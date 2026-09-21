@@ -3191,43 +3191,59 @@ local function drawCollectionDetailView()
             love.graphics.translate(-cardW / 2, -cardH / 2)
 
             -- Card Body
-            local itemCol = item.color or { 0.3, 0.4, 0.5, 1 }
-            love.graphics.setColor(0, 0, 0, 0.35)
-            UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
+            local dImg = (collectionCategory == "jokers") and UI.getDeityImage(item.id)
+            if dImg then
+                love.graphics.setColor(0, 0, 0, 0.35)
+                UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
 
-            love.graphics.setColor(0.18, 0.22, 0.26, 1)
-            UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
+                love.graphics.setColor(1, 1, 1, 1)
+                local iw, ih = dImg:getDimensions()
+                love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)
 
-            -- Card Header Banner
-            love.graphics.setColor(itemCol[1], itemCol[2], itemCol[3], 0.9)
-            UI.drawRoundedRect("fill", 0, 0, cardW, 26, 8)
-            UI.drawRoundedRect("fill", 0, 16, cardW, 10, 0)
+                if isH then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+                end
+            else
+                local itemCol = item.color or { 0.3, 0.4, 0.5, 1 }
+                love.graphics.setColor(0, 0, 0, 0.35)
+                UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
 
-            -- Card Border
-            love.graphics.setLineWidth(isH and 2.5 or 1.5)
-            love.graphics.setColor(isH and UI.COLORS.goldYellow or { itemCol[1], itemCol[2], itemCol[3], 0.8 })
-            UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+                love.graphics.setColor(0.18, 0.22, 0.26, 1)
+                UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
 
-            -- Card Icon
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(item.icon or "🃏", 0, 48, cardW, "center")
+                -- Card Header Banner
+                love.graphics.setColor(itemCol[1], itemCol[2], itemCol[3], 0.9)
+                UI.drawRoundedRect("fill", 0, 0, cardW, 26, 8)
+                UI.drawRoundedRect("fill", 0, 16, cardW, 10, 0)
 
-            -- Card Name
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(1, 1, 1, 1)
-            local cleanName = UI.truncateUtf8(item.name, 16)
-            love.graphics.printf(cleanName, 4, 100, cardW - 8, "center")
+                -- Card Border
+                love.graphics.setLineWidth(isH and 2.5 or 1.5)
+                love.graphics.setColor(isH and UI.COLORS.goldYellow or { itemCol[1], itemCol[2], itemCol[3], 0.8 })
+                UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
 
-            -- Rarity / Cost pill
-            if item.cost then
+                -- Card Icon
+                love.graphics.setFont(UI.fonts.large)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(item.icon or "🃏", 0, 48, cardW, "center")
+
+                -- Card Name
                 love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.goldYellow)
-                love.graphics.printf("$" .. item.cost, 0, 134, cardW, "center")
-            elseif item.rarity then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textMuted)
-                love.graphics.printf(item.rarity, 0, 134, cardW, "center")
+                love.graphics.setColor(1, 1, 1, 1)
+                local cleanName = UI.truncateUtf8(item.name, 16)
+                love.graphics.printf(cleanName, 4, 100, cardW - 8, "center")
+
+                -- Rarity / Cost pill
+                if item.cost then
+                    love.graphics.setFont(UI.fonts.tiny)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    love.graphics.printf("$" .. item.cost, 0, 134, cardW, "center")
+                elseif item.rarity then
+                    love.graphics.setFont(UI.fonts.tiny)
+                    love.graphics.setColor(UI.COLORS.textMuted)
+                    love.graphics.printf(item.rarity, 0, 134, cardW, "center")
+                end
             end
 
             love.graphics.pop()
@@ -3270,20 +3286,28 @@ local function drawCollectionDetailView()
         local lcy = inspY + 20
         local lcol = inspItem.color or { 0.3, 0.4, 0.5, 1 }
 
-        love.graphics.setColor(0, 0, 0, 0.4)
-        UI.drawRoundedRect("fill", lcx + 4, lcy + 6, lcw, lch, 10)
-        love.graphics.setColor(0.16, 0.20, 0.24, 1)
-        UI.drawRoundedRect("fill", lcx, lcy, lcw, lch, 10)
-        love.graphics.setColor(lcol[1], lcol[2], lcol[3], 0.95)
-        UI.drawRoundedRect("fill", lcx, lcy, lcw, 32, 10)
-        UI.drawRoundedRect("fill", lcx, lcy + 18, lcw, 14, 0)
-        love.graphics.setLineWidth(2)
-        love.graphics.setColor(lcol)
-        UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
+        local inspImg = (collectionCategory == "jokers") and UI.getDeityImage(inspItem.id)
+        if inspImg then
+            love.graphics.setColor(1, 1, 1, 1)
+            local iw, ih = inspImg:getDimensions()
+            love.graphics.draw(inspImg, lcx, lcy, 0, lcw / iw, lch / ih)
+            love.graphics.setLineWidth(2)
+            love.graphics.setColor(lcol)
+            UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
+        else
+            love.graphics.setColor(0.16, 0.20, 0.24, 1)
+            UI.drawRoundedRect("fill", lcx, lcy, lcw, lch, 10)
+            love.graphics.setColor(lcol[1], lcol[2], lcol[3], 0.95)
+            UI.drawRoundedRect("fill", lcx, lcy, lcw, 32, 10)
+            UI.drawRoundedRect("fill", lcx, lcy + 18, lcw, 14, 0)
+            love.graphics.setLineWidth(2)
+            love.graphics.setColor(lcol)
+            UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
 
-        love.graphics.setFont(UI.fonts.huge)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(inspItem.icon or "🃏", lcx, lcy + 55, lcw, "center")
+            love.graphics.setFont(UI.fonts.huge)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(inspItem.icon or "🃏", lcx, lcy + 55, lcw, "center")
+        end
 
         -- Item Header Info below card
         local infoY = lcy + lch + 18
@@ -5143,37 +5167,26 @@ local function drawBossDeityDraftState()
         love.graphics.setColor(borderCol)
         UI.drawRoundedRect("line", dx, cardY, cardW, cardH, 12)
 
-        -- Icon circle
-        love.graphics.setColor(borderCol[1], borderCol[2], borderCol[3], 0.2)
-        love.graphics.circle("fill", dx + cardW / 2, cardY + 70, 45)
-        love.graphics.setColor(borderCol)
-        love.graphics.setLineWidth(2)
-        love.graphics.circle("line", dx + cardW / 2, cardY + 70, 45)
-
-        -- Lightning bolt polygon icon
-        love.graphics.polygon("fill",
-            dx + cardW / 2 + 5, cardY + 45,
-            dx + cardW / 2 - 12, cardY + 70,
-            dx + cardW / 2 + 2, cardY + 70,
-            dx + cardW / 2 - 5, cardY + 95,
-            dx + cardW / 2 + 12, cardY + 68,
-            dx + cardW / 2 - 2, cardY + 68
-        )
+        -- Patron Card Visual (custom sprite or vector frame)
+        local cw, ch = 96, 138
+        local cx = dx + (cardW - cw) / 2
+        local cy = cardY + 20
+        UI.drawPatronCard(d, cx, cy, cw, ch, isHovered)
 
         -- Name
         love.graphics.setFont(UI.fonts.large)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(d.name, dx + 10, cardY + 130, cardW - 20, "center")
+        love.graphics.printf(d.name, dx + 10, cardY + 170, cardW - 20, "center")
 
         -- Rarity tag
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(borderCol)
-        love.graphics.printf(d.rarity:upper() .. " DEITY", dx, cardY + 165, cardW, "center")
+        love.graphics.printf(d.rarity:upper() .. " DEITY", dx, cardY + 204, cardW, "center")
 
         -- Description
         love.graphics.setFont(UI.fonts.regular)
         love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(d.desc, dx + 24, cardY + 205, cardW - 48, "center")
+        love.graphics.printf(d.desc, dx + 24, cardY + 230, cardW - 48, "center")
 
         -- Choose Button
         local btnChoose = {
@@ -6898,34 +6911,46 @@ local function drawShopState()
                 UI.drawRoundedRect("fill", -4 + tX * 8, 8 + tY * 8, cardW + 8, cardH, 8)
             end
 
-            -- Card Body
-            local cardColor = it.color or { 0.95, 0.85, 0.35, 1 }
-            love.graphics.setColor(0.18, 0.22, 0.28, 0.98)
-            UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
-            love.graphics.setColor(isCardHovered and UI.COLORS.goldYellow or { cardColor[1] * 0.7, cardColor[2] * 0.7, cardColor[3] * 0.7, 0.8 })
-            love.graphics.setLineWidth(isCardHovered and 2.5 or 1.5)
-            UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+            local dImg = (it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id)
+            if dImg then
+                love.graphics.setColor(1, 1, 1, 1)
+                local iw, ih = dImg:getDimensions()
+                love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)
+                if isCardHovered then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+                end
+            else
+                -- Card Body
+                local cardColor = it.color or { 0.95, 0.85, 0.35, 1 }
+                love.graphics.setColor(0.18, 0.22, 0.28, 0.98)
+                UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
+                love.graphics.setColor(isCardHovered and UI.COLORS.goldYellow or { cardColor[1] * 0.7, cardColor[2] * 0.7, cardColor[3] * 0.7, 0.8 })
+                love.graphics.setLineWidth(isCardHovered and 2.5 or 1.5)
+                UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
 
-            -- Top subtitle banner
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(cardColor)
-            love.graphics.printf(it.subtitle or "THẺ BÀI", 4, 8, cardW - 8, "center")
+                -- Top subtitle banner
+                love.graphics.setFont(UI.fonts.tiny)
+                love.graphics.setColor(cardColor)
+                love.graphics.printf(it.subtitle or "THẺ BÀI", 4, 8, cardW - 8, "center")
 
-            -- Card Icon / Art
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.printf(it.icon or "🃏", 0, 40, cardW, "center")
+                -- Card Icon / Art
+                love.graphics.setFont(UI.fonts.large)
+                love.graphics.printf(it.icon or "🃏", 0, 40, cardW, "center")
 
-            -- Card Title
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(it.name or "Vật Phẩm", 4, 85, cardW - 8, "center")
+                -- Card Title
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(it.name or "Vật Phẩm", 4, 85, cardW - 8, "center")
 
-            -- Bottom effect bar
-            love.graphics.setColor(0.12, 0.15, 0.19, 0.9)
-            UI.drawRoundedRect("fill", 6, cardH - 46, cardW - 12, 38, 4)
-            love.graphics.setFont(UI.fonts.tiny)
-            local shortDesc = UI.truncateUtf8(it.desc, 32)
-            love.graphics.printf(shortDesc, 8, cardH - 42, cardW - 16, "center")
+                -- Bottom effect bar
+                love.graphics.setColor(0.12, 0.15, 0.19, 0.9)
+                UI.drawRoundedRect("fill", 6, cardH - 46, cardW - 12, 38, 4)
+                love.graphics.setFont(UI.fonts.tiny)
+                local shortDesc = UI.truncateUtf8(it.desc, 32)
+                love.graphics.printf(shortDesc, 8, cardH - 42, cardW - 16, "center")
+            end
 
             love.graphics.pop()
 

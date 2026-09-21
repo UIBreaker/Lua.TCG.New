@@ -1089,9 +1089,9 @@ end
 
 -- 54. Test ♦️ TRẬT TỰ HOÀNG KIM (The Gilded Conclave / Diamonds Archetype)
 do
-    -- Khảm Nén Quặng: starts with 2 unlocked sockets
+    -- Every card starts with all three sockets available.
     local dCard = Deck.newCard(8, "diamonds")
-    assert(dCard.unlockedSockets == 2, "Diamonds must start with 2/5 sockets unlocked by default")
+    assert(dCard.unlockedSockets == 3, "Every card must start with 3/3 sockets available")
 
     -- Gemstone stat efficacy +50%
     local testGem = { id = "ruby", name = "Hồng Ngọc", onCardScore = function() return { addChips = 20, addMult = 4 } end }
@@ -1467,10 +1467,10 @@ do
     log("[PASS] 58. Bộ Sưu Tập Toàn Thư hiển thị duy nhất Bộ Bài Đỏ và toàn bộ nội dung hỗ trợ")
 end
 
--- 59. Balatro Tactile 3D Buttons (Extrusion, Tilt, Hotkeys, Depress & UTF-8 Uppercase)
+-- 59. Tactile 3D Buttons (Extrusion, Tilt, Depress & UTF-8 Uppercase)
 do
         -- A. UTF-8 Uppercase Verification
-        assert(UI.toUpperUtf8("chơi tay bài [Space]") == "CHƠI TAY BÀI [SPACE]", "toUpperUtf8 standard phrase")
+        assert(UI.toUpperUtf8("chơi tay bài") == "CHƠI TAY BÀI", "toUpperUtf8 standard phrase")
         assert(UI.toUpperUtf8("Ván\nKế Tiếp") == "VÁN\nKẾ TIẾP", "toUpperUtf8 multiline phrase")
         assert(UI.toUpperUtf8("Gieo lại $5") == "GIEO LẠI $5", "toUpperUtf8 with numbers/symbols")
         assert(UI.toUpperUtf8("Đơn thủ") == "ĐƠN THỦ", "toUpperUtf8 with Đ")
@@ -1479,7 +1479,7 @@ do
         -- B. UI.drawButton execution in various states
         local mockBtnActive = {
             id = "test_play",
-            text = "Chơi Tay Bài [Space]",
+            text = "Chơi Tay Bài",
             x = 100, y = 100, w = 180, h = 56,
             color = UI.COLORS.btnPlay,
         }
@@ -1488,7 +1488,7 @@ do
 
         local mockBtnPressed = {
             id = "test_discard",
-            text = "Bỏ Bài [D]",
+            text = "Bỏ Bài",
             x = 300, y = 100, w = 160, h = 56,
             color = UI.COLORS.btnDiscard,
         }
@@ -1497,7 +1497,7 @@ do
 
         local mockBtnDisabled = {
             id = "test_disabled",
-            text = "Bỏ Bài [D]",
+            text = "Bỏ Bài",
             x = 300, y = 100, w = 160, h = 56,
             color = UI.COLORS.btnDiscard,
             disabled = true,
@@ -1525,7 +1525,7 @@ do
         local okSub = pcall(function() UI.drawButton(mockBtnSub, true, false) end)
         assert(okSub, "UI.drawButton subtitle & alert button must render without error")
 
-        log("[PASS] 59. Hệ Thống Nút Bấm Balatro 3D (Extrusion, Depress, 3D Tilt, In Hoa UTF-8 & Keycap Badges) verified 100%")
+        log("[PASS] 59. Hệ Thống Nút Bấm 3D (Extrusion, Depress, 3D Tilt & In Hoa UTF-8) verified 100%")
     end
 
 -- 60. Grimdark/Retro Overhaul (Chiseled Sockets, Gothic Face Portraits & Hộ Linh Tarot System)
@@ -2386,7 +2386,7 @@ do
         suitCounts[card.suit] = (suitCounts[card.suit] or 0) + 1
         assert(card.disableFactionPassives == true, "Red Deck cards must not trigger legacy faction passives")
         assert(not card.isWildSuit and not card.isDualRankAce, "Red Deck cards must use normal poker suit and rank rules")
-        assert(card.unlockedSockets == 1, "Every Red Deck card must start with exactly one equipment socket")
+        assert(card.unlockedSockets == 3, "Every Red Deck card must start with all three equipment sockets")
     end
     for _, count in pairs(suitCounts) do assert(count == 13, "Each standard suit must contain 13 cards") end
 
@@ -2564,33 +2564,21 @@ do
     log("[PASS] 92. RunManager.advanceBlind & Blind Progression Contract verified 100%")
 end
 
--- 93. Test Equipment Socket Constraints & Synchronization (card.unlockedSockets & MAX_SLOTS = 3)
+-- 93. Test Equipment Socket Constraints & Synchronization (all 3 slots available)
 do
     local c = Deck.newCard(7, "valoria")
-    assert(c.unlockedSockets == 1, "Valoria starts with 1 unlocked socket")
+    assert(c.unlockedSockets == 3, "Every card starts with 3 available sockets")
     assert(c.maxSockets == 3, "Card maxSockets must be 3")
 
-    -- 1-slot item succeeds
-    local ok1 = Equipment.attach(c, Equipment.ITEMS.vanguard_spear)
-    assert(ok1 == true, "Attaching 1-slot item to 1 unlocked socket succeeds")
+    assert(Equipment.attach(c, Equipment.ITEMS.vanguard_spear) == true, "First equipment must attach")
+    assert(Equipment.attach(c, Equipment.ITEMS.shield_lock) == true, "Second equipment must attach")
+    assert(Equipment.attach(c, Equipment.ITEMS.iron_spikes) == true, "Third equipment must attach")
+    assert(Equipment.canAttach(c, Equipment.ITEMS.shield_gem) == false, "Fourth equipment must exceed the 3-slot cap")
 
-    -- Second 1-slot item fails because unlockedSockets == 1
-    local ok2, msg2 = Equipment.canAttach(c, Equipment.ITEMS.shield_lock)
-    assert(ok2 == false, "Attaching 2nd item must fail when card only has 1 unlocked socket")
-
-    -- Unlocking socket to 2 allows the second item
-    c.unlockedSockets = 2
-    local ok3 = Equipment.attach(c, Equipment.ITEMS.shield_lock)
-    assert(ok3 == true, "Attaching 2nd item succeeds once socket 2 is unlocked")
-
-    -- Attaching 2-slot legendary into 1 remaining slot fails
-    local okLeg, msgLeg = Equipment.canAttach(c, Equipment.ITEMS.tactical_compass)
-    assert(okLeg == false, "Attaching 2-slot legendary requires 2 open sockets, must fail")
-
-    -- Unlocking to max 3: 2 used + 2 needed = 4 > 3 -> fails
-    c.unlockedSockets = 3
-    assert(Equipment.canAttach(c, Equipment.ITEMS.tactical_compass) == false, "2 used + 2 needed > 3 sockets, must fail")
-    log("[PASS] 93. Equipment Socket Synchronization (unlockedSockets & MAX_SLOTS = 3) verified 100%")
+    c.unlockedSockets = 1 -- Legacy save values must no longer lock sockets.
+    c.equipments = {}
+    assert(Equipment.attach(c, Equipment.ITEMS.void_catalyst) == true, "2-slot equipment must fit on every fresh or legacy card")
+    log("[PASS] 93. Equipment Socket Synchronization (3 slots available on every card) verified 100%")
 end
 
 -- 94. Test Permanent Card Destruction (Permadeath)
@@ -2813,6 +2801,48 @@ do
     end
 
     log("[PASS] 99. Đồng Bộ Toàn Diện Bộ Sưu Tập (Single Source of Truth, Badges & Equipment Tracking) verified 100%")
+end
+
+-- 100. Test 9 Authentic Deity Pixel Art Assets & Card Rendering Pipeline
+do
+    local expectedDeities = {
+        { id = "deity_eternal_tree", name = "Bất Diệt Thần Thụ" },
+        { id = "deity_war_god", name = "Chiến Thần Tàn Bạo" },
+        { id = "deity_formation", name = "Chiến Trận Quân Kỳ" },
+        { id = "deity_vharos", name = "Huyết Ma Tận Diệt" },
+        { id = "deity_royalty", name = "Huyết Mạch Vương Quyền" },
+        { id = "deity_banner", name = "Huyết Tẩy Tàn Quân" },
+        { id = "deity_supreme", name = "Hỗn Mang Tối Thượng" },
+        { id = "deity_delayed_gratification", name = "Kiên Nhẫn Thần Thụ" },
+        { id = "deity_time_weaver", name = "Kẻ Diệt Thời Gian" },
+    }
+
+    for _, entry in ipairs(expectedDeities) do
+        -- A. Deities Catalog registration and naming
+        local d = Deities.CATALOG[entry.id]
+        assert(d ~= nil, "Deity must exist in Deities.CATALOG: " .. entry.id)
+        assert(d.name == entry.name, "Deity name mismatch for " .. entry.id .. ": expected " .. entry.name .. ", got " .. tostring(d.name))
+
+        -- B. Asset file existence and validity on disk
+        local path = "assets/deities/" .. entry.id .. ".png"
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "Deity card asset file must exist on disk: " .. path)
+        local content = f:read("*a")
+        f:close()
+        assert(content and #content > 10000, "Deity card asset must be valid image file (>10KB): " .. path .. " (" .. tostring(content and #content) .. " bytes)")
+
+        -- C. UI Image Loader safe invocation
+        local okLoader, img = pcall(UI.getDeityImage, entry.id)
+        assert(okLoader, "UI.getDeityImage must execute safely without runtime errors for " .. entry.id)
+
+        -- D. UI Patron Card rendering with image/fallback
+        local okRender = pcall(function()
+            UI.drawPatronCard(d, 50, 50, 82, 118, true, false, false, nil)
+        end)
+        assert(okRender, "UI.drawPatronCard must render deity card " .. entry.id .. " safely")
+    end
+
+    log("[PASS] 100. Tích hợp trọn vẹn 9 Thần Bài Pixel Art (Bất Diệt Thần Thụ, Chiến Thần, Quân Kỳ, Huyết Ma, Huyết Mạch, Huyết Tẩy, Hỗn Mang, Kiên Nhẫn, Kẻ Diệt Thời Gian) verified 100%")
 end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")

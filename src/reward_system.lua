@@ -347,10 +347,9 @@ function RewardSystem.draw(anim, V_WIDTH, V_HEIGHT, mx, my, buttonsTable)
     local btnX = (V_WIDTH - btnW) / 2
     local btnY = modalY + modalH - 58
 
-    local isSmallBlind = anim.blind and (anim.blind.type == "small" or anim.blind.index == 1)
     local btnContinue = {
         id = "cashout_continue",
-        text = isSmallBlind and "TIẾP TỤC ĐẾN BLIND TIẾP THEO ➔" or "TIẾP TỤC ĐẾN CỬA HÀNG ➔",
+        text = "TIẾP TỤC ĐẾN CỬA HÀNG ➔",
         x = btnX,
         y = btnY,
         w = btnW,

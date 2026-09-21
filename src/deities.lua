@@ -291,10 +291,10 @@ Deities.CATALOG = {
             end
         end,
     },
-    -- Cavendish -> Bất Diệt Cổ Thụ (x1.5 sau khi đã đánh 3 kiểu bài khác nhau trong trận)
+    -- Cavendish -> Bất Diệt Thần Thụ (x1.5 sau khi đã đánh 3 kiểu bài khác nhau trong trận)
     deity_eternal_tree = {
         id = "deity_eternal_tree",
-        name = "Bất Diệt Cổ Thụ",
+        name = "Bất Diệt Thần Thụ",
         rarity = "rare",
         cost = 8,
         requiresExtinct = "deity_sacred_fruit",
@@ -305,7 +305,7 @@ Deities.CATALOG = {
             local distinct = 0
             for _ in pairs(history) do distinct = distinct + 1 end
             if distinct >= 3 then
-                return { xMult = 1.5, message = "Bất Diệt Cổ Thụ ×1.5 Mult (3 kiểu bài khác nhau)!" }
+                return { xMult = 1.5, message = "Bất Diệt Thần Thụ ×1.5 Mult (3 kiểu bài khác nhau)!" }
             end
         end,
     },
@@ -494,7 +494,7 @@ Deities.CATALOG = {
     },
     deity_time_weaver = {
         id = "deity_time_weaver",
-        name = "Kẻ Dệt Thời Gian",
+        name = "Kẻ Diệt Thời Gian",
         rarity = "uncommon",
         cost = 6,
         desc = "Giữ 1 lá bài sang lượt sau; lượt tiếp theo rút ít hơn 1 lá",

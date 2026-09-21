@@ -151,6 +151,8 @@ local function restoreCard(savedCard)
         local equipment = restoreEquipment(savedEquipment)
         if equipment then table.insert(card.equipments, equipment) end
     end
+    card.maxSockets = Equipment.MAX_SLOTS
+    card.unlockedSockets = Equipment.MAX_SLOTS
     card.selected = false
     card.hovered = false
     card.faceDown = false

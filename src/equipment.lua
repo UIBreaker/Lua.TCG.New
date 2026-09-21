@@ -300,9 +300,9 @@ function Equipment.canAttach(card, equipItem)
         end
     end
     local needed = equipItem.slotsNeeded or 1
-    local available = card.unlockedSockets or 1
+    local available = math.min(card.maxSockets or Equipment.MAX_SLOTS, Equipment.MAX_SLOTS)
     if Equipment.getUsedSlots(card) + needed > available then
-        return false, "Lá bài này chỉ mới mở khóa " .. available .. "/" .. Equipment.MAX_SLOTS .. " hốc khảm!"
+        return false, "Lá bài này không còn đủ hốc khảm (tối đa " .. Equipment.MAX_SLOTS .. ")!"
     end
     return true
 end

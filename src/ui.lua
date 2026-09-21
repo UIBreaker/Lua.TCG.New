@@ -433,7 +433,7 @@ function UI.drawButton(btn, isHovered, isPressed)
     love.graphics.setColor(borderColor)
     UI.drawRoundedRect("line", btn.x, faceY, btn.w, faceH, r)
 
-    -- C. Typography, Labels, Subtitles & Hotkey Badges
+    -- C. Typography, Labels & Subtitles
     local font = btn.font or UI.fonts.regular or love.graphics.getFont()
     love.graphics.setFont(font)
 
@@ -520,69 +520,14 @@ function UI.drawButton(btn, isHovered, isPressed)
                 curY = curY + lineH + lineSpacing
             end
         else
-            -- Single line: Check for hotkey bracket like [Space], [D], [R], [Tab], [Esc]
-            local hotkey = cleanText:match("%[([^%]]+)%]")
-            if hotkey and not btn.noHotkeyBadge then
-                local prefix = cleanText:gsub("%s*%[[^%]]+%]%s*", "")
-                local pW = (#prefix > 0) and font:getWidth(prefix) or 0
-                local badgeFont = (font == UI.fonts.large or font == UI.fonts.huge) and (UI.fonts.medium or font) 
-                                  or (font == UI.fonts.medium and (UI.fonts.small or font) or (UI.fonts.tiny or font))
-                local kw = math.max(20, badgeFont:getWidth(hotkey) + 12)
-                local kh = math.max(16, badgeFont:getHeight() + 4)
-                local gap = (pW > 0) and 8 or 0
-                local totalW = pW + gap + kw
-                local startX = btn.x + (btn.w - totalW) / 2
-                local textY = faceY + (faceH - font:getHeight()) / 2
-                local badgeY = faceY + (faceH - kh) / 2
-
-                if pW > 0 then
-                    -- Main text shadow
-                    love.graphics.setFont(font)
-                    love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-                    love.graphics.print(prefix, startX, textY + 1.5)
-                    -- Main text
-                    love.graphics.setColor(textColor)
-                    love.graphics.print(prefix, startX, textY)
-                end
-
-                -- Keycap Badge
-                local bx = startX + pW + gap
-                -- Keycap Base / Depressed casing
-                love.graphics.setColor(0.06, 0.08, 0.10, 0.95)
-                UI.drawRoundedRect("fill", bx, badgeY + 1, kw, kh, 3)
-                -- Keycap Face
-                love.graphics.setColor(0.14, 0.18, 0.22, 0.95)
-                UI.drawRoundedRect("fill", bx, badgeY, kw, kh - 1, 3)
-                -- Keycap Top Highlight
-                love.graphics.setColor(1, 1, 1, 0.22)
-                love.graphics.line(bx + 2, badgeY + 1, bx + kw - 2, badgeY + 1)
-                -- Keycap Border
-                love.graphics.setLineWidth(1)
-                love.graphics.setColor(0.36, 0.44, 0.52, 0.92)
-                UI.drawRoundedRect("line", bx, badgeY, kw, kh, 3)
-                -- Keycap Text
-                love.graphics.setFont(badgeFont)
-                local kwText = badgeFont:getWidth(hotkey)
-                local khText = badgeFont:getHeight()
-                local ktx = bx + (kw - kwText) / 2
-                local kty = badgeY + (kh - khText) / 2
-                love.graphics.setColor(0, 0, 0, 0.95)
-                love.graphics.print(hotkey, ktx, kty + 1)
-                love.graphics.setColor(UI.COLORS.goldYellow or { 0.98, 0.85, 0.25, 1 })
-                love.graphics.print(hotkey, ktx, kty)
-            else
-                -- Standard single line text
-                local textW = font:getWidth(cleanText)
-                local textH = font:getHeight()
-                local tx = btn.x + (btn.w - textW) / 2
-                local ty = faceY + (faceH - textH) / 2
-                -- Shadow
-                love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-                love.graphics.print(cleanText, tx, ty + 1.5)
-                -- Face text
-                love.graphics.setColor(textColor)
-                love.graphics.print(cleanText, tx, ty)
-            end
+            local textW = font:getWidth(cleanText)
+            local textH = font:getHeight()
+            local tx = btn.x + (btn.w - textW) / 2
+            local ty = faceY + (faceH - textH) / 2
+            love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
+            love.graphics.print(cleanText, tx, ty + 1.5)
+            love.graphics.setColor(textColor)
+            love.graphics.print(cleanText, tx, ty)
         end
     end
 
@@ -710,20 +655,9 @@ function UI.drawCard(card, x, y, w, h)
 
     for s = 1, socketCount do
         local sx = socketStartX + (s - 1) * socketGap
-        local isUnlocked = s <= (card.unlockedSockets or 1)
         local eq = card.equipments and card.equipments[s]
 
-        if not isUnlocked then
-            -- 1. Locked Socket: Sunken dark-gray diamond cavity with chisel X
-            love.graphics.setColor(0.32, 0.28, 0.24, 0.85)
-            love.graphics.polygon("fill", sx, socketY - dh, sx + dw, socketY, sx, socketY + dh, sx - dw, socketY)
-            love.graphics.setColor(0.16, 0.14, 0.12, 0.95)
-            love.graphics.polygon("fill", sx, socketY - dh + 1, sx + dw - 1, socketY, sx, socketY + dh - 1, sx - dw + 1, socketY)
-            love.graphics.setLineWidth(1.2)
-            love.graphics.setColor(0.08, 0.07, 0.06, 0.9)
-            love.graphics.line(sx - 2.5, socketY - 2.5, sx + 2.5, socketY + 2.5)
-            love.graphics.line(sx + 2.5, socketY - 2.5, sx - 2.5, socketY + 2.5)
-        elseif not eq then
+        if not eq then
             -- 2. Open Empty Socket: Metallic beveled chisel rim & deep dark velvet cavity
             love.graphics.setColor(0.48, 0.40, 0.28, 0.95)
             love.graphics.polygon("fill", sx, socketY - dh - 0.8, sx + dw + 0.8, socketY, sx, socketY + dh + 0.8, sx - dw - 0.8, socketY)
@@ -1149,6 +1083,32 @@ function UI.drawRelicSigil(sigilId, cx, cy, size, color)
     love.graphics.pop()
 end
 
+-- Cache and loader for authentic deity card artwork
+UI.deityImages = UI.deityImages or {}
+
+function UI.getDeityImage(deityId)
+    if not deityId then return nil end
+    if UI.deityImages[deityId] ~= nil then
+        return UI.deityImages[deityId] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local path = "assets/deities/" .. deityId .. ".png"
+        local okInfo, info = pcall(love.filesystem.getInfo, path)
+        if okInfo and info then
+            local okImg, img = pcall(love.graphics.newImage, path)
+            if okImg and img then
+                if img.setFilter then
+                    img:setFilter("nearest", "nearest")
+                end
+                UI.deityImages[deityId] = img
+                return img
+            end
+        end
+    end
+    UI.deityImages[deityId] = false
+    return nil
+end
+
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
     if not d then return end
@@ -1166,10 +1126,6 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     -- Drop shadow
     love.graphics.setColor(0, 0, 0, 0.45)
     UI.drawRoundedRect("fill", 3, 5, w, h, 6)
-
-    -- Card Body: Deep Void Obsidian
-    love.graphics.setColor(0.10, 0.11, 0.13, 0.98)
-    UI.drawRoundedRect("fill", 0, 0, w, h, 6)
 
     -- Border by Rarity
     local rBorder = { 0.45, 0.48, 0.54, 1 }
@@ -1191,48 +1147,70 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
         rBorder = { 1, 1, 1, 1 }
     end
 
-    -- Inner background halo
-    love.graphics.setColor(rGlow)
-    love.graphics.circle("fill", w / 2, h / 2 + 2, w * 0.42)
+    local img = UI.getDeityImage(d.id)
+    if img then
+        -- Render authentic pixel art card artwork
+        love.graphics.setColor(1, 1, 1, 1)
+        local iw, ih = img:getDimensions()
+        love.graphics.draw(img, 0, 0, 0, w / iw, h / ih)
 
-    -- Ornate Gothic Double Hairline Border
-    love.graphics.setLineWidth(isHovered and 2.0 or 1.5)
-    love.graphics.setColor(rBorder)
-    UI.drawRoundedRect("line", 0, 0, w, h, 6)
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.45)
-    UI.drawRoundedRect("line", 3, 3, w - 6, h - 6, 4)
+        if isHovered then
+            love.graphics.setLineWidth(2.0)
+            love.graphics.setColor(1, 1, 1, 0.95)
+            UI.drawRoundedRect("line", 0, 0, w, h, 6)
+        elseif d.rarity == "legendary" then
+            love.graphics.setLineWidth(1.5)
+            love.graphics.setColor(0.96, 0.78, 0.22, 0.6)
+            UI.drawRoundedRect("line", 0, 0, w, h, 6)
+        end
+    else
+        -- Card Body: Deep Void Obsidian
+        love.graphics.setColor(0.10, 0.11, 0.13, 0.98)
+        UI.drawRoundedRect("fill", 0, 0, w, h, 6)
 
-    -- Corner Gothic Fleuron Notches
-    love.graphics.setColor(rBorder)
-    love.graphics.line(5, 7, 7, 5)
-    love.graphics.line(w - 5, 7, w - 7, 5)
-    love.graphics.line(5, h - 7, 7, h - 5)
-    love.graphics.line(w - 5, h - 7, w - 7, h - 5)
+        -- Inner background halo
+        love.graphics.setColor(rGlow)
+        love.graphics.circle("fill", w / 2, h / 2 + 2, w * 0.42)
 
-    -- Title Ribbon Banner at Top
-    local bannerH = 22
-    love.graphics.setColor(0.06, 0.07, 0.08, 0.95)
-    love.graphics.rectangle("fill", 4, 6, w - 8, bannerH, 3)
-    love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.7)
-    love.graphics.rectangle("line", 4, 6, w - 8, bannerH, 3)
+        -- Ornate Gothic Double Hairline Border
+        love.graphics.setLineWidth(isHovered and 2.0 or 1.5)
+        love.graphics.setColor(rBorder)
+        UI.drawRoundedRect("line", 0, 0, w, h, 6)
+        love.graphics.setLineWidth(1)
+        love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.45)
+        UI.drawRoundedRect("line", 3, 3, w - 6, h - 6, 4)
 
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(1, 1, 1, 0.95)
-    local displayName = UI.toUpperUtf8(d.name)
-    love.graphics.printf(displayName, 5, 10, w - 10, "center")
+        -- Corner Gothic Fleuron Notches
+        love.graphics.setColor(rBorder)
+        love.graphics.line(5, 7, 7, 5)
+        love.graphics.line(w - 5, 7, w - 7, 5)
+        love.graphics.line(5, h - 7, 7, h - 5)
+        love.graphics.line(w - 5, h - 7, w - 7, h - 5)
 
-    -- Center Dedicated Relic Sigil / Artwork
-    local cx = w / 2
-    local cy = h / 2 + 5
-    UI.drawRelicSigil(d.id, cx, cy, 28, rBorder)
+        -- Title Ribbon Banner at Top
+        local bannerH = 22
+        love.graphics.setColor(0.06, 0.07, 0.08, 0.95)
+        love.graphics.rectangle("fill", 4, 6, w - 8, bannerH, 3)
+        love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.7)
+        love.graphics.rectangle("line", 4, 6, w - 8, bannerH, 3)
 
-    -- Bottom Rarity Jewel Talisman
-    love.graphics.setColor(rBorder)
-    local jR = 3.5
-    love.graphics.polygon("fill", cx, h - 12 - jR, cx + jR, h - 12, cx, h - 12 + jR, cx - jR, h - 12)
-    love.graphics.setColor(1, 1, 1, 0.8)
-    love.graphics.circle("fill", cx - 0.8, h - 12 - 0.8, 1.0)
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(1, 1, 1, 0.95)
+        local displayName = UI.toUpperUtf8(d.name)
+        love.graphics.printf(displayName, 5, 10, w - 10, "center")
+
+        -- Center Dedicated Relic Sigil / Artwork
+        local cx = w / 2
+        local cy = h / 2 + 5
+        UI.drawRelicSigil(d.id, cx, cy, 28, rBorder)
+
+        -- Bottom Rarity Jewel Talisman
+        love.graphics.setColor(rBorder)
+        local jR = 3.5
+        love.graphics.polygon("fill", cx, h - 12 - jR, cx + jR, h - 12, cx, h - 12 + jR, cx - jR, h - 12)
+        love.graphics.setColor(1, 1, 1, 0.8)
+        love.graphics.circle("fill", cx - 0.8, h - 12 - 0.8, 1.0)
+    end
 
     -- Blueprint / Copy indicator
     if d.isCopyDeity and copyTarget then

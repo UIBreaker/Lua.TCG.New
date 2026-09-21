@@ -306,7 +306,6 @@ function Deck.newCard(rank, suit)
     local actualSuit = suitInfo.id
     local role = Deck.getCardRole(rank)
 
-    local isDiamond = (actualSuit == "aurelia" or actualSuit == "diamonds")
     local isAceOfClubs = ((rank == 1 or rank == 14) and (actualSuit == "elaris" or actualSuit == "clubs"))
     local isAceOfSpades = ((rank == 1 or rank == 14) and (actualSuit == "vharos" or actualSuit == "spades"))
 
@@ -327,7 +326,7 @@ function Deck.newCard(rank, suit)
         roleDesc = role.desc,
         equipments = {}, -- Up to 3 equipment slots
         maxSockets = 3,
-        unlockedSockets = isDiamond and 2 or 1, -- Gilded Conclave opens 2 sockets by default
+        unlockedSockets = 3,
         isWildSuit = requestedSuit ~= "red_deck" and isAceOfClubs,
         isDualRankAce = requestedSuit ~= "red_deck" and isAceOfSpades,
         isPrimalDrone = false,
@@ -345,7 +344,7 @@ function Deck.newCard(rank, suit)
     }
     if requestedSuit == "red_deck" then
         card.suitName = Deck.STANDARD_SUIT_NAMES[actualSuit] or card.suitName
-        card.unlockedSockets = 1
+        card.unlockedSockets = 3
     end
     nextCardId = nextCardId + 1
     return card
@@ -363,7 +362,7 @@ function Deck.createRedStarterDeck()
             card.isWildSuit = false
             card.isDualRankAce = false
             card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-            card.unlockedSockets = 1
+            card.unlockedSockets = 3
             table.insert(cards, card)
         end
     end
@@ -464,7 +463,7 @@ function Deck.cloneCard(card)
     newC.enhancement = card.enhancement
     newC.overchargeStacks = card.overchargeStacks or 0
     newC.isAnchor = card.isAnchor or (card.seal == "seal_anchor" or card.seal == "anchor")
-    newC.unlockedSockets = card.unlockedSockets or 1
+    newC.unlockedSockets = 3
     newC.maxSockets = 3
     newC.exhausted = card.exhausted or false
     newC.equipments = {}
@@ -542,7 +541,7 @@ function Deck.addCardToDeck(gameState, card)
         card.isWildSuit = false
         card.isDualRankAce = false
         card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-        card.unlockedSockets = 1
+        card.unlockedSockets = 3
     end
     card.baseRank = card.baseRank or card.rank
     card.rank = card.baseRank
@@ -612,7 +611,7 @@ function Deck.createRewardCard(excludeSuit)
         card.isWildSuit = false
         card.isDualRankAce = false
         card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-        card.unlockedSockets = 1
+        card.unlockedSockets = 3
     end
     return card
 end

@@ -118,7 +118,7 @@ function Capture.update(gameRef, callbacks)
         local Deck = require("src.deck")
         local kSpades = Deck.newCard(13, "valoria")
         Deck.addCardToDeck(gameRef, kSpades)
-        callbacks.openSocketing(Equipment.ITEMS.feather_free)
+        callbacks.openSocketing(Equipment.ITEMS.vitality_gem)
         saveImage("shot_socketing_fix.png")
 
     elseif frame == 112 then

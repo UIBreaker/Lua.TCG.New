@@ -338,7 +338,7 @@ log("[PASS] 23c. Knight (J) synergizes with Soldier (2-10) to grant bonus Chips 
 -- 19. Test Shop equipment purchase and socketing workflow
 local shopSim = Shop.new()
 Shop.refresh(shopSim, testGameState)
-local eqToBuy = Equipment.ITEMS.holy_relic
+local eqToBuy = Equipment.ITEMS.void_catalyst
 local testCardTarget = testGameState.persistentDeck[2]
 testCardTarget.unlockedSockets = math.max(testCardTarget.unlockedSockets or 1, eqToBuy.slotsNeeded or 1)
 assert(#testCardTarget.equipments == 0, "Target card starts with 0 equipments")
@@ -406,7 +406,7 @@ local UI = require("src.ui")
 UI.initFonts()
 local mockCard1 = Deck.newCard(10, "valoria")
 local mockCard2 = Deck.newCard(14, "aurelia")
-Equipment.attach(mockCard2, Equipment.ITEMS.holy_relic)
+Equipment.attach(mockCard2, Equipment.ITEMS.void_catalyst)
 Equipment.attach(mockCard2, Equipment.ITEMS.gem_fire)
 
 -- Verify UI.drawCard executes without error for both cards
@@ -1538,7 +1538,7 @@ do
     -- A. Card Sockets 3 Visual States Verification
     local mockCard = Deck.newCard(13, "valoria") -- King (Quốc Vương)
     mockCard.unlockedSockets = 3
-    Equipment.attach(mockCard, Equipment.ITEMS.holy_relic)
+    Equipment.attach(mockCard, Equipment.ITEMS.void_catalyst)
     local okDrawCard = pcall(function()
         UI.drawCard(mockCard, 100, 100, 140, 200, false, false, 0, 0)
     end)
@@ -1600,7 +1600,7 @@ do
     }
 
     -- TURN 1:
-    -- Player plays Pair 8♠ (+12 Armor from Đá Hộ Mệnh / ward_stone, 28 DMG)
+    -- Player plays Pair 8♠ (+12 Armor from Đá Thủ Thế / ward_stone, 28 DMG)
     local card8_1 = { rank = 8, rankName = "8", suit = "vharos", suitSymbol = "♠", equipments = { Equipment.ITEMS.ward_stone } }
     local card8_2 = { rank = 8, rankName = "8", suit = "vharos", suitSymbol = "♠" }
     local evalT1 = { type = Poker.HAND_TYPES.PAIR, scoringCards = { card8_1, card8_2 }, unscoredCards = {} }
@@ -1635,22 +1635,22 @@ do
     log("[PASS] 61a. Turn 1: Pair 8♠ (+12 Armor, 28 DMG) -> Monster 48/76 HP. Quái attacks 12 -> 12 Armor blocks 12 -> 40/100 HP")
 
     -- TURN 2:
-    -- Player plays Single K♠ (+15 Armor from Ngọc Hộ Thân, +5 HP from Ngọc Hồi Máu khi < 50% HP, 25 DMG)
+    -- Player plays Single K♠ (+12 Armor from Đá Thủ Thế, +4 HP from Ngọc Cấp Cứu khi < 50% HP, 25 DMG)
     local cardK = {
         rank = 13, rankName = "K", suit = "vharos", suitSymbol = "♠",
-        equipments = { Equipment.ITEMS.shield_gem, Equipment.ITEMS.vitality_gem }
+        equipments = { Equipment.ITEMS.ward_stone, Equipment.ITEMS.vitality_gem }
     }
     local evalT2 = { type = Poker.HAND_TYPES.HIGH_CARD, scoringCards = { cardK }, unscoredCards = {} }
     local scoreT2 = Scoring.calculate(evalT2, {}, testGame)
-    assert(scoreT2.addArmor == 15, "Shield gem must grant +15 Armor, got: " .. tostring(scoreT2.addArmor))
-    assert(scoreT2.healHp == 5, "Vitality gem must heal +5 HP when < 50% HP, got: " .. tostring(scoreT2.healHp))
+    assert(scoreT2.addArmor == 12, "Ward stone must grant +12 Armor, got: " .. tostring(scoreT2.addArmor))
+    assert(scoreT2.healHp == 4, "Vitality gem must heal +4 HP when < 50% HP, got: " .. tostring(scoreT2.healHp))
 
-    -- Survival attributes trigger FIRST (+15 Armor, +5 HP)
+    -- Survival attributes trigger FIRST (+12 Armor, +4 HP)
     testGame.playerArmor = testGame.playerArmor + scoreT2.addArmor
     testGame.playerShield = testGame.playerArmor
     testGame.playerHp = math.min(testGame.maxPlayerHp, testGame.playerHp + scoreT2.healHp)
-    assert(testGame.playerArmor == 15, "Player Armor must be 15")
-    assert(testGame.playerHp == 45, "Player HP must heal to 45/100, got: " .. testGame.playerHp)
+    assert(testGame.playerArmor == 12, "Player Armor must be 12")
+    assert(testGame.playerHp == 44, "Player HP must heal to 44/100, got: " .. testGame.playerHp)
 
     -- Deal 25 DMG to monster
     local dmg2 = 25
@@ -1667,11 +1667,11 @@ do
     testGame.handsRemaining = testGame.handsRemaining - 1
 
     assert(absorbed2 == 12, "12 Armor must block 12 damage")
-    assert(testGame.playerArmor == 3, "Armor must have 3 remaining (15 - 12 = 3)")
+    assert(testGame.playerArmor == 0, "Armor must be depleted (12 - 12 = 0)")
     assert(dmgToHp2 == 0, "0 damage penetrates to HP")
-    assert(testGame.playerHp == 45, "Player HP must be 45/100, got: " .. testGame.playerHp)
+    assert(testGame.playerHp == 44, "Player HP must be 44/100, got: " .. testGame.playerHp)
     assert(testGame.handsRemaining == 1, "1 Hand must remain")
-    log("[PASS] 61b. Turn 2: Single K♠ (+15 Armor, +5 HP, 25 DMG) -> Player heals to 45 HP, Monster 23/76 HP. Quái attacks 12 -> blocked -> 45/100 HP")
+    log("[PASS] 61b. Turn 2: Single K♠ (+12 Armor, +4 HP, 25 DMG) -> Player heals to 44 HP, Monster 23/76 HP. Quái attacks 12 -> blocked -> 44/100 HP")
 
     -- TURN 3:
     -- Player plays Single J♠ (no defense, 32 DMG)
@@ -1690,8 +1690,8 @@ do
     end
 
     assert(testGame.combatWon == true, "Combat must be won immediately on Turn 3")
-    assert(testGame.playerHp == 45, "Player HP must finish at 45 HP (NO counter-attack!), got: " .. testGame.playerHp)
-    log("[PASS] 61c. Turn 3: Single J♠ (32 DMG) -> Monster HP <= 0! Quái CHẾT NGAY! Immediate victory with 45 HP, NO counter-attack!")
+    assert(testGame.playerHp == 44, "Player HP must finish at 44 HP (NO counter-attack!), got: " .. testGame.playerHp)
+    log("[PASS] 61c. Turn 3: Single J♠ (32 DMG) -> Monster HP <= 0! Quái CHẾT NGAY! Immediate victory with 44 HP, NO counter-attack!")
 end
 
 -- 62. Test Dual Loss Condition & 3-Card Straight
@@ -2430,14 +2430,14 @@ do
     local testCard = Deck.newCard(10, "vharos")
     testCard.unlockedSockets = 3
     -- Attach 1: Iron Spikes (takes 1 slot)
-    local ok1 = Equipment.attach(testCard, Equipment.ITEMS.iron_spikes)
-    assert(ok1 == true, "Attach iron_spikes must succeed")
+    local ok1 = Equipment.attach(testCard, Equipment.ITEMS.gem_fire)
+    assert(ok1 == true, "Attach gem_fire must succeed")
     assert(Equipment.getUsedSlots(testCard) == 1, "Used slots must be 1")
 
-    -- Duplicate check: attach iron_spikes again must fail
-    local canDup = Equipment.canAttach(testCard, Equipment.ITEMS.iron_spikes)
+    -- Duplicate check: attaching the same gem again must fail
+    local canDup = Equipment.canAttach(testCard, Equipment.ITEMS.gem_fire)
     assert(canDup == false, "Socketing preview must mark duplicate equipment as invalid")
-    local okDup = Equipment.attach(testCard, Equipment.ITEMS.iron_spikes)
+    local okDup = Equipment.attach(testCard, Equipment.ITEMS.gem_fire)
     assert(okDup == false, "Duplicate equipment must be blocked")
 
     -- Legendary equipment check: Void Catalyst requires 2 slots
@@ -2446,9 +2446,9 @@ do
     assert(Equipment.getUsedSlots(testCard) == 3, "Total used slots must now be 3 (1 + 2)")
 
     -- Try attaching 4th slot: must fail (MAX_SLOTS = 3)
-    local canOver = Equipment.canAttach(testCard, Equipment.ITEMS.shield_gem)
+    local canOver = Equipment.canAttach(testCard, Equipment.ITEMS.vitality_gem)
     assert(canOver == false, "Socketing preview must mark cards without enough slots as invalid")
-    local okOver = Equipment.attach(testCard, Equipment.ITEMS.shield_gem)
+    local okOver = Equipment.attach(testCard, Equipment.ITEMS.vitality_gem)
     assert(okOver == false, "Attaching beyond 3 slots must fail")
 
     log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
@@ -2576,10 +2576,10 @@ do
     assert(c.unlockedSockets == 3, "Every card starts with 3 available sockets")
     assert(c.maxSockets == 3, "Card maxSockets must be 3")
 
-    assert(Equipment.attach(c, Equipment.ITEMS.vanguard_spear) == true, "First equipment must attach")
-    assert(Equipment.attach(c, Equipment.ITEMS.shield_lock) == true, "Second equipment must attach")
-    assert(Equipment.attach(c, Equipment.ITEMS.iron_spikes) == true, "Third equipment must attach")
-    assert(Equipment.canAttach(c, Equipment.ITEMS.shield_gem) == false, "Fourth equipment must exceed the 3-slot cap")
+    assert(Equipment.attach(c, Equipment.ITEMS.gem_fire) == true, "First equipment must attach")
+    assert(Equipment.attach(c, Equipment.ITEMS.gem_blast) == true, "Second equipment must attach")
+    assert(Equipment.attach(c, Equipment.ITEMS.ward_stone) == true, "Third equipment must attach")
+    assert(Equipment.canAttach(c, Equipment.ITEMS.vitality_gem) == false, "Fourth equipment must exceed the 3-slot cap")
 
     c.unlockedSockets = 1 -- Legacy save values must no longer lock sockets.
     c.equipments = {}
@@ -2688,32 +2688,25 @@ do
     log("[PASS] 96. Battle Seals Combat Lifecycle (Blood, Anchor, Prophecy, Purification) verified 100%")
 end
 
--- 97. Test Formation Archetype (Đội Hình): Equipment, Enhancements & Vanguard Marshal
+-- 97. Test the tactical roles of the nine-item equipment catalog.
 do
-    -- 1. Vanguard Spear: +25 Chips on outer cards (1 & #cards), -5 Chips in the middle
-    local spearItem = Equipment.ITEMS.vanguard_spear
-    assert(spearItem ~= nil, "vanguard_spear item must exist")
-    local cOuter1 = spearItem.onCardScore({}, {1, 2, 3}, 1, {})
-    local cMiddle = spearItem.onCardScore({}, {1, 2, 3}, 2, {})
-    local cOuter2 = spearItem.onCardScore({}, {1, 2, 3}, 3, {})
-    assert(cOuter1.addChips == 25, "Vanguard Spear grants +25 Chips on first position")
-    assert(cMiddle.addChips == -5, "Vanguard Spear gives -5 Chips in the middle position")
-    assert(cOuter2.addChips == 25, "Vanguard Spear grants +25 Chips on last position")
+    local fire = Equipment.ITEMS.gem_fire
+    assert(fire.onCardScore({}, { 1, 2, 3 }, 1).addChips == 30, "Outer card must get +30 Chips")
+    assert(fire.onCardScore({}, { 1, 2, 3 }, 2).addChips == 18, "Middle card must get +18 Chips")
 
-    -- 2. Shield Lock: +12 Armor and exhausts card
-    local lockItem = Equipment.ITEMS.shield_lock
-    local dummyCard = { exhausted = false }
-    local lockRes = lockItem.onCardScore(dummyCard, {}, 1, {})
-    assert(lockRes.addArmor == 12, "Shield Lock grants +12 Armor")
-    assert(dummyCard.exhausted == true, "Shield Lock must mark card exhausted")
+    local mirrorBuffs = Equipment.ITEMS.mirror_adjacent.onHandEvaluate(
+        { suit = "spades" }, { { suit = "hearts" }, { suit = "spades" }, { suit = "clubs" } }, 2
+    )
+    assert(mirrorBuffs[1].addChips == 12 and mirrorBuffs[3].addChips == 12, "Mirror must buff both different-suit neighbors")
 
-    -- 3. Tactical Compass: Legendary 2 slots, x1.25 XMult, swaps card
-    local compItem = Equipment.ITEMS.tactical_compass
-    assert(compItem.slotsNeeded == 2, "Tactical Compass requires 2 slots")
-    local row = { { id = "card1" }, { id = "card2" } }
-    local compRes = compItem.onCardScore(row[2], row, 2, {})
-    assert(compRes.xMultBonus == 0.25, "Tactical Compass gives +0.25 additive XMult (x1.25)")
-    assert(row[1].id == "card2" and row[2].id == "card1", "Tactical Compass must swap position with adjacent card")
+    local stormBuffs = Equipment.ITEMS.storm_eye.onHandEvaluate(
+        { suit = "hearts" }, { { suit = "hearts" }, { suit = "hearts" }, { suit = "clubs" } }, 1
+    )
+    assert(stormBuffs[1].addMult == 4, "Same-suit eye must grant +2 Mult per matching card")
+
+    local void = Equipment.ITEMS.void_catalyst
+    local voidResult = void.onCardScore()
+    assert(void.slotsNeeded == 2 and voidResult.addChips == 30 and voidResult.addMult == 10, "Void Catalyst must trade 2 slots for hybrid offense")
 
     -- 4. enh_vanguard (+15 Chips, +4 Mult at idx 1) & enh_rearguard (+8 Armor, +3 Mult at last idx)
     local c1 = Deck.newCard(5, "aurelia")
@@ -2733,7 +2726,7 @@ do
     local basicSpirit = Deities.CATALOG.spirit_pebble
     local spiritScore = basicSpirit.onHandScored(fEval, {}, basicSpirit)
     assert(spiritScore.addChips == 20, "Linh Sỏi grants +20 Chips")
-    log("[PASS] 97. Formation equipment, enhancements & Common spirit compatibility verified 100%")
+    log("[PASS] 97. Tactical equipment roles, enhancements & Common spirit compatibility verified 100%")
 end
 
 -- 98. Test Khế Ước Bỏ Ải (3-Part Unified Schema & Skip Execution)
@@ -2778,11 +2771,10 @@ do
     for _, poolId in ipairs(Equipment.POOL) do
         assert(eqIds[poolId] ~= nil, "Equipment from POOL missing in Collection: " .. poolId)
     end
-    -- Check specific vertical slice and foundation equipments
-    assert(eqIds["tactical_compass"].slotsNeeded == 2, "Tactical Compass must require 2 slots")
+    assert(#Equipment.POOL == 9, "Equipment catalog must contain exactly 9 items")
     assert(eqIds["void_catalyst"].slotsNeeded == 2, "Void Catalyst must require 2 slots")
-    assert(eqIds["vanguard_spear"].slotsNeeded == 1, "Vanguard Spear must require 1 slot")
-    assert(eqIds["shield_lock"].slotsNeeded == 1, "Shield Lock must require 1 slot")
+    assert(eqIds["gem_fire"].slotsNeeded == 1, "Fire gem must require 1 slot")
+    assert(eqIds["ward_stone"].slotsNeeded == 1, "Ward stone must require 1 slot")
 
     -- 2. Enhancements in Collection must match Deck.ENHANCEMENTS (all 10)
     local enhs = Collection.getItems("enhancements")
@@ -2848,6 +2840,43 @@ do
     end
 
     log("[PASS] 100. Tích hợp trọn vẹn 9 Hộ Linh Pixel Art (The Rock, This Is Fine, Bonk Cheems, Bongo Cat, Spider-Men, Đường Tăng, Minion Đồng Phục, Gigachad, Stonks) verified 100%")
+end
+
+-- 101. Test 9 Trang Bị Khảm Pixel Art Assets (Gương Dị Chất, Mắt Đồng Chất, Ngọc Cấp Cứu, Nhẫn Liều Mạng, Xúc Tác Hư Không, Đá Tam Kích, Đá Thủ Thế, Đá Tiên Phong, Đồng Tiền Át)
+do
+    local Equipment = require("src.equipment")
+    local expectedEquipment = {
+        { id = "mirror_adjacent", name = "Gương Dị Chất" },
+        { id = "storm_eye",       name = "Mắt Đồng Chất" },
+        { id = "vitality_gem",    name = "Ngọc Cấp Cứu" },
+        { id = "blood_ring",      name = "Nhẫn Liều Mạng" },
+        { id = "void_catalyst",   name = "Xúc Tác Hư Không" },
+        { id = "gem_blast",       name = "Đá Tam Kích" },
+        { id = "ward_stone",      name = "Đá Thủ Thế" },
+        { id = "gem_fire",        name = "Đá Tiên Phong" },
+        { id = "lucky_coin",      name = "Đồng Tiền Át" },
+    }
+
+    for _, entry in ipairs(expectedEquipment) do
+        -- A. Registration in Equipment.ITEMS
+        local eq = Equipment.ITEMS[entry.id]
+        assert(eq ~= nil, "Equipment must exist in Equipment.ITEMS: " .. entry.id)
+        assert(eq.name == entry.name, "Equipment name mismatch for " .. entry.id .. ": expected " .. entry.name .. ", got " .. tostring(eq.name))
+
+        -- B. Asset file existence and validity on disk
+        local path = "assets/equipment/" .. entry.id .. ".png"
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "Equipment asset file must exist on disk: " .. path)
+        local content = f:read("*a")
+        f:close()
+        assert(content and #content > 10000, "Equipment asset must be valid image file (>10KB): " .. path .. " (" .. tostring(content and #content) .. " bytes)")
+
+        -- C. UI Image Loader invocation
+        local okLoader, img = pcall(UI.getEquipmentImage, entry.id)
+        assert(okLoader, "UI.getEquipmentImage must execute safely for " .. entry.id)
+    end
+
+    log("[PASS] 101. Tích hợp trọn vẹn 9 Trang Bị Khảm Pixel Art (Gương Dị Chất, Mắt Đồng Chất, Ngọc Cấp Cứu, Nhẫn Liều Mạng, Xúc Tác Hư Không, Đá Tam Kích, Đá Thủ Thế, Đá Tiên Phong, Đồng Tiền Át) verified 100%")
 end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")

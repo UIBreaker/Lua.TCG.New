@@ -60,7 +60,7 @@ function Shop.refresh(shop, gameState)
         name = eq1.name,
         subtitle = "TRANG BỊ KHẢM",
         desc = eq1.desc,
-        cost = 5,
+        cost = eq1.cost or 5,
         icon = eq1.icon or "💎",
         color = eq1.color or { 0.95, 0.75, 0.25, 1 },
     })

@@ -3191,7 +3191,8 @@ local function drawCollectionDetailView()
             love.graphics.translate(-cardW / 2, -cardH / 2)
 
             -- Card Body
-            local dImg = (collectionCategory == "jokers") and UI.getDeityImage(item.id)
+            local dImg = ((collectionCategory == "jokers") and UI.getDeityImage(item.id))
+                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
             if dImg then
                 love.graphics.setColor(0, 0, 0, 0.35)
                 UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
@@ -3286,7 +3287,8 @@ local function drawCollectionDetailView()
         local lcy = inspY + 20
         local lcol = inspItem.color or { 0.3, 0.4, 0.5, 1 }
 
-        local inspImg = (collectionCategory == "jokers") and UI.getDeityImage(inspItem.id)
+        local inspImg = ((collectionCategory == "jokers") and UI.getDeityImage(inspItem.id))
+                     or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
         if inspImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = inspImg:getDimensions()
@@ -5546,13 +5548,23 @@ local function drawSocketingView()
     love.graphics.setColor(eqColor)
     UI.drawRoundedRect("line", panelX, panelY, panelW, panelH, 10)
 
-    love.graphics.setColor(eqColor[1], eqColor[2], eqColor[3], 0.22)
-    love.graphics.circle("fill", panelX + 58, panelY + panelH / 2, 34)
-    love.graphics.setColor(eqColor)
-    love.graphics.circle("line", panelX + 58, panelY + panelH / 2, 34)
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(equipment.icon or "◆", panelX + 24, panelY + 31, 68, "center")
+    local eqImg = UI.getEquipmentImage(equipment.id)
+    if eqImg then
+        love.graphics.setColor(1, 1, 1, 1)
+        local iw, ih = eqImg:getDimensions()
+        love.graphics.draw(eqImg, panelX + 30, panelY + 12, 0, 56 / iw, 80 / ih)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.setColor(eqColor)
+        UI.drawRoundedRect("line", panelX + 30, panelY + 12, 56, 80, 6)
+    else
+        love.graphics.setColor(eqColor[1], eqColor[2], eqColor[3], 0.22)
+        love.graphics.circle("fill", panelX + 58, panelY + panelH / 2, 34)
+        love.graphics.setColor(eqColor)
+        love.graphics.circle("line", panelX + 58, panelY + panelH / 2, 34)
+        love.graphics.setFont(UI.fonts.large)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.printf(equipment.icon or "◆", panelX + 24, panelY + 31, 68, "center")
+    end
 
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(eqColor)
@@ -6911,7 +6923,8 @@ local function drawShopState()
                 UI.drawRoundedRect("fill", -4 + tX * 8, 8 + tY * 8, cardW + 8, cardH, 8)
             end
 
-            local dImg = (it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id)
+            local dImg = ((it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id))
+                      or ((it.category == "equipment" and it.equipment) and UI.getEquipmentImage(it.equipment.id))
             if dImg then
                 love.graphics.setColor(1, 1, 1, 1)
                 local iw, ih = dImg:getDimensions()
@@ -7324,26 +7337,37 @@ local function drawShopState()
         UI.drawRoundedRect("fill", 10 + (shopDrag.tiltX or 0) * 12, 16 + (shopDrag.tiltY or 0) * 12, dcw, dch, 10)
 
         -- Card Body
-        local dColor = dItem.color or { 0.95, 0.85, 0.35, 1 }
-        love.graphics.setColor(0.18, 0.22, 0.28, 1)
-        UI.drawRoundedRect("fill", 0, 0, dcw, dch, 8)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.setLineWidth(2.5)
-        UI.drawRoundedRect("line", 0, 0, dcw, dch, 8)
+        local dragImg = ((dItem.category == "deity" and dItem.deity) and UI.getDeityImage(dItem.deity.id))
+                     or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
+        if dragImg then
+            love.graphics.setColor(1, 1, 1, 1)
+            local iw, ih = dragImg:getDimensions()
+            love.graphics.draw(dragImg, 0, 0, 0, dcw / iw, dch / ih)
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.setLineWidth(2.5)
+            UI.drawRoundedRect("line", 0, 0, dcw, dch, 8)
+        else
+            local dColor = dItem.color or { 0.95, 0.85, 0.35, 1 }
+            love.graphics.setColor(0.18, 0.22, 0.28, 1)
+            UI.drawRoundedRect("fill", 0, 0, dcw, dch, 8)
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.setLineWidth(2.5)
+            UI.drawRoundedRect("line", 0, 0, dcw, dch, 8)
 
-        -- Subtitle banner
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(dColor)
-        love.graphics.printf(dItem.subtitle or "THẺ BÀI", 4, 8, dcw - 8, "center")
+            -- Subtitle banner
+            love.graphics.setFont(UI.fonts.tiny)
+            love.graphics.setColor(dColor)
+            love.graphics.printf(dItem.subtitle or "THẺ BÀI", 4, 8, dcw - 8, "center")
 
-        -- Icon
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.printf(dItem.icon or "🃏", 0, 40, dcw, "center")
+            -- Icon
+            love.graphics.setFont(UI.fonts.large)
+            love.graphics.printf(dItem.icon or "🃏", 0, 40, dcw, "center")
 
-        -- Name
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(dItem.name or "Vật Phẩm", 4, 85, dcw - 8, "center")
+            -- Name
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf(dItem.name or "Vật Phẩm", 4, 85, dcw - 8, "center")
+        end
 
         -- Price badge
         love.graphics.setColor(0.12, 0.15, 0.19, 0.9)

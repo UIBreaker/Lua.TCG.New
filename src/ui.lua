@@ -1109,6 +1109,32 @@ function UI.getDeityImage(deityId)
     return nil
 end
 
+-- Cache and loader for authentic equipment card artwork
+UI.equipmentImages = UI.equipmentImages or {}
+
+function UI.getEquipmentImage(equipId)
+    if not equipId then return nil end
+    if UI.equipmentImages[equipId] ~= nil then
+        return UI.equipmentImages[equipId] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local path = "assets/equipment/" .. equipId .. ".png"
+        local okInfo, info = pcall(love.filesystem.getInfo, path)
+        if okInfo and info then
+            local okImg, img = pcall(love.graphics.newImage, path)
+            if okImg and img then
+                if img.setFilter then
+                    img:setFilter("nearest", "nearest")
+                end
+                UI.equipmentImages[equipId] = img
+                return img
+            end
+        end
+    end
+    UI.equipmentImages[equipId] = false
+    return nil
+end
+
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
     if not d then return end

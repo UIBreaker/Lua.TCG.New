@@ -53,7 +53,7 @@ RunManager.SKIP_PACTS = {
             if gameState.persistentDeck and #gameState.persistentDeck > 0 then
                 local targetCard = gameState.persistentDeck[1]
                 targetCard.unlockedSockets = math.max(targetCard.unlockedSockets or 1, 2)
-                Equipment.attach(targetCard, Equipment.ITEMS.tactical_compass or Equipment.ITEMS.void_catalyst)
+                Equipment.attach(targetCard, Equipment.ITEMS.void_catalyst)
             end
             gameState.wantedLevel = (gameState.wantedLevel or 0) + 2
             return "Đã nhận Trang Bị Huyền Thoại | Nợ: +2 Độ Truy Nã (+16% stats quái)!"

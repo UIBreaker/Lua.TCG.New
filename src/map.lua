@@ -102,8 +102,7 @@ Map.SKIP_TAGS = {
         icon = "💎",
         apply = function(gameState)
             local Equipment = require("src.equipment")
-            local items = { Equipment.ITEMS.gem_fire, Equipment.ITEMS.gem_lightning, Equipment.ITEMS.holy_relic, Equipment.ITEMS.dark_blade }
-            local chosenEq = items[Rng.random(#items)]
+            local chosenEq = Equipment.getRandomEquipment()
             if gameState.persistentDeck and #gameState.persistentDeck > 0 then
                 local c = gameState.persistentDeck[1]
                 Equipment.attach(c, chosenEq)

@@ -6927,6 +6927,7 @@ local function drawShopState()
 
             local dImg = ((it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id))
                       or ((it.category == "equipment" and it.equipment) and UI.getEquipmentImage(it.equipment.id))
+                      or ((it.category == "card" and it.card) and UI.getCardImage(it.card.suit, it.card.rank or it.card.rankName))
             if dImg then
                 love.graphics.setColor(1, 1, 1, 1)
                 local iw, ih = dImg:getDimensions()
@@ -7355,6 +7356,7 @@ local function drawShopState()
         -- Card Body
         local dragImg = ((dItem.category == "deity" and dItem.deity) and UI.getDeityImage(dItem.deity.id))
                      or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
+                     or ((dItem.category == "card" and dItem.card) and UI.getCardImage(dItem.card.suit, dItem.card.rank or dItem.card.rankName))
                      or ((dItem.category == "pack" or dItem.section == "lower_pack") and UI.getPackImage(dItem.packType or dItem.id))
         if dragImg then
             love.graphics.setColor(1, 1, 1, 1)

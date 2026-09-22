@@ -574,6 +574,38 @@ function UI.drawCard(card, x, y, w, h)
     love.graphics.setColor(0, 0, 0, shAlpha)
     UI.drawRoundedRect("fill", shOffX, shOffY, w, h, 8)
 
+    -- Face-down Card Drawing (The Fish boss ability)
+    if card.faceDown then
+        love.graphics.setColor(0.12, 0.14, 0.18, 0.98)
+        UI.drawRoundedRect("fill", 3, 3, w - 6, h - 6, 6)
+        love.graphics.setColor(0.35, 0.28, 0.38, 0.8)
+        UI.drawRoundedRect("line", 5, 5, w - 10, h - 10, 5)
+        love.graphics.setFont(UI.fonts.large)
+        love.graphics.setColor(0.75, 0.68, 0.85, 0.9)
+        love.graphics.printf("?", 0, h / 2 - 18, w, "center")
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(0.5, 0.45, 0.55, 0.8)
+        love.graphics.printf("PHONG ẤN", 0, h / 2 + 14, w, "center")
+        love.graphics.pop()
+        return
+    end
+
+    local cImg = UI.getCardImage(card.suit, card.rank or card.rankName)
+    if cImg then
+        love.graphics.setColor(1, 1, 1, 1)
+        local iw, ih = cImg:getDimensions()
+        love.graphics.draw(cImg, 0, 0, 0, w / iw, h / ih)
+
+        -- Highlight borders
+        love.graphics.setLineWidth(card.selected and 3.5 or (card.hovered and 2.5 or 1.5))
+        if card.selected then
+            love.graphics.setColor(UI.COLORS.cardSelectedBorder)
+            UI.drawRoundedRect("line", 0, 0, w, h, 8)
+        elseif card.hovered then
+            love.graphics.setColor(UI.COLORS.chipsBlue)
+            UI.drawRoundedRect("line", 0, 0, w, h, 8)
+        end
+    else
     -- Card background: Ancient Weathered Ivory Parchment
     love.graphics.setColor(UI.COLORS.cardBg)
     UI.drawRoundedRect("fill", 0, 0, w, h, 8)
@@ -856,6 +888,7 @@ function UI.drawCard(card, x, y, w, h)
         love.graphics.print(displayRole, (w - rw) / 2, h - 35 + 1)
         love.graphics.setColor(0.52, 0.46, 0.38, 1)
         love.graphics.print(displayRole, (w - rw) / 2, h - 35)
+    end
     end
 
     -- Con Dấu Sáp (Wax Seal) Base Chip Badge in bottom corner
@@ -1202,6 +1235,80 @@ function UI.getPackImage(packId)
     UI.packImages[mapped] = false
     return nil
 end
+
+-- Cache and loader for authentic playing card artwork (52 cards)
+UI.cardImages = UI.cardImages or {}
+
+local SUIT_ALIAS_MAP = {
+    hearts = "hearts",
+    valoria = "hearts",
+    sanguine_covenant = "hearts",
+
+    diamonds = "diamonds",
+    aurelia = "diamonds",
+    gilded_conclave = "diamonds",
+
+    clubs = "clubs",
+    elaris = "clubs",
+    feral_swarm = "clubs",
+
+    spades = "spades",
+    vharos = "spades",
+    iron_axiom = "spades",
+}
+
+local RANK_ALIAS_MAP = {
+    [1] = "A",
+    [14] = "A",
+    ["1"] = "A",
+    ["14"] = "A",
+    ["A"] = "A",
+    ["Ace"] = "A",
+    [11] = "J",
+    ["11"] = "J",
+    ["J"] = "J",
+    ["Jack"] = "J",
+    [12] = "Q",
+    ["12"] = "Q",
+    ["Q"] = "Q",
+    ["Queen"] = "Q",
+    [13] = "K",
+    ["13"] = "K",
+    ["K"] = "K",
+    ["King"] = "K",
+}
+
+function UI.getCardImage(suit, rank)
+    if not suit or not rank then return nil end
+    local s = SUIT_ALIAS_MAP[suit] or suit
+    local r = RANK_ALIAS_MAP[rank] or tostring(rank)
+    local key = s .. "_" .. r
+    if UI.cardImages[key] ~= nil then
+        return UI.cardImages[key] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local candidates = {
+            "assets/cards/" .. key .. ".png",
+            "assets/cards/" .. suit .. "_" .. r .. ".png",
+        }
+        for _, path in ipairs(candidates) do
+            local okInfo, info = pcall(love.filesystem.getInfo, path)
+            if okInfo and info then
+                local okImg, img = pcall(love.graphics.newImage, path)
+                if okImg and img then
+                    if img.setFilter then
+                        img:setFilter("nearest", "nearest")
+                    end
+                    UI.cardImages[key] = img
+                    return img
+                end
+            end
+        end
+    end
+    UI.cardImages[key] = false
+    return nil
+end
+
 
 
 -- Full Tarot Card Frame for Hộ Linh (Patrons)

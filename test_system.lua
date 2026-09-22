@@ -2967,6 +2967,49 @@ do
     log("[PASS] 102. Tích hợp trọn vẹn 7 Gói Bài Pixel Art (SPM Pack, ITM Pack, Card Pack, Enchantment Pack, Seal Pack, Transformation Pack, Planet Pack) verified 100%")
 end
 
+-- 103. Test 52 Playing Cards Pixel Art Assets (4 Suits x 13 Ranks)
+do
+    local Deck = require("src.deck")
+    local suits = { "hearts", "diamonds", "clubs", "spades" }
+    local ranks = { 14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 }
+    local rankNames = { [14] = "A", [2] = "2", [3] = "3", [4] = "4", [5] = "5", [6] = "6", [7] = "7", [8] = "8", [9] = "9", [10] = "10", [11] = "J", [12] = "Q", [13] = "K" }
+
+    local checkedCount = 0
+    for _, s in ipairs(suits) do
+        for _, r in ipairs(ranks) do
+            local rName = rankNames[r]
+            -- A. File existence on disk
+            local pth = "assets/cards/" .. s .. "_" .. rName .. ".png"
+            local f = io.open(pth, "rb")
+            assert(f ~= nil, "Card asset file must exist on disk: " .. pth)
+            local content = f:read("*a")
+            f:close()
+            assert(content and #content > 10000, "Card asset file must be valid (>10KB): " .. pth)
+
+            -- B. UI Image Loader invocation (by suit, faction alias, rank number, and rank name)
+            local ok1, img1 = pcall(UI.getCardImage, s, r)
+            assert(ok1 and img1 ~= nil, "UI.getCardImage must return image for " .. s .. " " .. r)
+
+            local ok2, img2 = pcall(UI.getCardImage, s, rName)
+            assert(ok2 and img2 ~= nil, "UI.getCardImage must return image for " .. s .. " " .. rName)
+
+            checkedCount = checkedCount + 1
+        end
+    end
+
+    assert(checkedCount == 52, "All 52 playing cards must be verified, checked: " .. checkedCount)
+
+    -- C. Test faction suit aliases
+    local factionMap = { hearts = "valoria", diamonds = "aurelia", clubs = "elaris", spades = "vharos" }
+    for suit, faction in pairs(factionMap) do
+        local okF, imgF = pcall(UI.getCardImage, faction, "A")
+        assert(okF and imgF ~= nil, "Faction alias " .. faction .. " must resolve to Ace card image")
+    end
+
+    log("[PASS] 103. Tích hợp trọn vẹn 52 Quân Bài Pixel Art (4 Chất x 13 Rank) verified 100%")
+end
+
+
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end

@@ -3009,7 +3009,62 @@ do
     log("[PASS] 103. Tích hợp trọn vẹn 52 Quân Bài Pixel Art (4 Chất x 13 Rank) verified 100%")
 end
 
+-- ============================================================================
+-- 104. TÍCH HỢP 9 THẺ BÀI THẾ ĐÁNH (POKER HANDS) PIXEL ART VÀO GAME
+-- ============================================================================
+do
+    local Collection = require("src.collection")
+    local expectedHands = {
+        { id = "straight_flush", vn = "van_kiem_quy_ton", book = "book_straight_flush" },
+        { id = "four_of_a_kind", vn = "tu_tuong",         book = "book_four_of_a_kind" },
+        { id = "full_house",     vn = "hon_nguyen",       book = "book_full_house" },
+        { id = "flush",          vn = "dong_khi",         book = "book_flush" },
+        { id = "straight",       vn = "truong_long",      book = "book_straight" },
+        { id = "three_of_a_kind",vn = "tam_hoa",          book = "book_three_of_a_kind" },
+        { id = "two_pair",       vn = "song_doi",         book = "book_two_pair" },
+        { id = "pair",           vn = "song_dao",         book = "book_pair" },
+        { id = "high_card",      vn = "don_thu",          book = nil },
+    }
 
+    assert(Poker.HAND_TYPES_ORDERED and #Poker.HAND_TYPES_ORDERED == 9, "Poker.HAND_TYPES_ORDERED must have 9 hands")
+
+    for _, h in ipairs(expectedHands) do
+        -- A. Verify primary file exists on disk and is valid PNG (>10KB)
+        local path = "assets/hands/hand_" .. h.id .. ".png"
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "Hand asset file must exist on disk: " .. path)
+        local content = f:read("*a")
+        f:close()
+        assert(content and #content > 10000, "Hand asset file must be valid (>10KB): " .. path)
+
+        -- B. UI Image Loader invocation (by ID, hand_ prefix, and Vietnamese slug)
+        local okId, imgId = pcall(UI.getHandImage, h.id)
+        assert(okId and imgId ~= nil, "UI.getHandImage must return image for " .. h.id)
+
+        local okVn, imgVn = pcall(UI.getHandImage, h.vn)
+        assert(okVn and imgVn ~= nil, "UI.getHandImage must return image for VN alias " .. h.vn)
+
+        -- C. Verify book prefix mapping if applicable
+        if h.book then
+            local okBook, imgBook = pcall(UI.getHandImage, h.book)
+            assert(okBook and imgBook ~= nil, "UI.getHandImage must return image for book alias " .. h.book)
+        end
+    end
+
+    -- D. Verify Collection 'other' category (Thế Đánh) items
+    local otherItems = Collection.getItems("other")
+    assert(otherItems and #otherItems == 9, "Collection category 'other' (Thế Đánh) must contain exactly 9 items")
+    for _, it in ipairs(otherItems) do
+        local okColl, imgColl = pcall(UI.getHandImage, it.handId or it.id)
+        assert(okColl and imgColl ~= nil, "UI.getHandImage must resolve collection item: " .. it.id)
+    end
+
+    -- E. Verify Collection Category title
+    local catOther = Collection.getCategoryById("other")
+    assert(catOther ~= nil and catOther.title == "Thế Đánh", "Category 'other' must be titled 'Thế Đánh'")
+
+    log("[PASS] 104. Tích hợp trọn vẹn 9 Thẻ Bài Thế Đánh Pixel Art (Cửu Phẩm Võ Học) verified 100%")
+end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end

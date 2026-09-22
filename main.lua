@@ -3194,6 +3194,8 @@ local function drawCollectionDetailView()
             local dImg = ((collectionCategory == "jokers") and UI.getDeityImage(item.id))
                       or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
                       or ((collectionCategory == "packs") and UI.getPackImage(item.packType or item.id))
+                      or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
+                      or ((collectionCategory == "vouchers") and (UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
             if dImg then
                 love.graphics.setColor(0, 0, 0, 0.35)
                 UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
@@ -3291,6 +3293,8 @@ local function drawCollectionDetailView()
         local inspImg = ((collectionCategory == "jokers") and UI.getDeityImage(inspItem.id))
                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
                      or ((collectionCategory == "packs") and UI.getPackImage(inspItem.packType or inspItem.id))
+                     or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
+                     or ((collectionCategory == "vouchers") and (UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
         if inspImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = inspImg:getDimensions()
@@ -6277,10 +6281,29 @@ local function drawHandbookModal()
         local handLvl = (game.handLevels and game.handLevels[h.id]) or 1
         local stats = Poker.getHandStats(h.id, handLvl)
 
+        -- Hand Card Miniature Thumbnail
+        local hImg = UI.getHandImage(h.id)
+        local thumbW = 34
+        local thumbH = 46
+        local thumbX = modalX + 34
+        local thumbY = cy + (rowH - thumbH) / 2
+        if hImg then
+            if isUnlocked then
+                love.graphics.setColor(1, 1, 1, 1)
+            else
+                love.graphics.setColor(0.35, 0.35, 0.40, 0.6)
+            end
+            local hiw, hih = hImg:getDimensions()
+            love.graphics.draw(hImg, thumbX, thumbY, 0, thumbW / hiw, thumbH / hih)
+            love.graphics.setColor(isUnlocked and { 0.3, 0.7, 0.9, 0.7 } or { 0.3, 0.3, 0.35, 0.4 })
+            love.graphics.setLineWidth(1)
+            UI.drawRoundedRect("line", thumbX, thumbY, thumbW, thumbH, 4)
+        end
+
         -- Status Badge (Left)
-        local badgeW = 95
+        local badgeW = 92
         local badgeH = 30
-        local badgeX = modalX + 38
+        local badgeX = modalX + 76
         local badgeY = cy + (rowH - badgeH) / 2
         if isUnlocked then
             love.graphics.setColor(0.15, 0.45, 0.25, 0.9)
@@ -6308,7 +6331,7 @@ local function drawHandbookModal()
         love.graphics.printf("Lv. " .. stats.level, lvlBadgeX, badgeY + 5, lvlBadgeW, "center")
 
         -- Hand Title & Requirements
-        local textX = lvlBadgeX + lvlBadgeW + 14
+        local textX = lvlBadgeX + lvlBadgeW + 12
         love.graphics.setFont(UI.fonts.regular)
         love.graphics.setColor(isUnlocked and UI.COLORS.goldYellow or { 0.6, 0.65, 0.7, 0.7 })
         love.graphics.print(h.vnName .. " (" .. h.name .. ")", textX, cy + 6)
@@ -6928,6 +6951,8 @@ local function drawShopState()
             local dImg = ((it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id))
                       or ((it.category == "equipment" and it.equipment) and UI.getEquipmentImage(it.equipment.id))
                       or ((it.category == "card" and it.card) and UI.getCardImage(it.card.suit, it.card.rank or it.card.rankName))
+                      or ((it.category == "book" or it.category == "skill_book" or it.handId) and (UI.getHandImage(it.handId or it.id) or UI.getHandImage(it.id)))
+                      or UI.getHandImage(it.id)
             if dImg then
                 love.graphics.setColor(1, 1, 1, 1)
                 local iw, ih = dImg:getDimensions()
@@ -7059,31 +7084,43 @@ local function drawShopState()
             love.graphics.setColor(UI.COLORS.goldYellow)
             love.graphics.printf("$" .. it.cost, px, py + 2, pw, "center")
 
-            -- Voucher Card Body
-            love.graphics.setColor(0.15, 0.28, 0.42, 0.98)
-            UI.drawRoundedRect("fill", 0, 0, vw, vh, 8)
-            love.graphics.setColor(isVHovered and UI.COLORS.goldYellow or { 0.35, 0.65, 0.95, 0.9 })
-            love.graphics.setLineWidth(isVHovered and 2.5 or 1.5)
-            UI.drawRoundedRect("line", 0, 0, vw, vh, 8)
+            local bImg = (it.category == "book" or it.handId or (it.id and tostring(it.id):find("book_"))) and (UI.getHandImage(it.handId or it.id) or UI.getHandImage(it.id))
+            if bImg then
+                love.graphics.setColor(1, 1, 1, 1)
+                local biw, bih = bImg:getDimensions()
+                love.graphics.draw(bImg, 0, 0, 0, vw / biw, vh / bih)
+                if isVHovered then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, vw, vh, 8)
+                end
+            else
+                -- Voucher Card Body
+                love.graphics.setColor(0.15, 0.28, 0.42, 0.98)
+                UI.drawRoundedRect("fill", 0, 0, vw, vh, 8)
+                love.graphics.setColor(isVHovered and UI.COLORS.goldYellow or { 0.35, 0.65, 0.95, 0.9 })
+                love.graphics.setLineWidth(isVHovered and 2.5 or 1.5)
+                UI.drawRoundedRect("line", 0, 0, vw, vh, 8)
 
-            -- Ticket notches
-            love.graphics.setColor(0.13, 0.16, 0.20, 1)
-            love.graphics.circle("fill", 0, vh / 2, 7)
-            love.graphics.circle("fill", vw, vh / 2, 7)
+                -- Ticket notches
+                love.graphics.setColor(0.13, 0.16, 0.20, 1)
+                love.graphics.circle("fill", 0, vh / 2, 7)
+                love.graphics.circle("fill", vw, vh / 2, 7)
 
-            -- Header
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor({ 0.65, 0.85, 1.0, 1 })
-            love.graphics.printf(it.subtitle or "VOUCHER", 4, 10, vw - 8, "center")
+                -- Header
+                love.graphics.setFont(UI.fonts.tiny)
+                love.graphics.setColor({ 0.65, 0.85, 1.0, 1 })
+                love.graphics.printf(it.subtitle or "VOUCHER", 4, 10, vw - 8, "center")
 
-            -- Icon
-            love.graphics.setFont(UI.fonts.huge)
-            love.graphics.printf(it.icon or "📜", 0, 42, vw, "center")
+                -- Icon
+                love.graphics.setFont(UI.fonts.huge)
+                love.graphics.printf(it.icon or "📜", 0, 42, vw, "center")
 
-            -- Name
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(it.name or "Bí Tịch", 6, 110, vw - 12, "center")
+                -- Name
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(it.name or "Bí Tịch", 6, 110, vw - 12, "center")
+            end
 
             love.graphics.pop()
 
@@ -7358,6 +7395,8 @@ local function drawShopState()
                      or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
                      or ((dItem.category == "card" and dItem.card) and UI.getCardImage(dItem.card.suit, dItem.card.rank or dItem.card.rankName))
                      or ((dItem.category == "pack" or dItem.section == "lower_pack") and UI.getPackImage(dItem.packType or dItem.id))
+                     or ((dItem.category == "book" or dItem.handId or (dItem.id and tostring(dItem.id):find("book_"))) and (UI.getHandImage(dItem.handId or dItem.id) or UI.getHandImage(dItem.id)))
+                     or UI.getHandImage(dItem.id)
         if dragImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = dragImg:getDimensions()

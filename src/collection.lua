@@ -100,8 +100,8 @@ Collection.CATEGORIES = {
     },
     {
         id = "other",
-        title = "Khác",
-        sub = "Tổ Hợp & Luật Bài",
+        title = "Thế Đánh",
+        sub = "9 Bí Tịch Cửu Phẩm",
         col = "right",
         btnColor = { 0.92, 0.28, 0.22, 1 },
         badge = "9",
@@ -359,14 +359,15 @@ function Collection.getItems(category)
         end
 
     elseif category == "other" then
-        -- 9 Poker Hand Types
+        -- 9 Poker Hand Types (Thế Đánh)
         for _, h in ipairs(Poker.HAND_TYPES_ORDERED or {}) do
             table.insert(items, {
                 id = h.id,
+                handId = h.id,
                 name = h.vnName or h.name,
-                subtitle = "TAY BÀI: " .. string.upper(h.name),
-                rarity = "Tổ Hợp Bài",
-                desc = "Điểm cơ sở: " .. h.baseChips .. " Chips x " .. h.baseMult .. " Mult.\nĐộ hiếm nâng cấp tăng mạnh khi sở hữu Bí Tịch Thiên Thể!",
+                subtitle = "THẾ ĐÁNH • " .. string.upper(h.name),
+                rarity = "Bí Tịch Cửu Phẩm",
+                desc = "Điểm cơ sở: " .. h.baseChips .. " Chips × " .. h.baseMult .. " Mult.\nTổ hợp yêu cầu: " .. (h.subtitle or h.name) .. " (" .. (h.requiredCards or 1) .. " lá).\nNâng cấp cấp độ vĩnh viễn thông qua các Thẻ Hành Tinh tương ứng!",
                 icon = "🎴",
                 color = { 0.40, 0.75, 0.95, 1 },
             })

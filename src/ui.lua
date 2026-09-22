@@ -1236,6 +1236,82 @@ function UI.getPackImage(packId)
     return nil
 end
 
+-- Cache and loader for authentic poker hand / martial arts cards (9 hand types)
+UI.handImages = UI.handImages or {}
+
+local HAND_ALIAS_MAP = {
+    straight_flush = "straight_flush",
+    four_of_a_kind = "four_of_a_kind",
+    full_house = "full_house",
+    flush = "flush",
+    straight = "straight",
+    three_of_a_kind = "three_of_a_kind",
+    two_pair = "two_pair",
+    pair = "pair",
+    high_card = "high_card",
+
+    van_kiem_quy_ton = "straight_flush",
+    van_kiem_quy_tong = "straight_flush",
+    tu_tuong = "four_of_a_kind",
+    hon_nguyen = "full_house",
+    dong_khi = "flush",
+    truong_long = "straight",
+    tam_hoa = "three_of_a_kind",
+    song_doi = "two_pair",
+    song_dao = "pair",
+    don_thu = "high_card",
+
+    book_straight_flush = "straight_flush",
+    book_four_of_a_kind = "four_of_a_kind",
+    book_full_house = "full_house",
+    book_flush = "flush",
+    book_straight = "straight",
+    book_three_of_a_kind = "three_of_a_kind",
+    book_two_pair = "two_pair",
+    book_pair = "pair",
+    book_high_card = "high_card",
+
+    hand_straight_flush = "straight_flush",
+    hand_four_of_a_kind = "four_of_a_kind",
+    hand_full_house = "full_house",
+    hand_flush = "flush",
+    hand_straight = "straight",
+    hand_three_of_a_kind = "three_of_a_kind",
+    hand_two_pair = "two_pair",
+    hand_pair = "pair",
+    hand_high_card = "high_card",
+}
+
+function UI.getHandImage(handId)
+    if not handId then return nil end
+    local mapped = HAND_ALIAS_MAP[handId] or handId
+    if UI.handImages[mapped] ~= nil then
+        return UI.handImages[mapped] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local candidates = {
+            "assets/hands/hand_" .. mapped .. ".png",
+            "assets/hands/" .. mapped .. ".png",
+            "assets/hands/" .. handId .. ".png",
+        }
+        for _, path in ipairs(candidates) do
+            local okInfo, info = pcall(love.filesystem.getInfo, path)
+            if okInfo and info then
+                local okImg, img = pcall(love.graphics.newImage, path)
+                if okImg and img then
+                    if img.setFilter then
+                        img:setFilter("nearest", "nearest")
+                    end
+                    UI.handImages[mapped] = img
+                    return img
+                end
+            end
+        end
+    end
+    UI.handImages[mapped] = false
+    return nil
+end
+
 -- Cache and loader for authentic playing card artwork (52 cards)
 UI.cardImages = UI.cardImages or {}
 

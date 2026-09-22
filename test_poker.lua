@@ -93,16 +93,20 @@ printLog(" Test 10 Passed: Straight Flush")
 -- Formula: (Base Chips + Bonus Chips) * (Base Mult + Bonus Mult) * XMult
 local testHand = Poker.evaluate({ C(9, "hearts"), C(9, "spades") })
 local testDeities = {
-    Deities.CATALOG.deity_hearts,
-    Deities.CATALOG.deity_spades,
-    Deities.CATALOG.deity_generous,
+    Deities.CATALOG.spirit_pebble, -- +20 Chips
+    Deities.CATALOG.spirit_ember,  -- +4 Mult
+    Deities.CATALOG.spirit_blade,  -- +8 Chips per scored card (2 * 8 = +16 Chips)
+    Deities.CATALOG.spirit_pair,   -- +6 Mult for Pair
 }
 local calc = Scoring.calculate(testHand, testDeities, { handsRemaining = 3 })
 printLog("Scoring calculation result: " .. calc.totalChips .. " Chips x " .. calc.totalMult .. " Mult x " .. calc.xMultTotal .. " XMult = " .. calc.finalScore)
-assert(calc.totalChips == 118, "Expected 118 chips, got " .. calc.totalChips)
-assert(calc.totalMult == 9, "Expected 9 effective mult after ordered deity triggers, got " .. calc.totalMult)
-assert(calc.xMultTotal == 1.5, "Expected 1.5 xMult, got " .. calc.xMultTotal)
-assert(calc.finalScore == 1062, "Expected 1062 final score, got " .. calc.finalScore)
+-- Base Pair: 10 Chips, 2 Mult. Cards: 9 + 9 = 18 Chips. Vharos Spades faction: +40 Chips.
+-- Total Chips: 10 + 18 + 40 + 20 + 16 = 104 Chips.
+-- Total Mult: 2 + 4 + 6 = 12 Mult.
+-- Final Score: 104 * 12 = 1248.
+assert(calc.totalChips == 104, "Expected 104 chips, got " .. calc.totalChips)
+assert(calc.totalMult == 12, "Expected 12 mult, got " .. calc.totalMult)
+assert(calc.finalScore == 1248, "Expected 1248 final score, got " .. calc.finalScore)
 printLog(" Test 11 Passed: Scoring Formula & Deities Integration")
 
 printLog("=== ALL 11 TESTS PASSED SUCCESSFULLY! ===")

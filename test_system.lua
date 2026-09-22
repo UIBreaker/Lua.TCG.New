@@ -677,6 +677,8 @@ end
 
 log("[PASS] 36. Graphics Overhaul (CRT & Psychedelic Background Shaders, 3D Card Tilt, Deity Reordering) verified")
 
+-- Legacy deity tests removed with the old catalog.
+if false then
 -- 37. Test Thần Khởi Nguyên (deity_genesis: +4 Mult unconditional)
 local genHand = Poker.evaluate({ Deck.newCard(10, "valoria") })
 local genScore = Scoring.calculate(genHand, { Deities.CATALOG.deity_genesis }, {})
@@ -791,6 +793,7 @@ assert(mirrorAurScore.totalMult == aurHand.type.baseMult + 12, "deity_mirror cop
 local mirrorEdgeScore = Scoring.calculate(genHand, { Deities.CATALOG.deity_genesis, Deities.CATALOG.deity_mirror }, {})
 assert(mirrorEdgeScore.totalMult == genHand.type.baseMult + 4, "deity_mirror with no target to the right must gracefully do nothing")
 log("[PASS] 46. Thần Phản Chiếu (Blueprint) verified: dynamically copies deity to right at 60% potency")
+end
 
 -- 47. Test Ante & Blind HP Progression (8 Ante, Small HP = round(76 * 1.6^(Ante-1)), Big = 1.5x, Boss = 2.0x)
 do
@@ -839,41 +842,41 @@ do
     local curBlindSmall = testRun.blinds[1]
 
     -- Non-Valoria run (Aurelia):
-    -- Base ($3) + 3 unused hands ($3) + Interest on $17 ($3) + Thần Kim Tài ($4) = Subtotal $13. Faction bonus: $0. Total: $13.
+    -- Base ($3) + 3 unused hands ($3) + Interest on $17 ($3) + Linh Tiền ($2) = Subtotal $11.
     local aureliaGame = {
         selectedFaction = "aurelia",
         handsRemaining = 3,
         gold = 17,
-        deities = { Deities.CATALOG.deity_golden },
+        deities = { Deities.CATALOG.spirit_coin },
     }
     local cashOutAur = RewardSystem.calculate(curBlindSmall, aureliaGame, false)
     assert(cashOutAur.basePayout == 3, "Base payout should be 3")
     assert(cashOutAur.unusedHandsBonus == 3, "Hands bonus should be 3")
     assert(cashOutAur.interestBonus == 3, "Interest on $17 should be 3")
-    assert(cashOutAur.deityBonus == 4, "Deity bonus from Thần Kim Tài should be 4")
-    assert(cashOutAur.subtotal == 13, "Subtotal should be 13")
+    assert(cashOutAur.deityBonus == 2, "Linh Tiền should grant +$2")
+    assert(cashOutAur.subtotal == 11, "Subtotal should be 11")
     assert(cashOutAur.factionBonus == 0, "Aurelia should receive 0 faction gold bonus")
-    assert(cashOutAur.totalGold == 13, "Total gold should be 13")
+    assert(cashOutAur.totalGold == 11, "Total gold should be 11")
 
-    -- Valoria run: Subtotal $13 -> +25% = math.ceil(13 * 0.25) = +$4 -> Total: $17
+    -- Valoria run: Subtotal $11 -> +25% = +$3 -> Total: $14
     local valoriaGame = {
         selectedFaction = "valoria",
         handsRemaining = 3,
         gold = 17,
-        deities = { Deities.CATALOG.deity_golden },
+        deities = { Deities.CATALOG.spirit_coin },
     }
     local cashOutVal = RewardSystem.calculate(curBlindSmall, valoriaGame, false)
-    assert(cashOutVal.subtotal == 13, "Valoria subtotal should be 13")
+    assert(cashOutVal.subtotal == 11, "Valoria subtotal should be 11")
     assert(cashOutVal.isValoria == true, "Should detect Valoria faction")
-    assert(cashOutVal.factionBonus == 4, "Valoria +25% of 13 should be math.ceil(3.25) = 4")
-    assert(cashOutVal.totalGold == 17, "Valoria total gold should be 17")
+    assert(cashOutVal.factionBonus == 3, "Valoria +25% of 11 should be 3")
+    assert(cashOutVal.totalGold == 14, "Valoria total gold should be 14")
 
     -- Skipped Blind: Base = 0, Hands = 0, Interest = $3, Deity = 0. Valoria +25% on $3 = +$1 -> Total: $4
     local valoriaSkipGame = {
         selectedFaction = "valoria",
         handsRemaining = 4,
         gold = 22,
-        deities = { Deities.CATALOG.deity_golden },
+        deities = { Deities.CATALOG.spirit_coin },
     }
     local cashOutSkip = RewardSystem.calculate(curBlindSmall, valoriaSkipGame, true)
     assert(cashOutSkip.wasSkipped == true, "Should flag wasSkipped")
@@ -1216,12 +1219,12 @@ end
 do
     -- 1. Arbitrary Slot Placement (can place at any slot, e.g. slot 2 and 3)
     local testGS = { deities = {} }
-    local addSlot2 = Deities.addDeity(testGS, Deities.CATALOG.deity_genesis, 2)
+    local addSlot2 = Deities.addDeity(testGS, Deities.CATALOG.spirit_ember, 2)
     assert(addSlot2 == true, "Deities.addDeity must succeed in placing into preferredSlot 2")
     assert(testGS.deities[2] ~= nil, "Slot 2 must contain Genesis")
     assert(testGS.deities[1] == nil and testGS.deities[3] == nil, "Slots 1 and 3 must remain empty")
 
-    local addSlot3 = Deities.addDeity(testGS, Deities.CATALOG.deity_eternal_tree, 3)
+    local addSlot3 = Deities.addDeity(testGS, Deities.CATALOG.spirit_pebble, 3)
     assert(addSlot3 == true, "Deities.addDeity must succeed in placing into preferredSlot 3")
     assert(testGS.deities[3] ~= nil, "Slot 3 must contain Eternal Tree")
     assert(testGS.deities[1] == nil, "Slot 1 must remain empty")
@@ -1230,9 +1233,9 @@ do
     -- 2. Drag / Swap between Slots
     -- Swap slot 2 and slot 1: Genesis moves from slot 2 to slot 1
     testGS.deities[1], testGS.deities[2] = testGS.deities[2], testGS.deities[1]
-    assert(testGS.deities[1] ~= nil and testGS.deities[1].id == "deity_genesis", "Genesis moved to slot 1")
+    assert(testGS.deities[1] ~= nil and testGS.deities[1].id == "spirit_ember", "Linh Lửa moved to slot 1")
     assert(testGS.deities[2] == nil, "Slot 2 is now empty")
-    assert(testGS.deities[3] ~= nil and testGS.deities[3].id == "deity_eternal_tree", "Slot 3 still holds Eternal Tree")
+    assert(testGS.deities[3] ~= nil and testGS.deities[3].id == "spirit_pebble", "Slot 3 still holds Linh Sỏi")
 
     -- 3. Left-to-Right Scoring Order Significance: [+Mult before xMult] > [xMult before +Mult]
     local testCard = Deck.newCard(7, "clubs")
@@ -1250,7 +1253,7 @@ do
     -- Order: Slot 1 = Genesis (+4 Mult), Slot 2 = mockTree (x3 XMult)
     -- Expected: (1 + 4) * 3 = 15 Mult -> 12 Chips * 15 Mult = 180 score!
     local deitiesA = {
-        [1] = Deities.CATALOG.deity_genesis,
+        [1] = Deities.CATALOG.spirit_ember,
         [2] = mockTree,
     }
     local scoreA = Scoring.calculate(testHand, deitiesA, {})
@@ -1262,7 +1265,7 @@ do
     -- Expected: (1 * 3) + 4 = 7 Mult -> 12 Chips * 7 Mult = 84 score!
     local deitiesB = {
         [1] = mockTree,
-        [2] = Deities.CATALOG.deity_genesis,
+        [2] = Deities.CATALOG.spirit_ember,
     }
     local scoreB = Scoring.calculate(testHand, deitiesB, {})
     assert(scoreB.totalMult == 7, "Order [xMult, +Mult] must result in 7 Mult, got: " .. scoreB.totalMult)
@@ -1271,7 +1274,8 @@ do
     assert(scoreA.finalScore > scoreB.finalScore, "Order [+Mult, xMult] MUST produce strictly greater score than [xMult, +Mult]!")
     assert(scoreA.finalScore == 180 and scoreB.finalScore == 84, "Scoring order verified: 180 vs 84 (more than 2x damage difference!)")
 
-    -- 4. Blueprint / Thần Phản Chiếu copies across empty slots
+    -- 4. Blueprint / Thần Phản Chiếu was removed with the legacy catalog.
+    if false then
     -- Setup: [1] = Mirror, [2] = nil, [3] = nil, [4] = Genesis, [5] = nil
     local deitiesWithGaps = {
         [1] = Deities.CATALOG.deity_mirror,
@@ -1284,6 +1288,7 @@ do
     local deitiesEdge = { [5] = Deities.CATALOG.deity_mirror }
     local resolvedEdge = Deities.resolveDeity(deitiesEdge, 5)
     assert(resolvedEdge == nil, "Mirror at slot 5 with no right neighbor must resolve to nil")
+    end
 
     -- Selling deity in slot 3 leaves other slots intact
     local sellGS = {
@@ -1359,7 +1364,7 @@ do
         assert(shop.rerollCost == 7, "Next reroll cost increases to $7")
 
         -- Test Mua Thần Bài vào Ô bất kỳ
-        local testDeity = Deities.CATALOG.deity_genesis
+        local testDeity = Deities.CATALOG.spirit_ember
         local buyOk = Deities.addDeity(mockGame, testDeity, 2)
         assert(buyOk == true, "Adding deity to preferred slot 2 must succeed")
         assert(Deities.getCount(mockGame.deities) == 1, "Deity count must be 1")
@@ -1456,7 +1461,7 @@ do
     end
 
     local jokers = Collection.getItems("jokers")
-    assert(#jokers >= 20, "Must have at least 20 Deities/Jokers in Collection, got: " .. #jokers)
+    assert(#jokers == 9, "Collection must expose exactly 9 Common spirits, got: " .. #jokers)
 
     local consumables = Collection.getItems("consumables")
     assert(#consumables >= 8, "Must have at least 8 Consumables/Equipment in Collection, got: " .. #consumables)
@@ -1557,12 +1562,12 @@ do
         assert(d.id ~= nil, "Deity must have id")
         assert(d.name ~= nil and d.name ~= "", "Deity must have Grimdark name: " .. tostring(d.id))
         assert(d.lore ~= nil and d.lore ~= "", "Deity must have lore flavor text: " .. tostring(d.id))
-        assert(d.rarity ~= nil, "Deity must have rarity: " .. tostring(d.id))
+        assert(d.rarity == "common", "Every new spirit must be Common: " .. tostring(d.id))
     end
-    assert(count >= 20, "Deities catalog must exist with >= 20 patrons, got: " .. count)
+    assert(count == 9, "Deities catalog must contain exactly 9 common spirits, got: " .. count)
 
     -- D. Hộ Linh Visual Tarot & Relic Sigils Rendering
-    local samplePatron = Deities.CATALOG.deity_hearts
+    local samplePatron = Deities.CATALOG.spirit_pebble
     local okPatronCard = pcall(function()
         UI.drawPatronCard(samplePatron, 100, 100, 82, 118, true, false, false)
     end)
@@ -1792,20 +1797,20 @@ do
     local resInt40 = RewardSystem.calculate(sb, { gold = 40, handsRemaining = 0, deities = {} }, false)
     assert(resInt40.interestBonus == 3, "$40 gold is capped at +$3 default interest")
 
-    -- Check Full Formula with Golden Joker (+$4) on Small Blind ($3) with 2 Hands ($2) and $25 Gold ($3 interest)
+    -- Check Full Formula with Linh Tiền (+$2) on Small Blind ($3), 2 Hands ($2), $25 Gold ($3 interest)
     local fullGame = {
         selectedFaction = "aurelia",
         gold = 25,
         handsRemaining = 2,
-        deities = { Deities.CATALOG.deity_golden },
+        deities = { Deities.CATALOG.spirit_coin },
     }
     local resFull = RewardSystem.calculate(sb, fullGame, false)
-    -- Total = 3 (Blind) + 2 (Hands) + 3 (Interest) + 4 (Jokers) = 12
+    -- Total = 3 (Blind) + 2 (Hands) + 3 (Interest) + 2 (Hộ Linh) = 10
     assert(resFull.basePayout == 3, "Blind payout is 3")
     assert(resFull.unusedHandsBonus == 2, "Hands bonus is 2")
     assert(resFull.interestBonus == 3, "Interest is 3")
-    assert(resFull.deityBonus == 4, "Joker bonus is 4")
-    assert(resFull.totalGold == 12, "Total must equal 3 + 2 + 3 + 4 = 12, got: " .. resFull.totalGold)
+    assert(resFull.deityBonus == 2, "Linh Tiền bonus is 2")
+    assert(resFull.totalGold == 10, "Total must equal 3 + 2 + 3 + 2 = 10, got: " .. resFull.totalGold)
     log("[PASS] 65. 4 Fixed Financial Sources & Cash Out Formula verified 100%")
 end
 
@@ -1834,6 +1839,8 @@ do
     log("[PASS] 66. Voucher Seed Money raises interest cap to $10 verified 100%")
 end
 
+-- 67. Legacy Delayed Gratification deity was removed.
+if false then
 -- 67. Test Delayed Gratification (Kiên Nhẫn Thần Thụ) Joker
 do
     local run = RunManager.newRun("aurelia")
@@ -1866,12 +1873,13 @@ do
     assert(resDG2.deityBonus == 0, "Delayed Gratification must grant $0 if discards were used, got: " .. resDG2.deityBonus)
     log("[PASS] 67. Delayed Gratification (Kiên Nhẫn Thần Thụ) Joker verified 100%")
 end
+end
 
 -- 68. Test RewardSystem.draw Rendering & Runtime Safety
 do
     local run = RunManager.newRun("aurelia")
     local sb = run.blinds[1]
-    local breakdown = RewardSystem.calculate(sb, { gold = 25, handsRemaining = 2, deities = { Deities.CATALOG.deity_golden } }, false)
+    local breakdown = RewardSystem.calculate(sb, { gold = 25, handsRemaining = 2, deities = { Deities.CATALOG.spirit_coin } }, false)
     local anim = RewardSystem.newAnimation(breakdown)
     RewardSystem.finishImmediately(anim)
     local btns = {}
@@ -2333,7 +2341,7 @@ do
         monster = { hp = 1 },
         hand = { savedCard },
     }
-    Deities.addDeity(testGame, Deities.CATALOG.deity_genesis)
+    Deities.addDeity(testGame, Deities.CATALOG.spirit_ember)
     testGame.deities[1].edition = "negative"
     testGame.run.ante = 3
     testGame.run.currentBlindIndex = 2
@@ -2362,7 +2370,7 @@ do
     reused.maxHands = 12
     reused.vouchers.discount = true
     reused.sacredFruitExtinct = true
-    reused.deities[1] = Deities.CATALOG.deity_genesis
+    reused.deities[1] = Deities.CATALOG.spirit_ember
     reused.consumables[1] = { id = "old_item" }
     GameState.resetRun(reused, "valoria")
     assert(reused.gold == 6 and reused.maxHands == 3, "New run must reset economy and hand upgrades")
@@ -2414,7 +2422,7 @@ do
 end
 
 
--- 87. Test Phase 1: Equipment Constraints (3 Slots, No Duplicates, Legendary = 2 Slots, Additive XMult <= 5.0)
+-- 87. Test Phase 1: Equipment Constraints (3 Slots, No Duplicates, Legendary = 2 Slots)
 do
     local testCard = Deck.newCard(10, "vharos")
     testCard.unlockedSockets = 3
@@ -2440,40 +2448,35 @@ do
     local okOver = Equipment.attach(testCard, Equipment.ITEMS.shield_gem)
     assert(okOver == false, "Attaching beyond 3 slots must fail")
 
-    -- Additive XMult Model test (capped at 5.0)
-    local evalX = {
-        type = Poker.HAND_TYPES.HIGH_CARD,
-        scoringCards = { testCard },
-        unscoredCards = {},
-    }
-    -- Add 2 heavy XMult deities: deity_eternal_tree (1.5 -> +0.5), deity_echo (1.6 -> +0.6)
-    local xScore = Scoring.calculate(evalX, { Deities.CATALOG.deity_eternal_tree, Deities.CATALOG.deity_echo }, {
-        playedHandsHistory = { high_card = 1, pair = 1, three_of_a_kind = 1 },
-        lastPlayedHandId = "pair",
-    })
-    -- Base 1.0 + 0.5 (tree) + 0.6 (echo) = 2.1
-    assert(math.abs(xScore.xMultTotal - 2.1) < 0.001, "Additive XMult must equal 2.1, got: " .. xScore.xMultTotal)
-    log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots, Additive XMult) verified 100%")
+    log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
 end
 
--- 88. Test Phase 2: Deities Base 3 Slots & Rarity Distribution
+-- 88. Test Phase 2: exactly 9 Common spirits and 3 base slots
 do
     local baseSlots = Deities.getMaxSlots({})
     assert(baseSlots == 3, "Deities base slots must be 3, got: " .. baseSlots)
 
-    -- Ante 1 Shop pool: must NOT contain Legendary
+    local spiritCount = 0
+    for _, spirit in pairs(Deities.CATALOG) do
+        spiritCount = spiritCount + 1
+        assert(spirit.rarity == "common", "Every spirit must be Common")
+    end
+    assert(spiritCount == 9, "Catalog must contain exactly 9 spirits")
+    assert(Deities.CATALOG.spirit_pebble.onHandScored().addChips == 20, "Linh Sỏi effect")
+    assert(Deities.CATALOG.spirit_ember.onHandScored().addMult == 4, "Linh Lửa effect")
+    assert(Deities.CATALOG.spirit_blade.onCardScored().addChips == 8, "Linh Kiếm effect")
+    assert(Deities.CATALOG.spirit_drum.onCardScored().addMult == 1, "Linh Trống effect")
+    assert(Deities.CATALOG.spirit_pair.onHandScored({ type = { id = "pair" } }).addMult == 6, "Linh Song effect")
+    assert(Deities.CATALOG.spirit_straight.onHandScored({ type = { id = "straight" } }).addChips == 30, "Linh Lộ effect")
+    assert(Deities.CATALOG.spirit_flush.onHandScored({ type = { id = "flush" } }).addMult == 5, "Linh Triều effect")
+    assert(Deities.CATALOG.spirit_crown.onCardScored({ rank = 11 }).addChips == 15, "Linh Miện effect")
+    assert(Deities.CATALOG.spirit_coin.onRoundWin().addGold == 2, "Linh Tiền effect")
+
     local ante1Pool = Deities.getRandomShopPool({}, 50, { ante = 1 })
     for _, d in ipairs(ante1Pool) do
-        assert(d.rarity ~= "legendary", "Ante 1 shop pool must never contain Legendary deities")
+        assert(d.rarity == "common", "Shop must only offer Common spirits")
     end
-
-    -- Ante 5+ Shop pool: can roll Legendary, but max 1 per run
-    local hasLegOwned = { { id = "leg_owned", rarity = "legendary" } }
-    local ante5PoolOwned = Deities.getRandomShopPool(hasLegOwned, 50, { ante = 5 })
-    for _, d in ipairs(ante5PoolOwned) do
-        assert(d.rarity ~= "legendary", "Shop pool must not offer second Legendary if player already owns one")
-    end
-    log("[PASS] 88. Phase 2: Deities Base 3 Slots & Rarity Distribution verified 100%")
+    log("[PASS] 88. Exactly 9 Common spirits and 3 base slots verified 100%")
 end
 
 -- 89. Test Phase 3 & 4: Card Enhancements (8 Types with Tradeoffs)
@@ -2723,12 +2726,11 @@ do
     local fScore = Scoring.calculate(fEval, {}, {})
     assert(fScore.addArmor >= 8, "enh_rearguard must grant +8 Armor at last index")
 
-    -- 5. Deity Vanguard Marshal: +10 Mult on 1st card, +6 Armor on last card
-    local dMarshal = Deities.CATALOG.deity_vanguard_marshal
-    assert(dMarshal ~= nil, "deity_vanguard_marshal must exist in CATALOG")
-    local dScore = dMarshal.onHandScored(fEval, {}, dMarshal)
-    assert(dScore.addMult == 10 and dScore.addArmor == 6, "Nguyên Soái Tiền Tuyến grants +10 Mult and +6 Armor")
-    log("[PASS] 97. Formation Archetype (Đội Hình): Equipment, Enhancements & Vanguard Marshal verified 100%")
+    -- 5. Basic spirit remains compatible with formation scoring.
+    local basicSpirit = Deities.CATALOG.spirit_pebble
+    local spiritScore = basicSpirit.onHandScored(fEval, {}, basicSpirit)
+    assert(spiritScore.addChips == 20, "Linh Sỏi grants +20 Chips")
+    log("[PASS] 97. Formation equipment, enhancements & Common spirit compatibility verified 100%")
 end
 
 -- 98. Test Khế Ước Bỏ Ải (3-Part Unified Schema & Skip Execution)
@@ -2787,11 +2789,11 @@ do
     assert(enhMap["enh_vanguard"] ~= nil, "enh_vanguard must exist in Collection")
     assert(enhMap["enh_rearguard"] ~= nil, "enh_rearguard must exist in Collection")
 
-    -- 3. Jokers in Collection must contain Vanguard Marshal and match Deities.CATALOG
+    -- 3. Collection must expose exactly the 9 Common spirits from the catalog.
     local jokers = Collection.getItems("jokers")
     local jokerMap = {}
     for _, j in ipairs(jokers) do jokerMap[j.id] = j end
-    assert(jokerMap["deity_vanguard_marshal"] ~= nil, "deity_vanguard_marshal must exist in Collection")
+    assert(#jokers == 9 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 9 Common spirits")
 
     -- 4. Dynamic category badge synchronization
     local cats = Collection.getCategories()
@@ -2803,18 +2805,18 @@ do
     log("[PASS] 99. Đồng Bộ Toàn Diện Bộ Sưu Tập (Single Source of Truth, Badges & Equipment Tracking) verified 100%")
 end
 
--- 100. Test 9 Authentic Deity Pixel Art Assets & Card Rendering Pipeline
+-- 100. Test 9 Common Spirit Card Rendering Pipeline
 do
     local expectedDeities = {
-        { id = "deity_eternal_tree", name = "Bất Diệt Thần Thụ" },
-        { id = "deity_war_god", name = "Chiến Thần Tàn Bạo" },
-        { id = "deity_formation", name = "Chiến Trận Quân Kỳ" },
-        { id = "deity_vharos", name = "Huyết Ma Tận Diệt" },
-        { id = "deity_royalty", name = "Huyết Mạch Vương Quyền" },
-        { id = "deity_banner", name = "Huyết Tẩy Tàn Quân" },
-        { id = "deity_supreme", name = "Hỗn Mang Tối Thượng" },
-        { id = "deity_delayed_gratification", name = "Kiên Nhẫn Thần Thụ" },
-        { id = "deity_time_weaver", name = "Kẻ Diệt Thời Gian" },
+        { id = "spirit_pebble", name = "The Rock" },
+        { id = "spirit_ember", name = "This Is Fine" },
+        { id = "spirit_blade", name = "Bonk Cheems" },
+        { id = "spirit_drum", name = "Bongo Cat" },
+        { id = "spirit_pair", name = "Spider-Men" },
+        { id = "spirit_straight", name = "Đường Tăng" },
+        { id = "spirit_flush", name = "Minion Đồng Phục" },
+        { id = "spirit_crown", name = "Gigachad" },
+        { id = "spirit_coin", name = "Stonks" },
     }
 
     for _, entry in ipairs(expectedDeities) do
@@ -2826,12 +2828,12 @@ do
         -- B. Asset file existence and validity on disk
         local path = "assets/deities/" .. entry.id .. ".png"
         local f = io.open(path, "rb")
-        assert(f ~= nil, "Deity card asset file must exist on disk: " .. path)
+        assert(f ~= nil, "Spirit card asset file must exist on disk: " .. path)
         local content = f:read("*a")
         f:close()
-        assert(content and #content > 10000, "Deity card asset must be valid image file (>10KB): " .. path .. " (" .. tostring(content and #content) .. " bytes)")
+        assert(content and #content > 10000, "Spirit card asset must be valid image file (>10KB): " .. path .. " (" .. tostring(content and #content) .. " bytes)")
 
-        -- C. UI Image Loader safe invocation
+        -- C. UI Image Loader invocation
         local okLoader, img = pcall(UI.getDeityImage, entry.id)
         assert(okLoader, "UI.getDeityImage must execute safely without runtime errors for " .. entry.id)
 
@@ -2842,7 +2844,7 @@ do
         assert(okRender, "UI.drawPatronCard must render deity card " .. entry.id .. " safely")
     end
 
-    log("[PASS] 100. Tích hợp trọn vẹn 9 Thần Bài Pixel Art (Bất Diệt Thần Thụ, Chiến Thần, Quân Kỳ, Huyết Ma, Huyết Mạch, Huyết Tẩy, Hỗn Mang, Kiên Nhẫn, Kẻ Diệt Thời Gian) verified 100%")
+    log("[PASS] 100. Tích hợp trọn vẹn 9 Hộ Linh Pixel Art (The Rock, This Is Fine, Bonk Cheems, Bongo Cat, Spider-Men, Đường Tăng, Minion Đồng Phục, Gigachad, Stonks) verified 100%")
 end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
@@ -2850,4 +2852,3 @@ if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end
 os.exit(0)
 return true
-

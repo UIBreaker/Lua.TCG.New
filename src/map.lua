@@ -54,7 +54,7 @@ Map.NODE_TYPES = {
         type = "boss",
         name = "TRÙM TỐI CAO",
         icon = "W",
-        desc = "Thủ lĩnh tối cao Tầng 20! Tiêu diệt để Tuyển Chọn 1 trong 2 THẦN BÀI GIÁNG LÂM!",
+        desc = "Thủ lĩnh tối cao Tầng 20! Tiêu diệt để chọn 1 trong 2 HỘ LINH!",
         color = { 1.0, 0.25, 0.25, 1 },
         bgColor = { 0.30, 0.10, 0.10, 0.95 },
     },
@@ -114,8 +114,8 @@ Map.SKIP_TAGS = {
     },
     {
         id = "rare_deity",
-        name = "Thần Hộ Mệnh Hiếm",
-        desc = "Tuyển chọn ngay 1 Thần Bài giáng lâm trợ chiến!",
+        name = "Hộ Linh Bí Ẩn",
+        desc = "Nhận ngay 1 Hộ Linh ngẫu nhiên trợ chiến!",
         color = { 0.95, 0.4, 0.25, 1 },
         icon = "👑",
         apply = function(gameState)
@@ -123,9 +123,9 @@ Map.SKIP_TAGS = {
             local pool = Deities.getBossDraftPool(gameState.deities or {}, 1)
             if pool and pool[1] then
                 Deities.addDeity(gameState, pool[1])
-                return "Thần Bài giáng lâm: " .. pool[1].name .. "!"
+                return "Đã nhận Hộ Linh: " .. pool[1].name .. "!"
             end
-            return "Đã nhận phúc lành Thần Bài!"
+            return "Đã nhận Hộ Linh!"
         end,
     },
 }

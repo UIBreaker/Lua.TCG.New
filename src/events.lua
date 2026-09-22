@@ -130,7 +130,7 @@ Events.LIST = {
     },
     {
         id = "oracle",
-        title = "🔮 TIÊN TRI THẦN BÀI 🔮",
+        title = "🔮 TIÊN TRI HỘ LINH 🔮",
         subtitle = "Bà thầy bói bí ẩn lơ lửng giữa làn khói tím mờ ảo.",
         desc = "Bà ta xòe những ngón tay đeo đầy nhẫn đá quý, nhìn thấu số phận và cơ duyên của bộ bài bạn mang theo. 'Ngươi muốn thay đổi vận mệnh thế nào, hỡi lữ khách?'",
         options = {

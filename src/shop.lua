@@ -42,7 +42,7 @@ function Shop.refresh(shop, gameState)
             category = "deity",
             deity = d,
             name = d.name,
-            subtitle = "THẦN HỘ MỆNH",
+            subtitle = "HỘ LINH",
             desc = d.desc or "+Hiệu ứng đặc biệt ván đấu",
             cost = d.cost or 5,
             rarity = d.rarity or "common",
@@ -156,9 +156,9 @@ function Shop.refresh(shop, gameState)
     local packCatalog = {
         {
             packType = "buffoon",
-            name = "GÓI THẦN BÀI",
+            name = "GÓI HỘ LINH",
             subtitle = "BUFFOON PACK",
-            desc = "Mở gói bao gồm 3 Thần Hộ Mệnh. Người chơi chọn 1 để sở hữu!",
+            desc = "Mở gói gồm 3 Hộ Linh. Chọn 1 để sở hữu!",
             cost = 4,
             color = { 0.88, 0.35, 0.35, 1 },
             icon = "🃏",
@@ -183,9 +183,9 @@ function Shop.refresh(shop, gameState)
         },
         {
             packType = "joker_edition",
-            name = "GÓI PHÙ PHÉP JOKER",
-            subtitle = "JOKER EDITIONS PACK",
-            desc = "Mở gói gồm 3 Phù Phép Joker (Aura, Ectoplasm, Ankh, Hex). Chọn 1!",
+            name = "GÓI PHÙ PHÉP HỘ LINH",
+            subtitle = "PHÙ PHÉP HỘ LINH",
+            desc = "Mở gói gồm 3 phép Aura, Ectoplasm, Ankh hoặc Hex. Chọn 1 để cường hóa Hộ Linh!",
             cost = 6,
             color = { 0.85, 0.40, 0.95, 1 },
             icon = "✨",
@@ -279,7 +279,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
         local maxSlots = Deities.getMaxSlots(gameState)
         if Deities.getCount(gameState.deities) >= maxSlots then
             Sound.play("cant_afford")
-            return false, "Đã đầy " .. maxSlots .. " Thần Hộ Mệnh! Hãy bán bớt thần cũ trước khi mua mới."
+            return false, "Đã đầy " .. maxSlots .. " Hộ Linh! Hãy bán bớt một Hộ Linh trước khi mua mới."
         end
         gameState.gold = gameState.gold - item.cost
         Deities.addDeity(gameState, item.deity)
@@ -556,7 +556,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         local maxSlots = Deities.getMaxSlots(gameState)
         if Deities.getCount(gameState.deities) >= maxSlots then
             Sound.play("cant_afford")
-            return false, "Đã đầy " .. maxSlots .. " Thần Hộ Mệnh!"
+            return false, "Đã đầy " .. maxSlots .. " Hộ Linh!"
         end
         Deities.addDeity(gameState, card)
         Sound.play("shop_buy")
@@ -585,7 +585,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         if card.id == "spell_aura" then
             if #deityList == 0 then
                 Sound.play("cant_afford")
-                return false, "Không có Thần Hộ Mệnh nào để phù phép!"
+                return false, "Không có Hộ Linh nào để phù phép!"
             end
             local chosen = deityList[Rng.random(#deityList)]
             local edPool = { "foil", "holo", "polychrome" }
@@ -597,7 +597,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         elseif card.id == "spell_ectoplasm" then
             if #deityList == 0 then
                 Sound.play("cant_afford")
-                return false, "Không có Thần Hộ Mệnh nào!"
+                return false, "Không có Hộ Linh nào!"
             end
             local chosen = deityList[Rng.random(#deityList)]
             chosen.deity.edition = "negative"
@@ -609,7 +609,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         elseif card.id == "spell_ankh" then
             if #deityList == 0 then
                 Sound.play("cant_afford")
-                return false, "Không có Thần Hộ Mệnh nào!"
+                return false, "Không có Hộ Linh nào!"
             end
             local chosen = deityList[Rng.random(#deityList)]
             local cloned = {}
@@ -623,7 +623,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         elseif card.id == "spell_hex" then
             if #deityList == 0 then
                 Sound.play("cant_afford")
-                return false, "Không có Thần Hộ Mệnh nào!"
+                return false, "Không có Hộ Linh nào!"
             end
             local chosen = deityList[Rng.random(#deityList)]
             chosen.deity.edition = "polychrome"

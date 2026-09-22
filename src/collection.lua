@@ -13,7 +13,7 @@ Collection.CATEGORIES = {
     -- Left Column
     {
         id = "jokers",
-        title = "Joker",
+        title = "Hộ Linh",
         sub = "Hộ Linh",
         col = "left",
         btnColor = { 0.58, 0.16, 0.14, 1 }, -- Dark Crimson / Reddish Brown
@@ -118,7 +118,7 @@ local EDITIONS = {
 }
 
 local PACKS = {
-    { id = "pack_buffoon", name = "Gói Thần Bài (Buffoon Pack)", cost = 4, rarity = "Đặc Quyền", desc = "Mở ra 2 lá Hộ Linh (Joker) ngẫu nhiên. Chọn 1 lá để thỉnh về trợ chiến!", icon = "🃏", color = { 0.90, 0.40, 0.20, 1 } },
+    { id = "pack_buffoon", name = "Gói Hộ Linh", cost = 4, rarity = "Đặc Quyền", desc = "Mở ra 2 Hộ Linh ngẫu nhiên. Chọn 1 để nhận!", icon = "🃏", color = { 0.90, 0.40, 0.20, 1 } },
     { id = "pack_standard", name = "Gói Quân Binh (Standard Pack)", cost = 4, rarity = "Tiêu Chuẩn", desc = "Mở ra 3 quân bài ma thuật kèm cường hóa hoặc ấn bản. Chọn 1 lá thêm vào bộ bài!", icon = "🎴", color = { 0.25, 0.60, 0.90, 1 } },
     { id = "pack_arcana", name = "Gói Trang Bị (Arcana Pack)", cost = 4, rarity = "Ma Pháp", desc = "Mở ra 3 Trang Bị Khảm Ngọc ngẫu nhiên. Chọn 1 bảo vật để khảm vào quân bài!", icon = "🔮", color = { 0.65, 0.35, 0.85, 1 } },
     { id = "pack_celestial", name = "Gói Thiên Thể (Celestial Pack)", cost = 4, rarity = "Thần Thánh", desc = "Mở ra các hành tinh ban phước, tăng vĩnh viễn Chips và Mult cho một thế bài cụ thể!", icon = "🪐", color = { 0.20, 0.75, 0.75, 1 } },
@@ -133,7 +133,7 @@ local VOUCHERS = {
     { id = "v_crystal", name = "Kính Ma Thuật (Telescope)", rarity = "Phiếu", cost = 10, desc = "Gói Thiên Thể luôn chứa hành tinh nâng cấp cho tay bài bạn chơi nhiều nhất!", icon = "🔭", color = { 0.30, 0.85, 0.85, 1 } },
     { id = "v_omen", name = "Chiêm Tinh Cổ (Omen Globe)", rarity = "Phiếu", cost = 10, desc = "Gói Trang Bị có tỷ lệ xuất hiện các cổ vật Huyền Thoại và Ấn Bản quý hiếm!", icon = "🔮", color = { 0.75, 0.40, 0.90, 1 } },
     { id = "v_directors", name = "Lệnh Giám Khảo (Director's Cut)", rarity = "Phiếu", cost = 10, desc = "Cho phép Gieo Lại (Reroll) Boss Blind 1 lần mỗi Ante với giá $10!", icon = "🎬", color = { 0.95, 0.50, 0.20, 1 } },
-    { id = "v_glow", name = "Quang Diệu (Glow Up)", rarity = "Phiếu", cost = 10, desc = "Tăng gấp đôi tỷ lệ xuất hiện Thần Bài mang hiệu ứng Foil, Holo, Polychrome!", icon = "✨", color = { 0.95, 0.85, 0.30, 1 } },
+    { id = "v_glow", name = "Quang Diệu (Glow Up)", rarity = "Phiếu", cost = 10, desc = "Tăng gấp đôi tỷ lệ Hộ Linh có hiệu ứng Foil, Holo hoặc Polychrome!", icon = "✨", color = { 0.95, 0.85, 0.30, 1 } },
     { id = "v_reroll_surplus", name = "Chợ Đen (Reroll Surplus)", rarity = "Phiếu", cost = 10, desc = "Giá khởi điểm gieo lại tại Cửa Hàng giảm xuống còn $3 (bình thường $5)!", icon = "🏷️", color = { 0.40, 0.90, 0.60, 1 } },
 }
 
@@ -167,7 +167,7 @@ function Collection.getItems(category)
             table.insert(items, {
                 id = d.id or id,
                 name = d.name or "Thần Vô Danh",
-                subtitle = (d.suit and string.upper(d.suit) or "THẦN BÀI") .. " • " .. string.upper(rarityName),
+                subtitle = (d.suit and string.upper(d.suit) or "HỘ LINH") .. " • " .. string.upper(rarityName),
                 rarity = rarityName,
                 cost = d.cost or 5,
                 desc = (d.desc or "Hiệu ứng thần bài hộ mệnh") .. (d.lore and ("\n\n\"" .. d.lore .. "\"") or ""),

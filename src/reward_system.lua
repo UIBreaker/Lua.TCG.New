@@ -324,7 +324,7 @@ function RewardSystem.draw(anim, V_WIDTH, V_HEIGHT, mx, my, buttonsTable)
     -- Formula summary text
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(0.70, 0.80, 0.90, 0.85)
-    love.graphics.printf("Công thức: Tổng Tiền = Thưởng Blind + Hands Còn Lại + min(floor(Tiền/5), Trần Lãi) + Thưởng Jokers", modalX, totalBoxY - 18, modalW, "center")
+    love.graphics.printf("Công thức: Tổng Tiền = Thưởng Blind + Hands Còn Lại + min(floor(Tiền/5), Trần Lãi) + Thưởng Hộ Linh", modalX, totalBoxY - 18, modalW, "center")
 
     love.graphics.setColor(0.08, 0.10, 0.13, 0.95)
     UI.drawRoundedRect("fill", modalX + 30, totalBoxY, modalW - 60, 48, 8)

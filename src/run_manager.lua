@@ -64,7 +64,7 @@ RunManager.SKIP_PACTS = {
         name = "Hành Quân Im Lặng",
         icon = "🤫",
         color = { 0.45, 0.70, 0.85, 1 },
-        instantDesc = "Nhận 1 Thần Bài Hộ Mệnh giáng lâm",
+        instantDesc = "Nhận 1 Hộ Linh ngẫu nhiên",
         debtDesc = "Trận kế tiếp bị trừ 1 Lượt Đánh (Hand)",
         durationDesc = "1 trận kế tiếp",
         apply = function(gameState)
@@ -73,7 +73,7 @@ RunManager.SKIP_PACTS = {
                 Deities.addDeity(gameState, pool[1])
             end
             gameState.pendingLostHandNextCombat = true
-            return "Thần Bài giáng lâm | Nợ: -1 Lượt Đánh trận kế tiếp!"
+            return "Đã nhận Hộ Linh | Nợ: -1 Lượt Đánh trận kế tiếp!"
         end,
     },
     {
@@ -96,7 +96,7 @@ RunManager.SKIP_PACTS = {
                     end
                 end
             end
-            Deities.addDeity(gameState, Deities.CATALOG.deity_gravekeeper)
+            Deities.addDeity(gameState, Deities.CATALOG.spirit_pebble)
             return "Đã thỉnh Người Giữ Mộ Cổ | Nợ: Đã thiêu hủy 2 lá bài yếu!"
         end,
     },
@@ -257,17 +257,17 @@ RunManager.TAGS = {
     },
     {
         id = "tag_rare_deity",
-        name = "Thần Bài Giáng Trần",
-        desc = "Nhận ngay 1 Thần Bài ngẫu nhiên giáng lâm trợ chiến!",
+        name = "Hộ Linh Xuất Hiện",
+        desc = "Nhận ngay 1 Hộ Linh ngẫu nhiên trợ chiến!",
         icon = "👑",
         color = { 0.95, 0.45, 0.25, 1 },
         apply = function(gameState)
             local pool = Deities.getRandomShopPool(gameState.deities or {}, 1, gameState)
             if pool and pool[1] then
                 Deities.addDeity(gameState, pool[1])
-                return "Thần Bài giáng lâm: " .. pool[1].name .. "!"
+                return "Đã nhận Hộ Linh: " .. pool[1].name .. "!"
             end
-            return "Đã nhận phúc lành Thần Bài!"
+            return "Đã nhận Hộ Linh!"
         end,
     },
     {

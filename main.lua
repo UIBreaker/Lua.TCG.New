@@ -937,7 +937,7 @@ local function useConsumable(idx)
         if #deityList == 0 then
             Sound.play("cant_afford")
             table.insert(anim.floatingTexts, {
-                text = "Không có Thần Hộ Mệnh nào để dùng phép!",
+                text = "Không có Hộ Linh nào để dùng phép!",
                 color = { 0.95, 0.35, 0.35, 1 },
                 x = 640,
                 y = 350,
@@ -2049,7 +2049,7 @@ function love.update(dt)
                         })
                     end
                     anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult)
-                    anim.stepCategory = "THẦN BÀI: " .. (st.deity and st.deity.name or "BỔ TRỢ"):upper()
+                    anim.stepCategory = "HỘ LINH: " .. (st.deity and st.deity.name or "BỔ TRỢ"):upper()
                     anim.stepLog = st.message
 
                 elseif st.type == "seal_trigger" then
@@ -2112,7 +2112,7 @@ function love.update(dt)
                         })
                     end
                     anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult)
-                    anim.stepCategory = "PHÙ PHÉP JOKER"
+                    anim.stepCategory = "PHÙ PHÉP HỘ LINH"
                     anim.stepLog = st.message
                     anim.targetStepDelay = 0.38
 
@@ -2703,7 +2703,7 @@ local function drawMainMenu()
     local statRows = {
         { label = "Ván cao nhất:", val = "Ante 8 (Thắng)" },
         { label = "Sát thương kỷ lục:", val = "1,234,567" },
-        { label = "Hộ Linh mở khóa:", val = "25 / 25" },
+        { label = "Hộ Linh mở khóa:", val = "9 / 9" },
         { label = "Trang bị khảm:", val = "8 / 8" },
         { label = "Bộ bài sở hữu:", val = "4 / 4 Cự Tộc" },
     }
@@ -2979,7 +2979,7 @@ local function drawCollectionModal()
     local btnJoker = {
         id = "coll_cat_jokers",
         catId = "jokers",
-        text = "Joker",
+        text = "Hộ Linh",
         sub = jokersCount .. " / " .. jokersCount,
         x = colLX,
         y = modalY + 24,
@@ -3457,7 +3457,7 @@ local function drawFactionSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Khởi đầu với 3 lá ngẫu nhiên thuộc phe đã chọn. Đánh bại BOSS để thỉnh Thần Bài Ban Ơn!", 0, V_HEIGHT - 35, V_WIDTH, "center")
+    love.graphics.printf("Khởi đầu với 3 lá ngẫu nhiên. Đánh bại BOSS để chọn thêm Hộ Linh!", 0, V_HEIGHT - 35, V_WIDTH, "center")
 end
 
 local function drawStarterDeckSelect()
@@ -4510,7 +4510,7 @@ local function drawBlindSelectState()
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("MÁU: " .. (game.playerHp or 100) .. "/" .. (game.maxPlayerHp or 100) .. " HP   |   TIỀN VÀNG: $" .. game.gold .. " (Lãi: +$" .. interestVal .. "/trận)   |   THẦN BÀI: " .. Deities.getCount(game.deities) .. "/" .. maxDeiSlots .. "   |   BỘ BÀI: " .. #(game.persistentDeck or {}) .. " lá", 40, 56)
+    love.graphics.print("MÁU: " .. (game.playerHp or 100) .. "/" .. (game.maxPlayerHp or 100) .. " HP   |   TIỀN VÀNG: $" .. game.gold .. " (Lãi: +$" .. interestVal .. "/trận)   |   HỘ LINH: " .. Deities.getCount(game.deities) .. "/" .. maxDeiSlots .. "   |   BỘ BÀI: " .. #(game.persistentDeck or {}) .. " lá", 40, 56)
 
     -- Right Action Buttons (Handbook, Deck Viewer, Options)
     local btnHandbook = {
@@ -4777,7 +4777,7 @@ local function drawVictoryState()
         { label = "SỐ ẢI ĐÃ CHIẾN THẮNG:", val = tostring(stats.blindsWon or 0) .. " Ải", color = { 0.35, 0.85, 0.45, 1 } },
         { label = "SỐ ẢI ĐÃ BỎ QUA (SKIP):", val = tostring(stats.blindsSkipped or 0) .. " Ải", color = { 0.85, 0.65, 0.35, 1 } },
         { label = "TỔNG TIỀN VÀNG CÒN LẠI:", val = "$" .. tostring(game.gold or 0), color = UI.COLORS.goldYellow },
-        { label = "SỐ THẦN BÀI GIÁNG LÂM:", val = tostring(Deities.getCount(game.deities)) .. " Thần", color = { 0.85, 0.45, 0.95, 1 } },
+        { label = "SỐ HỘ LINH:", val = tostring(Deities.getCount(game.deities)) .. " Hộ Linh", color = { 0.85, 0.45, 0.95, 1 } },
     }
 
     local rY = modalY + 160
@@ -4846,7 +4846,7 @@ local function drawMap()
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("MÁU: " .. (game.playerHp or 100) .. "/" .. (game.maxPlayerHp or 100) .. " HP   |   TIỀN VÀNG: $" .. game.gold .. " (Lãi: +$" .. interestVal .. "/trận)   |   THẦN BÀI: " .. Deities.getCount(game.deities) .. "/" .. maxDeiSlots, 40, 56)
+    love.graphics.print("MÁU: " .. (game.playerHp or 100) .. "/" .. (game.maxPlayerHp or 100) .. " HP   |   TIỀN VÀNG: $" .. game.gold .. " (Lãi: +$" .. interestVal .. "/trận)   |   HỘ LINH: " .. Deities.getCount(game.deities) .. "/" .. maxDeiSlots, 40, 56)
 
     -- Button Handbook & Deck Viewer
     local btnHandbookMap = {
@@ -5139,7 +5139,7 @@ local function drawBossDeityDraftState()
 
     love.graphics.setFont(UI.fonts.large)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Hai Vị Thần Bài Giáng Lâm — Hãy Chọn 1 Trong 2 Vị Thần:", 0, 100, V_WIDTH, "center")
+    love.graphics.printf("Hai Hộ Linh Xuất Hiện — Hãy Chọn 1:", 0, 100, V_WIDTH, "center")
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
@@ -7430,7 +7430,7 @@ local function drawShopState()
             if pack.packType == "buffoon" then
                 love.graphics.setFont(UI.fonts.tiny)
                 love.graphics.setColor({ 0.85, 0.65, 0.95, 1 })
-                love.graphics.printf("THẦN HỘ MỆNH", cx + 4, drawCY + 10, cW - 8, "center")
+                love.graphics.printf("HỘ LINH", cx + 4, drawCY + 10, cW - 8, "center")
                 love.graphics.setFont(UI.fonts.huge)
                 love.graphics.printf("👑", cx, drawCY + 36, cW, "center")
                 love.graphics.setFont(UI.fonts.small)
@@ -7469,7 +7469,7 @@ local function drawShopState()
             elseif pack.packType == "joker_edition" then
                 love.graphics.setFont(UI.fonts.tiny)
                 love.graphics.setColor({ 0.95, 0.45, 0.85, 1 })
-                love.graphics.printf("PHÙ PHÉP JOKER", cx + 4, drawCY + 10, cW - 8, "center")
+                love.graphics.printf("PHÙ PHÉP HỘ LINH", cx + 4, drawCY + 10, cW - 8, "center")
                 love.graphics.setFont(UI.fonts.huge)
                 love.graphics.printf(card.icon or "✨", cx, drawCY + 36, cW, "center")
                 love.graphics.setFont(UI.fonts.small)

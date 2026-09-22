@@ -2044,11 +2044,11 @@ do
     local scorePoly = Scoring.calculate(evalBase, { deityPoly }, {})
     assert(scorePoly.totalMult == math.floor(baseScore.totalMult * 1.5), "Polychrome edition must multiply Mult by 1.5")
 
-    -- Negative (+1 Joker Slot from base 3)
+    -- Negative (+1 Joker Slot from base 5)
     local deityNeg = { id = "test_neg", name = "Thần Âm Bản", edition = "negative" }
     local testGame = { deities = { deityNeg } }
     local maxSlots = Deities.getMaxSlots(testGame)
-    assert(maxSlots == 4, "Negative edition must expand max Deity slots from base 3 to 4, got: " .. maxSlots)
+    assert(maxSlots == 6, "Negative edition must expand max Deity slots from base 5 to 6, got: " .. maxSlots)
     log("[PASS] 75. Joker Editions (Foil +50c, Holo +10m, Poly x1.5m, Negative +1 Slot) verified 100%")
 end
 
@@ -2206,18 +2206,20 @@ do
     log("[PASS] 79. Hand Leveling & Planet Cards (Base scaling & Supernova +3 Lv) verified 100%")
 end
 
--- 80. Test Consumables Inventory Management (Capacity = 2)
+-- 80. Test Consumables Inventory Management (Capacity = 3)
 do
     local testGame = { consumables = {} }
     assert(#testGame.consumables == 0, "Consumables inventory starts empty")
     table.insert(testGame.consumables, { id = "c1", name = "Sao Hỏa" })
     assert(#testGame.consumables == 1, "Consumable 1 added")
     table.insert(testGame.consumables, { id = "c2", name = "Aura" })
-    assert(#testGame.consumables == 2, "Consumable 2 added (Capacity full)")
+    assert(#testGame.consumables == 2, "Consumable 2 added")
+    table.insert(testGame.consumables, { id = "c3", name = "Deja Vu" })
+    assert(#testGame.consumables == 3, "Consumable 3 added (Capacity full)")
 
-    local isFull = (#testGame.consumables >= 2)
-    assert(isFull == true, "Capacity is full at 2 consumables")
-    log("[PASS] 80. Consumables Inventory (Slots capacity = 2) verified 100%")
+    local isFull = (#testGame.consumables >= 3)
+    assert(isFull == true, "Capacity is full at 3 consumables")
+    log("[PASS] 80. Consumables Inventory (Slots capacity = 3) verified 100%")
 end
 
 -- 81. Test Shop.keepPackCard (Keep Booster Pack Cards into Consumables)
@@ -2241,7 +2243,8 @@ do
 
     -- Add a 2nd card to reach capacity
     table.insert(testGame.consumables, { id = "planet_mars", name = "Sao Hỏa", category = "celestial" })
-    assert(#testGame.consumables == 2, "Consumables is now 2/2")
+    table.insert(testGame.consumables, { id = "spell_hex", name = "Hex", category = "joker_spell" })
+    assert(#testGame.consumables == 3, "Consumables is now 3/3")
 
     -- Try keeping another card when full
     shop.currentPackOpening = {
@@ -2249,10 +2252,10 @@ do
         cards = { { id = "planet_jupiter", name = "Sao Mộc" } }
     }
     local okFail, failMsg = Shop.keepPackCard(shop, 1, testGame)
-    assert(okFail == false, "keepPackCard must fail when consumables is at capacity (2/2)")
+    assert(okFail == false, "keepPackCard must fail when consumables is at capacity (3/3)")
     assert(failMsg:find("đầy"), "Must return inventory full error message")
     assert(shop.currentPackOpening ~= nil, "Pack opening remains active when rejected so player doesn't lose pack")
-    log("[PASS] 81. Shop.keepPackCard (Keep Pack Cards into Consumables & Cap 2/2) verified 100%")
+    log("[PASS] 81. Shop.keepPackCard (Keep Pack Cards into Consumables & Cap 3/3) verified 100%")
 end
 
 -- 82. Test Dynamic Negative Deity Slots (Expansion from base 3 & Scoring Trigger)
@@ -2267,7 +2270,7 @@ do
         }
     }
     local maxSlots = Deities.getMaxSlots(testGame)
-    assert(maxSlots == 6, "3 Negative deities must expand max slots from base 3 to 6, got: " .. tostring(maxSlots))
+    assert(maxSlots == 8, "3 Negative deities must expand max slots from base 5 to 8, got: " .. tostring(maxSlots))
 
     -- Add 6th deity into slot 6
     local deity6 = {
@@ -2451,10 +2454,10 @@ do
     log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
 end
 
--- 88. Test Phase 2: exactly 9 Common spirits and 3 base slots
+-- 88. Test Phase 2: exactly 9 Common spirits and 5 base slots
 do
     local baseSlots = Deities.getMaxSlots({})
-    assert(baseSlots == 3, "Deities base slots must be 3, got: " .. baseSlots)
+    assert(baseSlots == 5, "Deities base slots must be 5, got: " .. baseSlots)
 
     local spiritCount = 0
     for _, spirit in pairs(Deities.CATALOG) do
@@ -2476,7 +2479,7 @@ do
     for _, d in ipairs(ante1Pool) do
         assert(d.rarity == "common", "Shop must only offer Common spirits")
     end
-    log("[PASS] 88. Exactly 9 Common spirits and 3 base slots verified 100%")
+    log("[PASS] 88. Exactly 9 Common spirits and 5 base slots verified 100%")
 end
 
 -- 89. Test Phase 3 & 4: Card Enhancements (8 Types with Tradeoffs)

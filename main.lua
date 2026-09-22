@@ -803,7 +803,7 @@ local function discardSelected()
             }
             local chosen = spellPool[Rng.random(#spellPool)]
             game.consumables = game.consumables or {}
-            if #game.consumables < 2 then
+            if #game.consumables < 3 then
                 table.insert(game.consumables, chosen)
                 table.insert(anim.floatingTexts, {
                     text = "🟣 [DẤU TÍM] Tạo Thẻ Phép: " .. chosen.name .. " (" .. chosen.subtitle .. ")!",
@@ -814,7 +814,7 @@ local function discardSelected()
                 })
             else
                 table.insert(anim.floatingTexts, {
-                    text = "🟣 [DẤU TÍM] Ô Tiêu Hao đã đầy (2/2)!",
+                    text = "🟣 [DẤU TÍM] Ô Tiêu Hao đã đầy (3/3)!",
                     color = { 0.85, 0.45, 0.95, 1 },
                     x = 640,
                     y = 390,
@@ -2350,7 +2350,7 @@ function love.update(dt)
                                         end
                                         if planetCard then
                                             game.consumables = game.consumables or {}
-                                            if #game.consumables < 2 then
+                                            if #game.consumables < 3 then
                                                 table.insert(game.consumables, {
                                                     id = planetCard.id,
                                                     category = "celestial",
@@ -2369,7 +2369,7 @@ function love.update(dt)
                                                 })
                                             else
                                                 table.insert(anim.floatingTexts, {
-                                                    text = "🔵 [DẤU LAM] Ô Tiêu Hao đã đầy (2/2)!",
+                                                    text = "🔵 [DẤU LAM] Ô Tiêu Hao đã đầy (3/3)!",
                                                     color = { 0.8, 0.8, 0.8, 1 },
                                                     x = 640,
                                                     y = 360,
@@ -2825,7 +2825,7 @@ local function drawMainMenu()
     local startBtnY = 195
 
     -- 1. Hero Button: VÀO TRẬN (PLAY)
-    local playText = hasRunStarted and "TIẾP TỤC TRẬN [Space]" or "VÀO TRẬN [Space]"
+    local playText = hasRunStarted and "TIẾP TỤC TRẬN" or "VÀO TRẬN"
     local btnPlay = {
         id = "menu_play",
         text = playText,
@@ -2841,7 +2841,7 @@ local function drawMainMenu()
     -- 2. Button: BỘ SƯU TẬP (COLLECTION)
     local btnCollection = {
         id = "menu_collection",
-        text = "BỘ SƯU TẬP [C]",
+        text = "BỘ SƯU TẬP",
         x = btnStackX,
         y = startBtnY + 92,
         w = btnStackW,
@@ -2854,7 +2854,7 @@ local function drawMainMenu()
     -- 3. Button: TUỲ CHỌN (SETTINGS)
     local btnOptions = {
         id = "menu_settings",
-        text = "TUỲ CHỌN [Tab]",
+        text = "TUỲ CHỌN",
         x = btnStackX,
         y = startBtnY + 172,
         w = btnStackW,
@@ -2867,7 +2867,7 @@ local function drawMainMenu()
     -- 4. Button: THOÁT (QUIT)
     local btnQuit = {
         id = "menu_quit",
-        text = "THOÁT [Esc]",
+        text = "THOÁT",
         x = btnStackX,
         y = startBtnY + 252,
         w = btnStackW,
@@ -3875,7 +3875,7 @@ local function drawPlayingState()
     -- D. Sidebar Action Buttons
     local btnHandbookPlay = {
         id = "open_handbook",
-        text = "T.tin Trận Này [H]",
+        text = "T.tin Trận Này",
         x = panelX + 10,
         y = panelY + 384,
         w = panelW - 20,
@@ -3888,7 +3888,7 @@ local function drawPlayingState()
 
     local btnDeckPlay = {
         id = "open_deck_viewer",
-        text = "Tuỳ Chọn [Tab]",
+        text = "Tuỳ Chọn",
         x = panelX + 10,
         y = panelY + 420,
         w = panelW - 20,
@@ -4038,18 +4038,18 @@ local function drawPlayingState()
         end
     end
 
-    -- Consumables Section (0/2)
+    -- Consumables Section (0/3)
     local conStartX = topStartX + maxDeiSlots * (deitySlotW + deityGap) + 20
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/2)", conStartX + 4, topStartY)
+    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + 4, topStartY)
 
     local conSlotW = 82
     local conSlotH = 118
     local conGap = 14
-    for j = 1, 2 do
+    for j = 1, 3 do
         local cx = conStartX + (j - 1) * (conSlotW + conGap)
         local c = game.consumables[j]
         drawConsumableSlot(c, cx, deityY, conSlotW, conSlotH, j, mx, my)
@@ -4160,7 +4160,7 @@ local function drawPlayingState()
     -- Left: Chơi Tay Bài [Space]
     local btnPlay = {
         id = "play",
-        text = "Chơi Tay Bài [Space]",
+        text = "Chơi Tay Bài",
         x = 445,
         y = actionY,
         w = 175,
@@ -4188,7 +4188,7 @@ local function drawPlayingState()
 
     local btnSortRank = {
         id = "sort_rank",
-        text = "Bậc [R]",
+        text = "Bậc",
         x = sortBoxX + 6,
         y = sortBoxY + 24,
         w = 62,
@@ -4201,7 +4201,7 @@ local function drawPlayingState()
 
     local btnSortSuit = {
         id = "sort_suit",
-        text = "Chất [S]",
+        text = "Chất",
         x = sortBoxX + 76,
         y = sortBoxY + 24,
         w = 62,
@@ -4215,7 +4215,7 @@ local function drawPlayingState()
     -- Right: Bỏ Bài [D]
     local btnDiscard = {
         id = "discard",
-        text = "Bỏ Bài [D]",
+        text = "Bỏ Bài",
         x = 795,
         y = actionY,
         w = 160,
@@ -4259,7 +4259,7 @@ local function drawPlayingState()
     -- Deck Pile Label & Counter
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("BỘ BÀI [Tab]", deckPileX, deckPileY + 12, deckPileW, "center")
+    love.graphics.printf("BỘ BÀI", deckPileX, deckPileY + 12, deckPileW, "center")
 
     local totalCardsInGame = #game.deck + #game.discardPile + #game.hand
     local deckCountStr = #game.deck .. " / " .. totalCardsInGame
@@ -4515,7 +4515,7 @@ local function drawBlindSelectState()
     -- Right Action Buttons (Handbook, Deck Viewer, Options)
     local btnHandbook = {
         id = "open_handbook",
-        text = "SỔ TAY [H]",
+        text = "SỔ TAY",
         x = V_WIDTH - 440,
         y = 25,
         w = 120,
@@ -4528,7 +4528,7 @@ local function drawBlindSelectState()
 
     local btnDeck = {
         id = "open_deck_viewer",
-        text = "XEM BÀI [D]",
+        text = "XEM BÀI",
         x = V_WIDTH - 305,
         y = 25,
         w = 125,
@@ -4851,7 +4851,7 @@ local function drawMap()
     -- Button Handbook & Deck Viewer
     local btnHandbookMap = {
         id = "open_handbook",
-        text = "SỔ TAY [H]",
+        text = "SỔ TAY",
         x = V_WIDTH - 440,
         y = 25,
         w = 180,
@@ -4864,7 +4864,7 @@ local function drawMap()
 
     local btnDeck = {
         id = "open_deck_viewer",
-        text = "XEM BỘ BÀI [Tab]",
+        text = "XEM BỘ BÀI",
         x = V_WIDTH - 240,
         y = 25,
         w = 200,
@@ -5232,7 +5232,7 @@ local function drawDeckViewerModal()
     -- Close button
     local closeBtn = {
         id = "close_deck_viewer",
-        text = "ĐÓNG [Esc]",
+        text = "ĐÓNG",
         x = modalX + modalW - 160,
         y = modalY + 15,
         w = 140,
@@ -6037,7 +6037,7 @@ local function drawShopTransferView()
     -- Close / Return button
     local btnCloseTransfer = {
         id = "close_shop_transfer",
-        text = "XONG / QUAY LẠI CỬA HÀNG [Esc]",
+        text = "XONG / QUAY LẠI CỬA HÀNG",
         x = V_WIDTH - 320,
         y = 615,
         w = 280,
@@ -6077,7 +6077,7 @@ local function drawCardInspectorModal(card)
     -- Close button
     local btnClose = {
         id = "close_inspector",
-        text = "ĐÓNG [Esc / Chuột Phải]",
+        text = "ĐÓNG",
         x = modalX + modalW - 240,
         y = modalY + 18,
         w = 210,
@@ -6214,7 +6214,7 @@ local function drawHandbookModal()
     -- Close Button
     local btnClose = {
         id = "close_handbook",
-        text = "ĐÓNG [Esc / H]",
+        text = "ĐÓNG",
         x = modalX + modalW - 190,
         y = modalY + 16,
         w = 160,
@@ -6659,7 +6659,7 @@ local function drawShopState()
     local trY = hy + 428
     local btnTransfer = {
         id = "open_shop_transfer",
-        text = "Hoán Đổi Trang Bị [T]",
+        text = "Hoán Đổi Trang Bị",
         x = hx + 10,
         y = trY,
         w = hw - 20,
@@ -6779,17 +6779,17 @@ local function drawShopState()
     local conSlotH = 118
     local conGap = 14
     love.graphics.setColor(0.08, 0.10, 0.13, 0.6)
-    UI.drawRoundedRect("fill", conStartX - 8, 14, 196, 140, 8)
+    UI.drawRoundedRect("fill", conStartX - 8, 14, 292, 140, 8)
     love.graphics.setColor(0.20, 0.26, 0.32, 0.4)
-    UI.drawRoundedRect("line", conStartX - 8, 14, 196, 140, 8)
+    UI.drawRoundedRect("line", conStartX - 8, 14, 292, 140, 8)
 
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/2)", conStartX + 4, 14)
+    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + 4, 14)
 
-    for i = 1, 2 do
+    for i = 1, 3 do
         local cx = conStartX + (i - 1) * (conSlotW + conGap)
         local cy = deiSlotY
         local c = game.consumables[i]
@@ -7264,7 +7264,7 @@ local function drawShopState()
         UI.drawRoundedRect("line", tipX, tipY, tipW, tipH, 4)
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Xem Toàn Bộ Bài [Tab]", tipX, tipY + 9, tipW, "center")
+        love.graphics.printf("Xem Toàn Bộ Bài", tipX, tipY + 9, tipW, "center")
     end
 
     ----------------------------------------------------------------------------
@@ -7859,7 +7859,7 @@ local function handlePlayingMousepressed(mx, my, button)
 
     -- Check Consumable slots (clicking anywhere on the slot card in combat/blind)
     local conStartX = 295 + maxDeiSlots * (82 + 14) + 20
-    for j = 1, 2 do
+    for j = 1, 3 do
         local cx = conStartX + (j - 1) * (82 + 14)
         local cy = 32
         if mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
@@ -8048,7 +8048,7 @@ local function handleShopMousepressed(mx, my, button)
     -- Check Consumable slots (clicking anywhere on the slot card in shop)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
     local conStartX = 295 + maxDeiSlots * (82 + 14) + 16
-    for j = 1, 2 do
+    for j = 1, 3 do
         local cx = conStartX + (j - 1) * (82 + 14)
         local cy = 32
         if mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
@@ -8791,28 +8791,11 @@ function love.mousepressed(x, y, button)
                 for _, btn in ipairs(buttons) do
                     if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                         if btn.id == "cashout_continue" then
-                            local curBlind = game.currentBlind or (game.run and game.run.blinds and game.run.blinds[game.run.currentBlindIndex])
-                            local isSmall = curBlind and (curBlind.type == "small" or curBlind.index == 1)
-                            if isSmall and game.run then
-                                -- Small Blind skips Shop, proceeds to Blind Select
-                                local continues, reason = RunManager.advanceBlind(game.run, game)
-                                if not continues and reason == "victory" then
-                                    state = "victory"
-                                    lastActiveState = "victory"
-                                    Sound.play("round_win")
-                                else
-                                    game.currentBlind = RunManager.getCurrentBlind(game.run)
-                                    state = "BLIND_SELECT"
-                                    lastActiveState = "BLIND_SELECT"
-                                end
-                                saveRunAtSafePoint()
-                            else
-                                if not shopData then shopData = Shop.new() end
-                                Shop.resetReroll(shopData)
-                                Shop.refresh(shopData, game)
-                                state = "shop"
-                                lastActiveState = "shop"
-                            end
+                            if not shopData then shopData = Shop.new() end
+                            Shop.resetReroll(shopData)
+                            Shop.refresh(shopData, game)
+                            state = "shop"
+                            lastActiveState = "shop"
                             Sound.play("card_deal")
                             return
                         end
@@ -9229,28 +9212,11 @@ function love.keypressed(key)
                 RewardSystem.finishImmediately(cashOutAnim)
                 Sound.play("shop_buy")
             elseif cashOutAnim and cashOutAnim.finished then
-                local curBlind = game.currentBlind or (game.run and game.run.blinds and game.run.blinds[game.run.currentBlindIndex])
-                local isSmall = curBlind and (curBlind.type == "small" or curBlind.index == 1)
-                if isSmall and game.run then
-                    -- Small Blind skips Shop, proceeds to Blind Select
-                    local continues, reason = RunManager.advanceBlind(game.run, game)
-                    if not continues and reason == "victory" then
-                        state = "victory"
-                        lastActiveState = "victory"
-                        Sound.play("round_win")
-                    else
-                        game.currentBlind = RunManager.getCurrentBlind(game.run)
-                        state = "BLIND_SELECT"
-                        lastActiveState = "BLIND_SELECT"
-                    end
-                    saveRunAtSafePoint()
-                else
-                    if not shopData then shopData = Shop.new() end
-                    Shop.resetReroll(shopData)
-                    Shop.refresh(shopData, game)
-                    state = "shop"
-                    lastActiveState = "shop"
-                end
+                if not shopData then shopData = Shop.new() end
+                Shop.resetReroll(shopData)
+                Shop.refresh(shopData, game)
+                state = "shop"
+                lastActiveState = "shop"
                 Sound.play("card_deal")
             end
         end

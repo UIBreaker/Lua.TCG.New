@@ -121,11 +121,11 @@ function Deities.getBossDraftPool(ownedDeities, count)
     return Deities.getRandomShopPool(ownedDeities, count or 2)
 end
 
-Deities.BASE_SLOTS = 3
-Deities.MAX_SLOTS = 3
+Deities.BASE_SLOTS = 5
+Deities.MAX_SLOTS = 5
 
 function Deities.getMaxSlots(gameState)
-    local maxSlots = math.min(4, Deities.BASE_SLOTS + ((gameState and gameState.extraDeitySlots) or 0))
+    local maxSlots = Deities.BASE_SLOTS + ((gameState and gameState.extraDeitySlots) or 0)
     local list = gameState and gameState.deities or gameState
     for _, deity in pairs(type(list) == "table" and list or {}) do
         if type(deity) == "table" and deity.edition == "negative" then maxSlots = maxSlots + 1 end

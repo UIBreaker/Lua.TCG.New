@@ -835,9 +835,9 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
     end
 
     gameState.consumables = gameState.consumables or {}
-    if #gameState.consumables >= 2 then
+    if #gameState.consumables >= 3 then
         Sound.play("cant_afford")
-        return false, "Ô tiêu hao đã đầy (2/2)!"
+        return false, "Ô tiêu hao đã đầy (3/3)!"
     end
 
     local storedCard = {}

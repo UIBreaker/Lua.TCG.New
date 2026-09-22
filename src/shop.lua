@@ -7,12 +7,32 @@ local Rng = require("src.rng")
 
 local Shop = {}
 
+-- Public catalogs are shared with the collection screen so every listed item
+-- is obtainable and every obtainable shop item is documented in one place.
+Shop.VOUCHERS = {
+    { id = "v_discount", name = "Thẻ Thành Viên", desc = "Giảm vĩnh viễn -$2 giá gieo lại tại mọi Cửa Hàng!", cost = 10, color = { 0.35, 0.85, 0.55, 1 }, icon = "🎟️" },
+    { id = "v_interest", name = "Sổ Tiết Kiệm", desc = "Nâng trần lãi ngân khố từ +$5 lên tối đa +$10 mỗi ván!", cost = 10, color = { 0.95, 0.80, 0.25, 1 }, icon = "💰" },
+    { id = "v_hand_plus", name = "Bùa Hảo Thủ", desc = "Tăng vĩnh viễn +1 lượt đánh mỗi trận!", cost = 10, color = { 0.85, 0.45, 0.95, 1 }, icon = "✋" },
+    { id = "v_hand_size", name = "Mở Rộng Tay Bài", desc = "Tăng vĩnh viễn +1 kích thước tay bài, không giới hạn!", cost = 8, color = { 0.85, 0.45, 0.95, 1 }, icon = "🎴" },
+}
+
+Shop.PACK_CATALOG = {
+    { packType = "buffoon", name = "GÓI HỘ LINH", subtitle = "HỘ LINH", desc = "Mở 3 Hộ Linh, chọn 1 để sở hữu.", cost = 4, rarity = "Hộ Linh", color = { 0.88, 0.35, 0.35, 1 }, icon = "🃏" },
+    { packType = "arcana", name = "GÓI TRANG BỊ", subtitle = "KHẢM NGỌC", desc = "Mở 3 Trang Bị Khảm, chọn 1 để gắn vào bài.", cost = 5, rarity = "Trang Bị", color = { 0.95, 0.75, 0.25, 1 }, icon = "💎" },
+    { packType = "standard", name = "GÓI QUÂN BÀI", subtitle = "CƯỜNG HÓA", desc = "Mở 3 quân bài có thể mang cường hóa, chọn 1 vào bộ bài.", cost = 4, rarity = "Quân Bài", color = { 0.25, 0.60, 0.95, 1 }, icon = "📦" },
+    { packType = "joker_edition", name = "GÓI PHÙ PHÉP HỘ LINH", subtitle = "PHÙ PHÉP", desc = "Mở 3 phép Aura, Ectoplasm, Ankh hoặc Hex, chọn 1.", cost = 6, rarity = "Phù Phép", color = { 0.85, 0.40, 0.95, 1 }, icon = "✨" },
+    { packType = "seal", name = "GÓI CON DẤU", subtitle = "ẤN CHIẾN", desc = "Mở 3 Con Dấu chiến thuật, chọn 1 để đóng lên bài.", cost = 6, rarity = "Con Dấu", color = { 0.95, 0.70, 0.20, 1 }, icon = "🔴" },
+    { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
+    { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
+}
+
 function Shop.new()
     return {
         items = {},
         baseRerollCost = 5,
         rerollCost = 5,
         currentPackOpening = nil,
+        lastPackTypes = {},
     }
 end
 
@@ -86,21 +106,19 @@ function Shop.refresh(shop, gameState)
         color = rewardCard.color,
     })
 
-    -- D. Thẻ Mở Rộng Tay Bài (Hand Size Expansion max 5)
+    -- D. Thẻ Mở Rộng Tay Bài: không giới hạn, giá tăng theo kích thước hiện tại.
     local curHandSize = (gameState and gameState.maxHandSize) or 3
-    if curHandSize < 5 then
-        local expandCost = (curHandSize == 3) and 12 or 18
-        table.insert(shop.items, {
-            section = "upper",
-            category = "hand_expansion",
-            name = "Mở Rộng Tay Bài",
-            subtitle = "TAY BÀI +1 (MAX 5)",
-            desc = "Tăng vĩnh viễn +1 Kích thước tay bài tối đa (3 -> 4 -> 5 lá, tối đa 5 lá)!",
-            cost = expandCost,
-            icon = "🎴",
-            color = { 0.85, 0.45, 0.95, 1 },
-        })
-    end
+    local expandCost = 12 + math.max(0, curHandSize - 3) * 6
+    table.insert(shop.items, {
+        section = "upper",
+        category = "hand_expansion",
+        name = "Mở Rộng Tay Bài",
+        subtitle = "TAY BÀI " .. curHandSize .. " → " .. (curHandSize + 1),
+        desc = "Tăng vĩnh viễn +1 kích thước tay bài. Không giới hạn; giá tăng theo số lá đang cầm.",
+        cost = expandCost,
+        icon = "🎴",
+        color = { 0.85, 0.45, 0.95, 1 },
+    })
 
     ----------------------------------------------------------------------------
     -- 2. LOWER SECTION CARDS (Phiếu Ante / Voucher & Gói Bài Booster Packs)
@@ -132,13 +150,7 @@ function Shop.refresh(shop, gameState)
         })
     else
         -- All hands unlocked: offer permanent Ante Voucher
-        local vouchers = {
-            { id = "v_discount", name = "Thẻ Thành Viên", desc = "Giảm vĩnh viễn -$2 giá gieo lại (Reroll) tại mọi Shop!", cost = 10, color = { 0.35, 0.85, 0.55, 1 } },
-            { id = "v_interest", name = "Sổ Tiết Kiệm (Seed Money)", desc = "Nâng trần mức lãi ngân khố từ +$5 lên tối đa +$10 mỗi ván (cần $50 để đạt tối đa)!", cost = 10, color = { 0.95, 0.80, 0.25, 1 } },
-            { id = "v_hand_plus", name = "Bùa Hảo Thủ", desc = "Tăng vĩnh viễn +1 Lượt Đánh (Max Hands) mỗi trận!", cost = 10, color = { 0.85, 0.45, 0.95, 1 } },
-            { id = "v_hand_size", name = "Mở Rộng Tay Bài", desc = "Tăng vĩnh viễn +1 Kích thước tay bài tối đa (Hand Size: 3 -> 4 -> 5...)!", cost = 8, color = { 0.85, 0.45, 0.95, 1 } },
-        }
-        local v = vouchers[Rng.random(#vouchers)]
+        local v = Shop.VOUCHERS[Rng.random(#Shop.VOUCHERS)]
         table.insert(shop.items, {
             section = "lower_voucher",
             category = "voucher",
@@ -148,76 +160,20 @@ function Shop.refresh(shop, gameState)
             desc = v.desc,
             cost = v.cost,
             color = v.color,
-            icon = "🎟️",
+            icon = v.icon or "🎟️",
         })
     end
 
-    -- B. Right 1 & Right 2: Gói Bài Booster Packs (7 loại Gói Bài Balatro)
-    local packCatalog = {
-        {
-            packType = "buffoon",
-            name = "GÓI HỘ LINH",
-            subtitle = "BUFFOON PACK",
-            desc = "Mở gói gồm 3 Hộ Linh. Chọn 1 để sở hữu!",
-            cost = 4,
-            color = { 0.88, 0.35, 0.35, 1 },
-            icon = "🃏",
-        },
-        {
-            packType = "arcana",
-            name = "GÓI TRANG BỊ",
-            subtitle = "ARCANA PACK",
-            desc = "Mở gói bao gồm 3 Trang Bị Khảm. Người chơi chọn 1 để khảm vào bài!",
-            cost = 5,
-            color = { 0.95, 0.75, 0.25, 1 },
-            icon = "💎",
-        },
-        {
-            packType = "standard",
-            name = "GÓI QUÂN BÀI",
-            subtitle = "STANDARD PACK",
-            desc = "Mở gói bao gồm 3 Quân Bài cường hóa. Người chơi chọn 1 đưa vào bộ bài!",
-            cost = 4,
-            color = { 0.25, 0.60, 0.95, 1 },
-            icon = "📦",
-        },
-        {
-            packType = "joker_edition",
-            name = "GÓI PHÙ PHÉP HỘ LINH",
-            subtitle = "PHÙ PHÉP HỘ LINH",
-            desc = "Mở gói gồm 3 phép Aura, Ectoplasm, Ankh hoặc Hex. Chọn 1 để cường hóa Hộ Linh!",
-            cost = 6,
-            color = { 0.85, 0.40, 0.95, 1 },
-            icon = "✨",
-        },
-        {
-            packType = "seal",
-            name = "GÓI CON DẤU",
-            subtitle = "SEALS PACK",
-            desc = "Mở gói gồm 3 Con Dấu (Vàng, Đỏ, Lam, Tím). Chọn 1 để đóng dấu!",
-            cost = 6,
-            color = { 0.95, 0.70, 0.20, 1 },
-            icon = "🔴",
-        },
-        {
-            packType = "spectral",
-            name = "GÓI BIẾN ĐỔI",
-            subtitle = "SPECTRAL PACK",
-            desc = "Mở gói gồm 3 Phép Biến Đổi Dị Thể (Familiar, Cryptid, Immolate...). Chọn 1!",
-            cost = 7,
-            color = { 0.40, 0.85, 0.85, 1 },
-            icon = "🔮",
-        },
-        {
-            packType = "celestial",
-            name = "GÓI HÀNH TINH",
-            subtitle = "CELESTIAL PACK",
-            desc = "Mở gói gồm 3 Thẻ Hành Tinh nâng cấp Cấp Độ thế bài Poker. Chọn 1!",
-            cost = 5,
-            color = { 0.35, 0.55, 0.95, 1 },
-            icon = "🪐",
-        },
-    }
+    -- B. Hai gói từ 7 hệ. Tránh lặp lại hai hệ vừa xuất hiện ở lần làm mới trước.
+    local recent = {}
+    for _, packType in ipairs(shop.lastPackTypes or {}) do recent[packType] = true end
+    local packCatalog = {}
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        if not recent[pack.packType] then table.insert(packCatalog, pack) end
+    end
+    if #packCatalog < 2 then
+        for _, pack in ipairs(Shop.PACK_CATALOG) do table.insert(packCatalog, pack) end
+    end
 
     for i = #packCatalog, 2, -1 do
         local j = Rng.random(i)
@@ -226,6 +182,7 @@ function Shop.refresh(shop, gameState)
 
     local pack1 = packCatalog[1]
     local pack2 = packCatalog[2]
+    shop.lastPackTypes = { pack1.packType, pack2.packType }
 
     table.insert(shop.items, {
         section = "lower_pack",
@@ -289,10 +246,6 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     elseif item.category == "hand_expansion" then
         local curH = gameState.maxHandSize or 3
-        if curH >= 5 then
-            Sound.play("cant_afford")
-            return false, "Kích thước tay bài đã đạt tối đa (5 lá)!"
-        end
         gameState.gold = gameState.gold - item.cost
         gameState.maxHandSize = curH + 1
         table.remove(shop.items, itemIndex)
@@ -376,7 +329,12 @@ function Shop.openPack(packItem, gameState)
         candidates = Deities.getRandomShopPool(gameState.deities, 3)
 
     elseif packItem.packType == "standard" then
-        local enhList = { "enh_armor", "enh_blood", "enh_overcharged", "enh_cursed", "enh_brittle", "enh_escort", "enh_harmonic", "enh_boss_hunter" }
+        local enhList = {}
+        for id, enhancement in pairs(Deck.ENHANCEMENTS or {}) do
+            if type(enhancement) == "table" and (enhancement.id or id) == id then
+                table.insert(enhList, id)
+            end
+        end
         for i = 1, 3 do
             local c = Deck.createRewardCard(userFaction)
             if Rng.random(100) <= 70 then

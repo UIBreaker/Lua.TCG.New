@@ -3193,6 +3193,7 @@ local function drawCollectionDetailView()
             -- Card Body
             local dImg = ((collectionCategory == "jokers") and UI.getDeityImage(item.id))
                       or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
+                      or ((collectionCategory == "packs") and UI.getPackImage(item.packType or item.id))
             if dImg then
                 love.graphics.setColor(0, 0, 0, 0.35)
                 UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
@@ -3289,6 +3290,7 @@ local function drawCollectionDetailView()
 
         local inspImg = ((collectionCategory == "jokers") and UI.getDeityImage(inspItem.id))
                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
+                     or ((collectionCategory == "packs") and UI.getPackImage(inspItem.packType or inspItem.id))
         if inspImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = inspImg:getDimensions()
@@ -7165,39 +7167,53 @@ local function drawShopState()
             love.graphics.setColor(UI.COLORS.goldYellow)
             love.graphics.printf("$" .. it.cost, tagX, tagY + 2, pw, "center")
 
-            -- Metallic Foil Pack Body
-            local packColor = it.color or { 0.88, 0.35, 0.35, 1 }
-            love.graphics.setColor(packColor[1] * 0.4, packColor[2] * 0.4, packColor[3] * 0.4, 0.98)
-            UI.drawRoundedRect("fill", 0, 0, packW, packH, 8)
-            love.graphics.setColor(isPackHovered and UI.COLORS.goldYellow or packColor)
-            love.graphics.setLineWidth(isPackHovered and 2.5 or 1.5)
-            UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
+            local packImg = UI.getPackImage(it.packType or it.id)
+            if packImg then
+                love.graphics.setColor(0, 0, 0, 0.40)
+                UI.drawRoundedRect("fill", 2, 4, packW, packH, 8)
+                love.graphics.setColor(1, 1, 1, 1)
+                local iw, ih = packImg:getDimensions()
+                love.graphics.draw(packImg, 0, 0, 0, packW / iw, packH / ih)
+                if isPackHovered then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
+                end
+            else
+                -- Metallic Foil Pack Body Fallback
+                local packColor = it.color or { 0.88, 0.35, 0.35, 1 }
+                love.graphics.setColor(packColor[1] * 0.4, packColor[2] * 0.4, packColor[3] * 0.4, 0.98)
+                UI.drawRoundedRect("fill", 0, 0, packW, packH, 8)
+                love.graphics.setColor(isPackHovered and UI.COLORS.goldYellow or packColor)
+                love.graphics.setLineWidth(isPackHovered and 2.5 or 1.5)
+                UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
 
-            -- Crimped Foil Ridges (Top & Bottom)
-            love.graphics.setColor(0.9, 0.9, 0.9, 0.5)
-            for ridge = 0, 11 do
-                local rx = 6 + ridge * 11
-                love.graphics.line(rx, 3, rx + 4, 10)
-                love.graphics.line(rx, packH - 10, rx + 4, packH - 3)
+                -- Crimped Foil Ridges (Top & Bottom)
+                love.graphics.setColor(0.9, 0.9, 0.9, 0.5)
+                for ridge = 0, 11 do
+                    local rx = 6 + ridge * 11
+                    love.graphics.line(rx, 3, rx + 4, 10)
+                    love.graphics.line(rx, packH - 10, rx + 4, packH - 3)
+                end
+
+                -- Metallic Shimmer Band in center
+                love.graphics.setColor(packColor[1], packColor[2], packColor[3], 0.25)
+                UI.drawRoundedRect("fill", 8, 36, packW - 16, 120, 6)
+
+                -- Icon
+                love.graphics.setFont(UI.fonts.huge)
+                love.graphics.printf(it.icon or "📦", 0, 50, packW, "center")
+
+                -- Pack Title
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(it.name or "Gói Bài", 4, 116, packW - 8, "center")
+
+                -- Subtitle
+                love.graphics.setFont(UI.fonts.tiny)
+                love.graphics.setColor(packColor)
+                love.graphics.printf(it.subtitle or "BOOSTER", 4, 138, packW - 8, "center")
             end
-
-            -- Metallic Shimmer Band in center
-            love.graphics.setColor(packColor[1], packColor[2], packColor[3], 0.25)
-            UI.drawRoundedRect("fill", 8, 36, packW - 16, 120, 6)
-
-            -- Icon
-            love.graphics.setFont(UI.fonts.huge)
-            love.graphics.printf(it.icon or "📦", 0, 50, packW, "center")
-
-            -- Pack Title
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(it.name or "Gói Bài", 4, 116, packW - 8, "center")
-
-            -- Subtitle
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(packColor)
-            love.graphics.printf(it.subtitle or "BOOSTER", 4, 138, packW - 8, "center")
 
             love.graphics.pop()
 
@@ -7339,6 +7355,7 @@ local function drawShopState()
         -- Card Body
         local dragImg = ((dItem.category == "deity" and dItem.deity) and UI.getDeityImage(dItem.deity.id))
                      or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
+                     or ((dItem.category == "pack" or dItem.section == "lower_pack") and UI.getPackImage(dItem.packType or dItem.id))
         if dragImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = dragImg:getDimensions()
@@ -7425,6 +7442,21 @@ local function drawShopState()
 
         love.graphics.setColor(0, 0, 0, 0.88)
         love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+
+        local packImg = UI.getPackImage(pack.packType or pack.id)
+        if packImg then
+            local pw, ph = 64, 84
+            local px = (V_WIDTH - pw) / 2
+            local py = 26
+            love.graphics.setColor(0, 0, 0, 0.5)
+            UI.drawRoundedRect("fill", px + 2, py + 4, pw, ph, 4)
+            love.graphics.setColor(1, 1, 1, 1)
+            local iw, ih = packImg:getDimensions()
+            love.graphics.draw(packImg, px, py, 0, pw / iw, ph / ih)
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.setLineWidth(1.5)
+            UI.drawRoundedRect("line", px, py, pw, ph, 4)
+        end
 
         love.graphics.setFont(UI.fonts.large)
         love.graphics.setColor(UI.COLORS.goldYellow)

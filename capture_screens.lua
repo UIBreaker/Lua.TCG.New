@@ -37,6 +37,10 @@ function Capture.update(gameRef, callbacks)
         saveImage("shot_collection_equipment.png")
 
     elseif frame == 8 then
+        if callbacks.openCollection then callbacks.openCollection("packs") end
+        saveImage("shot_collection_packs.png")
+
+    elseif frame == 9 then
         if callbacks.closeCollection then callbacks.closeCollection() end
         if callbacks.setMenuMode then callbacks.setMenuMode("deck_select") end
         saveImage("shot_menu.png")

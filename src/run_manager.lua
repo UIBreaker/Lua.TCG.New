@@ -443,7 +443,7 @@ RunManager.BOSS_DEBUFFS = {
     },
 }
 
-local BOSS_KEYS = {
+RunManager.BOSS_KEYS = {
     "lock_royals", "the_needle", "the_water", "the_fish", "the_arm", "the_hook", "max_3_cards"
 }
 
@@ -470,7 +470,7 @@ end
 
 -- Generate a random pact for small / big blind skip
 local function getRandomTag()
-    local pool = RunManager.PACTS or RunManager.TAGS
+    local pool = RunManager.SKIP_PACTS
     local idx = Rng.random(#pool)
     return pool[idx]
 end
@@ -484,7 +484,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
     local bossHp = RunManager.calculateBlindHp(a, "boss")
 
     -- Choose a Boss Debuff
-    local bKey = BOSS_KEYS[((a - 1) % #BOSS_KEYS) + 1]
+    local bKey = RunManager.BOSS_KEYS[((a - 1) % #RunManager.BOSS_KEYS) + 1]
     local bossDebuff = RunManager.BOSS_DEBUFFS[bKey] or RunManager.BOSS_DEBUFFS.the_needle
 
     local smallPact = getRandomTag()

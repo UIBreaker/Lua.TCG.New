@@ -1989,7 +1989,7 @@ do
     log("[PASS] 73. Starter hand size = 3 and selectable cards limit = 1 verified 100%")
 end
 
--- 74. Test "Mở Rộng Tay Bài" (Hand Expansion: $12 for 3->4, max 5)
+-- 74. Test "Mở Rộng Tay Bài" (không giới hạn, giá tăng dần)
 do
     local expansionItem = {
         category = "hand_expansion",
@@ -2010,13 +2010,24 @@ do
     assert(testGame.maxHandSize == 4, "maxHandSize must be upgraded to 4, got: " .. testGame.maxHandSize)
     assert(testGame.gold == 8, "Gold must be deducted by 12 (20 -> 8), got: " .. testGame.gold)
 
-    -- Try buying at cap (5)
-    testGame.maxHandSize = 5
+    -- Hand size can continue past the former cap of 5.
+    testGame.maxHandSize = 9
     testGame.gold = 50
-    table.insert(shop.items, expansionItem)
-    local okCap, capMsg = Shop.buyItem(shop, 1, testGame)
-    assert(okCap == false, "Hand expansion must be blocked at max 5 cards")
-    log("[PASS] 74. Mở Rộng Tay Bài shop item ($12 -> +1 Hand Size, capped at 5) verified 100%")
+    table.insert(shop.items, { category = "hand_expansion", name = "Mở Rộng Tay Bài", cost = 20 })
+    local okUnlimited = Shop.buyItem(shop, 1, testGame)
+    assert(okUnlimited == true, "Hand expansion must remain purchasable beyond 5 cards")
+    assert(testGame.maxHandSize == 10, "Hand size must expand from 9 to 10")
+
+    local refreshed = Shop.new()
+    Shop.refresh(refreshed, { maxHandSize = 9, unlockedHands = {}, deities = {} })
+    local foundExpansion = false
+    for _, item in ipairs(refreshed.items) do
+        if item.category == "hand_expansion" then
+            foundExpansion = item.cost == 48 and not string.find(item.subtitle, "MAX", 1, true)
+        end
+    end
+    assert(foundExpansion, "Shop must offer uncapped hand expansion with scaling cost at hand size 9")
+    log("[PASS] 74. Mở Rộng Tay Bài is uncapped and uses scaling cost verified 100%")
 end
 
 -- 75. Test Joker Editions (Foil, Holo, Polychrome, Negative)
@@ -2790,7 +2801,29 @@ do
     for _, j in ipairs(jokers) do jokerMap[j.id] = j end
     assert(#jokers == 9 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 9 Common spirits")
 
-    -- 4. Dynamic category badge synchronization
+    -- 4. Every shop pack and voucher must come from the same catalog as the Collection.
+    local packs = Collection.getItems("packs")
+    local packMap = {}
+    for _, pack in ipairs(packs) do packMap[pack.id] = pack end
+    assert(#packs == #Shop.PACK_CATALOG, "Collection pack count must match the live shop catalog")
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        assert(packMap["pack_" .. pack.packType] ~= nil, "Shop pack missing in Collection: " .. pack.packType)
+    end
+
+    local vouchers = Collection.getItems("vouchers")
+    local voucherMap = {}
+    for _, voucher in ipairs(vouchers) do voucherMap[voucher.id] = voucher end
+    for _, voucher in ipairs(Shop.VOUCHERS) do
+        assert(voucherMap[voucher.id] ~= nil, "Shop voucher missing in Collection: " .. voucher.id)
+    end
+
+    local pacts = Collection.getItems("tags")
+    assert(#pacts == #RunManager.SKIP_PACTS, "Collection must only list skip pacts that can appear in a run")
+
+    local blinds = Collection.getItems("blinds")
+    assert(#blinds == #RunManager.BOSS_KEYS + 2, "Collection must list exactly the active bosses plus Small and Big Blind")
+
+    -- 5. Dynamic category badge synchronization
     local cats = Collection.getCategories()
     for _, cat in ipairs(cats) do
         local count = #Collection.getItems(cat.id)
@@ -2878,6 +2911,62 @@ do
 
     log("[PASS] 101. Tích hợp trọn vẹn 9 Trang Bị Khảm Pixel Art (Gương Dị Chất, Mắt Đồng Chất, Ngọc Cấp Cứu, Nhẫn Liều Mạng, Xúc Tác Hư Không, Đá Tam Kích, Đá Thủ Thế, Đá Tiên Phong, Đồng Tiền Át) verified 100%")
 end
+
+-- 102. Test 7 Gói Bài (Booster Packs) Pixel Art Assets (SPM Pack, ITM Pack, Card Pack, Enchantment Pack, Seal Pack, Transformation Pack, Planet Pack)
+do
+    local Shop = require("src.shop")
+    local Collection = require("src.collection")
+    local expectedPacks = {
+        { id = "buffoon",        alias = "spm_pack",            name = "SPM Pack",            viName = "GÓI HỘ LINH" },
+        { id = "arcana",         alias = "itm_pack",            name = "ITM Pack",            viName = "GÓI TRANG BỊ" },
+        { id = "standard",       alias = "card_pack",           name = "Card Pack",           viName = "GÓI QUÂN BÀI" },
+        { id = "joker_edition",  alias = "enchantment_pack",    name = "Enchantment Pack",    viName = "GÓI PHÙ PHÉP HỘ LINH" },
+        { id = "seal",           alias = "seal_pack",           name = "Seal Pack",           viName = "GÓI CON DẤU" },
+        { id = "spectral",       alias = "transformation_pack", name = "Transformation Pack", viName = "GÓI BIẾN ĐỔI" },
+        { id = "celestial",      alias = "planet_pack",         name = "Planet Pack",         viName = "GÓI HÀNH TINH" },
+    }
+
+    assert(#Shop.PACK_CATALOG == 7, "Shop.PACK_CATALOG must contain exactly 7 pack types")
+
+    for _, entry in ipairs(expectedPacks) do
+        -- A. Registration in Shop.PACK_CATALOG
+        local foundInCatalog = false
+        for _, p in ipairs(Shop.PACK_CATALOG) do
+            if p.packType == entry.id then
+                foundInCatalog = true
+                assert(p.name == entry.viName, "Pack name mismatch for " .. entry.id)
+                break
+            end
+        end
+        assert(foundInCatalog, "Pack must exist in Shop.PACK_CATALOG: " .. entry.id)
+
+        -- B. Asset file existence and validity on disk (> 50KB)
+        local path1 = "assets/packs/pack_" .. entry.id .. ".png"
+        local path2 = "assets/packs/" .. entry.alias .. ".png"
+        for _, pth in ipairs({ path1, path2 }) do
+            local f = io.open(pth, "rb")
+            assert(f ~= nil, "Pack asset file must exist on disk: " .. pth)
+            local content = f:read("*a")
+            f:close()
+            assert(content and #content > 50000, "Pack asset must be valid image file (>50KB): " .. pth)
+        end
+
+        -- C. UI Image Loader invocation (by packType, pack_<id>, and alias)
+        local ok1, img1 = pcall(UI.getPackImage, entry.id)
+        assert(ok1, "UI.getPackImage must execute safely for " .. entry.id)
+        local ok2, img2 = pcall(UI.getPackImage, "pack_" .. entry.id)
+        assert(ok2, "UI.getPackImage must execute safely for pack_" .. entry.id)
+        local ok3, img3 = pcall(UI.getPackImage, entry.alias)
+        assert(ok3, "UI.getPackImage must execute safely for " .. entry.alias)
+    end
+
+    -- D. Collection items for "packs" category
+    local collItems = Collection.getItems("packs")
+    assert(#collItems == 7, "Collection 'packs' category must return exactly 7 pack items")
+
+    log("[PASS] 102. Tích hợp trọn vẹn 7 Gói Bài Pixel Art (SPM Pack, ITM Pack, Card Pack, Enchantment Pack, Seal Pack, Transformation Pack, Planet Pack) verified 100%")
+end
+
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end

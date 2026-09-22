@@ -2,7 +2,6 @@ local Deities = require("src.deities")
 local Equipment = require("src.equipment")
 local Deck = require("src.deck")
 local Shop = require("src.shop")
-local Monster = require("src.monster")
 local RunManager = require("src.run_manager")
 local Poker = require("src.poker")
 
@@ -117,26 +116,6 @@ local EDITIONS = {
     { id = "ed_poly", name = "Đa Sắc (Polychrome)", rarity = "Huyền Thoại", desc = "Hào quang ngũ sắc rực rỡ: Nhân x1.5 XMult trực tiếp vào điểm số cuối cùng!", icon = "🌈", color = { 0.95, 0.80, 0.20, 1 } },
 }
 
-local PACKS = {
-    { id = "pack_buffoon", name = "Gói Hộ Linh", cost = 4, rarity = "Đặc Quyền", desc = "Mở ra 2 Hộ Linh ngẫu nhiên. Chọn 1 để nhận!", icon = "🃏", color = { 0.90, 0.40, 0.20, 1 } },
-    { id = "pack_standard", name = "Gói Quân Binh (Standard Pack)", cost = 4, rarity = "Tiêu Chuẩn", desc = "Mở ra 3 quân bài ma thuật kèm cường hóa hoặc ấn bản. Chọn 1 lá thêm vào bộ bài!", icon = "🎴", color = { 0.25, 0.60, 0.90, 1 } },
-    { id = "pack_arcana", name = "Gói Trang Bị (Arcana Pack)", cost = 4, rarity = "Ma Pháp", desc = "Mở ra 3 Trang Bị Khảm Ngọc ngẫu nhiên. Chọn 1 bảo vật để khảm vào quân bài!", icon = "🔮", color = { 0.65, 0.35, 0.85, 1 } },
-    { id = "pack_celestial", name = "Gói Thiên Thể (Celestial Pack)", cost = 4, rarity = "Thần Thánh", desc = "Mở ra các hành tinh ban phước, tăng vĩnh viễn Chips và Mult cho một thế bài cụ thể!", icon = "🪐", color = { 0.20, 0.75, 0.75, 1 } },
-    { id = "pack_spectral", name = "Gói U Hồn (Spectral Pack)", cost = 6, rarity = "Cấm Kỵ", desc = "Mở ra các phép thuật biến dị cổ đại cực mạnh nhưng mang theo tác dụng phụ khó lường!", icon = "👻", color = { 0.85, 0.20, 0.40, 1 } },
-}
-
-local VOUCHERS = {
-    { id = "v_discount", name = "Thẻ Thành Viên (Overstock)", rarity = "Phiếu", cost = 10, desc = "Giảm vĩnh viễn -$2 giá gieo lại (Reroll) tại mọi Cửa Hàng suốt cả hành trình!", icon = "🎟️", color = { 0.35, 0.85, 0.55, 1 } },
-    { id = "v_interest", name = "Sổ Tiết Kiệm (Seed Money)", rarity = "Phiếu", cost = 10, desc = "Nâng trần mức lãi ngân khố sau mỗi trận từ +$5 lên tối đa +$10 mỗi ván (cần $50 để đạt tối đa)!", icon = "💰", color = { 0.95, 0.80, 0.25, 1 } },
-    { id = "v_hand_plus", name = "Bùa Hảo Thủ (Grabber)", rarity = "Phiếu", cost = 10, desc = "Tăng vĩnh viễn +1 Lượt Đánh bài (Max Hands) tối đa trong mọi trận chiến!", icon = "✋", color = { 0.85, 0.45, 0.95, 1 } },
-    { id = "v_discard_plus", name = "Túi Đổi Vận (Wasteful)", rarity = "Phiếu", cost = 10, desc = "Tăng vĩnh viễn +1 Lượt Đổi bài (Max Discards) tối đa trong mọi trận chiến!", icon = "🔄", color = { 0.40, 0.75, 0.95, 1 } },
-    { id = "v_crystal", name = "Kính Ma Thuật (Telescope)", rarity = "Phiếu", cost = 10, desc = "Gói Thiên Thể luôn chứa hành tinh nâng cấp cho tay bài bạn chơi nhiều nhất!", icon = "🔭", color = { 0.30, 0.85, 0.85, 1 } },
-    { id = "v_omen", name = "Chiêm Tinh Cổ (Omen Globe)", rarity = "Phiếu", cost = 10, desc = "Gói Trang Bị có tỷ lệ xuất hiện các cổ vật Huyền Thoại và Ấn Bản quý hiếm!", icon = "🔮", color = { 0.75, 0.40, 0.90, 1 } },
-    { id = "v_directors", name = "Lệnh Giám Khảo (Director's Cut)", rarity = "Phiếu", cost = 10, desc = "Cho phép Gieo Lại (Reroll) Boss Blind 1 lần mỗi Ante với giá $10!", icon = "🎬", color = { 0.95, 0.50, 0.20, 1 } },
-    { id = "v_glow", name = "Quang Diệu (Glow Up)", rarity = "Phiếu", cost = 10, desc = "Tăng gấp đôi tỷ lệ Hộ Linh có hiệu ứng Foil, Holo hoặc Polychrome!", icon = "✨", color = { 0.95, 0.85, 0.30, 1 } },
-    { id = "v_reroll_surplus", name = "Chợ Đen (Reroll Surplus)", rarity = "Phiếu", cost = 10, desc = "Giá khởi điểm gieo lại tại Cửa Hàng giảm xuống còn $3 (bình thường $5)!", icon = "🏷️", color = { 0.40, 0.90, 0.60, 1 } },
-}
-
 function Collection.getCategories()
     for _, cat in ipairs(Collection.CATEGORIES) do
         local count = #Collection.getItems(cat.id)
@@ -246,9 +225,31 @@ function Collection.getItems(category)
         })
 
     elseif category == "vouchers" then
-        for _, v in ipairs(VOUCHERS) do
-            table.insert(items, v)
+        for _, book in pairs(Poker.SKILL_BOOKS or {}) do
+            table.insert(items, {
+                id = "book_" .. book.handId,
+                name = book.name,
+                subtitle = "BÍ TỊCH TAY BÀI",
+                rarity = "Bí Tịch",
+                cost = 10,
+                desc = book.desc,
+                icon = "📜",
+                color = { 0.22, 0.72, 0.98, 1 },
+            })
         end
+        for _, voucher in ipairs(Shop.VOUCHERS or {}) do
+            table.insert(items, {
+                id = voucher.id,
+                name = voucher.name,
+                subtitle = "PHIẾU ĐẶC QUYỀN",
+                rarity = "Đặc Quyền",
+                cost = voucher.cost,
+                desc = voucher.desc,
+                icon = voucher.icon or "🎟️",
+                color = voucher.color,
+            })
+        end
+        table.sort(items, function(a, b) return a.name < b.name end)
 
     elseif category == "enhancements" then
         -- Harvest directly from Deck.ENHANCEMENTS
@@ -291,8 +292,18 @@ function Collection.getItems(category)
         end
 
     elseif category == "packs" then
-        for _, p in ipairs(PACKS) do
-            table.insert(items, p)
+        for _, pack in ipairs(Shop.PACK_CATALOG or {}) do
+            table.insert(items, {
+                id = "pack_" .. pack.packType,
+                packType = pack.packType,
+                name = pack.name,
+                subtitle = pack.subtitle,
+                rarity = pack.rarity or "Gói Bài",
+                cost = pack.cost,
+                desc = pack.desc,
+                icon = pack.icon,
+                color = pack.color,
+            })
         end
 
     elseif category == "tags" then
@@ -310,19 +321,6 @@ function Collection.getItems(category)
                 })
             end
         end
-        -- Include Legacy Skip Tags
-        for _, t in ipairs(RunManager.TAGS or {}) do
-            table.insert(items, {
-                id = t.id,
-                name = t.name,
-                subtitle = "NHÃN BỎ QUA",
-                rarity = "Thẻ Thưởng",
-                desc = t.desc,
-                icon = t.icon or "🏷️",
-                color = t.color or { 0.95, 0.82, 0.22, 1 },
-            })
-        end
-
     elseif category == "blinds" then
         -- Normal, Elite, and Bosses
         table.insert(items, {
@@ -344,17 +342,20 @@ function Collection.getItems(category)
             color = { 0.95, 0.55, 0.20, 1 },
         })
 
-        -- Active disruptive bosses
-        for id, b in pairs(Monster.DISRUPTIVE_BOSSES or {}) do
-            table.insert(items, {
-                id = b.id or id,
-                name = b.name,
-                subtitle = b.title or "BOSS DỊ BIẾN",
-                rarity = "Boss",
-                desc = b.desc or "Lời nguyền áp chế đặc biệt của Boss Blind. Không thể Bỏ Qua!",
-                icon = "💀",
-                color = b.color or { 0.95, 0.25, 0.25, 1 },
-            })
+        -- Only show bosses that the active 8-Ante run can actually generate.
+        for _, id in ipairs(RunManager.BOSS_KEYS or {}) do
+            local boss = RunManager.BOSS_DEBUFFS[id]
+            if boss then
+                table.insert(items, {
+                    id = boss.id or id,
+                    name = boss.name,
+                    subtitle = boss.title or "BOSS DỊ BIẾN",
+                    rarity = "Boss",
+                    desc = boss.desc or "Lời nguyền áp chế đặc biệt của Boss Blind. Không thể Bỏ Qua!",
+                    icon = "💀",
+                    color = boss.color or { 0.95, 0.25, 0.25, 1 },
+                })
+            end
         end
 
     elseif category == "other" then

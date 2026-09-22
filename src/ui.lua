@@ -1135,6 +1135,75 @@ function UI.getEquipmentImage(equipId)
     return nil
 end
 
+-- Cache and loader for authentic pack artwork
+UI.packImages = UI.packImages or {}
+
+local PACK_TYPE_MAP = {
+    buffoon = "pack_buffoon",
+    pack_buffoon = "pack_buffoon",
+    spm_pack = "pack_buffoon",
+    spm = "pack_buffoon",
+
+    arcana = "pack_arcana",
+    pack_arcana = "pack_arcana",
+    itm_pack = "pack_arcana",
+    itm = "pack_arcana",
+
+    standard = "pack_standard",
+    pack_standard = "pack_standard",
+    card_pack = "pack_standard",
+    card = "pack_standard",
+
+    joker_edition = "pack_joker_edition",
+    pack_joker_edition = "pack_joker_edition",
+    enchantment_pack = "pack_joker_edition",
+    enchantment = "pack_joker_edition",
+
+    seal = "pack_seal",
+    pack_seal = "pack_seal",
+    seal_pack = "pack_seal",
+
+    spectral = "pack_spectral",
+    pack_spectral = "pack_spectral",
+    transformation_pack = "pack_spectral",
+    transformation = "pack_spectral",
+
+    celestial = "pack_celestial",
+    pack_celestial = "pack_celestial",
+    planet_pack = "pack_celestial",
+    planet = "pack_celestial",
+}
+
+function UI.getPackImage(packId)
+    if not packId then return nil end
+    local mapped = PACK_TYPE_MAP[packId] or packId
+    if UI.packImages[mapped] ~= nil then
+        return UI.packImages[mapped] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local candidates = {
+            "assets/packs/" .. mapped .. ".png",
+            "assets/packs/" .. packId .. ".png",
+        }
+        for _, path in ipairs(candidates) do
+            local okInfo, info = pcall(love.filesystem.getInfo, path)
+            if okInfo and info then
+                local okImg, img = pcall(love.graphics.newImage, path)
+                if okImg and img then
+                    if img.setFilter then
+                        img:setFilter("nearest", "nearest")
+                    end
+                    UI.packImages[mapped] = img
+                    return img
+                end
+            end
+        end
+    end
+    UI.packImages[mapped] = false
+    return nil
+end
+
+
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
     if not d then return end

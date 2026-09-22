@@ -3066,6 +3066,66 @@ do
     log("[PASS] 104. Tích hợp trọn vẹn 9 Thẻ Bài Thế Đánh Pixel Art (Cửu Phẩm Võ Học) verified 100%")
 end
 
+-- ============================================================================
+-- 105. TÍCH HỢP THẺ BÀI MỞ RỘNG TAY BÀI (HAND EXPANSION VOUCHER) PIXEL ART VÀO GAME
+-- ============================================================================
+do
+    local Collection = require("src.collection")
+    local Shop = require("src.shop")
+
+    -- A. Verify primary file exists on disk and is valid PNG (>10KB)
+    local expectedFiles = {
+        "assets/vouchers/v_hand_size.png",
+        "assets/vouchers/hand_expansion.png",
+        "assets/vouchers/mo_rong_tay_bai.png",
+        "assets/hands/hand_expansion.png",
+        "assets/cards/hand_expansion.png",
+    }
+    for _, path in ipairs(expectedFiles) do
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "Voucher asset file must exist on disk: " .. path)
+        local content = f:read("*a")
+        f:close()
+        assert(content and #content > 10000, "Voucher asset file must be valid (>10KB): " .. path)
+    end
+
+    -- B. Verify UI Image Loader invocation (by ID, alias, and Vietnamese title)
+    local okId, imgId = pcall(UI.getVoucherImage, "v_hand_size")
+    assert(okId and imgId ~= nil, "UI.getVoucherImage must return image for v_hand_size")
+
+    local okAlias, imgAlias = pcall(UI.getVoucherImage, "hand_expansion")
+    assert(okAlias and imgAlias ~= nil, "UI.getVoucherImage must return image for hand_expansion")
+
+    local okVn, imgVn = pcall(UI.getVoucherImage, "Mở Rộng Tay Bài")
+    assert(okVn and imgVn ~= nil, "UI.getVoucherImage must return image for Vietnamese name")
+
+    -- C. Verify in Shop.VOUCHERS
+    local foundVoucher = false
+    for _, v in ipairs(Shop.VOUCHERS) do
+        if v.id == "v_hand_size" then
+            foundVoucher = true
+            assert(v.name == "Mở Rộng Tay Bài", "Voucher name must be 'Mở Rộng Tay Bài'")
+            break
+        end
+    end
+    assert(foundVoucher, "v_hand_size must exist in Shop.VOUCHERS catalog")
+
+    -- D. Verify in Collection 'vouchers' category
+    local vouchers = Collection.getItems("vouchers")
+    local foundCollVoucher = false
+    for _, item in ipairs(vouchers) do
+        if item.id == "v_hand_size" then
+            foundCollVoucher = true
+            local okCImg, cImg = pcall(UI.getVoucherImage, item.id)
+            assert(okCImg and cImg ~= nil, "Collection voucher item must resolve image via UI.getVoucherImage")
+            break
+        end
+    end
+    assert(foundCollVoucher, "v_hand_size must exist in Collection vouchers category")
+
+    log("[PASS] 105. Tích hợp trọn vẹn Thẻ Bài Mở Rộng Tay Bài Pixel Art (Voucher) verified 100%")
+end
+
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end

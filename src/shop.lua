@@ -110,6 +110,8 @@ function Shop.refresh(shop, gameState)
     local curHandSize = (gameState and gameState.maxHandSize) or 3
     local expandCost = 12 + math.max(0, curHandSize - 3) * 6
     table.insert(shop.items, {
+        id = "hand_expansion",
+        voucherId = "v_hand_size",
         section = "upper",
         category = "hand_expansion",
         name = "Mở Rộng Tay Bài",

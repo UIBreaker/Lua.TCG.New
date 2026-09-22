@@ -1312,6 +1312,47 @@ function UI.getHandImage(handId)
     return nil
 end
 
+-- Cache and loader for authentic voucher / hand expansion artwork
+UI.voucherImages = UI.voucherImages or {}
+
+local VOUCHER_ALIAS_MAP = {
+    v_hand_size = "v_hand_size",
+    hand_expansion = "v_hand_size",
+    mo_rong_tay_bai = "v_hand_size",
+    ["Mở Rộng Tay Bài"] = "v_hand_size",
+}
+
+function UI.getVoucherImage(voucherId)
+    if not voucherId then return nil end
+    local mapped = VOUCHER_ALIAS_MAP[voucherId] or voucherId
+    if UI.voucherImages[mapped] ~= nil then
+        return UI.voucherImages[mapped] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local candidates = {
+            "assets/vouchers/" .. mapped .. ".png",
+            "assets/vouchers/" .. voucherId .. ".png",
+            "assets/hands/" .. mapped .. ".png",
+            "assets/cards/" .. mapped .. ".png",
+        }
+        for _, path in ipairs(candidates) do
+            local okInfo, info = pcall(love.filesystem.getInfo, path)
+            if okInfo and info then
+                local okImg, img = pcall(love.graphics.newImage, path)
+                if okImg and img then
+                    if img.setFilter then
+                        img:setFilter("nearest", "nearest")
+                    end
+                    UI.voucherImages[mapped] = img
+                    return img
+                end
+            end
+        end
+    end
+    UI.voucherImages[mapped] = false
+    return nil
+end
+
 -- Cache and loader for authentic playing card artwork (52 cards)
 UI.cardImages = UI.cardImages or {}
 

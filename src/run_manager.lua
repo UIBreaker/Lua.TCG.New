@@ -418,7 +418,7 @@ RunManager.BOSS_DEBUFFS = {
         debuffId = "the_arm",
         name = "CỰ MA BÀN TAY",
         title = "TRÙM: THE ARM",
-        desc = "Bàn Tay Suy Đồi: Mỗi lượt đánh, các lá bài tính điểm bị suy đồi giảm vĩnh viễn 1 Rank!",
+        desc = "Bàn Tay Suy Đồi: Mỗi lượt đánh, các lá bài tạo Aura bị suy đồi giảm vĩnh viễn 1 Rank!",
         color = { 0.5, 0.8, 0.3, 1 },
     },
     the_hook = {

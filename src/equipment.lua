@@ -59,7 +59,7 @@ Equipment.ITEMS = {
         id = "lucky_coin", name = "Đồng Tiền Át", icon = "💰",
         rarity = "uncommon", cost = 5, slotsNeeded = 1,
         color = { 1.00, 0.85, 0.20, 1 },
-        desc = "Nhận +$2 Vàng khi lá A này ghi điểm",
+        desc = "Nhận +$2 Vàng khi lá A này tạo Aura",
         onCardScore = function(card)
             if card and card.rank == 14 then
                 return { addGold = 2, message = "+$2 Vàng (Đồng Tiền Át)" }
@@ -102,7 +102,7 @@ Equipment.ITEMS = {
         id = "void_catalyst", name = "Xúc Tác Hư Không", icon = "🌌",
         rarity = "legendary", cost = 8, slotsNeeded = 2,
         color = { 0.85, 0.35, 0.95, 1 },
-        desc = "Tốn 2 hốc: +30 Chips và +10 Mult khi lá ghi điểm",
+        desc = "Tốn 2 hốc: +30 Chips và +10 Mult khi lá tạo Aura",
         onCardScore = function()
             return { addChips = 30, addMult = 10, message = "+30 Chips, +10 Mult (Xúc Tác Hư Không)" }
         end,

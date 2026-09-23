@@ -111,7 +111,7 @@ function RewardSystem.newAnimation(breakdown)
         local bTitle = breakdown.blind and breakdown.blind.title or "ẢI CHIẾN THẮNG"
         table.insert(lines, {
             label = "1. THƯỞNG CƠ BẢN (" .. bTitle .. ")",
-            desc = "Hoàn thành mục tiêu điểm của Blind",
+            desc = "Hoàn thành mục tiêu Aura của Blind",
             valText = "+$" .. breakdown.basePayout,
             valNum = breakdown.basePayout,
             icon = "🏆",

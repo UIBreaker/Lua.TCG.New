@@ -2962,7 +2962,20 @@ do
 
     -- D. Collection items for "packs" category
     local collItems = Collection.getItems("packs")
-    assert(#collItems == 7, "Collection 'packs' category must return exactly 7 pack items")
+    local coverCount, contentCount = 0, 0
+    for _, item in ipairs(collItems) do
+        if item.isPackContent then contentCount = contentCount + 1 else coverCount = coverCount + 1 end
+    end
+    assert(coverCount == 7, "Collection 'packs' category must retain exactly 7 pack covers")
+    assert(contentCount > 0, "Collection 'packs' category must list every possible pack reward")
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        local expected = Shop.getPackContents(pack.packType)
+        local shown = 0
+        for _, item in ipairs(collItems) do
+            if item.isPackContent and item.sourcePackType == pack.packType then shown = shown + 1 end
+        end
+        assert(shown == #expected, "Collection must show all rewards for pack: " .. pack.packType)
+    end
 
     log("[PASS] 102. Tích hợp trọn vẹn 7 Gói Bài Pixel Art (SPM Pack, ITM Pack, Card Pack, Enchantment Pack, Seal Pack, Transformation Pack, Planet Pack) verified 100%")
 end
@@ -3067,7 +3080,7 @@ do
 end
 
 -- ============================================================================
--- 105. TÍCH HỢP THẺ BÀI MỞ RỘNG TAY BÀI (HAND EXPANSION VOUCHER) PIXEL ART VÀO GAME
+-- 105. MỞ RỘNG TAY BÀI LÀ VẬT PHẨM SHOP RIÊNG, KHÔNG PHẢI PHIẾU
 -- ============================================================================
 do
     local Collection = require("src.collection")
@@ -3099,7 +3112,7 @@ do
     local okVn, imgVn = pcall(UI.getVoucherImage, "Mở Rộng Tay Bài")
     assert(okVn and imgVn ~= nil, "UI.getVoucherImage must return image for Vietnamese name")
 
-    -- C. Verify in Shop.VOUCHERS
+    -- C. Exactly three permanent vouchers; hand expansion is intentionally separate.
     local foundVoucher = false
     for _, v in ipairs(Shop.VOUCHERS) do
         if v.id == "v_hand_size" then
@@ -3108,7 +3121,8 @@ do
             break
         end
     end
-    assert(foundVoucher, "v_hand_size must exist in Shop.VOUCHERS catalog")
+    assert(not foundVoucher, "v_hand_size must not be mixed into Shop.VOUCHERS")
+    assert(#Shop.VOUCHERS == 3, "Shop must expose exactly Bùa Hảo Thủ, Sổ Tiết Kiệm and Thẻ Thành Viên")
 
     -- D. Verify in Collection 'vouchers' category
     local vouchers = Collection.getItems("vouchers")
@@ -3121,9 +3135,10 @@ do
             break
         end
     end
-    assert(foundCollVoucher, "v_hand_size must exist in Collection vouchers category")
+    assert(not foundCollVoucher, "Hand expansion must not appear in Collection vouchers category")
+    assert(#vouchers == 3, "Collection vouchers must contain exactly the three permanent vouchers")
 
-    log("[PASS] 105. Tích hợp trọn vẹn Thẻ Bài Mở Rộng Tay Bài Pixel Art (Voucher) verified 100%")
+    log("[PASS] 105. Hand expansion remains a separate shop upgrade and vouchers are exactly 3")
 end
 
 -- 106. Every booster reward resolves artwork and carries opening animation state.

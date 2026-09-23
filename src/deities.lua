@@ -17,13 +17,13 @@ Deities.CATALOG = {
     },
     spirit_blade = {
         id = "spirit_blade", name = "Bonk Cheems", rarity = "common", cost = 4,
-        desc = "Mỗi lá ghi điểm nhận +8 Chips",
-        lore = "Mỗi lá ghi điểm được Bonk thêm một phát.",
+        desc = "Mỗi lá tạo Aura nhận +8 Chips",
+        lore = "Mỗi lá tạo Aura được Bonk thêm một phát.",
         onCardScored = function() return { addChips = 8, message = "+8 Chips" } end,
     },
     spirit_drum = {
         id = "spirit_drum", name = "Bongo Cat", rarity = "common", cost = 4,
-        desc = "Mỗi lá ghi điểm nhận +1 Mult",
+        desc = "Mỗi lá tạo Aura nhận +1 Mult",
         lore = "Mỗi lá chạm bàn là thêm một nhịp Mult.",
         onCardScored = function() return { addMult = 1, message = "+1 Mult" } end,
     },
@@ -59,7 +59,7 @@ Deities.CATALOG = {
     },
     spirit_crown = {
         id = "spirit_crown", name = "Gigachad", rarity = "common", cost = 4,
-        desc = "Mỗi lá J, Q hoặc K ghi điểm nhận +15 Chips",
+        desc = "Mỗi lá J, Q hoặc K tạo Aura nhận +15 Chips",
         lore = "Chỉ J, Q, K mới đủ góc hàm để nhận thêm Chips.",
         onCardScored = function(card)
             if card and card.rank and card.rank >= 11 and card.rank <= 13 then

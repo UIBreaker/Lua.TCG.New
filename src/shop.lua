@@ -13,7 +13,6 @@ Shop.VOUCHERS = {
     { id = "v_discount", name = "Thẻ Thành Viên", desc = "Giảm vĩnh viễn -$2 giá gieo lại tại mọi Cửa Hàng!", cost = 10, color = { 0.35, 0.85, 0.55, 1 }, icon = "🎟️" },
     { id = "v_interest", name = "Sổ Tiết Kiệm", desc = "Nâng trần lãi ngân khố từ +$5 lên tối đa +$10 mỗi ván!", cost = 10, color = { 0.95, 0.80, 0.25, 1 }, icon = "💰" },
     { id = "v_hand_plus", name = "Bùa Hảo Thủ", desc = "Tăng vĩnh viễn +1 lượt đánh mỗi trận!", cost = 10, color = { 0.85, 0.45, 0.95, 1 }, icon = "✋" },
-    { id = "v_hand_size", name = "Mở Rộng Tay Bài", desc = "Tăng vĩnh viễn +1 kích thước tay bài, không giới hạn!", cost = 8, color = { 0.85, 0.45, 0.95, 1 }, icon = "🎴" },
 }
 
 Shop.PACK_CATALOG = {
@@ -25,6 +24,83 @@ Shop.PACK_CATALOG = {
     { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
     { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
 }
+
+-- Canonical pack reward catalogs. Both the shop and the collection read these
+-- tables so a reward can never be sold without also being documented.
+Shop.JOKER_SPELLS = {
+    { id = "spell_aura", name = "Aura", subtitle = "HÀO QUANG", desc = "Thêm Foil (+50c), Holo (+10m), hoặc Polychrome (x1.5m) cho 1 Hộ Linh ngẫu nhiên!", icon = "✨", color = { 0.95, 0.85, 0.35, 1 } },
+    { id = "spell_ectoplasm", name = "Ectoplasm", subtitle = "NGOẠI CHẤT", desc = "Thêm Negative (+1 ô Hộ Linh) cho 1 Hộ Linh ngẫu nhiên, đổi lại giảm -1 kích thước tay bài!", icon = "👻", color = { 0.35, 0.85, 0.55, 1 } },
+    { id = "spell_ankh", name = "Ankh", subtitle = "THÁNH GIÁ", desc = "Sao chép 1 Hộ Linh ngẫu nhiên và hủy toàn bộ Hộ Linh còn lại!", icon = "☥", color = { 0.95, 0.75, 0.25, 1 } },
+    { id = "spell_hex", name = "Hex", subtitle = "LỜI NGUYỀN", desc = "Thêm Polychrome (x1.5 Mult) cho 1 Hộ Linh ngẫu nhiên và hủy toàn bộ Hộ Linh còn lại!", icon = "🔮", color = { 0.85, 0.25, 0.45, 1 } },
+}
+
+Shop.SEAL_CARDS = {
+    { id = "seal_blood", sealType = "seal_blood", sealName = "Ấn Huyết", name = "Ấn Huyết (Blood)", subtitle = "ẤN HUYẾT", desc = "+50% Sát thương khi máu người chơi < 50%!", icon = "🩸", color = { 0.90, 0.15, 0.15, 1 } },
+    { id = "seal_prophecy", sealType = "seal_prophecy", sealName = "Ấn Tiên Tri", name = "Ấn Tiên Tri (Prophecy)", subtitle = "ẤN TIÊN TRI", desc = "Khi tạo Aura, nhìn thấy Intent tiếp theo của Boss!", icon = "🔮", color = { 0.30, 0.60, 0.95, 1 } },
+    { id = "seal_ashen", sealType = "seal_ashen", sealName = "Ấn Tro Tàn", name = "Ấn Tro Tàn (Ashen)", subtitle = "ẤN TRO TÀN", desc = "Tự thiêu hủy lá này sau khi đánh, gây 40 Sát thương Chuẩn vào Quái!", icon = "🔥", color = { 0.60, 0.55, 0.50, 1 } },
+    { id = "seal_bounty", sealType = "seal_bounty", sealName = "Ấn Truy Nã", name = "Ấn Truy Nã (Bounty)", subtitle = "ẤN TRUY NÃ", desc = "Nếu lá này kết liễu Quái, thưởng ngay +$2 Vàng!", icon = "💰", color = { 0.95, 0.80, 0.25, 1 } },
+    { id = "seal_anchor", sealType = "seal_anchor", sealName = "Ấn Neo", name = "Ấn Neo (Anchor)", subtitle = "ẤN NEO", desc = "Lá này luôn nằm trên tay khi bắt đầu lượt (không bị xáo vào cọc)!", icon = "⚓", color = { 0.20, 0.70, 0.60, 1 } },
+    { id = "seal_purifying", sealType = "seal_purifying", sealName = "Ấn Thanh Tẩy", name = "Ấn Thanh Tẩy (Purifying)", subtitle = "ẤN THANH TẨY", desc = "Xóa bỏ 1 trạng thái bất lợi trên bản thân khi kích hoạt!", icon = "✨", color = { 0.85, 0.85, 0.95, 1 } },
+}
+
+Shop.SPECTRAL_CARDS = {
+    { id = "spec_familiar", name = "Familiar", subtitle = "LINH THÚ", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị vào bộ bài!", icon = "🦉", color = { 0.65, 0.45, 0.85, 1 } },
+    { id = "spec_grim", name = "Grim", subtitle = "TỬ THẦN", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 2 lá Át (A) có trang bị vào bộ bài!", icon = "💀", color = { 0.85, 0.30, 0.40, 1 } },
+    { id = "spec_incantation", name = "Incantation", subtitle = "CHÚ THUẬT", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 4 lá Quân Số (2-10) có trang bị vào bộ bài!", icon = "🕯️", color = { 0.95, 0.60, 0.30, 1 } },
+    { id = "spec_cryptid", name = "Cryptid", subtitle = "DỊ THỂ", desc = "Nhân bản 1 lá bài đã chọn trên tay thành 2 bản sao y hệt!", icon = "👥", color = { 0.40, 0.75, 0.95, 1 } },
+    { id = "spec_immolate", name = "Immolate", subtitle = "THIÊU RỤI", desc = "Hủy tối đa 5 lá ngẫu nhiên trên tay, lập tức nhận +$20 Tiền Vàng!", icon = "🔥", color = { 0.95, 0.40, 0.20, 1 } },
+    { id = "spec_sigil", name = "Sigil", subtitle = "ẤN KÝ", desc = "Biến đổi toàn bộ lá trên tay thành cùng 1 chất ngẫu nhiên!", icon = "🔯", color = { 0.50, 0.85, 0.65, 1 } },
+    { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi toàn bộ lá trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm -1 kích thước tay bài!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
+    { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tăng Cấp Độ của TẤT CẢ Thế Đánh lên +1!", icon = "🕳️", color = { 0.30, 0.30, 0.45, 1 } },
+}
+
+Shop.STANDARD_CARDS = {}
+for _, suit in ipairs({ "hearts", "diamonds", "clubs", "spades" }) do
+    local suitInfo = Deck.SUITS[suit]
+    for rank = 2, 14 do
+        Shop.STANDARD_CARDS[#Shop.STANDARD_CARDS + 1] = {
+            id = "standard_" .. suit .. "_" .. rank,
+            name = (Deck.RANK_NAMES[rank] or tostring(rank)) .. (suitInfo.symbol or ""),
+            rank = rank,
+            rankName = Deck.RANK_NAMES[rank] or tostring(rank),
+            suit = suitInfo.id,
+            suitSymbol = suitInfo.symbol,
+            color = suitInfo.color,
+            baseChips = Deck.getChipValue(rank),
+            desc = "Quân bài " .. (Deck.RANK_NAMES[rank] or tostring(rank)) .. (suitInfo.symbol or "") .. " có thể xuất hiện với một Cường Hóa.",
+        }
+    end
+end
+
+local function copyList(source)
+    local result = {}
+    for _, item in ipairs(source or {}) do result[#result + 1] = item end
+    return result
+end
+
+function Shop.getPackContents(packType)
+    if packType == "buffoon" then
+        local result = {}
+        for _, deity in pairs(Deities.CATALOG or {}) do result[#result + 1] = deity end
+        table.sort(result, function(a, b) return a.name < b.name end)
+        return result
+    elseif packType == "arcana" then
+        local result = {}
+        for _, id in ipairs(Equipment.POOL or {}) do result[#result + 1] = Equipment.ITEMS[id] end
+        return result
+    elseif packType == "standard" then
+        return copyList(Shop.STANDARD_CARDS)
+    elseif packType == "joker_edition" then
+        return copyList(Shop.JOKER_SPELLS)
+    elseif packType == "seal" then
+        return copyList(Shop.SEAL_CARDS)
+    elseif packType == "spectral" then
+        return copyList(Shop.SPECTRAL_CARDS)
+    elseif packType == "celestial" then
+        return copyList(Poker.PLANET_CARDS)
+    end
+    return {}
+end
 
 function Shop.new()
     return {
@@ -351,40 +427,7 @@ function Shop.openPack(packItem, gameState)
         end
 
     elseif packItem.packType == "joker_edition" then
-        local spells = {
-            {
-                id = "spell_aura",
-                name = "Aura",
-                subtitle = "HÀO QUANG",
-                desc = "Thêm Foil (+50c), Holo (+10m), hoặc Polychrome (x1.5m) cho 1 Thần ngẫu nhiên!",
-                icon = "✨",
-                color = { 0.95, 0.85, 0.35, 1 },
-            },
-            {
-                id = "spell_ectoplasm",
-                name = "Ectoplasm",
-                subtitle = "NGOẠI CHẤT",
-                desc = "Thêm Negative (+1 Slot Thần) cho 1 Thần ngẫu nhiên, đổi lại giảm -1 Hand Size!",
-                icon = "👻",
-                color = { 0.35, 0.85, 0.55, 1 },
-            },
-            {
-                id = "spell_ankh",
-                name = "Ankh",
-                subtitle = "THÁNH GIÁ",
-                desc = "Sao chép 1 Thần ngẫu nhiên và hủy diệt toàn bộ các Thần còn lại!",
-                icon = "☥",
-                color = { 0.95, 0.75, 0.25, 1 },
-            },
-            {
-                id = "spell_hex",
-                name = "Hex",
-                subtitle = "LỜI NGUYỀN",
-                desc = "Thêm Polychrome (x1.5 Mult) cho 1 Thần ngẫu nhiên và hủy diệt toàn bộ các Thần còn lại!",
-                icon = "🔮",
-                color = { 0.85, 0.25, 0.45, 1 },
-            },
-        }
+        local spells = copyList(Shop.JOKER_SPELLS)
         for i = #spells, 2, -1 do
             local j = Rng.random(i)
             spells[i], spells[j] = spells[j], spells[i]
@@ -392,68 +435,7 @@ function Shop.openPack(packItem, gameState)
         for i = 1, 3 do table.insert(candidates, spells[i]) end
 
     elseif packItem.packType == "seal" then
-        local seals = {
-            {
-                id = "seal_blood",
-                sealType = "seal_blood",
-                sealName = "Ấn Huyết",
-                name = "Ấn Huyết (Blood)",
-                subtitle = "ẤN HUYẾT",
-                desc = "+50% Sát thương khi máu người chơi < 50%!",
-                icon = "🩸",
-                color = { 0.90, 0.15, 0.15, 1 },
-            },
-            {
-                id = "seal_prophecy",
-                sealType = "seal_prophecy",
-                sealName = "Ấn Tiên Tri",
-                name = "Ấn Tiên Tri (Prophecy)",
-                subtitle = "ẤN TIÊN TRI",
-                desc = "Khi ghi điểm, nhìn thấy Intent tiếp theo của Boss!",
-                icon = "🔮",
-                color = { 0.30, 0.60, 0.95, 1 },
-            },
-            {
-                id = "seal_ashen",
-                sealType = "seal_ashen",
-                sealName = "Ấn Tro Tàn",
-                name = "Ấn Tro Tàn (Ashen)",
-                subtitle = "ẤN TRO TÀN",
-                desc = "Tự thiêu hủy lá này sau khi đánh, gây 40 Sát thương Chuẩn vào Quái!",
-                icon = "🔥",
-                color = { 0.60, 0.55, 0.50, 1 },
-            },
-            {
-                id = "seal_bounty",
-                sealType = "seal_bounty",
-                sealName = "Ấn Truy Nã",
-                name = "Ấn Truy Nã (Bounty)",
-                subtitle = "ẤN TRUY NÃ",
-                desc = "Nếu lá này kết liễu Quái, thưởng ngay +$2 Vàng!",
-                icon = "💰",
-                color = { 0.95, 0.80, 0.25, 1 },
-            },
-            {
-                id = "seal_anchor",
-                sealType = "seal_anchor",
-                sealName = "Ấn Neo",
-                name = "Ấn Neo (Anchor)",
-                subtitle = "ẤN NEO",
-                desc = "Lá này luôn nằm trên tay khi bắt đầu lượt (không bị xáo vào cọc)!",
-                icon = "⚓",
-                color = { 0.20, 0.70, 0.60, 1 },
-            },
-            {
-                id = "seal_purifying",
-                sealType = "seal_purifying",
-                sealName = "Ấn Thanh Tẩy",
-                name = "Ấn Thanh Tẩy (Purifying)",
-                subtitle = "ẤN THANH TẨY",
-                desc = "Xóa bỏ 1 trạng thái bất lợi (debuff) trên bản thân khi kích hoạt!",
-                icon = "✨",
-                color = { 0.85, 0.85, 0.95, 1 },
-            },
-        }
+        local seals = copyList(Shop.SEAL_CARDS)
         for i = #seals, 2, -1 do
             local j = Rng.random(i)
             seals[i], seals[j] = seals[j], seals[i]
@@ -461,16 +443,7 @@ function Shop.openPack(packItem, gameState)
         for i = 1, 3 do table.insert(candidates, seals[i]) end
 
     elseif packItem.packType == "spectral" then
-        local spectrals = {
-            { id = "spec_familiar", name = "Familiar", subtitle = "LINH THÚ", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị vào bộ bài!", icon = "🦉", color = { 0.65, 0.45, 0.85, 1 } },
-            { id = "spec_grim", name = "Grim", subtitle = "TỬ THẦN", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 2 lá Át (A) có trang bị vào bộ bài!", icon = "💀", color = { 0.85, 0.30, 0.40, 1 } },
-            { id = "spec_incantation", name = "Incantation", subtitle = "CHÚ THUẬT", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 4 lá Quân Số (2-10) có trang bị vào bộ bài!", icon = "🕯️", color = { 0.95, 0.60, 0.30, 1 } },
-            { id = "spec_cryptid", name = "Cryptid", subtitle = "DỊ THỂ", desc = "Nhân bản 1 lá bài đã chọn trên tay thành 2 bản sao y hệt!", icon = "👥", color = { 0.40, 0.75, 0.95, 1 } },
-            { id = "spec_immolate", name = "Immolate", subtitle = "THIÊU RỤI", desc = "Hủy diệt tối đa 5 lá bài ngẫu nhiên trên tay, lập tức nhận +$20 Tiền Vàng!", icon = "🔥", color = { 0.95, 0.40, 0.20, 1 } },
-            { id = "spec_sigil", name = "Sigil", subtitle = "ẤN KÝ", desc = "Biến đổi toàn bộ các lá bài trên tay thành cùng 1 chất ngẫu nhiên (♠, ♥, ♦, ♣)!", icon = "🔯", color = { 0.50, 0.85, 0.65, 1 } },
-            { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi toàn bộ các lá bài trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm -1 Hand Size!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
-            { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tăng Cấp Độ của TẤT CẢ các thế bài Poker lên +1 Cấp (Level)!", icon = "🕳️", color = { 0.30, 0.30, 0.45, 1 } },
-        }
+        local spectrals = copyList(Shop.SPECTRAL_CARDS)
         for i = #spectrals, 2, -1 do
             local j = Rng.random(i)
             spectrals[i], spectrals[j] = spectrals[j], spectrals[i]

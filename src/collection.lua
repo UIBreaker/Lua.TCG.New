@@ -29,10 +29,10 @@ Collection.CATEGORIES = {
     {
         id = "vouchers",
         title = "Phiếu",
-        sub = "Bí Tịch & Đặc Quyền",
+        sub = "3 Phiếu Đặc Quyền",
         col = "left",
         btnColor = { 0.92, 0.28, 0.22, 1 },
-        badge = "9",
+        badge = "3",
         alert = true,
     },
     {
@@ -74,7 +74,7 @@ Collection.CATEGORIES = {
     {
         id = "packs",
         title = "Gói Bài",
-        sub = "Gói Thẻ Cửa Hàng",
+        sub = "Gói & Toàn Bộ Nội Dung",
         col = "right",
         btnColor = { 0.92, 0.28, 0.22, 1 },
         badge = "5",
@@ -113,7 +113,7 @@ local EDITIONS = {
     { id = "ed_base", name = "Ấn Bản Chuẩn (Standard)", rarity = "Cơ Bản", desc = "Lá bài gốc nguyên bản không mang lớp phủ quang học ma thuật.", icon = "🃏", color = { 0.70, 0.70, 0.70, 1 } },
     { id = "ed_foil", name = "Mạ Bạc (Foil)", rarity = "Đặc Biệt", desc = "Phủ một lớp kim loại bạc lấp lánh: Tặng thêm +50 Chips cố định mỗi khi kích hoạt!", icon = "✨", color = { 0.35, 0.75, 0.95, 1 } },
     { id = "ed_holo", name = "Quang Phổ (Holographic)", rarity = "Hiếm", desc = "Phản chiếu 7 sắc cầu vồng: Tặng thêm +10 Mult cho tổng điểm tay bài khi kích hoạt!", icon = "🌟", color = { 0.85, 0.35, 0.85, 1 } },
-    { id = "ed_poly", name = "Đa Sắc (Polychrome)", rarity = "Huyền Thoại", desc = "Hào quang ngũ sắc rực rỡ: Nhân x1.5 XMult trực tiếp vào điểm số cuối cùng!", icon = "🌈", color = { 0.95, 0.80, 0.20, 1 } },
+    { id = "ed_poly", name = "Đa Sắc (Polychrome)", rarity = "Huyền Thoại", desc = "Hào quang ngũ sắc rực rỡ: Nhân x1.5 XMult trực tiếp vào Aura cuối cùng!", icon = "🌈", color = { 0.95, 0.80, 0.20, 1 } },
 }
 
 function Collection.getCategories()
@@ -225,18 +225,6 @@ function Collection.getItems(category)
         })
 
     elseif category == "vouchers" then
-        for _, book in pairs(Poker.SKILL_BOOKS or {}) do
-            table.insert(items, {
-                id = "book_" .. book.handId,
-                name = book.name,
-                subtitle = "BÍ TỊCH TAY BÀI",
-                rarity = "Bí Tịch",
-                cost = 10,
-                desc = book.desc,
-                icon = "📜",
-                color = { 0.22, 0.72, 0.98, 1 },
-            })
-        end
         for _, voucher in ipairs(Shop.VOUCHERS or {}) do
             table.insert(items, {
                 id = voucher.id,
@@ -304,6 +292,22 @@ function Collection.getItems(category)
                 icon = pack.icon,
                 color = pack.color,
             })
+            for index, reward in ipairs(Shop.getPackContents(pack.packType)) do
+                local item = {}
+                for key, value in pairs(reward) do item[key] = value end
+                item.id = "pack_content_" .. pack.packType .. "_" .. tostring(reward.id or (reward.suit or "item") .. "_" .. (reward.rank or index))
+                item.packType = pack.packType
+                item.sourcePackType = pack.packType
+                item.isPackContent = true
+                item.name = reward.name or ((reward.rankName or tostring(reward.rank or "?")) .. (reward.suitSymbol or ""))
+                item.subtitle = pack.name .. " • NỘI DUNG CÓ THỂ NHẬN"
+                item.rarity = reward.rarity or pack.rarity or "Nội Dung Gói"
+                item.desc = (reward.desc or "Quân bài có thể xuất hiện khi mở gói.") .. "\n\nNguồn: " .. pack.name
+                item.icon = reward.icon or pack.icon
+                item.color = reward.color or pack.color
+                item.cost = nil
+                table.insert(items, item)
+            end
         end
 
     elseif category == "tags" then
@@ -328,7 +332,7 @@ function Collection.getItems(category)
             name = "Small Blind (Cược Nhỏ)",
             subtitle = "VÒNG ĐẤU CƠ BẢN",
             rarity = "Tiêu Chuẩn",
-            desc = "Mục tiêu điểm chuẩn theo Ante hiện tại. Có thể Bỏ Qua để nhận Thẻ Thưởng Skip Tag!",
+            desc = "Mục tiêu Aura chuẩn theo Ante hiện tại. Có thể Bỏ Qua để nhận Thẻ Thưởng Skip Tag!",
             icon = "🔷",
             color = { 0.35, 0.65, 0.95, 1 },
         })
@@ -337,7 +341,7 @@ function Collection.getItems(category)
             name = "Big Blind (Cược Lớn)",
             subtitle = "VÒNG ĐẤU THỬ THÁCH",
             rarity = "Thử Thách",
-            desc = "Mục tiêu 1.5x điểm. Thưởng nhiều Vàng hơn và có thể Bỏ Qua nhận Thẻ Thưởng quý!",
+            desc = "Mục tiêu 1.5x Aura. Thưởng nhiều Vàng hơn và có thể Bỏ Qua nhận Thẻ Thưởng quý!",
             icon = "🔶",
             color = { 0.95, 0.55, 0.20, 1 },
         })
@@ -367,7 +371,7 @@ function Collection.getItems(category)
                 name = h.vnName or h.name,
                 subtitle = "THẾ ĐÁNH • " .. string.upper(h.name),
                 rarity = "Bí Tịch Cửu Phẩm",
-                desc = "Điểm cơ sở: " .. h.baseChips .. " Chips × " .. h.baseMult .. " Mult.\nTổ hợp yêu cầu: " .. (h.subtitle or h.name) .. " (" .. (h.requiredCards or 1) .. " lá).\nNâng cấp cấp độ vĩnh viễn thông qua các Thẻ Hành Tinh tương ứng!",
+                desc = "Aura cơ sở: " .. h.baseChips .. " Chips × " .. h.baseMult .. " Mult.\nTổ hợp yêu cầu: " .. (h.subtitle or h.name) .. " (" .. (h.requiredCards or 1) .. " lá).\nNâng cấp cấp độ vĩnh viễn thông qua các Thẻ Hành Tinh tương ứng!",
                 icon = "🎴",
                 color = { 0.40, 0.75, 0.95, 1 },
             })

@@ -94,6 +94,7 @@ local isShopTransferOpen = false
 local transferSourceCard = nil
 local transferSourceEqIndex = nil
 local transferMessage = nil
+local transferPage = 1
 
 -- Rest Site & Forge State
 local restStateData = {
@@ -192,6 +193,7 @@ end
 
 local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c then
+        cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
         love.graphics.setColor(0.12, 0.16, 0.22, 0.95)
         UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
@@ -457,25 +459,32 @@ local function drawRealisticFireParticles()
     love.graphics.setBlendMode("add")
     for _, p in ipairs(anim.fireParticles) do
         local progress = p.life / p.maxLife
-        local curAlpha = math.max(0, progress * (p.alpha or 0.85))
-        local curSize = p.size * (0.3 + 0.7 * progress)
+        local fadeIn = math.min(1, (p.age or 0) * 10)
+        local curAlpha = math.max(0, progress * fadeIn * (p.alpha or 0.85))
+        local curSize = p.size * (0.35 + 0.65 * progress)
 
         if p.pType == "ember" then
-            -- Intense glowing ember / spark
+            -- Sparks have a glowing head and a velocity trail, making large
+            -- Aura bursts feel energetic without covering the numbers.
             love.graphics.setColor(p.outerCol[1], p.outerCol[2], p.outerCol[3], curAlpha * 0.5)
-            love.graphics.circle("fill", p.x, p.y, curSize * 2.2)
+            love.graphics.setLineWidth(math.max(1, curSize * 0.65))
+            love.graphics.line(p.x, p.y, p.x - p.vx * 0.035, p.y - p.vy * 0.035)
             love.graphics.setColor(p.coreCol[1], p.coreCol[2], p.coreCol[3], curAlpha)
-            love.graphics.circle("fill", p.x, p.y, curSize)
+            love.graphics.circle("fill", p.x, p.y, curSize * 0.75)
         else
-            -- 3-layer organic flame: outer glow -> body flame -> white-hot core
+            -- Three tapered layers read as a flame rather than a stack of dots.
+            local sway = math.sin((p.age or 0) * 15 + (p.phase or 0)) * curSize * 0.8
+            local tipY = p.y - curSize * (2.8 + (p.tier or 1) * 0.35)
             love.graphics.setColor(p.outerCol[1], p.outerCol[2], p.outerCol[3], curAlpha * 0.45)
-            love.graphics.circle("fill", p.x, p.y, curSize * 1.8)
+            love.graphics.polygon("fill", p.x - curSize * 1.45, p.y + curSize, p.x + curSize * 1.45, p.y + curSize, p.x + sway, tipY)
+            love.graphics.circle("fill", p.x, p.y + curSize * 0.45, curSize * 1.45)
             love.graphics.setColor(p.bodyCol[1], p.bodyCol[2], p.bodyCol[3], curAlpha * 0.85)
-            love.graphics.circle("fill", p.x, p.y, curSize)
+            love.graphics.polygon("fill", p.x - curSize * 0.85, p.y + curSize * 0.7, p.x + curSize * 0.85, p.y + curSize * 0.7, p.x + sway * 0.55, tipY + curSize * 0.85)
             love.graphics.setColor(p.coreCol[1], p.coreCol[2], p.coreCol[3], curAlpha * 0.95)
-            love.graphics.circle("fill", p.x, p.y, curSize * 0.45)
+            love.graphics.polygon("fill", p.x - curSize * 0.32, p.y + curSize * 0.55, p.x + curSize * 0.32, p.y + curSize * 0.55, p.x + sway * 0.22, tipY + curSize * 1.55)
         end
     end
+    love.graphics.setLineWidth(1)
     love.graphics.setBlendMode("alpha")
 end
 
@@ -3144,7 +3153,7 @@ local function drawCollectionModal()
         { id = "coll_cat_packs", catId = "packs", text = "Gói Bài", y = modalY + 180, h = 46 },
         { id = "coll_cat_tags", catId = "tags", text = "Khế Ước Bỏ Ải", y = modalY + 232, h = 46, alert = true },
         { id = "coll_cat_blinds", catId = "blinds", text = "Blind", y = modalY + 284, h = 86, alert = true },
-        { id = "coll_cat_other", catId = "other", text = "Khác", sub = "Tổ Hợp & Điểm Số", y = modalY + 376, h = 46 },
+        { id = "coll_cat_other", catId = "other", text = "Thế Đánh", sub = "Tổ Hợp & Aura", y = modalY + 376, h = 46 },
     }
     for _, rb in ipairs(rButtons) do
         rb.x = colRX
@@ -3272,7 +3281,7 @@ local function drawCollectionDetailView()
             -- Card Body
             local dImg = ((collectionCategory == "jokers") and UI.getDeityImage(item.id))
                       or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
-                      or ((collectionCategory == "packs") and UI.getPackImage(item.packType or item.id))
+                      or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
                       or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
                       or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
             if dImg then
@@ -3371,7 +3380,7 @@ local function drawCollectionDetailView()
 
         local inspImg = ((collectionCategory == "jokers") and UI.getDeityImage(inspItem.id))
                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
-                     or ((collectionCategory == "packs") and UI.getPackImage(inspItem.packType or inspItem.id))
+                     or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
                      or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
                      or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
         if inspImg then
@@ -3766,7 +3775,7 @@ local function drawPlayingState()
 
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Điểm Ván", sbX, sbY + 8, sbW, "center")
+    love.graphics.printf("AURA", sbX, sbY + 8, sbW, "center")
 
     -- Check selected hand
     local selectedCards = getSelectedCards()
@@ -3785,7 +3794,7 @@ local function drawPlayingState()
     }) or nil
 
     if state == "scoring" and anim.active then
-        local handTitle = (anim.evalResult and anim.evalResult.type and ((anim.evalResult.type.vnName) .. " (Lv. " .. (anim.evalResult.level or 1) .. ")")) or "ĐIỂM VÁN"
+        local handTitle = (anim.evalResult and anim.evalResult.type and ((anim.evalResult.type.vnName) .. " (Lv. " .. (anim.evalResult.level or 1) .. ")")) or "AURA"
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(UI.COLORS.goldYellow)
         love.graphics.printf(handTitle, sbX, sbY + 30, sbW, "center")
@@ -3898,7 +3907,7 @@ local function drawPlayingState()
     else
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf("Chọn bài để tính điểm", sbX, sbY + 30, sbW, "center")
+        love.graphics.printf("Chọn bài để tạo Aura", sbX, sbY + 30, sbW, "center")
 
         -- Chips box 0
         local cbX = sbX + 12
@@ -4074,7 +4083,9 @@ local function drawPlayingState()
             -- Slot bounce effect
             local bScale = anim.deityBounce and anim.deityBounce[i] or 1.0
             love.graphics.push()
-            love.graphics.translate(dx + deitySlotW / 2, deityY + deitySlotH / 2)
+            local deityFloat = math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2
+            love.graphics.translate(dx + deitySlotW / 2, deityY + deitySlotH / 2 + deityFloat)
+            love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
             if bScale > 1.01 then
                 love.graphics.scale(bScale, bScale)
             end
@@ -4596,7 +4607,7 @@ local function drawScoringState()
     else
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf("ĐANG TÍNH ĐIỂM  •  " .. math.min(anim.currentStepIndex, #anim.scoringData.steps) .. "/" .. #anim.scoringData.steps, playAreaX, footerY, playAreaW, "center")
+        love.graphics.printf("ĐANG CỘNG AURA  •  " .. math.min(anim.currentStepIndex, #anim.scoringData.steps) .. "/" .. #anim.scoringData.steps, playAreaX, footerY, playAreaW, "center")
     end
 end
 
@@ -5493,7 +5504,14 @@ local function drawDeckViewerModal()
             if isHov then hoveredDeckCard = c end
 
             c.hovered = isHov
-            UI.drawCard(c, cx, cy, cw, ch)
+            local driftY = math.sin(((juice and juice.ambientTimer) or 0) * 1.1 + i * 0.57) * 1.8
+            local driftR = math.sin(((juice and juice.ambientTimer) or 0) * 0.72 + i * 0.41) * 0.006
+            love.graphics.push()
+            love.graphics.translate(cx + cw / 2, cy + ch / 2 + driftY - (isHov and 4 or 0))
+            love.graphics.rotate(driftR)
+            love.graphics.translate(-cw / 2, -ch / 2)
+            UI.drawCard(c, 0, 0, cw, ch)
+            love.graphics.pop()
         end
     end
 
@@ -5512,7 +5530,7 @@ local function drawDeckViewerModal()
 
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print("Chỉ các tay bài đã mở khóa mới có thể đánh ra và kích hoạt điểm!", rightX, modalY + 92)
+    love.graphics.print("Chỉ các Thế Đánh đã mở khóa mới có thể đánh ra và tạo Aura!", rightX, modalY + 92)
 
     -- List of Poker Hands
     local handList = {
@@ -6064,7 +6082,7 @@ local function drawRestState()
     end
 end
 
-local function drawShopTransferView()
+local function drawShopTransferViewLegacy()
     -- Overlay
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0.08, 0.10, 0.13, 1)
@@ -6292,7 +6310,7 @@ local function drawCardInspectorModal(card)
     love.graphics.printf(role.desc, cardArtX + 8, durY + 54, cardArtW - 16, "left")
 
     love.graphics.setColor(UI.COLORS.hpGreen)
-    love.graphics.printf("Điểm: +" .. card.baseChips .. " Chips", cardArtX + 8, durY + durH - 24, cardArtW - 16, "center")
+    love.graphics.printf("Aura: +" .. card.baseChips .. " Chips", cardArtX + 8, durY + durH - 24, cardArtW - 16, "center")
 
     -- Right side: Equipment Sockets
     local rightX = modalX + 230
@@ -6611,7 +6629,7 @@ local function drawSettingsModal()
     local row2Y = modalY + 138
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("Tốc Độ Tính Điểm:", modalX + 35, row2Y + 6)
+    love.graphics.print("Tốc Độ Aura:", modalX + 35, row2Y + 6)
 
     local speedText = settings.fastScoring and "Siêu Tốc (2x)" or "Bình Thường (1x)"
     local btnSpeed = { id = "setting_speed", text = speedText, x = modalX + 300, y = row2Y, w = 150, h = 34, color = settings.fastScoring and UI.COLORS.xmultGold or UI.COLORS.btnNormal, font = UI.fonts.small }
@@ -6736,7 +6754,7 @@ local function drawShopState()
     UI.drawRoundedRect("line", hx + 10, scBoxY, hw - 20, 52, 6)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print("Điểm Ván", hx + 18, scBoxY + 6)
+    love.graphics.print("AURA", hx + 18, scBoxY + 6)
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print("0", hx + 18, scBoxY + 24)
@@ -6917,7 +6935,12 @@ local function drawShopState()
             end
 
             local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
+            love.graphics.push()
+            love.graphics.translate(sx + deiSlotW / 2, sy + deiSlotH / 2 + math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2)
+            love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
+            love.graphics.translate(-sx - deiSlotW / 2, -sy - deiSlotH / 2)
             UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            love.graphics.pop()
 
             if not isDropTarget then
                 local sellPrice = math.max(1, math.floor((d.cost or 4) / 2))
@@ -7849,6 +7872,127 @@ local function drawShopState()
     end
 end
 
+local TRANSFER_PER_PAGE = 16
+
+local function getTransferPageCards()
+    local allCards = getAllDeckCards()
+    local totalPages = math.max(1, math.ceil(#allCards / TRANSFER_PER_PAGE))
+    transferPage = math.max(1, math.min(transferPage, totalPages))
+    local first = (transferPage - 1) * TRANSFER_PER_PAGE + 1
+    local visible = {}
+    for i = first, math.min(#allCards, first + TRANSFER_PER_PAGE - 1) do
+        visible[#visible + 1] = allCards[i]
+    end
+    return visible, totalPages, #allCards
+end
+
+local function getTransferCardRect(index)
+    local cw, ch, gap, cols = 70, 102, 14, 8
+    local gridW = cols * cw + (cols - 1) * gap
+    local x = (V_WIDTH - gridW) / 2 + ((index - 1) % cols) * (cw + gap)
+    local y = 128 + math.floor((index - 1) / cols) * 132
+    return x, y, cw, ch
+end
+
+local function getTransferEquipmentRect(index)
+    return 250 + (index - 1) * 275, 430, 255, 76
+end
+
+local function drawShopTransferView()
+    local winW, winH = love.graphics.getDimensions()
+    love.graphics.setColor(0.06, 0.08, 0.11, 1)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    local mx, my = toVirtual(love.mouse.getPosition())
+    buttons = {}
+
+    love.graphics.setFont(UI.fonts.large)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf("HOÁN ĐỔI TRANG BỊ", 0, 22, V_WIDTH, "center")
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("Chọn lá nguồn • chọn trang bị • chọn lá đích", 0, 58, V_WIDTH, "center")
+
+    local visible, totalPages, totalCards = getTransferPageCards()
+    local chosenEq = transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex]
+    local stepText = not transferSourceCard and "1  CHỌN LÁ ĐANG MANG TRANG BỊ"
+        or not chosenEq and ("2  CHỌN TRANG BỊ TỪ " .. (transferSourceCard.rankName or "") .. (transferSourceCard.suitSymbol or ""))
+        or ("3  CHỌN LÁ ĐÍCH CHO " .. chosenEq.name)
+    love.graphics.setColor(0.12, 0.16, 0.21, 0.96)
+    UI.drawRoundedRect("fill", 210, 88, V_WIDTH - 420, 28, 7)
+    love.graphics.setColor(chosenEq and UI.COLORS.hpGreen or UI.COLORS.chipsBlue)
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.printf(stepText, 220, 96, V_WIDTH - 440, "center")
+
+    for i, card in ipairs(visible) do
+        local x, y, w, h = getTransferCardRect(i)
+        local hovered = mx >= x and mx <= x + w and my >= y and my <= y + h
+        local isSource = card == transferSourceCard
+        local canReceive = false
+        if chosenEq and not isSource then canReceive = Equipment.canAttach(card, chosenEq) end
+        local float = math.sin((juice and juice.ambientTimer or 0) * 1.2 + i * 0.55) * 1.5
+        love.graphics.push()
+        love.graphics.translate(0, float - (hovered and 5 or 0))
+        card.hovered = hovered
+        UI.drawCard(card, x, y, w, h)
+        love.graphics.pop()
+
+        love.graphics.setLineWidth(isSource and 3 or 2)
+        if isSource then
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            UI.drawRoundedRect("line", x - 3, y - 3, w + 6, h + 6, 8)
+        elseif chosenEq then
+            love.graphics.setColor(canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
+            UI.drawRoundedRect("line", x - 2, y - 2, w + 4, h + 4, 8)
+        end
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(Equipment.getUsedSlots(card) > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)
+        love.graphics.printf(Equipment.getUsedSlots(card) .. "/" .. Equipment.MAX_SLOTS .. " hốc", x, y + h + 5, w, "center")
+    end
+
+    local prev = { id = "transfer_prev", text = "‹", x = 450, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage <= 1 }
+    local next = { id = "transfer_next", text = "›", x = 788, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage >= totalPages }
+    buttons[#buttons + 1], buttons[#buttons + 1] = prev, next
+    UI.drawButton(prev, not prev.disabled and mx >= prev.x and mx <= prev.x + prev.w and my >= prev.y and my <= prev.y + prev.h)
+    UI.drawButton(next, not next.disabled and mx >= next.x and mx <= next.x + next.w and my >= next.y and my <= next.y + next.h)
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(UI.COLORS.textLight)
+    love.graphics.printf("Trang " .. transferPage .. "/" .. totalPages .. "  •  " .. totalCards .. " lá", 500, 394, 280, "center")
+
+    if transferSourceCard then
+        for index, eq in ipairs(transferSourceCard.equipments or {}) do
+            local x, y, w, h = getTransferEquipmentRect(index)
+            local selected = index == transferSourceEqIndex
+            love.graphics.setColor(selected and { 0.20, 0.32, 0.29, 1 } or { 0.13, 0.17, 0.22, 1 })
+            UI.drawRoundedRect("fill", x, y, w, h, 8)
+            love.graphics.setLineWidth(selected and 3 or 1.5)
+            love.graphics.setColor(selected and UI.COLORS.hpGreen or (eq.color or UI.COLORS.panelBorder))
+            UI.drawRoundedRect("line", x, y, w, h, 8)
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setColor(eq.color or UI.COLORS.goldYellow)
+            love.graphics.print(eq.name, x + 12, y + 9)
+            love.graphics.setFont(UI.fonts.tiny)
+            love.graphics.setColor(UI.COLORS.textLight)
+            love.graphics.printf(eq.desc or "", x + 12, y + 33, w - 24, "left")
+        end
+    else
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.printf("Các lá không có trang bị vẫn được hiển thị để làm đích nhận.", 0, 453, V_WIDTH, "center")
+    end
+
+    if transferMessage then
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.goldYellow)
+        love.graphics.printf(transferMessage, 160, 535, V_WIDTH - 320, "center")
+    end
+
+    local reset = { id = "transfer_reset", text = "CHỌN LẠI NGUỒN", x = 250, y = 615, w = 230, h = 44, color = UI.COLORS.btnNormal, font = UI.fonts.small }
+    local close = { id = "close_shop_transfer", text = "XONG / VỀ CỬA HÀNG", x = V_WIDTH - 480, y = 615, w = 230, h = 44, color = UI.COLORS.btnPlay, font = UI.fonts.small }
+    buttons[#buttons + 1], buttons[#buttons + 1] = reset, close
+    UI.drawButton(reset, mx >= reset.x and mx <= reset.x + reset.w and my >= reset.y and my <= reset.y + reset.h)
+    UI.drawButton(close, mx >= close.x and mx <= close.x + close.w and my >= close.y and my <= close.y + close.h)
+end
+
 local function drawShopFx()
     for _, fx in ipairs(shopFx) do
         local p = math.min(1, fx.life / fx.duration)
@@ -8244,41 +8388,32 @@ local function handleShopMousepressed(mx, my, button)
                     transferSourceCard = nil
                     transferSourceEqIndex = nil
                     transferMessage = nil
+                    transferPage = 1
                     Sound.play("card_deal")
+                    return true
+                elseif btn.id == "transfer_prev" and not btn.disabled then
+                    transferPage = math.max(1, transferPage - 1)
+                    Sound.play("card_select")
+                    return true
+                elseif btn.id == "transfer_next" and not btn.disabled then
+                    transferPage = transferPage + 1
+                    Sound.play("card_select")
+                    return true
+                elseif btn.id == "transfer_reset" then
+                    transferSourceCard = nil
+                    transferSourceEqIndex = nil
+                    transferMessage = nil
+                    Sound.play("card_select")
                     return true
                 end
             end
         end
 
-        local allCards = getAllDeckCards()
-
-        local cw = 90
-        local ch = 130
-        local gap = 18
-        local totalW = #allCards * cw + math.max(0, #allCards - 1) * gap
-        local startX = math.max(80, (V_WIDTH - totalW) / 2)
-        local cardY = 125
-
-        -- Step 1 click: source card
-        for i, c in ipairs(allCards) do
-            local cx = startX + (i - 1) * (cw + gap)
-            if mx >= cx and mx <= cx + cw and my >= cardY and my <= cardY + ch then
-                transferSourceCard = c
-                transferSourceEqIndex = nil
-                transferMessage = nil
-                Sound.play("card_select")
-                return true
-            end
-        end
-
-        -- Step 2 click: equipment slot
+        local visible = getTransferPageCards()
         if transferSourceCard and transferSourceCard.equipments then
-            local eqBoxW = 210
-            local eqBoxH = 65
             for idx, eq in ipairs(transferSourceCard.equipments) do
-                local ex = 80 + (idx - 1) * (eqBoxW + 16)
-                local ey = 320
-                if mx >= ex and mx <= ex + eqBoxW and my >= ey and my <= ey + eqBoxH then
+                local ex, ey, ew, eh = getTransferEquipmentRect(idx)
+                if mx >= ex and mx <= ex + ew and my >= ey and my <= ey + eh then
                     transferSourceEqIndex = idx
                     transferMessage = nil
                     Sound.play("card_select")
@@ -8287,17 +8422,32 @@ local function handleShopMousepressed(mx, my, button)
             end
         end
 
-        -- Step 3 click: target card
-        if transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex] then
-            local targetY = 445
-            for i, c in ipairs(allCards) do
-                local cx = startX + (i - 1) * (cw + gap)
-                if c ~= transferSourceCard and (not c.equipments or #c.equipments < 5) and mx >= cx and mx <= cx + cw and my >= targetY and my <= targetY + ch then
+        local chosenEq = transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex]
+        for i, c in ipairs(visible) do
+            local cx, cy, cw, ch = getTransferCardRect(i)
+            if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
+                if chosenEq and c ~= transferSourceCard then
+                    local canAttach, reason = Equipment.canAttach(c, chosenEq)
+                    if not canAttach then
+                        transferMessage = reason
+                        Sound.play("cant_afford")
+                        return true
+                    end
                     local ok, msg = Shop.transferEquipment(transferSourceCard, transferSourceEqIndex, c)
                     transferMessage = msg
                     if ok then
                         transferSourceEqIndex = nil
+                        Sound.play("card_deal")
                     end
+                    return true
+                elseif c.equipments and #c.equipments > 0 then
+                    transferSourceCard = c
+                    transferSourceEqIndex = nil
+                    transferMessage = nil
+                    Sound.play("card_select")
+                    return true
+                else
+                    transferMessage = "Lá này chưa có trang bị; hãy chọn làm đích sau khi chọn trang bị nguồn."
                     return true
                 end
             end

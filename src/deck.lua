@@ -15,7 +15,7 @@ Deck.SEALS = {
         name = "Ấn Tiên Tri",
         icon = "🔮",
         color = { 0.30, 0.60, 0.95, 1 },
-        desc = "Khi ghi điểm, nhìn thấu 2 ý định (Intent) kế tiếp của Quái vật / Boss",
+        desc = "Khi tạo Aura, nhìn thấu 2 ý định (Intent) kế tiếp của Quái vật / Boss",
     },
     seal_ashen = {
         id = "seal_ashen",
@@ -59,7 +59,7 @@ Deck.ENHANCEMENTS = {
         name = "Giáp Hóa",
         icon = "🛡️",
         color = { 0.40, 0.70, 0.90, 1 },
-        desc = "+8 Giáp khi ghi điểm, nhưng lá này bị -10 Chips vĩnh viễn",
+        desc = "+8 Giáp khi tạo Aura, nhưng lá này bị -10 Chips vĩnh viễn",
     },
     enh_blood = {
         id = "enh_blood",
@@ -87,7 +87,7 @@ Deck.ENHANCEMENTS = {
         name = "Nứt Vỡ",
         icon = "💥",
         color = { 0.90, 0.60, 0.30, 1 },
-        desc = "x1.4 XMult cực mạnh, nhưng 25% tỉ lệ vỡ vụn biến mất vĩnh viễn sau khi ghi điểm",
+        desc = "x1.4 XMult cực mạnh, nhưng 25% tỉ lệ vỡ vụn biến mất vĩnh viễn sau khi tạo Aura",
     },
     enh_escort = {
         id = "enh_escort",
@@ -122,7 +122,7 @@ Deck.ENHANCEMENTS = {
         name = "Hậu Vệ",
         icon = "🛡️",
         color = { 0.35, 0.70, 0.90, 1 },
-        desc = "Vững chắc chốt chặn — nếu là lá cuối cùng trong tay bài ghi điểm: +8 Giáp & +3 Mult",
+        desc = "Vững chắc chốt chặn — nếu là lá cuối cùng trong tay bài tạo Aura: +8 Giáp & +3 Mult",
     },
 }
 
@@ -138,7 +138,7 @@ Deck.FACTIONS = {
         color = { 1.0, 0.82, 0.22, 1 },
         icon = "♦",
         archetype = "Tài Phiệt, Khai Thác 5 Ô Khảm & Lãi Suất Vận Mệnh",
-        passive1 = "Kim Ngân & Lãi Vô Tận: Mỗi lá Rô ghi điểm +$1 Vàng. Lãi suất +$1 cho mỗi $4 không giới hạn trần.",
+        passive1 = "Kim Ngân & Lãi Vô Tận: Mỗi lá Rô tạo Aura +$1 Vàng. Lãi suất +$1 cho mỗi $4 không giới hạn trần.",
         passive2 = "Khảm Nén Quặng: Mở sẵn 2/5 ô khảm khi nhặt, toàn bộ Ngọc Khảm tăng +50% uy lực.",
     },
     elaris = {
@@ -167,7 +167,7 @@ Deck.FACTIONS = {
         icon = "♠",
         archetype = "Định luật Bất Biến & Lũy Tiến Chips Cơ Học",
         passive1 = "Định Luật Bất Biến: Lá Bích tự động xếp theo Rank từ bé đến lớn. Miễn nhiễm 100% debuff Boss.",
-        passive2 = "Chỉ Số Thép & Quân Lực: Mỗi lá Bích ghi điểm +20 Chips. Rank tăng dần thưởng +(ΔRank × 10) Chips.",
+        passive2 = "Chỉ Số Thép & Quân Lực: Mỗi lá Bích tạo Aura +20 Chips. Rank tăng dần thưởng +(ΔRank × 10) Chips.",
     },
     valoria = {
         id = "valoria",

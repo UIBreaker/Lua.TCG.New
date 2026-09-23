@@ -646,4 +646,14 @@ function Deck.sortBySuit(hand)
     end)
 end
 
+-- Move one card without rebuilding the hand, preserving every card field and id.
+function Deck.moveCard(hand, fromIndex, toIndex)
+    if not hand or fromIndex == toIndex or not hand[fromIndex] or toIndex < 1 or toIndex > #hand then
+        return false
+    end
+    local card = table.remove(hand, fromIndex)
+    table.insert(hand, toIndex, card)
+    return true
+end
+
 return Deck

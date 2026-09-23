@@ -108,6 +108,7 @@ local treasureRewards = {}
 -- Deck Viewer Modal State
 local isDeckViewerOpen = false
 local deckViewerFilter = "all" -- "all", "rank", "suit", "equipped"
+local deckViewerPage = 1
 
 -- Main Menu & Pause Menu State
 local menuMode = "title" -- "title", "deck_select"
@@ -303,6 +304,7 @@ local anim = {
     targetStepDelay = 0.36,
     -- Squash & Stretch + Dynamic Scale Bounce
     cardBounce = {},
+    cardHit = {},
     deityBounce = {},
     bounceScale = { chips = 1.0, mult = 1.0, xMult = 1.0, score = 1.0 },
     -- Particle & Fire System
@@ -314,6 +316,36 @@ local anim = {
     impactColor = { 1, 1, 1, 1 },
     entranceTimer = 0,
 }
+
+-- Short-lived visual feedback shared by shop purchases, sales and pack picks.
+local shopFx = {}
+
+local function spawnShopFx(kind, item, x, y)
+    local category = item and item.category
+    local targetX, targetY = 1110, 630
+    if category == "deity" or (item and item.id and Deities.CATALOG[item.id]) then
+        targetX, targetY = 420, 86
+    elseif category == "equipment" then
+        targetX, targetY = 720, 92
+    elseif category == "consumable" then
+        targetX, targetY = 980, 92
+    end
+    if kind == "sell" then
+        targetX, targetY = 205, 570
+    elseif kind == "destroy" then
+        targetX, targetY = x or 640, (y or 360) - 28
+    end
+    table.insert(shopFx, {
+        kind = kind,
+        item = item or {},
+        x = x or 640,
+        y = y or 360,
+        life = 0,
+        targetX = targetX,
+        targetY = targetY,
+        duration = kind == "destroy" and 0.72 or (kind == "sell" and 0.82 or 0.92),
+    })
+end
 
 -- Hand Card Drag & Drop State
 local handDrag = {
@@ -872,6 +904,28 @@ local function discardSelected()
     Sound.play("card_deal")
 end
 
+local function destroyHandCard(index)
+    local card = game.hand and game.hand[index]
+    if not card then return nil end
+    local x = (card.visualX or 590) + 50
+    local y = (card.visualY or 470) + 72
+    table.remove(game.hand, index)
+    if game.persistentDeck then
+        for i = #game.persistentDeck, 1, -1 do
+            if game.persistentDeck[i].id == card.id then
+                table.remove(game.persistentDeck, i)
+                break
+            end
+        end
+    end
+    game.selectedIndices = {}
+    for i, remaining in ipairs(game.hand) do
+        if remaining.selected then table.insert(game.selectedIndices, i) end
+    end
+    spawnShopFx("destroy", { category = "card", card = card }, x, y)
+    return card
+end
+
 local function useConsumable(idx)
     game.consumables = game.consumables or {}
     local c = game.consumables[idx]
@@ -1041,8 +1095,7 @@ local function useConsumable(idx)
     elseif c.category == "spectral" or (c.id and c.id:find("spec_")) then
         local userFaction = game.selectedFaction or game.selectedSuit or "aurelia"
         if c.id == "spec_familiar" then
-            if game.hand and #game.hand > 0 then table.remove(game.hand, Rng.random(#game.hand)) end
-            if game.persistentDeck and #game.persistentDeck > 0 then table.remove(game.persistentDeck, Rng.random(#game.persistentDeck)) end
+            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
             local ranks = { 11, 12, 13 }
             for i = 1, 3 do
                 local nc = Deck.newCard(ranks[i], userFaction)
@@ -1054,8 +1107,7 @@ local function useConsumable(idx)
             table.insert(anim.floatingTexts, { text = "👻 Familiar: Thêm 3 lá J/Q/K có trang bị!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
             return true
         elseif c.id == "spec_grim" then
-            if game.hand and #game.hand > 0 then table.remove(game.hand, Rng.random(#game.hand)) end
-            if game.persistentDeck and #game.persistentDeck > 0 then table.remove(game.persistentDeck, Rng.random(#game.persistentDeck)) end
+            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
             for i = 1, 2 do
                 local nc = Deck.newCard(14, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
@@ -1066,8 +1118,7 @@ local function useConsumable(idx)
             table.insert(anim.floatingTexts, { text = "💀 Grim: Thêm 2 lá Át (A) có trang bị!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
             return true
         elseif c.id == "spec_incantation" then
-            if game.hand and #game.hand > 0 then table.remove(game.hand, Rng.random(#game.hand)) end
-            if game.persistentDeck and #game.persistentDeck > 0 then table.remove(game.persistentDeck, Rng.random(#game.persistentDeck)) end
+            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
             for i = 1, 4 do
                 local r = Rng.random(2, 10)
                 local nc = Deck.newCard(r, userFaction)
@@ -1100,15 +1151,8 @@ local function useConsumable(idx)
         elseif c.id == "spec_immolate" then
             local destroyed = 0
             while game.hand and #game.hand > 0 and destroyed < 5 do
-                table.remove(game.hand, 1)
+                destroyHandCard(1)
                 destroyed = destroyed + 1
-            end
-            if game.persistentDeck then
-                local dDeck = 0
-                while #game.persistentDeck > 3 and dDeck < destroyed do
-                    table.remove(game.persistentDeck, 1)
-                    dDeck = dDeck + 1
-                end
             end
             game.gold = (game.gold or 0) + 20
             Sound.play("xmult_boom")
@@ -1303,6 +1347,7 @@ local function playSelectedHand()
     anim.pitchStep = 0
     anim.targetStepDelay = 0.36
     anim.cardBounce = {}
+    anim.cardHit = {}
     anim.deityBounce = {}
     anim.bounceScale = { chips = 1.35, mult = 1.35, xMult = 1.0, score = 1.35 }
     anim.particles = {}
@@ -1566,6 +1611,7 @@ function love.update(dt)
             end,
             openPack = function(packItem)
                 shopData.currentPackOpening = Shop.openPack(packItem, game)
+                shopData.currentPackOpening.animationTimer = 2
                 state = "shop"
             end,
             closePack = function()
@@ -1619,6 +1665,12 @@ function love.update(dt)
             b.scaleY = b.scaleY + (1.0 - b.scaleY) * math.min(1.0, dt * 12)
         end
     end
+    if anim.cardHit then
+        for idx, age in pairs(anim.cardHit) do
+            age = age + dt
+            anim.cardHit[idx] = age < 0.36 and age or nil
+        end
+    end
 
     -- Smoothly lerp player hand cards visual positions & rotation
     if game.hand and #game.hand > 0 then
@@ -1640,6 +1692,9 @@ function love.update(dt)
             end
 
             local tx, ty, tw, th, tangle = getHandCardPosition(i, #game.hand)
+            local idle = math.sin(juice.ambientTimer * 1.75 + i * 0.82) * 2.5
+            ty = ty + idle
+            tangle = tangle + math.sin(juice.ambientTimer * 1.25 + i * 0.67) * 0.008
             if c.selected then
                 ty = ty - 28
             end
@@ -1661,7 +1716,9 @@ function love.update(dt)
                     c.rotation = c.visualAngle
                 end
             end
-            local targetScale = c.selected and 1.08 or (c.hovered and 1.04 or 1.0)
+            c.selectPulse = math.max(0, (c.selectPulse or 0) - dt * 4.5)
+            local targetScale = c.selected and 1.11 or (c.hovered and 1.075 or 1.0)
+            targetScale = targetScale + math.sin((c.selectPulse or 0) * math.pi) * 0.07
             c.visualScale = (c.visualScale or 1.0) + (targetScale - (c.visualScale or 1.0)) * math.min(1.0, dt * 14)
         end
     end
@@ -1684,6 +1741,21 @@ function love.update(dt)
     juice.goldBounce = juice.goldBounce + (1.0 - juice.goldBounce) * math.min(1.0, dt * 10)
     juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * math.min(1.0, dt * 10)
     juice.handRankBounce = juice.handRankBounce + (1.0 - juice.handRankBounce) * math.min(1.0, dt * 10)
+
+    if shopData and shopData.currentPackOpening then
+        local opening = shopData.currentPackOpening
+        opening.animationTimer = math.min(3.0, (opening.animationTimer or 0) + dt)
+    end
+    for i = #shopFx, 1, -1 do
+        local fx = shopFx[i]
+        fx.life = fx.life + dt
+        if fx.life >= fx.duration then table.remove(shopFx, i) end
+    end
+    for _, card in ipairs(anim.playedCards or {}) do
+        if card.destroyFxActive then
+            card.destroyFx = math.min(1, (card.destroyFx or 0) + dt * 1.9)
+        end
+    end
 
     -- Gold change detection
     if game.gold and juice.lastGold and game.gold ~= juice.lastGold then
@@ -1918,6 +1990,7 @@ function love.update(dt)
 
                     -- Squash & Stretch + Spark burst
                     anim.cardBounce[st.cardIndex] = { scaleX = 0.84, scaleY = 1.28 }
+                    anim.cardHit[st.cardIndex] = 0
                     anim.bounceScale.chips = 1.40
                     if st.addedMult > 0 then
                         anim.bounceScale.mult = 1.45
@@ -1932,6 +2005,12 @@ function love.update(dt)
                     local cardCenterX = startCX + (st.cardIndex - 1) * (cardW + cardGap) + cardW / 2
                     local cardCenterY = 295 + 70 - 20
                     spawnSparks(cardCenterX, cardCenterY, 18, UI.COLORS.goldYellow)
+                    if st.card.destroyed then
+                        st.card.destroyFx = 0
+                        st.card.destroyFxActive = true
+                        spawnSparks(cardCenterX, cardCenterY, 34, { 1.0, 0.32, 0.08, 1 })
+                        Sound.play("xmult_boom", 1.15)
+                    end
                     anim.impactFlash = 0.18
                     anim.impactX = cardCenterX
                     anim.impactY = cardCenterY
@@ -3907,60 +3986,38 @@ local function drawPlayingState()
     table.insert(buttons, btnDeckPlay)
     UI.drawButton(btnDeckPlay, mx >= btnDeckPlay.x and mx <= btnDeckPlay.x + btnDeckPlay.w and my >= btnDeckPlay.y and my <= btnDeckPlay.y + btnDeckPlay.h)
 
-    -- E. Stats Matrix (Bottom)
+    -- E. Compact combat economy strip
     local matrixY = panelY + 458
+    local statGap = 6
+    local statW = (panelW - 20 - statGap * 2) / 3
+    local statH = 76
+    local stats = {
+        { label = "TAY", value = game.handsRemaining, color = UI.COLORS.chipsBlue },
+        { label = "BỎ", value = game.discardsRemaining, color = UI.COLORS.multRed },
+        { label = "VÀNG", value = "$" .. game.gold, color = UI.COLORS.goldYellow },
+    }
+    for i, stat in ipairs(stats) do
+        local sx = panelX + 10 + (i - 1) * (statW + statGap)
+        love.graphics.setColor(0.08, 0.11, 0.15, 0.98)
+        UI.drawRoundedRect("fill", sx, matrixY, statW, statH, 7)
+        love.graphics.setColor(stat.color[1], stat.color[2], stat.color[3], 0.85)
+        UI.drawRoundedRect("line", sx, matrixY, statW, statH, 7)
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.printf(stat.label, sx, matrixY + 8, statW, "center")
+        local bounce = i == 3 and (juice.goldBounce or 1) or 1
+        UI.drawAnimatedNumber(tostring(stat.value), sx, matrixY + 20, statW, 46, stat.color, bounce)
+    end
 
-    -- Hands Remaining (Blue Box)
-    local handBoxW = 118
-    local handBoxH = 65
-    love.graphics.setColor(0.12, 0.28, 0.55, 0.95)
-    UI.drawRoundedRect("fill", panelX + 10, matrixY, handBoxW, handBoxH, 6)
-    love.graphics.setColor(UI.COLORS.chipsBlue)
-    UI.drawRoundedRect("line", panelX + 10, matrixY, handBoxW, handBoxH, 6)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(0.85, 0.92, 1.0, 1)
-    love.graphics.printf("Tay Bài", panelX + 10, matrixY + 6, handBoxW, "center")
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(tostring(game.handsRemaining), panelX + 10, matrixY + 22, handBoxW, "center")
-
-    -- Discards Remaining (Red Box)
-    local discBoxY = matrixY + 73
-    love.graphics.setColor(0.55, 0.18, 0.20, 0.95)
-    UI.drawRoundedRect("fill", panelX + 10, discBoxY, handBoxW, handBoxH, 6)
-    love.graphics.setColor(UI.COLORS.multRed)
-    UI.drawRoundedRect("line", panelX + 10, discBoxY, handBoxW, handBoxH, 6)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(1.0, 0.85, 0.85, 1)
-    love.graphics.printf("Lượt Bỏ", panelX + 10, discBoxY + 6, handBoxW, "center")
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(tostring(game.discardsRemaining), panelX + 10, discBoxY + 22, handBoxW, "center")
-
-    -- Gold Cash Box (Right Box)
-    local goldBoxX = panelX + 136
-    local goldBoxW = panelW - 146
-    local goldBoxH = 138
-    love.graphics.setColor(0.12, 0.15, 0.18, 0.95)
-    UI.drawRoundedRect("fill", goldBoxX, matrixY, goldBoxW, goldBoxH, 6)
-    love.graphics.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], 0.8)
-    UI.drawRoundedRect("line", goldBoxX, matrixY, goldBoxW, goldBoxH, 6)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("Tiền Vàng", goldBoxX, matrixY + 8, goldBoxW, "center")
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("$" .. game.gold, goldBoxX, matrixY + 36, goldBoxW, "center")
-
-    -- Interest Info
     local curInterest = math.min(5, math.floor(game.gold / 5))
+    love.graphics.setColor(0.11, 0.14, 0.18, 0.95)
+    UI.drawRoundedRect("fill", panelX + 10, matrixY + 82, panelW - 20, 34, 6)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("Lãi: +$" .. curInterest .. "/trận (Max $5)", goldBoxX, matrixY + 110, goldBoxW, "center")
+    love.graphics.printf("LÃI SAU TRẬN  +$" .. curInterest .. "   •   TỐI ĐA +$5", panelX + 10, matrixY + 10 + 82, panelW - 20, "center")
 
     -- Round Info (Footer)
-    local footerY = matrixY + 146
-    local footerH = 76
+    local footerY = matrixY + 122
+    local footerH = 70
     love.graphics.setColor(0.10, 0.13, 0.16, 0.95)
     UI.drawRoundedRect("fill", panelX + 10, footerY, panelW - 20, footerH, 6)
     love.graphics.setColor(0.24, 0.32, 0.40, 1)
@@ -3968,10 +4025,10 @@ local function drawPlayingState()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("VÁN ĐẤU HIỆN TẠI", panelX + 10, footerY + 14, panelW - 20, "center")
+    love.graphics.printf("VÁN HIỆN TẠI", panelX + 10, footerY + 12, panelW - 20, "center")
     love.graphics.setFont(UI.fonts.large)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Ván " .. tostring(game.round or 1), panelX + 10, footerY + 36, panelW - 20, "center")
+    love.graphics.printf("Ván " .. tostring(game.round or 1), panelX + 10, footerY + 32, panelW - 20, "center")
 
     ----------------------------------------------------------------------------
     -- 2. TOP BAR: DEITIES & CONSUMABLES (0/2)
@@ -4068,10 +4125,10 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     if eval and scPreview then
         -- Subtle highlight banner above player cards
-        local hbW = 540
-        local hbH = 34
+        local hbW = 610
+        local hbH = 48
         local hbX = 295 + (820 - hbW) / 2
-        local hbY = 412
+        local hbY = 404
         love.graphics.setColor(0.10, 0.14, 0.18, 0.85)
         UI.drawRoundedRect("fill", hbX, hbY, hbW, hbH, 6)
         love.graphics.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], 0.7)
@@ -4079,11 +4136,18 @@ local function drawPlayingState()
 
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf(eval.type.vnName .. ": " .. scPreview.totalChips .. " Chips × " .. scPreview.totalMult .. " Mult = " .. scPreview.finalScore .. " Sát Thương!", hbX, hbY + 8, hbW, "center")
-    elseif state ~= "scoring" then
+        love.graphics.printf(eval.type.vnName, hbX + 14, hbY + 7, 230, "left")
         love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(0.85, 0.90, 0.95, 0.75)
-        love.graphics.printf("[Chuột trái]: Chọn hoặc Giữ kéo thả sắp xếp | [Chuột phải]: Xem chi tiết | [F11]: Toàn màn hình", 295, 420, 820, "center")
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf(scPreview.totalChips .. " CHIPS  ×  " .. scPreview.totalMult .. " MULT", hbX + 14, hbY + 27, 260, "left")
+        love.graphics.setColor(0.34, 0.08, 0.10, 0.95)
+        UI.drawRoundedRect("fill", hbX + hbW - 190, hbY + 7, 176, 34, 6)
+        love.graphics.setColor(UI.COLORS.hpRed)
+        UI.drawRoundedRect("line", hbX + hbW - 190, hbY + 7, 176, 34, 6)
+        love.graphics.setFont(UI.fonts.medium)
+        love.graphics.printf(UI.formatNumber(scPreview.finalScore) .. " DMG", hbX + hbW - 190, hbY + 12, 176, "center")
+    elseif state ~= "scoring" then
+        -- Keep the table clear; interactions are communicated by card motion.
     end
 
     ----------------------------------------------------------------------------
@@ -4123,6 +4187,14 @@ local function drawPlayingState()
                 love.graphics.line(1180, 620, cx + cardW / 2, cy + cardH / 2)
                 love.graphics.circle("fill", cx + cardW / 2, cy + cardH / 2, 5 + trailAlpha * 5)
                 love.graphics.setLineWidth(1)
+                love.graphics.setBlendMode("alpha")
+            end
+            if c.hovered or c.selected then
+                local glow = c.selected and UI.COLORS.goldYellow or UI.COLORS.chipsBlue
+                local pulse = 0.28 + math.sin(juice.ambientTimer * 5 + i) * 0.08
+                love.graphics.setBlendMode("add")
+                love.graphics.setColor(glow[1], glow[2], glow[3], pulse)
+                UI.drawRoundedRect("fill", cx - 6, cy - 6, cardW + 12, cardH + 14, 11)
                 love.graphics.setBlendMode("alpha")
             end
             UI.drawCard(c, cx, cy, cardW, cardH)
@@ -4368,6 +4440,15 @@ local function drawScoringState()
             cy = cy - 20 -- Lift active card
         end
 
+        local hitAge = anim.cardHit and anim.cardHit[i]
+        if hitAge then
+            local force = math.max(0, 1 - hitAge / 0.36)
+            cx = cx + math.sin(hitAge * 118) * 7 * force
+            cy = cy - math.sin(hitAge * 62) * 4 * force
+            c.rotation = c.rotation + math.sin(hitAge * 95) * 0.045 * force
+            c.visualScale = c.visualScale * (1 + 0.11 * force)
+        end
+
         if anim.cardBounce and anim.cardBounce[i] then
             c.scaleX = anim.cardBounce[i].scaleX
             c.scaleY = anim.cardBounce[i].scaleY
@@ -4383,10 +4464,35 @@ local function drawScoringState()
             love.graphics.setColor(1, 1, 1, 1)
         end
 
-        UI.drawCard(c, cx, cy, cardW, cardH)
+        local dissolve = c.destroyFxActive and (c.destroyFx or 0) or 0
+        if dissolve > 0 then
+            local shrink = math.max(0.18, 1 - dissolve * 0.72)
+            love.graphics.push()
+            love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
+            love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
+            love.graphics.scale(shrink, shrink)
+            UI.drawCard(c, -cardW / 2, -cardH / 2, cardW, cardH)
+            love.graphics.pop()
+
+            love.graphics.setBlendMode("add")
+            for shard = 1, 18 do
+                local phase = shard * 2.37
+                local sx = cx + cardW / 2 + math.cos(phase) * dissolve * (24 + shard * 1.6)
+                local sy = cy + cardH * (1 - dissolve) + math.sin(phase) * 18 - dissolve * shard * 1.3
+                love.graphics.setColor(1, 0.22 + (shard % 3) * 0.16, 0.05, 1 - dissolve)
+                love.graphics.rectangle("fill", sx, sy, 2 + shard % 4, 2 + shard % 3)
+            end
+            love.graphics.setBlendMode("alpha")
+        else
+            UI.drawCard(c, cx, cy, cardW, cardH)
+        end
 
         -- If actively scoring: Draw golden highlight ring and floating pill above
         if isActive then
+            love.graphics.setBlendMode("add")
+            love.graphics.setColor(1, 0.72, 0.18, 0.16 + math.sin(juice.ambientTimer * 18) * 0.05)
+            UI.drawRoundedRect("fill", cx - 9, cy - 9, cardW + 18, cardH + 18, 12)
+            love.graphics.setBlendMode("alpha")
             love.graphics.setLineWidth(3)
             love.graphics.setColor(UI.COLORS.goldYellow)
             UI.drawRoundedRect("line", cx - 2, cy - 2, cardW + 4, cardH + 4, 8)
@@ -4490,7 +4596,7 @@ local function drawScoringState()
     else
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.printf("Bước " .. math.min(anim.currentStepIndex, #anim.scoringData.steps) .. "/" .. #anim.scoringData.steps .. "  •  [Nhấp chuột hoặc bấm Phím Cách để tua nhanh]", playAreaX, footerY, playAreaW, "center")
+        love.graphics.printf("ĐANG TÍNH ĐIỂM  •  " .. math.min(anim.currentStepIndex, #anim.scoringData.steps) .. "/" .. #anim.scoringData.steps, playAreaX, footerY, playAreaW, "center")
     end
 end
 
@@ -5213,6 +5319,49 @@ local function drawBossDeityDraftState()
     end
 end
 
+local function getDeckViewerCards()
+    local cards = {}
+    if (state == "playing" or state == "scoring") and (#game.hand > 0 or #game.deck > 0 or #game.discardPile > 0) then
+        for _, card in ipairs(game.hand) do table.insert(cards, card) end
+        for _, card in ipairs(game.deck) do table.insert(cards, card) end
+        for _, card in ipairs(game.discardPile) do table.insert(cards, card) end
+    else
+        for _, card in ipairs(game.persistentDeck or {}) do table.insert(cards, card) end
+    end
+    return cards
+end
+
+local function getDeckViewerFilteredCards()
+    local filtered = {}
+    for _, card in ipairs(getDeckViewerCards()) do
+        local suit = card.suit
+        if suit == "hearts" then suit = "valoria"
+        elseif suit == "diamonds" then suit = "aurelia"
+        elseif suit == "clubs" then suit = "elaris"
+        elseif suit == "spades" then suit = "vharos" end
+        local equipped = card.equipments and #card.equipments > 0
+        if deckViewerFilter == "all" or (deckViewerFilter == "equipped" and equipped) or deckViewerFilter == suit then
+            table.insert(filtered, card)
+        end
+    end
+    return filtered
+end
+
+local function getDeckViewerCardAt(mx, my, modalX, modalY)
+    local cards = getDeckViewerFilteredCards()
+    local first = (deckViewerPage - 1) * 32 + 1
+    for sourceIndex = first, math.min(#cards, first + 31) do
+        local visibleIndex = sourceIndex - first + 1
+        local col = (visibleIndex - 1) % 8
+        local row = math.floor((visibleIndex - 1) / 8)
+        local cx = modalX + 24 + col * 84
+        local cy = modalY + 128 + row * 118
+        if mx >= cx and mx <= cx + 74 and my >= cy and my <= cy + 108 then
+            return cards[sourceIndex]
+        end
+    end
+end
+
 local function drawDeckViewerModal()
     -- Overlay dimming
     local winW, winH = love.graphics.getDimensions()
@@ -5251,24 +5400,17 @@ local function drawDeckViewerModal()
     UI.drawButton(closeBtn, mx >= closeBtn.x and mx <= closeBtn.x + closeBtn.w and my >= closeBtn.y and my <= closeBtn.y + closeBtn.h)
 
     -- Gather all cards in the full deck
-    local allCards = {}
-    if (state == "playing" or state == "scoring") and (#game.hand > 0 or #game.deck > 0 or #game.discardPile > 0) then
-        for _, c in ipairs(game.hand) do table.insert(allCards, c) end
-        for _, c in ipairs(game.deck) do table.insert(allCards, c) end
-        for _, c in ipairs(game.discardPile) do table.insert(allCards, c) end
-    else
-        for _, c in ipairs(game.persistentDeck or {}) do table.insert(allCards, c) end
-    end
+    local allCards = getDeckViewerCards()
 
     -- Filter cards
-    local filteredCards = {}
+    local filteredCards = getDeckViewerFilteredCards()
     local suitCounts = { aurelia = 0, elaris = 0, vharos = 0, valoria = 0 }
     local equippedCount = 0
 
     for _, c in ipairs(allCards) do
         local s = c.suit
-        if s == "hearts" then s = "aurelia"
-        elseif s == "diamonds" then s = "valoria"
+        if s == "hearts" then s = "valoria"
+        elseif s == "diamonds" then s = "aurelia"
         elseif s == "clubs" then s = "elaris"
         elseif s == "spades" then s = "vharos" end
 
@@ -5278,19 +5420,25 @@ local function drawDeckViewerModal()
         local hasEq = (c.equipments and #c.equipments > 0)
         if hasEq then equippedCount = equippedCount + 1 end
 
-        if deckViewerFilter == "all" then
-            table.insert(filteredCards, c)
-        elseif deckViewerFilter == "equipped" and hasEq then
-            table.insert(filteredCards, c)
-        elseif deckViewerFilter == s or deckViewerFilter == c.suit then
-            table.insert(filteredCards, c)
-        end
     end
 
     -- Left Column: Cards (Width 680)
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Tổng cộng: " .. #allCards .. " lá  (Rô ♦: " .. suitCounts.aurelia .. " | Tép ♣: " .. suitCounts.elaris .. " | Bích ♠: " .. suitCounts.vharos .. " | Cơ ♥: " .. suitCounts.valoria .. " | Đã khảm: " .. equippedCount .. " lá)", modalX + 24, modalY + 58)
+
+    local cardsPerPage = 32
+    local totalPages = math.max(1, math.ceil(#filteredCards / cardsPerPage))
+    deckViewerPage = math.max(1, math.min(deckViewerPage, totalPages))
+    local pagePrev = { id = "deck_page_prev", text = "‹", x = modalX + 570, y = modalY + 50, w = 34, h = 26, color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = deckViewerPage <= 1 }
+    local pageNext = { id = "deck_page_next", text = "›", x = modalX + 654, y = modalY + 50, w = 34, h = 26, color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = deckViewerPage >= totalPages }
+    table.insert(buttons, pagePrev)
+    table.insert(buttons, pageNext)
+    UI.drawButton(pagePrev, not pagePrev.disabled and mx >= pagePrev.x and mx <= pagePrev.x + pagePrev.w and my >= pagePrev.y and my <= pagePrev.y + pagePrev.h)
+    UI.drawButton(pageNext, not pageNext.disabled and mx >= pageNext.x and mx <= pageNext.x + pageNext.w and my >= pageNext.y and my <= pageNext.y + pageNext.h)
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf(deckViewerPage .. "/" .. totalPages, modalX + 604, modalY + 57, 50, "center")
 
     -- Filter Tabs
     local filterTabs = {
@@ -5330,7 +5478,11 @@ local function drawDeckViewerModal()
     local cols = 8
     local hoveredDeckCard = nil
 
-    for i, c in ipairs(filteredCards) do
+    local firstCard = (deckViewerPage - 1) * cardsPerPage + 1
+    local lastCard = math.min(#filteredCards, firstCard + cardsPerPage - 1)
+    for sourceIndex = firstCard, lastCard do
+        local c = filteredCards[sourceIndex]
+        local i = sourceIndex - firstCard + 1
         local col = (i - 1) % cols
         local row = math.floor((i - 1) / cols)
         local cx = cardGridX + col * (cw + cgap)
@@ -5394,10 +5546,14 @@ local function drawDeckViewerModal()
         love.graphics.setColor(isUnlocked and UI.COLORS.goldYellow or UI.COLORS.textMuted)
         love.graphics.print(h.name .. " (" .. h.poker .. ")", rightX + 12, hy + 8)
 
-        -- Hand Stats & Status Tag
+        -- Hand stats include the current permanent level, not only base values.
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.print("Cần: " .. h.req .. " lá   |   Cơ bản: " .. h.base, rightX + 12, hy + 28)
+        local handType = Poker.HAND_TYPES[h.id]
+        local level = (game.handLevels and game.handLevels[h.id]) or 1
+        local stats = handType and Poker.getHandStats(handType, level)
+        local statText = stats and (stats.chips .. " Chips × " .. stats.mult .. " Mult") or h.base
+        love.graphics.print("Lv." .. level .. "  •  Cần " .. h.req .. " lá  •  " .. statText, rightX + 12, hy + 28)
 
         if isUnlocked then
             love.graphics.setFont(UI.fonts.tiny)
@@ -6909,8 +7065,10 @@ local function drawShopState()
         local cx = cardStartX + (cIdx - 1) * (cardW + cardGap)
         local cy = upY + 36
 
-        local isCardHovered = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
-        local drawY = isCardHovered and (cy - 12) or cy
+        local idlePhase = juice.ambientTimer * 1.55 + gIdx * 1.31
+        local idleY = math.sin(idlePhase) * 3.5
+        local isCardHovered = (mx >= cx and mx <= cx + cardW and my >= cy + idleY and my <= cy + idleY + cardH)
+        local drawY = isCardHovered and (cy - 14) or (cy + idleY)
         local isDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
 
         if isDragged then
@@ -6926,6 +7084,8 @@ local function drawShopState()
             love.graphics.translate(cx + cardW / 2, drawY + cardH / 2)
             if isCardHovered then
                 love.graphics.shear(tX * 0.10, tY * 0.10)
+            else
+                love.graphics.rotate(math.sin(idlePhase * 0.72) * 0.009)
             end
             love.graphics.translate(-cardW / 2, -cardH / 2)
 
@@ -7053,8 +7213,10 @@ local function drawShopState()
         local vw = 130
         local vh = 195
 
-        local isVHovered = (mx >= vx and mx <= vx + vw and my >= vy and my <= vy + vh)
-        local drawVY = isVHovered and (vy - 10) or vy
+        local idlePhase = juice.ambientTimer * 1.42 + gIdx * 1.17
+        local idleY = math.sin(idlePhase) * 3
+        local isVHovered = (mx >= vx and mx <= vx + vw and my >= vy + idleY and my <= vy + idleY + vh)
+        local drawVY = isVHovered and (vy - 12) or (vy + idleY)
         local isVDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
 
         if isVDragged then
@@ -7070,6 +7232,8 @@ local function drawShopState()
             love.graphics.translate(vx + vw / 2, drawVY + vh / 2)
             if isVHovered then
                 love.graphics.shear(tX * 0.10, tY * 0.10)
+            else
+                love.graphics.rotate(math.sin(idlePhase * 0.68) * 0.008)
             end
             love.graphics.translate(-vw / 2, -vh / 2)
 
@@ -7175,8 +7339,10 @@ local function drawShopState()
         local px = packStartX + (pIdx - 1) * (packW + packGap)
         local py = lowY + 32
 
-        local isPackHovered = (mx >= px and mx <= px + packW and my >= py and my <= py + packH)
-        local drawPY = isPackHovered and (py - 10) or py
+        local idlePhase = juice.ambientTimer * 1.35 + gIdx * 1.43
+        local idleY = math.sin(idlePhase) * 4
+        local isPackHovered = (mx >= px and mx <= px + packW and my >= py + idleY and my <= py + idleY + packH)
+        local drawPY = isPackHovered and (py - 12) or (py + idleY)
         local isPackDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
 
         if isPackDragged then
@@ -7192,6 +7358,8 @@ local function drawShopState()
             love.graphics.translate(px + packW / 2, drawPY + packH / 2)
             if isPackHovered then
                 love.graphics.shear(tX * 0.10, tY * 0.10)
+            else
+                love.graphics.rotate(math.sin(idlePhase * 0.74) * 0.01)
             end
             love.graphics.translate(-packW / 2, -packH / 2)
 
@@ -7489,152 +7657,117 @@ local function drawShopState()
         love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
 
         local packImg = UI.getPackImage(pack.packType or pack.id)
-        if packImg then
-            local pw, ph = 64, 84
-            local px = (V_WIDTH - pw) / 2
-            local py = 26
-            love.graphics.setColor(0, 0, 0, 0.5)
-            UI.drawRoundedRect("fill", px + 2, py + 4, pw, ph, 4)
-            love.graphics.setColor(1, 1, 1, 1)
-            local iw, ih = packImg:getDimensions()
-            love.graphics.draw(packImg, px, py, 0, pw / iw, ph / ih)
+        local timer = pData.animationTimer or 0
+        if timer < 0.90 then
+            local entrance = math.min(1, timer / 0.42)
+            local eased = 1 - (1 - entrance) ^ 3
+            local charge = math.max(0, (timer - 0.42) / 0.48)
+            local shake = charge * math.sin(timer * 70) * 7
+            local pulse = 0.70 + eased * 0.30 + math.sin(timer * 24) * 0.018 * charge
+            local pw, ph = 184 * pulse, 248 * pulse
+            local px, py = (V_WIDTH - pw) / 2 + shake, 500 + (150 - 500) * eased
+
+            love.graphics.setBlendMode("add")
+            for ring = 1, 3 do
+                local radius = 75 + charge * (70 + ring * 26)
+                love.graphics.setColor(1, 0.58 + ring * 0.08, 0.12, charge * (0.22 - ring * 0.035))
+                love.graphics.setLineWidth(2)
+                love.graphics.circle("line", 640, 278, radius)
+            end
+            love.graphics.setLineWidth(1)
+            love.graphics.setBlendMode("alpha")
+            if packImg then
+                love.graphics.setColor(0, 0, 0, 0.5)
+                UI.drawRoundedRect("fill", px + 9, py + 15, pw, ph, 10)
+                love.graphics.setColor(1, 1, 1, 1)
+                local iw, ih = packImg:getDimensions()
+                love.graphics.draw(packImg, px + pw / 2, py + ph / 2, shake * 0.002, pw / iw, ph / ih, iw / 2, ih / 2)
+            end
+            love.graphics.setBlendMode("add")
+            for ray = 1, 20 do
+                local angle = ray * math.pi * 2 / 20 + timer * 0.8
+                local radius = 95 + charge * 190
+                love.graphics.setColor(1, 0.72, 0.18, charge * 0.62)
+                love.graphics.line(640 + math.cos(angle) * 62, 278 + math.sin(angle) * 82, 640 + math.cos(angle) * radius, 278 + math.sin(angle) * radius)
+            end
+            love.graphics.setBlendMode("alpha")
+            love.graphics.setFont(UI.fonts.large)
             love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.setLineWidth(1.5)
-            UI.drawRoundedRect("line", px, py, pw, ph, 4)
-        end
-
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf("MỞ " .. (pack.name or "GÓI BÀI") .. " — CHỌN 1 THẺ BÀI", 0, 120, V_WIDTH, "center")
-
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf("Nhấp vào 1 thẻ bài bạn muốn nhận để đưa vào hành trang của bạn:", 0, 168, V_WIDTH, "center")
-
-        local totalCardsW = #cards * 150 + (#cards - 1) * 32
-        local startCardX = (V_WIDTH - totalCardsW) / 2
-        local cardY = 210
-        local cW = 150
-        local cH = 260
-
-        for i, card in ipairs(cards) do
-            local cx = startCardX + (i - 1) * (cW + 32)
-            local isChoiceHovered = (mx >= cx and mx <= cx + cW and my >= cardY and my <= cardY + cH)
-            local drawCY = isChoiceHovered and (cardY - 14) or cardY
-
-            love.graphics.setColor(0.16, 0.20, 0.26, 0.98)
-            UI.drawRoundedRect("fill", cx, drawCY, cW, cH, 10)
-            love.graphics.setColor(isChoiceHovered and UI.COLORS.goldYellow or { 0.45, 0.55, 0.70, 0.8 })
-            love.graphics.setLineWidth(isChoiceHovered and 3 or 1.5)
-            UI.drawRoundedRect("line", cx, drawCY, cW, cH, 10)
-
-            if pack.packType == "buffoon" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor({ 0.85, 0.65, 0.95, 1 })
-                love.graphics.printf("HỘ LINH", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf("👑", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
+            love.graphics.printf(charge < 0.65 and (pack.name or "GÓI BÀI") or "XÉ NIÊM PHONG...", 0, 446, V_WIDTH, "center")
+        else
+            local flash = math.max(0, 1 - (timer - 0.90) / 0.22)
+            if flash > 0 then
+                love.graphics.setColor(1, 0.88, 0.55, flash * 0.55)
+                love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+            end
+            if packImg then
+                local pw, ph = 64, 84
+                local px, py = (V_WIDTH - pw) / 2, 26
                 love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            elseif pack.packType == "standard" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or UI.COLORS.goldYellow)
-                love.graphics.printf(card.roleTitle or "QUÂN BÀI", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.suitSymbol or "♠", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.medium)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.rankName .. " " .. card.suitSymbol, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf("+" .. (card.baseChips or 10) .. " Chips\nChất " .. (card.suitSymbol or "?"), cx + 8, drawCY + 140, cW - 16, "center")
-
-            elseif pack.packType == "arcana" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or UI.COLORS.goldYellow)
-                love.graphics.printf("TRANG BỊ KHẢM", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "💎", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            elseif pack.packType == "joker_edition" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor({ 0.95, 0.45, 0.85, 1 })
-                love.graphics.printf("PHÙ PHÉP HỘ LINH", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "✨", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            elseif pack.packType == "seal" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or { 0.85, 0.75, 0.35, 1 })
-                love.graphics.printf(card.subtitle or "CON DẤU", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "🔴", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            elseif pack.packType == "spectral" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor({ 0.45, 0.85, 0.85, 1 })
-                love.graphics.printf("QUANG PHỔ", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "👻", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            elseif pack.packType == "celestial" then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or { 0.35, 0.75, 0.95, 1 })
-                love.graphics.printf(card.subtitle or "HÀNH TINH", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "🪐", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name, cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
-
-            else
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or UI.COLORS.goldYellow)
-                love.graphics.printf(card.subtitle or "THẺ BÀI", cx + 4, drawCY + 10, cW - 8, "center")
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(card.icon or "🃏", cx, drawCY + 36, cW, "center")
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name or "Thẻ", cx + 6, drawCY + 105, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(card.desc or "", cx + 8, drawCY + 132, cW - 16, "center")
+                local iw, ih = packImg:getDimensions()
+                love.graphics.draw(packImg, px, py, 0, pw / iw, ph / ih)
+                love.graphics.setColor(UI.COLORS.goldYellow)
+                UI.drawRoundedRect("line", px, py, pw, ph, 4)
             end
 
-            local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial")
-            if isConsumablePack then
+            love.graphics.setFont(UI.fonts.large)
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.printf("MỞ " .. (pack.name or "GÓI BÀI") .. " — CHỌN 1 THẺ BÀI", 0, 120, V_WIDTH, "center")
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setColor(UI.COLORS.textLight)
+            love.graphics.printf("Mỗi lựa chọn đều hiển thị artwork và hiệu ứng trước khi nhận.", 0, 168, V_WIDTH, "center")
+
+            local totalCardsW = #cards * 150 + (#cards - 1) * 32
+            local startCardX = (V_WIDTH - totalCardsW) / 2
+            local cardY, cW, cH = 210, 150, 260
+            local labels = { buffoon = "HỘ LINH", standard = "QUÂN BÀI", arcana = "TRANG BỊ KHẢM", joker_edition = "PHÙ PHÉP", seal = "CON DẤU", spectral = "BIẾN ĐỔI", celestial = "HÀNH TINH" }
+
+            for i, card in ipairs(cards) do
+                local cx = startCardX + (i - 1) * (cW + 32)
+                local reveal = math.max(0, math.min(1, (timer - 0.94 - (i - 1) * 0.14) / 0.46))
+                local eased = 1 - (1 - reveal) ^ 3
+                local flipX = math.max(0.035, math.sin(eased * math.pi / 2))
+                local ready = reveal >= 0.99
+                local isChoiceHovered = ready and mx >= cx and mx <= cx + cW and my >= cardY and my <= cardY + cH
+                local idleY = ready and math.sin(juice.ambientTimer * 1.8 + i * 1.4) * 3 or 0
+                local drawCY = isChoiceHovered and (cardY - 16) or (cardY + idleY + (1 - eased) * 75)
+
+                love.graphics.push()
+                love.graphics.translate(cx + cW / 2, drawCY + cH / 2)
+                love.graphics.scale(flipX, 0.82 + eased * 0.18)
+                love.graphics.rotate((1 - eased) * ((i - 2) * 0.24))
+                love.graphics.translate(-cx - cW / 2, -drawCY - cH / 2)
+
+                love.graphics.setColor(0.16, 0.20, 0.26, 0.98)
+                UI.drawRoundedRect("fill", cx, drawCY, cW, cH, 10)
+                love.graphics.setColor(isChoiceHovered and UI.COLORS.goldYellow or (card.color or { 0.45, 0.55, 0.70, 0.8 }))
+                love.graphics.setLineWidth(isChoiceHovered and 3 or 1.5)
+                UI.drawRoundedRect("line", cx, drawCY, cW, cH, 10)
+
+                love.graphics.setFont(UI.fonts.tiny)
+                love.graphics.setColor(card.color or UI.COLORS.goldYellow)
+                love.graphics.printf(labels[pack.packType] or "THẺ BÀI", cx + 4, drawCY + 9, cW - 8, "center")
+
+                local art = UI.getPackCardImage(pack.packType, card)
+                if art then
+                    local iw, ih = art:getDimensions()
+                    local artW, artH = 104, 104
+                    local artScale = math.min(artW / iw, artH / ih)
+                    local drawW, drawH = iw * artScale, ih * artScale
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(art, cx + (cW - drawW) / 2, drawCY + 28 + (artH - drawH) / 2, 0, artScale, artScale)
+                end
+
+                love.graphics.setFont(UI.fonts.small)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.printf(card.name or ((card.rankName or "") .. (card.suitSymbol or "")), cx + 6, drawCY + 138, cW - 12, "center")
+                love.graphics.setFont(UI.fonts.tiny)
+                love.graphics.setColor(UI.COLORS.textLight)
+                local desc = card.desc or ("+" .. (card.baseChips or 0) .. " Chips • " .. (card.suitName or card.suitSymbol or ""))
+                love.graphics.printf(desc, cx + 8, drawCY + 163, cW - 16, "center")
+
+                local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial")
+                if ready and isConsumablePack then
                 local btnUse = {
                     id = "choose_pack_" .. i,
                     text = "DÙNG NGAY",
@@ -7662,7 +7795,7 @@ local function drawShopState()
                 }
                 table.insert(buttons, btnKeep)
                 UI.drawButton(btnKeep, mx >= btnKeep.x and mx <= btnKeep.x + btnKeep.w and my >= btnKeep.y and my <= btnKeep.y + btnKeep.h, juice and juice.buttonPressedId == btnKeep.id)
-            else
+                elseif ready then
                 local btnPick = {
                     id = "choose_pack_" .. i,
                     text = "CHỌN LÁ NÀY",
@@ -7676,10 +7809,22 @@ local function drawShopState()
                 }
                 table.insert(buttons, btnPick)
                 UI.drawButton(btnPick, mx >= btnPick.x and mx <= btnPick.x + btnPick.w and my >= btnPick.y and my <= btnPick.y + btnPick.h, juice and juice.buttonPressedId == btnPick.id)
-            end
-        end
+                end
+                love.graphics.pop()
 
-        local btnSkip = {
+                if reveal > 0 and reveal < 0.72 then
+                    love.graphics.setBlendMode("add")
+                    for spark = 1, 8 do
+                        local a = spark * 2.41 + i
+                        local radius = reveal * 52
+                        love.graphics.setColor(1, 0.78, 0.22, (1 - reveal) * 0.8)
+                        love.graphics.circle("fill", cx + cW / 2 + math.cos(a) * radius, drawCY + cH / 2 + math.sin(a) * radius, 2.5)
+                    end
+                    love.graphics.setBlendMode("alpha")
+                end
+            end
+
+            local btnSkip = {
             id = "skip_pack",
             text = "BỎ QUA GÓI BÀI",
             x = (V_WIDTH - 200) / 2,
@@ -7689,8 +7834,9 @@ local function drawShopState()
             color = UI.COLORS.btnDiscard,
             font = UI.fonts.small,
         }
-        table.insert(buttons, btnSkip)
-        UI.drawButton(btnSkip, mx >= btnSkip.x and mx <= btnSkip.x + btnSkip.w and my >= btnSkip.y and my <= btnSkip.y + btnSkip.h, juice.buttonPressedId == btnSkip.id)
+            table.insert(buttons, btnSkip)
+            UI.drawButton(btnSkip, mx >= btnSkip.x and mx <= btnSkip.x + btnSkip.w and my >= btnSkip.y and my <= btnSkip.y + btnSkip.h, juice.buttonPressedId == btnSkip.id)
+        end
     end
 
     if isShopTransferOpen then
@@ -7700,6 +7846,75 @@ local function drawShopState()
     if hoveredDeityTooltip then
         local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
         UI.drawPatronTooltip(hoveredDeityTooltip, mx, my, copyTarget)
+    end
+end
+
+local function drawShopFx()
+    for _, fx in ipairs(shopFx) do
+        local p = math.min(1, fx.life / fx.duration)
+        local item = fx.item or {}
+        local travel = 1 - (1 - p) ^ 3
+        local x = fx.x + ((fx.targetX or fx.x) - fx.x) * travel
+        local y = fx.y + ((fx.targetY or fx.y) - fx.y) * travel - math.sin(p * math.pi) * (fx.kind == "sell" and 55 or 92)
+        local pop = math.sin(math.min(1, p / 0.24) * math.pi) * 0.16
+        local size = fx.kind == "destroy" and math.max(0.06, 1 + pop - p * 0.96)
+            or (fx.kind == "sell" and math.max(0.12, 1 + pop - p * 0.82) or math.max(0.42, 1 + pop - travel * 0.48))
+        local w, h = 92, 130
+
+        love.graphics.setBlendMode("add")
+        love.graphics.setLineWidth(4)
+        local trailColor = (fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 }
+        love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], (1 - p) * 0.34)
+        love.graphics.line(fx.x, fx.y, x, y)
+        love.graphics.setLineWidth(1)
+        love.graphics.setBlendMode("alpha")
+
+        love.graphics.push()
+        love.graphics.translate(x, y)
+        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "sell" and -1.05 or 0.24)
+        love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
+        love.graphics.scale(size, size)
+        if item.category == "deity" or item.id and Deities.CATALOG[item.id] then
+            UI.drawPatronCard(item.deity or item, -w / 2, -h / 2, w, h, false, false, false)
+        elseif item.category == "card" or item.rank then
+            UI.drawCard(item.card or item, -w / 2, -h / 2, w, h)
+        else
+            love.graphics.setColor(0.12, 0.16, 0.22, 0.98)
+            UI.drawRoundedRect("fill", -w / 2, -h / 2, w, h, 8)
+            local art = item.packType and UI.getPackCardImage(item.packType, item.reward or item)
+                or (item.category == "equipment" and UI.getEquipmentImage(item.equipment and item.equipment.id or item.id))
+                or (item.category == "pack" and UI.getPackImage(item.packType))
+                or (item.category == "book" and UI.getHandImage(item.handId))
+                or ((item.category == "voucher" or item.category == "hand_expansion") and UI.getVoucherImage(item.voucherId or item.category))
+            if art then
+                local iw, ih = art:getDimensions()
+                local s = math.min(76 / iw, 82 / ih)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(art, -iw * s / 2, -50, 0, s, s)
+            end
+            love.graphics.setFont(UI.fonts.tiny)
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.printf(item.name or (item.reward and item.reward.name) or "VẬT PHẨM", -w / 2 + 4, 38, w - 8, "center")
+        end
+        love.graphics.pop()
+
+        love.graphics.setBlendMode("add")
+        for i = 1, 12 do
+            local angle = i * 2.17
+            local radius = p * (20 + i * 2.4)
+            local color = (fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.22, 0.08 } or { 1, 0.82, 0.22 }
+            love.graphics.setColor(color[1], color[2], color[3], 1 - p)
+            love.graphics.rectangle("fill", x + math.cos(angle) * radius, y + math.sin(angle) * radius, 3, 3)
+        end
+        love.graphics.setBlendMode("alpha")
+
+        if fx.kind == "sell" and p > 0.58 then
+            local coinP = (p - 0.58) / 0.42
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], 1 - coinP * 0.35)
+            local sellPrice = math.max(1, math.floor((item.cost or 4) / 2))
+            love.graphics.printf("+$" .. sellPrice, x - 40, y - 30 - coinP * 18, 80, "center")
+        end
     end
 end
 
@@ -7807,6 +8022,8 @@ function love.draw()
     elseif state == "victory" then
         drawVictoryState()
     end
+
+    drawShopFx()
 
     if isDeckViewerOpen then
         drawDeckViewerModal()
@@ -8094,7 +8311,12 @@ local function handleShopMousepressed(mx, my, button)
         for _, btn in ipairs(buttons) do
             if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                 if btn.id:sub(1, 12) == "choose_pack_" then
+                    local opening = shopData.currentPackOpening
+                    local reward = opening.cards and opening.cards[btn.cardIndex]
                     local ok, action, eq = Shop.choosePackCard(shopData, btn.cardIndex, game)
+                    if ok then
+                        spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
+                    end
                     if ok and action == "open_socketing" and eq then
                         pendingEquipment = eq
                         socketingReturnState = "shop"
@@ -8118,7 +8340,12 @@ local function handleShopMousepressed(mx, my, button)
                     end
                     return true
                 elseif btn.id:sub(1, 10) == "keep_pack_" then
+                    local opening = shopData.currentPackOpening
+                    local reward = opening.cards and opening.cards[btn.cardIndex]
                     local ok, msg = Shop.keepPackCard(shopData, btn.cardIndex, game)
+                    if ok then
+                        spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
+                    end
                     if ok and type(msg) == "string" then
                         table.insert(anim.floatingTexts, {
                             text = msg,
@@ -8138,7 +8365,9 @@ local function handleShopMousepressed(mx, my, button)
                     end
                     return true
                 elseif btn.id == "skip_pack" then
+                    local skippedPack = shopData.currentPackOpening.pack
                     Shop.skipPack(shopData)
+                    spawnShopFx("sell", { category = "pack", packType = skippedPack.packType, name = skippedPack.name }, btn.x + btn.w / 2, btn.y)
                     return true
                 end
             end
@@ -8205,7 +8434,10 @@ local function handleShopMousepressed(mx, my, button)
                     return true
                 end
             elseif btn.id:sub(1, 5) == "sell_" then
-                Shop.sellDeity(game, btn.deityIndex)
+                local sold = game.deities and game.deities[btn.deityIndex]
+                if Shop.sellDeity(game, btn.deityIndex) then
+                    spawnShopFx("sell", sold, btn.x + btn.w / 2, btn.y - 42)
+                end
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
                 useConsumable(btn.consumableIndex)
@@ -8492,42 +8724,11 @@ local function handleModalsMousepressed(mx, my, button)
             local modalH = 650
             local modalX = (V_WIDTH - modalW) / 2
             local modalY = (V_HEIGHT - modalH) / 2
-            local cardGridX = modalX + 24
-            local cardGridY = modalY + 128
-            local cw = 74
-            local ch = 108
-            local cgap = 10
-            local cols = 8
-
-            local allCards = {}
-            for _, c in ipairs(game.deck) do table.insert(allCards, c) end
-            for _, c in ipairs(game.hand) do table.insert(allCards, c) end
-            for _, c in ipairs(game.discardPile) do table.insert(allCards, c) end
-
-            local filteredCards = {}
-            for _, c in ipairs(allCards) do
-                local hasEq = (c.equipments and #c.equipments > 0)
-                if deckViewerFilter == "all" then
-                    table.insert(filteredCards, c)
-                elseif deckViewerFilter == "equipped" and hasEq then
-                    table.insert(filteredCards, c)
-                elseif deckViewerFilter == c.suit then
-                    table.insert(filteredCards, c)
-                end
-            end
-
-            for i, c in ipairs(filteredCards) do
-                local col = (i - 1) % cols
-                local row = math.floor((i - 1) / cols)
-                local cx = cardGridX + col * (cw + cgap)
-                local cy = cardGridY + row * (ch + cgap)
-                if cy + ch <= modalY + modalH - 20 then
-                    if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
-                        inspectCardModal = c
-                        Sound.play("card_deal")
-                        return true
-                    end
-                end
+            local card = getDeckViewerCardAt(mx, my, modalX, modalY)
+            if card then
+                inspectCardModal = card
+                Sound.play("card_deal")
+                return true
             end
         end
 
@@ -8588,9 +8789,28 @@ local function handleModalsMousepressed(mx, my, button)
             local tx = tabStartX + (idx - 1) * (tabW + 6)
             if mx >= tx and mx <= tx + tabW and my >= tabY and my <= tabY + tabH then
                 deckViewerFilter = fid
+                deckViewerPage = 1
                 Sound.play("card_deal")
                 return true
             end
+        end
+
+        if mx >= modalX + 570 and mx <= modalX + 604 and my >= modalY + 50 and my <= modalY + 76 then
+            deckViewerPage = math.max(1, deckViewerPage - 1)
+            Sound.play("card_slide")
+            return true
+        elseif mx >= modalX + 654 and mx <= modalX + 688 and my >= modalY + 50 and my <= modalY + 76 then
+            local pages = math.max(1, math.ceil(#getDeckViewerFilteredCards() / 32))
+            deckViewerPage = math.min(pages, deckViewerPage + 1)
+            Sound.play("card_slide")
+            return true
+        end
+
+        local card = getDeckViewerCardAt(mx, my, modalX, modalY)
+        if card then
+            inspectCardModal = card
+            Sound.play("card_deal")
+            return true
         end
 
         -- Click outside modal closes it
@@ -9369,36 +9589,25 @@ function love.mousemoved(x, y, dx, dy)
         end
 
         if handDrag.isDragging then
-            local idx = handDrag.cardIndex
-            local c = game.hand[idx]
-            local isAxiomSpade = c and (c.suit == "spades" or c.suit == "vharos" or c.suit == "iron_axiom")
-            if c and not isAxiomSpade then
-                -- Check left neighbor
-                if idx > 1 then
-                    local leftCard = game.hand[idx - 1]
-                    local isLeftAxiom = leftCard and (leftCard.suit == "spades" or leftCard.suit == "vharos" or leftCard.suit == "iron_axiom")
-                    if not isLeftAxiom then
-                        local prevSlotX = getHandCardPosition(idx - 1, #game.hand)
-                        if c.visualX < prevSlotX + 35 then
-                            game.hand[idx], game.hand[idx - 1] = game.hand[idx - 1], game.hand[idx]
-                            handDrag.cardIndex = idx - 1
-                            Sound.play("card_slide")
-                        end
-                    end
+            local nearest, nearestDistance = handDrag.cardIndex, math.huge
+            for slot = 1, #game.hand do
+                local slotX, _, slotW = getHandCardPosition(slot, #game.hand)
+                local distance = math.abs(mx - (slotX + slotW / 2))
+                if distance < nearestDistance then
+                    nearest, nearestDistance = slot, distance
                 end
-                -- Check right neighbor
-                if idx < #game.hand then
-                    local rightCard = game.hand[idx + 1]
-                    local isRightAxiom = rightCard and (rightCard.suit == "spades" or rightCard.suit == "vharos" or rightCard.suit == "iron_axiom")
-                    if not isRightAxiom then
-                        local nextSlotX = getHandCardPosition(idx + 1, #game.hand)
-                        if c.visualX > nextSlotX - 35 then
-                            game.hand[idx], game.hand[idx + 1] = game.hand[idx + 1], game.hand[idx]
-                            handDrag.cardIndex = idx + 1
-                            Sound.play("card_slide")
-                        end
-                    end
+            end
+            local selectedCards = {}
+            for _, card in ipairs(game.hand) do
+                if card.selected then selectedCards[card] = true end
+            end
+            if nearest ~= handDrag.cardIndex and Deck.moveCard(game.hand, handDrag.cardIndex, nearest) then
+                handDrag.cardIndex = nearest
+                game.selectedIndices = {}
+                for index, card in ipairs(game.hand) do
+                    if selectedCards[card] then table.insert(game.selectedIndices, index) end
                 end
+                Sound.play("card_slide", 0.96 + nearest * 0.015)
             end
         end
     end
@@ -9433,6 +9642,7 @@ function love.mousereleased(x, y, button)
             local card = game.hand[handDrag.cardIndex]
             if card then
                 card.visualScale = 1.15
+                card.selectPulse = 1
             end
             toggleCardSelection(handDrag.cardIndex)
             if card and card.selected then
@@ -9450,7 +9660,11 @@ function love.mousereleased(x, y, button)
 
     if button == 1 and shopDrag.active then
         if not shopDrag.isDragging and shopDrag.itemIndex then
+            local boughtItem = shopDrag.item
             local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
+            if success then
+                spawnShopFx("buy", boughtItem, shopDrag.origX + shopDrag.cardW / 2, shopDrag.origY + shopDrag.cardH / 2)
+            end
             if success and msg == "open_socketing" and eq then
                 pendingEquipment = eq
                 socketingReturnState = "shop"
@@ -9459,7 +9673,11 @@ function love.mousereleased(x, y, button)
         elseif shopDrag.isDragging and shopDrag.item then
             if my < 380 or my < (shopDrag.origY - 40) then
                 if (game.gold or 0) >= (shopDrag.item.cost or 0) then
+                    local boughtItem = shopDrag.item
                     local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
+                    if success then
+                        spawnShopFx("buy", boughtItem, mx, my)
+                    end
                     if success and msg == "open_socketing" and eq then
                         pendingEquipment = eq
                         socketingReturnState = "shop"

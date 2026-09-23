@@ -1426,6 +1426,27 @@ function UI.getCardImage(suit, rank)
     return nil
 end
 
+-- Resolve the best existing artwork for a reward revealed from a booster pack.
+-- The pack cover is an intentional fallback, so reward cards never show a
+-- missing-glyph square while content-specific artwork is still unavailable.
+function UI.getPackCardImage(packType, card)
+    card = card or {}
+    if packType == "buffoon" then
+        local image = UI.getDeityImage(card.id)
+        if image then return image, true end
+    elseif packType == "standard" then
+        local image = UI.getCardImage(card.suit, card.rank or card.rankName)
+        if image then return image, true end
+    elseif packType == "arcana" then
+        local image = UI.getEquipmentImage(card.id)
+        if image then return image, true end
+    elseif packType == "celestial" then
+        local image = UI.getHandImage(card.handId or card.id)
+        if image then return image, true end
+    end
+    return UI.getPackImage(packType), false
+end
+
 
 
 -- Full Tarot Card Frame for Hộ Linh (Patrons)

@@ -3126,6 +3126,32 @@ do
     log("[PASS] 105. Tích hợp trọn vẹn Thẻ Bài Mở Rộng Tay Bài Pixel Art (Voucher) verified 100%")
 end
 
+-- 106. Every booster reward resolves artwork and carries opening animation state.
+do
+    local gs = { deities = {}, selectedSuit = "aurelia", handLevels = {}, hand = {}, persistentDeck = {}, unlockedHands = {} }
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        local opening = Shop.openPack(pack, gs)
+        assert(opening.animationTimer == 0, "Pack opening animation must start at zero: " .. pack.packType)
+        assert(opening.cards and #opening.cards > 0, "Pack must reveal reward cards: " .. pack.packType)
+        for _, reward in ipairs(opening.cards) do
+            local ok, artwork = pcall(UI.getPackCardImage, pack.packType, reward)
+            assert(ok and artwork ~= nil, "Pack reward must resolve artwork: " .. pack.packType .. "/" .. tostring(reward.id or reward.name))
+        end
+    end
+    log("[PASS] 106. Pack reveal animation state and artwork fallback verified for all 7 pack types")
+end
+
+-- 107. Expanded hands can move a card freely across the full row.
+do
+    local hand = {}
+    for i = 1, 12 do hand[i] = { id = i } end
+    assert(Deck.moveCard(hand, 2, 11), "Expanded hand reorder must succeed")
+    assert(hand[11].id == 2 and hand[2].id == 3, "Moved card and shifted neighbors must keep their identity")
+    assert(Deck.moveCard(hand, 11, 1), "Reverse expanded hand reorder must succeed")
+    assert(hand[1].id == 2 and #hand == 12, "Reorder must preserve card count")
+    log("[PASS] 107. Expanded hand cards reorder freely without losing identity")
+end
+
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end

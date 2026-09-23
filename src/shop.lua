@@ -490,6 +490,7 @@ function Shop.openPack(packItem, gameState)
     return {
         pack = packItem,
         cards = candidates,
+        animationTimer = 0,
     }
 end
 

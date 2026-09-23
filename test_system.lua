@@ -3189,6 +3189,51 @@ do
     log("[PASS] 108. All 24 gameplay audio cues synthesize and missing card/coin sounds play")
 end
 
+-- 109. Debug controls use the live catalogs and preserve a coherent run.
+do
+    local DebugTools = require("src.debug_tools")
+    local Collection = require("src.collection")
+    local gs = GameState.new("red_deck")
+    gs.persistentDeck = Deck.createStarterDeck("red_deck")
+    local shop = Shop.new()
+    assert(DebugTools.setGold(gs, "54321") and gs.gold == 54321)
+    assert(DebugTools.addGold(gs, "79") and gs.gold == 54400)
+    assert(not DebugTools.setGold(gs, "-1"))
+    assert(not DebugTools.setAnte(gs, "1.5"))
+    assert(DebugTools.setAnte(gs, "27", 3))
+    assert(gs.run.ante == 27 and gs.run.currentBlindIndex == 3 and gs.run.blinds[3].status == "current")
+    assert(gs.run.blinds[3].hp == RunManager.calculateBlindHp(27, "boss"))
+    assert(DebugTools.setAnte(gs, "1", 1) and gs.run.maxAnte == 8 and not gs.run.endless)
+
+    local target = gs.persistentDeck[1]
+    local function grant(cat, wantedId)
+        for _, item in ipairs(Collection.getItems(cat)) do
+            if item.id == wantedId then return DebugTools.grantCollectionItem(gs, shop, cat, item, target) end
+        end
+        error("Missing debug collection item: " .. wantedId)
+    end
+    assert(grant("vouchers", "v_interest") and gs.maxInterest == 10 and gs.gold == 54400)
+    assert(grant("enhancements", "enh_armor") and target.enhancement == "enh_armor")
+    assert(grant("seals", "seal_anchor") and target.seal == "seal_anchor")
+    assert(grant("editions", "ed_foil") and target.edition == "foil")
+    local ok, action, eq = grant("consumables", Equipment.POOL[1])
+    assert(ok and action == "socketing" and eq.id == Equipment.POOL[1])
+    local oldCount = #gs.persistentDeck
+    for _, item in ipairs(Collection.getItems("packs")) do
+        if item.isPackContent and item.packType == "standard" then
+            assert(DebugTools.grantCollectionItem(gs, shop, "packs", item, target))
+            break
+        end
+    end
+    assert(#gs.persistentDeck == oldCount + 1, "Debug grant should add the chosen pack card")
+    local pact = Collection.getItems("tags")[1]
+    assert(DebugTools.grantCollectionItem(gs, shop, "tags", pact, target))
+    local blind = Collection.getItems("blinds")[1]
+    local blindOk, blindAction, blindId = DebugTools.grantCollectionItem(gs, shop, "blinds", blind, target)
+    assert(blindOk and blindAction == "blind" and blindId == blind.id)
+    log("[PASS] 109. Debug gold, Ante 27 boss and collection grants follow live gameplay rules")
+end
+
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end

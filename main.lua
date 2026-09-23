@@ -36,6 +36,7 @@ local Events = require("src.events")
 local RunManager = require("src.run_manager")
 local RewardSystem = require("src.reward_system")
 local Collection = require("src.collection")
+local DebugTools = require("src.debug_tools")
 local Persistence = require("src.persistence")
 local Rng = require("src.rng")
 local GameState = require("src.game_state")
@@ -116,6 +117,15 @@ local deckViewerPage = 1
 local menuMode = "title" -- "title", "deck_select"
 local isPauseMenuOpen = false
 local isSettingsOpen = false
+local isDebugOpen = false
+local debugTab = "gold"
+local debugGoldInput = "100"
+local debugAnteInput = "1"
+local debugInputFocus = nil
+local debugCategory = "jokers"
+local debugItemPage = 1
+local debugTargetCardIndex = 1
+local debugMessage = nil
 local lastActiveState = "map"
 local hasRunStarted = false
 
@@ -131,9 +141,11 @@ local settings = {
     fastScoring = false,
     fullscreen = false,
     crtEnabled = true,
+    debugEnabled = false,
 }
 
 local function saveSettings()
+    if isCaptureMode then return end
     Persistence.saveSettings(settings)
 end
 
@@ -1576,6 +1588,9 @@ function love.update(dt)
             closeShopTransfer = function()
                 isShopTransferOpen = false
             end,
+            getShopTransferState = function()
+                return isShopTransferOpen, transferPage, transferSourceCard, transferSourceEqIndex
+            end,
             openHandbook = function()
                 isHandbookOpen = true
             end,
@@ -1602,6 +1617,9 @@ function love.update(dt)
             end,
             openSettings = function()
                 isSettingsOpen = true
+            end,
+            isDebugEnabled = function()
+                return settings.debugEnabled
             end,
             closeSettings = function()
                 isSettingsOpen = false
@@ -6434,7 +6452,7 @@ local function drawSettingsModal()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 500
-    local modalH = 430
+    local modalH = 515
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
@@ -6500,6 +6518,19 @@ local function drawSettingsModal()
     local btnCrt = { id = "setting_crt", text = crtText, x = modalX + 300, y = row4Y, w = 150, h = 34, color = settings.crtEnabled and UI.COLORS.btnPlay or UI.COLORS.btnNormal, font = UI.fonts.small }
     table.insert(buttons, btnCrt)
     UI.drawButton(btnCrt, mx >= btnCrt.x and mx <= btnCrt.x + btnCrt.w and my >= btnCrt.y and my <= btnCrt.y + btnCrt.h, juice.buttonPressedId == btnCrt.id)
+
+    local row5Y = modalY + 312
+    love.graphics.setFont(UI.fonts.regular)
+    love.graphics.setColor(UI.COLORS.textLight)
+    love.graphics.print("Chế Độ Debug:", modalX + 35, row5Y + 6)
+    local btnDebugToggle = { id = "setting_debug_toggle", text = settings.debugEnabled and "BẬT" or "TẮT", x = modalX + 300, y = row5Y, w = 150, h = 34, color = settings.debugEnabled and UI.COLORS.btnPlay or UI.COLORS.btnNormal, font = UI.fonts.small }
+    buttons[#buttons + 1] = btnDebugToggle
+    UI.drawButton(btnDebugToggle, mx >= btnDebugToggle.x and mx <= btnDebugToggle.x + btnDebugToggle.w and my >= btnDebugToggle.y and my <= btnDebugToggle.y + btnDebugToggle.h)
+    if settings.debugEnabled then
+        local btnDebugOpen = { id = "setting_debug_open", text = "MỞ BẢNG DEBUG", x = modalX + 150, y = modalY + 365, w = 200, h = 34, color = UI.COLORS.chipsBlue, font = UI.fonts.small }
+        buttons[#buttons + 1] = btnDebugOpen
+        UI.drawButton(btnDebugOpen, mx >= btnDebugOpen.x and mx <= btnDebugOpen.x + btnDebugOpen.w and my >= btnDebugOpen.y and my <= btnDebugOpen.y + btnDebugOpen.h)
+    end
 
     -- Close Button
     local btnClose = { id = "close_settings", text = "LƯU & ĐÓNG", x = modalX + (modalW - 180) / 2, y = modalY + modalH - 52, w = 180, h = 40, color = UI.COLORS.btnPlay, font = UI.fonts.regular }
@@ -7715,6 +7746,109 @@ local function drawShopState()
     end
 end
 
+local DEBUG_CATEGORIES = { "jokers", "consumables", "vouchers", "enhancements", "seals", "editions", "packs", "other", "tags", "blinds", "decks" }
+local DEBUG_SCREENS = {
+    { id = "menu", text = "MENU" }, { id = "BLIND_SELECT", text = "CHỌN BLIND" },
+    { id = "small", text = "ĐẤU TIỂU YÊU" }, { id = "big", text = "ĐẤU ĐẠI QUÁI" },
+    { id = "boss", text = "ĐẤU BOSS" }, { id = "shop", text = "CỬA HÀNG" },
+    { id = "rest", text = "NGHỈ NGƠI" }, { id = "treasure", text = "KHO BÁU" },
+    { id = "event", text = "SỰ KIỆN" }, { id = "boss_deity", text = "CHỌN HỘ LINH" },
+    { id = "chest", text = "RƯƠNG BOSS" }, { id = "map", text = "BẢN ĐỒ" },
+    { id = "socketing", text = "KHẢM TRANG BỊ" }, { id = "CASH_OUT", text = "TRẢ THƯỞNG" },
+    { id = "scoring", text = "TÍNH AURA" },
+    { id = "gameover", text = "THUA CUỘC" }, { id = "victory", text = "CHIẾN THẮNG" },
+}
+
+local function drawDebugModal()
+    local mx, my = toVirtual(love.mouse.getPosition())
+    buttons = {}
+    local function add(id, label, x, y, w, h, color, font)
+        local btn = { id = id, text = label, x = x, y = y, w = w, h = h, color = color or UI.COLORS.btnNormal, font = font or UI.fonts.small }
+        buttons[#buttons + 1] = btn
+        UI.drawButton(btn, mx >= x and mx <= x + w and my >= y and my <= y + h)
+    end
+    love.graphics.setColor(0, 0, 0, 0.86)
+    love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+    love.graphics.setColor(UI.COLORS.panelBg)
+    UI.drawRoundedRect("fill", 55, 32, 1170, 652, 12)
+    love.graphics.setColor(UI.COLORS.panelBorder)
+    UI.drawRoundedRect("line", 55, 32, 1170, 652, 12)
+    love.graphics.setFont(UI.fonts.large)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.print("BẢNG DEBUG — KIỂM THỬ GAME", 80, 48)
+    add("debug_close", "ĐÓNG", 1080, 48, 116, 36, UI.COLORS.btnDiscard)
+    for i, tab in ipairs({ { "gold", "TIỀN" }, { "teleport", "DỊCH CHUYỂN" }, { "items", "BỘ SƯU TẬP" } }) do
+        add("debug_tab_" .. tab[1], tab[2], 80 + (i - 1) * 190, 102, 176, 38,
+            debugTab == tab[1] and UI.COLORS.btnPlay or UI.COLORS.btnNormal)
+    end
+
+    if debugTab == "gold" then
+        love.graphics.setFont(UI.fonts.medium)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.print("Vàng hiện tại: $" .. tostring(game.gold or 0), 110, 185)
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.print("Nhập số vàng (tối đa 9 triệu tỷ), rồi chọn đặt hoặc cộng:", 110, 240)
+        add("debug_focus_gold", (debugInputFocus == "gold" and "▸ " or "") .. debugGoldInput, 110, 280, 420, 52)
+        add("debug_set_gold", "ĐẶT SỐ VÀNG", 560, 280, 220, 52, UI.COLORS.btnPlay)
+        add("debug_add_gold", "CỘNG SỐ VÀNG", 800, 280, 220, 52, UI.COLORS.goldYellow)
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.printf("Chế độ Debug chỉ nên dùng để kiểm thử. Tiến trình sau khi chỉnh sửa vẫn có thể được lưu.", 110, 390, 950, "left")
+    elseif debugTab == "teleport" then
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.print("Ante muốn tới (1–999):", 90, 169)
+        add("debug_focus_ante", (debugInputFocus == "ante" and "▸ " or "") .. debugAnteInput, 300, 156, 135, 38)
+        add("debug_set_ante", "ÁP DỤNG ANTE", 455, 156, 170, 38, UI.COLORS.btnPlay)
+        love.graphics.print("Chọn màn — trận đấu sẽ được khởi tạo đúng với Ante và loại Blind:", 90, 218)
+        for i, screen in ipairs(DEBUG_SCREENS) do
+            local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+            add("debug_screen_" .. screen.id, screen.text, 90 + col * 270, 255 + row * 78, 240, 55,
+                UI.COLORS.btnNormal)
+        end
+    else
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.print("Chọn mục để nhận/dùng ngay. Hiệu ứng trên bài áp dụng cho lá đích bên dưới.", 80, 151)
+        for i, catId in ipairs(DEBUG_CATEGORIES) do
+            local cat = Collection.getCategoryById(catId)
+            local col, row = (i - 1) % 6, math.floor((i - 1) / 6)
+            add("debug_category_" .. catId, cat and cat.title or catId, 80 + col * 188, 178 + row * 40, 178, 34,
+                debugCategory == catId and UI.COLORS.btnPlay or UI.COLORS.btnNormal, UI.fonts.tiny)
+        end
+        local deckCards = getAllDeckCards()
+        debugTargetCardIndex = math.max(1, math.min(debugTargetCardIndex, #deckCards))
+        local target = deckCards[debugTargetCardIndex]
+        add("debug_target_prev", "‹", 80, 270, 38, 32)
+        add("debug_target_next", "›", 574, 270, 38, 32)
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf("Lá đích " .. debugTargetCardIndex .. "/" .. #deckCards .. ": " .. (target and ((target.rankName or "") .. (target.suitSymbol or "")) or "trống"), 126, 277, 440, "center")
+        local items = Collection.getItems(debugCategory)
+        local perPage = 12
+        local totalPages = math.max(1, math.ceil(#items / perPage))
+        debugItemPage = math.max(1, math.min(debugItemPage, totalPages))
+        for slot = 1, perPage do
+            local itemIndex = (debugItemPage - 1) * perPage + slot
+            local item = items[itemIndex]
+            if item then
+                local col, row = (slot - 1) % 2, math.floor((slot - 1) / 2)
+                add("debug_grant_" .. itemIndex, item.name, 80 + col * 570, 318 + row * 46, 540, 38,
+                    UI.COLORS.btnNormal, UI.fonts.small)
+            end
+        end
+        add("debug_items_prev", "‹", 400, 604, 48, 36)
+        add("debug_items_next", "›", 714, 604, 48, 36)
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf("Trang " .. debugItemPage .. "/" .. totalPages .. " • " .. #items .. " mục", 462, 612, 238, "center")
+    end
+    if debugMessage then
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.goldYellow)
+        love.graphics.printf(debugMessage, 80, 652, 1120, "center")
+    end
+end
+
 local TRANSFER_PER_PAGE = 16
 
 local function getTransferPageCards()
@@ -7794,7 +7928,8 @@ drawShopTransferView = function()
 
     local prev = { id = "transfer_prev", text = "‹", x = 450, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage <= 1 }
     local next = { id = "transfer_next", text = "›", x = 788, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage >= totalPages }
-    buttons[#buttons + 1], buttons[#buttons + 1] = prev, next
+    buttons[#buttons + 1] = prev
+    buttons[#buttons + 1] = next
     UI.drawButton(prev, not prev.disabled and mx >= prev.x and mx <= prev.x + prev.w and my >= prev.y and my <= prev.y + prev.h)
     UI.drawButton(next, not next.disabled and mx >= next.x and mx <= next.x + next.w and my >= next.y and my <= next.y + next.h)
     love.graphics.setFont(UI.fonts.small)
@@ -7831,7 +7966,8 @@ drawShopTransferView = function()
 
     local reset = { id = "transfer_reset", text = "CHỌN LẠI NGUỒN", x = 250, y = 615, w = 230, h = 44, color = UI.COLORS.btnNormal, font = UI.fonts.small }
     local close = { id = "close_shop_transfer", text = "XONG / VỀ CỬA HÀNG", x = V_WIDTH - 480, y = 615, w = 230, h = 44, color = UI.COLORS.btnPlay, font = UI.fonts.small }
-    buttons[#buttons + 1], buttons[#buttons + 1] = reset, close
+    buttons[#buttons + 1] = reset
+    buttons[#buttons + 1] = close
     UI.drawButton(reset, mx >= reset.x and mx <= reset.x + reset.w and my >= reset.y and my <= reset.y + reset.h)
     UI.drawButton(close, mx >= close.x and mx <= close.x + close.w and my >= close.y and my <= close.y + close.h)
 end
@@ -8024,12 +8160,12 @@ function love.draw()
         drawCardInspectorModal(inspectCardModal)
     end
 
-    if isSettingsOpen then
-        drawSettingsModal()
-    end
-
     if isPauseMenuOpen then
         drawPauseMenuModal()
+    end
+
+    if isSettingsOpen then
+        drawSettingsModal()
     end
 
     if isCollectionOpen then
@@ -8041,7 +8177,7 @@ function love.draw()
     end
 
     -- In-game sleek Pause / Menu button at top right
-    if state ~= "menu" and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen then
+    if state ~= "menu" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
         local mx, my = toVirtual(love.mouse.getPosition())
         local btnMenu = {
             id = "open_pause_menu",
@@ -8056,6 +8192,10 @@ function love.draw()
         table.insert(buttons, btnMenu)
         local isH = (mx >= btnMenu.x and mx <= btnMenu.x + btnMenu.w and my >= btnMenu.y and my <= btnMenu.y + btnMenu.h)
         UI.drawButton(btnMenu, isH, juice.buttonPressedId == btnMenu.id)
+    end
+
+    if isDebugOpen then
+        drawDebugModal()
     end
 
     -- Floating juice notifications
@@ -8485,7 +8625,157 @@ local function handleShopMousepressed(mx, my, button)
     return false
 end
 
+local function debugTeleport(screenId)
+    if not hasRunStarted and screenId ~= "menu" then startNewGame("red_deck") end
+    local blindIndex = screenId == "big" and 2 or (screenId == "boss" and 3 or 1)
+    local ok, message = DebugTools.setAnte(game, debugAnteInput, blindIndex)
+    if not ok then debugMessage = message return end
+    pendingCombatNode = nil
+    isShopTransferOpen = false
+    isDeckViewerOpen = false
+    inspectCardModal = nil
+    isDebugOpen = false
+    isSettingsOpen = false
+    isPauseMenuOpen = false
+    if screenId == "small" or screenId == "big" or screenId == "boss" then
+        startBlindCombat(RunManager.getCurrentBlind(game.run))
+    elseif screenId == "shop" then
+        Shop.resetReroll(shopData)
+        Shop.refresh(shopData, game)
+        state = "shop"
+    elseif screenId == "rest" then
+        restStateData = { chosenAction = nil, selectedCard = nil, message = nil }
+        state = "rest"
+    elseif screenId == "treasure" then
+        generateTreasureRewards()
+        state = "treasure"
+    elseif screenId == "event" then
+        game.currentEvent = Events.getRandomEvent(game)
+        game.eventOutcomeText = nil
+        state = "event"
+    elseif screenId == "boss_deity" then
+        game.bossDeityDraft = Deities.getBossDraftPool(game.deities, 2)
+        state = "boss_deity"
+    elseif screenId == "chest" then
+        generateBossChestRewards()
+        socketingReturnState = "shop"
+        state = "chest"
+    elseif screenId == "map" then
+        game.map = Map.generate(game.act or 1)
+        state = "map"
+    elseif screenId == "socketing" then
+        pendingEquipment = Equipment.ITEMS[Equipment.POOL[1]]
+        socketingReturnState = "shop"
+        state = "socketing"
+    elseif screenId == "CASH_OUT" then
+        local blind = RunManager.getCurrentBlind(game.run)
+        local breakdown = RewardSystem.calculate(blind, game, false)
+        RunManager.completeCurrentBlind(game.run)
+        game.gold = (game.gold or 0) + breakdown.totalGold
+        cashOutAnim = RewardSystem.newAnimation(breakdown)
+        state = "CASH_OUT"
+    elseif screenId == "scoring" then
+        startBlindCombat(RunManager.getCurrentBlind(game.run))
+        toggleCardSelection(1)
+        playSelectedHand()
+    else
+        state = screenId
+    end
+    if state ~= "menu" then lastActiveState = state end
+    saveRunAtSafePoint()
+    Sound.play("card_deal")
+end
+
+local function handleDebugMousepressed(mx, my, button)
+    if button ~= 1 then return true end
+    for _, btn in ipairs(buttons) do
+        if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+            local id = btn.id
+            if id == "debug_close" then
+                isDebugOpen = false
+                isSettingsOpen = true
+            elseif id:sub(1, 10) == "debug_tab_" then
+                debugTab = id:sub(11)
+                debugInputFocus = nil
+                debugMessage = nil
+            elseif id == "debug_focus_gold" then
+                if debugInputFocus ~= "gold" then debugGoldInput = "" end
+                debugInputFocus = "gold"
+            elseif id == "debug_set_gold" or id == "debug_add_gold" then
+                local ok, message = id == "debug_set_gold" and DebugTools.setGold(game, debugGoldInput)
+                    or DebugTools.addGold(game, debugGoldInput)
+                debugMessage = message
+                if ok then saveRunAtSafePoint() end
+            elseif id == "debug_focus_ante" then
+                if debugInputFocus ~= "ante" then debugAnteInput = "" end
+                debugInputFocus = "ante"
+            elseif id == "debug_set_ante" then
+                if not hasRunStarted then startNewGame("red_deck") end
+                local ok, message = DebugTools.setAnte(game, debugAnteInput, 1)
+                debugMessage = message
+                if ok then
+                    state = "BLIND_SELECT"
+                    lastActiveState = state
+                    saveRunAtSafePoint()
+                end
+            elseif id:sub(1, 13) == "debug_screen_" then
+                debugTeleport(id:sub(14))
+            elseif id:sub(1, 15) == "debug_category_" then
+                debugCategory = id:sub(16)
+                debugItemPage = 1
+                debugMessage = nil
+            elseif id == "debug_target_prev" then
+                debugTargetCardIndex = math.max(1, debugTargetCardIndex - 1)
+            elseif id == "debug_target_next" then
+                debugTargetCardIndex = math.min(#getAllDeckCards(), debugTargetCardIndex + 1)
+            elseif id == "debug_items_prev" then
+                debugItemPage = math.max(1, debugItemPage - 1)
+            elseif id == "debug_items_next" then
+                debugItemPage = debugItemPage + 1
+            elseif id:sub(1, 12) == "debug_grant_" then
+                if not hasRunStarted then startNewGame("red_deck") end
+                local item = Collection.getItems(debugCategory)[tonumber(id:sub(13))]
+                local target = getAllDeckCards()[debugTargetCardIndex]
+                local ok, result, payload = DebugTools.grantCollectionItem(game, shopData, debugCategory, item, target)
+                debugMessage = result
+                if ok and result == "socketing" and payload then
+                    pendingEquipment = payload
+                    socketingReturnState = state == "menu" and "map" or state
+                    if socketingReturnState ~= "shop" and socketingReturnState ~= "map" then socketingReturnState = "shop" end
+                    state = "socketing"
+                    isDebugOpen = false
+                    isSettingsOpen = false
+                    isPauseMenuOpen = false
+                elseif ok and result == "pack" then
+                    Shop.resetReroll(shopData)
+                    Shop.refresh(shopData, game)
+                    shopData.currentPackOpening = Shop.openPack({ packType = payload or item.packType, name = item.name }, game)
+                    state = "shop"
+                    isDebugOpen = false
+                    isSettingsOpen = false
+                    isPauseMenuOpen = false
+                elseif ok and result == "blind" then
+                    local targetScreen = payload == "blind_small" and "small" or (payload == "blind_big" and "big" or "boss")
+                    debugTeleport(targetScreen)
+                    if targetScreen == "boss" and RunManager.BOSS_DEBUFFS[payload] then
+                        local blind = RunManager.getCurrentBlind(game.run)
+                        blind.debuff = RunManager.BOSS_DEBUFFS[payload]
+                        blind.name = blind.debuff.name
+                        startBlindCombat(blind)
+                    end
+                elseif ok then
+                    saveRunAtSafePoint()
+                end
+            end
+            Sound.play("ui_click")
+            return true
+        end
+    end
+    return true
+end
+
 local function handleModalsMousepressed(mx, my, button)
+    if isDebugOpen then return handleDebugMousepressed(mx, my, button) end
     -- 0. Settings Modal Handling
     if isSettingsOpen then
         if button == 1 then
@@ -8524,11 +8814,24 @@ local function handleModalsMousepressed(mx, my, button)
                         saveSettings()
                         Sound.play("ui_click")
                         return true
+                    elseif btn.id == "setting_debug_toggle" then
+                        settings.debugEnabled = not settings.debugEnabled
+                        if not settings.debugEnabled then isDebugOpen = false end
+                        saveSettings()
+                        Sound.play("ui_click")
+                        return true
+                    elseif btn.id == "setting_debug_open" and settings.debugEnabled then
+                        debugAnteInput = tostring(game.run and game.run.ante or 1)
+                        debugMessage = nil
+                        isDebugOpen = true
+                        isSettingsOpen = false
+                        Sound.play("ui_click")
+                        return true
                     end
                 end
             end
             local modalW = 500
-            local modalH = 430
+            local modalH = 515
             local modalX = (V_WIDTH - modalW) / 2
             local modalY = (V_HEIGHT - modalH) / 2
             if mx < modalX or mx > modalX + modalW or my < modalY or my > modalY + modalH then
@@ -8678,6 +8981,12 @@ local function handleModalsMousepressed(mx, my, button)
             return true
         end
         return true
+    end
+
+    -- Transfer owns the full shop screen, so its cards and controls take
+    -- priority over generic inspector and drag input.
+    if state == "shop" and isShopTransferOpen and not isDeckViewerOpen then
+        return handleShopMousepressed(mx, my, button)
     end
 
     -- 1. Right-Click Inspector Modal Dismissal
@@ -9419,6 +9728,19 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if isDebugOpen then
+        if key == "escape" then
+            isDebugOpen = false
+            isSettingsOpen = true
+        elseif key == "backspace" and debugInputFocus == "gold" then
+            debugGoldInput = debugGoldInput:sub(1, -2)
+        elseif key == "backspace" and debugInputFocus == "ante" then
+            debugAnteInput = debugAnteInput:sub(1, -2)
+        elseif key == "return" or key == "kpenter" then
+            debugInputFocus = nil
+        end
+        return
+    end
     -- Global Fullscreen Toggle
     if key == "f11" then
         settings.fullscreen = not settings.fullscreen
@@ -9540,6 +9862,16 @@ function love.keypressed(key)
                 startBlindCombat(blind)
             end
         end
+    end
+end
+
+function love.textinput(text)
+    if not isDebugOpen or not debugInputFocus then return end
+    local digits = text:gsub("%D", "")
+    if debugInputFocus == "gold" then
+        debugGoldInput = (debugGoldInput .. digits):sub(1, 16)
+    elseif debugInputFocus == "ante" then
+        debugAnteInput = (debugAnteInput .. digits):sub(1, 3)
     end
 end
 

@@ -2,6 +2,14 @@ local Capture = {}
 
 local frame = 0
 local Equipment = require("src.equipment")
+local Deities = require("src.deities")
+
+local function clickVirtual(x, y)
+    local w, h = love.graphics.getDimensions()
+    local scale = math.min(w / 1280, h / 720)
+    love.mousepressed((w - 1280 * scale) / 2 + x * scale,
+        (h - 720 * scale) / 2 + y * scale, 1)
+end
 
 local function saveImage(name)
     love.graphics.captureScreenshot(function(imgData)
@@ -59,7 +67,36 @@ function Capture.update(gameRef, callbacks)
         if callbacks.openSettings then callbacks.openSettings() end
         saveImage("shot_settings.png")
 
+    elseif frame == 19 then
+        if not callbacks.isDebugEnabled() then clickVirtual(760, 430) end
+
+    elseif frame == 20 then
+        saveImage("shot_settings_debug.png")
+
+    elseif frame == 21 then
+        clickVirtual(640, 485)
+
+    elseif frame == 22 then
+        saveImage("shot_debug.png")
+        clickVirtual(200, 300)
+        love.textinput("123")
+
+    elseif frame == 23 then
+        clickVirtual(620, 300)
+        assert(gameRef.gold == 123, "Debug gold control must update the run")
+        clickVirtual(350, 120)
+
     elseif frame == 24 then
+        saveImage("shot_debug_teleport.png")
+        clickVirtual(550, 120)
+
+    elseif frame == 25 then
+        saveImage("shot_debug_items.png")
+        clickVirtual(250, 338)
+        assert(Deities.getCount(gameRef.deities) == 1, "Debug collection button must grant a spirit")
+        clickVirtual(1130, 65)
+
+    elseif frame == 26 then
         if callbacks.closeSettings then callbacks.closeSettings() end
         saveImage("shot_map.png")
 
@@ -109,8 +146,34 @@ function Capture.update(gameRef, callbacks)
         if callbacks.closePack then callbacks.closePack() end
 
     elseif frame == 78 then
+        Equipment.attach(gameRef.persistentDeck[1], Equipment.ITEMS.gem_fire)
         callbacks.openShopTransfer()
         saveImage("shot_shop_transfer.png")
+
+    elseif frame == 80 then
+        clickVirtual(809, 400)
+        assert(select(2, callbacks.getShopTransferState()) == 2, "Transfer next-page button must respond")
+
+    elseif frame == 81 then
+        clickVirtual(470, 400)
+        assert(select(2, callbacks.getShopTransferState()) == 1, "Transfer previous-page button must respond")
+
+    elseif frame == 82 then
+        clickVirtual(345, 180)
+        assert(select(3, callbacks.getShopTransferState()) == gameRef.persistentDeck[1], "Transfer source card must respond")
+
+    elseif frame == 83 then
+        clickVirtual(300, 465)
+        assert(select(4, callbacks.getShopTransferState()) == 1, "Transfer equipment choice must respond")
+
+    elseif frame == 84 then
+        clickVirtual(430, 180)
+        assert(#gameRef.persistentDeck[1].equipments == 0 and #gameRef.persistentDeck[2].equipments == 1,
+            "Transfer target card must receive the equipment")
+
+    elseif frame == 85 then
+        clickVirtual(900, 635)
+        assert(not callbacks.getShopTransferState(), "Transfer close button must respond")
 
     elseif frame == 86 then
         callbacks.closeShopTransfer()
@@ -144,6 +207,25 @@ function Capture.update(gameRef, callbacks)
 
     elseif frame == 145 then
         saveImage("shot_scoring_juice.png")
+
+    elseif frame == 160 then
+        callbacks.openSettings()
+
+    elseif frame == 161 then
+        clickVirtual(640, 485)
+
+    elseif frame == 162 then
+        clickVirtual(350, 120)
+
+    elseif frame == 163 then
+        clickVirtual(350, 175)
+        love.textinput("9")
+
+    elseif frame == 164 then
+        clickVirtual(500, 175)
+        clickVirtual(180, 350)
+        assert(gameRef.run.ante == 9 and gameRef.monster and gameRef.monster.isBoss,
+            "Debug teleport must start Boss combat at the selected Ante")
 
     elseif frame == 165 then
         print("All screenshots captured!")

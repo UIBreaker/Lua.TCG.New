@@ -2804,8 +2804,12 @@ do
     -- 4. Every shop pack and voucher must come from the same catalog as the Collection.
     local packs = Collection.getItems("packs")
     local packMap = {}
-    for _, pack in ipairs(packs) do packMap[pack.id] = pack end
-    assert(#packs == #Shop.PACK_CATALOG, "Collection pack count must match the live shop catalog")
+    local coverCount = 0
+    for _, pack in ipairs(packs) do
+        packMap[pack.id] = pack
+        if not pack.isPackContent then coverCount = coverCount + 1 end
+    end
+    assert(coverCount == #Shop.PACK_CATALOG, "Collection pack covers must match the live shop catalog")
     for _, pack in ipairs(Shop.PACK_CATALOG) do
         assert(packMap["pack_" .. pack.packType] ~= nil, "Shop pack missing in Collection: " .. pack.packType)
     end
@@ -3165,6 +3169,24 @@ do
     assert(Deck.moveCard(hand, 11, 1), "Reverse expanded hand reorder must succeed")
     assert(hand[1].id == 2 and #hand == 12, "Reorder must preserve card count")
     log("[PASS] 107. Expanded hand cards reorder freely without losing identity")
+end
+
+-- 108. Every named gameplay cue must resolve to an initialized sound.
+do
+    local Sound = require("src.sound")
+    assert(Sound.init(), "Gameplay audio synthesizer must initialize")
+    for _, cue in ipairs({
+        "ui_hover", "ui_click", "card_select", "card_deselect", "card_slide",
+        "card_draw", "card_deal", "card_play", "card_destroy", "coin",
+        "chip_tick", "mult_pop", "score_impact", "xmult_boom", "jackpot",
+        "round_win", "game_over", "shop_buy", "shop_reroll", "pack_open",
+        "cant_afford", "equip", "sell", "consume",
+    }) do
+        assert(Sound.has(cue), "Missing gameplay sound cue: " .. cue)
+    end
+    assert(Sound.play("card_slide"), "Card movement must play a real sound")
+    assert(Sound.play("coin"), "Gold reward must play a real sound")
+    log("[PASS] 108. All 24 gameplay audio cues synthesize and missing card/coin sounds play")
 end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")

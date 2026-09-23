@@ -2,6 +2,24 @@ local Sound = {}
 
 local sounds = {}
 local enabled = true
+local activeVoices = {}
+local lastPlayed = {}
+local MAX_VOICES = 18
+local gain = {
+    ui_hover = 0.26, ui_click = 0.48,
+    card_select = 0.52, card_deselect = 0.46, card_slide = 0.42,
+    card_draw = 0.60, card_deal = 0.50, card_play = 0.78,
+    chip_tick = 0.40, mult_pop = 0.60, coin = 0.66,
+    score_impact = 0.80, xmult_boom = 0.72, jackpot = 0.72,
+    round_win = 0.72, game_over = 0.72,
+    shop_buy = 0.60, shop_reroll = 0.52, pack_open = 0.70,
+    equip = 0.66, sell = 0.58, consume = 0.65, card_destroy = 0.56,
+    cant_afford = 0.55,
+}
+local cooldown = {
+    ui_hover = 0.07, ui_click = 0.035, card_slide = 0.035,
+    card_draw = 0.025, chip_tick = 0.022, mult_pop = 0.028,
+}
 
 local function generateSound(duration, sampleRate, generator)
     local sampleCount = math.floor(duration * sampleRate)
@@ -10,7 +28,8 @@ local function generateSound(duration, sampleRate, generator)
         local t = i / sampleRate
         local sample = generator(t, duration)
         -- Clamp between -1.0 and 1.0
-        sample = math.max(-1.0, math.min(1.0, sample))
+        local edge = math.min(1, t * 500, (duration - t) * 80)
+        sample = math.max(-1.0, math.min(1.0, sample * math.max(0, edge)))
         soundData:setSample(i, sample)
     end
     return love.audio.newSource(soundData, "static")
@@ -19,9 +38,11 @@ end
 function Sound.init()
     if not love.sound or not love.audio then
         enabled = false
-        return
+        return false
     end
 
+    enabled = true
+    sounds, activeVoices, lastPlayed = {}, {}, {}
     local success, err = pcall(function()
         local rate = 44100
 
@@ -200,12 +221,54 @@ function Sound.init()
             local shimmer = math.sin(2 * math.pi * shimmerFreq * t) * 0.5 + 0.25 * math.sin(2 * math.pi * (shimmerFreq * 1.5) * t)
             return env * 0.45 * (tearNoise * 0.7 + shimmer * 0.5)
         end)
+
+        -- Soft paper drag; the hand reordering action used to be silent.
+        sounds.card_slide = generateSound(0.11, rate, function(t, d)
+            local p = t / d
+            local paper = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.22
+            local tap = math.sin(2 * math.pi * 420 * t) * math.exp(-t * 34)
+            return paper + tap * 0.20
+        end)
+
+        sounds.coin = generateSound(0.24, rate, function(t)
+            local bell = math.sin(2 * math.pi * 1174.66 * t)
+                + 0.35 * math.sin(2 * math.pi * 1761.99 * t)
+            return bell * math.exp(-t * 17) * 0.48
+        end)
+
+        sounds.equip = generateSound(0.28, rate, function(t)
+            local click = math.sin(2 * math.pi * 280 * t) * math.exp(-t * 65)
+            local ring = (math.sin(2 * math.pi * 784 * t)
+                + 0.32 * math.sin(2 * math.pi * 1176 * t)) * math.exp(-t * 16)
+            return click * 0.45 + ring * 0.35
+        end)
+
+        sounds.sell = generateSound(0.22, rate, function(t)
+            local swipe = (love.math.random() * 2 - 1) * math.exp(-t * 38)
+            local coin = math.sin(2 * math.pi * 880 * t) * math.exp(-t * 18)
+            return swipe * 0.16 + coin * 0.40
+        end)
+
+        sounds.consume = generateSound(0.36, rate, function(t, d)
+            local p = t / d
+            local shimmer = math.sin(2 * math.pi * (620 + 620 * p) * t)
+            local body = math.sin(2 * math.pi * 220 * t)
+            return (shimmer * 0.42 + body * 0.18) * math.sin(math.pi * p)
+        end)
+
+        sounds.card_destroy = generateSound(0.34, rate, function(t, d)
+            local p = t / d
+            local noise = (love.math.random() * 2 - 1) * math.exp(-t * 11)
+            local fall = math.sin(2 * math.pi * (520 - 360 * p) * t) * math.exp(-t * 13)
+            return noise * 0.30 + fall * 0.28
+        end)
     end)
 
     if not success then
         print("[Sound] Init warning: audio synthesizer disabled (" .. tostring(err) .. ")")
         enabled = false
     end
+    return success
 end
 
 local masterVolume = 0.8
@@ -215,7 +278,7 @@ end
 
 function Sound.setVolume(vol)
     masterVolume = math.max(0, math.min(1.0, vol or 0.8))
-    if love.audio and love.audio.setVolume then
+    if love and love.audio and love.audio.setVolume then
         love.audio.setVolume(masterVolume)
     end
 end
@@ -224,23 +287,34 @@ function Sound.getVolume()
     return masterVolume
 end
 
+function Sound.has(name)
+    return sounds[name] ~= nil
+end
+
 function Sound.play(name, pitch)
-    if not enabled then return end
+    if not enabled or masterVolume <= 0 then return false end
     local s = sounds[name]
-    if s then
-        pcall(function()
-            -- Clone static sources when possible so rapid draw/score sounds layer
-            -- naturally instead of cutting the previous sound off.
-            local voice = s.clone and s:clone() or s
-            if voice == s then voice:stop() end
-            if pitch and voice.setPitch then
-                voice:setPitch(math.max(0.2, math.min(3.0, pitch)))
-            elseif voice.setPitch then
-                voice:setPitch(1.0)
-            end
-            voice:play()
-        end)
-    end
+    if not s then return false end
+    local now = (love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock()
+    if now - (lastPlayed[name] or -math.huge) < (cooldown[name] or 0) then return false end
+    lastPlayed[name] = now
+
+    local ok = pcall(function()
+        for i = #activeVoices, 1, -1 do
+            if not activeVoices[i]:isPlaying() then table.remove(activeVoices, i) end
+        end
+        while #activeVoices >= MAX_VOICES do
+            local oldest = table.remove(activeVoices, 1)
+            oldest:stop()
+        end
+        local voice = s.clone and s:clone() or s
+        if voice == s then voice:stop() end
+        if voice.setPitch then voice:setPitch(math.max(0.2, math.min(3, pitch or 1))) end
+        if voice.setVolume then voice:setVolume(gain[name] or 0.6) end
+        voice:play()
+        activeVoices[#activeVoices + 1] = voice
+    end)
+    return ok
 end
 
 return Sound

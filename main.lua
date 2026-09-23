@@ -95,6 +95,7 @@ local transferSourceCard = nil
 local transferSourceEqIndex = nil
 local transferMessage = nil
 local transferPage = 1
+local drawShopTransferView -- Called by drawShopState; implemented after the shop layout.
 
 -- Rest Site & Forge State
 local restStateData = {
@@ -932,6 +933,7 @@ local function destroyHandCard(index)
         if remaining.selected then table.insert(game.selectedIndices, i) end
     end
     spawnShopFx("destroy", { category = "card", card = card }, x, y)
+    Sound.play("card_destroy")
     return card
 end
 
@@ -6082,165 +6084,6 @@ local function drawRestState()
     end
 end
 
-local function drawShopTransferViewLegacy()
-    -- Overlay
-    local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.10, 0.13, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-
-    local mx, my = toVirtual(love.mouse.getPosition())
-    buttons = {}
-
-    -- Title
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("HOÁN ĐỔI TRANG BỊ GIỮA CÁC LÁ BÀI (SHOP TRANSFER)", 0, 25, V_WIDTH, "center")
-
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("1. Chọn Lá Nguồn -> 2. Chọn Trang Bị Muốn Gỡ -> 3. Chọn Lá Đích Để Gắn Sang (Tối đa " .. Equipment.MAX_SLOTS .. " ô/lá)", 0, 62, V_WIDTH, "center")
-
-    local allCards = getAllDeckCards()
-
-    -- Auto select first equipped card if none selected
-    if not transferSourceCard then
-        for _, c in ipairs(allCards) do
-            if c.equipments and #c.equipments > 0 then
-                transferSourceCard = c
-                break
-            end
-        end
-    end
-
-    -- Section 1: Choose Source Card
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("BƯỚC 1: Chọn lá bài nguồn (Đang mang trang bị):", 80, 95)
-
-    local cw = 90
-    local ch = 130
-    local gap = 18
-    local totalW = #allCards * cw + math.max(0, #allCards - 1) * gap
-    local startX = math.max(80, (V_WIDTH - totalW) / 2)
-    local cardY = 125
-
-    for i, c in ipairs(allCards) do
-        local cx = startX + (i - 1) * (cw + gap)
-        local isSelected = (transferSourceCard == c)
-        local isHovered = (mx >= cx and mx <= cx + cw and my >= cardY and my <= cardY + ch)
-        c.hovered = isHovered
-
-        UI.drawCard(c, cx, cardY, cw, ch)
-
-        if isSelected then
-            love.graphics.setLineWidth(3.5)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", cx - 3, cardY - 3, cw + 6, ch + 6, 10)
-        end
-
-        local eqCount = Equipment.getUsedSlots(c)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(eqCount > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)
-        love.graphics.printf(eqCount .. "/" .. Equipment.MAX_SLOTS .. " ô", cx, cardY + ch + 6, cw, "center")
-    end
-
-    -- Section 2: Choose Equipment slot from transferSourceCard
-    if transferSourceCard then
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("BƯỚC 2: Chọn trang bị muốn gỡ từ Lá " .. transferSourceCard.rankName .. transferSourceCard.suitSymbol .. ":", 80, 285)
-
-        local eqList = transferSourceCard.equipments or {}
-        if #eqList == 0 then
-            love.graphics.setFont(UI.fonts.regular)
-            love.graphics.setColor(UI.COLORS.multRed)
-            love.graphics.print("Lá bài này hiện không có trang bị nào để gỡ!", 100, 320)
-        else
-            local eqBoxW = 210
-            local eqBoxH = 65
-            for idx, eq in ipairs(eqList) do
-                local ex = 80 + (idx - 1) * (eqBoxW + 16)
-                local ey = 320
-                local isEqSel = (transferSourceEqIndex == idx)
-                local isEqHov = (mx >= ex and mx <= ex + eqBoxW and my >= ey and my <= ey + eqBoxH)
-
-                love.graphics.setColor(isEqSel and { 0.25, 0.35, 0.45, 1 } or { 0.16, 0.20, 0.25, 0.9 })
-                UI.drawRoundedRect("fill", ex, ey, eqBoxW, eqBoxH, 8)
-                love.graphics.setLineWidth(isEqSel and 3 or 1.5)
-                love.graphics.setColor(isEqSel and UI.COLORS.goldYellow or (eq.color or UI.COLORS.panelBorder))
-                UI.drawRoundedRect("line", ex, ey, eqBoxW, eqBoxH, 8)
-
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(eq.color or 1, 1, 1, 1)
-                love.graphics.print("[Ô " .. idx .. "] " .. eq.name, ex + 10, ey + 8)
-
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(eq.desc, ex + 10, ey + 30, eqBoxW - 20, "left")
-            end
-        end
-    end
-
-    -- Section 3: Choose Target Card
-    if transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex] then
-        local chosenEq = transferSourceCard.equipments[transferSourceEqIndex]
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("BƯỚC 3: Chọn lá bài đích để nhận [" .. chosenEq.name .. "]:", 80, 410)
-
-        local targetY = 445
-        for i, c in ipairs(allCards) do
-            local cx = startX + (i - 1) * (cw + gap)
-            local isSameCard = (c == transferSourceCard)
-            local isFull = (c.equipments and #c.equipments >= 5)
-            local canTransfer = not isSameCard and not isFull
-            local isHovered = (canTransfer and mx >= cx and mx <= cx + cw and my >= targetY and my <= targetY + ch)
-            c.hovered = isHovered
-
-            UI.drawCard(c, cx, targetY, cw, ch)
-
-            if isSameCard then
-                love.graphics.setColor(0, 0, 0, 0.6)
-                UI.drawRoundedRect("fill", cx, targetY, cw, ch, 8)
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textMuted)
-                love.graphics.printf("[Nguồn]", cx, targetY + ch / 2 - 8, cw, "center")
-            elseif isFull then
-                love.graphics.setColor(0, 0, 0, 0.6)
-                UI.drawRoundedRect("fill", cx, targetY, cw, ch, 8)
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.multRed)
-                love.graphics.printf("[Đã Đầy 5/5]", cx, targetY + ch / 2 - 8, cw, "center")
-            else
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.hpGreen)
-                love.graphics.printf("Gắn vào đây", cx, targetY + ch + 6, cw, "center")
-            end
-        end
-    end
-
-    -- Message banner
-    if transferMessage then
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf(transferMessage, 80, 630, V_WIDTH - 420, "left")
-    end
-
-    -- Close / Return button
-    local btnCloseTransfer = {
-        id = "close_shop_transfer",
-        text = "XONG / QUAY LẠI CỬA HÀNG",
-        x = V_WIDTH - 320,
-        y = 615,
-        w = 280,
-        h = 50,
-        color = UI.COLORS.btnPlay,
-        font = UI.fonts.regular,
-    }
-    table.insert(buttons, btnCloseTransfer)
-    UI.drawButton(btnCloseTransfer, mx >= btnCloseTransfer.x and mx <= btnCloseTransfer.x + btnCloseTransfer.w and my >= btnCloseTransfer.y and my <= btnCloseTransfer.y + btnCloseTransfer.h)
-end
-
 local function drawCardInspectorModal(card)
     if not card then return end
     -- Overlay dimming
@@ -7898,7 +7741,7 @@ local function getTransferEquipmentRect(index)
     return 250 + (index - 1) * 275, 430, 255, 76
 end
 
-local function drawShopTransferView()
+drawShopTransferView = function()
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0.06, 0.08, 0.11, 1)
     love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
@@ -8311,7 +8154,7 @@ local function handlePlayingMousepressed(mx, my, button)
                 Sound.play("card_deal")
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
-                useConsumable(btn.consumableIndex)
+                if useConsumable(btn.consumableIndex) then Sound.play("consume") end
                 return true
             end
         end
@@ -8326,7 +8169,7 @@ local function handlePlayingMousepressed(mx, my, button)
         local cy = 32
         if mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
             if game.consumables and game.consumables[j] then
-                useConsumable(j)
+                if useConsumable(j) then Sound.play("consume") end
                 return true
             end
         end
@@ -8437,7 +8280,6 @@ local function handleShopMousepressed(mx, my, button)
                     transferMessage = msg
                     if ok then
                         transferSourceEqIndex = nil
-                        Sound.play("card_deal")
                     end
                     return true
                 elseif c.equipments and #c.equipments > 0 then
@@ -8533,7 +8375,7 @@ local function handleShopMousepressed(mx, my, button)
         local cy = 32
         if mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
             if game.consumables and game.consumables[j] then
-                useConsumable(j)
+                if useConsumable(j) then Sound.play("consume") end
                 return true
             end
         end
@@ -8590,7 +8432,7 @@ local function handleShopMousepressed(mx, my, button)
                 end
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
-                useConsumable(btn.consumableIndex)
+                if useConsumable(btn.consumableIndex) then Sound.play("consume") end
                 return true
             elseif btn.id == "reroll" then
                 Shop.reroll(shopData, game)
@@ -9486,7 +9328,7 @@ function love.mousepressed(x, y, button)
                             end
                         end
                     end
-                    Sound.play("shop_buy")
+                    Sound.play("equip")
                     pendingEquipment = nil
                     socketingPage = 1
                     socketingMessage = nil

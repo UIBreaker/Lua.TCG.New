@@ -815,7 +815,7 @@ function Shop.sellDeity(gameState, deityIndex)
     local sellPrice = math.max(1, math.floor((d.cost or 4) / 2))
     gameState.gold = (gameState.gold or 0) + sellPrice
     gameState.deities[deityIndex] = nil
-    Sound.play("chip_tick")
+    Sound.play("sell")
     return true
 end
 
@@ -834,7 +834,7 @@ function Shop.transferEquipment(sourceCard, eqIndex, targetCard)
     table.remove(sourceCard.equipments, eqIndex)
     targetCard.equipments = targetCard.equipments or {}
     table.insert(targetCard.equipments, eq)
-    Sound.play("round_win")
+    Sound.play("equip")
     return true, "Đã chuyển [" .. eq.name .. "] sang Lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
 end
 

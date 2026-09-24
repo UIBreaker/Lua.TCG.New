@@ -2771,18 +2771,23 @@ local function drawMainMenu()
     g.print("ROGUELIKE POKER TCG", 78, 194)
 
     local px, py, pw, ph = 62, 225, 300, 322
-    UI.drawGildedPanel(px, py, pw, ph)
+    local profileFrame = UI.getButtonImage("menu_profile_frame")
+    if profileFrame then
+        local fw, fh = profileFrame:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(profileFrame, px, py, 0, pw / fw, ph / fh)
+    else
+        UI.drawGildedPanel(px, py, pw, ph)
+    end
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("✦  HỒ SƠ KẺ THÁCH ĐẤU", px + 22, py + 20)
+    g.print("HỒ SƠ KẺ THÁCH ĐẤU", px + 22, py + 42)
     g.setFont(UI.fonts.large)
     g.setColor(UI.COLORS.textLight)
-    g.print("Nhatnam", px + 22, py + 50)
+    g.print("Nhatnam", px + 22, py + 66)
     g.setFont(UI.fonts.tiny)
     g.setColor(0.8, 0.59, 0.9, 1)
-    g.print(hasRunStarted and "HÀNH TRÌNH ĐANG DIỄN RA" or "SẴN SÀNG KHÁM PHÁ", px + 22, py + 89)
-    g.setColor(UI.COLORS.goldYellow)
-    g.line(px + 20, py + 116, px + pw - 20, py + 116)
+    g.print(hasRunStarted and "HÀNH TRÌNH ĐANG DIỄN RA" or "SẴN SÀNG KHÁM PHÁ", px + 22, py + 98)
 
     local rows = {
         { "Ải hiện tại", hasRunStarted and ("Ải " .. tostring((game.run and game.run.ante) or game.act or 1)) or "Chưa bắt đầu" },
@@ -2793,7 +2798,7 @@ local function drawMainMenu()
     }
     g.setFont(UI.fonts.small)
     for i, row in ipairs(rows) do
-        local ry = py + 132 + (i - 1) * 32
+        local ry = py + 135 + (i - 1) * 32
         g.setColor(UI.COLORS.textLight)
         g.print(row[1], px + 22, ry)
         g.setColor(UI.COLORS.goldYellow)
@@ -2807,16 +2812,16 @@ local function drawMainMenu()
     local menuItems = {
         { id = "menu_play", text = hasRunStarted and "TIẾP TỤC" or "VÀO TRẬN",
             sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", color = { 0.05, 0.26, 0.49, 1 },
-            menuAccent = { 0.55, 0.81, 1, 1 }, assetId = "btn_main_vao_tran" },
+            menuAccent = { 0.55, 0.81, 1, 1 }, assetId = "menu_frame_blue" },
         { id = "menu_collection", text = "BỘ SƯU TẬP",
             sub = "BÀI • SPM • TRANG BỊ", icon = "▣", color = { 0.32, 0.21, 0.07, 1 },
-            menuAccent = UI.COLORS.goldYellow, assetId = "btn_main_bo_suu_tap" },
+            menuAccent = UI.COLORS.goldYellow, assetId = "menu_frame_gold" },
         { id = "menu_settings", text = "TÙY CHỌN",
             sub = "CÀI ĐẶT TRÒ CHƠI", icon = "✦", color = { 0.28, 0.09, 0.39, 1 },
-            menuAccent = { 0.83, 0.55, 0.95, 1 }, assetId = "btn_main_tuy_chon" },
+            menuAccent = { 0.83, 0.55, 0.95, 1 }, assetId = "menu_frame_violet" },
         { id = "menu_quit", text = "THOÁT",
             sub = "TẠM BIỆT", icon = "⇥", color = { 0.42, 0.08, 0.10, 1 },
-            menuAccent = { 1, 0.47, 0.45, 1 }, assetId = "btn_main_thoat" },
+            menuAccent = { 1, 0.47, 0.45, 1 }, assetId = "menu_frame_red" },
     }
     for i, item in ipairs(menuItems) do
         local btn = {
@@ -3476,13 +3481,13 @@ local function drawBattleInfoPanel(m, eval, preview)
     local handName = scoring and (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local x, y, w, h = 12, 76, 222, 615
-    UI.drawGildedPanel(x, y, w, h)
-
-    local crestStar = UI.getButtonImage("crest_star_compass")
-    if crestStar then
-        local cw, ch = crestStar:getDimensions()
+    local frame = UI.getButtonImage("battle_info_frame")
+    if frame then
+        local fw, fh = frame:getDimensions()
         g.setColor(1, 1, 1, 1)
-        g.draw(crestStar, x + (w - 36) / 2, y - 10, 0, 36 / cw, 36 / ch)
+        g.draw(frame, x, y, 0, w / fw, h / fh)
+    else
+        UI.drawGildedPanel(x, y, w, h)
     end
 
     g.setFont(UI.fonts.small)
@@ -3595,13 +3600,6 @@ local function drawBattleInfoPanel(m, eval, preview)
     local monY = auraY + auraBoxH + 10
     g.setColor(UI.COLORS.panelBorder)
     g.line(x + 14, monY, x + w - 14, monY)
-
-    local dragonImg = UI.getButtonImage("art_dragon_head")
-    if dragonImg then
-        local dw, dh = dragonImg:getDimensions()
-        g.setColor(1, 1, 1, 0.90)
-        g.draw(dragonImg, x + w - 95, monY + 6, 0, 88 / dw, 68 / dh)
-    end
 
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.goldYellow)

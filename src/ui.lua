@@ -346,15 +346,30 @@ function UI.drawButton(btn, isHovered, isPressed)
     if img then
         local iw, ih = img:getDimensions()
         if not enabled then
-            g.setColor(0.78, 0.80, 0.84, 0.95)
+            g.setColor(0.72, 0.75, 0.80, 0.86)
         elseif hover and not btn.activeAssetId then
-            g.setColor(1.15, 1.15, 1.15, 1)
+            g.setColor(1, 1, 1, 1)
         else
             g.setColor(1, 1, 1, 1)
         end
         g.draw(img, btn.x, btn.y, 0, btn.w / iw, btn.h / ih)
 
-        if btn.renderText or (btn.id == "menu_play" and btn.text == "TIẾP TỤC") then
+        if btn.menuStyle then
+            local accent = btn.menuAccent or UI.COLORS.goldYellow
+            g.setColor(accent)
+            g.setFont(UI.fonts.title)
+            g.printf(btn.icon or "✦", btn.x + 18, btn.y + (btn.h - UI.fonts.title:getHeight()) / 2, 62, "center")
+            local font = btn.font or UI.fonts.large
+            local label = UI.toUpperUtf8(UI.sanitizeText(btn.text or ""))
+            g.setFont(font)
+            g.setColor(enabled and UI.COLORS.textLight or UI.COLORS.textMuted)
+            g.printf(label, btn.x + 94, btn.y + (btn.sub and 12 or (btn.h - font:getHeight()) / 2), btn.w - 116, "left")
+            if btn.sub then
+                g.setFont(UI.fonts.tiny)
+                g.setColor(0.82, 0.86, 0.92, enabled and 0.95 or 0.68)
+                g.printf(UI.sanitizeText(btn.sub), btn.x + 96, btn.y + 49, btn.w - 118, "left")
+            end
+        elseif btn.renderText or (btn.id == "menu_play" and btn.text == "TIẾP TỤC") then
             local font = btn.font or UI.fonts.regular
             g.setFont(font)
             g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)

@@ -30,6 +30,17 @@ UI.COLORS = {
 }
 
 UI.fonts = {}
+UI.BATTLE_ARENA_X = 250
+UI.BATTLE_ARENA_W = 760
+UI.BATTLE_CENTER_X = UI.BATTLE_ARENA_X + UI.BATTLE_ARENA_W / 2
+
+function UI.getScoringCardX(index, count)
+    local cardW = 96
+    local spacing = count > 1 and math.min(112, (UI.BATTLE_ARENA_W - cardW) / (count - 1)) or 0
+    local totalW = cardW + math.max(0, count - 1) * spacing
+    return UI.BATTLE_ARENA_X + (UI.BATTLE_ARENA_W - totalW) / 2 + (index - 1) * spacing
+end
+
 UI.useLegacyPixelArt = false
 function UI.visualImage(image)
     return UI.useLegacyPixelArt and image or nil
@@ -118,6 +129,32 @@ end
 function UI.drawRoundedRect(mode, x, y, w, h, r)
     r = r or 6
     love.graphics.rectangle(mode, x, y, w, h, r, r)
+end
+
+function UI.drawGildedPanel(x, y, w, h, accent)
+    local g = love.graphics
+    accent = accent or UI.COLORS.goldYellow
+    g.push("all")
+    g.setColor(0, 0, 0, 0.55)
+    UI.drawRoundedRect("fill", x + 4, y + 6, w, h, 7)
+    g.setColor(0.045, 0.065, 0.09, 0.93)
+    UI.drawRoundedRect("fill", x, y, w, h, 7)
+    g.setColor(accent[1], accent[2], accent[3], 0.9)
+    g.setLineWidth(2)
+    UI.drawRoundedRect("line", x, y, w, h, 7)
+    g.setColor(accent[1], accent[2], accent[3], 0.35)
+    g.setLineWidth(1)
+    UI.drawRoundedRect("line", x + 5, y + 5, w - 10, h - 10, 4)
+    local corner = math.min(18, w / 7, h / 4)
+    g.setColor(accent[1], accent[2], accent[3], 0.8)
+    for _, sx in ipairs({ x, x + w }) do
+        for _, sy in ipairs({ y, y + h }) do
+            local dx = sx == x and 1 or -1
+            local dy = sy == y and 1 or -1
+            g.line(sx + dx * 2, sy + dy * corner, sx + dx * 2, sy + dy * 2, sx + dx * corner, sy + dy * 2)
+        end
+    end
+    g.pop()
 end
 
 -- Procedural vector drawing for card faction and suit symbols
@@ -290,6 +327,29 @@ function UI.drawButton(btn, isHovered, isPressed)
     g.translate(cx, cy)
     g.scale(scale)
     g.translate(-cx, -cy)
+    if btn.menuStyle then
+        local accent = btn.menuAccent or UI.COLORS.goldYellow
+        UI.drawGildedPanel(btn.x, btn.y, btn.w, btn.h, accent)
+        g.setColor(base[1], base[2], base[3], hover and 0.58 or 0.34)
+        UI.drawRoundedRect("fill", btn.x + 6, btn.y + 6, btn.w - 12, btn.h - 12, 4)
+        g.setColor(accent[1], accent[2], accent[3], hover and 0.88 or 0.52)
+        g.line(btn.x + 75, btn.y + 14, btn.x + 75, btn.y + btn.h - 14)
+        g.setFont(UI.fonts.title)
+        g.setColor(accent)
+        g.printf(btn.icon or "✦", btn.x + 12, btn.y + (btn.h - UI.fonts.title:getHeight()) / 2, 54, "center")
+        local font = btn.font or UI.fonts.large
+        local label = UI.toUpperUtf8(UI.sanitizeText(btn.text or ""))
+        g.setFont(font)
+        g.setColor(enabled and UI.COLORS.textLight or UI.COLORS.textMuted)
+        g.printf(label, btn.x + 90, btn.y + (btn.sub and 13 or (btn.h - font:getHeight()) / 2), btn.w - 105, "left")
+        if btn.sub then
+            g.setFont(UI.fonts.tiny)
+            g.setColor(0.78, 0.82, 0.87, 1)
+            g.printf(btn.sub, btn.x + 90, btn.y + 48, btn.w - 105, "left")
+        end
+        g.pop()
+        return
+    end
     g.setColor(0.01, 0.025, 0.03, 0.32)
     UI.drawRoundedRect("fill", btn.x + 2, btn.y + 4, btn.w, btn.h, 5)
     g.setColor(enabled and base or { 0.17, 0.20, 0.22, 0.86 })
@@ -300,6 +360,12 @@ function UI.drawButton(btn, isHovered, isPressed)
     g.setLineWidth(hover and 1.7 or 1)
     g.setColor(hover and UI.COLORS.goldYellow or { 0.54, 0.61, 0.60, 0.75 })
     UI.drawRoundedRect("line", btn.x, btn.y, btn.w, btn.h, 5)
+    if btn.w >= 90 and btn.h >= 36 then
+        g.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], hover and 0.9 or 0.48)
+        g.line(btn.x + 6, btn.y + 13, btn.x + 6, btn.y + 6, btn.x + 18, btn.y + 6)
+        g.line(btn.x + btn.w - 18, btn.y + btn.h - 6, btn.x + btn.w - 6, btn.y + btn.h - 6,
+            btn.x + btn.w - 6, btn.y + btn.h - 13)
+    end
     local font = btn.font or UI.fonts.regular
     g.setFont(font)
     g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)

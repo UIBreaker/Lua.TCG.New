@@ -216,6 +216,7 @@ local function getDeitySlotRect(i, currentState)
     local slotY = 32
     return startX + (i - 1) * (slotW + gap), slotY, slotW, slotH
 end
+UI.getDeitySlotRect = getDeitySlotRect
 
 local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c then
@@ -1550,7 +1551,7 @@ function love.load()
     love.graphics.printf = function(value, ...)
         return nativePrintf(UI.localizeText(value), ...)
     end
-    for key, path in pairs({ background = "assets/scene/shrine_lowpoly.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }) do
+    for key, path in pairs({ background = "assets/scene/shrine_lowpoly.png", menuWorld = "assets/scene/menu_world_v2.png", menuLogo = "assets/scene/menu_logo_v2.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }) do
         if love.filesystem.getInfo(path) then
             local ok, image = pcall(love.graphics.newImage, path)
             if ok then
@@ -2074,11 +2075,7 @@ function love.update(dt)
                     anim.bounceScale.score = 1.35
                     screenShake = math.max(screenShake, 2.0)
 
-                    local cardW = 96
-                    local cardGap = 16
-                    local totalCardsW = #anim.playedCards * cardW + math.max(0, #anim.playedCards - 1) * cardGap
-                    local startCX = 295 + (820 - totalCardsW) / 2
-                    local cardCenterX = startCX + (st.cardIndex - 1) * (cardW + cardGap) + cardW / 2
+                    local cardCenterX = UI.getScoringCardX(st.cardIndex, #anim.playedCards) + 48
                     local cardCenterY = 295 + 70 - 20
                     spawnSparks(cardCenterX, cardCenterY, 18, UI.COLORS.goldYellow)
                     if st.card.destroyed then
@@ -2161,12 +2158,13 @@ function love.update(dt)
                             if d == st.deity or (d and d.id == st.deity.id) then dIdx = di break end
                         end
                     end
-                    local dCenterX = 295 + 56
+                    local dCenterX = 1074
                     if dIdx then
                         anim.deityBounce[dIdx] = 1.45
-                        dCenterX = 295 + (dIdx - 1) * (112 + 12) + 56
+                        local dx, _, dw = UI.getDeitySlotRect(dIdx, "playing")
+                        dCenterX = dx + dw / 2
                     end
-                    local dCenterY = 15 + 22 + 44
+                    local dCenterY = 156
 
                     if st.xMult > 1.0 then
                         if st.resultingMult then
@@ -2216,7 +2214,7 @@ function love.update(dt)
                     table.insert(anim.floatingTexts, {
                         text = "KÍCH HOẠT LẠI (DẤU ĐỎ)!",
                         color = { 0.95, 0.25, 0.25, 1 },
-                        x = 295 + (st.cardIndex - 1) * (96 + 16) + 48,
+                        x = UI.getScoringCardX(st.cardIndex, #anim.playedCards) + 48,
                         y = 300,
                         alpha = 1.8,
                     })
@@ -2224,8 +2222,9 @@ function love.update(dt)
                 elseif st.type == "deity_edition" then
                     anim.activeCardIndex = nil
                     local dIdx = st.slotIndex or 1
-                    local dCenterX = 295 + (dIdx - 1) * (112 + 12) + 56
-                    local dCenterY = 15 + 22 + 44
+                    local dx, dy, dw, dh = UI.getDeitySlotRect(dIdx, "playing")
+                    local dCenterX = dx + dw / 2
+                    local dCenterY = dy + dh / 2
                     anim.deityBounce[dIdx] = 1.45
 
                     if st.edition == "foil" then
@@ -2287,9 +2286,9 @@ function love.update(dt)
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
 
-                    -- Damage projectile/impact directly into monster at top left
-                    local mCenterX = 145
-                    local mCenterY = 100
+                    -- Keep the impact on the monster, not the removed left HUD.
+                    local mCenterX = UI.BATTLE_CENTER_X
+                    local mCenterY = 270
                     spawnSparks(mCenterX, mCenterY, 32, UI.COLORS.hpRed)
                     anim.impactFlash = 0.32
                     anim.impactX = mCenterX
@@ -2299,7 +2298,7 @@ function love.update(dt)
                         text = "-" .. UI.formatNumber(actualDmg) .. " HP!",
                         color = UI.COLORS.hpRed,
                         x = mCenterX,
-                        y = mCenterY - 15,
+                        y = mCenterY - 58,
                         alpha = 2.0,
                     })
 
@@ -2736,532 +2735,181 @@ end
 --------------------------------------------------------------------------------
 
 local function drawMainMenu()
+    local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    -- 1. Dark vignette overlay allowing psychedelic background shader to pulse smoothly
-    love.graphics.setColor(0.04, 0.05, 0.07, 0.45)
-    love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-
-    -- Top corner subtle vignette
-    love.graphics.setColor(0, 0, 0, 0.35)
-    love.graphics.rectangle("fill", 0, 0, V_WIDTH, 120)
-
-    -- 2. Top-right Version Indicators
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("1.0.1o-FULL", 0, 14, V_WIDTH - 24, "right")
-    love.graphics.printf("1.0.0~BETA-1620a-TERRASUIT", 0, 28, V_WIDTH - 24, "right")
-
-    -- 3. Majestic Gothic Title: "TERRA SUIT"
-    local titleY = 44
-    local fontLogo = UI.fonts.logo or UI.fonts.huge
-    love.graphics.setFont(fontLogo)
-
-    -- Extruded 3D Chiseled Metal Shadow
-    for d = 8, 1, -1 do
-        love.graphics.setColor(0.03, 0.04, 0.06, 0.95)
-        love.graphics.printf("TERRA SUIT", d, titleY + d, V_WIDTH, "center")
+    if battleArt.menuWorld then
+        local bw, bh = battleArt.menuWorld:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
     end
+    g.setColor(0.01, 0.02, 0.05, 0.18)
+    g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
-    -- 8-Direction Dark Outline
-    love.graphics.setColor(0.08, 0.10, 0.14, 1)
-    for ox = -3, 3, 3 do
-        for oy = -3, 3, 3 do
-            if ox ~= 0 or oy ~= 0 then
-                love.graphics.printf("TERRA SUIT", ox, titleY + oy, V_WIDTH, "center")
-            end
+    if battleArt.menuLogo then
+        local lw = battleArt.menuLogo:getWidth()
+        g.setColor(1, 1, 1, 1)
+        g.draw(battleArt.menuLogo, 40, 4, 0, 590 / lw, 590 / lw)
+    else
+        g.setFont(UI.fonts.logo)
+        g.setColor(UI.COLORS.goldYellow)
+        g.print("TERRA SUIT", 46, 46)
+    end
+    g.setFont(UI.fonts.medium)
+    g.setColor(UI.COLORS.goldYellow)
+    g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
+    g.setFont(UI.fonts.tiny)
+    g.setColor(UI.COLORS.textLight)
+    g.print("ROGUELIKE POKER TCG", 78, 194)
+
+    local px, py, pw, ph = 62, 225, 300, 322
+    UI.drawGildedPanel(px, py, pw, ph)
+    g.setFont(UI.fonts.small)
+    g.setColor(UI.COLORS.goldYellow)
+    g.print("✦  HỒ SƠ KẺ THÁCH ĐẤU", px + 22, py + 20)
+    g.setFont(UI.fonts.large)
+    g.setColor(UI.COLORS.textLight)
+    g.print("Nhatnam", px + 22, py + 50)
+    g.setFont(UI.fonts.tiny)
+    g.setColor(0.8, 0.59, 0.9, 1)
+    g.print(hasRunStarted and "HÀNH TRÌNH ĐANG DIỄN RA" or "SẴN SÀNG KHÁM PHÁ", px + 22, py + 89)
+    g.setColor(UI.COLORS.goldYellow)
+    g.line(px + 20, py + 116, px + pw - 20, py + 116)
+
+    local rows = {
+        { "Ải hiện tại", hasRunStarted and ("Ải " .. tostring((game.run and game.run.ante) or game.act or 1)) or "Chưa bắt đầu" },
+        { "Tiền vàng", tostring(game.gold or 0) },
+        { "SPM đang mang", tostring(Deities.getCount(game.deities)) .. "/" .. tostring(Deities.getMaxSlots(game)) },
+        { "Lá trong bộ bài", tostring(#(game.persistentDeck or {})) },
+        { "Tay bài tối đa", tostring(game.maxHandSize or 3) },
+    }
+    g.setFont(UI.fonts.small)
+    for i, row in ipairs(rows) do
+        local ry = py + 132 + (i - 1) * 32
+        g.setColor(UI.COLORS.textLight)
+        g.print(row[1], px + 22, ry)
+        g.setColor(UI.COLORS.goldYellow)
+        g.printf(row[2], px + 22, ry, pw - 44, "right")
+        if i < #rows then
+            g.setColor(0.72, 0.60, 0.39, 0.22)
+            g.line(px + 22, ry + 24, px + pw - 22, ry + 24)
         end
     end
 
-    -- Face Lettering: Weathered Ivory Gold
-    love.graphics.setColor(0.96, 0.92, 0.82, 1)
-    love.graphics.printf("TERRA SUIT", 0, titleY, V_WIDTH, "center")
-
-    -- Inner Chiseled Gold Highlight Line
-    love.graphics.setColor(0.98, 0.82, 0.28, 0.85)
-    love.graphics.printf("TERRA SUIT", 0, titleY - 1, V_WIDTH, "center")
-
-    -- Subtitle
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], 0.9)
-    love.graphics.printf("—  TÀN TÍCH VẬN MỆNH • ROGUELIKE POKER TCG  —", 0, titleY + 98, V_WIDTH, "center")
-
-    ----------------------------------------------------------------------------
-    -- 4. LEFT COLUMN: HỒ SƠ THỢ SĂN (Player Dossier)
-    ----------------------------------------------------------------------------
-    local dosX = 85
-    local dosY = 185
-    local dosW = 280
-    local dosH = 435
-
-    -- Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.6)
-    UI.drawRoundedRect("fill", dosX + 5, dosY + 7, dosW, dosH, 10)
-
-    -- Dossier Body
-    love.graphics.setColor(0.10, 0.12, 0.15, 0.96)
-    UI.drawRoundedRect("fill", dosX, dosY, dosW, dosH, 10)
-
-    -- Double Gothic Frame
-    love.graphics.setLineWidth(1.5)
-    love.graphics.setColor(0.75, 0.62, 0.24, 0.9)
-    UI.drawRoundedRect("line", dosX, dosY, dosW, dosH, 10)
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(0.45, 0.38, 0.20, 0.6)
-    UI.drawRoundedRect("line", dosX + 4, dosY + 4, dosW - 8, dosH - 8, 8)
-
-    -- Corner Fleuron Lines
-    love.graphics.setColor(0.85, 0.72, 0.25, 0.85)
-    love.graphics.line(dosX + 7, dosY + 12, dosX + 7, dosY + 7, dosX + 12, dosY + 7)
-    love.graphics.line(dosX + dosW - 7, dosY + 12, dosX + dosW - 7, dosY + 7, dosX + dosW - 12, dosY + 7)
-    love.graphics.line(dosX + 7, dosY + dosH - 12, dosX + 7, dosY + dosH - 7, dosX + 12, dosY + dosH - 7)
-    love.graphics.line(dosX + dosW - 7, dosY + dosH - 12, dosX + dosW - 7, dosY + dosH - 7, dosX + dosW - 12, dosY + dosH - 7)
-
-    -- Top Wax Seal
-    local sealCX = dosX + dosW / 2
-    local sealCY = dosY + 32
-    local sR = 17
-    love.graphics.setColor(0.55, 0.08, 0.10, 0.95)
-    for a = 0, 5 do
-        local ang = a * (math.pi / 3)
-        love.graphics.circle("fill", sealCX + math.cos(ang) * (sR - 2), sealCY + math.sin(ang) * (sR - 2), 6)
-    end
-    love.graphics.setColor(0.72, 0.12, 0.15, 1)
-    love.graphics.circle("fill", sealCX, sealCY, sR)
-    love.graphics.setColor(0.52, 0.08, 0.10, 1)
-    love.graphics.circle("fill", sealCX, sealCY, sR - 3.5)
-    -- Stamped Crown
-    love.graphics.setColor(0.95, 0.82, 0.35, 1)
-    love.graphics.polygon("fill", sealCX - 7, sealCY + 4, sealCX - 8, sealCY - 4, sealCX - 3, sealCY - 1, sealCX, sealCY - 5, sealCX + 3, sealCY - 1, sealCX + 8, sealCY - 4, sealCX + 7, sealCY + 4)
-
-    -- Dossier Text
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("HỒ SƠ KẺ THÁCH ĐẤU", dosX, dosY + 62, dosW, "center")
-
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("Nhatnam", dosX, dosY + 84, dosW, "center")
-
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.bossPurple)
-    love.graphics.printf("DANH HIỆU: ĐỒ TỆ CỔ TỘC", dosX, dosY + 116, dosW, "center")
-
-    -- Divider
-    love.graphics.setColor(0.35, 0.30, 0.22, 0.8)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(dosX + 20, dosY + 138, dosX + dosW - 20, dosY + 138)
-
-    -- Dossier Stats List
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    local statRows = {
-        { label = "Ván cao nhất:", val = "Ante 8 (Thắng)" },
-        { label = "Sát thương kỷ lục:", val = "1,234,567" },
-        { label = "Hộ Linh mở khóa:", val = "9 / 9" },
-        { label = "Trang bị khảm:", val = "8 / 8" },
-        { label = "Bộ bài sở hữu:", val = "4 / 4 Cự Tộc" },
+    local menuItems = {
+        { id = "menu_play", text = hasRunStarted and "TIẾP TỤC" or "VÀO TRẬN",
+            sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", color = { 0.05, 0.26, 0.49, 1 },
+            menuAccent = { 0.55, 0.81, 1, 1 } },
+        { id = "menu_collection", text = "BỘ SƯU TẬP",
+            sub = "BÀI • SPM • TRANG BỊ", icon = "▣", color = { 0.32, 0.21, 0.07, 1 },
+            menuAccent = UI.COLORS.goldYellow },
+        { id = "menu_settings", text = "TÙY CHỌN",
+            sub = "CÀI ĐẶT TRÒ CHƠI", icon = "✦", color = { 0.28, 0.09, 0.39, 1 },
+            menuAccent = { 0.83, 0.55, 0.95, 1 } },
+        { id = "menu_quit", text = "THOÁT",
+            sub = "TẠM BIỆT", icon = "⇥", color = { 0.42, 0.08, 0.10, 1 },
+            menuAccent = { 1, 0.47, 0.45, 1 } },
     }
-    local rowY = dosY + 154
-    for _, sr in ipairs(statRows) do
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf(sr.label, dosX + 16, rowY, dosW - 32, "left")
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf(sr.val, dosX + 16, rowY, dosW - 32, "right")
-        rowY = rowY + 28
+    for i, item in ipairs(menuItems) do
+        local btn = {
+            id = item.id, text = item.text, sub = item.sub, icon = item.icon,
+            x = 808, y = 234 + (i - 1) * 91, w = 426, h = 78,
+            color = item.color, menuAccent = item.menuAccent, menuStyle = true,
+            font = UI.fonts.large,
+        }
+        table.insert(buttons, btn)
+        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
+            juice.buttonPressedId == btn.id)
     end
 
-    -- Dossier Change Profile Button
-    local btnProf = {
-        id = "menu_profile",
-        text = "Đổi Hồ Sơ",
-        x = dosX + 20,
-        y = dosY + dosH - 56,
-        w = dosW - 40,
-        h = 38,
-        color = UI.COLORS.btnNormal,
-        font = UI.fonts.small,
+    g.setFont(UI.fonts.tiny)
+    g.setColor(UI.COLORS.textLight)
+    g.print("TERRA SUIT  •  POKER ROGUELIKE", 38, 683)
+    local footer = {
+        { id = "menu_mod", text = "MOD", x = 827, w = 78 },
+        { id = "menu_lang", text = "TIẾNG VIỆT", x = 913, w = 150 },
+        { id = "menu_discord", text = "DISCORD", x = 1071, w = 100 },
+        { id = "menu_x", text = "X", x = 1179, w = 55 },
     }
-    table.insert(buttons, btnProf)
-
-    ----------------------------------------------------------------------------
-    -- 5. CENTERPIECE: THE FLOATING ELDRITCH TAROT CARD
-    ----------------------------------------------------------------------------
-    local emblemCX = 575
-    local cardFloatY = 385 + math.sin((juice.ambientTimer or 0) * 2.0) * 8
-    local cardTilt = math.sin((juice.ambientTimer or 0) * 1.5) * 0.04
-
-    love.graphics.push()
-    love.graphics.translate(emblemCX, cardFloatY)
-    love.graphics.rotate(cardTilt)
-
-    local cardW = 165
-    local cardH = 245
-    local halfW = cardW / 2
-    local halfH = cardH / 2
-
-    -- Card 3D drop shadow
-    love.graphics.setColor(0, 0, 0, 0.65)
-    UI.drawRoundedRect("fill", -halfW + 10, -halfH + 12, cardW, cardH, 10)
-
-    -- Card Gilded Gold Frame
-    love.graphics.setColor(0.92, 0.76, 0.22, 1)
-    UI.drawRoundedRect("fill", -halfW, -halfH, cardW, cardH, 10)
-
-    -- Card Body: Deep Obsidian Parchment
-    love.graphics.setColor(0.10, 0.12, 0.15, 0.98)
-    UI.drawRoundedRect("fill", -halfW + 5, -halfH + 5, cardW - 10, cardH - 10, 8)
-
-    -- Inner Card Decorative Frame
-    love.graphics.setColor(0.68, 0.55, 0.20, 0.75)
-    love.graphics.setLineWidth(1)
-    UI.drawRoundedRect("line", -halfW + 10, -halfH + 10, cardW - 20, cardH - 20, 6)
-
-    -- Center Eldritch Sigil: Ancient Mystical Eye & Occult Radiance
-    love.graphics.setColor(0.85, 0.25, 0.35, 0.22)
-    love.graphics.circle("fill", 0, -10, 48)
-    love.graphics.setColor(0.95, 0.82, 0.28, 0.40)
-    love.graphics.circle("line", 0, -10, 50)
-
-    -- Tarot Title Ribbon
-    love.graphics.setColor(0.06, 0.07, 0.09, 0.95)
-    love.graphics.rectangle("fill", -halfW + 14, -halfH + 16, cardW - 28, 24, 3)
-    love.graphics.setColor(0.85, 0.72, 0.25, 0.8)
-    love.graphics.rectangle("line", -halfW + 14, -halfH + 16, cardW - 28, 24, 3)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("CỔ VẬT VẬN MỆNH", -halfW + 14, -halfH + 21, cardW - 28, "center")
-
-    -- Crossed Dark Spectral Chains
-    local function drawChainLink(lx, ly, lrot)
-        love.graphics.push()
-        love.graphics.translate(lx, ly)
-        love.graphics.rotate(lrot)
-        love.graphics.setColor(0.14, 0.17, 0.22, 0.95)
-        love.graphics.rectangle("fill", -10, -5, 20, 10, 4, 4)
-        love.graphics.setColor(0.78, 0.84, 0.92, 1)
-        love.graphics.rectangle("fill", -8, -3, 16, 6, 3, 3)
-        love.graphics.setColor(0.14, 0.17, 0.22, 1)
-        love.graphics.rectangle("fill", -3, -1, 6, 2, 1, 1)
-        love.graphics.pop()
+    for _, item in ipairs(footer) do
+        local btn = {
+            id = item.id, text = item.text, x = item.x, y = 662, w = item.w, h = 36,
+            color = UI.COLORS.btnNormal, font = UI.fonts.tiny,
+        }
+        table.insert(buttons, btn)
+        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
+            juice.buttonPressedId == btn.id)
     end
-
-    local dAngle = math.atan2(cardH, cardW)
-    for t = -0.42, 0.42, 0.14 do
-        drawChainLink(t * cardW * 0.92, t * cardH * 0.92, dAngle)
-        drawChainLink(-t * cardW * 0.92, t * cardH * 0.92, -dAngle)
-    end
-
-    -- Center Forged Padlock
-    local lockW = 48
-    local lockH = 42
-    local shackleR = 15
-    love.graphics.setColor(0.70, 0.76, 0.84, 1)
-    love.graphics.setLineWidth(5)
-    love.graphics.arc("line", "open", 0, -12, shackleR, math.pi, 2 * math.pi)
-
-    love.graphics.setColor(0.24, 0.28, 0.35, 1)
-    UI.drawRoundedRect("fill", -lockW / 2, -10, lockW, lockH, 6)
-    love.graphics.setColor(0.85, 0.72, 0.25, 0.9)
-    UI.drawRoundedRect("line", -lockW / 2, -10, lockW, lockH, 6)
-
-    -- Keyhole
-    love.graphics.setColor(0.06, 0.08, 0.12, 1)
-    love.graphics.circle("fill", 0, 7, 5)
-    love.graphics.polygon("fill", -3, 7, 3, 7, 1.5, 18, -1.5, 18)
-
-    love.graphics.pop()
-
-    ----------------------------------------------------------------------------
-    -- 6. RIGHT COLUMN: HERO ACTION STACK (Tactile 3D Buttons)
-    ----------------------------------------------------------------------------
-    local btnStackX = 775
-    local btnStackW = 390
-    local startBtnY = 195
-
-    -- 1. Hero Button: VÀO TRẬN (PLAY)
-    local playText = hasRunStarted and "TIẾP TỤC TRẬN" or "VÀO TRẬN"
-    local btnPlay = {
-        id = "menu_play",
-        text = playText,
-        x = btnStackX,
-        y = startBtnY,
-        w = btnStackW,
-        h = 76,
-        color = UI.COLORS.btnPlay,
-        font = UI.fonts.title or UI.fonts.large,
-    }
-    table.insert(buttons, btnPlay)
-
-    -- 2. Button: BỘ SƯU TẬP (COLLECTION)
-    local btnCollection = {
-        id = "menu_collection",
-        text = "BỘ SƯU TẬP",
-        x = btnStackX,
-        y = startBtnY + 92,
-        w = btnStackW,
-        h = 64,
-        color = UI.COLORS.btnSpecial,
-        font = UI.fonts.large,
-    }
-    table.insert(buttons, btnCollection)
-
-    -- 3. Button: TUỲ CHỌN (SETTINGS)
-    local btnOptions = {
-        id = "menu_settings",
-        text = "TUỲ CHỌN",
-        x = btnStackX,
-        y = startBtnY + 172,
-        w = btnStackW,
-        h = 64,
-        color = UI.COLORS.btnNormal,
-        font = UI.fonts.large,
-    }
-    table.insert(buttons, btnOptions)
-
-    -- 4. Button: THOÁT (QUIT)
-    local btnQuit = {
-        id = "menu_quit",
-        text = "THOÁT",
-        x = btnStackX,
-        y = startBtnY + 252,
-        w = btnStackW,
-        h = 64,
-        color = UI.COLORS.btnDestruct,
-        font = UI.fonts.large,
-    }
-    table.insert(buttons, btnQuit)
-
-    -- Render all interactive 3D buttons
-    for _, btn in ipairs(buttons) do
-        local isH = (mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
-        local isP = (juice.buttonPressedId == btn.id)
-        UI.drawButton(btn, isH, isP)
-    end
-
-    ----------------------------------------------------------------------------
-    -- 7. FOOTER BAR: MODS, LANGUAGE & COMMUNITY
-    ----------------------------------------------------------------------------
-    local footY = 652
-    local footH = 34
-
-    -- Left: Version & Engine Info
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("TERRA SUIT v1.0.1o • ENGINE POKER ROGUELIKE", 85, footY + 8, 400, "left")
-
-    -- Right Footer Buttons
-    local btnMod = {
-        id = "menu_mod",
-        text = "MOD",
-        x = 815,
-        y = footY,
-        w = 80,
-        h = footH,
-        color = { 0.32, 0.38, 0.52, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnMod)
-    UI.drawButton(btnMod, mx >= btnMod.x and mx <= btnMod.x + btnMod.w and my >= btnMod.y and my <= btnMod.y + btnMod.h, juice.buttonPressedId == btnMod.id)
-
-    local btnLang = {
-        id = "menu_lang",
-        text = "A文 Tiếng Việt",
-        x = 905,
-        y = footY,
-        w = 150,
-        h = footH,
-        color = { 0.16, 0.24, 0.28, 1 },
-        font = UI.fonts.tiny,
-    }
-    table.insert(buttons, btnLang)
-    UI.drawButton(btnLang, mx >= btnLang.x and mx <= btnLang.x + btnLang.w and my >= btnLang.y and my <= btnLang.y + btnLang.h, juice.buttonPressedId == btnLang.id)
-
-    local btnDiscord = {
-        id = "menu_discord",
-        text = "Dc",
-        x = 1065,
-        y = footY,
-        w = 46,
-        h = footH,
-        color = { 0.32, 0.40, 0.88, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnDiscord)
-    UI.drawButton(btnDiscord, mx >= btnDiscord.x and mx <= btnDiscord.x + btnDiscord.w and my >= btnDiscord.y and my <= btnDiscord.y + btnDiscord.h, juice.buttonPressedId == btnDiscord.id)
-
-    local btnX = {
-        id = "menu_x",
-        text = "𝕏",
-        x = 1120,
-        y = footY,
-        w = 46,
-        h = footH,
-        color = { 0.14, 0.14, 0.16, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnX)
-    UI.drawButton(btnX, mx >= btnX.x and mx <= btnX.x + btnX.w and my >= btnX.y and my <= btnX.y + btnH, juice.buttonPressedId == btnX.id)
 end
 
 local function drawCollectionModal()
+    local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
-    buttons = {} -- Clear previous menu buttons so they don't draw or capture clicks inside the modal!
-    -- Dim background
-    love.graphics.setColor(0.06, 0.07, 0.10, 1.0)
-    love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-
-    local modalW = 820
-    local modalH = 590
-    local modalX = (V_WIDTH - modalW) / 2
-    local modalY = (V_HEIGHT - modalH) / 2
-
-    -- Modal background & border
-    love.graphics.setColor(0, 0, 0, 0.5)
-    UI.drawRoundedRect("fill", modalX + 4, modalY + 6, modalW, modalH, 12)
-    love.graphics.setColor(0.22, 0.28, 0.31, 0.98) -- #38464d
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setColor(0.31, 0.39, 0.44, 1)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
-
-    local colW = 340
-    local colLX = modalX + 26
-    local colRX = modalX + modalW - 26 - colW
-
-    -- LEFT COLUMN
-    -- 1. Joker (Thần Hộ Mệnh)
-    local jokersCount = #Collection.getItems("jokers")
-    local btnJoker = {
-        id = "coll_cat_jokers",
-        catId = "jokers",
-        text = "Hộ Linh",
-        sub = jokersCount .. " / " .. jokersCount,
-        x = colLX,
-        y = modalY + 24,
-        w = colW,
-        h = 76,
-        color = { 0.55, 0.16, 0.14, 1 },
-        font = UI.fonts.large,
-    }
-    table.insert(buttons, btnJoker)
-
-    -- 2. Bộ Bài (Factions)
-    local decksCount = #Collection.getItems("decks")
-    local btnDecks = {
-        id = "coll_cat_decks",
-        catId = "decks",
-        text = "Bộ Bài",
-        sub = decksCount .. " / " .. decksCount,
-        x = colLX,
-        y = modalY + 112,
-        w = colW,
-        h = 48,
-        color = { 0.92, 0.28, 0.22, 1 },
-        font = UI.fonts.medium,
-    }
-    table.insert(buttons, btnDecks)
-
-    -- 3. Phiếu (Vouchers)
-    local vouchersCount = #Collection.getItems("vouchers")
-    local btnVouchers = {
-        id = "coll_cat_vouchers",
-        catId = "vouchers",
-        text = "Phiếu",
-        sub = vouchersCount .. " / " .. vouchersCount,
-        x = colLX,
-        y = modalY + 172,
-        w = colW,
-        h = 48,
-        color = { 0.92, 0.28, 0.22, 1 },
-        font = UI.fonts.medium,
-        alert = true,
-    }
-    table.insert(buttons, btnVouchers)
-
-    -- 4. Section Lá Tiêu Thụ / Trang Bị Khảm (Dark inset with vertical tab and large orange card)
-    local boxY = modalY + 232
-    local boxH = 270
-    love.graphics.setColor(0.12, 0.16, 0.18, 1)
-    UI.drawRoundedRect("fill", colLX, boxY, colW, boxH, 8)
-    love.graphics.setColor(0.22, 0.28, 0.32, 1)
-    UI.drawRoundedRect("line", colLX, boxY, colW, boxH, 8)
-
-    -- Vertical label "LÁ TIÊU THỤ"
-    love.graphics.push()
-    love.graphics.translate(colLX + 14, boxY + boxH - 25)
-    love.graphics.rotate(-math.pi / 2)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print("LÁ TIÊU THỤ", 0, 0)
-    love.graphics.pop()
-
-    -- Large orange card button inside
-    local eqCount = #Collection.getItems("consumables")
-    local btnConsumables = {
-        id = "coll_cat_consumables",
-        catId = "consumables",
-        text = "Lá Tiêu Thụ",
-        sub = "Trang Bị Khảm\n" .. eqCount .. " / " .. eqCount,
-        x = colLX + 44,
-        y = boxY + 12,
-        w = colW - 56,
-        h = boxH - 24,
-        color = { 0.96, 0.54, 0.08, 1 },
-        font = UI.fonts.large,
-        isMultiLine = true,
-    }
-    table.insert(buttons, btnConsumables)
-
-    -- RIGHT COLUMN
-    local rButtons = {
-        { id = "coll_cat_enhancements", catId = "enhancements", text = "Lá Cường Hoá", y = modalY + 24, h = 46 },
-        { id = "coll_cat_seals", catId = "seals", text = "Con Dấu", y = modalY + 76, h = 46 },
-        { id = "coll_cat_editions", catId = "editions", text = "Ấn Bản", y = modalY + 128, h = 46, alert = true },
-        { id = "coll_cat_packs", catId = "packs", text = "Gói Bài", y = modalY + 180, h = 46 },
-        { id = "coll_cat_tags", catId = "tags", text = "Khế Ước Bỏ Ải", y = modalY + 232, h = 46, alert = true },
-        { id = "coll_cat_blinds", catId = "blinds", text = "Blind", y = modalY + 284, h = 86, alert = true },
-        { id = "coll_cat_other", catId = "other", text = "Thế Đánh", sub = "Tổ Hợp & Aura", y = modalY + 376, h = 46 },
-    }
-    for _, rb in ipairs(rButtons) do
-        rb.x = colRX
-        rb.w = colW
-        rb.color = { 0.92, 0.28, 0.22, 1 }
-        rb.font = UI.fonts.regular
-        if not rb.sub then
-            local count = #Collection.getItems(rb.catId)
-            rb.sub = count .. " / " .. count
-        end
-        table.insert(buttons, rb)
+    buttons = {}
+    if battleArt.menuWorld then
+        local bw, bh = battleArt.menuWorld:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
     end
+    g.setColor(0.01, 0.02, 0.04, 0.78)
+    g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+    UI.drawGildedPanel(60, 34, 1160, 640)
 
-    -- BOTTOM: Trở Lại (Orange button spanning full modal width)
-    local btnBack = {
-        id = "coll_close",
-        text = "Trở Lại",
-        x = modalX + 26,
-        y = modalY + modalH - 60,
-        w = modalW - 52,
-        h = 44,
-        color = { 0.96, 0.54, 0.08, 1 },
-        font = UI.fonts.medium,
+    g.setFont(UI.fonts.title)
+    g.setColor(UI.COLORS.goldYellow)
+    g.printf("BỘ SƯU TẬP", 90, 56, 1100, "center")
+    g.setFont(UI.fonts.small)
+    g.setColor(UI.COLORS.textMuted)
+    g.printf("Khám phá toàn bộ bài, SPM, trang bị và thử thách", 90, 98, 1100, "center")
+
+    local categories = {
+        { id = "jokers", title = "SPM", icon = "✦", accent = { 0.62, 0.80, 1, 1 } },
+        { id = "decks", title = "BỘ BÀI", icon = "▣", accent = UI.COLORS.goldYellow },
+        { id = "vouchers", title = "PHIẾU", icon = "◈", accent = { 0.55, 0.86, 0.70, 1 } },
+        { id = "consumables", title = "TRANG BỊ KHẢM", icon = "◇", accent = { 0.64, 0.86, 0.95, 1 } },
+        { id = "enhancements", title = "LÁ CƯỜNG HÓA", icon = "✧", accent = { 0.95, 0.68, 0.50, 1 } },
+        { id = "seals", title = "CON DẤU", icon = "✦", accent = { 0.75, 0.62, 0.94, 1 } },
+        { id = "editions", title = "ẤN BẢN", icon = "◇", accent = UI.COLORS.goldYellow },
+        { id = "packs", title = "RƯƠNG BÀI", icon = "▣", accent = { 0.55, 0.80, 0.98, 1 } },
+        { id = "tags", title = "KHẾ ƯỚC BỎ ẢI", icon = "✧", accent = { 0.95, 0.55, 0.55, 1 } },
+        { id = "blinds", title = "QUÁI VẬT", icon = "⚔", accent = { 0.95, 0.55, 0.55, 1 } },
+        { id = "other", title = "THẾ ĐÁNH", icon = "✦", accent = { 0.70, 0.88, 0.70, 1 } },
     }
-    table.insert(buttons, btnBack)
-
-    -- Draw all buttons in this modal
-    for _, btn in ipairs(buttons) do
-        local isH = (mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
-        local isP = (juice and juice.buttonPressedId == btn.id)
-        UI.drawButton(btn, isH, isP)
+    for i, cat in ipairs(categories) do
+        local count = #Collection.getItems(cat.id)
+        local col = (i - 1) % 3
+        local row = math.floor((i - 1) / 3)
+        local btn = {
+            id = "coll_cat_" .. cat.id, catId = cat.id, text = cat.title,
+            sub = tostring(count) .. " mục", icon = cat.icon,
+            x = 94 + col * 367, y = 132 + row * 113, w = 350, h = 98,
+            color = { 0.10, 0.15, 0.21, 1 }, menuAccent = cat.accent,
+            menuStyle = true, font = UI.fonts.medium,
+        }
+        table.insert(buttons, btn)
+        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
+            juice.buttonPressedId == btn.id)
     end
+    local close = {
+        id = "coll_close", text = "TRỞ LẠI", x = 515, y = 596, w = 250, h = 50,
+        color = UI.COLORS.btnNormal, font = UI.fonts.medium,
+    }
+    table.insert(buttons, close)
+    UI.drawButton(close, mx >= close.x and mx <= close.x + close.w and my >= close.y and my <= close.y + close.h,
+        juice.buttonPressedId == close.id)
 end
 
 local function drawCollectionDetailView()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    -- Dim background
-    love.graphics.setColor(0.06, 0.07, 0.10, 1.0)
+    if battleArt.menuWorld then
+        local bw, bh = battleArt.menuWorld:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
+    end
+    love.graphics.setColor(0.01, 0.02, 0.04, 0.84)
     love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
     local cat = Collection.getCategoryById(collectionCategory) or { title = "Danh Mục", sub = "" }
@@ -3272,11 +2920,7 @@ local function drawCollectionDetailView()
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
-    -- Modal box
-    love.graphics.setColor(0.14, 0.18, 0.21, 0.98)
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setColor(0.28, 0.38, 0.44, 1)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
+    UI.drawGildedPanel(modalX, modalY, modalW, modalH)
 
     -- Header Navigation
     local btnBack = {
@@ -3286,7 +2930,7 @@ local function drawCollectionDetailView()
         y = modalY + 16,
         w = 230,
         h = 38,
-        color = { 0.96, 0.54, 0.08, 1 },
+        color = UI.COLORS.btnNormal,
         font = UI.fonts.small,
     }
     table.insert(buttons, btnBack)
@@ -3623,7 +3267,12 @@ end
 
 local function drawStarterDeckSelect()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(UI.COLORS.bg)
+    if battleArt.menuWorld then
+        local bw, bh = battleArt.menuWorld:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
+    end
+    love.graphics.setColor(0.01, 0.02, 0.04, 0.74)
     love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -3647,13 +3296,7 @@ local function drawStarterDeckSelect()
     local cardW, cardH = 390, 430
     local cardX, cardY = (V_WIDTH - cardW) / 2, 135
     local hovered = mx >= cardX and mx <= cardX + cardW and my >= cardY and my <= cardY + cardH
-    love.graphics.setColor(0, 0, 0, 0.45)
-    UI.drawRoundedRect("fill", cardX + 5, cardY + 7, cardW, cardH, 16)
-    love.graphics.setColor(hovered and { 0.24, 0.08, 0.10, 1 } or { 0.17, 0.08, 0.10, 1 })
-    UI.drawRoundedRect("fill", cardX, cardY, cardW, cardH, 16)
-    love.graphics.setLineWidth(hovered and 4 or 2)
-    love.graphics.setColor(deckInfo.color)
-    UI.drawRoundedRect("line", cardX, cardY, cardW, cardH, 16)
+    UI.drawGildedPanel(cardX, cardY, cardW, cardH, deckInfo.color)
 
     love.graphics.setFont(UI.fonts.title)
     love.graphics.setColor(deckInfo.color)
@@ -3666,12 +3309,12 @@ local function drawStarterDeckSelect()
 
     love.graphics.setColor(0.30, 0.07, 0.09, 0.95)
     UI.drawRoundedRect("fill", cardX + 34, cardY + 220, cardW - 68, 105, 10)
-    love.graphics.setFont(UI.fonts.medium)
+    love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(1, 0.86, 0.48, 1)
-    love.graphics.printf("TAY ĐẦU TIÊN: +10 MULT", cardX + 40, cardY + 238, cardW - 80, "center")
+    love.graphics.printf("LƯỢT ĐẦU: +10 CƯỜNG HÓA", cardX + 40, cardY + 233, cardW - 80, "center")
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Mỗi combat xáo bộ bài và chỉ rút 3 lá ngẫu nhiên lên tay.", cardX + 50, cardY + 278, cardW - 100, "center")
+    love.graphics.printf("Mỗi trận xáo bộ bài và rút 3 lá ngẫu nhiên lên tay.", cardX + 50, cardY + 274, cardW - 100, "center")
 
     local choose = {
         id = "deck_red", deckId = "red_deck", text = "CHỌN BỘ BÀI ĐỎ",
@@ -3683,7 +3326,7 @@ local function drawStarterDeckSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Bộ bài chuẩn 52 lá • Không có kỹ năng phe • Hand Size khởi đầu: 3", 0, V_HEIGHT - 50, V_WIDTH, "center")
+    love.graphics.printf("Bộ bài chuẩn 52 lá • Không có kỹ năng phe • Tay bài khởi đầu: 3", 0, V_HEIGHT - 50, V_WIDTH, "center")
 end
 
 local function drawMenu()
@@ -3697,8 +3340,8 @@ end
 getHandCardPosition = function(index, totalCards)
     local cardW = 100
     local cardH = 145
-    local handAreaX = 52
-    local handAreaW = 930
+    local handAreaX = UI.BATTLE_ARENA_X
+    local handAreaW = UI.BATTLE_ARENA_W
 
     if totalCards <= 1 then
         local cx = handAreaX + (handAreaW - cardW) / 2
@@ -3724,10 +3367,7 @@ end
 
 local function drawBattleHud(m, mx, my)
     local g = love.graphics
-    g.setColor(0.055, 0.09, 0.13, 0.94)
-    UI.drawRoundedRect("fill", 10, 8, 1260, 55, 8)
-    g.setColor(0.70, 0.58, 0.30, 0.82)
-    UI.drawRoundedRect("line", 10, 8, 1260, 55, 8)
+    UI.drawGildedPanel(10, 8, 1260, 55)
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.goldYellow)
     g.print("ẢI " .. tostring((game.run and game.run.ante) or game.act or 1) .. "-" .. tostring((game.run and game.run.blindIndex) or game.round or 1), 24, 16)
@@ -3753,7 +3393,7 @@ local function drawBattleEnemy(m)
     local t = (juice and juice.ambientTimer) or 0
     local attack = monsterMotion.attack / 0.42
     local hit = monsterMotion.hit / 0.35
-    local cx, cy = 540, 270 + math.sin(t * 1.9) * 5
+    local cx, cy = UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.9) * 5
     local size = m.isBoss and 355 or (m.isElite and 325 or 290)
     g.setColor(0, 0, 0, 0.38)
     g.ellipse("fill", cx, 414, size * 0.38, 23)
@@ -3770,11 +3410,93 @@ local function drawBattleEnemy(m)
     end
     g.setFont(UI.fonts.medium)
     g.setColor(1, 1, 1, 1)
-    g.printf((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu", 367, 85, 350, "center")
-    UI.drawMonsterHpBar(374, 111, 336, 24, m.hp, m.maxHp, m.damageLagHp)
+    g.printf((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu", UI.BATTLE_CENTER_X - 175, 85, 350, "center")
+    UI.drawMonsterHpBar(UI.BATTLE_CENTER_X - 168, 111, 336, 24, m.hp, m.maxHp, m.damageLagHp)
+end
+
+local function drawBattleInfoPanel(m, eval, preview)
+    local g = love.graphics
+    local scoring = state == "scoring" and anim.active
+    local chips = scoring and (anim.displayChips or 0) or (preview and preview.totalChips or 0)
+    local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
+    local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
+    local aura = scoring and (anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
+    local handName = scoring and (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName)
+        or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
+    local x, y, w, h = 12, 76, 222, 615
+    UI.drawGildedPanel(x, y, w, h)
+
+    g.setFont(UI.fonts.small)
+    g.setColor(UI.COLORS.goldYellow)
+    g.print("TAY BÀI", x + 14, y + 14)
+    g.setColor(UI.COLORS.textLight)
+    g.printf(UI.truncateUtf8(handName, 24), x + 14, y + 39, w - 28, "left")
+
+    local statY = y + 83
+    for _, stat in ipairs({
+        { label = "SÁT THƯƠNG", value = chips, color = UI.COLORS.chipsBlue, offset = 0 },
+        { label = "CƯỜNG HÓA", value = mult, color = UI.COLORS.multRed, offset = 100 },
+    }) do
+        local sx = x + 12 + stat.offset
+        g.setColor(stat.color[1], stat.color[2], stat.color[3], 0.26)
+        UI.drawRoundedRect("fill", sx, statY, 96, 66, 5)
+        g.setColor(stat.color)
+        UI.drawRoundedRect("line", sx, statY, 96, 66, 5)
+        g.setFont(UI.fonts.tiny)
+        g.printf(stat.label, sx + 3, statY + 8, 90, "center")
+        g.setFont(UI.fonts.medium)
+        g.printf(UI.formatNumber(stat.value), sx + 3, statY + 31, 90, "center")
+    end
+    g.setFont(UI.fonts.small)
+    g.setColor(UI.COLORS.textMuted)
+    g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), x + 12, y + 159, w - 24, "center")
+    if xMult > 1 then
+        g.setFont(UI.fonts.tiny)
+        g.printf("Hệ số phụ ×" .. string.format("%.2f", xMult), x + 12, y + 181, w - 24, "center")
+    end
+
+    g.setColor(0.57, 0.41, 0.22, 0.30)
+    UI.drawRoundedRect("fill", x + 12, y + 208, w - 24, 61, 5)
+    g.setColor(UI.COLORS.goldYellow)
     g.setFont(UI.fonts.tiny)
+    g.printf(scoring and "AURA ĐANG CỘNG" or "AURA DỰ KIẾN", x + 16, y + 215, w - 32, "center")
+    g.setFont(UI.fonts.large)
+    g.printf(UI.formatNumber(aura), x + 16, y + 233, w - 32, "center")
+
+    g.setColor(UI.COLORS.panelBorder)
+    g.line(x + 14, y + 289, x + w - 14, y + 289)
+    g.setFont(UI.fonts.small)
+    g.setColor(UI.COLORS.goldYellow)
+    g.print("QUÁI VẬT", x + 14, y + 302)
+    g.setColor(UI.COLORS.textLight)
+    g.printf(UI.truncateUtf8((m and m.name) or "Không rõ", 25), x + 14, y + 326, w - 28, "left")
+    g.setFont(UI.fonts.tiny)
+    g.setColor(UI.COLORS.textMuted)
+    g.print("MÁU  " .. tostring(m and m.hp or 0) .. "/" .. tostring(m and m.maxHp or 0), x + 14, y + 352)
     g.setColor(UI.COLORS.hpRed)
-    g.printf("ĐÒN TỚI  " .. tostring(m.attack or 0) .. " SÁT THƯƠNG", 378, 143, 328, "center")
+    g.print("CHIÊU TIẾP THEO", x + 14, y + 377)
+    g.setColor(UI.COLORS.textLight)
+    g.printf(UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"), x + 14, y + 395, w - 28, "left")
+    g.setColor(UI.COLORS.goldYellow)
+    g.print(m and m.bossData and "DEBUFF" or "ĐẶC ĐIỂM", x + 14, y + 434)
+    g.setColor(UI.COLORS.textMuted)
+    local debuff = m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi"
+    g.printf(UI.truncateUtf8(debuff, 150), x + 14, y + 452, w - 28, "left")
+    if scoring then
+        g.setColor(UI.COLORS.panelBorder)
+        g.line(x + 14, y + 548, x + w - 14, y + 548)
+        g.setColor(UI.COLORS.goldYellow)
+        g.setFont(UI.fonts.tiny)
+        local finished = anim.currentStepIndex > #anim.scoringData.steps
+        local category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA")
+        g.printf(UI.truncateUtf8(category, 26), x + 14, y + 558, w - 28, "left")
+        g.setColor(UI.COLORS.textLight)
+        local detail = finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
+            or (game.handsRemaining <= 0 and "Hết lượt đánh • bạn đã thua"
+                or ("Đã gây " .. UI.formatNumber(anim.displayFinalScore or 0) .. " sát thương")))
+            or UI.localizeText(anim.stepLog or "")
+        g.printf(UI.truncateUtf8(detail, 55), x + 14, y + 576, w - 28, "left")
+    end
 end
 
 local function drawPlayingState()
@@ -3812,10 +3534,9 @@ local function drawPlayingState()
     }) or nil
     drawBattleEnemy(m)
     drawBattleHud(m, mx, my)
-    love.graphics.setColor(0.055, 0.09, 0.13, 0.84)
-    UI.drawRoundedRect("fill", 1028, 73, 239, 390, 8)
-    love.graphics.setColor(0.68, 0.57, 0.32, 0.72)
-    UI.drawRoundedRect("line", 1028, 73, 239, 390, 8)
+    drawBattleInfoPanel(m, eval, scPreview)
+    UI.drawGildedPanel(1028, 73, 239, 248)
+    UI.drawGildedPanel(1028, 318, 239, 145, { 0.45, 0.85, 0.65, 1 })
 
     -- 2. RIGHT RAIL: SPM & CONSUMABLES
     ----------------------------------------------------------------------------
@@ -3909,37 +3630,7 @@ local function drawPlayingState()
     end
 
     ----------------------------------------------------------------------------
-    -- 3. CENTER FELT TABLE: PLAYED / SELECTED HINTS
-    ----------------------------------------------------------------------------
-    if eval and scPreview then
-        -- Subtle highlight banner above player cards
-        local hbW = 610
-        local hbH = 48
-        local hbX = 295 + (820 - hbW) / 2
-        local hbY = 404
-        love.graphics.setColor(0.10, 0.14, 0.18, 0.85)
-        UI.drawRoundedRect("fill", hbX, hbY, hbW, hbH, 6)
-        love.graphics.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], 0.7)
-        UI.drawRoundedRect("line", hbX, hbY, hbW, hbH, 6)
-
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf(eval.type.vnName, hbX + 14, hbY + 7, 230, "left")
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(scPreview.totalChips .. " CHIPS  ×  " .. scPreview.totalMult .. " MULT", hbX + 14, hbY + 27, 260, "left")
-        love.graphics.setColor(0.34, 0.08, 0.10, 0.95)
-        UI.drawRoundedRect("fill", hbX + hbW - 190, hbY + 7, 176, 34, 6)
-        love.graphics.setColor(UI.COLORS.hpRed)
-        UI.drawRoundedRect("line", hbX + hbW - 190, hbY + 7, 176, 34, 6)
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.printf(UI.formatNumber(scPreview.finalScore) .. " DMG", hbX + hbW - 190, hbY + 12, 176, "center")
-    elseif state ~= "scoring" then
-        -- Keep the table clear; interactions are communicated by card motion.
-    end
-
-    ----------------------------------------------------------------------------
-    -- 4. PLAYER HAND CARDS
+    -- PLAYER HAND CARDS
     ----------------------------------------------------------------------------
     local cardW = 100
     local cardH = 145
@@ -4009,7 +3700,7 @@ local function drawPlayingState()
     local handCountText = #game.hand .. "/" .. maxHandSize
     local hcW = 60
     local hcH = 22
-    local hcX = 517 - hcW / 2
+    local hcX = UI.BATTLE_CENTER_X - hcW / 2
     local hcY = 608
     love.graphics.setColor(0.12, 0.16, 0.20, 0.9)
     UI.drawRoundedRect("fill", hcX, hcY, hcW, hcH, 4)
@@ -4029,7 +3720,7 @@ local function drawPlayingState()
     local btnPlay = {
         id = "play",
         text = "Chơi Tay Bài",
-        x = 260,
+        x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
         w = 175,
         h = 58,
@@ -4041,7 +3732,7 @@ local function drawPlayingState()
     UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h)
 
     -- Center: Sắp Xếp Container Box
-    local sortBoxX = 450
+    local sortBoxX = UI.BATTLE_CENTER_X - 65
     local sortBoxY = actionY - 8
     local sortBoxW = 145
     local sortBoxH = 68
@@ -4084,7 +3775,7 @@ local function drawPlayingState()
     local btnDiscard = {
         id = "discard",
         text = "Bỏ Bài",
-        x = 610,
+        x = UI.BATTLE_CENTER_X + 95,
         y = actionY,
         w = 160,
         h = 58,
@@ -4177,47 +3868,21 @@ local function drawPlayingState()
 end
 
 local function drawScoringState()
-    -- 1. Draw the underlying playing table completely untouched (NO dark overlay, NO modal popup!)
+    -- Reuse the arena and live left-side breakdown while cards resolve.
     drawPlayingState()
 
-    -- 2. Center Play Zone: Played Cards Staging Area (y = 295)
+    -- Played cards share the same arena center as the hand and monster.
     local cards = anim.playedCards or {}
     local cardW = 96
     local cardH = 140
-    local cardGap = 16
-    local totalCardsW = #cards * cardW + math.max(0, #cards - 1) * cardGap
-    local playAreaX = 295
-    local playAreaW = 820
-    local startCX = playAreaX + (playAreaW - totalCardsW) / 2
     local playY = 295
-
-    -- Hand Name Header & Step Log Banner above played cards in Play Zone
-    local bannerW = math.max(480, totalCardsW + 60)
-    local bannerH = 50
-    local bannerX = playAreaX + (playAreaW - bannerW) / 2
-    local bannerY = playY - 62
-
-    love.graphics.setColor(0.08, 0.10, 0.14, 0.92)
-    UI.drawRoundedRect("fill", bannerX, bannerY, bannerW, bannerH, 8)
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    UI.drawRoundedRect("line", bannerX, bannerY, bannerW, bannerH, 8)
-
-    local handNameText = (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName or "TAY BÀI") .. " (" .. (anim.evalResult and anim.evalResult.type and anim.evalResult.type.name or "") .. ")"
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf(handNameText, bannerX, bannerY + 6, bannerW, "center")
-
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf(anim.stepLog or "", bannerX + 10, bannerY + 28, bannerW - 20, "center")
 
     -- Render Played Cards in Play Zone
     for i, c in ipairs(cards) do
-        local cx = startCX + (i - 1) * (cardW + cardGap)
-        local entrance = math.max(0, math.min(1, ((anim.entranceTimer or 0) - (i - 1) * 0.055) / 0.24))
+        local cx = UI.getScoringCardX(i, #cards)
+        local entrance = math.max(0, math.min(1, ((anim.entranceTimer or 0) - (i - 1) * 0.04) / 0.16))
         local easedEntrance = 1 - (1 - entrance) ^ 3
-        local cy = 610 + (playY - 610) * easedEntrance
+        local cy = 490 + (playY - 490) * easedEntrance
         local isActive = (anim.activeCardIndex == i)
         local isScored = (anim.scoredCards and anim.scoredCards[i] ~= nil)
 
@@ -4286,7 +3951,7 @@ local function drawScoringState()
             UI.drawRoundedRect("line", cx - 2, cy - 2, cardW + 4, cardH + 4, 8)
 
             -- Floating pill above card
-            local pillW = 104
+            local pillW = 120
             local pillH = 26
             local pillX = cx + (cardW - pillW) / 2
             local pillY = cy - 32
@@ -4298,13 +3963,13 @@ local function drawScoringState()
 
             love.graphics.setFont(UI.fonts.small)
             love.graphics.setColor(UI.COLORS.goldYellow)
-            local bonusText = "+" .. (c.baseChips or 0) .. " Chips"
+            local bonusText = "+" .. (c.baseChips or 0) .. " ST"
             if anim.scoredCards and anim.scoredCards[i] then
                 local sc = anim.scoredCards[i]
                 if sc.addedMult and sc.addedMult > 0 then
-                    bonusText = "+" .. sc.addedChips .. "c/+" .. sc.addedMult .. "m"
+                    bonusText = "+" .. sc.addedChips .. " ST / +" .. sc.addedMult .. " C.H"
                 else
-                    bonusText = "+" .. sc.addedChips .. " Chips"
+                    bonusText = "+" .. sc.addedChips .. " ST"
                 end
             end
             love.graphics.printf(bonusText, pillX, pillY + 4, pillW, "center")
@@ -4365,27 +4030,6 @@ local function drawScoringState()
         love.graphics.printf(ft.text, ft.x - 200, ft.y, 400, "center")
     end
 
-    -- 5. Footer Hint & Fast-Forward Prompt
-    local footerY = 442
-    if anim.currentStepIndex > #anim.scoringData.steps then
-        if anim.monsterDefeated then
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(UI.COLORS.btnPlay)
-            love.graphics.printf("⚔ TIÊU DIỆT QUÁI VẬT! (+ $" .. anim.earnedGold .. " Vàng)", playAreaX, footerY - 4, playAreaW, "center")
-        elseif game.handsRemaining <= 0 then
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(UI.COLORS.multRed)
-            love.graphics.printf("HẾT LƯỢT ĐÁNH — BẠN ĐÃ BỊ ĐÁNH BẠI!", playAreaX, footerY - 4, playAreaW, "center")
-        else
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("Đã gây " .. UI.formatNumber(anim.displayFinalScore) .. " Sát thương vào Quái Vật!", playAreaX, footerY, playAreaW, "center")
-        end
-    else
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf("ĐANG CỘNG AURA  •  " .. math.min(anim.currentStepIndex, #anim.scoringData.steps) .. "/" .. #anim.scoringData.steps, playAreaX, footerY, playAreaW, "center")
-    end
 end
 
 local function drawBlindSelectState()
@@ -6162,12 +5806,7 @@ local function drawPauseMenuModal()
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
-    -- Modal Box
-    love.graphics.setColor(UI.COLORS.panelBg)
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setColor(UI.COLORS.panelBorder)
-    love.graphics.setLineWidth(2)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
+    UI.drawGildedPanel(modalX, modalY, modalW, modalH)
 
     -- Header
     love.graphics.setFont(UI.fonts.large)
@@ -6215,12 +5854,7 @@ local function drawSettingsModal()
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
-    -- Modal Box
-    love.graphics.setColor(UI.COLORS.panelBg)
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setColor(UI.COLORS.panelBorder)
-    love.graphics.setLineWidth(2)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
+    UI.drawGildedPanel(modalX, modalY, modalW, modalH)
 
     -- Header
     love.graphics.setFont(UI.fonts.large)
@@ -6327,11 +5961,7 @@ local function drawShopState()
     local deiStartX = 1042
     local deiSlotY = 112
 
-    local deiBoxW = 239
-    love.graphics.setColor(0.08, 0.10, 0.13, 0.6)
-    UI.drawRoundedRect("fill", deiStartX - 14, 73, deiBoxW, 390, 8)
-    love.graphics.setColor(0.20, 0.26, 0.32, 0.4)
-    UI.drawRoundedRect("line", deiStartX - 14, 73, deiBoxW, 390, 8)
+    UI.drawGildedPanel(deiStartX - 14, 73, 239, 248)
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.goldYellow)
@@ -6419,10 +6049,7 @@ local function drawShopState()
     local conSlotW = 64
     local conSlotH = 88
     local conGap = 14
-    love.graphics.setColor(0.08, 0.10, 0.13, 0.6)
-    UI.drawRoundedRect("fill", conStartX - 8, 319, 224, 139, 8)
-    love.graphics.setColor(0.20, 0.26, 0.32, 0.4)
-    UI.drawRoundedRect("line", conStartX - 8, 319, 224, 139, 8)
+    UI.drawGildedPanel(conStartX - 14, 318, 239, 145, { 0.45, 0.85, 0.65, 1 })
 
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
@@ -6440,10 +6067,7 @@ local function drawShopState()
     -- 3. MAIN SHOP BOARD (Upper: Cards On Sale | Lower: Voucher & Packs)
     ----------------------------------------------------------------------------
     -- Horizontal shop HUD and small navigation replace the former left column.
-    love.graphics.setColor(0.055, 0.09, 0.13, 0.94)
-    UI.drawRoundedRect("fill", 14, 8, 1252, 56, 8)
-    love.graphics.setColor(0.70, 0.58, 0.30, 0.82)
-    UI.drawRoundedRect("line", 14, 8, 1252, 56, 8)
+    UI.drawGildedPanel(14, 8, 1252, 56)
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.print("CỬA HÀNG", 30, 24)
@@ -6453,11 +6077,7 @@ local function drawShopState()
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
 
     local shopX, shopY, shopW, shopH = 20, 76, 985, 560
-    love.graphics.setColor(0.10, 0.12, 0.15, 0.96)
-    UI.drawRoundedRect("fill", shopX, shopY, shopW, shopH, 12)
-    love.graphics.setColor(0.85, 0.28, 0.24, 0.85)
-    love.graphics.setLineWidth(2.5)
-    UI.drawRoundedRect("line", shopX, shopY, shopW, shopH, 12)
+    UI.drawGildedPanel(shopX, shopY, shopW, shopH)
 
     ----------------------------------------------------------------------------
     -- A. UPPER COMPARTMENT (Next Round & Reroll + Upper Cards On Sale)

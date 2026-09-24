@@ -3234,6 +3234,25 @@ do
     log("[PASS] 109. Debug gold, Ante 27 boss and collection grants follow live gameplay rules")
 end
 
+for _, count in ipairs({ 1, 3, 9, 16 }) do
+    local left = UI.getScoringCardX(1, count)
+    local right = UI.getScoringCardX(count, count) + 96
+    assert(left >= UI.BATTLE_ARENA_X and right <= UI.BATTLE_ARENA_X + UI.BATTLE_ARENA_W,
+        "Played cards must stay inside the battle arena")
+    assert(math.abs((left + right) / 2 - UI.BATTLE_CENTER_X) < 0.01,
+        "Played cards must stay centered in the battle arena")
+end
+log("[PASS] 110. Played cards stay centered across hand sizes")
+
+assert(love.filesystem.getInfo("assets/scene/menu_world_v2.png"), "Menu artwork must ship with the game")
+assert(love.filesystem.getInfo("assets/scene/menu_logo_v2.png"), "Menu title artwork must ship with the game")
+assert(pcall(function()
+    UI.drawGildedPanel(0, 0, 240, 100)
+    UI.drawButton({ text = "VÀO TRẬN", icon = "⚔", sub = "KHÁM PHÁ LỤC ĐỊA",
+        x = 0, y = 0, w = 300, h = 80, menuStyle = true }, true, false)
+end), "Gilded menu frame and interactive button must render")
+log("[PASS] 111. New menu artwork and gilded controls render")
+
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end

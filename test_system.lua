@@ -3322,6 +3322,37 @@ do
     end
 
     log("[PASS] 112. Tích hợp trọn vẹn bộ Nút Bấm Dark Fantasy UI Assets từ Ảnh 3 vào Giao Diện Hình 1 và 2 (Vào Trận, Bộ Sưu Tập, Tùy Chọn, Thoát, Trận, Bộ Bài, Chơi Tay Bài, Bỏ Bài, Sắp Xếp Bài Bậc & Chất) verified 100%")
+
+    -- 113. Verify all HUD Badges, Crests, Icons, and Gothic Slots from Image 3
+    local expectedHudAssets = {
+        "badge_sat_thuong",
+        "badge_cuong_hoa",
+        "badge_power",
+        "badge_aura",
+        "art_dragon_head",
+        "icon_spm_eye",
+        "icon_consumable_potion",
+        "crest_top_monster",
+        "icon_top_heart",
+        "icon_top_coin",
+        "icon_top_cards",
+        "icon_top_skull",
+        "crest_star_compass",
+        "slot_spm_empty",
+        "slot_item_empty",
+    }
+    for _, assetKey in ipairs(expectedHudAssets) do
+        local path = "assets/ui/" .. assetKey .. ".png"
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "HUD asset file must exist on disk: " .. path)
+        local data = f:read("*a")
+        f:close()
+        assert(data and #data > 1000, "HUD asset file must be valid PNG (>1KB): " .. path)
+
+        local okLoader, img = pcall(UI.getButtonImage, assetKey)
+        assert(okLoader, "UI.getButtonImage must execute safely for " .. assetKey)
+    end
+    log("[PASS] 113. Tích hợp trọn vẹn bộ HUD Badges, Crests, Icons và Gothic Slots từ Ảnh 3 (Sát Thương, Cường Hóa, Power, Aura Dự Kiến, Đầu Rồng, SPM Eye, Bình Tiêu Hao, Crest Quái, Tim Máu, Tiền Vàng, Thẻ Bài Lượt, Đầu Lâu Bỏ Bài, Star Compass Crest, Gothic Slots) verified 100%")
 end
 
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")

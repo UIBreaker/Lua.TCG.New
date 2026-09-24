@@ -270,14 +270,21 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             love.graphics.printf(c.desc or "", ttX + 6, ttY + 22, ttW - 12, "left")
         end
     else
-        love.graphics.setColor(0.09, 0.11, 0.13, 0.6)
-        UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(0.24, 0.28, 0.34, 0.5)
-        UI.drawRoundedRect("line", cx, cy, conSlotW, conSlotH, 6)
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(0.32, 0.36, 0.42, 0.5)
-        love.graphics.printf("Trống", cx, cy + conSlotH / 2 - 10, conSlotW, "center")
+        local emptyImg = UI.getButtonImage("slot_item_empty")
+        if emptyImg then
+            local ew, eh = emptyImg:getDimensions()
+            love.graphics.setColor(1, 1, 1, 0.90)
+            love.graphics.draw(emptyImg, cx, cy, 0, conSlotW / ew, conSlotH / eh)
+        else
+            love.graphics.setColor(0.09, 0.11, 0.13, 0.6)
+            UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
+            love.graphics.setLineWidth(1)
+            love.graphics.setColor(0.24, 0.28, 0.34, 0.5)
+            UI.drawRoundedRect("line", cx, cy, conSlotW, conSlotH, 6)
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setColor(0.32, 0.36, 0.42, 0.5)
+            love.graphics.printf("Trống", cx, cy + conSlotH / 2 - 10, conSlotW, "center")
+        end
     end
 end
 
@@ -3373,14 +3380,59 @@ local function drawBattleHud(m, mx, my)
     g.print("ẢI " .. tostring((game.run and game.run.ante) or game.act or 1) .. "-" .. tostring((game.run and game.run.blindIndex) or game.round or 1), 24, 16)
     g.setColor(UI.COLORS.textLight)
     g.print(m and (m.isBoss or m.isElite) and m.name or "Tiểu Yêu", 24, 38)
+
+    local crestImg = UI.getButtonImage("crest_top_monster")
+    if crestImg then
+        local cw, ch = crestImg:getDimensions()
+        g.setColor(1, 1, 1, 0.92)
+        g.draw(crestImg, 120, 18, 0, 26 / cw, 30 / ch)
+    end
+
     UI.drawPlayerHpBar(178, 19, 235, 32, game.playerHp, game.maxPlayerHp, game.playerArmor or game.playerShield or 0)
-    g.setColor(UI.COLORS.goldYellow)
-    g.print("◉ " .. tostring(game.gold or 0), 436, 27)
-    g.setColor(UI.COLORS.textLight)
-    g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 550, 27)
-    g.print("BỎ " .. tostring(game.discardsRemaining or 0), 700, 27)
-    local info = { id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_tran", activeAssetId = "btn_top_tran_active" }
-    local deck = { id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_bo_bai", activeAssetId = "btn_top_bo_bai_active" }
+
+    local coinImg = UI.getButtonImage("icon_top_coin")
+    if coinImg then
+        local iw, ih = coinImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(coinImg, 430, 23, 0, 20 / iw, 24 / ih)
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.goldYellow)
+        g.print(tostring(game.gold or 0), 456, 27)
+    else
+        g.setColor(UI.COLORS.goldYellow)
+        g.print("◉ " .. tostring(game.gold or 0), 436, 27)
+    end
+
+    local cardsImg = UI.getButtonImage("icon_top_cards")
+    if cardsImg then
+        local iw, ih = cardsImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(cardsImg, 532, 23, 0, 20 / iw, 24 / ih)
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.textLight)
+        g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 558, 27)
+    else
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.textLight)
+        g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 550, 27)
+    end
+
+    local skullImg = UI.getButtonImage("icon_top_skull")
+    if skullImg then
+        local iw, ih = skullImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(skullImg, 676, 23, 0, 20 / iw, 24 / ih)
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.textLight)
+        g.print("BỎ " .. tostring(game.discardsRemaining or 0), 702, 27)
+    else
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.textLight)
+        g.print("BỎ " .. tostring(game.discardsRemaining or 0), 700, 27)
+    end
+
+    local info = { id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_tran_active", activeAssetId = "btn_top_tran_active" }
+    local deck = { id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_bo_bai_active", activeAssetId = "btn_top_bo_bai_active" }
     for _, btn in ipairs({ info, deck }) do
         table.insert(buttons, btn)
         UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
@@ -3426,62 +3478,167 @@ local function drawBattleInfoPanel(m, eval, preview)
     local x, y, w, h = 12, 76, 222, 615
     UI.drawGildedPanel(x, y, w, h)
 
+    local crestStar = UI.getButtonImage("crest_star_compass")
+    if crestStar then
+        local cw, ch = crestStar:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(crestStar, x + (w - 36) / 2, y - 10, 0, 36 / cw, 36 / ch)
+    end
+
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.goldYellow)
     g.print("TAY BÀI", x + 14, y + 14)
     g.setColor(UI.COLORS.textLight)
     g.printf(UI.truncateUtf8(handName, 24), x + 14, y + 39, w - 28, "left")
 
-    local statY = y + 83
-    for _, stat in ipairs({
-        { label = "SÁT THƯƠNG", value = chips, color = UI.COLORS.chipsBlue, offset = 0 },
-        { label = "CƯỜNG HÓA", value = mult, color = UI.COLORS.multRed, offset = 100 },
-    }) do
-        local sx = x + 12 + stat.offset
-        g.setColor(stat.color[1], stat.color[2], stat.color[3], 0.26)
-        UI.drawRoundedRect("fill", sx, statY, 96, 66, 5)
-        g.setColor(stat.color)
-        UI.drawRoundedRect("line", sx, statY, 96, 66, 5)
-        g.setFont(UI.fonts.tiny)
-        g.printf(stat.label, sx + 3, statY + 8, 90, "center")
-        g.setFont(UI.fonts.medium)
-        g.printf(UI.formatNumber(stat.value), sx + 3, statY + 31, 90, "center")
+    local statY = y + 72
+    local satImg = UI.getButtonImage("badge_sat_thuong")
+    local cuongImg = UI.getButtonImage("badge_cuong_hoa")
+    local badgeW = 98
+    local badgeH = 62
+
+    if satImg and cuongImg then
+        local sx = x + 10
+        local sw, sh = satImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(satImg, sx, statY, 0, badgeW / sw, badgeH / sh)
+        if chips > 0 then
+            g.setColor(0.04, 0.08, 0.14, 0.92)
+            g.rectangle("fill", sx + 50, statY + 24, 42, 32, 3)
+            g.setFont(UI.fonts.medium)
+            g.setColor(UI.COLORS.chipsBlue)
+            g.printf(UI.formatNumber(chips), sx + 48, statY + 28, 46, "center")
+        end
+
+        local cx = x + 114
+        local cw, ch = cuongImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(cuongImg, cx, statY, 0, badgeW / cw, badgeH / sh)
+        if mult > 0 then
+            g.setColor(0.14, 0.04, 0.06, 0.92)
+            g.rectangle("fill", cx + 50, statY + 24, 42, 32, 3)
+            g.setFont(UI.fonts.medium)
+            g.setColor(UI.COLORS.multRed)
+            g.printf(UI.formatNumber(mult), cx + 48, statY + 28, 46, "center")
+        end
+    else
+        for _, stat in ipairs({
+            { label = "SÁT THƯƠNG", value = chips, color = UI.COLORS.chipsBlue, offset = 0 },
+            { label = "CƯỜNG HÓA", value = mult, color = UI.COLORS.multRed, offset = 100 },
+        }) do
+            local sx = x + 12 + stat.offset
+            g.setColor(stat.color[1], stat.color[2], stat.color[3], 0.26)
+            UI.drawRoundedRect("fill", sx, statY, 96, 66, 5)
+            g.setColor(stat.color)
+            UI.drawRoundedRect("line", sx, statY, 96, 66, 5)
+            g.setFont(UI.fonts.tiny)
+            g.printf(stat.label, sx + 3, statY + 8, 90, "center")
+            g.setFont(UI.fonts.medium)
+            g.printf(UI.formatNumber(stat.value), sx + 3, statY + 31, 90, "center")
+        end
     end
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.textMuted)
-    g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), x + 12, y + 159, w - 24, "center")
+
+    local pwrY = statY + badgeH + 6
+    local pwrImg = UI.getButtonImage("badge_power")
+    local pwrBoxW = 104
+    local pwrBoxH = 40
+    local px = x + (w - pwrBoxW) / 2
+    if pwrImg then
+        local pw, ph = pwrImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(pwrImg, px, pwrY, 0, pwrBoxW / pw, pwrBoxH / ph)
+        if chips > 0 or mult > 0 then
+            g.setColor(0.04, 0.06, 0.08, 0.90)
+            g.rectangle("fill", px + 30, pwrY + 8, 44, 24, 3)
+            g.setFont(UI.fonts.small)
+            g.setColor(UI.COLORS.textLight)
+            g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), px + 10, pwrY + 11, pwrBoxW - 20, "center")
+        end
+    else
+        g.setFont(UI.fonts.small)
+        g.setColor(UI.COLORS.textMuted)
+        g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), x + 12, pwrY + 8, w - 24, "center")
+    end
     if xMult > 1 then
         g.setFont(UI.fonts.tiny)
-        g.printf("Hệ số phụ ×" .. string.format("%.2f", xMult), x + 12, y + 181, w - 24, "center")
+        g.setColor(UI.COLORS.goldYellow)
+        g.printf("Hệ số phụ ×" .. string.format("%.2f", xMult), x + 12, pwrY + 42, w - 24, "center")
     end
 
-    g.setColor(0.57, 0.41, 0.22, 0.30)
-    UI.drawRoundedRect("fill", x + 12, y + 208, w - 24, 61, 5)
-    g.setColor(UI.COLORS.goldYellow)
-    g.setFont(UI.fonts.tiny)
-    g.printf(scoring and "AURA ĐANG CỘNG" or "AURA DỰ KIẾN", x + 16, y + 215, w - 32, "center")
-    g.setFont(UI.fonts.large)
-    g.printf(UI.formatNumber(aura), x + 16, y + 233, w - 32, "center")
+    local auraY = pwrY + (xMult > 1 and 58 or 46)
+    local auraImg = UI.getButtonImage("badge_aura")
+    local auraBoxW = 202
+    local auraBoxH = 68
+    local ax = x + (w - auraBoxW) / 2
 
+    if auraImg then
+        local aw, ah = auraImg:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(auraImg, ax, auraY, 0, auraBoxW / aw, auraBoxH / ah)
+        if aura > 0 then
+            g.setColor(0.12, 0.10, 0.06, 0.92)
+            g.rectangle("fill", ax + 90, auraY + 26, 98, 34, 3)
+            g.setFont(UI.fonts.large)
+            g.setColor(UI.COLORS.goldYellow)
+            g.printf(UI.formatNumber(aura), ax + 88, auraY + 28, 102, "center")
+        end
+    else
+        g.setColor(0.57, 0.41, 0.22, 0.30)
+        UI.drawRoundedRect("fill", ax, auraY, auraBoxW, auraBoxH, 5)
+        g.setColor(UI.COLORS.goldYellow)
+        g.setFont(UI.fonts.tiny)
+        g.printf(scoring and "AURA ĐANG CỘNG" or "AURA DỰ KIẾN", ax + 4, auraY + 7, auraBoxW - 8, "center")
+        g.setFont(UI.fonts.large)
+        g.printf(UI.formatNumber(aura), ax + 4, auraY + 25, auraBoxW - 8, "center")
+    end
+
+    local monY = auraY + auraBoxH + 10
     g.setColor(UI.COLORS.panelBorder)
-    g.line(x + 14, y + 289, x + w - 14, y + 289)
+    g.line(x + 14, monY, x + w - 14, monY)
+
+    local dragonImg = UI.getButtonImage("art_dragon_head")
+    if dragonImg then
+        local dw, dh = dragonImg:getDimensions()
+        g.setColor(1, 1, 1, 0.90)
+        g.draw(dragonImg, x + w - 95, monY + 6, 0, 88 / dw, 68 / dh)
+    end
+
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("QUÁI VẬT", x + 14, y + 302)
+    g.print("✦ QUÁI VẬT", x + 14, monY + 12)
     g.setColor(UI.COLORS.textLight)
-    g.printf(UI.truncateUtf8((m and m.name) or "Không rõ", 25), x + 14, y + 326, w - 28, "left")
+    g.print(UI.truncateUtf8((m and m.name) or "Không rõ", 13), x + 14, monY + 34)
     g.setFont(UI.fonts.tiny)
     g.setColor(UI.COLORS.textMuted)
-    g.print("MÁU  " .. tostring(m and m.hp or 0) .. "/" .. tostring(m and m.maxHp or 0), x + 14, y + 352)
+    g.print("MÁU  " .. tostring(m and m.hp or 0) .. "/" .. tostring(m and m.maxHp or 0), x + 14, monY + 54)
+
+    local hpBarY = monY + 76
+    local hpBarW = w - 28
+    local hpBarH = 14
+    local mCurHp = math.max(0, (m and m.hp) or 0)
+    local mMaxHp = math.max(1, (m and m.maxHp) or 1)
+    local mPct = math.min(1.0, mCurHp / mMaxHp)
+    g.setColor(0.08, 0.05, 0.05, 0.95)
+    UI.drawRoundedRect("fill", x + 14, hpBarY, hpBarW, hpBarH, 3)
+    if mPct > 0 then
+        g.setColor(0.85, 0.22, 0.22, 0.95)
+        UI.drawRoundedRect("fill", x + 15, hpBarY + 1, math.floor((hpBarW - 2) * mPct), hpBarH - 2, 2)
+    end
+    g.setColor(0.45, 0.15, 0.15, 1)
+    g.setLineWidth(1.2)
+    UI.drawRoundedRect("line", x + 14, hpBarY, hpBarW, hpBarH, 3)
+
+    g.setFont(UI.fonts.tiny)
     g.setColor(UI.COLORS.hpRed)
-    g.print("CHIÊU TIẾP THEO", x + 14, y + 377)
+    g.print("CHIÊU TIẾP THEO", x + 14, hpBarY + 22)
     g.setColor(UI.COLORS.textLight)
-    g.printf(UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"), x + 14, y + 395, w - 28, "left")
+    g.printf(UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"), x + 14, hpBarY + 38, w - 28, "left")
+
     g.setColor(UI.COLORS.goldYellow)
-    g.print(m and m.bossData and "DEBUFF" or "ĐẶC ĐIỂM", x + 14, y + 434)
+    g.print(m and m.bossData and "DEBUFF" or "ĐẶC ĐIỂM", x + 14, hpBarY + 74)
     g.setColor(UI.COLORS.textMuted)
     local debuff = m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi"
-    g.printf(UI.truncateUtf8(debuff, 150), x + 14, y + 452, w - 28, "left")
+    g.printf(UI.truncateUtf8(debuff, 150), x + 14, hpBarY + 92, w - 28, "left")
     if scoring then
         g.setColor(UI.COLORS.panelBorder)
         g.line(x + 14, y + 548, x + w - 14, y + 548)
@@ -3544,11 +3701,17 @@ local function drawPlayingState()
     local topStartY = 82
 
     -- Deities Section
+    local spmEyeImg = UI.getButtonImage("icon_spm_eye")
+    if spmEyeImg then
+        local iw, ih = spmEyeImg:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(spmEyeImg, topStartX, topStartY - 2, 0, 24 / iw, 24 / ih)
+    end
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.goldYellow)
     local curDeiCount = Deities.getCount(game.deities)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    love.graphics.print("SPM (" .. curDeiCount .. "/" .. maxDeiSlots .. ")", topStartX + 4, topStartY)
+    love.graphics.print("SPM (" .. curDeiCount .. "/" .. maxDeiSlots .. ")", topStartX + (spmEyeImg and 28 or 4), topStartY)
 
     local deitySlotW = 64
     local deitySlotH = 88
@@ -3594,20 +3757,27 @@ local function drawPlayingState()
             love.graphics.pop()
         else
             -- Empty Tarot Slot
-            love.graphics.setColor(0.09, 0.11, 0.13, isDropTarget and 0.85 or 0.6)
-            UI.drawRoundedRect("fill", dx, deityY, deitySlotW, deitySlotH, 6)
-            love.graphics.setLineWidth(isDropTarget and 2.5 or 1)
-            love.graphics.setColor(isDropTarget and UI.COLORS.hpGreen or { 0.25, 0.28, 0.35, 0.5 })
-            UI.drawRoundedRect("line", dx, deityY, deitySlotW, deitySlotH, 6)
-
-            if isDropTarget then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.hpGreen)
-                love.graphics.printf("THẢ VÀO\nĐÂY", dx + 4, deityY + deitySlotH / 2 - 14, deitySlotW - 8, "center")
+            local emptyDeiImg = UI.getButtonImage("slot_spm_empty")
+            if emptyDeiImg and not isDropTarget then
+                local ew, eh = emptyDeiImg:getDimensions()
+                love.graphics.setColor(1, 1, 1, 0.90)
+                love.graphics.draw(emptyDeiImg, dx, deityY, 0, deitySlotW / ew, deitySlotH / eh)
             else
-                love.graphics.setFont(UI.fonts.large)
-                love.graphics.setColor(0.28, 0.32, 0.38, 0.5)
-                love.graphics.printf("+", dx, deityY + deitySlotH / 2 - 18, deitySlotW, "center")
+                love.graphics.setColor(0.09, 0.11, 0.13, isDropTarget and 0.85 or 0.6)
+                UI.drawRoundedRect("fill", dx, deityY, deitySlotW, deitySlotH, 6)
+                love.graphics.setLineWidth(isDropTarget and 2.5 or 1)
+                love.graphics.setColor(isDropTarget and UI.COLORS.hpGreen or { 0.25, 0.28, 0.35, 0.5 })
+                UI.drawRoundedRect("line", dx, deityY, deitySlotW, deitySlotH, 6)
+
+                if isDropTarget then
+                    love.graphics.setFont(UI.fonts.tiny)
+                    love.graphics.setColor(UI.COLORS.hpGreen)
+                    love.graphics.printf("THẢ VÀO\nĐÂY", dx + 4, deityY + deitySlotH / 2 - 14, deitySlotW - 8, "center")
+                else
+                    love.graphics.setFont(UI.fonts.large)
+                    love.graphics.setColor(0.28, 0.32, 0.38, 0.5)
+                    love.graphics.printf("+", dx, deityY + deitySlotH / 2 - 18, deitySlotW, "center")
+                end
             end
         end
     end
@@ -3616,9 +3786,15 @@ local function drawPlayingState()
     local conStartX = 1042
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
+    local potionImg = UI.getButtonImage("icon_consumable_potion")
+    if potionImg then
+        local iw, ih = potionImg:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(potionImg, conStartX, 325, 0, 24 / iw, 24 / ih)
+    end
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + 4, 327)
+    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + (potionImg and 28 or 4), 327)
 
     local conSlotW = 64
     local conSlotH = 88
@@ -7392,7 +7568,7 @@ function love.draw()
             h = 34,
             color = UI.COLORS.panelBg,
             font = UI.fonts.small,
-            assetId = "btn_top_tuy_chon",
+            assetId = "btn_top_tuy_chon_active",
             activeAssetId = "btn_top_tuy_chon_active",
         }
         table.insert(buttons, btnMenu)

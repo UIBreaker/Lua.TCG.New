@@ -346,7 +346,7 @@ function UI.drawButton(btn, isHovered, isPressed)
     if img then
         local iw, ih = img:getDimensions()
         if not enabled then
-            g.setColor(0.42, 0.45, 0.50, 0.6)
+            g.setColor(0.78, 0.80, 0.84, 0.95)
         elseif hover and not btn.activeAssetId then
             g.setColor(1.15, 1.15, 1.15, 1)
         else
@@ -1312,6 +1312,12 @@ function UI.drawPlayerHpBar(x, y, w, h, currentHp, maxHp, shield)
     UI.drawRoundedRect("line", x, y, w, h, 6)
 
     -- Text
+    local heartImg = UI.getButtonImage("icon_top_heart")
+    if heartImg then
+        local hw, hh = heartImg:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(heartImg, x + 6, y + (h - 20) / 2, 0, 20 / hw, 20 / hh)
+    end
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(1, 1, 1, 1)
     local hpText = "MÁU: " .. currentHp .. " / " .. maxHp .. " HP"
@@ -1319,7 +1325,8 @@ function UI.drawPlayerHpBar(x, y, w, h, currentHp, maxHp, shield)
         hpText = hpText .. " (GIÁP: +" .. shield .. ")"
     end
     local tw = UI.fonts.small:getWidth(hpText)
-    love.graphics.print(hpText, x + (w - tw) / 2, y + (h - 16) / 2)
+    local startX = heartImg and (x + 28 + (w - 28 - tw) / 2) or (x + (w - tw) / 2)
+    love.graphics.print(hpText, startX, y + (h - 16) / 2)
 end
 
 -- Format numbers with commas (e.g. 1,234,567) or scientific e-notation (e.g. 1.234e12)

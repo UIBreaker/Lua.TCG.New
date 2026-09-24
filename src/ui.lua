@@ -327,6 +327,47 @@ function UI.drawButton(btn, isHovered, isPressed)
     g.translate(cx, cy)
     g.scale(scale)
     g.translate(-cx, -cy)
+
+    -- Check for authentic image asset (spritesheet buttons from Image 3)
+    local img = nil
+    if type(btn.image) == "userdata" then
+        img = btn.image
+    elseif type(btn.image) == "string" then
+        img = UI.getButtonImage(btn.image)
+    elseif btn.assetId then
+        if hover and btn.activeAssetId then
+            img = UI.getButtonImage(btn.activeAssetId)
+        end
+        if not img then
+            img = UI.getButtonImage(btn.assetId)
+        end
+    end
+
+    if img then
+        local iw, ih = img:getDimensions()
+        if not enabled then
+            g.setColor(0.42, 0.45, 0.50, 0.6)
+        elseif hover and not btn.activeAssetId then
+            g.setColor(1.15, 1.15, 1.15, 1)
+        else
+            g.setColor(1, 1, 1, 1)
+        end
+        g.draw(img, btn.x, btn.y, 0, btn.w / iw, btn.h / ih)
+
+        if btn.renderText or (btn.id == "menu_play" and btn.text == "TIẾP TỤC") then
+            local font = btn.font or UI.fonts.regular
+            g.setFont(font)
+            g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)
+            local label = UI.sanitizeText(btn.text or "")
+            if not btn.preserveCase then label = UI.toUpperUtf8(label) end
+            local labelY = btn.y + (btn.h - font:getHeight()) / 2
+            g.printf(label, btn.x + 3, labelY, btn.w - 6, "center")
+        end
+
+        g.pop()
+        return
+    end
+
     if btn.menuStyle then
         local accent = btn.menuAccent or UI.COLORS.goldYellow
         UI.drawGildedPanel(btn.x, btn.y, btn.w, btn.h, accent)
@@ -956,6 +997,37 @@ function UI.getCardImage(suit, rank)
         end
     end
     UI.cardImages[key] = false
+    return nil
+end
+
+-- Cache and loader for authentic dark fantasy UI button artwork (from Image 3)
+UI.buttonImages = UI.buttonImages or {}
+
+function UI.getButtonImage(buttonKey)
+    if not buttonKey then return nil end
+    if UI.buttonImages[buttonKey] ~= nil then
+        return UI.buttonImages[buttonKey] or nil
+    end
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local candidates = {
+            "assets/ui/" .. buttonKey .. ".png",
+            "assets/buttons/" .. buttonKey .. ".png",
+        }
+        for _, path in ipairs(candidates) do
+            local okInfo, info = pcall(love.filesystem.getInfo, path)
+            if okInfo and info then
+                local okImg, img = pcall(love.graphics.newImage, path)
+                if okImg and img then
+                    if img.setFilter then
+                        img:setFilter("linear", "linear")
+                    end
+                    UI.buttonImages[buttonKey] = img
+                    return img
+                end
+            end
+        end
+    end
+    UI.buttonImages[buttonKey] = false
     return nil
 end
 

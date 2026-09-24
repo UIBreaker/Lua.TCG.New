@@ -2800,23 +2800,23 @@ local function drawMainMenu()
     local menuItems = {
         { id = "menu_play", text = hasRunStarted and "TIẾP TỤC" or "VÀO TRẬN",
             sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", color = { 0.05, 0.26, 0.49, 1 },
-            menuAccent = { 0.55, 0.81, 1, 1 } },
+            menuAccent = { 0.55, 0.81, 1, 1 }, assetId = "btn_main_vao_tran" },
         { id = "menu_collection", text = "BỘ SƯU TẬP",
             sub = "BÀI • SPM • TRANG BỊ", icon = "▣", color = { 0.32, 0.21, 0.07, 1 },
-            menuAccent = UI.COLORS.goldYellow },
+            menuAccent = UI.COLORS.goldYellow, assetId = "btn_main_bo_suu_tap" },
         { id = "menu_settings", text = "TÙY CHỌN",
             sub = "CÀI ĐẶT TRÒ CHƠI", icon = "✦", color = { 0.28, 0.09, 0.39, 1 },
-            menuAccent = { 0.83, 0.55, 0.95, 1 } },
+            menuAccent = { 0.83, 0.55, 0.95, 1 }, assetId = "btn_main_tuy_chon" },
         { id = "menu_quit", text = "THOÁT",
             sub = "TẠM BIỆT", icon = "⇥", color = { 0.42, 0.08, 0.10, 1 },
-            menuAccent = { 1, 0.47, 0.45, 1 } },
+            menuAccent = { 1, 0.47, 0.45, 1 }, assetId = "btn_main_thoat" },
     }
     for i, item in ipairs(menuItems) do
         local btn = {
             id = item.id, text = item.text, sub = item.sub, icon = item.icon,
             x = 808, y = 234 + (i - 1) * 91, w = 426, h = 78,
             color = item.color, menuAccent = item.menuAccent, menuStyle = true,
-            font = UI.fonts.large,
+            font = UI.fonts.large, assetId = item.assetId,
         }
         table.insert(buttons, btn)
         UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
@@ -3379,8 +3379,8 @@ local function drawBattleHud(m, mx, my)
     g.setColor(UI.COLORS.textLight)
     g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 550, 27)
     g.print("BỎ " .. tostring(game.discardsRemaining or 0), 700, 27)
-    local info = { id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny }
-    local deck = { id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny }
+    local info = { id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_tran", activeAssetId = "btn_top_tran_active" }
+    local deck = { id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_bo_bai", activeAssetId = "btn_top_bo_bai_active" }
     for _, btn in ipairs({ info, deck }) do
         table.insert(buttons, btn)
         UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
@@ -3726,6 +3726,7 @@ local function drawPlayingState()
         h = 58,
         color = UI.COLORS.chipsBlue,
         font = UI.fonts.small,
+        assetId = "btn_combat_play",
         disabled = not hasSelection or game.handsRemaining <= 0,
     }
     table.insert(buttons, btnPlay)
@@ -3741,9 +3742,16 @@ local function drawPlayingState()
     love.graphics.setColor(0.30, 0.38, 0.46, 1)
     UI.drawRoundedRect("line", sortBoxX, sortBoxY, sortBoxW, sortBoxH, 6)
 
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
+    local sortHeaderImg = UI.getButtonImage("btn_combat_sort_header")
+    if sortHeaderImg then
+        local shw, shh = sortHeaderImg:getDimensions()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(sortHeaderImg, sortBoxX + (sortBoxW - 124) / 2, sortBoxY + 2, 0, 124 / shw, 20 / shh)
+    else
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
+    end
 
     local btnSortRank = {
         id = "sort_rank",
@@ -3754,6 +3762,7 @@ local function drawPlayingState()
         h = 36,
         color = (game.sortMode == "rank") and { 0.28, 0.48, 0.72, 1 } or UI.COLORS.btnNormal,
         font = UI.fonts.tiny,
+        assetId = (game.sortMode == "rank") and "btn_combat_sort_rank_active" or "btn_combat_sort_rank_inactive",
     }
     table.insert(buttons, btnSortRank)
     UI.drawButton(btnSortRank, mx >= btnSortRank.x and mx <= btnSortRank.x + btnSortRank.w and my >= btnSortRank.y and my <= btnSortRank.y + btnSortRank.h)
@@ -3767,6 +3776,7 @@ local function drawPlayingState()
         h = 36,
         color = (game.sortMode == "suit") and { 0.28, 0.48, 0.72, 1 } or UI.COLORS.btnNormal,
         font = UI.fonts.tiny,
+        assetId = (game.sortMode == "suit") and "btn_combat_sort_suit_active" or "btn_combat_sort_suit_inactive",
     }
     table.insert(buttons, btnSortSuit)
     UI.drawButton(btnSortSuit, mx >= btnSortSuit.x and mx <= btnSortSuit.x + btnSortSuit.w and my >= btnSortSuit.y and my <= btnSortSuit.y + btnSortSuit.h)
@@ -3781,6 +3791,7 @@ local function drawPlayingState()
         h = 58,
         color = UI.COLORS.multRed,
         font = UI.fonts.small,
+        assetId = "btn_combat_discard",
         disabled = not hasSelection or game.discardsRemaining <= 0,
     }
     table.insert(buttons, btnDiscard)
@@ -7375,12 +7386,14 @@ function love.draw()
         local btnMenu = {
             id = "open_pause_menu",
             text = "TÙY CHỌN",
-            x = V_WIDTH - 132,
-            y = 14,
-            w = 118,
-            h = 30,
+            x = 1142,
+            y = 18,
+            w = 108,
+            h = 34,
             color = UI.COLORS.panelBg,
             font = UI.fonts.small,
+            assetId = "btn_top_tuy_chon",
+            activeAssetId = "btn_top_tuy_chon_active",
         }
         table.insert(buttons, btnMenu)
         local isH = (mx >= btnMenu.x and mx <= btnMenu.x + btnMenu.w and my >= btnMenu.y and my <= btnMenu.y + btnMenu.h)
@@ -7485,6 +7498,10 @@ local function handlePlayingMousepressed(mx, my, button)
             elseif btn.id == "open_deck_viewer" then
                 isDeckViewerOpen = true
                 Sound.play("card_deal")
+                return true
+            elseif btn.id == "open_settings" then
+                isSettingsOpen = true
+                Sound.play("ui_click")
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
                 if useConsumable(btn.consumableIndex) then Sound.play("consume") end
@@ -8463,8 +8480,8 @@ function love.mousepressed(x, y, button)
                     isDeckViewerOpen = true
                     Sound.play("card_deal")
                     return
-                elseif btn.id == "open_options" then
-                    isPauseMenuOpen = true
+                elseif btn.id == "open_options" or btn.id == "open_settings" then
+                    isSettingsOpen = true
                     Sound.play("ui_click")
                     return
                 end

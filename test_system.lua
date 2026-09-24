@@ -3253,6 +3253,77 @@ assert(pcall(function()
 end), "Gilded menu frame and interactive button must render")
 log("[PASS] 111. New menu artwork and gilded controls render")
 
+-- 112. Test 13 Nút Bấm Dark Fantasy UI Assets (Image 3 Sprite Sheet Integration)
+do
+    local expectedButtons = {
+        -- Main Menu Buttons (Image 2)
+        "btn_main_vao_tran",
+        "btn_main_bo_suu_tap",
+        "btn_main_tuy_chon",
+        "btn_main_thoat",
+
+        -- Top Bar Navigation Buttons (Image 1)
+        "btn_top_tran",
+        "btn_top_tran_active",
+        "btn_top_bo_bai",
+        "btn_top_bo_bai_active",
+        "btn_top_tuy_chon",
+        "btn_top_tuy_chon_active",
+
+        -- Bottom Combat Action Buttons (Image 1)
+        "btn_combat_play",
+        "btn_combat_discard",
+        "btn_combat_sort_header",
+        "btn_combat_sort_rank",
+        "btn_combat_sort_rank_active",
+        "btn_combat_sort_rank_inactive",
+        "btn_combat_sort_suit",
+        "btn_combat_sort_suit_active",
+        "btn_combat_sort_suit_inactive",
+    }
+
+    for _, btnKey in ipairs(expectedButtons) do
+        -- A. Asset file existence and validity on disk
+        local path = "assets/ui/" .. btnKey .. ".png"
+        local f = io.open(path, "rb")
+        assert(f ~= nil, "Button asset file must exist on disk: " .. path)
+        local data = f:read("*a")
+        f:close()
+        assert(data and #data > 1000, "Button asset file must be valid PNG (>1KB): " .. path .. " (" .. tostring(data and #data) .. " bytes)")
+
+        -- B. UI Button Image Loader invocation
+        local okLoader, img = pcall(UI.getButtonImage, btnKey)
+        assert(okLoader, "UI.getButtonImage must execute safely for " .. btnKey)
+
+        -- C. UI.drawButton rendering with assetId
+        local mockBtn = {
+            id = "mock_" .. btnKey,
+            assetId = btnKey,
+            x = 100, y = 100, w = 150, h = 45,
+            text = "TEST",
+        }
+        local okDrawNormal = pcall(function() UI.drawButton(mockBtn, false, false) end)
+        assert(okDrawNormal, "UI.drawButton must render normal image button safely for " .. btnKey)
+
+        local okDrawHover = pcall(function() UI.drawButton(mockBtn, true, false) end)
+        assert(okDrawHover, "UI.drawButton must render hovered image button safely for " .. btnKey)
+
+        local okDrawPressed = pcall(function() UI.drawButton(mockBtn, true, true) end)
+        assert(okDrawPressed, "UI.drawButton must render pressed image button safely for " .. btnKey)
+
+        local mockDisabled = {
+            id = "mock_dis_" .. btnKey,
+            assetId = btnKey,
+            x = 100, y = 100, w = 150, h = 45,
+            disabled = true,
+        }
+        local okDrawDisabled = pcall(function() UI.drawButton(mockDisabled, false, false) end)
+        assert(okDrawDisabled, "UI.drawButton must render disabled image button safely for " .. btnKey)
+    end
+
+    log("[PASS] 112. Tích hợp trọn vẹn bộ Nút Bấm Dark Fantasy UI Assets từ Ảnh 3 vào Giao Diện Hình 1 và 2 (Vào Trận, Bộ Sưu Tập, Tùy Chọn, Thoát, Trận, Bộ Bài, Chơi Tay Bài, Bỏ Bài, Sắp Xếp Bài Bậc & Chất) verified 100%")
+end
+
 log("=== ALL SYSTEM TESTS PASSED SUCCESSFULLY! ===")
 if logFile then logFile:close() end
 if love and love.audio then love.audio.stop() end

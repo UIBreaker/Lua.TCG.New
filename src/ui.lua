@@ -2,34 +2,38 @@ local UI = {}
 
 -- Color constants
 UI.COLORS = {
-    bg = { 0.08, 0.12, 0.11, 1 },
-    felt = { 0.10, 0.18, 0.14, 1 },
-    panelBg = { 0.12, 0.16, 0.18, 0.95 },
-    panelBorder = { 0.25, 0.35, 0.38, 1 },
-    cardBg = { 0.92, 0.88, 0.80, 1 },
-    cardBorder = { 0.52, 0.46, 0.38, 1 },
-    cardSelectedBorder = { 0.95, 0.8, 0.1, 1 },
+    bg = { 0.055, 0.075, 0.090, 1 },
+    felt = { 0.080, 0.120, 0.130, 1 },
+    panelBg = { 0.090, 0.125, 0.145, 0.96 },
+    panelBorder = { 0.34, 0.40, 0.42, 1 },
+    cardBg = { 0.91, 0.91, 0.87, 1 },
+    cardBorder = { 0.44, 0.52, 0.54, 1 },
+    cardSelectedBorder = { 0.95, 0.72, 0.38, 1 },
     textLight = { 0.95, 0.96, 0.98, 1 },
     textDark = { 0.15, 0.15, 0.18, 1 },
     textMuted = { 0.68, 0.74, 0.80, 1 },
-    chipsBlue = { 0.18, 0.55, 0.92, 1 },
-    multRed = { 0.78, 0.12, 0.18, 1 },
-    suitCrimson = { 0.78, 0.12, 0.18, 1 },
-    suitObsidian = { 0.11, 0.12, 0.15, 1 },
-    xmultGold = { 0.95, 0.72, 0.12, 1 },
-    goldYellow = { 0.98, 0.85, 0.25, 1 },
-    hpGreen = { 0.2, 0.8, 0.3, 1 },
-    hpRed = { 0.85, 0.2, 0.2, 1 },
-    bossPurple = { 0.85, 0.25, 0.8, 1 },
-    btnPlay = { 0.18, 0.55, 0.92, 1 },
-    btnDiscard = { 0.88, 0.28, 0.22, 1 },
-    btnConfirm = { 0.18, 0.70, 0.38, 1 },
-    btnSpecial = { 0.95, 0.75, 0.18, 1 },
-    btnDestruct = { 0.82, 0.22, 0.24, 1 },
-    btnNormal = { 0.22, 0.28, 0.35, 1 },
+    chipsBlue = { 0.25, 0.49, 0.54, 1 },
+    multRed = { 0.55, 0.28, 0.26, 1 },
+    suitCrimson = { 0.62, 0.19, 0.22, 1 },
+    suitObsidian = { 0.13, 0.21, 0.26, 1 },
+    xmultGold = { 0.88, 0.65, 0.31, 1 },
+    goldYellow = { 0.91, 0.76, 0.48, 1 },
+    hpGreen = { 0.31, 0.62, 0.49, 1 },
+    hpRed = { 0.72, 0.24, 0.25, 1 },
+    bossPurple = { 0.53, 0.37, 0.58, 1 },
+    btnPlay = { 0.24, 0.48, 0.51, 1 },
+    btnDiscard = { 0.56, 0.29, 0.27, 1 },
+    btnConfirm = { 0.27, 0.55, 0.42, 1 },
+    btnSpecial = { 0.68, 0.50, 0.29, 1 },
+    btnDestruct = { 0.60, 0.26, 0.25, 1 },
+    btnNormal = { 0.18, 0.25, 0.29, 1 },
 }
 
 UI.fonts = {}
+UI.useLegacyPixelArt = false
+function UI.visualImage(image)
+    return UI.useLegacyPixelArt and image or nil
+end
 
 function UI.sanitizeText(str)
     if type(str) ~= "string" then return str end
@@ -274,685 +278,119 @@ function UI.drawButton(btn, isHovered, isPressed)
     if not btn or btn.invisible then return end
     if not btn.x or not btn.y or not btn.w or not btn.h then return end
 
-    -- 1. Auto-resolve hover & pressed states if omitted
-    if isHovered == nil then
-        local mx = UI.virtualMouseX
-        local my = UI.virtualMouseY
-        if not mx and love.mouse and love.mouse.getPosition then
-            mx, my = love.mouse.getPosition()
-        end
-        if mx and my then
-            isHovered = (mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
-        else
-            isHovered = false
-        end
+    -- One calm material treatment across menus, combat and shop.
+    local g = love.graphics
+    local enabled = not btn.disabled
+    local hover = enabled and isHovered
+    local pressed = enabled and isPressed
+    local base = btn.color or UI.COLORS.btnNormal
+    local scale = pressed and 0.98 or (hover and 1.025 or 1)
+    local cx, cy = btn.x + btn.w / 2, btn.y + btn.h / 2
+    g.push("all")
+    g.translate(cx, cy)
+    g.scale(scale)
+    g.translate(-cx, -cy)
+    g.setColor(0.01, 0.025, 0.03, 0.32)
+    UI.drawRoundedRect("fill", btn.x + 2, btn.y + 4, btn.w, btn.h, 5)
+    g.setColor(enabled and base or { 0.17, 0.20, 0.22, 0.86 })
+    UI.drawRoundedRect("fill", btn.x, btn.y, btn.w, btn.h, 5)
+    g.setColor(1, 1, 1, hover and 0.25 or 0.12)
+    g.polygon("fill", btn.x + 4, btn.y + 3, btn.x + btn.w - 4, btn.y + 3,
+        btn.x + btn.w - 13, btn.y + 10, btn.x + 10, btn.y + 10)
+    g.setLineWidth(hover and 1.7 or 1)
+    g.setColor(hover and UI.COLORS.goldYellow or { 0.54, 0.61, 0.60, 0.75 })
+    UI.drawRoundedRect("line", btn.x, btn.y, btn.w, btn.h, 5)
+    local font = btn.font or UI.fonts.regular
+    g.setFont(font)
+    g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)
+    local label = UI.sanitizeText(btn.text or "")
+    if not btn.preserveCase then label = UI.toUpperUtf8(label) end
+    local labelY = btn.y + (btn.h - font:getHeight()) / 2 - (btn.sub and 7 or 0)
+    g.printf(label, btn.x + 3, labelY, btn.w - 6, "center")
+    if btn.sub then
+        g.setFont(UI.fonts.tiny)
+        g.setColor(UI.COLORS.textMuted)
+        g.printf(UI.sanitizeText(btn.sub), btn.x + 3, labelY + font:getHeight() + 1, btn.w - 6, "center")
     end
-    if isPressed == nil then
-        isPressed = (btn.isPressed == true) or (btn.id and btn.id == UI.currentPressedBtnId)
-    else
-        isPressed = isPressed or (btn.isPressed == true) or (btn.id and btn.id == UI.currentPressedBtnId)
-    end
-
-    -- 2. Spring Scale Animation (Hover expansion 1.06x, Click shrink 0.94x)
-    btn.animScale = btn.animScale or 1.0
-    local targetScale = 1.0
-    if btn.disabled then
-        targetScale = 1.0
-    elseif isPressed then
-        targetScale = 0.94
-    elseif isHovered then
-        targetScale = 1.06
-    end
-    btn.animScale = btn.animScale + (targetScale - btn.animScale) * 0.28
-
-    -- 3. Mechanical Depression Animation (Instant snap down, spring release)
-    btn.pressProgress = btn.pressProgress or 0
-    if isPressed and not btn.disabled then
-        btn.pressProgress = 1.0
-    else
-        btn.pressProgress = btn.pressProgress * 0.65
-        if btn.pressProgress < 0.01 then btn.pressProgress = 0 end
-    end
-
-    -- 4. 3D Mouse Tilt (Perspective shear based on cursor offset from center)
-    btn.tiltX = btn.tiltX or 0
-    btn.tiltY = btn.tiltY or 0
-    if isHovered and not btn.disabled then
-        local mx = UI.virtualMouseX
-        local my = UI.virtualMouseY
-        if not mx and love.mouse and love.mouse.getPosition then
-            mx, my = love.mouse.getPosition()
-        end
-        if mx and my then
-            local tx, ty = UI.calculateTilt(mx, my, btn.x, btn.y, btn.w, btn.h)
-            btn.tiltX = btn.tiltX + (tx - btn.tiltX) * 0.25
-            btn.tiltY = btn.tiltY + (ty - btn.tiltY) * 0.25
-        end
-    else
-        btn.tiltX = btn.tiltX * 0.72
-        btn.tiltY = btn.tiltY * 0.72
-        if math.abs(btn.tiltX) < 0.001 then btn.tiltX = 0 end
-        if math.abs(btn.tiltY) < 0.001 then btn.tiltY = 0 end
-    end
-
-    -- 5. Extrusion Depth & Corner Radius
-    local depth = 0
-    if not btn.disabled then
-        if btn.depth then
-            depth = btn.depth
-        elseif btn.h <= 24 then
-            depth = 2
-        elseif btn.h <= 36 then
-            depth = 3
-        elseif btn.h <= 55 then
-            depth = 5
-        else
-            depth = 6
-        end
-    end
-    local r = btn.cornerRadius or math.min(8, math.max(4, math.floor(btn.h * 0.2)))
-    local depressY = math.floor(btn.pressProgress * math.max(0, depth - 1) + 0.5)
-
-    -- 6. Color Scheme & Disabled State Handling
-    local baseCol = btn.color or UI.COLORS.btnNormal
-    local faceColor, baseColor, borderColor, textColor
-    if btn.disabled then
-        faceColor = { 0.22, 0.25, 0.29, 0.88 }
-        baseColor = { 0.16, 0.18, 0.21, 0.88 }
-        borderColor = { 0.15, 0.17, 0.20, 0.70 }
-        textColor = { 0.48, 0.52, 0.56, 0.85 }
-    else
-        local bright = isHovered and 1.15 or 1.0
-        faceColor = {
-            math.min(1.0, baseCol[1] * bright),
-            math.min(1.0, baseCol[2] * bright),
-            math.min(1.0, baseCol[3] * bright),
-            baseCol[4] or 1
-        }
-        baseColor = {
-            baseCol[1] * 0.40,
-            baseCol[2] * 0.40,
-            baseCol[3] * 0.40,
-            baseCol[4] or 1
-        }
-        if isHovered then
-            borderColor = { 1.0, 1.0, 1.0, 0.98 }
-        else
-            borderColor = { 0.06, 0.08, 0.10, 0.88 }
-        end
-        textColor = btn.textColor or { 1.0, 1.0, 1.0, 1.0 }
-    end
-
-    -- 7. Render Transformation
-    local cx = btn.x + btn.w / 2
-    local cy = btn.y + btn.h / 2
-
-    love.graphics.push()
-    love.graphics.translate(cx, cy)
-    love.graphics.scale(btn.animScale, btn.animScale)
-    if btn.tiltX ~= 0 or btn.tiltY ~= 0 then
-        love.graphics.shear(btn.tiltX * 0.045, btn.tiltY * 0.045)
-    end
-    love.graphics.translate(-cx, -cy)
-
-    -- A. Extruded 3D Base (Chân nút phía dưới dày 3-6px)
-    if depth > 0 then
-        love.graphics.setColor(baseColor)
-        UI.drawRoundedRect("fill", btn.x, btn.y + 2, btn.w, btn.h - 2, r)
-
-        love.graphics.setColor(0.04, 0.05, 0.07, 0.92)
-        love.graphics.setLineWidth(1.5)
-        UI.drawRoundedRect("line", btn.x, btn.y + 2, btn.w, btn.h - 2, r)
-    end
-
-    -- B. Button Face (Mặt trên nút)
-    local faceY = btn.y + depressY
-    local faceH = btn.h - depth
-    if isPressed and depth > 0 then
-        faceH = math.max(4, faceH - 1)
-    end
-
-    love.graphics.setColor(faceColor)
-    UI.drawRoundedRect("fill", btn.x, faceY, btn.w, faceH, r)
-
-    -- Face Top Glossy Highlight (Phản quang mép trên)
-    if not btn.disabled and faceH > 10 then
-        love.graphics.setColor(1, 1, 1, isHovered and 0.26 or 0.16)
-        local hlH = math.max(2, math.min(6, math.floor(faceH * 0.22)))
-        UI.drawRoundedRect("fill", btn.x + 2, faceY + 1, btn.w - 4, hlH, math.max(2, r - 2))
-    end
-
-    -- Face Bottom Inset Shadow (Rãnh phân tách Face và Base)
-    if not btn.disabled and depth > 0 and faceH > 12 then
-        love.graphics.setColor(0, 0, 0, 0.24)
-        UI.drawRoundedRect("fill", btn.x + 2, faceY + faceH - 3, btn.w - 4, 2, math.max(1, r - 2))
-    end
-
-    -- Face Outline (Sáng trắng khi hover, viền đen pixel khi bình thường)
-    love.graphics.setLineWidth(isHovered and not btn.disabled and 2.0 or 1.5)
-    love.graphics.setColor(borderColor)
-    UI.drawRoundedRect("line", btn.x, faceY, btn.w, faceH, r)
-
-    -- C. Typography, Labels & Subtitles
-    local font = btn.font or UI.fonts.regular or love.graphics.getFont()
-    love.graphics.setFont(font)
-
-    local rawText = btn.text or ""
-    local cleanText = UI.sanitizeText(rawText)
-    if not btn.preserveCase then
-        cleanText = UI.toUpperUtf8(cleanText)
-    end
-
-    if btn.isMultiLine and btn.sub then
-        local f1 = UI.fonts.large or font
-        local f2 = UI.fonts.medium or font
-        -- Line 1
-        love.graphics.setFont(f1)
-        local l1W = f1:getWidth(cleanText)
-        local l1Y = faceY + faceH * 0.24
-        love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-        love.graphics.print(cleanText, btn.x + (btn.w - l1W) / 2, l1Y + 1.5)
-        love.graphics.setColor(textColor)
-        love.graphics.print(cleanText, btn.x + (btn.w - l1W) / 2, l1Y)
-
-        -- Subtitle
-        local subText = UI.sanitizeText(btn.sub or "")
-        if not btn.preserveCase then subText = UI.toUpperUtf8(subText) end
-        love.graphics.setFont(f2)
-        local subW = f2:getWidth(subText)
-        local subY = faceY + faceH * 0.52
-        love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-        love.graphics.print(subText, btn.x + (btn.w - subW) / 2, subY + 1.5)
-        love.graphics.setColor(btn.disabled and textColor or { 0.92, 0.94, 0.98, 0.95 })
-        love.graphics.print(subText, btn.x + (btn.w - subW) / 2, subY)
-    elseif btn.sub then
-        local fMain = font
-        local fSub = UI.fonts.small or font
-        if btn.h <= 55 then
-            fMain = UI.fonts.small or font
-            fSub = UI.fonts.tiny or font
-        end
-        local gap = 2
-        local totalH = fMain:getHeight() + gap + fSub:getHeight()
-        local mainY = faceY + math.floor((faceH - totalH) / 2)
-        local subY = mainY + fMain:getHeight() + gap
-
-        love.graphics.setFont(fMain)
-        local mainW = fMain:getWidth(cleanText)
-        love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-        love.graphics.print(cleanText, btn.x + (btn.w - mainW) / 2, mainY + 1.5)
-        love.graphics.setColor(textColor)
-        love.graphics.print(cleanText, btn.x + (btn.w - mainW) / 2, mainY)
-
-        local subText = UI.sanitizeText(btn.sub or "")
-        if not btn.preserveCase then subText = UI.toUpperUtf8(subText) end
-        love.graphics.setFont(fSub)
-        local subW = fSub:getWidth(subText)
-        love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-        love.graphics.print(subText, btn.x + (btn.w - subW) / 2, subY + 1.5)
-        love.graphics.setColor(btn.disabled and textColor or { 0.92, 0.94, 0.98, 0.92 })
-        love.graphics.print(subText, btn.x + (btn.w - subW) / 2, subY)
-    else
-        -- Check for newline
-        if cleanText:find("\n") then
-            local rawLines = {}
-            for l in cleanText:gmatch("([^\r\n]*)") do
-                table.insert(rawLines, l)
-            end
-            if #rawLines > 1 and rawLines[#rawLines] == "" then
-                table.remove(rawLines)
-            end
-            local lineH = font:getHeight()
-            local lineSpacing = 2
-            local totalH = #rawLines * lineH + (#rawLines - 1) * lineSpacing
-            local curY = faceY + (faceH - totalH) / 2
-            for _, line in ipairs(rawLines) do
-                if #line > 0 then
-                    local lw = font:getWidth(line)
-                    local lx = btn.x + (btn.w - lw) / 2
-                    -- Shadow
-                    love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-                    love.graphics.print(line, lx, curY + 1.5)
-                    -- Face text
-                    love.graphics.setColor(textColor)
-                    love.graphics.print(line, lx, curY)
-                end
-                curY = curY + lineH + lineSpacing
-            end
-        else
-            local textW = font:getWidth(cleanText)
-            local textH = font:getHeight()
-            local tx = btn.x + (btn.w - textW) / 2
-            local ty = faceY + (faceH - textH) / 2
-            love.graphics.setColor(0.04, 0.04, 0.06, 0.95)
-            love.graphics.print(cleanText, tx, ty + 1.5)
-            love.graphics.setColor(textColor)
-            love.graphics.print(cleanText, tx, ty)
-        end
-    end
-
-    -- Alert exclamation badge on right side
-    if btn.alert then
-        local badgeX = btn.x + btn.w - 18
-        local badgeY = faceY + faceH / 2
-        love.graphics.setColor(0.85, 0.18, 0.18, 1)
-        love.graphics.circle("fill", badgeX, badgeY, 11)
-        love.graphics.setColor(1, 1, 1, 0.95)
-        love.graphics.setLineWidth(1.5)
-        love.graphics.circle("line", badgeX, badgeY, 11)
-        love.graphics.setFont(UI.fonts.tiny or font)
-        love.graphics.setColor(0, 0, 0, 0.95)
-        love.graphics.printf("!", badgeX - 11, badgeY - 6, 22, "center")
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("!", badgeX - 11, badgeY - 7, 22, "center")
-    end
-
-    love.graphics.pop()
+    g.pop()
 end
 
+-- Matte stone/ivory cards with a single faceted suit emblem. The same renderer
+-- is used by the hand, collection, shop, rewards and pack reveals.
 function UI.drawCard(card, x, y, w, h)
-    love.graphics.push()
-    love.graphics.translate(x + w / 2, y + h / 2)
-    if card.rotation and card.rotation ~= 0 then
-        love.graphics.rotate(card.rotation)
-    end
-    -- Pseudo-3D perspective tilt
-    if (card.tiltX and card.tiltX ~= 0) or (card.tiltY and card.tiltY ~= 0) then
-        love.graphics.shear((card.tiltX or 0) * 0.12, (card.tiltY or 0) * 0.12)
-    end
+    local g = love.graphics
+    local rank = tostring(card.rankName or card.rank or "?")
+    local red = card.suit == "hearts" or card.suit == "diamonds"
+        or card.suit == "valoria" or card.suit == "aurelia"
+    local accent = red and UI.COLORS.suitCrimson or UI.COLORS.suitObsidian
+    local selected = card.selected == true
+    local hovered = card.hovered == true
     local s = card.visualScale or 1
-    local sx = (card.scaleX or card.scale or 1) * s
-    local sy = (card.scaleY or card.scale or 1) * s
-    love.graphics.scale(sx, sy)
-    love.graphics.translate(-w / 2, -h / 2)
-
-    -- Dynamic Drop Shadow based on tilt & elevation
-    local isLifted = (s > 1.05) or (card.isLifted == true)
-    local shOffX = 4 + (card.tiltX or 0) * 10
-    local shOffY = (isLifted and 14 or 6) + (card.tiltY or 0) * 10
-    local shAlpha = isLifted and 0.45 or 0.32
-    love.graphics.setColor(0, 0, 0, shAlpha)
-    UI.drawRoundedRect("fill", shOffX, shOffY, w, h, 8)
-
-    -- Face-down Card Drawing (The Fish boss ability)
+    g.push("all")
+    g.translate(x + w / 2, y + h / 2)
+    g.rotate(card.rotation or 0)
+    g.scale((card.scaleX or card.scale or 1) * s, (card.scaleY or card.scale or 1) * s)
+    g.translate(-w / 2, -h / 2)
+    g.setColor(0, 0, 0, selected and 0.44 or 0.30)
+    UI.drawRoundedRect("fill", 4, selected and 11 or 6, w, h, 5)
+    g.setColor(UI.COLORS.cardBg)
+    UI.drawRoundedRect("fill", 0, 0, w, h, 5)
+    g.setColor(1, 1, 1, 0.58)
+    g.polygon("fill", 4, 4, w - 4, 4, w * 0.72, h * 0.32, w * 0.18, h * 0.49)
+    g.setColor(0.55, 0.62, 0.61, 0.11)
+    g.polygon("fill", 4, h * 0.72, w * 0.72, h * 0.32, w - 4, h - 4, 4, h - 4)
+    g.setLineWidth(selected and 3 or (hovered and 2 or 1.2))
+    g.setColor(selected and UI.COLORS.cardSelectedBorder or (hovered and UI.COLORS.chipsBlue or UI.COLORS.cardBorder))
+    UI.drawRoundedRect("line", 0, 0, w, h, 5)
+    g.setColor(accent)
+    g.setFont(UI.fonts.large)
+    g.print(rank, 8, 3)
+    UI.drawSuitSymbol(card.suit, 18, 37, math.min(w, h) * 0.15, accent)
     if card.faceDown then
-        love.graphics.setColor(0.12, 0.14, 0.18, 0.98)
-        UI.drawRoundedRect("fill", 3, 3, w - 6, h - 6, 6)
-        love.graphics.setColor(0.35, 0.28, 0.38, 0.8)
-        UI.drawRoundedRect("line", 5, 5, w - 10, h - 10, 5)
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(0.75, 0.68, 0.85, 0.9)
-        love.graphics.printf("?", 0, h / 2 - 18, w, "center")
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(0.5, 0.45, 0.55, 0.8)
-        love.graphics.printf("PHONG ẤN", 0, h / 2 + 14, w, "center")
-        love.graphics.pop()
-        return
-    end
-
-    local cImg = UI.getCardImage(card.suit, card.rank or card.rankName)
-    if cImg then
-        love.graphics.setColor(1, 1, 1, 1)
-        local iw, ih = cImg:getDimensions()
-        love.graphics.draw(cImg, 0, 0, 0, w / iw, h / ih)
-
-        -- Highlight borders
-        love.graphics.setLineWidth(card.selected and 3.5 or (card.hovered and 2.5 or 1.5))
-        if card.selected then
-            love.graphics.setColor(UI.COLORS.cardSelectedBorder)
-            UI.drawRoundedRect("line", 0, 0, w, h, 8)
-        elseif card.hovered then
-            love.graphics.setColor(UI.COLORS.chipsBlue)
-            UI.drawRoundedRect("line", 0, 0, w, h, 8)
-        end
+        g.setColor(0.13, 0.19, 0.22, 0.94)
+        UI.drawRoundedRect("fill", 4, 4, w - 8, h - 8, 4)
+        g.setColor(UI.COLORS.goldYellow)
+        g.setFont(UI.fonts.medium)
+        g.printf("?", 0, h / 2 - 13, w, "center")
     else
-    -- Card background: Ancient Weathered Ivory Parchment
-    love.graphics.setColor(UI.COLORS.cardBg)
-    UI.drawRoundedRect("fill", 0, 0, w, h, 8)
-
-    -- Inner edge burnt / aged soot vignette
-    love.graphics.setColor(0.72, 0.65, 0.54, 0.45)
-    UI.drawRoundedRect("line", 1.5, 1.5, w - 3, h - 3, 7)
-    love.graphics.setColor(0.82, 0.76, 0.66, 0.35)
-    UI.drawRoundedRect("line", 3, 3, w - 6, h - 6, 6)
-
-    -- Border
-    love.graphics.setLineWidth(card.selected and 3.5 or 2)
-    if card.selected then
-        love.graphics.setColor(UI.COLORS.cardSelectedBorder)
-    elseif card.hovered then
-        love.graphics.setColor(UI.COLORS.chipsBlue)
-    else
-        love.graphics.setColor(UI.COLORS.cardBorder)
-    end
-    UI.drawRoundedRect("line", 0, 0, w, h, 8)
-
-    -- Corner Gothic Filigree Brackets
-    love.graphics.setColor(0.48, 0.42, 0.34, 0.65)
-    love.graphics.setLineWidth(1)
-    love.graphics.line(5, 12, 5, 5, 12, 5)
-    love.graphics.line(w - 5, 12, w - 5, 5, w - 12, 5)
-    love.graphics.line(5, h - 12, 5, h - 5, 12, h - 5)
-    love.graphics.line(w - 5, h - 12, w - 5, h - 5, w - 12, h - 5)
-
-    -- Face-down Card Drawing (The Fish boss ability)
-    if card.faceDown then
-        love.graphics.setColor(0.12, 0.14, 0.18, 0.98)
-        UI.drawRoundedRect("fill", 3, 3, w - 6, h - 6, 6)
-        love.graphics.setColor(0.35, 0.28, 0.38, 0.8)
-        UI.drawRoundedRect("line", 5, 5, w - 10, h - 10, 5)
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(0.75, 0.68, 0.85, 0.9)
-        love.graphics.printf("?", 0, h / 2 - 18, w, "center")
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(0.5, 0.45, 0.55, 0.8)
-        love.graphics.printf("PHONG ẤN", 0, h / 2 + 14, w, "center")
-        love.graphics.pop()
-        return
-    end
-
-    -- Gilded inner frame for equipped cards (subtle, elegant golden foil inlay)
-    local eqCount = (card.equipments and #card.equipments) or 0
-    if eqCount > 0 then
-        love.graphics.setLineWidth(1.5)
-        love.graphics.setColor(0.85, 0.70, 0.22, 0.85)
-        UI.drawRoundedRect("line", 3, 3, w - 6, h - 6, 6)
-    end
-
-    -- Suit Color (Crimson Burgundy or Void Obsidian)
-    local isRedSuit = (card.suit == "hearts" or card.suit == "valoria" or card.suit == "diamonds" or card.suit == "aurelia")
-    local suitColor = isRedSuit and UI.COLORS.suitCrimson or UI.COLORS.suitObsidian
-
-    -- Top-left rank
-    love.graphics.setColor(suitColor)
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.print(card.rankName, 8, 4)
-
-    -- Top-left small suit icon
-    UI.drawSuitSymbol(card.suit, 15, 38, 14, suitColor)
-
-    -- Bottom-right rank
-    love.graphics.setColor(suitColor)
-    love.graphics.setFont(UI.fonts.regular)
-    local rk = card.rankName
-    local rkW = UI.fonts.regular:getWidth(rk)
-    love.graphics.print(rk, w - rkW - 8, h - 23)
-
-    local socketCount = (Equipment and Equipment.MAX_SLOTS) or 3
-    local dw = 5.2
-    local dh = 5.2
-    local socketGap = 15
-    local socketStartX = (w - (socketCount * socketGap - 3)) / 2 + 3
-    local socketY = 9
-
-    for s = 1, socketCount do
-        local sx = socketStartX + (s - 1) * socketGap
-        local eq = card.equipments and card.equipments[s]
-
-        if not eq then
-            -- 2. Open Empty Socket: Metallic beveled chisel rim & deep dark velvet cavity
-            love.graphics.setColor(0.48, 0.40, 0.28, 0.95)
-            love.graphics.polygon("fill", sx, socketY - dh - 0.8, sx + dw + 0.8, socketY, sx, socketY + dh + 0.8, sx - dw - 0.8, socketY)
-            love.graphics.setColor(0.09, 0.08, 0.08, 0.98)
-            love.graphics.polygon("fill", sx, socketY - dh + 0.5, sx + dw - 0.5, socketY, sx, socketY + dh - 0.5, sx - dw + 0.5, socketY)
-            love.graphics.setColor(0.82, 0.72, 0.50, 0.7)
-            love.graphics.setLineWidth(1)
-            love.graphics.line(sx - dw, socketY, sx, socketY - dh)
-            love.graphics.line(sx, socketY - dh, sx + dw, socketY)
-        else
-            -- 3. Socketed Gemstone: Faceted jewel with glowing core & 4 prongs
-            local gc = eq.color or UI.COLORS.goldYellow
-            -- Jewelry Bezel
-            love.graphics.setColor(0.85, 0.72, 0.22, 0.95)
-            love.graphics.polygon("fill", sx, socketY - dh - 1.2, sx + dw + 1.2, socketY, sx, socketY + dh + 1.2, sx - dw - 1.2, socketY)
-            -- Upper Facet
-            love.graphics.setColor(math.min(1, gc[1] * 1.3), math.min(1, gc[2] * 1.3), math.min(1, gc[3] * 1.3), 1)
-            love.graphics.polygon("fill", sx, socketY - dh, sx + dw, socketY, sx, socketY, sx - dw, socketY)
-            -- Lower Facet
-            love.graphics.setColor(gc[1] * 0.65, gc[2] * 0.65, gc[3] * 0.65, 1)
-            love.graphics.polygon("fill", sx - dw, socketY, sx + dw, socketY, sx, socketY + dh)
-            -- Core table glow
-            love.graphics.setColor(1, 1, 1, 0.55)
-            love.graphics.polygon("fill", sx, socketY - dh * 0.45, sx + dw * 0.45, socketY, sx, socketY + dh * 0.45, sx - dw * 0.45, socketY)
-            -- 4 Golden Prongs
-            love.graphics.setColor(0.98, 0.88, 0.35, 1)
-            love.graphics.circle("fill", sx, socketY - dh, 1.0)
-            love.graphics.circle("fill", sx + dw, socketY, 1.0)
-            love.graphics.circle("fill", sx, socketY + dh, 1.0)
-            love.graphics.circle("fill", sx - dw, socketY, 1.0)
-            -- Specular sparkle
-            love.graphics.setColor(1, 1, 1, 0.95)
-            love.graphics.line(sx - 2, socketY - 1.5, sx, socketY - 1.5)
-            love.graphics.line(sx - 1, socketY - 2.5, sx - 1, socketY - 0.5)
+        local cx, cy = w / 2, h * 0.52
+        local facet = math.min(w * 0.31, h * 0.22)
+        g.setColor(accent[1], accent[2], accent[3], 0.12)
+        g.polygon("fill", cx, cy - facet * 1.35, cx + facet * 1.1, cy,
+            cx, cy + facet * 1.35, cx - facet * 1.1, cy)
+        g.setColor(accent[1], accent[2], accent[3], 0.35)
+        g.polygon("fill", cx, cy - facet * 1.08, cx + facet * 0.78, cy,
+            cx, cy + facet * 0.15, cx - facet * 0.78, cy)
+        UI.drawSuitSymbol(card.suit, cx, cy + 1, facet * 1.48, accent)
+        g.setColor(accent)
+        g.setFont(UI.fonts.regular)
+        g.print(rank, w - UI.fonts.regular:getWidth(rank) - 8, h - 24)
+        local slots = (Equipment and Equipment.MAX_SLOTS) or 3
+        for i = 1, slots do
+            local eq = card.equipments and card.equipments[i]
+            local sx = w / 2 + (i - (slots + 1) / 2) * 15
+            local col = eq and (eq.color or UI.COLORS.goldYellow) or UI.COLORS.cardBorder
+            g.setColor(col)
+            g.polygon(eq and "fill" or "line", sx, 6, sx + 4, 10, sx, 14, sx - 4, 10)
+        end
+        if card.seal then
+            g.setColor(UI.COLORS.goldYellow)
+            g.circle("fill", w - 14, 16, 7)
+            g.setColor(UI.COLORS.textDark)
+            g.setFont(UI.fonts.tiny)
+            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 9, 14, "center")
+        end
+        if card.baseChips then
+            g.setColor(accent)
+            UI.drawRoundedRect("fill", 6, h - 26, 32, 19, 4)
+            g.setColor(UI.COLORS.textLight)
+            g.setFont(UI.fonts.tiny)
+            g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
         end
     end
-
-    -- Center Artwork: Face Cards Gothic Pixel Portraits or Numeric Pips
-    local rank = card.rank or 2
-    local cx = w / 2
-    local cy = h / 2 - 3
-
-    if rank == 13 then
-        -- 👑 KING (K - Quốc Vương): Gothic Bloodied Sovereign Portrait
-        local pw, ph = 52, 60
-        local px = cx - pw / 2
-        local py = cy - ph / 2 + 1
-
-        -- Gothic Arched Frame
-        love.graphics.setColor(0.18, 0.11, 0.12, 0.95)
-        UI.drawRoundedRect("fill", px, py, pw, ph, 6)
-        love.graphics.setColor(0.72, 0.58, 0.22, 0.95)
-        love.graphics.setLineWidth(1.5)
-        UI.drawRoundedRect("line", px, py, pw, ph, 6)
-
-        -- Regal Ermine Mantle
-        love.graphics.setColor(0.55, 0.10, 0.14, 1)
-        love.graphics.polygon("fill", px + 4, py + ph - 2, px + pw - 4, py + ph - 2, cx, py + 24)
-        love.graphics.setColor(0.94, 0.92, 0.88, 1)
-        love.graphics.rectangle("fill", px + 8, py + ph - 14, pw - 16, 7, 2)
-        love.graphics.setColor(0.10, 0.08, 0.08, 1)
-        love.graphics.circle("fill", px + 14, py + ph - 10, 1.1)
-        love.graphics.circle("fill", px + 22, py + ph - 10, 1.1)
-        love.graphics.circle("fill", px + 30, py + ph - 10, 1.1)
-        love.graphics.circle("fill", px + 38, py + ph - 10, 1.1)
-
-        -- Masked Visage / Brooding Face
-        love.graphics.setColor(0.82, 0.72, 0.42, 1)
-        love.graphics.rectangle("fill", cx - 9, py + 18, 18, 16, 4)
-        love.graphics.setColor(0.10, 0.06, 0.06, 1)
-        love.graphics.rectangle("fill", cx - 7, py + 22, 4, 3)
-        love.graphics.rectangle("fill", cx + 3, py + 22, 4, 3)
-
-        -- Bleeding Iron Crown
-        love.graphics.setColor(0.28, 0.26, 0.28, 1)
-        love.graphics.polygon("fill",
-            cx - 12, py + 18,
-            cx - 13, py + 6,
-            cx - 6, py + 12,
-            cx, py + 4,
-            cx + 6, py + 12,
-            cx + 13, py + 6,
-            cx + 12, py + 18
-        )
-        love.graphics.setColor(0.85, 0.70, 0.22, 1)
-        love.graphics.rectangle("fill", cx - 12, py + 16, 24, 3)
-        love.graphics.setColor(0.85, 0.12, 0.15, 0.95)
-        love.graphics.circle("fill", cx, py + 8, 1.8)
-        love.graphics.circle("fill", cx - 9, py + 10, 1.5)
-        love.graphics.circle("fill", cx + 9, py + 10, 1.5)
-        love.graphics.line(cx - 9, py + 11, cx - 9, py + 16)
-
-        -- Suit Insignia on Gorget
-        UI.drawSuitSymbol(card.suit, cx, py + ph - 18, 11, suitColor)
-
-    elseif rank == 12 then
-        -- 👸 QUEEN (Q - Hoàng Hậu): Mourning Veiled Sovereign Portrait
-        local pw, ph = 52, 60
-        local px = cx - pw / 2
-        local py = cy - ph / 2 + 1
-
-        -- Gothic Arched Frame
-        love.graphics.setColor(0.14, 0.10, 0.16, 0.95)
-        UI.drawRoundedRect("fill", px, py, pw, ph, 6)
-        love.graphics.setColor(0.65, 0.45, 0.72, 0.95)
-        love.graphics.setLineWidth(1.5)
-        UI.drawRoundedRect("line", px, py, pw, ph, 6)
-
-        -- Black Mourning Veil Cascading
-        love.graphics.setColor(0.10, 0.08, 0.12, 1)
-        love.graphics.polygon("fill", cx - 13, py + 14, px + 5, py + ph - 2, cx - 4, py + ph - 2, cx, py + 28)
-        love.graphics.polygon("fill", cx + 13, py + 14, px + pw - 5, py + ph - 2, cx + 4, py + ph - 2, cx, py + 28)
-
-        -- Pale Regal Face
-        love.graphics.setColor(0.90, 0.86, 0.82, 1)
-        love.graphics.rectangle("fill", cx - 8, py + 18, 16, 16, 4)
-        love.graphics.setColor(0.25, 0.18, 0.25, 1)
-        love.graphics.line(cx - 6, py + 24, cx - 2, py + 24)
-        love.graphics.line(cx + 2, py + 24, cx + 6, py + 24)
-
-        -- Thorned Amethyst Tiara
-        love.graphics.setColor(0.20, 0.18, 0.22, 1)
-        love.graphics.polygon("fill", cx - 10, py + 18, cx - 8, py + 8, cx, py + 12, cx + 8, py + 8, cx + 10, py + 18)
-        love.graphics.setColor(0.78, 0.32, 0.88, 1)
-        love.graphics.circle("fill", cx, py + 13, 2.2)
-
-        -- Suit Insignia
-        UI.drawSuitSymbol(card.suit, cx, py + ph - 16, 11, suitColor)
-
-    elseif rank == 11 then
-        -- ⚔️ KNIGHT (J - Hiệp Sĩ): Slotted Iron Visor Greathelm Portrait
-        local pw, ph = 52, 60
-        local px = cx - pw / 2
-        local py = cy - ph / 2 + 1
-
-        -- Gothic Shield Frame
-        love.graphics.setColor(0.12, 0.14, 0.18, 0.95)
-        UI.drawRoundedRect("fill", px, py, pw, ph, 6)
-        love.graphics.setColor(0.48, 0.58, 0.68, 0.95)
-        love.graphics.setLineWidth(1.5)
-        UI.drawRoundedRect("line", px, py, pw, ph, 6)
-
-        -- Iron Greathelm
-        love.graphics.setColor(0.32, 0.36, 0.42, 1)
-        love.graphics.rectangle("fill", cx - 11, py + 10, 22, 28, 4)
-        love.graphics.setColor(0.48, 0.52, 0.60, 1)
-        love.graphics.rectangle("fill", cx - 13, py + 19, 26, 4, 1)
-        -- Slotted Visor Eye Slit
-        love.graphics.setColor(0.08, 0.08, 0.10, 1)
-        love.graphics.rectangle("fill", cx - 9, py + 20, 18, 2)
-        love.graphics.setColor(0.95, 0.35, 0.15, 0.95)
-        love.graphics.rectangle("fill", cx - 4, py + 20, 3, 2)
-        love.graphics.rectangle("fill", cx + 2, py + 20, 3, 2)
-
-        -- Steel Gorget & Shoulders
-        love.graphics.setColor(0.24, 0.28, 0.34, 1)
-        love.graphics.polygon("fill", px + 4, py + ph - 2, px + pw - 4, py + ph - 2, cx + 8, py + 38, cx - 8, py + 38)
-        love.graphics.setColor(0.70, 0.75, 0.82, 1)
-        love.graphics.circle("fill", px + 9, py + ph - 8, 1.1)
-        love.graphics.circle("fill", px + pw - 9, py + ph - 8, 1.1)
-
-        -- Suit Crest
-        UI.drawSuitSymbol(card.suit, cx, py + ph - 15, 11, suitColor)
-
-    elseif rank == 14 then
-        -- 🗡️ ACE (A - Thần Khí): Divine Relic Sigil & Holy Halo
-        love.graphics.setColor(suitColor[1], suitColor[2], suitColor[3], 0.18)
-        love.graphics.circle("fill", cx, cy, 26)
-        love.graphics.setColor(suitColor[1], suitColor[2], suitColor[3], 0.35)
-        love.graphics.circle("line", cx, cy, 28)
-        UI.drawSuitSymbol(card.suit, cx, cy, 38, suitColor)
-    else
-        -- 🛡️ SOLDIER (2-10): Gothic Pips & Insignia
-        UI.drawSuitSymbol(card.suit, cx, cy, 40, suitColor)
-    end
-
-    -- Role text at lower center in retro pixel font
-    local roleText = card.roleName
-    if not roleText and card.rank then
-        local Deck = require("src.deck")
-        local role = Deck.getCardRole(card.rank)
-        roleText = role.name
-    end
-    if roleText then
-        local displayRole = roleText
-        if rank == 13 then displayRole = "KING"
-        elseif rank == 12 then displayRole = "QUEEN"
-        elseif rank == 11 then displayRole = "KNIGHT"
-        elseif rank == 14 then displayRole = "DIVINE"
-        else displayRole = "SOLDIER"
-        end
-
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(0.32, 0.28, 0.24, 0.95)
-        local rw = UI.fonts.tiny:getWidth(displayRole)
-        love.graphics.print(displayRole, (w - rw) / 2, h - 35 + 1)
-        love.graphics.setColor(0.52, 0.46, 0.38, 1)
-        love.graphics.print(displayRole, (w - rw) / 2, h - 35)
-    end
-    end
-
-    -- Con Dấu Sáp (Wax Seal) Base Chip Badge in bottom corner
-    local sealCX = 22
-    local sealCY = h - 18
-    local sealR = 11.5
-
-    -- Molten Wax Lobes
-    love.graphics.setColor(0.48, 0.08, 0.10, 0.95)
-    for a = 0, 5 do
-        local ang = a * (math.pi / 3)
-        local lx = sealCX + math.cos(ang) * (sealR - 1)
-        local ly = sealCY + math.sin(ang) * (sealR - 1)
-        love.graphics.circle("fill", lx, ly, 4.2)
-    end
-    love.graphics.setColor(0.68, 0.12, 0.15, 0.98)
-    love.graphics.circle("fill", sealCX, sealCY, sealR)
-
-    -- Inner Stamped Seal Cavity
-    love.graphics.setColor(0.52, 0.08, 0.10, 1)
-    love.graphics.circle("fill", sealCX, sealCY, sealR - 2.5)
-
-    -- Top Glossy Highlight Arc
-    love.graphics.setColor(1, 1, 1, 0.35)
-    love.graphics.setLineWidth(1)
-    love.graphics.arc("line", "open", sealCX, sealCY, sealR - 1.5, math.pi * 1.1, math.pi * 1.8)
-
-    -- Stamped Number
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(0.98, 0.88, 0.45, 1)
-    local chipStr = "+" .. card.baseChips
-    local cW = UI.fonts.tiny:getWidth(chipStr)
-    love.graphics.print(chipStr, sealCX - cW / 2, sealCY - UI.fonts.tiny:getHeight() / 2)
-
-    -- Top-Right Decorative Wax Seal (Gold, Red, Blue, Purple)
-    if card.seal then
-        local sCX = w - 16
-        local sCY = 16
-        local sR = 9
-        local sealColor = { 0.95, 0.75, 0.20, 1 }
-        local sealText = "G"
-        if card.seal == "red" then
-            sealColor = { 0.88, 0.20, 0.25, 1 }
-            sealText = "R"
-        elseif card.seal == "blue" then
-            sealColor = { 0.25, 0.55, 0.95, 1 }
-            sealText = "B"
-        elseif card.seal == "purple" then
-            sealColor = { 0.75, 0.25, 0.90, 1 }
-            sealText = "P"
-        end
-        love.graphics.setColor(0, 0, 0, 0.4)
-        love.graphics.circle("fill", sCX + 1, sCY + 1, sR)
-        love.graphics.setColor(sealColor[1] * 0.7, sealColor[2] * 0.7, sealColor[3] * 0.7, 1)
-        love.graphics.circle("fill", sCX, sCY, sR)
-        love.graphics.setColor(sealColor)
-        love.graphics.circle("fill", sCX, sCY, sR - 2)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(sealText, sCX - 8, sCY - 7, 16, "center")
-    end
-
-    love.graphics.pop()
+    g.pop()
 end
+
 
 -- Procedural Grimdark Relic / Patron Sigils
 function UI.drawRelicSigil(sigilId, cx, cy, size, color)
@@ -1116,6 +554,36 @@ function UI.drawRelicSigil(sigilId, cx, cy, size, color)
     love.graphics.pop()
 end
 
+-- Deterministic faceted emblem for catalogue/shop items without raster art.
+function UI.drawItemEmblem(item, cx, cy, size, color)
+    local g = love.graphics
+    local id = tostring((item and (item.id or item.name)) or "relic")
+    local seed = 0
+    for i = 1, #id do seed = (seed * 33 + id:byte(i)) % 997 end
+    local c = color or UI.COLORS.goldYellow
+    local sides = 5 + seed % 3
+    local points = {}
+    local inner = {}
+    for i = 1, sides do
+        local a = (i - 1) * math.pi * 2 / sides - math.pi / 2
+        local radius = size * (0.78 + ((seed + i * 7) % 5) * 0.045)
+        points[i] = { cx + math.cos(a) * radius, cy + math.sin(a) * radius }
+        inner[i] = { cx + math.cos(a) * size * 0.32, cy + math.sin(a) * size * 0.32 }
+    end
+    g.push("all")
+    for i = 1, sides do
+        local j = i % sides + 1
+        local shade = (i % 2 == 0) and 0.68 or 1
+        g.setColor(c[1] * shade, c[2] * shade, c[3] * shade, 0.9)
+        g.polygon("fill", cx, cy, points[i][1], points[i][2], points[j][1], points[j][2])
+    end
+    g.setColor(1, 1, 1, 0.4)
+    g.polygon("fill", inner[1][1], inner[1][2], inner[2][1], inner[2][2], cx, cy)
+    g.setColor(0.06, 0.10, 0.12, 0.7)
+    g.circle("fill", cx, cy, size * 0.12)
+    g.pop()
+end
+
 -- Cache and loader for authentic deity card artwork
 UI.deityImages = UI.deityImages or {}
 
@@ -1215,6 +683,7 @@ function UI.getPackImage(packId)
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
         local candidates = {
+            "assets/scene/treasure_chest.png",
             "assets/packs/" .. mapped .. ".png",
             "assets/packs/" .. packId .. ".png",
         }
@@ -1223,9 +692,7 @@ function UI.getPackImage(packId)
             if okInfo and info then
                 local okImg, img = pcall(love.graphics.newImage, path)
                 if okImg and img then
-                    if img.setFilter then
-                        img:setFilter("nearest", "nearest")
-                    end
+                    if img.setFilter then img:setFilter("linear", "linear") end
                     UI.packImages[mapped] = img
                     return img
                 end
@@ -1426,11 +893,88 @@ function UI.getCardImage(suit, rank)
     return nil
 end
 
--- Resolve the best existing artwork for a reward revealed from a booster pack.
--- The pack cover is an intentional fallback, so reward cards never show a
--- missing-glyph square while content-specific artwork is still unavailable.
+-- Presentation-only terminology: combat IDs and saved data keep their stable names.
+function UI.localizeText(value)
+    if type(value) ~= "string" then return value end
+    return value
+        :gsub("SMALL BLIND", "QUÁI THƯỜNG")
+        :gsub("BIG BLIND", "QUÁI TINH ANH")
+        :gsub("BOSS BLIND", "QUÁI THỦ LĨNH")
+        :gsub("Small Blind", "Quái Thường")
+        :gsub("Big Blind", "Quái Tinh Anh")
+        :gsub("Boss Blind", "Quái Thủ Lĩnh")
+        :gsub("BLIND", "QUÁI")
+        :gsub("Blind", "Quái")
+        :gsub("ANTE", "ẢI")
+        :gsub("Ante", "Ải")
+        :gsub("ante", "ải")
+        :gsub("HỘ LINH", "SPM")
+        :gsub("Hộ Linh", "SPM")
+        :gsub("hộ linh", "SPM")
+        :gsub("JOKER", "SPM")
+        :gsub("Joker", "SPM")
+        :gsub("Straight Flush", "Thùng Phá Sảnh")
+        :gsub("Four of a Kind", "Tứ Quý")
+        :gsub("Full House", "Cù Lũ")
+        :gsub("Two Pair", "Hai Đôi")
+        :gsub("Three of a Kind", "Sám Cô")
+        :gsub("High Card", "Đơn Thủ")
+        :gsub("Straight", "Sảnh")
+        :gsub("Flush", "Thùng")
+        :gsub("Pair", "Đôi")
+        :gsub("XMult", "Hệ số")
+        :gsub("CHIPS", "SÁT THƯƠNG")
+        :gsub("Chips", "Sát thương")
+        :gsub("%f[%a]chips%f[%A]", "sát thương")
+        :gsub("MULT", "CƯỜNG HÓA")
+        :gsub("Mult", "Cường hóa")
+        :gsub("%f[%a]mult%f[%A]", "cường hóa")
+        :gsub("BOOSTER", "RƯƠNG")
+        :gsub("Booster", "Rương")
+        :gsub("GÓI", "RƯƠNG")
+        :gsub("Gói", "Rương")
+        :gsub(" DMG", " ST")
+        :gsub("MENU", "TÙY CHỌN")
+end
+
+-- Render each reward as its own material card, without reverting to pixel sprites.
+UI.packRewardImages = UI.packRewardImages or {}
 function UI.getPackCardImage(packType, card)
     card = card or {}
+    if not UI.useLegacyPixelArt and love.graphics.newCanvas then
+        local key = table.concat({ tostring(packType), tostring(card.id or card.handId or card.name or ""),
+            tostring(card.rank or ""), tostring(card.suit or "") }, ":")
+        if UI.packRewardImages[key] then return UI.packRewardImages[key], true end
+        local g = love.graphics
+        local canvas = g.newCanvas(128, 176)
+        canvas:setFilter("linear", "linear")
+        local previousCanvas = g.getCanvas()
+        g.push("all")
+        g.setCanvas(canvas)
+        g.clear(0, 0, 0, 0)
+        g.origin()
+        if packType == "standard" then
+            UI.drawCard(card, 0, 0, 128, 176)
+        elseif packType == "buffoon" then
+            UI.drawPatronCard(card, 0, 0, 128, 176)
+        else
+            local col = card.color or UI.COLORS.chipsBlue
+            g.setColor(0.13, 0.19, 0.21, 1)
+            UI.drawRoundedRect("fill", 0, 0, 128, 176, 6)
+            g.setColor(col)
+            UI.drawRoundedRect("line", 1, 1, 126, 174, 6)
+            g.polygon("fill", 64, 34, 102, 87, 64, 140, 26, 87)
+            g.setColor(1, 1, 1, 0.30)
+            g.polygon("fill", 64, 34, 102, 87, 64, 87, 26, 87)
+            g.setFont(UI.fonts.tiny)
+            g.setColor(UI.COLORS.textLight)
+            g.printf(UI.toUpperUtf8(UI.truncateUtf8(card.name or "VẬT PHẨM", 20)), 7, 8, 114, "center")
+        end
+        g.setCanvas(previousCanvas)
+        g.pop()
+        UI.packRewardImages[key] = canvas
+        return canvas, true
+    end
     if packType == "buffoon" then
         local image = UI.getDeityImage(card.id)
         if image then return image, true end
@@ -1450,149 +994,50 @@ end
 
 
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
+
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
     if not d then return end
-    w = w or 82
-    h = h or 118
-
-    love.graphics.push()
-    love.graphics.translate(x + w / 2, y + h / 2)
-    local s = (isHovered and 1.05 or 1.0)
-    if isPressed then s = 0.96 end
-    if isDropTarget then s = 1.08 end
-    love.graphics.scale(s, s)
-    love.graphics.translate(-w / 2, -h / 2)
-
-    -- Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.45)
-    UI.drawRoundedRect("fill", 3, 5, w, h, 6)
-
-    -- Border by Rarity
-    local rBorder = { 0.45, 0.48, 0.54, 1 }
-    local rGlow = { 0.5, 0.5, 0.5, 0.2 }
-    if d.rarity == "uncommon" then
-        rBorder = { 0.20, 0.78, 0.45, 1 }
-        rGlow = { 0.2, 0.8, 0.4, 0.25 }
-    elseif d.rarity == "rare" then
-        rBorder = { 0.22, 0.60, 0.98, 1 }
-        rGlow = { 0.2, 0.6, 1.0, 0.25 }
-    elseif d.rarity == "legendary" then
-        rBorder = { 0.96, 0.78, 0.22, 1 }
-        rGlow = { 0.95, 0.78, 0.2, 0.3 }
-    end
-
-    if isDropTarget then
-        rBorder = UI.COLORS.bossPurple
-    elseif isHovered then
-        rBorder = { 1, 1, 1, 1 }
-    end
-
-    local img = UI.getDeityImage(d.id)
-    if img then
-        -- Render authentic pixel art card artwork
-        love.graphics.setColor(1, 1, 1, 1)
-        local iw, ih = img:getDimensions()
-        love.graphics.draw(img, 0, 0, 0, w / iw, h / ih)
-
-        if isHovered then
-            love.graphics.setLineWidth(2.0)
-            love.graphics.setColor(1, 1, 1, 0.95)
-            UI.drawRoundedRect("line", 0, 0, w, h, 6)
-        elseif d.rarity == "legendary" then
-            love.graphics.setLineWidth(1.5)
-            love.graphics.setColor(0.96, 0.78, 0.22, 0.6)
-            UI.drawRoundedRect("line", 0, 0, w, h, 6)
-        end
-    else
-        -- Card Body: Deep Void Obsidian
-        love.graphics.setColor(0.10, 0.11, 0.13, 0.98)
-        UI.drawRoundedRect("fill", 0, 0, w, h, 6)
-
-        -- Inner background halo
-        love.graphics.setColor(rGlow)
-        love.graphics.circle("fill", w / 2, h / 2 + 2, w * 0.42)
-
-        -- Ornate Gothic Double Hairline Border
-        love.graphics.setLineWidth(isHovered and 2.0 or 1.5)
-        love.graphics.setColor(rBorder)
-        UI.drawRoundedRect("line", 0, 0, w, h, 6)
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.45)
-        UI.drawRoundedRect("line", 3, 3, w - 6, h - 6, 4)
-
-        -- Corner Gothic Fleuron Notches
-        love.graphics.setColor(rBorder)
-        love.graphics.line(5, 7, 7, 5)
-        love.graphics.line(w - 5, 7, w - 7, 5)
-        love.graphics.line(5, h - 7, 7, h - 5)
-        love.graphics.line(w - 5, h - 7, w - 7, h - 5)
-
-        -- Title Ribbon Banner at Top
-        local bannerH = 22
-        love.graphics.setColor(0.06, 0.07, 0.08, 0.95)
-        love.graphics.rectangle("fill", 4, 6, w - 8, bannerH, 3)
-        love.graphics.setColor(rBorder[1], rBorder[2], rBorder[3], 0.7)
-        love.graphics.rectangle("line", 4, 6, w - 8, bannerH, 3)
-
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(1, 1, 1, 0.95)
-        local displayName = UI.toUpperUtf8(d.name)
-        love.graphics.printf(displayName, 5, 10, w - 10, "center")
-
-        -- Center Dedicated Relic Sigil / Artwork
-        local cx = w / 2
-        local cy = h / 2 + 5
-        UI.drawRelicSigil(d.id, cx, cy, 28, rBorder)
-
-        -- Bottom Rarity Jewel Talisman
-        love.graphics.setColor(rBorder)
-        local jR = 3.5
-        love.graphics.polygon("fill", cx, h - 12 - jR, cx + jR, h - 12, cx, h - 12 + jR, cx - jR, h - 12)
-        love.graphics.setColor(1, 1, 1, 0.8)
-        love.graphics.circle("fill", cx - 0.8, h - 12 - 0.8, 1.0)
-    end
-
-    -- Blueprint / Copy indicator
-    if d.isCopyDeity and copyTarget then
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf("⇄", 4, h - 22, w - 8, "center")
-    end
-
-    -- Joker Edition Badge (Foil, Holo, Polychrome, Negative)
+    w, h = w or 82, h or 118
+    local g = love.graphics
+    local rim = d.rarity == "legendary" and UI.COLORS.goldYellow
+        or (d.rarity == "rare" and UI.COLORS.chipsBlue or UI.COLORS.panelBorder)
+    local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
+    g.push("all")
+    g.translate(x + w / 2, y + h / 2)
+    g.scale(s)
+    g.translate(-w / 2, -h / 2)
+    g.setColor(0, 0, 0, 0.35)
+    UI.drawRoundedRect("fill", 3, 5, w, h, 5)
+    g.setColor(0.13, 0.18, 0.20, 0.98)
+    UI.drawRoundedRect("fill", 0, 0, w, h, 5)
+    g.setColor(rim[1], rim[2], rim[3], 0.25)
+    g.polygon("fill", 4, 4, w - 4, 4, w * 0.66, h * 0.52, 4, h * 0.62)
+    g.setColor(rim)
+    g.setLineWidth(isHovered and 2 or 1)
+    UI.drawRoundedRect("line", 0, 0, w, h, 5)
+    g.setFont(UI.fonts.tiny)
+    g.setColor(UI.COLORS.textLight)
+    local name = w < 75 and UI.truncateUtf8(d.name or "SPM", 9) or (d.name or "SPM")
+    g.printf(UI.toUpperUtf8(name), 5, 8, w - 10, "center")
+    g.setColor(rim[1], rim[2], rim[3], 0.16)
+    g.circle("fill", w / 2, h * 0.55, w * 0.27)
+    UI.drawRelicSigil(d.id, w / 2, h * 0.55, math.min(w * 0.38, h * 0.33), rim)
+    g.setColor(rim)
+    g.polygon("fill", w / 2, h - 13, w / 2 + 4, h - 9, w / 2, h - 5, w / 2 - 4, h - 9)
     if d.edition then
-        local edW = w - 8
-        local edH = 16
-        local edY = h - 20
-        local edCol = { 0.25, 0.65, 0.95, 0.95 }
-        local edText = "FOIL +50c"
-        if d.edition == "holo" then
-            edCol = { 0.95, 0.35, 0.85, 0.95 }
-            edText = "HOLO +10m"
-        elseif d.edition == "polychrome" then
-            edCol = { 0.95, 0.75, 0.20, 0.95 }
-            edText = "POLY x1.5"
-        elseif d.edition == "negative" then
-            edCol = { 0.15, 0.18, 0.22, 0.95 }
-            edText = "NEGATIVE +1"
-        end
-        love.graphics.setColor(edCol)
-        UI.drawRoundedRect("fill", 4, edY, edW, edH, 3)
-        love.graphics.setColor(1, 1, 1, 0.9)
-        UI.drawRoundedRect("line", 4, edY, edW, edH, 3)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.printf(edText, 4, edY + 1, edW, "center")
+        g.setFont(UI.fonts.tiny)
+        g.setColor(UI.COLORS.goldYellow)
+        local editionLabel = ({ negative = "NEG", polychrome = "POLY", holo = "HOLO", foil = "FOIL" })[d.edition] or d.edition
+        g.printf(UI.toUpperUtf8(editionLabel), 3, h - 26, w - 6, "center")
     end
-
     if isDropTarget then
-        love.graphics.setColor(0, 0, 0, 0.75)
-        UI.drawRoundedRect("fill", 2, 2, w - 4, h - 4, 5)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf("⇄\nHOÁN\nĐỔI", 4, h / 2 - 18, w - 8, "center")
+        g.setColor(0.04, 0.08, 0.09, 0.86)
+        UI.drawRoundedRect("fill", 3, 3, w - 6, h - 6, 4)
+        g.setFont(UI.fonts.tiny)
+        g.setColor(UI.COLORS.goldYellow)
+        g.printf("HOÁN ĐỔI", 3, h / 2 - 9, w - 6, "center")
     end
-
-    love.graphics.pop()
+    g.pop()
 end
 
 -- Rich Floating Tooltip for Hộ Linh (Patrons)

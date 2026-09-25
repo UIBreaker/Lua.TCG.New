@@ -29,6 +29,9 @@ local Scoring = require("src.scoring")
 local Shop = require("src.shop")
 local Sound = require("src.sound")
 local UI = require("src.ui")
+local Theme = require("ui.theme")
+local Layout = require("ui.layout")
+local Gallery = require("ui.gallery")
 local Monster = require("src.monster")
 local Equipment = require("src.equipment")
 local Map = require("src.map")
@@ -57,6 +60,11 @@ local state = "menu"
 -- Virtual Resolution
 local V_WIDTH = 1280
 local V_HEIGHT = 720
+-- Keep the established 1280x720 layout coordinates, but rasterize to the
+-- requested 1920x1080 virtual canvas for sharper typography and UI sprites.
+local RENDER_SCALE = Layout.width / V_WIDTH
+local RENDER_WIDTH = Layout.width
+local RENDER_HEIGHT = Layout.height
 local scale = 1
 local offsetX = 0
 local offsetY = 0
@@ -117,6 +125,7 @@ local deckViewerPage = 1
 local menuMode = "title" -- "title", "deck_select"
 local isPauseMenuOpen = false
 local isSettingsOpen = false
+local isUiGalleryOpen = false
 local isDebugOpen = false
 local debugTab = "gold"
 local debugGoldInput = "100"
@@ -222,11 +231,14 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c then
         cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
-        love.graphics.setColor(0.12, 0.16, 0.22, 0.95)
-        UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
-        love.graphics.setLineWidth(isHover and 2 or 1.5)
-        love.graphics.setColor(c.color or UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", cx, cy, conSlotW, conSlotH, 6)
+        if isHover then cy = cy - 2 end
+        if not UI.drawSlot(isHover and "hover" or "occupied", "consumable", cx, cy, conSlotW, conSlotH) then
+            love.graphics.setColor(0.12, 0.16, 0.22, 0.95)
+            UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
+            love.graphics.setLineWidth(isHover and 2 or 1.5)
+            love.graphics.setColor(c.color or UI.COLORS.goldYellow)
+            UI.drawRoundedRect("line", cx, cy, conSlotW, conSlotH, 6)
+        end
 
         -- Icon
         love.graphics.setFont(UI.fonts.medium)
@@ -256,26 +268,15 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
         if isHover and my < cy + conSlotH - 26 then
             -- Tooltip
             local ttW = 210
-            local ttH = 75
+            local ttH = 92
             local ttX = math.min(V_WIDTH - ttW - 10, math.max(10, cx - 40))
             local ttY = cy + conSlotH + 8
-            love.graphics.setColor(0.08, 0.10, 0.14, 0.96)
-            UI.drawRoundedRect("fill", ttX, ttY, ttW, ttH, 6)
-            love.graphics.setColor(c.color or UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", ttX, ttY, ttW, ttH, 6)
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf(c.name, ttX + 6, ttY + 6, ttW - 12, "left")
-            love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf(c.desc or "", ttX + 6, ttY + 22, ttW - 12, "left")
+            UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
+                UI.truncateUtf8(c.desc or "", 90), UI.fonts, "green")
         end
     else
-        local emptyImg = UI.getButtonImage("slot_item_empty")
-        if emptyImg then
-            local ew, eh = emptyImg:getDimensions()
-            love.graphics.setColor(1, 1, 1, 0.90)
-            love.graphics.draw(emptyImg, cx, cy, 0, conSlotW / ew, conSlotH / eh)
-        else
+        local isHover = mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH
+        if not UI.drawSlot(isHover and "hover" or "empty", "consumable", cx, cy, conSlotW, conSlotH) then
             love.graphics.setColor(0.09, 0.11, 0.13, 0.6)
             UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
             love.graphics.setLineWidth(1)
@@ -384,7 +385,10 @@ local function spawnShopFx(kind, item, x, y)
 end
 
 local function getConsumableSlotRect(i, currentState)
-    if currentState == "playing" or currentState == "scoring" or currentState == "shop" then
+    if currentState == "playing" or currentState == "scoring" then
+        local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+        return 1042 + (i - 1) * 72, maxSlots > 8 and 416 or 358, 64, 88
+    elseif currentState == "shop" then
         return 1042 + (i - 1) * 72, 358, 64, 88
     end
     return 295 + (i - 1) * 96, 32, 82, 118
@@ -543,15 +547,11 @@ local hoveredCardTooltip = nil
 
 local function updateScale()
     local winW, winH = love.graphics.getDimensions()
-    local scaleX = winW / V_WIDTH
-    local scaleY = winH / V_HEIGHT
-    scale = math.min(scaleX, scaleY)
-    offsetX = (winW - V_WIDTH * scale) / 2
-    offsetY = (winH - V_HEIGHT * scale) / 2
+    scale, offsetX, offsetY = Layout.scale(winW, winH)
 end
 
 local function toVirtual(mx, my)
-    return (mx - offsetX) / scale, (my - offsetY) / scale
+    return (mx - offsetX) / (scale * RENDER_SCALE), (my - offsetY) / (scale * RENDER_SCALE)
 end
 
 local function syncCardSelections()
@@ -1532,7 +1532,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
 
 local function initShadersAndCanvas()
     if love.graphics and love.graphics.newCanvas then
-        mainCanvas = love.graphics.newCanvas(V_WIDTH, V_HEIGHT)
+        mainCanvas = love.graphics.newCanvas(RENDER_WIDTH, RENDER_HEIGHT)
         mainCanvas:setFilter("linear", "linear")
     end
     if love.graphics and love.graphics.newShader then
@@ -3378,69 +3378,21 @@ getHandCardPosition = function(index, totalCards)
 end
 
 local function drawBattleHud(m, mx, my)
-    local g = love.graphics
-    UI.drawGildedPanel(10, 8, 1260, 55)
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.goldYellow)
-    g.print("ẢI " .. tostring((game.run and game.run.ante) or game.act or 1) .. "-" .. tostring((game.run and game.run.blindIndex) or game.round or 1), 24, 16)
-    g.setColor(UI.COLORS.textLight)
-    g.print(m and (m.isBoss or m.isElite) and m.name or "Tiểu Yêu", 24, 38)
-
-    local crestImg = UI.getButtonImage("crest_top_monster")
-    if crestImg then
-        local cw, ch = crestImg:getDimensions()
-        g.setColor(1, 1, 1, 0.92)
-        g.draw(crestImg, 120, 18, 0, 26 / cw, 30 / ch)
-    end
-
-    UI.drawPlayerHpBar(178, 19, 235, 32, game.playerHp, game.maxPlayerHp, game.playerArmor or game.playerShield or 0)
-
-    local coinImg = UI.getButtonImage("icon_top_coin")
-    if coinImg then
-        local iw, ih = coinImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(coinImg, 430, 23, 0, 20 / iw, 24 / ih)
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.goldYellow)
-        g.print(tostring(game.gold or 0), 456, 27)
-    else
-        g.setColor(UI.COLORS.goldYellow)
-        g.print("◉ " .. tostring(game.gold or 0), 436, 27)
-    end
-
-    local cardsImg = UI.getButtonImage("icon_top_cards")
-    if cardsImg then
-        local iw, ih = cardsImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(cardsImg, 532, 23, 0, 20 / iw, 24 / ih)
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.textLight)
-        g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 558, 27)
-    else
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.textLight)
-        g.print("LƯỢT " .. tostring(game.handsRemaining or 0) .. "/" .. tostring(game.maxHands or 0), 550, 27)
-    end
-
-    local skullImg = UI.getButtonImage("icon_top_skull")
-    if skullImg then
-        local iw, ih = skullImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(skullImg, 676, 23, 0, 20 / iw, 24 / ih)
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.textLight)
-        g.print("BỎ " .. tostring(game.discardsRemaining or 0), 702, 27)
-    else
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.textLight)
-        g.print("BỎ " .. tostring(game.discardsRemaining or 0), 700, 27)
-    end
-
-    local info = { id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_tran_active", activeAssetId = "btn_top_tran_active" }
-    local deck = { id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, color = UI.COLORS.btnNormal, font = UI.fonts.tiny, assetId = "btn_top_bo_bai_active", activeAssetId = "btn_top_bo_bai_active" }
-    for _, btn in ipairs({ info, deck }) do
+    UI.components.TopHUD.draw({
+        ante = (game.run and game.run.ante) or game.act or 1,
+        round = (game.run and game.run.blindIndex) or game.round or 1,
+        enemyName = m and (m.isBoss or m.isElite) and m.name or "Tiểu Yêu",
+        hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0,
+        hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
+        discards = game.discardsRemaining or 0,
+    }, UI.fonts)
+    for _, btn in ipairs({
+        {id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, font = UI.fonts.tiny, variant = "cyan"},
+        {id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, font = UI.fonts.tiny, variant = "gold"},
+    }) do
         table.insert(buttons, btn)
-        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
+        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
+            juice.buttonPressedId == btn.id)
     end
 end
 
@@ -3465,14 +3417,11 @@ local function drawBattleEnemy(m)
         g.draw(enemyImage, -iw * fit / 2, -ih * fit / 2, 0, fit, fit)
         g.pop()
     end
-    g.setFont(UI.fonts.medium)
-    g.setColor(1, 1, 1, 1)
-    g.printf((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu", UI.BATTLE_CENTER_X - 175, 85, 350, "center")
-    UI.drawMonsterHpBar(UI.BATTLE_CENTER_X - 168, 111, 336, 24, m.hp, m.maxHp, m.damageLagHp)
+    UI.components.EnemyPanel.draw((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu",
+        m.hp, m.maxHp, UI.fonts, UI.BATTLE_CENTER_X)
 end
 
 local function drawBattleInfoPanel(m, eval, preview)
-    local g = love.graphics
     local scoring = state == "scoring" and anim.active
     local chips = scoring and (anim.displayChips or 0) or (preview and preview.totalChips or 0)
     local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
@@ -3480,178 +3429,20 @@ local function drawBattleInfoPanel(m, eval, preview)
     local aura = scoring and (anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
     local handName = scoring and (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
-    local x, y, w, h = 12, 76, 222, 615
-    local frame = UI.getButtonImage("battle_info_frame")
-    if frame then
-        local fw, fh = frame:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(frame, x, y, 0, w / fw, h / fh)
-    else
-        UI.drawGildedPanel(x, y, w, h)
-    end
-
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.goldYellow)
-    g.print("TAY BÀI", x + 14, y + 14)
-    g.setColor(UI.COLORS.textLight)
-    g.printf(UI.truncateUtf8(handName, 24), x + 14, y + 39, w - 28, "left")
-
-    local statY = y + 72
-    local satImg = UI.getButtonImage("badge_sat_thuong")
-    local cuongImg = UI.getButtonImage("badge_cuong_hoa")
-    local badgeW = 98
-    local badgeH = 62
-
-    if satImg and cuongImg then
-        local sx = x + 10
-        local sw, sh = satImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(satImg, sx, statY, 0, badgeW / sw, badgeH / sh)
-        if chips > 0 then
-            g.setColor(0.04, 0.08, 0.14, 0.92)
-            g.rectangle("fill", sx + 50, statY + 24, 42, 32, 3)
-            g.setFont(UI.fonts.medium)
-            g.setColor(UI.COLORS.chipsBlue)
-            g.printf(UI.formatNumber(chips), sx + 48, statY + 28, 46, "center")
-        end
-
-        local cx = x + 114
-        local cw, ch = cuongImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(cuongImg, cx, statY, 0, badgeW / cw, badgeH / sh)
-        if mult > 0 then
-            g.setColor(0.14, 0.04, 0.06, 0.92)
-            g.rectangle("fill", cx + 50, statY + 24, 42, 32, 3)
-            g.setFont(UI.fonts.medium)
-            g.setColor(UI.COLORS.multRed)
-            g.printf(UI.formatNumber(mult), cx + 48, statY + 28, 46, "center")
-        end
-    else
-        for _, stat in ipairs({
-            { label = "SÁT THƯƠNG", value = chips, color = UI.COLORS.chipsBlue, offset = 0 },
-            { label = "CƯỜNG HÓA", value = mult, color = UI.COLORS.multRed, offset = 100 },
-        }) do
-            local sx = x + 12 + stat.offset
-            g.setColor(stat.color[1], stat.color[2], stat.color[3], 0.26)
-            UI.drawRoundedRect("fill", sx, statY, 96, 66, 5)
-            g.setColor(stat.color)
-            UI.drawRoundedRect("line", sx, statY, 96, 66, 5)
-            g.setFont(UI.fonts.tiny)
-            g.printf(stat.label, sx + 3, statY + 8, 90, "center")
-            g.setFont(UI.fonts.medium)
-            g.printf(UI.formatNumber(stat.value), sx + 3, statY + 31, 90, "center")
-        end
-    end
-
-    local pwrY = statY + badgeH + 6
-    local pwrImg = UI.getButtonImage("badge_power")
-    local pwrBoxW = 104
-    local pwrBoxH = 40
-    local px = x + (w - pwrBoxW) / 2
-    if pwrImg then
-        local pw, ph = pwrImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(pwrImg, px, pwrY, 0, pwrBoxW / pw, pwrBoxH / ph)
-        if chips > 0 or mult > 0 then
-            g.setColor(0.04, 0.06, 0.08, 0.90)
-            g.rectangle("fill", px + 30, pwrY + 8, 44, 24, 3)
-            g.setFont(UI.fonts.small)
-            g.setColor(UI.COLORS.textLight)
-            g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), px + 10, pwrY + 11, pwrBoxW - 20, "center")
-        end
-    else
-        g.setFont(UI.fonts.small)
-        g.setColor(UI.COLORS.textMuted)
-        g.printf(UI.formatNumber(chips) .. " × " .. UI.formatNumber(mult), x + 12, pwrY + 8, w - 24, "center")
-    end
-    if xMult > 1 then
-        g.setFont(UI.fonts.tiny)
-        g.setColor(UI.COLORS.goldYellow)
-        g.printf("Hệ số phụ ×" .. string.format("%.2f", xMult), x + 12, pwrY + 42, w - 24, "center")
-    end
-
-    local auraY = pwrY + (xMult > 1 and 58 or 46)
-    local auraImg = UI.getButtonImage("badge_aura")
-    local auraBoxW = 202
-    local auraBoxH = 68
-    local ax = x + (w - auraBoxW) / 2
-
-    if auraImg then
-        local aw, ah = auraImg:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(auraImg, ax, auraY, 0, auraBoxW / aw, auraBoxH / ah)
-        if aura > 0 then
-            g.setColor(0.12, 0.10, 0.06, 0.92)
-            g.rectangle("fill", ax + 90, auraY + 26, 98, 34, 3)
-            g.setFont(UI.fonts.large)
-            g.setColor(UI.COLORS.goldYellow)
-            g.printf(UI.formatNumber(aura), ax + 88, auraY + 28, 102, "center")
-        end
-    else
-        g.setColor(0.57, 0.41, 0.22, 0.30)
-        UI.drawRoundedRect("fill", ax, auraY, auraBoxW, auraBoxH, 5)
-        g.setColor(UI.COLORS.goldYellow)
-        g.setFont(UI.fonts.tiny)
-        g.printf(scoring and "AURA ĐANG CỘNG" or "AURA DỰ KIẾN", ax + 4, auraY + 7, auraBoxW - 8, "center")
-        g.setFont(UI.fonts.large)
-        g.printf(UI.formatNumber(aura), ax + 4, auraY + 25, auraBoxW - 8, "center")
-    end
-
-    local monY = auraY + auraBoxH + 10
-    g.setColor(UI.COLORS.panelBorder)
-    g.line(x + 14, monY, x + w - 14, monY)
-
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.goldYellow)
-    g.print("✦ QUÁI VẬT", x + 14, monY + 12)
-    g.setColor(UI.COLORS.textLight)
-    g.print(UI.truncateUtf8((m and m.name) or "Không rõ", 13), x + 14, monY + 34)
-    g.setFont(UI.fonts.tiny)
-    g.setColor(UI.COLORS.textMuted)
-    g.print("MÁU  " .. tostring(m and m.hp or 0) .. "/" .. tostring(m and m.maxHp or 0), x + 14, monY + 54)
-
-    local hpBarY = monY + 76
-    local hpBarW = w - 28
-    local hpBarH = 14
-    local mCurHp = math.max(0, (m and m.hp) or 0)
-    local mMaxHp = math.max(1, (m and m.maxHp) or 1)
-    local mPct = math.min(1.0, mCurHp / mMaxHp)
-    g.setColor(0.08, 0.05, 0.05, 0.95)
-    UI.drawRoundedRect("fill", x + 14, hpBarY, hpBarW, hpBarH, 3)
-    if mPct > 0 then
-        g.setColor(0.85, 0.22, 0.22, 0.95)
-        UI.drawRoundedRect("fill", x + 15, hpBarY + 1, math.floor((hpBarW - 2) * mPct), hpBarH - 2, 2)
-    end
-    g.setColor(0.45, 0.15, 0.15, 1)
-    g.setLineWidth(1.2)
-    UI.drawRoundedRect("line", x + 14, hpBarY, hpBarW, hpBarH, 3)
-
-    g.setFont(UI.fonts.tiny)
-    g.setColor(UI.COLORS.hpRed)
-    g.print("CHIÊU TIẾP THEO", x + 14, hpBarY + 22)
-    g.setColor(UI.COLORS.textLight)
-    g.printf(UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"), x + 14, hpBarY + 38, w - 28, "left")
-
-    g.setColor(UI.COLORS.goldYellow)
-    g.print(m and m.bossData and "DEBUFF" or "ĐẶC ĐIỂM", x + 14, hpBarY + 74)
-    g.setColor(UI.COLORS.textMuted)
-    local debuff = m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi"
-    g.printf(UI.truncateUtf8(debuff, 150), x + 14, hpBarY + 92, w - 28, "left")
-    if scoring then
-        g.setColor(UI.COLORS.panelBorder)
-        g.line(x + 14, y + 548, x + w - 14, y + 548)
-        g.setColor(UI.COLORS.goldYellow)
-        g.setFont(UI.fonts.tiny)
-        local finished = anim.currentStepIndex > #anim.scoringData.steps
-        local category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA")
-        g.printf(UI.truncateUtf8(category, 26), x + 14, y + 558, w - 28, "left")
-        g.setColor(UI.COLORS.textLight)
-        local detail = finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
-            or (game.handsRemaining <= 0 and "Hết lượt đánh • bạn đã thua"
-                or ("Đã gây " .. UI.formatNumber(anim.displayFinalScore or 0) .. " sát thương")))
-            or UI.localizeText(anim.stepLog or "")
-        g.printf(UI.truncateUtf8(detail, 55), x + 14, y + 576, w - 28, "left")
-    end
+    local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
+    local detail = scoring and (finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
+        or ("Đã gây " .. UI.formatNumber(anim.displayFinalScore or 0) .. " sát thương"))
+        or UI.localizeText(anim.stepLog or "")) or ""
+    UI.components.HandInfoPanel.draw({
+        handName = UI.truncateUtf8(handName, 24), chips = chips, mult = mult, xMult = xMult, aura = aura,
+        scoring = scoring, enemyName = UI.truncateUtf8((m and m.name) or "Không rõ", 13),
+        enemyHp = math.max(0, (m and m.hp) or 0), enemyMaxHp = (m and m.maxHp) or 1,
+        intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
+        debuff = UI.truncateUtf8(m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi", 55),
+        isBoss = m and m.bossData ~= nil,
+        category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA"),
+        detail = UI.truncateUtf8(detail, 55),
+    }, UI.fonts, UI.formatNumber)
 end
 
 local function drawPlayingState()
@@ -3690,8 +3481,12 @@ local function drawPlayingState()
     drawBattleEnemy(m)
     drawBattleHud(m, mx, my)
     drawBattleInfoPanel(m, eval, scPreview)
-    UI.drawGildedPanel(1028, 73, 239, 248)
-    UI.drawGildedPanel(1028, 318, 239, 145, { 0.45, 0.85, 0.65, 1 })
+    local curDeiCount = Deities.getCount(game.deities)
+    local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    UI.components.SPMPanel.draw(curDeiCount, maxDeiSlots, UI.fonts)
+    game.consumables = game.consumables or {}
+    local conCount = #game.consumables
+    UI.components.ConsumablePanel.draw(conCount, 3, UI.fonts, maxDeiSlots)
 
     -- 2. RIGHT RAIL: SPM & CONSUMABLES
     ----------------------------------------------------------------------------
@@ -3699,17 +3494,7 @@ local function drawPlayingState()
     local topStartY = 82
 
     -- Deities Section
-    local spmEyeImg = UI.getButtonImage("icon_spm_eye")
-    if spmEyeImg then
-        local iw, ih = spmEyeImg:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(spmEyeImg, topStartX, topStartY - 2, 0, 24 / iw, 24 / ih)
-    end
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    local curDeiCount = Deities.getCount(game.deities)
-    local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    love.graphics.print("SPM (" .. curDeiCount .. "/" .. maxDeiSlots .. ")", topStartX + (spmEyeImg and 28 or 4), topStartY)
+    -- Heading is owned by the reusable SPMPanel.
 
     local deitySlotW = 64
     local deitySlotH = 88
@@ -3724,16 +3509,13 @@ local function drawPlayingState()
         local isDropTarget = (deityDrag.active and deityDrag.isDragging and isHoveredSlot and deityDrag.deityIndex ~= i)
 
         if isDraggedSource then
-            -- Ghost / Placeholder at original position
-            love.graphics.setColor(0.10, 0.12, 0.15, 0.45)
-            UI.drawRoundedRect("fill", dx, deityY, deitySlotW, deitySlotH, 6)
-            love.graphics.setLineWidth(1.5)
-            love.graphics.setColor(0.35, 0.40, 0.48, 0.5)
-            UI.drawRoundedRect("line", dx, deityY, deitySlotW, deitySlotH, 6)
+            -- Keep the source slot art visible while identifying the drag origin.
+            UI.drawSlot("empty", "spm", dx, deityY, deitySlotW, deitySlotH)
             love.graphics.setFont(UI.fonts.tiny)
             love.graphics.setColor(UI.COLORS.textMuted)
             love.graphics.printf("Vị trí cũ", dx + 4, deityY + deitySlotH / 2 - 6, deitySlotW - 8, "center")
         elseif d then
+            UI.components.Slot.draw(dx, deityY, deitySlotW, deitySlotH, "occupied", {variant = "gold"})
             if isHoveredSlot and not (deityDrag.active and deityDrag.isDragging) then
                 hoveredDeityTooltip = d
                 d.slotIndex = i
@@ -3755,11 +3537,13 @@ local function drawPlayingState()
             love.graphics.pop()
         else
             -- Empty Tarot Slot
-            local emptyDeiImg = UI.getButtonImage("slot_spm_empty")
-            if emptyDeiImg and not isDropTarget then
-                local ew, eh = emptyDeiImg:getDimensions()
-                love.graphics.setColor(1, 1, 1, 0.90)
-                love.graphics.draw(emptyDeiImg, dx, deityY, 0, deitySlotW / ew, deitySlotH / eh)
+            local slotState = isDropTarget and "selected" or (isHoveredSlot and "hover" or "empty")
+            if UI.drawSlot(slotState, "spm", dx, deityY, deitySlotW, deitySlotH) then
+                if isDropTarget then
+                    love.graphics.setFont(UI.fonts.tiny)
+                    love.graphics.setColor(UI.COLORS.hpGreen)
+                    love.graphics.printf("THẢ VÀO\nĐÂY", dx + 4, deityY + deitySlotH / 2 - 14, deitySlotW - 8, "center")
+                end
             else
                 love.graphics.setColor(0.09, 0.11, 0.13, isDropTarget and 0.85 or 0.6)
                 UI.drawRoundedRect("fill", dx, deityY, deitySlotW, deitySlotH, 6)
@@ -3782,17 +3566,7 @@ local function drawPlayingState()
 
     -- Consumables Section (0/3)
     local conStartX = 1042
-    game.consumables = game.consumables or {}
-    local conCount = #game.consumables
-    local potionImg = UI.getButtonImage("icon_consumable_potion")
-    if potionImg then
-        local iw, ih = potionImg:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(potionImg, conStartX, 325, 0, 24 / iw, 24 / ih)
-    end
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + (potionImg and 28 or 4), 327)
+    -- Heading is owned by the reusable ConsumablePanel.
 
     local conSlotW = 64
     local conSlotH = 88
@@ -3876,10 +3650,7 @@ local function drawPlayingState()
     local hcH = 22
     local hcX = UI.BATTLE_CENTER_X - hcW / 2
     local hcY = 608
-    love.graphics.setColor(0.12, 0.16, 0.20, 0.9)
-    UI.drawRoundedRect("fill", hcX, hcY, hcW, hcH, 4)
-    love.graphics.setColor(0.35, 0.45, 0.55, 0.8)
-    UI.drawRoundedRect("line", hcX, hcY, hcW, hcH, 4)
+    UI.components.Panel.draw(hcX, hcY, hcW, hcH)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(handCountText, hcX, hcY + 3, hcW, "center")
@@ -3889,6 +3660,7 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     local hasSelection = (#selectedCards >= 1 and #selectedCards <= getMaxSelectableCards())
     local actionY = 636
+    UI.components.Panel.draw(365, 626, 530, 72)
 
     -- Left: Chơi Tay Bài [Space]
     local btnPlay = {
@@ -3898,34 +3670,23 @@ local function drawPlayingState()
         y = actionY,
         w = 175,
         h = 58,
-        color = UI.COLORS.chipsBlue,
         font = UI.fonts.small,
-        assetId = "btn_combat_play",
+        variant = "cyan",
         disabled = not hasSelection or game.handsRemaining <= 0,
     }
     table.insert(buttons, btnPlay)
-    UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h)
+    UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h,
+        juice.buttonPressedId == btnPlay.id)
 
     -- Center: Sắp Xếp Container Box
     local sortBoxX = UI.BATTLE_CENTER_X - 65
     local sortBoxY = actionY - 8
     local sortBoxW = 145
     local sortBoxH = 68
-    love.graphics.setColor(0.12, 0.16, 0.20, 0.95)
-    UI.drawRoundedRect("fill", sortBoxX, sortBoxY, sortBoxW, sortBoxH, 6)
-    love.graphics.setColor(0.30, 0.38, 0.46, 1)
-    UI.drawRoundedRect("line", sortBoxX, sortBoxY, sortBoxW, sortBoxH, 6)
-
-    local sortHeaderImg = UI.getButtonImage("btn_combat_sort_header")
-    if sortHeaderImg then
-        local shw, shh = sortHeaderImg:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(sortHeaderImg, sortBoxX + (sortBoxW - 124) / 2, sortBoxY + 2, 0, 124 / shw, 20 / shh)
-    else
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
-    end
+    UI.components.Panel.draw(sortBoxX, sortBoxY, sortBoxW, sortBoxH)
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.setColor(Theme.colors.muted)
+    love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
 
     local btnSortRank = {
         id = "sort_rank",
@@ -3934,12 +3695,12 @@ local function drawPlayingState()
         y = sortBoxY + 24,
         w = 62,
         h = 36,
-        color = (game.sortMode == "rank") and { 0.28, 0.48, 0.72, 1 } or UI.COLORS.btnNormal,
         font = UI.fonts.tiny,
-        assetId = (game.sortMode == "rank") and "btn_combat_sort_rank_active" or "btn_combat_sort_rank_inactive",
+        selected = game.sortMode == "rank",
     }
     table.insert(buttons, btnSortRank)
-    UI.drawButton(btnSortRank, mx >= btnSortRank.x and mx <= btnSortRank.x + btnSortRank.w and my >= btnSortRank.y and my <= btnSortRank.y + btnSortRank.h)
+    UI.drawButton(btnSortRank, mx >= btnSortRank.x and mx <= btnSortRank.x + btnSortRank.w and my >= btnSortRank.y and my <= btnSortRank.y + btnSortRank.h,
+        juice.buttonPressedId == btnSortRank.id)
 
     local btnSortSuit = {
         id = "sort_suit",
@@ -3948,12 +3709,12 @@ local function drawPlayingState()
         y = sortBoxY + 24,
         w = 62,
         h = 36,
-        color = (game.sortMode == "suit") and { 0.28, 0.48, 0.72, 1 } or UI.COLORS.btnNormal,
         font = UI.fonts.tiny,
-        assetId = (game.sortMode == "suit") and "btn_combat_sort_suit_active" or "btn_combat_sort_suit_inactive",
+        selected = game.sortMode == "suit",
     }
     table.insert(buttons, btnSortSuit)
-    UI.drawButton(btnSortSuit, mx >= btnSortSuit.x and mx <= btnSortSuit.x + btnSortSuit.w and my >= btnSortSuit.y and my <= btnSortSuit.y + btnSortSuit.h)
+    UI.drawButton(btnSortSuit, mx >= btnSortSuit.x and mx <= btnSortSuit.x + btnSortSuit.w and my >= btnSortSuit.y and my <= btnSortSuit.y + btnSortSuit.h,
+        juice.buttonPressedId == btnSortSuit.id)
 
     -- Right: Bỏ Bài [D]
     local btnDiscard = {
@@ -3963,13 +3724,13 @@ local function drawPlayingState()
         y = actionY,
         w = 160,
         h = 58,
-        color = UI.COLORS.multRed,
         font = UI.fonts.small,
-        assetId = "btn_combat_discard",
+        variant = "red",
         disabled = not hasSelection or game.discardsRemaining <= 0,
     }
     table.insert(buttons, btnDiscard)
-    UI.drawButton(btnDiscard, mx >= btnDiscard.x and mx <= btnDiscard.x + btnDiscard.w and my >= btnDiscard.y and my <= btnDiscard.y + btnDiscard.h)
+    UI.drawButton(btnDiscard, mx >= btnDiscard.x and mx <= btnDiscard.x + btnDiscard.w and my >= btnDiscard.y and my <= btnDiscard.y + btnDiscard.h,
+        juice.buttonPressedId == btnDiscard.id)
 
     ----------------------------------------------------------------------------
     -- 6. BOTTOM-RIGHT FACEDOWN DRAW DECK PILE
@@ -3981,35 +3742,9 @@ local function drawPlayingState()
 
     local isDeckHovered = (mx >= deckPileX and mx <= deckPileX + deckPileW and my >= deckPileY and my <= deckPileY + deckPileH)
 
-    -- Layer 1 & 2 shadow stack
-    love.graphics.setColor(0.08, 0.10, 0.12, 0.7)
-    UI.drawRoundedRect("fill", deckPileX - 4, deckPileY + 4, deckPileW, deckPileH, 8)
-    UI.drawRoundedRect("fill", deckPileX - 2, deckPileY + 2, deckPileW, deckPileH, 8)
-
-    -- Top Deck Card Back
-    love.graphics.setColor(isDeckHovered and { 0.22, 0.32, 0.42, 1 } or { 0.16, 0.20, 0.26, 1 })
-    UI.drawRoundedRect("fill", deckPileX, deckPileY, deckPileW, deckPileH, 8)
-    love.graphics.setLineWidth(isDeckHovered and 2.5 or 1.5)
-    love.graphics.setColor(isDeckHovered and UI.COLORS.goldYellow or { 0.35, 0.45, 0.55, 1 })
-    UI.drawRoundedRect("line", deckPileX, deckPileY, deckPileW, deckPileH, 8)
-
-    -- Card back pattern: inner decorative border & crest
-    love.graphics.setColor(0.24, 0.32, 0.40, 0.7)
-    UI.drawRoundedRect("line", deckPileX + 6, deckPileY + 6, deckPileW - 12, deckPileH - 12, 6)
-
-    -- Faction symbol on card back
-    UI.drawSuitSymbol(game.selectedSuit, deckPileX + deckPileW / 2, deckPileY + deckPileH / 2 - 10, 36)
-
-    -- Deck Pile Label & Counter
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("BỘ BÀI", deckPileX, deckPileY + 12, deckPileW, "center")
-
     local totalCardsInGame = #game.deck + #game.discardPile + #game.hand
-    local deckCountStr = #game.deck .. " / " .. totalCardsInGame
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(deckCountStr, deckPileX, deckPileY + deckPileH - 34, deckPileW, "center")
+    UI.components.DeckCounter.draw(deckPileX, deckPileY, deckPileW, deckPileH,
+        #game.deck, totalCardsInGame, UI.fonts, isDeckHovered)
 
     local btnDeckPile = {
         id = "open_deck_viewer",
@@ -4141,10 +3876,7 @@ local function drawScoringState()
             local pillX = cx + (cardW - pillW) / 2
             local pillY = cy - 32
 
-            love.graphics.setColor(0.12, 0.16, 0.22, 0.95)
-            UI.drawRoundedRect("fill", pillX, pillY, pillW, pillH, 6)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", pillX, pillY, pillW, pillH, 6)
+            UI.components.Panel.draw(pillX, pillY, pillW, pillH)
 
             love.graphics.setFont(UI.fonts.small)
             love.graphics.setColor(UI.COLORS.goldYellow)
@@ -4166,15 +3898,12 @@ local function drawScoringState()
             local badgeX = cx + (cardW - badgeW) / 2
             local badgeY = cy + cardH + 4
 
-            love.graphics.setColor(0.10, 0.25, 0.16, 0.90)
-            UI.drawRoundedRect("fill", badgeX, badgeY, badgeW, badgeH, 4)
-            love.graphics.setColor(UI.COLORS.hpGreen)
-            UI.drawRoundedRect("line", badgeX, badgeY, badgeW, badgeH, 4)
+            UI.components.Panel.draw(badgeX, badgeY, badgeW, badgeH, {variant = "green"})
 
             love.graphics.setFont(UI.fonts.tiny)
             love.graphics.setColor(UI.COLORS.hpGreen)
             local scoredInfo = anim.scoredCards[i]
-            love.graphics.printf("✓ +" .. scoredInfo.addedChips .. "c", badgeX, badgeY + 2, badgeW, "center")
+            love.graphics.printf("✓ +" .. scoredInfo.addedChips .. " ST", badgeX, badgeY + 2, badgeW, "center")
         end
     end
 
@@ -6110,6 +5839,12 @@ local function drawSettingsModal()
         UI.drawButton(btnDebugOpen, mx >= btnDebugOpen.x and mx <= btnDebugOpen.x + btnDebugOpen.w and my >= btnDebugOpen.y and my <= btnDebugOpen.y + btnDebugOpen.h)
     end
 
+    local btnGallery = { id = "setting_gallery", text = "UI GALLERY", x = modalX + 150,
+        y = modalY + 407, w = 200, h = 34, variant = "purple", font = UI.fonts.small }
+    buttons[#buttons + 1] = btnGallery
+    UI.drawButton(btnGallery, mx >= btnGallery.x and mx <= btnGallery.x + btnGallery.w
+        and my >= btnGallery.y and my <= btnGallery.y + btnGallery.h)
+
     -- Close Button
     local btnClose = { id = "close_settings", text = "LƯU & ĐÓNG", x = modalX + (modalW - 180) / 2, y = modalY + modalH - 52, w = 180, h = 40, color = UI.COLORS.btnPlay, font = UI.fonts.regular }
     table.insert(buttons, btnClose)
@@ -7465,10 +7200,12 @@ function love.draw()
     if mainCanvas then
         love.graphics.setCanvas({ mainCanvas, stencil = true })
         love.graphics.clear(0, 0, 0, 1)
+        love.graphics.push()
+        love.graphics.scale(RENDER_SCALE, RENDER_SCALE)
     else
         love.graphics.push()
         love.graphics.translate(offsetX, offsetY)
-        love.graphics.scale(scale, scale)
+        love.graphics.scale(scale * RENDER_SCALE, scale * RENDER_SCALE)
     end
 
     -- A single restrained environment replaces the old shifting neon backdrop.
@@ -7566,7 +7303,7 @@ function love.draw()
             h = 34,
             color = UI.COLORS.panelBg,
             font = UI.fonts.small,
-            assetId = "btn_top_tuy_chon_active",
+            assetId = "btn_top_tuy_chon",
             activeAssetId = "btn_top_tuy_chon_active",
         }
         table.insert(buttons, btnMenu)
@@ -7609,7 +7346,16 @@ function love.draw()
         love.graphics.pop()
     end
 
+    if isUiGalleryOpen then
+        local galleryMx, galleryMy = toVirtual(love.mouse.getPosition())
+        Gallery.draw(UI.fonts, galleryMx, galleryMy)
+    end
+
     love.graphics.pop()
+
+    -- The game layout remains expressed in 1280x720 units; undo that logical
+    -- scale before presenting the 1920x1080 render target.
+    if mainCanvas then love.graphics.pop() end
 
     -- 2. If Canvas is enabled, present to screen via CRT Post-Processing Shader
     if mainCanvas then
@@ -7620,7 +7366,7 @@ function love.draw()
 
         if settings.crtEnabled and crtShader then
             love.graphics.setShader(crtShader)
-            if crtShader:hasUniform("u_resolution") then crtShader:send("u_resolution", { V_WIDTH, V_HEIGHT }) end
+            if crtShader:hasUniform("u_resolution") then crtShader:send("u_resolution", { RENDER_WIDTH, RENDER_HEIGHT }) end
             if crtShader:hasUniform("u_time") then crtShader:send("u_time", juice.ambientTimer or 0) end
             if crtShader:hasUniform("u_curvature") then crtShader:send("u_curvature", 0.002) end
             if crtShader:hasUniform("u_chroma") then crtShader:send("u_chroma", 0.0003) end
@@ -8207,6 +7953,11 @@ local function handleModalsMousepressed(mx, my, button)
                         isSettingsOpen = false
                         Sound.play("ui_click")
                         return true
+                    elseif btn.id == "setting_gallery" then
+                        isSettingsOpen = false
+                        isUiGalleryOpen = true
+                        Sound.play("ui_click")
+                        return true
                     end
                 end
             end
@@ -8509,6 +8260,13 @@ end
 
 function love.mousepressed(x, y, button)
     local mx, my = toVirtual(x, y)
+    if isUiGalleryOpen then
+        if button == 1 and mx >= 1152 and mx <= 1248 and my >= 20 and my <= 51 then
+            isUiGalleryOpen = false
+            Sound.play("ui_click")
+        end
+        return
+    end
 
     -- Track pressed button id for juice animation, tactile mechanical sound & micro-screenshake
     for _, btn in ipairs(buttons or {}) do
@@ -9108,6 +8866,14 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if isUiGalleryOpen then
+        if key == "escape" or key == "f8" then isUiGalleryOpen = false end
+        return
+    end
+    if key == "f8" then
+        isUiGalleryOpen = true
+        return
+    end
     if isDebugOpen then
         if key == "escape" then
             isDebugOpen = false

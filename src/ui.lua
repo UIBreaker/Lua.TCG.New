@@ -1,32 +1,37 @@
 local UI = {}
+local Theme = require("ui.theme")
+local Panel = require("ui.components.panel")
+local Button = require("ui.components.button")
+local Slot = require("ui.components.slot")
+local HealthBar = require("ui.components.health_bar")
 
 -- Color constants
 UI.COLORS = {
     bg = { 0.055, 0.075, 0.090, 1 },
     felt = { 0.080, 0.120, 0.130, 1 },
-    panelBg = { 0.090, 0.125, 0.145, 0.96 },
-    panelBorder = { 0.34, 0.40, 0.42, 1 },
+    panelBg = Theme.colors.surface,
+    panelBorder = Theme.colors.metal,
     cardBg = { 0.91, 0.91, 0.87, 1 },
     cardBorder = { 0.44, 0.52, 0.54, 1 },
     cardSelectedBorder = { 0.95, 0.72, 0.38, 1 },
-    textLight = { 0.95, 0.96, 0.98, 1 },
+    textLight = Theme.colors.text,
     textDark = { 0.15, 0.15, 0.18, 1 },
-    textMuted = { 0.68, 0.74, 0.80, 1 },
-    chipsBlue = { 0.25, 0.49, 0.54, 1 },
-    multRed = { 0.55, 0.28, 0.26, 1 },
+    textMuted = Theme.colors.muted,
+    chipsBlue = Theme.colors.cyan,
+    multRed = Theme.colors.red,
     suitCrimson = { 0.62, 0.19, 0.22, 1 },
     suitObsidian = { 0.13, 0.21, 0.26, 1 },
     xmultGold = { 0.88, 0.65, 0.31, 1 },
-    goldYellow = { 0.91, 0.76, 0.48, 1 },
-    hpGreen = { 0.31, 0.62, 0.49, 1 },
-    hpRed = { 0.72, 0.24, 0.25, 1 },
-    bossPurple = { 0.53, 0.37, 0.58, 1 },
-    btnPlay = { 0.24, 0.48, 0.51, 1 },
-    btnDiscard = { 0.56, 0.29, 0.27, 1 },
-    btnConfirm = { 0.27, 0.55, 0.42, 1 },
-    btnSpecial = { 0.68, 0.50, 0.29, 1 },
-    btnDestruct = { 0.60, 0.26, 0.25, 1 },
-    btnNormal = { 0.18, 0.25, 0.29, 1 },
+    goldYellow = Theme.colors.gold,
+    hpGreen = Theme.colors.green,
+    hpRed = Theme.colors.red,
+    bossPurple = Theme.colors.purple,
+    btnPlay = Theme.colors.cyan,
+    btnDiscard = Theme.colors.red,
+    btnConfirm = Theme.colors.green,
+    btnSpecial = Theme.colors.gold,
+    btnDestruct = Theme.colors.red,
+    btnNormal = Theme.colors.raised,
 }
 
 UI.fonts = {}
@@ -131,33 +136,6 @@ function UI.drawRoundedRect(mode, x, y, w, h, r)
     love.graphics.rectangle(mode, x, y, w, h, r, r)
 end
 
-function UI.drawGildedPanel(x, y, w, h, accent)
-    local g = love.graphics
-    accent = accent or UI.COLORS.goldYellow
-    g.push("all")
-    g.setColor(0, 0, 0, 0.55)
-    UI.drawRoundedRect("fill", x + 4, y + 6, w, h, 7)
-    g.setColor(0.045, 0.065, 0.09, 0.93)
-    UI.drawRoundedRect("fill", x, y, w, h, 7)
-    g.setColor(accent[1], accent[2], accent[3], 0.9)
-    g.setLineWidth(2)
-    UI.drawRoundedRect("line", x, y, w, h, 7)
-    g.setColor(accent[1], accent[2], accent[3], 0.35)
-    g.setLineWidth(1)
-    UI.drawRoundedRect("line", x + 5, y + 5, w - 10, h - 10, 4)
-    local corner = math.min(18, w / 7, h / 4)
-    g.setColor(accent[1], accent[2], accent[3], 0.8)
-    for _, sx in ipairs({ x, x + w }) do
-        for _, sy in ipairs({ y, y + h }) do
-            local dx = sx == x and 1 or -1
-            local dy = sy == y and 1 or -1
-            g.line(sx + dx * 2, sy + dy * corner, sx + dx * 2, sy + dy * 2, sx + dx * corner, sy + dy * 2)
-        end
-    end
-    g.pop()
-end
-
--- Procedural vector drawing for card faction and suit symbols
 function UI.drawSuitSymbol(suit, cx, cy, size, customColor)
     love.graphics.push("all")
     if customColor then
@@ -311,134 +289,6 @@ function UI.drawSuitSymbol(suit, cx, cy, size, customColor)
     love.graphics.pop()
 end
 
-function UI.drawButton(btn, isHovered, isPressed)
-    if not btn or btn.invisible then return end
-    if not btn.x or not btn.y or not btn.w or not btn.h then return end
-
-    -- One calm material treatment across menus, combat and shop.
-    local g = love.graphics
-    local enabled = not btn.disabled
-    local hover = enabled and isHovered
-    local pressed = enabled and isPressed
-    local base = btn.color or UI.COLORS.btnNormal
-    local scale = pressed and 0.98 or (hover and 1.025 or 1)
-    local cx, cy = btn.x + btn.w / 2, btn.y + btn.h / 2
-    g.push("all")
-    g.translate(cx, cy)
-    g.scale(scale)
-    g.translate(-cx, -cy)
-
-    -- Check for authentic image asset (spritesheet buttons from Image 3)
-    local img = nil
-    if type(btn.image) == "userdata" then
-        img = btn.image
-    elseif type(btn.image) == "string" then
-        img = UI.getButtonImage(btn.image)
-    elseif btn.assetId then
-        if hover and btn.activeAssetId then
-            img = UI.getButtonImage(btn.activeAssetId)
-        end
-        if not img then
-            img = UI.getButtonImage(btn.assetId)
-        end
-    end
-
-    if img then
-        local iw, ih = img:getDimensions()
-        if not enabled then
-            g.setColor(0.72, 0.75, 0.80, 0.86)
-        elseif hover and not btn.activeAssetId then
-            g.setColor(1, 1, 1, 1)
-        else
-            g.setColor(1, 1, 1, 1)
-        end
-        g.draw(img, btn.x, btn.y, 0, btn.w / iw, btn.h / ih)
-
-        if btn.menuStyle then
-            local accent = btn.menuAccent or UI.COLORS.goldYellow
-            g.setColor(accent)
-            g.setFont(UI.fonts.title)
-            g.printf(btn.icon or "✦", btn.x + 18, btn.y + (btn.h - UI.fonts.title:getHeight()) / 2, 62, "center")
-            local font = btn.font or UI.fonts.large
-            local label = UI.toUpperUtf8(UI.sanitizeText(btn.text or ""))
-            g.setFont(font)
-            g.setColor(enabled and UI.COLORS.textLight or UI.COLORS.textMuted)
-            g.printf(label, btn.x + 94, btn.y + (btn.sub and 12 or (btn.h - font:getHeight()) / 2), btn.w - 116, "left")
-            if btn.sub then
-                g.setFont(UI.fonts.tiny)
-                g.setColor(0.82, 0.86, 0.92, enabled and 0.95 or 0.68)
-                g.printf(UI.sanitizeText(btn.sub), btn.x + 96, btn.y + 49, btn.w - 118, "left")
-            end
-        elseif btn.renderText or (btn.id == "menu_play" and btn.text == "TIẾP TỤC") then
-            local font = btn.font or UI.fonts.regular
-            g.setFont(font)
-            g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)
-            local label = UI.sanitizeText(btn.text or "")
-            if not btn.preserveCase then label = UI.toUpperUtf8(label) end
-            local labelY = btn.y + (btn.h - font:getHeight()) / 2
-            g.printf(label, btn.x + 3, labelY, btn.w - 6, "center")
-        end
-
-        g.pop()
-        return
-    end
-
-    if btn.menuStyle then
-        local accent = btn.menuAccent or UI.COLORS.goldYellow
-        UI.drawGildedPanel(btn.x, btn.y, btn.w, btn.h, accent)
-        g.setColor(base[1], base[2], base[3], hover and 0.58 or 0.34)
-        UI.drawRoundedRect("fill", btn.x + 6, btn.y + 6, btn.w - 12, btn.h - 12, 4)
-        g.setColor(accent[1], accent[2], accent[3], hover and 0.88 or 0.52)
-        g.line(btn.x + 75, btn.y + 14, btn.x + 75, btn.y + btn.h - 14)
-        g.setFont(UI.fonts.title)
-        g.setColor(accent)
-        g.printf(btn.icon or "✦", btn.x + 12, btn.y + (btn.h - UI.fonts.title:getHeight()) / 2, 54, "center")
-        local font = btn.font or UI.fonts.large
-        local label = UI.toUpperUtf8(UI.sanitizeText(btn.text or ""))
-        g.setFont(font)
-        g.setColor(enabled and UI.COLORS.textLight or UI.COLORS.textMuted)
-        g.printf(label, btn.x + 90, btn.y + (btn.sub and 13 or (btn.h - font:getHeight()) / 2), btn.w - 105, "left")
-        if btn.sub then
-            g.setFont(UI.fonts.tiny)
-            g.setColor(0.78, 0.82, 0.87, 1)
-            g.printf(btn.sub, btn.x + 90, btn.y + 48, btn.w - 105, "left")
-        end
-        g.pop()
-        return
-    end
-    g.setColor(0.01, 0.025, 0.03, 0.32)
-    UI.drawRoundedRect("fill", btn.x + 2, btn.y + 4, btn.w, btn.h, 5)
-    g.setColor(enabled and base or { 0.17, 0.20, 0.22, 0.86 })
-    UI.drawRoundedRect("fill", btn.x, btn.y, btn.w, btn.h, 5)
-    g.setColor(1, 1, 1, hover and 0.25 or 0.12)
-    g.polygon("fill", btn.x + 4, btn.y + 3, btn.x + btn.w - 4, btn.y + 3,
-        btn.x + btn.w - 13, btn.y + 10, btn.x + 10, btn.y + 10)
-    g.setLineWidth(hover and 1.7 or 1)
-    g.setColor(hover and UI.COLORS.goldYellow or { 0.54, 0.61, 0.60, 0.75 })
-    UI.drawRoundedRect("line", btn.x, btn.y, btn.w, btn.h, 5)
-    if btn.w >= 90 and btn.h >= 36 then
-        g.setColor(UI.COLORS.goldYellow[1], UI.COLORS.goldYellow[2], UI.COLORS.goldYellow[3], hover and 0.9 or 0.48)
-        g.line(btn.x + 6, btn.y + 13, btn.x + 6, btn.y + 6, btn.x + 18, btn.y + 6)
-        g.line(btn.x + btn.w - 18, btn.y + btn.h - 6, btn.x + btn.w - 6, btn.y + btn.h - 6,
-            btn.x + btn.w - 6, btn.y + btn.h - 13)
-    end
-    local font = btn.font or UI.fonts.regular
-    g.setFont(font)
-    g.setColor(enabled and (btn.textColor or UI.COLORS.textLight) or UI.COLORS.textMuted)
-    local label = UI.sanitizeText(btn.text or "")
-    if not btn.preserveCase then label = UI.toUpperUtf8(label) end
-    local labelY = btn.y + (btn.h - font:getHeight()) / 2 - (btn.sub and 7 or 0)
-    g.printf(label, btn.x + 3, labelY, btn.w - 6, "center")
-    if btn.sub then
-        g.setFont(UI.fonts.tiny)
-        g.setColor(UI.COLORS.textMuted)
-        g.printf(UI.sanitizeText(btn.sub), btn.x + 3, labelY + font:getHeight() + 1, btn.w - 6, "center")
-    end
-    g.pop()
-end
-
--- Matte stone/ivory cards with a single faceted suit emblem. The same renderer
--- is used by the hand, collection, shop, rewards and pack reveals.
 function UI.drawCard(card, x, y, w, h)
     local g = love.graphics
     local rank = tostring(card.rankName or card.rank or "?")
@@ -1259,92 +1109,6 @@ function UI.drawPatronTooltip(d, mx, my, copyTarget)
     love.graphics.printf('"' .. lore .. '"', ttx + 12, tty + 84, ttW - 24, "left")
 end
 
-function UI.drawMonsterHpBar(x, y, w, h, currentHp, maxHp, damageLagHp)
-    -- Background bar
-    love.graphics.setColor(0.12, 0.14, 0.16, 0.95)
-    UI.drawRoundedRect("fill", x, y, w, h, 6)
-
-    local maxH = math.max(1, maxHp)
-    -- Damage lag bar (yellow/red trailing bar)
-    if damageLagHp and damageLagHp > currentHp then
-        local lagRatio = math.min(1.0, math.max(0.0, damageLagHp / maxH))
-        love.graphics.setColor(0.9, 0.45, 0.1, 0.85)
-        UI.drawRoundedRect("fill", x, y, w * lagRatio, h, 6)
-    end
-
-    -- Current HP Fill (Green fading to red)
-    local ratio = math.min(1.0, math.max(0.0, currentHp / maxH))
-    if ratio > 0 then
-        if ratio > 0.5 then
-            love.graphics.setColor(UI.COLORS.hpGreen)
-        elseif ratio > 0.25 then
-            love.graphics.setColor(UI.COLORS.goldYellow)
-        else
-            love.graphics.setColor(UI.COLORS.hpRed)
-        end
-        UI.drawRoundedRect("fill", x, y, w * ratio, h, 6)
-    end
-
-    -- Border
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(0.35, 0.45, 0.5, 1)
-    UI.drawRoundedRect("line", x, y, w, h, 6)
-
-    -- HP Text inside bar
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(1, 1, 1, 1)
-    local hpText = currentHp .. " / " .. maxHp .. " HP"
-    local tw = UI.fonts.small:getWidth(hpText)
-    love.graphics.print(hpText, x + (w - tw) / 2, y + (h - 16) / 2)
-end
-
-function UI.drawPlayerHpBar(x, y, w, h, currentHp, maxHp, shield)
-    currentHp = math.max(0, currentHp or 100)
-    maxHp = maxHp or 100
-    shield = shield or 0
-
-    -- Background
-    love.graphics.setColor(0.1, 0.13, 0.16, 0.95)
-    UI.drawRoundedRect("fill", x, y, w, h, 6)
-
-    -- Fill bar
-    local pct = math.min(1.0, math.max(0.0, currentHp / maxHp))
-    local fillW = math.floor((w - 4) * pct)
-    if fillW > 0 then
-        if pct > 0.5 then
-            love.graphics.setColor(0.2, 0.8, 0.4, 0.95)
-        elseif pct > 0.25 then
-            love.graphics.setColor(0.95, 0.8, 0.2, 0.95)
-        else
-            love.graphics.setColor(0.85, 0.2, 0.2, 0.95)
-        end
-        UI.drawRoundedRect("fill", x + 2, y + 2, fillW, h - 4, 4)
-    end
-
-    -- Border
-    love.graphics.setColor(0.3, 0.4, 0.48, 1)
-    love.graphics.setLineWidth(1.5)
-    UI.drawRoundedRect("line", x, y, w, h, 6)
-
-    -- Text
-    local heartImg = UI.getButtonImage("icon_top_heart")
-    if heartImg then
-        local hw, hh = heartImg:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(heartImg, x + 6, y + (h - 20) / 2, 0, 20 / hw, 20 / hh)
-    end
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(1, 1, 1, 1)
-    local hpText = "MÁU: " .. currentHp .. " / " .. maxHp .. " HP"
-    if shield > 0 then
-        hpText = hpText .. " (GIÁP: +" .. shield .. ")"
-    end
-    local tw = UI.fonts.small:getWidth(hpText)
-    local startX = heartImg and (x + 28 + (w - 28 - tw) / 2) or (x + (w - tw) / 2)
-    love.graphics.print(hpText, startX, y + (h - 16) / 2)
-end
-
--- Format numbers with commas (e.g. 1,234,567) or scientific e-notation (e.g. 1.234e12)
 function UI.formatNumber(num)
     if not num then return "0" end
     local absVal = math.abs(num)
@@ -1450,6 +1214,55 @@ function UI.calculateTilt(mx, my, cx, cy, w, h)
     local normX = math.max(-1, math.min(1, (mx - cardCenterX) / ((w or 100) * 0.5)))
     local normY = math.max(-1, math.min(1, (my - cardCenterY) / ((h or 140) * 0.5)))
     return normX, normY
+end
+
+-- Shared procedural UI theme. Kept behind the existing public API so menu,
+-- shop and battle hitboxes continue to use the same interaction code.
+UI.theme = Theme
+UI.components = {
+    Panel = Panel,
+    Button = Button,
+    Slot = Slot,
+    HealthBar = HealthBar,
+    ProgressBar = require("ui.components.progress_bar"),
+    StatBox = require("ui.components.stat_box"),
+    TopHUD = require("ui.components.top_hud"),
+    EnemyPanel = require("ui.components.enemy_panel"),
+    HandInfoPanel = require("ui.components.hand_info_panel"),
+    SPMPanel = require("ui.components.spm_panel"),
+    ConsumablePanel = require("ui.components.consumable_panel"),
+    DeckCounter = require("ui.components.deck_counter"),
+    Tooltip = require("ui.components.tooltip"),
+    TabButton = require("ui.components.tab_button"),
+    SortButton = require("ui.components.sort_button"),
+    IconButton = require("ui.components.icon_button"),
+}
+
+function UI.drawGildedPanel(x, y, w, h, accent)
+    Panel.draw(x, y, w, h, { accent = accent or Theme.colors.gold })
+end
+
+function UI.drawButton(btn, isHovered, isPressed)
+    Button.draw(btn, btn.disabled and "disabled" or isPressed and "pressed" or isHovered and "hover"
+        or btn.selected and "selected" or "normal", UI.fonts)
+end
+
+function UI.drawSlot(state, family, x, y, w, h)
+    Slot.draw(x, y, w, h, state, {
+        variant = family == "consumable" and "green" or "gold",
+        font = family == "consumable" and UI.fonts.small or UI.fonts.medium,
+        label = family == "consumable" and "Trống" or "+",
+    })
+    return true
+end
+
+function UI.drawMonsterHpBar(x, y, w, h, currentHp, maxHp)
+    HealthBar.draw(x, y, w, h, currentHp, maxHp, { variant = "red", font = UI.fonts.small })
+end
+
+function UI.drawPlayerHpBar(x, y, w, h, currentHp, maxHp)
+    HealthBar.draw(x, y, w, h, currentHp, maxHp, { variant = "green", font = UI.fonts.small,
+        label = "MÁU  " .. tostring(currentHp) .. " / " .. tostring(maxHp) .. " HP" })
 end
 
 return UI

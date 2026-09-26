@@ -3378,22 +3378,15 @@ getHandCardPosition = function(index, totalCards)
 end
 
 local function drawBattleHud(m, mx, my)
-    UI.components.TopHUD.draw({
+    local hudButtons = UI.components.TopHUD.draw({
         ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.blindIndex) or game.round or 1,
         enemyName = m and (m.isBoss or m.isElite) and m.name or "Tiểu Yêu",
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
         discards = game.discardsRemaining or 0,
-    }, UI.fonts)
-    for _, btn in ipairs({
-        {id = "open_handbook", text = "TRẬN", x = 805, y = 19, w = 82, h = 33, font = UI.fonts.tiny, variant = "cyan"},
-        {id = "open_deck_viewer", text = "BỘ BÀI", x = 896, y = 19, w = 93, h = 33, font = UI.fonts.tiny, variant = "gold"},
-    }) do
-        table.insert(buttons, btn)
-        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
-            juice.buttonPressedId == btn.id)
-    end
+    }, UI.fonts, mx, my, juice.buttonPressedId)
+    for _, btn in ipairs(hudButtons) do table.insert(buttons, btn) end
 end
 
 local function drawBattleEnemy(m)
@@ -7292,7 +7285,7 @@ function love.draw()
     end
 
     -- In-game sleek Pause / Menu button at top right
-    if state ~= "menu" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
+    if state ~= "menu" and state ~= "playing" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
         local mx, my = toVirtual(love.mouse.getPosition())
         local btnMenu = {
             id = "open_pause_menu",

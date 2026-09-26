@@ -130,6 +130,18 @@ function UI.initFonts()
     UI.fonts.huge = loadFont(48)
     UI.fonts.logo = loadFont(92)
 
+    local function loadHudFont(size)
+        for _, path in ipairs({"C:/Windows/Fonts/georgiab.ttf", "C:/Windows/Fonts/georgia.ttf"}) do
+            local ok, font = pcall(love.graphics.newFont, path, size)
+            if ok and font then return font end
+        end
+        return loadFont(size)
+    end
+    UI.fonts.hudTitle = loadHudFont(18)
+    UI.fonts.hudStat = loadHudFont(18)
+    UI.fonts.hudButton = loadHudFont(18)
+    UI.fonts.hudSmall = loadHudFont(16)
+
     local function loadInfoFont(size)
         local ok, font = pcall(love.graphics.newFont, "fonts/font.ttf", size)
         if ok and font then return font end

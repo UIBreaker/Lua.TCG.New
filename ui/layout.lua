@@ -8,7 +8,7 @@ function Layout.scale(windowWidth, windowHeight)
 end
 
 Layout.battle = {
-    hud = {10, 8, 1260, 55},
+    hud = {55, 5, 1170, 65},
     hand = {12, 76, 222, 615},
     spm = {1028, 73, 239, 248},
     consumables = {1028, 326, 239, 146},

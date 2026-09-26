@@ -24,7 +24,7 @@ function Gallery.draw(fonts, mouseX, mouseY)
     love.graphics.rectangle("fill", 0, 0, 1280, 720)
     TopHUD.draw({ante = 1, round = 1, enemyName = "Tiểu Yêu", hp = 82, maxHp = 100,
         gold = 76, hands = 3, maxHands = 3, discards = 3}, fonts)
-    local close = {text = "ĐÓNG", x = 1152, y = 20, w = 96, h = 31, variant = "red", font = fonts.tiny}
+    local close = {text = "ĐÓNG", x = 1152, y = 674, w = 96, h = 31, variant = "red", font = fonts.tiny}
     local closeOver = mouseX >= close.x and mouseX <= close.x + close.w
         and mouseY >= close.y and mouseY <= close.y + close.h
     Button.draw(close, closeOver and love.mouse.isDown(1) and "pressed"

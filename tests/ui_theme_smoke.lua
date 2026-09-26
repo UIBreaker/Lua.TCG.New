@@ -1,6 +1,6 @@
 package.path = "./?.lua;./?/init.lua;" .. package.path
 
-local draws = 0
+local draws, imageDraws = 0, 0
 local font = {
     getHeight = function() return 16 end,
     getWidth = function(_, text) return #tostring(text) * 8 end,
@@ -16,7 +16,7 @@ local font = {
 }
 local fonts = {tiny = font, small = font, regular = font, medium = font, large = font}
 local g = {}
-for _, name in ipairs({"push", "pop", "setColor", "setLineWidth", "line", "polygon", "setFont"}) do
+for _, name in ipairs({"push", "pop", "setColor", "setLineWidth", "setBlendMode", "line", "polygon", "setFont"}) do
     g[name] = function() end
 end
 function g.getFont() return font end
@@ -26,7 +26,8 @@ function g.newImage(path)
     return {setFilter = function() end, getDimensions = function() return width, height end}
 end
 function g.newQuad(x, y, w, h, sw, sh) return {x, y, w, h, sw, sh} end
-function g.draw(_, quad, _, _, _, sx, sy)
+function g.draw(image, quad, _, _, _, sx, sy)
+    if image == menuImage then imageDraws = imageDraws + 1 end
     if type(quad) == "table" then
         assert(sx > 0 and sx <= 1 and sy > 0 and sy <= 1, "sprite quad scaled by source pixels instead of target size")
     end
@@ -41,6 +42,7 @@ function g.rectangle(_, x, y, w, h)
     draws = draws + 1
 end
 love = {graphics = g, mouse = {isDown = function() return false end}}
+menuImage = {getDimensions = function() return 1465, 253 end}
 
 local Layout = require("ui.layout")
 local Gallery = require("ui.gallery")
@@ -77,6 +79,9 @@ for _, state in ipairs({"normal", "hover", "pressed", "disabled", "selected"}) d
         disabled = state == "disabled", selected = state == "selected"}
     UI.drawButton(btn, state == "hover", state == "pressed")
 end
+UI.drawButton({text = "VÀO TRẬN", sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", menuStyle = true,
+    menuAccent = {0.55, 0.81, 1, 1}, backgroundImage = menuImage, x = 100, y = 300, w = 426, h = 74}, true)
+assert(imageDraws == 2, "menu asset button should draw a hover glow and its original frame")
 UI.drawGildedPanel(300, 450, 200, 100)
 UI.drawSlot("selected", "spm", 520, 450, 60, 80)
 UI.drawPlayerHpBar(600, 450, 200, 26, 80, 100)

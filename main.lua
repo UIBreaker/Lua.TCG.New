@@ -2770,45 +2770,6 @@ local function drawMainMenu()
     g.setColor(UI.COLORS.textLight)
     g.print("ROGUELIKE POKER TCG", 78, 194)
 
-    local px, py, pw, ph = 62, 225, 300, 322
-    local profileFrame = UI.getButtonImage("menu_profile_frame")
-    if profileFrame then
-        local fw, fh = profileFrame:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(profileFrame, px, py, 0, pw / fw, ph / fh)
-    else
-        UI.drawGildedPanel(px, py, pw, ph)
-    end
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.goldYellow)
-    g.print("HỒ SƠ KẺ THÁCH ĐẤU", px + 22, py + 42)
-    g.setFont(UI.fonts.large)
-    g.setColor(UI.COLORS.textLight)
-    g.print("Nhatnam", px + 22, py + 66)
-    g.setFont(UI.fonts.tiny)
-    g.setColor(0.8, 0.59, 0.9, 1)
-    g.print(hasRunStarted and "HÀNH TRÌNH ĐANG DIỄN RA" or "SẴN SÀNG KHÁM PHÁ", px + 22, py + 98)
-
-    local rows = {
-        { "Ải hiện tại", hasRunStarted and ("Ải " .. tostring((game.run and game.run.ante) or game.act or 1)) or "Chưa bắt đầu" },
-        { "Tiền vàng", tostring(game.gold or 0) },
-        { "SPM đang mang", tostring(Deities.getCount(game.deities)) .. "/" .. tostring(Deities.getMaxSlots(game)) },
-        { "Lá trong bộ bài", tostring(#(game.persistentDeck or {})) },
-        { "Tay bài tối đa", tostring(game.maxHandSize or 3) },
-    }
-    g.setFont(UI.fonts.small)
-    for i, row in ipairs(rows) do
-        local ry = py + 135 + (i - 1) * 32
-        g.setColor(UI.COLORS.textLight)
-        g.print(row[1], px + 22, ry)
-        g.setColor(UI.COLORS.goldYellow)
-        g.printf(row[2], px + 22, ry, pw - 44, "right")
-        if i < #rows then
-            g.setColor(0.72, 0.60, 0.39, 0.22)
-            g.line(px + 22, ry + 24, px + pw - 22, ry + 24)
-        end
-    end
-
     local menuItems = {
         { id = "menu_play", text = hasRunStarted and "TIẾP TỤC" or "VÀO TRẬN",
             sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", color = { 0.05, 0.26, 0.49, 1 },
@@ -2826,9 +2787,9 @@ local function drawMainMenu()
     for i, item in ipairs(menuItems) do
         local btn = {
             id = item.id, text = item.text, sub = item.sub, icon = item.icon,
-            x = 808, y = 234 + (i - 1) * 91, w = 426, h = 78,
+            x = 808, y = 234 + (i - 1) * 91, w = 426, h = 74,
             color = item.color, menuAccent = item.menuAccent, menuStyle = true,
-            font = UI.fonts.large, assetId = item.assetId,
+            font = UI.fonts.large, backgroundImage = UI.getButtonImage(item.assetId),
         }
         table.insert(buttons, btn)
         UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,

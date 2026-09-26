@@ -1592,6 +1592,7 @@ function love.resize(w, h)
 end
 
 function love.update(dt)
+    Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     monsterMotion.attack = math.max(0, monsterMotion.attack - dt)
     monsterMotion.hit = math.max(0, monsterMotion.hit - dt)
     if game and game.monster then

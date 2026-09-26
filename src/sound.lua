@@ -4,6 +4,8 @@ local sounds = {}
 local enabled = true
 local activeVoices = {}
 local lastPlayed = {}
+local menuMusic
+local menuMusicLoadAttempted = false
 local MAX_VOICES = 18
 local gain = {
     ui_hover = 0.26, ui_click = 0.48,
@@ -285,6 +287,28 @@ end
 
 function Sound.getVolume()
     return masterVolume
+end
+
+function Sound.setMenuMusicEnabled(shouldPlay)
+    if not love or not love.audio or not love.audio.newSource then return false end
+    if not shouldPlay then
+        if menuMusic and menuMusic:isPlaying() then menuMusic:stop() end
+        return true
+    end
+    if not menuMusic and not menuMusicLoadAttempted then
+        menuMusicLoadAttempted = true
+        local ok, source = pcall(love.audio.newSource, "assets/audio/menu_theme.mp3", "stream")
+        if ok then
+            menuMusic = source
+            menuMusic:setLooping(true)
+            menuMusic:setVolume(0.38)
+        else
+            print("[Sound] Menu music could not be loaded: " .. tostring(source))
+        end
+    end
+    if not menuMusic then return false end
+    if not menuMusic:isPlaying() then return pcall(menuMusic.play, menuMusic) end
+    return true
 end
 
 function Sound.has(name)

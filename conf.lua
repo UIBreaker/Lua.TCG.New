@@ -24,4 +24,5 @@ function love.conf(t)
     t.modules.timer = true
     t.modules.window = true
     t.modules.system = true
+    t.modules.video = true
 end

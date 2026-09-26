@@ -207,7 +207,10 @@ local monsterMotion = { attack = 0, hit = 0 }
 
 local function getDeitySlotRect(i, currentState)
     currentState = currentState or state
-    if currentState == "playing" or currentState == "scoring" or currentState == "shop" then
+    if currentState == "playing" or currentState == "scoring" then
+        local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+        return Layout.fanCardRect(Layout.battle.spm, i, maxSlots)
+    elseif currentState == "shop" then
         local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
         if maxSlots > 6 then
             local column = (i - 1) % 4
@@ -271,7 +274,7 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             local ttH = 92
             local ttX = math.min(V_WIDTH - ttW - 10, math.max(10, cx - 40))
             local ttY = cy + conSlotH + 8
-            UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
+        UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
                 UI.truncateUtf8(c.desc or "", 90), UI.fonts, "green")
         end
     else
@@ -286,6 +289,62 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             love.graphics.setColor(0.32, 0.36, 0.42, 0.5)
             love.graphics.printf("Trống", cx, cy + conSlotH / 2 - 10, conSlotW, "center")
         end
+    end
+end
+
+local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, isTopHovered)
+    if not c then return end
+    local g = love.graphics
+    local hovered = isTopHovered == true
+    local drawY = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + index * 0.9) * 1.5
+    if hovered then drawY = drawY - 2 end
+    local accent = c.color or UI.COLORS.hpGreen
+    local scale = hovered and 1.04 or 1
+
+    g.push("all")
+    g.translate(cx + cardW / 2, drawY + cardH / 2)
+    g.scale(scale)
+    g.translate(-cardW / 2, -cardH / 2)
+    g.setColor(0, 0, 0, 0.45)
+    UI.drawRoundedRect("fill", 3, 4, cardW, cardH, 6)
+    g.setColor(0.055, 0.085, 0.09, 0.98)
+    UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 6)
+    g.setColor(accent[1], accent[2], accent[3], hovered and 0.3 or 0.14)
+    UI.drawRoundedRect("fill", 3, 3, cardW - 6, 30, 4)
+    g.setColor(accent)
+    g.setLineWidth(hovered and 2 or 1.25)
+    UI.drawRoundedRect("line", 0.5, 0.5, cardW - 1, cardH - 1, 6)
+    g.setFont(UI.fonts.medium)
+    g.setColor(1, 1, 1, 1)
+    g.printf(c.icon or "✦", 3, 6, cardW - 6, "center")
+    g.setFont(UI.fonts.tiny)
+    g.setColor(UI.COLORS.textLight)
+    g.printf(UI.truncateUtf8(c.name or "Thẻ phép", 7), 5, 39, cardW - 10, "center")
+
+    local buttonW = math.min(54, cardW - 16)
+    local button = {
+        id = "use_consumable_" .. index,
+        text = "DÙNG",
+        x = cx + (cardW - buttonW) / 2,
+        y = drawY + cardH - 24,
+        w = buttonW,
+        h = 18,
+        color = UI.COLORS.btnPlay,
+        font = UI.fonts.tiny,
+        consumableIndex = index,
+    }
+    g.pop()
+    table.insert(buttons, button)
+    UI.drawButton(button,
+        mx >= button.x and mx <= button.x + button.w and my >= button.y and my <= button.y + button.h,
+        juice and juice.buttonPressedId == button.id)
+
+    if hovered and my < button.y then
+        local ttW, ttH = 210, 92
+        local ttX = math.max(10, cx - ttW - 8)
+        local ttY = math.max(10, cy - ttH - 8)
+        UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
+            UI.truncateUtf8(c.desc or "", 90), UI.fonts, "green")
     end
 end
 
@@ -386,8 +445,8 @@ end
 
 local function getConsumableSlotRect(i, currentState)
     if currentState == "playing" or currentState == "scoring" then
-        local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-        return 1042 + (i - 1) * 72, maxSlots > 8 and 416 or 358, 64, 88
+        local total = math.max(3, game and game.consumables and #game.consumables or 0)
+        return Layout.fanCardRect(Layout.battle.consumables, i, total)
     elseif currentState == "shop" then
         return 1042 + (i - 1) * 72, 358, 64, 88
     end
@@ -1567,6 +1626,15 @@ function love.load()
             end
         end
     end
+    local menuVideoPath = "assets/scene/menu_background.ogv"
+    if love.filesystem.getInfo(menuVideoPath) then
+        local ok, video = pcall(love.graphics.newVideo, menuVideoPath, { audio = false })
+        if ok then
+            battleArt.menuVideo = video
+            UI.menuBackgroundVideo = video
+            video:play()
+        end
+    end
     settings = Persistence.loadSettings(settings)
     Sound.init()
     Sound.setVolume(settings.sfxVolume)
@@ -2742,16 +2810,30 @@ end
 -- DRAW FUNCTIONS
 --------------------------------------------------------------------------------
 
+local function drawMenuBackground()
+    local g = love.graphics
+    local video = battleArt.menuVideo
+    g.setColor(1, 1, 1, 1)
+    if video then
+        local width, height = video:getDimensions()
+        if width > 0 and height > 0 then
+            local scale = math.max(V_WIDTH / width, V_HEIGHT / height)
+            g.draw(video, (V_WIDTH - width * scale) / 2, (V_HEIGHT - height * scale) / 2, 0, scale, scale)
+            return
+        end
+    end
+    if battleArt.menuWorld then
+        local width, height = battleArt.menuWorld:getDimensions()
+        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / width, V_HEIGHT / height)
+    end
+end
+
 local function drawMainMenu()
     local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    if battleArt.menuWorld then
-        local bw, bh = battleArt.menuWorld:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    end
+    drawMenuBackground()
     g.setColor(0.01, 0.02, 0.05, 0.18)
     g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
@@ -2766,10 +2848,10 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
-    g.setFont(UI.fonts.tiny)
-    g.setColor(UI.COLORS.textLight)
-    g.print("ROGUELIKE POKER TCG", 78, 194)
+    -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
+    -- g.setFont(UI.fonts.tiny)
+    -- g.setColor(UI.COLORS.textLight)
+    -- g.print("ROGUELIKE POKER TCG", 78, 194)
 
     local menuItems = {
         { id = "menu_play", text = hasRunStarted and "TIẾP TỤC" or "VÀO TRẬN",
@@ -2821,11 +2903,7 @@ local function drawCollectionModal()
     local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
-    if battleArt.menuWorld then
-        local bw, bh = battleArt.menuWorld:getDimensions()
-        g.setColor(1, 1, 1, 1)
-        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    end
+    drawMenuBackground()
     g.setColor(0.01, 0.02, 0.04, 0.78)
     g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
     UI.drawGildedPanel(60, 34, 1160, 640)
@@ -2878,11 +2956,7 @@ local function drawCollectionDetailView()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    if battleArt.menuWorld then
-        local bw, bh = battleArt.menuWorld:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    end
+    drawMenuBackground()
     love.graphics.setColor(0.01, 0.02, 0.04, 0.84)
     love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
@@ -3241,11 +3315,7 @@ end
 
 local function drawStarterDeckSelect()
     local winW, winH = love.graphics.getDimensions()
-    if battleArt.menuWorld then
-        local bw, bh = battleArt.menuWorld:getDimensions()
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    end
+    drawMenuBackground()
     love.graphics.setColor(0.01, 0.02, 0.04, 0.74)
     love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
     local mx, my = toVirtual(love.mouse.getPosition())
@@ -3438,10 +3508,12 @@ local function drawPlayingState()
     drawBattleInfoPanel(m, eval, scPreview)
     local curDeiCount = Deities.getCount(game.deities)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    UI.components.SPMPanel.draw(curDeiCount, maxDeiSlots, UI.fonts)
+    UI.components.SPMPanel.draw(curDeiCount, maxDeiSlots, UI.fonts, UI.getPanelImage("spm_row_frame_v1"))
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
-    UI.components.ConsumablePanel.draw(conCount, 3, UI.fonts, maxDeiSlots)
+    local maxConsumableSlots = math.max(3, conCount)
+    UI.components.ConsumablePanel.draw(conCount, 3, UI.fonts, maxDeiSlots,
+        UI.getPanelImage("consumable_row_frame_v1"))
 
     -- 2. RIGHT RAIL: SPM & CONSUMABLES
     ----------------------------------------------------------------------------
@@ -3451,11 +3523,17 @@ local function drawPlayingState()
     -- Deities Section
     -- Heading is owned by the reusable SPMPanel.
 
-    local deitySlotW = 64
-    local deitySlotH = 88
-    local deityGap = 14
-    local deityY = 112
-
+    local hoveredDeityIndex = nil
+    if not (deityDrag.active and deityDrag.isDragging) then
+        for i = maxDeiSlots, 1, -1 do
+            local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
+            local d = game.deities and game.deities[i]
+            if d and mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh then
+                hoveredDeityIndex = i
+                break
+            end
+        end
+    end
     for i = 1, maxDeiSlots do
         local dx, deityY, deitySlotW, deitySlotH = getDeitySlotRect(i, "playing")
         local d = game.deities and game.deities[i]
@@ -3464,20 +3542,16 @@ local function drawPlayingState()
         local isDropTarget = (deityDrag.active and deityDrag.isDragging and isHoveredSlot and deityDrag.deityIndex ~= i)
 
         if isDraggedSource then
-            -- Keep the source slot art visible while identifying the drag origin.
-            UI.drawSlot("empty", "spm", dx, deityY, deitySlotW, deitySlotH)
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.printf("Vị trí cũ", dx + 4, deityY + deitySlotH / 2 - 6, deitySlotW - 8, "center")
+            -- The moving card is rendered by the shared drag preview.
         elseif d then
-            UI.components.Slot.draw(dx, deityY, deitySlotW, deitySlotH, "occupied", {variant = "gold"})
-            if isHoveredSlot and not (deityDrag.active and deityDrag.isDragging) then
+            local isHoveredCard = hoveredDeityIndex == i
+            if isHoveredCard then
                 hoveredDeityTooltip = d
                 d.slotIndex = i
             end
 
             -- Slot bounce effect
-            local bScale = anim.deityBounce and anim.deityBounce[i] or 1.0
+            local bScale = math.min(1.02, anim.deityBounce and anim.deityBounce[i] or 1.0)
             love.graphics.push()
             local deityFloat = math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2
             love.graphics.translate(dx + deitySlotW / 2, deityY + deitySlotH / 2 + deityFloat)
@@ -3488,48 +3562,31 @@ local function drawPlayingState()
             love.graphics.translate(-dx - deitySlotW / 2, -deityY - deitySlotH / 2)
 
             local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
-            UI.drawPatronCard(d, dx, deityY, deitySlotW, deitySlotH, isHoveredSlot, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            UI.drawPatronCard(d, dx, deityY, deitySlotW, deitySlotH, isHoveredCard,
+                juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
             love.graphics.pop()
-        else
-            -- Empty Tarot Slot
-            local slotState = isDropTarget and "selected" or (isHoveredSlot and "hover" or "empty")
-            if UI.drawSlot(slotState, "spm", dx, deityY, deitySlotW, deitySlotH) then
-                if isDropTarget then
-                    love.graphics.setFont(UI.fonts.tiny)
-                    love.graphics.setColor(UI.COLORS.hpGreen)
-                    love.graphics.printf("THẢ VÀO\nĐÂY", dx + 4, deityY + deitySlotH / 2 - 14, deitySlotW - 8, "center")
-                end
-            else
-                love.graphics.setColor(0.09, 0.11, 0.13, isDropTarget and 0.85 or 0.6)
-                UI.drawRoundedRect("fill", dx, deityY, deitySlotW, deitySlotH, 6)
-                love.graphics.setLineWidth(isDropTarget and 2.5 or 1)
-                love.graphics.setColor(isDropTarget and UI.COLORS.hpGreen or { 0.25, 0.28, 0.35, 0.5 })
-                UI.drawRoundedRect("line", dx, deityY, deitySlotW, deitySlotH, 6)
-
-                if isDropTarget then
-                    love.graphics.setFont(UI.fonts.tiny)
-                    love.graphics.setColor(UI.COLORS.hpGreen)
-                    love.graphics.printf("THẢ VÀO\nĐÂY", dx + 4, deityY + deitySlotH / 2 - 14, deitySlotW - 8, "center")
-                else
-                    love.graphics.setFont(UI.fonts.large)
-                    love.graphics.setColor(0.28, 0.32, 0.38, 0.5)
-                    love.graphics.printf("+", dx, deityY + deitySlotH / 2 - 18, deitySlotW, "center")
-                end
-            end
+        elseif isDropTarget then
+            UI.drawSlot("selected", "spm", dx, deityY, deitySlotW, deitySlotH)
         end
     end
 
     -- Consumables Section (0/3)
-    local conStartX = 1042
-    -- Heading is owned by the reusable ConsumablePanel.
-
-    local conSlotW = 64
-    local conSlotH = 88
-    local conGap = 14
-    for j = 1, 3 do
+    -- Empty capacity is intentionally invisible; occupied cards share one fan row.
+    local hoveredConsumableIndex = nil
+    for j = maxConsumableSlots, 1, -1 do
         local cx, cy = getConsumableSlotRect(j, "playing")
         local c = game.consumables[j]
-        drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
+        if c and mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
+            hoveredConsumableIndex = j
+            break
+        end
+    end
+    for j = 1, maxConsumableSlots do
+        local cx, cy, cardW, cardH = getConsumableSlotRect(j, "playing")
+        local c = game.consumables[j]
+        if c then
+            drawBattleConsumableCard(c, cx, cy, cardW, cardH, j, mx, my, j == hoveredConsumableIndex)
+        end
     end
 
     ----------------------------------------------------------------------------
@@ -7145,6 +7202,16 @@ local function drawGameOverState()
 end
 
 function love.draw()
+    if UI.menuBackgroundVideo then
+        if state == "menu" then
+            if not UI.menuBackgroundVideo:isPlaying() then
+                UI.menuBackgroundVideo:rewind()
+                UI.menuBackgroundVideo:play()
+            end
+        elseif UI.menuBackgroundVideo:isPlaying() then
+            UI.menuBackgroundVideo:pause()
+        end
+    end
     if love.mouse and love.mouse.getPosition then
         local rawMx, rawMy = love.mouse.getPosition()
         UI.virtualMouseX, UI.virtualMouseY = toVirtual(rawMx, rawMy)
@@ -7388,7 +7455,8 @@ local function handlePlayingMousepressed(mx, my, button)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
 
     -- Check Consumable slots (clicking anywhere on the slot card in combat/blind)
-    for j = 1, 3 do
+    local maxConsumableSlots = math.max(3, game.consumables and #game.consumables or 0)
+    for j = maxConsumableSlots, 1, -1 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "playing")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
             if game.consumables and game.consumables[j] then
@@ -7399,7 +7467,7 @@ local function handlePlayingMousepressed(mx, my, button)
     end
 
     -- Check Deity Slots in Top Bar for Drag & Drop Reordering
-    for i = 1, maxDeiSlots do
+    for i = maxDeiSlots, 1, -1 do
         local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
         if mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh then
             if game.deities and game.deities[i] then
@@ -9135,11 +9203,28 @@ function love.mousereleased(x, y, button)
             local srcSlot = deityDrag.deityIndex
             local foundDest = nil
             local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-            for i = 1, maxDeiSlots do
+            local first, last, step = 1, maxDeiSlots, 1
+            if state == "playing" or state == "scoring" then
+                first, last, step = maxDeiSlots, 1, -1
+            end
+            -- Prefer the visually exposed cards; only use an invisible empty
+            -- destination when the pointer is outside every occupied card.
+            for i = first, last, step do
                 local sx, sy, sw, sh = getDeitySlotRect(i, state)
-                if mx >= sx - 10 and mx <= sx + sw + 10 and my >= sy - 10 and my <= sy + sh + 10 then
+                if game.deities[i] and mx >= sx - 10 and mx <= sx + sw + 10
+                    and my >= sy - 10 and my <= sy + sh + 10 then
                     foundDest = i
                     break
+                end
+            end
+            if not foundDest then
+                for i = first, last, step do
+                    local sx, sy, sw, sh = getDeitySlotRect(i, state)
+                    if not game.deities[i] and mx >= sx - 10 and mx <= sx + sw + 10
+                        and my >= sy - 10 and my <= sy + sh + 10 then
+                        foundDest = i
+                        break
+                    end
                 end
             end
             if foundDest and foundDest ~= srcSlot then

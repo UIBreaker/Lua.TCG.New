@@ -893,6 +893,28 @@ end
 
 -- Cache and loader for authentic dark fantasy UI button artwork (from Image 3)
 UI.buttonImages = UI.buttonImages or {}
+UI.panelImages = UI.panelImages or {}
+
+function UI.getPanelImage(panelKey)
+    if not panelKey then return nil end
+    if UI.panelImages[panelKey] ~= nil then
+        return UI.panelImages[panelKey] or nil
+    end
+    local path = "assets/ui/generated/panels/" .. panelKey .. ".png"
+    if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
+        local okInfo, info = pcall(love.filesystem.getInfo, path)
+        if okInfo and info then
+            local okImage, image = pcall(love.graphics.newImage, path)
+            if okImage and image then
+                if image.setFilter then image:setFilter("linear", "linear") end
+                UI.panelImages[panelKey] = image
+                return image
+            end
+        end
+    end
+    UI.panelImages[panelKey] = false
+    return nil
+end
 
 function UI.getButtonImage(buttonKey)
     if not buttonKey then return nil end
@@ -1046,8 +1068,9 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     UI.drawRoundedRect("line", 0, 0, w, h, 5)
     g.setFont(UI.fonts.tiny)
     g.setColor(UI.COLORS.textLight)
-    local name = w < 75 and UI.truncateUtf8(d.name or "SPM", 9) or (d.name or "SPM")
-    g.printf(UI.toUpperUtf8(name), 5, 8, w - 10, "center")
+    local name = UI.toUpperUtf8(d.name or "SPM")
+    local maxNameChars = math.max(4, math.floor((w - 10) / 7) - 3)
+    g.printf(UI.truncateUtf8(name, maxNameChars), 5, 8, w - 10, "center")
     g.setColor(rim[1], rim[2], rim[3], 0.16)
     g.circle("fill", w / 2, h * 0.55, w * 0.27)
     UI.drawRelicSigil(d.id, w / 2, h * 0.55, math.min(w * 0.38, h * 0.33), rim)

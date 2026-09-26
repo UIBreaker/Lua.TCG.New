@@ -1,11 +1,12 @@
 local Panel = require("ui.components.panel")
 local Theme = require("ui.theme")
 local Core = require("ui.components.core")
+local Layout = require("ui.layout")
 local ConsumablePanel = {}
-function ConsumablePanel.draw(count, maxCount, fonts, spmSlots)
-    local y = (spmSlots or 5) > 8 and 384 or 326
-    Panel.draw(1028, y, 239, 146, {variant = "green"})
-    Core.text("TIÊU HAO (" .. tostring(count) .. "/" .. tostring(maxCount) .. ")", 1044, y + 10,
-        205, fonts.small, Theme.colors.green)
+function ConsumablePanel.draw(count, maxCount, fonts, _, frameImage)
+    local rect = Layout.battle.consumables
+    Panel.draw(rect[1], rect[2], rect[3], rect[4], {variant = "green", image = frameImage})
+    Core.text("TIÊU HAO (" .. tostring(count) .. "/" .. tostring(maxCount) .. ")",
+        rect[1] + 16, rect[2] + 8, rect[3] - 32, fonts.small, Theme.colors.green)
 end
 return ConsumablePanel

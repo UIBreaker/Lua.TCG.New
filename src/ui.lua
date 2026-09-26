@@ -129,6 +129,20 @@ function UI.initFonts()
     UI.fonts.title = loadFont(36)
     UI.fonts.huge = loadFont(48)
     UI.fonts.logo = loadFont(92)
+
+    local function loadInfoFont(size)
+        local ok, font = pcall(love.graphics.newFont, "fonts/font.ttf", size)
+        if ok and font then return font end
+        return loadFont(size)
+    end
+    UI.fonts.info = {
+        detail = loadInfoFont(13),
+        label = loadInfoFont(15),
+        body = loadInfoFont(17),
+        title = loadInfoFont(21),
+        value = loadInfoFont(25),
+        aura = loadInfoFont(29),
+    }
 end
 
 function UI.drawRoundedRect(mode, x, y, w, h, r)

@@ -315,22 +315,59 @@ function UI.drawSuitSymbol(suit, cx, cy, size, customColor)
     love.graphics.pop()
 end
 
-function UI.drawCard(card, x, y, w, h)
+function UI.drawCard(card, x, y, w, h, isFloating)
     local g = love.graphics
     local rank = tostring(card.rankName or card.rank or "?")
+    local cardImage = not card.faceDown and UI.getCardImage(card.suit, card.rank or card.rankName)
     local red = card.suit == "hearts" or card.suit == "diamonds"
         or card.suit == "valoria" or card.suit == "aurelia"
     local accent = red and UI.COLORS.suitCrimson or UI.COLORS.suitObsidian
     local selected = card.selected == true
     local hovered = card.hovered == true
-    local s = card.visualScale or 1
+    local s = (card.visualScale or 1) * (isFloating and 1.08 or 1)
     g.push("all")
     g.translate(x + w / 2, y + h / 2)
     g.rotate(card.rotation or 0)
+    g.shear((card.tiltX or 0) * 0.035, (card.tiltY or 0) * 0.025)
     g.scale((card.scaleX or card.scale or 1) * s, (card.scaleY or card.scale or 1) * s)
     g.translate(-w / 2, -h / 2)
-    g.setColor(0, 0, 0, selected and 0.44 or 0.30)
-    UI.drawRoundedRect("fill", 4, selected and 11 or 6, w, h, 5)
+    g.setColor(0, 0, 0, isFloating and 0.56 or (selected and 0.44 or 0.30))
+    UI.drawRoundedRect("fill", 4, isFloating and 15 or (selected and 11 or 6), w, h, 5)
+    if cardImage then
+        local imageW, imageH = cardImage:getDimensions()
+        g.setColor(1, 1, 1, 1)
+        g.draw(cardImage, 0, 0, 0, w / imageW, h / imageH)
+        if selected or hovered then
+            g.setLineWidth(selected and 3 or 2)
+            g.setColor(selected and UI.COLORS.cardSelectedBorder or UI.COLORS.chipsBlue)
+            UI.drawRoundedRect("line", 0, 0, w, h, 5)
+        end
+        local slots = (Equipment and Equipment.MAX_SLOTS) or 3
+        for i = 1, slots do
+            local eq = card.equipments and card.equipments[i]
+            if eq then
+                local sx = w / 2 + (i - (slots + 1) / 2) * 15
+                g.setColor(eq.color or UI.COLORS.goldYellow)
+                g.polygon("fill", sx, 6, sx + 4, 10, sx, 14, sx - 4, 10)
+            end
+        end
+        if card.seal then
+            g.setColor(UI.COLORS.goldYellow)
+            g.circle("fill", w - 14, 16, 7)
+            g.setColor(UI.COLORS.textDark)
+            g.setFont(UI.fonts.tiny)
+            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 9, 14, "center")
+        end
+        if card.baseChips then
+            g.setColor(accent)
+            UI.drawRoundedRect("fill", 6, h - 26, 32, 19, 4)
+            g.setColor(UI.COLORS.textLight)
+            g.setFont(UI.fonts.tiny)
+            g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
+        end
+        g.pop()
+        return
+    end
     g.setColor(UI.COLORS.cardBg)
     UI.drawRoundedRect("fill", 0, 0, w, h, 5)
     g.setColor(1, 1, 1, 0.58)
@@ -584,6 +621,7 @@ end
 
 -- Cache and loader for authentic deity card artwork
 UI.deityImages = UI.deityImages or {}
+UI.deityImageIsSpnCard = UI.deityImageIsSpnCard or {}
 
 function UI.getDeityImage(deityId)
     if not deityId then return nil end
@@ -591,15 +629,26 @@ function UI.getDeityImage(deityId)
         return UI.deityImages[deityId] or nil
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
-        local path = "assets/deities/" .. deityId .. ".png"
+        local path = "assets/deities/spn/" .. deityId .. ".png"
         local okInfo, info = pcall(love.filesystem.getInfo, path)
+        local isSpnCard = okInfo and info ~= nil
+        if not isSpnCard then
+            path = "assets/deities/generated/" .. deityId .. ".png"
+            okInfo, info = pcall(love.filesystem.getInfo, path)
+        end
+        if not (okInfo and info) then
+            path = "assets/deities/" .. deityId .. ".png"
+            okInfo, info = pcall(love.filesystem.getInfo, path)
+        end
         if okInfo and info then
             local okImg, img = pcall(love.graphics.newImage, path)
             if okImg and img then
                 if img.setFilter then
-                    img:setFilter("nearest", "nearest")
+                    local filter = "linear"
+                    img:setFilter(filter, filter)
                 end
                 UI.deityImages[deityId] = img
+                UI.deityImageIsSpnCard[deityId] = isSpnCard
                 return img
             end
         end
@@ -879,7 +928,7 @@ function UI.getCardImage(suit, rank)
                 local okImg, img = pcall(love.graphics.newImage, path)
                 if okImg and img then
                     if img.setFilter then
-                        img:setFilter("nearest", "nearest")
+                        img:setFilter("linear", "linear")
                     end
                     UI.cardImages[key] = img
                     return img
@@ -959,11 +1008,11 @@ function UI.localizeText(value)
         :gsub("ANTE", "ẢI")
         :gsub("Ante", "Ải")
         :gsub("ante", "ải")
-        :gsub("HỘ LINH", "SPM")
-        :gsub("Hộ Linh", "SPM")
-        :gsub("hộ linh", "SPM")
-        :gsub("JOKER", "SPM")
-        :gsub("Joker", "SPM")
+        :gsub("HỘ LINH", "SPN")
+        :gsub("Hộ Linh", "SPN")
+        :gsub("hộ linh", "SPN")
+        :gsub("JOKER", "SPN")
+        :gsub("Joker", "SPN")
         :gsub("Straight Flush", "Thùng Phá Sảnh")
         :gsub("Four of a Kind", "Tứ Quý")
         :gsub("Full House", "Cù Lũ")
@@ -1050,6 +1099,9 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     if not d then return end
     w, h = w or 82, h or 118
     local g = love.graphics
+    local deityId = d.deityId or d.id
+    local deityImage = UI.getDeityImage(deityId)
+    local isSpnCard = deityImage and UI.deityImageIsSpnCard[deityId]
     local rim = d.rarity == "legendary" and UI.COLORS.goldYellow
         or (d.rarity == "rare" and UI.COLORS.chipsBlue or UI.COLORS.panelBorder)
     local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
@@ -1057,6 +1109,15 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     g.translate(x + w / 2, y + h / 2)
     g.scale(s)
     g.translate(-w / 2, -h / 2)
+    if isSpnCard then
+        local imageW, imageH = deityImage:getDimensions()
+        local imageScale = math.min(w / imageW, h / imageH)
+        local imageDrawW, imageDrawH = imageW * imageScale, imageH * imageScale
+        g.setColor(1, 1, 1, 1)
+        g.draw(deityImage, (w - imageDrawW) / 2, (h - imageDrawH) / 2, 0, imageScale, imageScale)
+        g.pop()
+        return
+    end
     g.setColor(0, 0, 0, 0.35)
     UI.drawRoundedRect("fill", 3, 5, w, h, 5)
     g.setColor(0.13, 0.18, 0.20, 0.98)
@@ -1066,28 +1127,23 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     g.setColor(rim)
     g.setLineWidth(isHovered and 2 or 1)
     UI.drawRoundedRect("line", 0, 0, w, h, 5)
-    g.setFont(UI.fonts.tiny)
-    g.setColor(UI.COLORS.textLight)
-    local name = UI.toUpperUtf8(d.name or "SPM")
-    local maxNameChars = math.max(4, math.floor((w - 10) / 7) - 3)
-    g.printf(UI.truncateUtf8(name, maxNameChars), 5, 8, w - 10, "center")
-    g.setColor(rim[1], rim[2], rim[3], 0.16)
-    g.circle("fill", w / 2, h * 0.55, w * 0.27)
-    UI.drawRelicSigil(d.id, w / 2, h * 0.55, math.min(w * 0.38, h * 0.33), rim)
-    g.setColor(rim)
-    g.polygon("fill", w / 2, h - 13, w / 2 + 4, h - 9, w / 2, h - 5, w / 2 - 4, h - 9)
-    if d.edition then
-        g.setFont(UI.fonts.tiny)
-        g.setColor(UI.COLORS.goldYellow)
-        local editionLabel = ({ negative = "NEG", polychrome = "POLY", holo = "HOLO", foil = "FOIL" })[d.edition] or d.edition
-        g.printf(UI.toUpperUtf8(editionLabel), 3, h - 26, w - 6, "center")
+    if deityImage then
+        local imageW, imageH = deityImage:getDimensions()
+        local imageY = 22
+        local imageHAvailable = h - imageY - 5
+        local imageScale = math.min((w - 10) / imageW, imageHAvailable / imageH)
+        local imageDrawW, imageDrawH = imageW * imageScale, imageH * imageScale
+        g.setColor(1, 1, 1, 1)
+        g.draw(deityImage, (w - imageDrawW) / 2, imageY + (imageHAvailable - imageDrawH) / 2, 0, imageScale, imageScale)
+    else
+        g.setColor(rim[1], rim[2], rim[3], 0.16)
+        g.circle("fill", w / 2, h * 0.55, w * 0.27)
+        UI.drawRelicSigil(d.id, w / 2, h * 0.55, math.min(w * 0.38, h * 0.33), rim)
     end
     if isDropTarget then
-        g.setColor(0.04, 0.08, 0.09, 0.86)
-        UI.drawRoundedRect("fill", 3, 3, w - 6, h - 6, 4)
-        g.setFont(UI.fonts.tiny)
+        g.setLineWidth(3)
         g.setColor(UI.COLORS.goldYellow)
-        g.printf("HOÁN ĐỔI", 3, h / 2 - 9, w - 6, "center")
+        UI.drawRoundedRect("line", 2, 2, w - 4, h - 4, 5)
     end
     g.pop()
 end

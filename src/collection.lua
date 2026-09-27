@@ -12,8 +12,8 @@ Collection.CATEGORIES = {
     -- Left Column
     {
         id = "jokers",
-        title = "Hộ Linh",
-        sub = "Hộ Linh",
+        title = "SPN",
+        sub = "SPN",
         col = "left",
         btnColor = { 0.58, 0.16, 0.14, 1 }, -- Dark Crimson / Reddish Brown
         badge = "25",
@@ -146,9 +146,10 @@ function Collection.getItems(category)
             table.insert(items, {
                 id = d.id or id,
                 name = d.name or "Thần Vô Danh",
-                subtitle = (d.suit and string.upper(d.suit) or "HỘ LINH") .. " • " .. string.upper(rarityName),
+                subtitle = (d.suit and string.upper(d.suit) or "SPN") .. " • " .. string.upper(rarityName),
                 rarity = rarityName,
                 cost = d.cost or 5,
+                showCost = true,
                 desc = (d.desc or "Hiệu ứng thần bài hộ mệnh") .. (d.lore and ("\n\n\"" .. d.lore .. "\"") or ""),
                 icon = "🃏",
                 color = (d.rarity == "legendary" and { 0.95, 0.82, 0.22, 1 }) or
@@ -295,6 +296,7 @@ function Collection.getItems(category)
             for index, reward in ipairs(Shop.getPackContents(pack.packType)) do
                 local item = {}
                 for key, value in pairs(reward) do item[key] = value end
+                if pack.packType == "buffoon" then item.deityId = reward.id end
                 item.id = "pack_content_" .. pack.packType .. "_" .. tostring(reward.id or (reward.suit or "item") .. "_" .. (reward.rank or index))
                 item.packType = pack.packType
                 item.sourcePackType = pack.packType

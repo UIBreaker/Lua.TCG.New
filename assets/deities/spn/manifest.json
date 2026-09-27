@@ -1,0 +1,15 @@
+{
+  "source": "codex-clipboard-4af488ea-1dbb-433b-acbb-efb2a06e3bdb.png; Song Đôi: codex-clipboard-bedd5c02-6eb0-4af3-bff9-12025685b42c.png",
+  "cropFormat": "[x, y, width, height] in source image; Song Đôi is polygon-masked to the card silhouette",
+  "cards": [
+    { "id": "spirit_pebble", "name": "Cổ Thạch", "file": "spirit_pebble.png", "crop": [12, 5, 342, 530] },
+    { "id": "spirit_crown", "name": "Huyết Vương", "file": "spirit_crown.png", "crop": [374, 5, 338, 530] },
+    { "id": "spirit_coin", "name": "Kim Tệ", "file": "spirit_coin.png", "crop": [734, 5, 342, 530] },
+    { "id": "spirit_blade", "name": "Kiếm Ảnh", "file": "spirit_blade.png", "crop": [1097, 5, 338, 530] },
+    { "id": "spirit_drum", "name": "Trống Lôi", "file": "spirit_drum.png", "crop": [12, 546, 342, 530] },
+    { "id": "spirit_ember", "name": "Tàn Hỏa", "file": "spirit_ember.png", "crop": [374, 546, 339, 530] },
+    { "id": "spirit_flush", "name": "Đồng Chất", "file": "spirit_flush.png", "crop": [734, 546, 341, 530] },
+    { "id": "spirit_straight", "name": "Lộ Kiếm", "file": "spirit_straight.png", "crop": [1097, 546, 338, 530] },
+    { "id": "spirit_pair", "name": "Song Đôi", "file": "spirit_pair.png", "crop": [392, 10, 752, 988], "mask": [[34, 3], [715, 3], [749, 35], [749, 952], [715, 985], [34, 985], [2, 952], [2, 35]] }
+  ]
+}

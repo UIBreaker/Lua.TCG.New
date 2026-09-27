@@ -4,33 +4,33 @@ local Deities = {}
 -- Đúng 9 Hộ Linh cơ bản, tất cả bậc C (Common), mỗi lá một hiệu ứng dễ đọc.
 Deities.CATALOG = {
     spirit_pebble = {
-        id = "spirit_pebble", name = "The Rock", rarity = "common", cost = 4,
+        id = "spirit_pebble", name = "Cổ Thạch", rarity = "common", cost = 4,
         desc = "+20 Chips cho mỗi tay bài",
-        lore = "Nhướng một bên mày, cộng Chips bằng cơ bắp.",
+        lore = "Cổ thạch trấn giữ linh lực bền bỉ qua từng lượt.",
         onHandScored = function() return { addChips = 20, message = "+20 Chips" } end,
     },
     spirit_ember = {
-        id = "spirit_ember", name = "This Is Fine", rarity = "common", cost = 4,
+        id = "spirit_ember", name = "Tàn Hỏa", rarity = "common", cost = 4,
         desc = "+4 Mult cho mỗi tay bài",
-        lore = "Mọi thứ đang cháy, nhưng Mult vẫn tăng đều.",
+        lore = "Đốm lửa cuối cùng vẫn âm ỉ bùng lên sức mạnh.",
         onHandScored = function() return { addMult = 4, message = "+4 Mult" } end,
     },
     spirit_blade = {
-        id = "spirit_blade", name = "Bonk Cheems", rarity = "common", cost = 4,
+        id = "spirit_blade", name = "Kiếm Ảnh", rarity = "common", cost = 4,
         desc = "Mỗi lá tạo Aura nhận +8 Chips",
-        lore = "Mỗi lá tạo Aura được Bonk thêm một phát.",
+        lore = "Lưỡi kiếm vô hình gia hộ từng lá bài được đánh ra.",
         onCardScored = function() return { addChips = 8, message = "+8 Chips" } end,
     },
     spirit_drum = {
-        id = "spirit_drum", name = "Bongo Cat", rarity = "common", cost = 4,
+        id = "spirit_drum", name = "Trống Lôi", rarity = "common", cost = 4,
         desc = "Mỗi lá tạo Aura nhận +1 Mult",
-        lore = "Mỗi lá chạm bàn là thêm một nhịp Mult.",
+        lore = "Tiếng trống sấm vang lên theo từng lá bài.",
         onCardScored = function() return { addMult = 1, message = "+1 Mult" } end,
     },
     spirit_pair = {
-        id = "spirit_pair", name = "Spider-Men", rarity = "common", cost = 4,
+        id = "spirit_pair", name = "Song Đôi", rarity = "common", cost = 4,
         desc = "+6 Mult khi đánh Đôi",
-        lore = "Hai lá giống nhau cùng chỉ: chính là hắn.",
+        lore = "Hai linh ảnh cộng hưởng khi một đôi xuất hiện.",
         onHandScored = function(hand)
             if hand and hand.type and hand.type.id == "pair" then
                 return { addMult = 6, message = "Đôi +6 Mult" }
@@ -38,9 +38,9 @@ Deities.CATALOG = {
         end,
     },
     spirit_straight = {
-        id = "spirit_straight", name = "Đường Tăng", rarity = "common", cost = 4,
+        id = "spirit_straight", name = "Lộ Kiếm", rarity = "common", cost = 4,
         desc = "+30 Chips khi đánh Sảnh",
-        lore = "Thỉnh kinh không vòng vo: cứ Sảnh thẳng mà đi.",
+        lore = "Kiếm khí mở đường thẳng qua mọi chướng ngại.",
         onHandScored = function(hand)
             if hand and hand.type and hand.type.id == "straight" then
                 return { addChips = 30, message = "Sảnh +30 Chips" }
@@ -48,9 +48,9 @@ Deities.CATALOG = {
         end,
     },
     spirit_flush = {
-        id = "spirit_flush", name = "Minion Đồng Phục", rarity = "common", cost = 4,
+        id = "spirit_flush", name = "Đồng Chất", rarity = "common", cost = 4,
         desc = "+5 Mult khi đánh Thùng",
-        lore = "Cả đội mặc cùng một chất, sức mạnh tăng đồng loạt.",
+        lore = "Những linh ấn cùng chất hợp thành một dòng sức mạnh.",
         onHandScored = function(hand)
             if hand and hand.type and hand.type.id == "flush" then
                 return { addMult = 5, message = "Thùng +5 Mult" }
@@ -58,9 +58,9 @@ Deities.CATALOG = {
         end,
     },
     spirit_crown = {
-        id = "spirit_crown", name = "Gigachad", rarity = "common", cost = 4,
+        id = "spirit_crown", name = "Huyết Vương", rarity = "common", cost = 4,
         desc = "Mỗi lá J, Q hoặc K tạo Aura nhận +15 Chips",
-        lore = "Chỉ J, Q, K mới đủ góc hàm để nhận thêm Chips.",
+        lore = "Vương miện cổ ban sức mạnh cho các bậc hoàng gia.",
         onCardScored = function(card)
             if card and card.rank and card.rank >= 11 and card.rank <= 13 then
                 return { addChips = 15, message = "Hoàng Gia +15 Chips" }
@@ -68,9 +68,9 @@ Deities.CATALOG = {
         end,
     },
     spirit_coin = {
-        id = "spirit_coin", name = "Stonks", rarity = "common", cost = 4,
+        id = "spirit_coin", name = "Kim Tệ", rarity = "common", cost = 4,
         desc = "+$2 Vàng sau khi thắng một Blind",
-        lore = "Thắng Blind, biểu đồ đi lên và ví có thêm tiền.",
+        lore = "Linh kim sinh sôi sau mỗi chiến thắng.",
         onRoundWin = function() return { addGold = 2, message = "+$2 Vàng" } end,
     },
 }

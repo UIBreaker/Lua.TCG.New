@@ -2858,7 +2858,7 @@ local function drawMainMenu()
             sub = "KHÁM PHÁ LỤC ĐỊA", icon = "⚔", color = { 0.05, 0.26, 0.49, 1 },
             menuAccent = { 0.55, 0.81, 1, 1 }, assetId = "menu_frame_blue" },
         { id = "menu_collection", text = "BỘ SƯU TẬP",
-            sub = "BÀI • SPM • TRANG BỊ", icon = "▣", color = { 0.32, 0.21, 0.07, 1 },
+            sub = "BÀI • SPN • TRANG BỊ", icon = "▣", color = { 0.32, 0.21, 0.07, 1 },
             menuAccent = UI.COLORS.goldYellow, assetId = "menu_frame_gold" },
         { id = "menu_settings", text = "TÙY CHỌN",
             sub = "CÀI ĐẶT TRÒ CHƠI", icon = "✦", color = { 0.28, 0.09, 0.39, 1 },
@@ -2913,10 +2913,10 @@ local function drawCollectionModal()
     g.printf("BỘ SƯU TẬP", 90, 56, 1100, "center")
     g.setFont(UI.fonts.small)
     g.setColor(UI.COLORS.textMuted)
-    g.printf("Khám phá toàn bộ bài, SPM, trang bị và thử thách", 90, 98, 1100, "center")
+    g.printf("Khám phá toàn bộ bài, SPN, trang bị và thử thách", 90, 98, 1100, "center")
 
     local categories = {
-        { id = "jokers", title = "SPM", icon = "✦", accent = { 0.62, 0.80, 1, 1 } },
+        { id = "jokers", title = "SPN", icon = "✦", accent = { 0.62, 0.80, 1, 1 } },
         { id = "decks", title = "BỘ BÀI", icon = "▣", accent = UI.COLORS.goldYellow },
         { id = "vouchers", title = "PHIẾU", icon = "◈", accent = { 0.55, 0.86, 0.70, 1 } },
         { id = "consumables", title = "TRANG BỊ KHẢM", icon = "◇", accent = { 0.64, 0.86, 0.95, 1 } },
@@ -2985,13 +2985,21 @@ local function drawCollectionDetailView()
     local isBackH = (mx >= btnBack.x and mx <= btnBack.x + btnBack.w and my >= btnBack.y and my <= btnBack.y + btnBack.h)
     UI.drawButton(btnBack, isBackH, juice.buttonPressedId == btnBack.id)
 
-    love.graphics.setFont(UI.fonts.large)
+    local collectionHeaderX = modalX + 270
+    local collectionHeaderW = modalW - 294
+    local collectionTitle = string.upper(cat.title) .. " • " .. cat.sub
+    local collectionTitleFont = UI.fonts.large
+    local collectionTitleScale = math.min(1, collectionHeaderW / math.max(1, collectionTitleFont:getWidth(collectionTitle)))
+    love.graphics.setFont(collectionTitleFont)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print(string.upper(cat.title) .. " • " .. cat.sub, modalX + 270, modalY + 20)
+    love.graphics.print(collectionTitle, collectionHeaderX, modalY + 20, 0, collectionTitleScale, collectionTitleScale)
 
-    love.graphics.setFont(UI.fonts.small)
+    local collectionSubtitle = #items .. " Mục đã mở khóa • Nhấp hoặc rê chuột vào thẻ để xem chi tiết"
+    local collectionSubtitleFont = UI.fonts.small
+    local collectionSubtitleScale = math.min(1, collectionHeaderW / math.max(1, collectionSubtitleFont:getWidth(collectionSubtitle)))
+    love.graphics.setFont(collectionSubtitleFont)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print(#items .. " Mục đã mở khóa • Nhấp hoặc rê chuột vào thẻ để xem chi tiết", modalX + 272, modalY + 48)
+    love.graphics.print(collectionSubtitle, collectionHeaderX + 2, modalY + 50, 0, collectionSubtitleScale, collectionSubtitleScale)
 
     -- Layout: Left Area is Grid (width ~ 750), Right Area is Inspector (width ~ 360)
     local gridX = modalX + 24
@@ -3012,7 +3020,14 @@ local function drawCollectionDetailView()
     local maxScroll = math.max(0, totalContentH - (gridH - 10))
     collectionScrollY = math.max(0, math.min(maxScroll, collectionScrollY or 0))
 
-    love.graphics.intersectScissor(gridX, gridY, gridW, gridH)
+    if mainCanvas then
+        love.graphics.intersectScissor(gridX * RENDER_SCALE, gridY * RENDER_SCALE,
+            gridW * RENDER_SCALE, gridH * RENDER_SCALE)
+    else
+        local outputScale = scale * RENDER_SCALE
+        love.graphics.intersectScissor(offsetX + gridX * outputScale, offsetY + gridY * outputScale,
+            gridW * outputScale, gridH * outputScale)
+    end
 
     for i, item in ipairs(items) do
         local col = (i - 1) % cols
@@ -3039,13 +3054,23 @@ local function drawCollectionDetailView()
             love.graphics.translate(-cardW / 2, -cardH / 2)
 
             -- Card Body
-            local dImg = ((collectionCategory == "jokers") and UI.getDeityImage(item.id))
+            local deityId = (collectionCategory == "jokers" and item.id)
+                or (collectionCategory == "packs" and item.isPackContent and item.deityId)
+            local deityArt = deityId and UI.getDeityImage(deityId)
+            local dImg = deityArt
                       or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
                       or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
                       or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
                       or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
-            if not UI.useLegacyPixelArt and collectionCategory ~= "packs" then dImg = nil end
-            if dImg then
+            if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and not deityArt then dImg = nil end
+            if deityArt then
+                UI.drawPatronCard(item, 0, 0, cardW, cardH)
+                if isH then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+                end
+            elseif dImg then
                 love.graphics.setColor(0, 0, 0, 0.35)
                 UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
 
@@ -3136,13 +3161,18 @@ local function drawCollectionDetailView()
         local lcy = inspY + 20
         local lcol = inspItem.color or { 0.3, 0.4, 0.5, 1 }
 
-        local inspImg = ((collectionCategory == "jokers") and UI.getDeityImage(inspItem.id))
+        local deityPreviewId = (collectionCategory == "jokers" and inspItem.id)
+            or (collectionCategory == "packs" and inspItem.isPackContent and inspItem.deityId)
+        local deityPreview = deityPreviewId and UI.getDeityImage(deityPreviewId)
+        local inspImg = deityPreview
                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
                      or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
                      or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
                      or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
-        if not UI.useLegacyPixelArt and collectionCategory ~= "packs" then inspImg = nil end
-        if inspImg then
+        if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and not deityPreview then inspImg = nil end
+        if deityPreview then
+            UI.drawPatronCard(inspItem, lcx, lcy, lcw, lch)
+        elseif inspImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = inspImg:getDimensions()
             love.graphics.draw(inspImg, lcx, lcy, 0, lcw / iw, lch / ih)
@@ -3644,9 +3674,7 @@ local function drawPlayingState()
     if handDrag.active and handDrag.isDragging and handDrag.cardIndex then
         local dc = game.hand[handDrag.cardIndex]
         if dc then
-            love.graphics.setColor(0, 0, 0, 0.45)
-            UI.drawRoundedRect("fill", dc.visualX + 6, dc.visualY + 14, cardW, cardH, 8)
-            UI.drawCard(dc, dc.visualX, dc.visualY, cardW, cardH)
+            UI.drawCard(dc, dc.visualX, dc.visualY, cardW, cardH, true)
         end
     end
 
@@ -5897,7 +5925,7 @@ local function drawShopState()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("SPM (" .. deiCount .. "/" .. maxDeiSlots .. ")", deiStartX + 4, 82)
+    love.graphics.print("SPN (" .. deiCount .. "/" .. maxDeiSlots .. ")", deiStartX + 4, 82)
 
     for i = 1, maxDeiSlots do
         local sx, sy, deiSlotW, deiSlotH = getDeitySlotRect(i, "shop")
@@ -6123,7 +6151,8 @@ local function drawShopState()
                 UI.drawRoundedRect("fill", -4 + tX * 8, 8 + tY * 8, cardW + 8, cardH, 8)
             end
 
-            local dImg = ((it.category == "deity" and it.deity) and UI.getDeityImage(it.deity.id))
+            local deityCard = (it.category == "deity") and it.deity
+            local dImg = (deityCard and UI.getDeityImage(deityCard.id))
                       or ((it.category == "equipment" and it.equipment) and UI.getEquipmentImage(it.equipment.id))
                       or ((it.category == "card" and it.card) and UI.getCardImage(it.card.suit, it.card.rank or it.card.rankName))
                       or ((it.category == "hand_expansion" or it.id == "v_hand_size" or it.id == "hand_expansion") and UI.getVoucherImage("v_hand_size"))
@@ -6131,7 +6160,14 @@ local function drawShopState()
                       or UI.getVoucherImage(it.id)
                       or UI.getHandImage(it.id)
             dImg = UI.visualImage(dImg)
-            if dImg then
+            if deityCard then
+                UI.drawPatronCard(deityCard, 0, 0, cardW, cardH)
+                if isCardHovered then
+                    love.graphics.setLineWidth(2.5)
+                    love.graphics.setColor(UI.COLORS.goldYellow)
+                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
+                end
+            elseif dImg then
                 love.graphics.setColor(1, 1, 1, 1)
                 local iw, ih = dImg:getDimensions()
                 love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)

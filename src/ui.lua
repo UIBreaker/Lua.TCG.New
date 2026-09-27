@@ -672,7 +672,7 @@ function UI.getEquipmentImage(equipId)
             local okImg, img = pcall(love.graphics.newImage, path)
             if okImg and img then
                 if img.setFilter then
-                    img:setFilter("nearest", "nearest")
+                    img:setFilter("linear", "linear")
                 end
                 UI.equipmentImages[equipId] = img
                 return img
@@ -730,9 +730,9 @@ function UI.getPackImage(packId)
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
         local candidates = {
-            "assets/scene/treasure_chest.png",
             "assets/packs/" .. mapped .. ".png",
             "assets/packs/" .. packId .. ".png",
+            "assets/scene/treasure_chest.png",
         }
         for _, path in ipairs(candidates) do
             local okInfo, info = pcall(love.filesystem.getInfo, path)
@@ -855,7 +855,7 @@ function UI.getVoucherImage(voucherId)
                 local okImg, img = pcall(love.graphics.newImage, path)
                 if okImg and img then
                     if img.setFilter then
-                        img:setFilter("nearest", "nearest")
+                        img:setFilter("linear", "linear")
                     end
                     UI.voucherImages[mapped] = img
                     return img

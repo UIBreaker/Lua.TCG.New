@@ -3062,7 +3062,7 @@ local function drawCollectionDetailView()
                       or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
                       or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
                       or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
-            if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and not deityArt then dImg = nil end
+            if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityArt then dImg = nil end
             if deityArt then
                 UI.drawPatronCard(item, 0, 0, cardW, cardH)
                 if isH then
@@ -3169,7 +3169,7 @@ local function drawCollectionDetailView()
                      or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
                      or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
                      or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
-        if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and not deityPreview then inspImg = nil end
+        if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityPreview then inspImg = nil end
         if deityPreview then
             UI.drawPatronCard(inspItem, lcx, lcy, lcw, lch)
         elseif inspImg then
@@ -5104,7 +5104,6 @@ local function drawSocketingView()
     UI.drawRoundedRect("line", panelX, panelY, panelW, panelH, 10)
 
     local eqImg = UI.getEquipmentImage(equipment.id)
-    eqImg = UI.visualImage(eqImg)
     if eqImg then
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = eqImg:getDimensions()
@@ -6159,7 +6158,9 @@ local function drawShopState()
                       or ((it.category == "book" or it.category == "skill_book" or it.handId) and (UI.getHandImage(it.handId or it.id) or UI.getHandImage(it.id)))
                       or UI.getVoucherImage(it.id)
                       or UI.getHandImage(it.id)
-            dImg = UI.visualImage(dImg)
+            if it.category ~= "equipment" and it.category ~= "card" and it.category ~= "hand_expansion" then
+                dImg = UI.visualImage(dImg)
+            end
             if deityCard then
                 UI.drawPatronCard(deityCard, 0, 0, cardW, cardH)
                 if isCardHovered then
@@ -6427,24 +6428,11 @@ local function drawShopState()
             love.graphics.setColor(UI.COLORS.goldYellow)
             love.graphics.printf("$" .. it.cost, tagX, tagY + 2, pw, "center")
 
-            local packImg = battleArt.chest or UI.getPackImage(it.packType or it.id)
+            local packImg = UI.getPackImage(it.packType or it.id) or battleArt.chest
             if packImg then
-                local packColor = it.color or UI.COLORS.goldYellow
-                love.graphics.setColor(0.09, 0.15, 0.20, 0.97)
-                UI.drawRoundedRect("fill", 0, 0, packW, packH, 8)
-                love.graphics.setColor(packColor)
-                UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
                 love.graphics.setColor(1, 1, 1, 1)
                 local iw, ih = packImg:getDimensions()
-                love.graphics.draw(packImg, 7, 24, 0, (packW - 14) / iw, 126 / ih)
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(it.name or "Rương", 5, 158, packW - 10, "center")
-                if isPackHovered then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
-                end
+                love.graphics.draw(packImg, 0, 0, 0, packW / iw, packH / ih)
             else
                 -- Metallic Foil Pack Body Fallback
                 local packColor = it.color or { 0.88, 0.35, 0.35, 1 }
@@ -6626,7 +6614,9 @@ local function drawShopState()
                      or ((dItem.category == "book" or dItem.handId or (dItem.id and tostring(dItem.id):find("book_"))) and (UI.getHandImage(dItem.handId or dItem.id) or UI.getHandImage(dItem.id)))
                      or UI.getVoucherImage(dItem.id)
                      or UI.getHandImage(dItem.id)
-        dragImg = UI.visualImage(dragImg)
+        if dItem.category ~= "equipment" and dItem.category ~= "card" and dItem.category ~= "hand_expansion" then
+            dragImg = UI.visualImage(dragImg)
+        end
         if dragImg then
             love.graphics.setColor(1, 1, 1, 1)
             local iw, ih = dragImg:getDimensions()
@@ -7170,7 +7160,9 @@ local function drawShopFx()
                 or (item.category == "pack" and UI.getPackImage(item.packType))
                 or (item.category == "book" and UI.getHandImage(item.handId))
                 or ((item.category == "voucher" or item.category == "hand_expansion") and UI.getVoucherImage(item.voucherId or item.category))
-            if not item.packType and item.category ~= "pack" then art = UI.visualImage(art) end
+            if not item.packType and item.category ~= "pack" and item.category ~= "equipment" and item.category ~= "hand_expansion" then
+                art = UI.visualImage(art)
+            end
             if art then
                 local iw, ih = art:getDimensions()
                 local s = math.min(76 / iw, 82 / ih)

@@ -65,7 +65,7 @@ local function fitValue(text, fonts, width)
     return fonts.detail or love.graphics.getFont()
 end
 
-local function drawMetric(x, y, w, h, label, value, variant, icon, fonts)
+local function drawMetric(x, y, w, h, label, value, variant, icon, fonts, bounce)
     local color = Theme.colors[variant] or Theme.colors.gold
     local text = tostring(value or "0")
     Core.text(label, x + 3, y + 7, w - 6, fonts.detail, color, "center")
@@ -75,9 +75,15 @@ local function drawMetric(x, y, w, h, label, value, variant, icon, fonts)
     local textWidth = math.min(valueFont:getWidth(text), w - iconSize - 14)
     local groupWidth = iconSize + 5 + textWidth
     local startX = x + (w - groupWidth) / 2
+    local centerX, centerY = startX + groupWidth / 2, y + h - 23
+    love.graphics.push()
+    love.graphics.translate(centerX, centerY)
+    love.graphics.scale(bounce or 1, bounce or 1)
+    love.graphics.translate(-centerX, -centerY)
     drawIcon(icon, startX, y + h - 33, iconSize)
     Core.text(text, startX + iconSize + 5, y + h - 39, textWidth + 2,
         valueFont, Theme.colors.text, "left")
+    love.graphics.pop()
 end
 
 function HandInfoPanel.draw(data, fonts, formatNumber)
@@ -113,9 +119,9 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         drawFonts.body, Theme.colors.text, "left", drawFonts.label)
 
     drawMetric(x + 12, y + 78, 94, 66, "SÁT THƯƠNG", fmt(data.chips or 0),
-        "cyan", "damage", drawFonts)
+        "cyan", "damage", drawFonts, data.chipsBounce)
     drawMetric(x + 116, y + 78, 94, 66, "CƯỜNG HÓA", fmt(data.mult or 0),
-        "red", "power", drawFonts)
+        "red", "power", drawFonts, data.multBounce)
 
     Core.text(tostring(fmt(data.chips or 0)) .. " × " .. tostring(fmt(data.mult or 0))
         .. ((data.xMult or 1) > 1 and (" × " .. string.format("%.2f", data.xMult)) or ""),
@@ -126,7 +132,13 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     drawIcon("aura", x + 27, y + 207, 24)
     local auraText = tostring(fmt(data.aura or 0))
     local auraFont = fitValue(auraText, drawFonts, w - 78)
+    local auraCenterX = x + 56 + (w - 80) / 2
+    love.graphics.push()
+    love.graphics.translate(auraCenterX, y + 216)
+    love.graphics.scale(data.auraBounce or 1, data.auraBounce or 1)
+    love.graphics.translate(-auraCenterX, -(y + 216))
     Core.text(auraText, x + 56, y + 202, w - 80, auraFont, Theme.colors.gold, "center")
+    love.graphics.pop()
 
     drawIcon("trait", x + 14, y + 267, 19)
     Core.text("QUÁI VẬT", x + 39, y + 268, w - 53, drawFonts.title, Theme.colors.gold)
@@ -138,7 +150,7 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         x + 38, y + 317, w - 54, drawFonts.label, Theme.colors.muted)
 
     local barX, barY, barW, barH = x + 18, y + 340, w - 36, 16
-    local hp, maxHp = math.max(0, tonumber(data.enemyHp) or 0), tonumber(data.enemyMaxHp) or 1
+    local hp, maxHp = math.max(0, tonumber(data.enemyBarHp or data.enemyHp) or 0), tonumber(data.enemyMaxHp) or 1
     local ratio = math.max(0, math.min(1, hp / math.max(1, maxHp)))
     if ratio > 0 then
         g.push("all")
@@ -150,14 +162,30 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     drawIcon("intent", x + 15, y + 363, 18)
     Core.text("CHIÊU TIẾP THEO", x + 39, y + 364, w - 53,
         drawFonts.label, Theme.colors.red)
-    Core.text(boundedLines(data.intent or "Chưa rõ", drawFonts.body, w - 32, 2),
-        x + 16, y + 388, w - 32, drawFonts.body, Theme.colors.text)
+    local intentText = boundedLines(data.intent or "Chưa rõ", drawFonts.body, w - 32, 2)
+    Core.text(intentText, x + 16, y + 388, w - 32, drawFonts.body, Theme.colors.text)
+    local _, intentLines = drawFonts.body:getWrap(intentText, w - 32)
+    local speedY = math.max(y + 414, y + 388 + math.max(1, #intentLines) * drawFonts.body:getHeight() + 3)
 
-    drawIcon("trait", x + 15, y + 442, 18)
-    Core.text(data.isBoss and "DEBUFF" or "ĐẶC ĐIỂM", x + 39, y + 443,
+    local enemySpeed = tonumber(data.enemySpeed)
+    if enemySpeed then
+        local playerSpeed = tonumber(data.playerSpeed)
+        local speedText = "TỐC ĐÁNH QUÁI " .. tostring(enemySpeed)
+        local speedColor = Theme.colors.red
+        if playerSpeed then
+            local shownPlayerSpeed = playerSpeed % 1 == 0 and tostring(playerSpeed) or string.format("%.1f", playerSpeed)
+            speedText = "TỐC ĐÁNH " .. shownPlayerSpeed .. " • QUÁI " .. tostring(enemySpeed)
+            speedColor = playerSpeed >= enemySpeed and Theme.colors.cyan or Theme.colors.red
+        end
+        Core.textLine(speedText, x + 16, speedY, w - 32, drawFonts.detail, speedColor, "left", drawFonts.detail)
+    end
+
+    local traitY = math.max(y + 442, speedY + 27)
+    drawIcon("trait", x + 15, traitY, 18)
+    Core.text(data.isBoss and "DEBUFF" or "ĐẶC ĐIỂM", x + 39, traitY + 1,
         w - 53, drawFonts.label, data.isBoss and Theme.colors.red or Theme.colors.gold)
     Core.text(boundedLines(data.debuff or "Không có hiệu ứng bất lợi",
-        drawFonts.detail, w - 32, 2), x + 16, y + 467, w - 32,
+        drawFonts.detail, w - 32, 2), x + 16, traitY + 25, w - 32,
         drawFonts.detail, Theme.colors.muted)
 
     if data.scoring then

@@ -210,7 +210,7 @@ Deck.STARTER_DECKS = {
         id = "red_deck",
         name = "Bộ Bài Đỏ",
         color = { 0.88, 0.16, 0.20, 1 },
-        desc = "+10 Mult cho tay bài đầu tiên của mỗi trận. Bắt đầu combat với 3 lá ngẫu nhiên.",
+        desc = "Bắt đầu với 1 lá bài ngẫu nhiên trong bộ chuẩn 52 lá.",
     },
 }
 
@@ -286,6 +286,18 @@ function Deck.getChipValue(rank)
     end
 end
 
+function Deck.getAttackSpeed(rank)
+    if rank == 1 or rank == 14 then return 11 end
+    if rank >= 11 and rank <= 13 then return 10 end -- J / Q / K
+    return math.max(1, math.min(11, tonumber(rank) or 1))
+end
+
+function Deck.getCardAttackSpeed(card)
+    if not card then return 1 end
+    card.attackSpeed = Deck.getAttackSpeed(card.rank)
+    return card.attackSpeed
+end
+
 local nextCardId = 1
 
 -- Keep generated card ids unique after restoring a saved run whose cards may
@@ -319,6 +331,7 @@ function Deck.newCard(rank, suit)
         rankName = Deck.RANK_NAMES[rank] or tostring(rank),
         color = suitInfo.color,
         baseChips = Deck.getChipValue(rank),
+        attackSpeed = Deck.getAttackSpeed(rank),
         role = role.id,
         roleName = role.name,
         roleTitle = role.title,
@@ -353,24 +366,20 @@ end
 Deck.DEFAULT_HAND_SIZE = 3
 
 function Deck.createRedStarterDeck()
-    local cards = {}
-    for _, suit in ipairs(Deck.FACTION_ORDER) do
-        for rank = 2, 14 do
-            local card = Deck.newCard(rank, suit)
-            card.disableFactionPassives = true
-            card.starterDeckId = "red_deck"
-            card.isWildSuit = false
-            card.isDualRankAce = false
-            card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-            card.unlockedSockets = 3
-            table.insert(cards, card)
-        end
-    end
-    return cards
+    local suit = Deck.FACTION_ORDER[Rng.random(#Deck.FACTION_ORDER)]
+    local rank = Rng.random(2, 14)
+    local card = Deck.newCard(rank, suit)
+    card.disableFactionPassives = true
+    card.starterDeckId = "red_deck"
+    card.isWildSuit = false
+    card.isDualRankAce = false
+    card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
+    card.unlockedSockets = 3
+    return { card }
 end
 
 -- Create the selected starter deck. Legacy faction decks remain readable for
--- old saves/tests, while new runs use the 52-card Red Deck.
+-- old saves; new Red Deck runs begin with a single random standard card.
 function Deck.createStarterDeck(suit)
     if suit == "red_deck" then return Deck.createRedStarterDeck() end
     local cards = {
@@ -387,11 +396,13 @@ function Deck.degradeCard(card)
         card.rank = card.rank - 1
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
         card.baseChips = Deck.getChipValue(card.rank)
+        card.attackSpeed = Deck.getAttackSpeed(card.rank)
         return "degraded"
     elseif card.rank == 2 then
         card.rank = 1
         card.rankName = "A"
         card.baseChips = Deck.getChipValue(1)
+        card.attackSpeed = Deck.getAttackSpeed(1)
         return "degraded"
     elseif card.rank == 1 then
         return "destroyed"
@@ -411,6 +422,7 @@ function Deck.upgradeCard(card)
     card.rank = bRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
     card.baseChips = Deck.getChipValue(card.rank)
+    card.attackSpeed = Deck.getAttackSpeed(card.rank)
     return card
 end
 
@@ -421,6 +433,7 @@ function Deck.restoreDeck(deck)
         local bRank = card.baseRank or card.rank
         card.rank = bRank
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
+        card.attackSpeed = Deck.getAttackSpeed(card.rank)
         if card.isPrimalDrone then
             card.baseChips = 50
             card.baseMult = 5
@@ -444,6 +457,7 @@ function Deck.cloneCard(card)
     newC.baseRank = card.baseRank or card.rank
     newC.rank = newC.baseRank
     newC.rankName = Deck.RANK_NAMES[newC.rank] or tostring(newC.rank)
+    newC.attackSpeed = Deck.getAttackSpeed(newC.rank)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
     newC.role = card.role or newC.role
@@ -547,6 +561,7 @@ function Deck.addCardToDeck(gameState, card)
     card.rank = card.baseRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
     card.baseChips = Deck.getChipValue(card.rank)
+    card.attackSpeed = Deck.getAttackSpeed(card.rank)
     local role = Deck.getCardRole(card.rank)
     card.role = role.id
     card.roleName = role.name

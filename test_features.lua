@@ -18,14 +18,14 @@ print(" Test 1 Passed: Mono-Suit Deck (52 cards all Hearts)")
 -- Test 2: Monster and Boss stage logic
 local m1 = Monster.create(1)
 assert(m1.isBoss == false, "Round 1 should be normal monster")
-assert(m1.hp == 76, "Encounter 1 HP should be 76")
+assert(m1.hp == 21, "Encounter 1 HP should be 21")
 
 local m3 = Monster.create(3)
 assert(m3.isBoss == false, "Round 3 should be normal monster")
 
 local m4 = Monster.create(4, true, false, 4)
 assert(m4.isBoss == true, "Round 4 should be BOSS")
-assert(m4.hp == 514, "Encounter 4 Boss HP should be 514")
+assert(m4.hp == 142, "Encounter 4 Boss HP should be 142")
 
 local m8 = Monster.create(8, true, false, 8)
 assert(m8.isBoss == true, "Round 8 should be BOSS 2")

@@ -4,6 +4,7 @@ local Panel = require("ui.components.panel")
 local Button = require("ui.components.button")
 local Slot = require("ui.components.slot")
 local HealthBar = require("ui.components.health_bar")
+local Deck = require("src.deck")
 
 -- Color constants
 UI.COLORS = {
@@ -315,6 +316,20 @@ function UI.drawSuitSymbol(suit, cx, cy, size, customColor)
     love.graphics.pop()
 end
 
+local function drawCardSpeedBadge(card, w, h)
+    local g = love.graphics
+    local badgeW, badgeH = math.min(34, w * 0.40), math.min(19, h * 0.16)
+    local bx, by = w - badgeW - 4, 4
+    g.setColor(0.035, 0.055, 0.07, 0.92)
+    UI.drawRoundedRect("fill", bx, by, badgeW, badgeH, 4)
+    g.setColor(UI.COLORS.goldYellow)
+    g.polygon("fill", bx + 5, by + 3, bx + 10, by + 3, bx + 8, by + 7,
+        bx + 12, by + 7, bx + 5, by + badgeH - 3, bx + 7, by + 9, bx + 3, by + 9)
+    g.setColor(UI.COLORS.textLight)
+    g.setFont(UI.fonts.tiny)
+    g.printf(tostring(Deck.getCardAttackSpeed(card)), bx + 13, by + 1, badgeW - 14, "center")
+end
+
 function UI.drawCard(card, x, y, w, h, isFloating)
     local g = love.graphics
     local rank = tostring(card.rankName or card.rank or "?")
@@ -353,10 +368,10 @@ function UI.drawCard(card, x, y, w, h, isFloating)
         end
         if card.seal then
             g.setColor(UI.COLORS.goldYellow)
-            g.circle("fill", w - 14, 16, 7)
+            g.circle("fill", w - 14, 34, 7)
             g.setColor(UI.COLORS.textDark)
             g.setFont(UI.fonts.tiny)
-            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 9, 14, "center")
+            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 27, 14, "center")
         end
         if card.baseChips then
             g.setColor(accent)
@@ -365,6 +380,7 @@ function UI.drawCard(card, x, y, w, h, isFloating)
             g.setFont(UI.fonts.tiny)
             g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
         end
+        drawCardSpeedBadge(card, w, h)
         g.pop()
         return
     end
@@ -410,10 +426,10 @@ function UI.drawCard(card, x, y, w, h, isFloating)
         end
         if card.seal then
             g.setColor(UI.COLORS.goldYellow)
-            g.circle("fill", w - 14, 16, 7)
+            g.circle("fill", w - 14, 34, 7)
             g.setColor(UI.COLORS.textDark)
             g.setFont(UI.fonts.tiny)
-            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 9, 14, "center")
+            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 27, 14, "center")
         end
         if card.baseChips then
             g.setColor(accent)
@@ -422,6 +438,7 @@ function UI.drawCard(card, x, y, w, h, isFloating)
             g.setFont(UI.fonts.tiny)
             g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
         end
+        drawCardSpeedBadge(card, w, h)
     end
     g.pop()
 end

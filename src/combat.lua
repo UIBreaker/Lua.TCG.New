@@ -7,8 +7,77 @@ function Combat.getOutcome(game)
     if not game or not game.monster then return "continue" end
     if game.playerHp and game.playerHp <= 0 then return "defeat" end
     if game.monster.hp and game.monster.hp <= 0 then return "victory" end
-    if game.handsRemaining and game.handsRemaining <= 0 then return "defeat" end
+    local noCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) == 0
+    local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
+        and game.monster.bossData.debuffId == "the_needle"
+    if game.handsRemaining and game.handsRemaining <= 0 and (noCards or handLimitIsFinal) then return "defeat" end
     return "continue"
+end
+
+function Combat.getAverageAttackSpeed(cards)
+    local total, count = 0, 0
+    for _, card in ipairs(cards or {}) do
+        total = total + Deck.getCardAttackSpeed(card)
+        count = count + 1
+    end
+    return count > 0 and (total / count) or 0
+end
+
+function Combat.resolveMonsterAttack(game)
+    local monster = game and game.monster
+    if not monster or (monster.hp or 0) <= 0 then return nil end
+
+    local attack = monster.attack or 12
+    local armor = game.playerArmor or game.playerShield or 0
+    local absorbed = math.min(armor, attack)
+    armor = math.floor((armor - absorbed) * 0.5)
+    local damage = math.min(attack - absorbed, math.floor((game.maxPlayerHp or 100) * 0.60))
+
+    game.playerArmor = armor
+    game.playerShield = armor
+    game.playerHp = math.max(0, (game.playerHp or 100) - damage)
+    monster.attack = math.floor(attack * 1.08 + 0.5)
+    monster.armor = math.floor((monster.armor or 0) * 1.05 + 2)
+
+    for _, card in ipairs(game.hand or {}) do
+        if card.enhancement == "enh_escort" or card.enhancement == "escort" then
+            game.playerArmor = math.min(30, (game.playerArmor or 0) + 5)
+            game.playerShield = game.playerArmor
+        end
+    end
+
+    return {
+        attack = attack,
+        absorbed = absorbed,
+        damage = damage,
+        killedPlayer = game.playerHp <= 0,
+        playerSpeed = game.lastPlayerAttackSpeed or 0,
+        monsterSpeed = monster.attackSpeed or 1,
+    }
+end
+
+function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
+    if not game then return 0 end
+    game.deck = game.deck or {}
+    game.discardPile = game.discardPile or {}
+    game.hand = game.hand or {}
+
+    if recycleDiscard and #game.deck == 0 and #game.discardPile > 0 then
+        while #game.discardPile > 0 do
+            table.insert(game.deck, table.remove(game.discardPile))
+        end
+        Deck.shuffle(game.deck)
+    end
+
+    local drawnCount = 0
+    while #game.hand < (maxHandSize or 0) and #game.deck > 0 do
+        local card = table.remove(game.deck)
+        card.selected = false
+        drawnCount = drawnCount + 1
+        if prepareDraw then prepareDraw(card, drawnCount) end
+        table.insert(game.hand, card)
+    end
+    return drawnCount
 end
 
 local function isFaction(game, id)
@@ -45,6 +114,7 @@ function Combat.start(game, monster, round)
             game.handsRemaining = game.handsRemaining + (result and result.addHands or 0)
         end
     end
+    game.turnHandLimit = game.handsRemaining
 
     local slaughterChips = game.storedSlaughterChips or 0
     if slaughterChips > 0 then

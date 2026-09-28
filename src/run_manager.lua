@@ -448,12 +448,12 @@ RunManager.BOSS_KEYS = {
 }
 
 -- HP formula:
--- Small Blind: round(76 * (1.71 ^ (Ante - 1)))
+-- Small Blind: round(21 * (1.71 ^ (Ante - 1)))
 -- Big Blind: round(1.5 * Small HP)
 -- Boss Blind: round(2.0 * Small HP)
 function RunManager.calculateBlindHp(ante, blindType)
     local a = math.max(1, ante or 1)
-    local smallHp = 76
+    local smallHp = 21
     for _ = 2, a do
         smallHp = math.floor(smallHp * 1.71 + 0.5)
     end
@@ -582,6 +582,7 @@ function RunManager.createBlindMonster(blind, gameState)
         maxHp = blind.hp,
         damageLagHp = blind.hp,
         attack = atk,
+        attackSpeed = Monster.rollAttackSpeed(),
         intent = {
             type = "attack",
             value = atk,

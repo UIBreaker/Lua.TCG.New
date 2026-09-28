@@ -25,28 +25,29 @@ end
 log("=== RUNNING ROGUELIKE POKER SYSTEM TESTS ===")
 
 do
-    -- 1. Test Monster HP scaling (Encounter 1 = 76 HP, each subsequent encounter increases by 50% indefinitely)
+    -- 1. Test Monster HP scaling (Encounter 1 = 21 HP, each subsequent encounter increases by 50% indefinitely)
     local m1 = Monster.create(1, false, false, 1)
-    assert(m1.hp == 76, "Encounter 1 monster HP must be 76, got: " .. m1.hp)
-    assert(m1.maxHp == 76, "Encounter 1 monster maxHp must be 76")
-    assert(m1.attack == 12, "Encounter 1 monster attack must be 12, got: " .. m1.attack)
-    assert(m1.intent ~= nil and m1.intent.value == 12, "Encounter 1 monster intent must be 12 DMG")
-    log("[PASS] 1. Encounter 1 Monster HP is 76 HP with 12 DMG intent: " .. m1.name .. " (" .. m1.hp .. " HP)")
+    assert(m1.hp == 21, "Encounter 1 monster HP must be 21, got: " .. m1.hp)
+    assert(m1.maxHp == 21, "Encounter 1 monster maxHp must be 21")
+    assert(m1.attack == 4, "Encounter 1 monster attack must be 4, got: " .. m1.attack)
+    assert(m1.intent ~= nil and m1.intent.value == 4, "Encounter 1 monster intent must be 4 DMG")
+    assert(m1.attackSpeed >= 1 and m1.attackSpeed <= 11, "Monster attack speed must be within 1..11")
+    log("[PASS] 1. Encounter 1 Monster has 21 HP, 4 DMG and attack speed 1..11: " .. m1.name)
 
     local m2 = Monster.create(2, false, false, 2)
-    assert(m2.hp == 114, "Encounter 2 monster HP must be 114 (+50%), got: " .. m2.hp)
+    assert(m2.hp == 32, "Encounter 2 monster HP must be 32 (+50%), got: " .. m2.hp)
     local m3 = Monster.create(3, false, false, 3)
-    assert(m3.hp == 171, "Encounter 3 monster HP must be 171 (+50%), got: " .. m3.hp)
+    assert(m3.hp == 47, "Encounter 3 monster HP must be 47 (+50%), got: " .. m3.hp)
     local m4 = Monster.create(4, false, false, 4)
-    assert(m4.hp == 257, "Encounter 4 monster HP must be 257 (+50%), got: " .. m4.hp)
+    assert(m4.hp == 71, "Encounter 4 monster HP must be 71 (+50%), got: " .. m4.hp)
     local m5 = Monster.create(5, false, false, 5)
-    assert(m5.hp == 385, "Encounter 5 monster HP must be 385 (+50%), got: " .. m5.hp)
-    log("[PASS] 2. Monster HP scaling (+50% each encounter) verified: 76 -> 114 -> 171 -> 257 -> 385 HP")
+    assert(m5.hp == 106, "Encounter 5 monster HP must be 106 (+50%), got: " .. m5.hp)
+    log("[PASS] 2. Monster HP scaling (+50% each encounter) verified: 21 -> 32 -> 47 -> 71 -> 106 HP")
 
     -- 2. Test Boss creation with scaling
     local boss1 = Monster.create(5, true, false, 5)
     assert(boss1.isBoss == true, "Boss must be flagged isBoss")
-    assert(boss1.hp == math.floor(385 * 2.0), "Boss HP must be 2.0x base, got: " .. boss1.hp)
+    assert(boss1.hp == math.floor(106 * 2.0), "Boss HP must be 2.0x base, got: " .. boss1.hp)
     log("[PASS] 2b. Boss created with scaled HP: " .. boss1.name .. " (" .. boss1.hp .. " HP)")
 end
 
@@ -468,7 +469,7 @@ log("[PASS] 27. Faction Discard Buffs rebalanced cleanly: Aurelia (+6/12c, +1m),
 
 -- 23. Test Player HP & Monster Counter-Attack
 local simMon = Monster.create(1, false, false, 1)
-assert(simMon.attack ~= nil and simMon.attack >= 12, "Monster must possess an attack stat (>= 12)")
+assert(simMon.attack ~= nil and simMon.attack >= 4, "Monster must possess its scaled attack stat (>= 4)")
 local simPlayer = { playerHp = 100, maxPlayerHp = 100, playerShield = 0 }
 -- Simulate monster counter-attack when not defeated
 local dmgDealtToPlayer = simMon.attack
@@ -795,17 +796,17 @@ assert(mirrorEdgeScore.totalMult == genHand.type.baseMult + 4, "deity_mirror wit
 log("[PASS] 46. Thần Phản Chiếu (Blueprint) verified: dynamically copies deity to right at 60% potency")
 end
 
--- 47. Test Ante & Blind HP Progression (8 Ante, Small HP = round(76 * 1.6^(Ante-1)), Big = 1.5x, Boss = 2.0x)
+-- 47. Test Ante & Blind HP Progression (8 Ante, each Small HP scales by 1.71, Big = 1.5x, Boss = 2.0x)
 do
     local expectedSmallHps = {
-        [1] = 76,
-        [2] = 130,
-        [3] = 222,
-        [4] = 380,
-        [5] = 650,
-        [6] = 1112,
-        [7] = 1902,
-        [8] = 3252,
+        [1] = 21,
+        [2] = 36,
+        [3] = 62,
+        [4] = 106,
+        [5] = 181,
+        [6] = 310,
+        [7] = 530,
+        [8] = 906,
     }
     for a = 1, 8 do
         local sHp = RunManager.calculateBlindHp(a, "small")
@@ -820,7 +821,7 @@ do
         local expBoss = math.floor(expS * 2.0 + 0.5)
         assert(bossHp == expBoss, "Ante " .. a .. " Boss Blind HP mismatch: expected " .. expBoss .. ", got " .. bossHp)
     end
-    log("[PASS] 47. Ante & Blind HP Progression verified: 8 Antes mathematically validated (Small 76->3252, Big 114->4878, Boss 152->6504)")
+    log("[PASS] 47. Ante & Blind HP Progression verified: Small 21->906, Big 32->1359, Boss 42->1812")
 end
 
 -- 48. Test RunManager.newRun and Blind Structure
@@ -1585,9 +1586,13 @@ end
 do
     log("--- Testing 3-Turn Turn-Based Combat Benchmark ---")
     local monster = Monster.create(1, false, false, 1)
-    assert(monster.hp == 76, "Encounter 1 monster HP must be 76, got: " .. monster.hp)
-    assert(monster.attack == 12, "Encounter 1 monster attack must be 12, got: " .. monster.attack)
-    assert(monster.intent ~= nil and monster.intent.value == 12, "Monster intent must show 12 DMG")
+    assert(monster.hp == 21, "Encounter 1 monster HP must be 21, got: " .. monster.hp)
+    assert(monster.attack == 4, "Encounter 1 monster attack must be 4, got: " .. monster.attack)
+    assert(monster.intent ~= nil and monster.intent.value == 4, "Monster intent must show 4 DMG")
+    -- Keep a high-HP attack-order fixture so this test can focus on armor/heal math.
+    monster.hp, monster.maxHp, monster.damageLagHp = 76, 76, 76
+    monster.attack = 12
+    monster.intent.value = 12
 
     local testGame = {
         playerHp = 40,
@@ -1743,7 +1748,7 @@ do
             local m = RunManager.createBlindMonster(b, { selectedFaction = "aurelia" })
             assert(m.attack <= 50, "Monster attack in Ante " .. ante .. " must never exceed 50 DMG (no one-shots), got: " .. m.attack)
             if b.type == "small" and ante == 1 then
-                assert(m.attack == 12, "Ante 1 Small Blind attack must be exactly 12 DMG benchmark, got: " .. m.attack)
+                assert(m.attack == 4, "Ante 1 Small Blind attack must be exactly 4 DMG benchmark, got: " .. m.attack)
             end
             if b.type == "boss" and ante == 8 then
                 -- Even with 4080 HP, boss attack must be capped at 50, NOT 612!
@@ -2398,25 +2403,28 @@ do
     log("[PASS] 85. Fresh-run schema prevents state leaks and gameplay RNG is reproducible")
 end
 
--- 86. Red Deck replaces faction selection and grants +10 Mult on first hand.
+-- 86. Red Deck starts with one random standard card and has no first-hand bonus.
 do
     Rng.seed(20260917)
     local redDeck = Deck.createRedStarterDeck()
-    assert(#redDeck == 52, "Red Deck must contain the standard 52-card pool")
-    local suitCounts = { aurelia = 0, elaris = 0, vharos = 0, valoria = 0 }
+    assert(#redDeck == 1, "Red Deck must start with one card")
+    local startCard = redDeck[1]
+    assert(startCard.rank >= 2 and startCard.rank <= 14, "Starting card rank must come from the 52-card set")
+    assert(startCard.attackSpeed == Deck.getAttackSpeed(startCard.rank), "Card attack speed must follow its rank")
+    assert(Deck.getAttackSpeed(2) == 2 and Deck.getAttackSpeed(8) == 8, "Number cards must use their rank as attack speed")
+    assert(Deck.getAttackSpeed(11) == 10 and Deck.getAttackSpeed(13) == 10 and Deck.getAttackSpeed(14) == 11,
+        "J/Q/K and A speed must be 10 and 11")
     for _, card in ipairs(redDeck) do
-        suitCounts[card.suit] = (suitCounts[card.suit] or 0) + 1
         assert(card.disableFactionPassives == true, "Red Deck cards must not trigger legacy faction passives")
         assert(not card.isWildSuit and not card.isDualRankAce, "Red Deck cards must use normal poker suit and rank rules")
         assert(card.unlockedSockets == 3, "Every Red Deck card must start with all three equipment sockets")
     end
-    for _, count in pairs(suitCounts) do assert(count == 13, "Each standard suit must contain 13 cards") end
 
     local redGame = GameState.new("red_deck")
     redGame.persistentDeck = redDeck
     local monster = Monster.create(1, false, false, 1)
     Combat.start(redGame, monster, 1)
-    assert(#redGame.hand == 3 and #redGame.deck == 49, "Combat must draw exactly 3 random opening cards from Red Deck")
+    assert(#redGame.hand == 1 and #redGame.deck == 0, "Combat must draw the single starting card")
     assert(redGame.handsPlayedThisCombat == 0, "First-hand counter must reset at combat start")
     for i, card in ipairs(redGame.hand) do
         assert(card.dealPending == true, "Opening cards must enter through the deal animation")
@@ -2431,8 +2439,8 @@ do
     local evaluated = Poker.evaluate({ testCard }, { high_card = true })
     local firstScore = Scoring.calculate(evaluated, {}, { starterDeckId = "red_deck", handsPlayedThisCombat = 0 })
     local laterScore = Scoring.calculate(evaluated, {}, { starterDeckId = "red_deck", handsPlayedThisCombat = 1 })
-    assert(firstScore.totalMult == laterScore.totalMult + 10, "Red Deck first hand must receive exactly +10 Mult")
-    log("[PASS] 86. Red Deck has 52 cards, draws 3 random cards and grants +10 Mult only on the first hand")
+    assert(firstScore.totalMult == laterScore.totalMult, "Red Deck must not add a first-hand Mult bonus")
+    log("[PASS] 86. Red Deck starts with one random card, displays speed and has no first-hand Mult bonus")
 end
 
 
@@ -2535,7 +2543,7 @@ do
     -- Wanted Level scaling: +8% per level
     pactGame.wantedLevel = 3
     local mWanted = Monster.create(1, false, false, 1)
-    assert(mWanted.hp == 76, "Base monster HP is 76")
+    assert(mWanted.hp == 21, "Base monster HP is 21")
     log("[PASS] 90. Phase 5: 6 Pacts & Wanted Level mechanics verified 100%")
 end
 

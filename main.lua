@@ -73,6 +73,7 @@ local offsetY = 0
 local mainCanvas = nil
 local bgShader = nil
 local crtShader = nil
+local impactShader = nil
 
 local bgCurrentColors = {
     a = { 0.72, 0.10, 0.14 },
@@ -361,6 +362,7 @@ local anim = {
     displayMult = 0,
     displayXMult = 1.0,
     displayFinalScore = 0,
+    displayAura = 0,
     stepTimer = 0,
     playedCards = {},
     floatingTexts = {},
@@ -384,6 +386,11 @@ local anim = {
     impactY = 0,
     impactColor = { 1, 1, 1, 1 },
     entranceTimer = 0,
+    hitStop = 0,
+    screenFlash = 0,
+    screenDistortion = 0,
+    exitStarted = false,
+    exitProgress = 0,
     consumableUseCooldown = 0,
     chestReveal = { state = nil, timer = 0 },
 }
@@ -728,8 +735,7 @@ local function startNewGame(chosenDeck)
     transferSourceEqIndex = nil
     transferMessage = nil
 
-    -- Red Deck contains a standard 52-card pool; each combat draws exactly
-    -- three random cards from it as the opening hand.
+    -- Red Deck begins with one card sampled uniformly from the standard 52.
     game.persistentDeck = Deck.createStarterDeck(game.starterDeckId)
     Deck.restoreDeck(game.persistentDeck)
     game.masterDeck = game.persistentDeck
@@ -821,8 +827,32 @@ function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
         x = cx,
         y = cy - 58,
         alpha = 2.0,
+        scale = 1.55,
     })
     Sound.play(heavy and "damage_heavy" or "damage_hit")
+end
+
+local function maxCombatHandSize()
+    return (game.selectedFaction == "elaris" or game.selectedSuit == "elaris")
+        and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
+end
+
+local function dealCombatHand(recycleDiscard)
+    local drawn = Combat.drawCards(game, maxCombatHandSize(), function(card, order)
+        anim.prepareDrawAnimation(card, order)
+        if game.monster and game.monster.isBoss and game.monster.bossData
+            and game.monster.bossData.debuffId == "the_fish" then
+            card.faceDown = true
+        end
+    end, recycleDiscard)
+    if game.sortMode == "rank" then
+        Deck.sortByRank(game.hand)
+    else
+        Deck.sortBySuit(game.hand)
+    end
+    clearAllSelections()
+    syncCardSelections()
+    return drawn
 end
 
 local function discardSelected()
@@ -981,37 +1011,8 @@ local function discardSelected()
         game.discardsUsedInCombat = (game.discardsUsedInCombat or 0) + 1
     end
 
-    -- Refill hand to maxHandSize cards while deck/discard has cards
-    local maxHandSize = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
-    local dealOrder = 0
-    while #game.hand < maxHandSize do
-        if #game.deck == 0 and #game.discardPile > 0 then
-            while #game.discardPile > 0 do
-                table.insert(game.deck, table.remove(game.discardPile))
-            end
-            Deck.shuffle(game.deck)
-        end
-        if #game.deck == 0 then break end
-        local drawn = table.remove(game.deck)
-        if drawn then
-            dealOrder = dealOrder + 1
-            drawn.selected = false
-            anim.prepareDrawAnimation(drawn, dealOrder)
-            if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_fish" then
-                drawn.faceDown = true
-            end
-            table.insert(game.hand, drawn)
-        end
-    end
-
-    if game.sortMode == "rank" then
-        Deck.sortByRank(game.hand)
-    else
-        Deck.sortBySuit(game.hand)
-    end
-
-    clearAllSelections()
-    syncCardSelections()
+    -- Draw only from the remaining deck; the discard pile returns on explicit end turn.
+    dealCombatHand(false)
     Sound.play("card_deal")
 end
 
@@ -1333,6 +1334,19 @@ local function playSelectedHand()
     if #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
+    local playedCardStarts = {}
+    for i, card in ipairs(playedCards) do
+        playedCardStarts[i] = {
+            x = card.visualX or (UI.BATTLE_CENTER_X - 48),
+            y = card.visualY or 466,
+            scale = card.visualScale or 1.0,
+            rotation = card.rotation or card.visualAngle or 0,
+        }
+    end
+    local playerSpeed = Combat.getAverageAttackSpeed(playedCards)
+    local monsterSpeed = game.monster and (game.monster.attackSpeed or 1) or 1
+    game.lastPlayerAttackSpeed = playerSpeed
+    game.monsterAttackedBeforePlayer = playerSpeed < monsterSpeed
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
     game.lastPlayedHandId = evalResult.type and evalResult.type.id
@@ -1379,6 +1393,22 @@ local function playSelectedHand()
                 alpha = 2.5,
             })
             Sound.play("xmult_boom")
+        end
+    end
+
+    local preScoreAttack = nil
+    if game.monsterAttackedBeforePlayer then
+        preScoreAttack = Combat.resolveMonsterAttack(game)
+        if preScoreAttack then
+            monsterMotion.attack = 0.42
+            screenShake = 16
+            Sound.play("score_impact", 0.72)
+            if game.playerHp <= 0 then
+                state = "gameover"
+                Persistence.deleteRun()
+                Sound.play("game_over")
+                return
+            end
         end
     end
 
@@ -1451,11 +1481,13 @@ local function playSelectedHand()
     anim.timer = 0
     anim.scoringData = scoreResult
     anim.playedCards = playedCards
+    anim.cardEntryFrom = playedCardStarts
     anim.currentStepIndex = 1
     anim.displayChips = scoreResult.baseChips
     anim.displayMult = scoreResult.baseMult
     anim.displayXMult = 1.0
     anim.displayFinalScore = scoreResult.baseChips * scoreResult.baseMult
+    anim.displayAura = 0
     anim.activeCardIndex = nil
     anim.scoredCards = {}
     anim.stepLog = evalResult.type.vnName .. ": " .. scoreResult.baseChips .. " Chips × " .. scoreResult.baseMult .. " Mult"
@@ -1464,6 +1496,22 @@ local function playSelectedHand()
     anim.playedCards = playedCards
     anim.evalResult = evalResult
     anim.floatingTexts = {}
+    anim.playerAttackSpeed = playerSpeed
+    anim.monsterAttackSpeed = monsterSpeed
+    anim.monsterAttackedBeforePlayer = preScoreAttack ~= nil
+    if preScoreAttack then
+        local shownSpeed = playerSpeed % 1 == 0 and tostring(playerSpeed) or string.format("%.1f", playerSpeed)
+        local attackText = "QUÁI TĐ " .. tostring(monsterSpeed) .. " > BẠN " .. shownSpeed
+            .. "  •  -" .. preScoreAttack.damage .. " HP"
+        if preScoreAttack.absorbed > 0 then attackText = attackText .. " (Giáp " .. preScoreAttack.absorbed .. ")" end
+        table.insert(anim.floatingTexts, {
+            text = attackText,
+            color = UI.COLORS.hpRed,
+            x = 640,
+            y = 350,
+            alpha = 2.5,
+        })
+    end
     anim.monsterDefeated = false
     anim.playerKilled = false
     anim.earnedGold = 0
@@ -1478,9 +1526,74 @@ local function playSelectedHand()
     anim.fireParticles = {}
     anim.impactFlash = 0
     anim.entranceTimer = 0
+    anim.hitStop = 0
+    anim.screenFlash = 0
+    anim.screenDistortion = 0
+    anim.exitStarted = false
+    anim.exitProgress = 0
 
     state = "scoring"
     Sound.play("card_play", 1.0)
+end
+
+local function endPlayerTurn()
+    if not game or not game.monster then return false end
+    local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
+        and game.monster.bossData.debuffId == "the_needle"
+    if handLimitIsFinal and (game.handsRemaining or 0) <= 0 then return false end
+    local canEndTurn = #game.hand == 0 or (game.handsRemaining or 0) <= 0
+    local availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
+    if not canEndTurn or availableCards == 0 then return false end
+    Combat.cleanupDestroyedCards(game)
+    availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
+    if availableCards == 0 then return false end
+
+    local attack = Combat.resolveMonsterAttack(game)
+    if not attack then return false end
+    monsterMotion.attack = 0.42
+    screenShake = math.max(screenShake or 0, 10)
+    anim.hitStop = 0.06
+    anim.screenFlash = 0.075
+    anim.screenDistortion = 0.09
+    anim.impactFlash = 0.16
+    anim.impactX, anim.impactY, anim.impactColor = UI.BATTLE_CENTER_X, 414, UI.COLORS.hpRed
+    spawnSparks(UI.BATTLE_CENTER_X, 414, 16, UI.COLORS.hpRed)
+    Sound.play(attack.damage >= 8 and "damage_heavy" or "damage_hit")
+    table.insert(anim.floatingTexts, {
+        text = "QUÁI ĐẬP CUỐI LƯỢT  •  -" .. attack.damage .. " HP"
+            .. (attack.absorbed > 0 and ("  •  GIÁP " .. attack.absorbed) or ""),
+        color = UI.COLORS.hpRed,
+        x = UI.BATTLE_CENTER_X,
+        y = 390,
+        alpha = 2.2,
+    })
+
+    if attack.killedPlayer then
+        state = "gameover"
+        Persistence.deleteRun()
+        Sound.play("game_over")
+        return true
+    end
+
+    Combat.onPlayerTurnEnd(game)
+    local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(game)
+    if cleansed then
+        table.insert(anim.floatingTexts, {
+            text = "✨ " .. cleanseMsg, color = UI.COLORS.hpGreen,
+            x = 640, y = 300, alpha = 2.5,
+        })
+    end
+    game.handsRemaining = game.turnHandLimit or game.maxHands or game.handsRemaining or 0
+    local drawnCards = 0
+    if #game.hand == 0 then
+        drawnCards = dealCombatHand(true)
+    else
+        clearAllSelections()
+        syncCardSelections()
+    end
+    state = "playing"
+    Sound.play(drawnCards > 0 and "card_deal" or "ui_click")
+    return true
 end
 
 local function generateBossChestRewards()
@@ -1564,6 +1677,7 @@ extern number u_curvature;
 extern number u_chroma;
 extern number u_scanlines;
 extern number u_vignette;
+extern number u_impact;
 
 vec2 curveUV(vec2 uv) {
     uv = uv * 2.0 - 1.0;
@@ -1574,6 +1688,12 @@ vec2 curveUV(vec2 uv) {
 
 vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
     vec2 uv = texture_coords;
+    vec2 impactDelta = uv - vec2(0.5, 0.5);
+    number impactDistance = length(impactDelta);
+    vec2 impactDirection = impactDistance > 0.0001 ? impactDelta / impactDistance : vec2(0.0, 1.0);
+    number impactWave = sin(impactDistance * 105.0 + u_impact * 24.0)
+        * exp(-impactDistance * 7.0) * u_impact;
+    uv += impactDirection * impactWave * 0.0028;
     vec2 curved_uv = curveUV(uv);
 
     if (curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0) {
@@ -1581,7 +1701,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     }
 
     vec2 distFromCenter = curved_uv - 0.5;
-    number aberration = length(distFromCenter) * u_chroma;
+    number aberration = length(distFromCenter) * (u_chroma + u_impact * 0.00075);
 
     number r = Texel(texture, curved_uv + distFromCenter * aberration).r;
     number g = Texel(texture, curved_uv).g;
@@ -1603,6 +1723,27 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
 }
 ]]
 
+local impactShaderCode = [[
+extern number u_strength;
+
+vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
+    vec2 uv = texture_coords;
+    vec2 delta = uv - vec2(0.5, 0.5);
+    number distanceFromCenter = length(delta);
+    vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
+    number ripple = sin(distanceFromCenter * 112.0 + u_strength * 28.0)
+        * exp(-distanceFromCenter * 7.5) * u_strength;
+    vec2 offset = direction * ripple * 0.0024;
+    vec2 redUv = clamp(uv + offset, vec2(0.0), vec2(1.0));
+    vec2 blueUv = clamp(uv - offset, vec2(0.0), vec2(1.0));
+    vec4 base = Texel(texture, uv);
+    vec3 shifted = vec3(Texel(texture, redUv).r, base.g, Texel(texture, blueUv).b);
+    number edgeFlash = exp(-abs(distanceFromCenter - 0.16) * 72.0) * u_strength * 0.09;
+    shifted += vec3(edgeFlash, edgeFlash * 0.76, edgeFlash * 0.48);
+    return vec4(mix(base.rgb, shifted, clamp(u_strength * 1.4, 0.0, 1.0)), base.a) * color;
+}
+]]
+
 local function initShadersAndCanvas()
     if love.graphics and love.graphics.newCanvas then
         mainCanvas = love.graphics.newCanvas(RENDER_WIDTH, RENDER_HEIGHT)
@@ -1614,6 +1755,9 @@ local function initShadersAndCanvas()
 
         local okCrt, shaderCrt = pcall(love.graphics.newShader, crtShaderCode)
         if okCrt then crtShader = shaderCrt end
+
+        local okImpact, shaderImpact = pcall(love.graphics.newShader, impactShaderCode)
+        if okImpact then impactShader = shaderImpact end
     end
 end
 
@@ -1736,6 +1880,9 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
+    if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
+    local motionDt = hitStopped and 0 or dt
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
     if state == "chest" or state == "treasure" then
@@ -1753,8 +1900,8 @@ function love.update(dt)
         anim.chestReveal.state = nil
         anim.chestReveal.timer = 0.90
     end
-    monsterMotion.attack = math.max(0, monsterMotion.attack - dt)
-    monsterMotion.hit = math.max(0, monsterMotion.hit - dt)
+    monsterMotion.attack = math.max(0, monsterMotion.attack - motionDt)
+    monsterMotion.hit = math.max(0, monsterMotion.hit - motionDt)
     if game and game.monster then
         if monsterMotion.target ~= game.monster then
             monsterMotion.target = game.monster
@@ -1779,7 +1926,7 @@ function love.update(dt)
     updateCaptureMode()
 
     if screenShake > 0 then
-        screenShake = math.max(0, screenShake - dt * 15)
+        screenShake = math.max(0, screenShake - motionDt * 15)
     end
 
     -- Update Map horizontal scrolling camera
@@ -1789,7 +1936,7 @@ function love.update(dt)
 
     -- Smooth Monster damage lag bar
     if game.monster and game.monster.damageLagHp > game.monster.hp then
-        game.monster.damageLagHp = math.max(game.monster.hp, game.monster.damageLagHp - dt * (game.monster.maxHp * 0.75))
+        game.monster.damageLagHp = math.max(game.monster.hp, game.monster.damageLagHp - motionDt * (game.monster.maxHp * 0.75))
     end
 
     -- Smoothly update floating texts
@@ -1797,6 +1944,7 @@ function love.update(dt)
         local ft = anim.floatingTexts[i]
         ft.y = ft.y - dt * 40
         ft.alpha = ft.alpha - dt * 1.1
+        if ft.scale then ft.scale = ft.scale + (1 - ft.scale) * math.min(1, dt * 12) end
         if ft.alpha <= 0 then
             table.remove(anim.floatingTexts, i)
         end
@@ -2083,11 +2231,17 @@ function love.update(dt)
     end
 
     anim.impactFlash = math.max(0, (anim.impactFlash or 0) - dt)
+    anim.screenFlash = math.max(0, (anim.screenFlash or 0) - dt)
+    anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
+    if anim.displayAura ~= nil and anim.displayFinalScore ~= nil then
+        anim.displayAura = anim.displayAura
+            + (anim.displayFinalScore - anim.displayAura) * math.min(1, motionDt * 9)
+    end
 
     -- Scoring Animation Loop
     if state == "scoring" and anim.active then
-        anim.entranceTimer = (anim.entranceTimer or 0) + dt
-        anim.stepTimer = anim.stepTimer + (settings.fastScoring and dt * 2.0 or dt)
+        anim.entranceTimer = (anim.entranceTimer or 0) + motionDt
+        anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 2.0 or motionDt)
         local stepDelay = anim.targetStepDelay or 0.36
 
         if anim.stepTimer >= stepDelay then
@@ -2357,6 +2511,9 @@ function love.update(dt)
                     anim.activeCardIndex = nil
                     local shakeAmt = math.min(6.5, 2.0 + math.log10(math.max(10, st.finalScore)) * 0.9)
                     screenShake = math.max(screenShake, shakeAmt)
+                    anim.hitStop = 0.055
+                    anim.screenFlash = 0.105
+                    anim.screenDistortion = 0.12
                     anim.bounceScale.score = 1.85
                     Sound.play("score_impact", 0.95)
                     if st.finalScore >= 1000 then Sound.play("xmult_boom", 0.88) end
@@ -2625,63 +2782,42 @@ function love.update(dt)
                             })
                         end
 
-                        -- 2. Monster Counter-Attack on Player HP
-                        local mAtk = (game.monster and game.monster.attack) or 12
-                        local curArmor = (game.playerArmor or game.playerShield or 0)
-                        local absorbed = math.min(curArmor, mAtk)
-                        curArmor = curArmor - absorbed
-                        -- Giáp còn lại sau đòn đánh của quái bị mất 50%
-                        curArmor = math.floor(curArmor * 0.5)
-                        game.playerArmor = curArmor
-                        game.playerShield = curArmor
-                        local dmgToPlayer = mAtk - absorbed
-
-                        -- Anti-OneShot Protection: Hard cap single-hit damage to at most 60% of max HP
-                        local maxDmgCap = math.floor((game.maxPlayerHp or 100) * 0.60)
-                        if dmgToPlayer > maxDmgCap then
-                            dmgToPlayer = maxDmgCap
+                        -- The faster side acts first; ties are resolved in the player's favor.
+                        local attackResult = nil
+                        if not anim.monsterAttackedBeforePlayer then
+                            attackResult = Combat.resolveMonsterAttack(game)
                         end
-
-                        game.playerHp = math.max(0, (game.playerHp or 100) - dmgToPlayer)
-                        monsterMotion.attack = 0.42
-
-                        -- Monster Cuồng Nộ (Enrage) scaling: +8% Attack & +5% Armor each turn
-                        if game.monster then
-                            game.monster.attack = math.floor(game.monster.attack * 1.08 + 0.5)
-                            game.monster.armor = math.floor((game.monster.armor or 0) * 1.05 + 2)
-                        end
-
-                        -- Escort Enhancement (Hộ Tống): unplayed cards in hand grant +5 Armor
-                        for _, c in ipairs(game.hand or {}) do
-                            if c.enhancement == "enh_escort" or c.enhancement == "escort" then
-                                game.playerArmor = math.min(30, (game.playerArmor or 0) + 5)
-                                game.playerShield = game.playerArmor
+                        if attackResult then
+                            monsterMotion.attack = 0.42
+                            screenShake = 16
+                            Sound.play("score_impact", 0.72)
+                            local counterMsg = "[BẠN TĐ " .. tostring(attackResult.playerSpeed)
+                                .. " ≥ QUÁI " .. tostring(attackResult.monsterSpeed) .. "] QUÁI PHẢN CÔNG -"
+                                .. attackResult.damage .. " HP!"
+                            if attackResult.absorbed > 0 then
+                                counterMsg = counterMsg .. " Giáp đỡ " .. attackResult.absorbed
                             end
+                            table.insert(anim.floatingTexts, {
+                                text = counterMsg,
+                                color = UI.COLORS.hpRed,
+                                x = 640,
+                                y = 350,
+                                alpha = 2.5,
+                            })
                         end
-
-                        screenShake = 16
-                        Sound.play("score_impact", 0.72)
-                        local counterMsg = "[QUÁI PHẢN CÔNG] -" .. dmgToPlayer .. " HP!"
-                        if absorbed > 0 then
-                            counterMsg = "[QUÁI PHẢN CÔNG] Giáp đỡ " .. absorbed .. " | -" .. dmgToPlayer .. " HP!"
-                        end
-                        table.insert(anim.floatingTexts, {
-                            text = counterMsg,
-                            color = UI.COLORS.hpRed,
-                            x = 640,
-                            y = 350,
-                            alpha = 2.5,
-                        })
 
                         if game.playerHp <= 0 then
                             anim.playerKilled = true
                             Sound.play("game_over")
-                        elseif game.handsRemaining <= 0 then
-                            Sound.play("game_over")
-                        end
+                    end
                     end
                 end
             else
+                if anim.stepTimer >= 0.12 and not anim.exitStarted then
+                    anim.exitStarted = true
+                    Sound.play("card_slide", 0.86)
+                end
+                anim.exitProgress = math.max(0, math.min(1, (anim.stepTimer - 0.12) / 0.52))
                 if anim.stepTimer >= 0.8 or anim.currentStepIndex > #steps + 1 then
                     anim.active = false
                     anim.playedCards = {}
@@ -2749,45 +2885,21 @@ function love.update(dt)
                             Sound.play("round_win")
                         end
                     else
-                        -- End of turn lifecycle:
+                        -- Preserve per-hand lifecycle effects; turn recycling itself
+                        -- only happens when the player explicitly ends the turn.
                         Combat.cleanupDestroyedCards(game)
                         Combat.onPlayerTurnEnd(game)
                         local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(game)
                         if cleansed then
-                            table.insert(anim.floatingTexts, { text = "✨ " .. cleanseMsg, color = UI.COLORS.hpGreen, x = 640, y = 300, alpha = 3.0 })
+                            table.insert(anim.floatingTexts, {
+                                text = "✨ " .. cleanseMsg,
+                                color = UI.COLORS.hpGreen,
+                                x = 640,
+                                y = 300,
+                                alpha = 3.0,
+                            })
                         end
-
-                        -- Refill hand to maxHandSize cards while deck/discard has cards
-                        local maxHandSize = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
-                        local dealOrder = 0
-                        while #game.hand < maxHandSize do
-                            if #game.deck == 0 and #game.discardPile > 0 then
-                                while #game.discardPile > 0 do
-                                    table.insert(game.deck, table.remove(game.discardPile))
-                                end
-                                Deck.shuffle(game.deck)
-                            end
-                            if #game.deck == 0 then break end
-                            local drawn = table.remove(game.deck)
-                            if drawn then
-                                dealOrder = dealOrder + 1
-                                drawn.selected = false
-                                anim.prepareDrawAnimation(drawn, dealOrder)
-                                if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_fish" then
-                                    drawn.faceDown = true
-                                end
-                                table.insert(game.hand, drawn)
-                            end
-                        end
-
-                        if game.sortMode == "rank" then
-                            Deck.sortByRank(game.hand)
-                        else
-                            Deck.sortBySuit(game.hand)
-                        end
-
-                        clearAllSelections()
-                        syncCardSelections()
+                        dealCombatHand(false)
                         state = "playing"
                         Sound.play("card_deal")
                     end
@@ -3244,7 +3356,7 @@ local function drawFactionSelect()
 
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Mỗi phe sở hữu bộ bài và ban ơn thần thánh đặc trưng (Bắt đầu với 3 lá ngẫu nhiên):", 0, 85, V_WIDTH, "center")
+    love.graphics.printf("Bắt đầu với 1 lá bài ngẫu nhiên; mở rộng bộ bài trong hành trình.", 0, 85, V_WIDTH, "center")
 
     -- 4 Faction Selection Cards (Grimdark Archetypes)
     local factions = {
@@ -3331,7 +3443,7 @@ local function drawFactionSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Khởi đầu với 3 lá ngẫu nhiên. Đánh bại BOSS để chọn thêm Hộ Linh!", 0, V_HEIGHT - 35, V_WIDTH, "center")
+    love.graphics.printf("Khởi đầu với 1 lá ngẫu nhiên. Đánh bại BOSS để chọn thêm Hộ Linh!", 0, V_HEIGHT - 35, V_WIDTH, "center")
 end
 
 local function drawStarterDeckSelect()
@@ -3376,10 +3488,10 @@ local function drawStarterDeckSelect()
     UI.drawRoundedRect("fill", cardX + 34, cardY + 220, cardW - 68, 105, 10)
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(1, 0.86, 0.48, 1)
-    love.graphics.printf("LƯỢT ĐẦU: +10 CƯỜNG HÓA", cardX + 40, cardY + 233, cardW - 80, "center")
+    love.graphics.printf("KHỞI ĐẦU: 1 LÁ NGẪU NHIÊN", cardX + 40, cardY + 233, cardW - 80, "center")
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Mỗi trận xáo bộ bài và rút 3 lá ngẫu nhiên lên tay.", cardX + 50, cardY + 274, cardW - 100, "center")
+    love.graphics.printf("Lá bài được chọn đều từ bộ chuẩn 52 lá.", cardX + 50, cardY + 274, cardW - 100, "center")
 
     local choose = {
         id = "deck_red", deckId = "red_deck", text = "CHỌN BỘ BÀI ĐỎ",
@@ -3391,7 +3503,7 @@ local function drawStarterDeckSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Bộ bài chuẩn 52 lá • Không có kỹ năng phe • Tay bài khởi đầu: 3", 0, V_HEIGHT - 50, V_WIDTH, "center")
+    love.graphics.printf("1 lá ban đầu • Thu thập thêm bài trong hành trình • Tốc đánh từ 1 đến 11", 0, V_HEIGHT - 50, V_WIDTH, "center")
 end
 
 local function drawMenu()
@@ -3464,7 +3576,7 @@ local function drawBattleEnemy(m)
         g.pop()
     end
     UI.components.EnemyPanel.draw((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu",
-        m.hp, m.maxHp, UI.fonts, UI.BATTLE_CENTER_X)
+        m.damageLagHp or m.hp, m.maxHp, UI.fonts, UI.BATTLE_CENTER_X, m.hp)
 end
 
 local function drawBattleInfoPanel(m, eval, preview)
@@ -3472,7 +3584,7 @@ local function drawBattleInfoPanel(m, eval, preview)
     local chips = scoring and (anim.displayChips or 0) or (preview and preview.totalChips or 0)
     local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
     local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
-    local aura = scoring and (anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
+    local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
     local handName = scoring and (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
@@ -3483,7 +3595,14 @@ local function drawBattleInfoPanel(m, eval, preview)
         handName = UI.truncateUtf8(handName, 24), chips = chips, mult = mult, xMult = xMult, aura = aura,
         scoring = scoring, enemyName = UI.truncateUtf8((m and m.name) or "Không rõ", 13),
         enemyHp = math.max(0, (m and m.hp) or 0), enemyMaxHp = (m and m.maxHp) or 1,
+        enemyBarHp = m and (m.damageLagHp or m.hp) or 0,
         intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
+        playerSpeed = scoring and anim.playerAttackSpeed
+            or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards()) or nil),
+        enemySpeed = m and (m.attackSpeed or 1),
+        chipsBounce = scoring and anim.bounceScale.chips or 1,
+        multBounce = scoring and anim.bounceScale.mult or 1,
+        auraBounce = scoring and anim.bounceScale.score or 1,
         debuff = UI.truncateUtf8(m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi", 55),
         isBoss = m and m.bossData ~= nil,
         category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA"),
@@ -3518,10 +3637,22 @@ local function drawCombatFeedback()
         love.graphics.setBlendMode("alpha")
     end
 
+    if (anim.screenFlash or 0) > 0 then
+        local alpha = math.min(0.12, (anim.screenFlash / 0.105) * 0.12)
+        love.graphics.setBlendMode("add")
+        love.graphics.setColor(1, 0.90, 0.72, alpha)
+        love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+        love.graphics.setBlendMode("alpha")
+    end
+
     for _, ft in ipairs(anim.floatingTexts) do
         love.graphics.setFont(UI.fonts.large)
         love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], ft.alpha)
-        love.graphics.printf(ft.text, ft.x - 200, ft.y, 400, "center")
+        love.graphics.push()
+        love.graphics.translate(ft.x, ft.y)
+        love.graphics.scale(ft.scale or 1, ft.scale or 1)
+        love.graphics.printf(ft.text, -200, 0, 400, "center")
+        love.graphics.pop()
     end
 end
 
@@ -3728,16 +3859,22 @@ local function drawPlayingState()
     UI.components.Panel.draw(365, 626, 530, 72)
 
     -- Left: Chơi Tay Bài [Space]
+    local handLimitIsFinal = game.monster and game.monster.isBoss and game.monster.bossData
+        and game.monster.bossData.debuffId == "the_needle"
+    local canEndTurn = not (handLimitIsFinal and (game.handsRemaining or 0) <= 0)
+        and (#game.hand == 0 or (game.handsRemaining or 0) <= 0)
+        and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
     local btnPlay = {
-        id = "play",
-        text = "Chơi Tay Bài",
+        id = canEndTurn and "end_turn" or "play",
+        text = canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài",
         x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
         w = 175,
         h = 58,
         font = UI.fonts.small,
         variant = "cyan",
-        disabled = not hasSelection or game.handsRemaining <= 0,
+        disabled = not canEndTurn and (not hasSelection or game.handsRemaining <= 0),
+        pressScale = 0.95,
     }
     table.insert(buttons, btnPlay)
     UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h,
@@ -3865,15 +4002,29 @@ local function drawScoringState()
 
     -- Render Played Cards in Play Zone
     for i, c in ipairs(cards) do
-        local cx = UI.getScoringCardX(i, #cards)
-        local entrance = math.max(0, math.min(1, ((anim.entranceTimer or 0) - (i - 1) * 0.04) / 0.16))
+        local targetX = UI.getScoringCardX(i, #cards)
+        local start = anim.cardEntryFrom and anim.cardEntryFrom[i] or nil
+        local fromX = start and start.x or targetX
+        local fromY = start and start.y or 490
+        local entrance = math.max(0, math.min(1, ((anim.entranceTimer or 0) - (i - 1) * 0.055) / 0.23))
         local easedEntrance = 1 - (1 - entrance) ^ 3
-        local cy = 490 + (playY - 490) * easedEntrance
+        local cx = fromX + (targetX - fromX) * easedEntrance
+        local cy = fromY + (playY - fromY) * easedEntrance
         local isActive = (anim.activeCardIndex == i)
         local isScored = (anim.scoredCards and anim.scoredCards[i] ~= nil)
 
-        c.visualScale = 0.72 + easedEntrance * 0.28
-        c.rotation = (1 - easedEntrance) * ((i % 2 == 0) and 0.10 or -0.10)
+        c.visualScale = (start and start.scale or 1.0) + (0.96 - (start and start.scale or 1.0)) * easedEntrance
+        c.rotation = ((start and start.rotation) or ((i % 2 == 0) and 0.10 or -0.10)) * (1 - easedEntrance)
+
+        local exit = anim.exitProgress or 0
+        if exit > 0 then
+            local easedExit = 1 - (1 - exit) ^ 3
+            local deckX, deckY = 1140 - cardW / 2, 535
+            cx = cx + (deckX - cx) * easedExit
+            cy = cy + (deckY - cy) * easedExit
+            c.visualScale = c.visualScale * (1 - easedExit * 0.54)
+            c.rotation = c.rotation + ((i % 2 == 0) and 0.16 or -0.16) * easedExit
+        end
 
         if isActive then
             cy = cy - 20 -- Lift active card
@@ -7469,6 +7620,7 @@ function love.draw()
         love.graphics.setColor(0.02, 0.02, 0.03, 1)
         love.graphics.rectangle("fill", 0, 0, winW, winH)
 
+        local impactStrength = math.max(0, math.min(1, (anim.screenDistortion or 0) / 0.12))
         if settings.crtEnabled and crtShader then
             love.graphics.setShader(crtShader)
             if crtShader:hasUniform("u_resolution") then crtShader:send("u_resolution", { RENDER_WIDTH, RENDER_HEIGHT }) end
@@ -7477,6 +7629,10 @@ function love.draw()
             if crtShader:hasUniform("u_chroma") then crtShader:send("u_chroma", 0.0003) end
             if crtShader:hasUniform("u_scanlines") then crtShader:send("u_scanlines", 0.035) end
             if crtShader:hasUniform("u_vignette") then crtShader:send("u_vignette", 0.04) end
+            if crtShader:hasUniform("u_impact") then crtShader:send("u_impact", impactStrength) end
+        elseif impactStrength > 0 and impactShader then
+            love.graphics.setShader(impactShader)
+            if impactShader:hasUniform("u_strength") then impactShader:send("u_strength", impactStrength) end
         else
             love.graphics.setShader()
         end
@@ -7498,6 +7654,9 @@ local function handlePlayingMousepressed(mx, my, button)
         if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             if btn.id == "play" then
                 playSelectedHand()
+                return true
+            elseif btn.id == "end_turn" then
+                endPlayerTurn()
                 return true
             elseif btn.id == "discard" then
                 discardSelected()
@@ -9098,7 +9257,7 @@ function love.keypressed(key)
 
     if state == "playing" then
         if key == "space" or key == "return" then
-            playSelectedHand()
+            if #game.hand == 0 or (game.handsRemaining or 0) <= 0 then endPlayerTurn() else playSelectedHand() end
         elseif key == "d" then
             discardSelected()
         elseif key == "r" then

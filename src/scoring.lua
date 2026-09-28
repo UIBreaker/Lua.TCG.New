@@ -98,18 +98,6 @@ function Scoring.calculate(handInfo, deities, context)
         end
     end
 
-    -- Red Deck passive: a flat +10 Mult on the first played hand of each
-    -- combat. Preview and actual scoring share this condition without
-    -- mutating the combat counter here.
-    if context and context.starterDeckId == "red_deck" and (context.handsPlayedThisCombat or 0) == 0 then
-        bonusMult = bonusMult + 10
-        table.insert(steps, {
-            type = "starter_deck_bonus",
-            addedMult = 10,
-            message = "🔴 BỘ BÀI ĐỎ: Tay đầu tiên +10 Mult!",
-        })
-    end
-
     -- Check pre-hand equipment buffs (adjacent mirror, same suit storm eye)
     local cardExternalBuffs = {} -- cardIndex -> { chips, mult }
     for i, card in ipairs(handInfo.scoringCards) do

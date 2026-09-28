@@ -164,8 +164,11 @@ function Monster.getHpByEncounter(encounterCount, isBoss, isElite)
     end
 end
 
-function Monster.rollAttackSpeed()
-    return Rng.random(1, 11)
+function Monster.rollAttackSpeed(encounterCount)
+    local encounter = math.max(1, tonumber(encounterCount) or 1)
+    -- Enemy speed rises gently through a run, with room to grow up to 999.
+    local maximum = math.min(999, 11 + math.floor((encounter - 1) * 0.25))
+    return Rng.random(1, maximum)
 end
 
 -- Counter-attack damage starts low and scales with each monster encounter.
@@ -200,7 +203,7 @@ function Monster.create(round, isBossOverride, isEliteOverride, encounterCountOv
         maxHp = hp,
         damageLagHp = hp,
         attack = attack,
-        attackSpeed = Monster.rollAttackSpeed(),
+        attackSpeed = Monster.rollAttackSpeed(encounterCount),
         phase = 1,
         enrageStacks = 0,
         armor = 0,

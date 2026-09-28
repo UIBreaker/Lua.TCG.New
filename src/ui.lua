@@ -5,6 +5,7 @@ local Button = require("ui.components.button")
 local Slot = require("ui.components.slot")
 local HealthBar = require("ui.components.health_bar")
 local Deck = require("src.deck")
+local Deities = require("src.deities")
 
 -- Color constants
 UI.COLORS = {
@@ -1112,6 +1113,41 @@ end
 
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 
+local function drawRarityPennant(deity, width)
+    local badge, color = Deities.getRarityBadge(deity)
+    local font = UI.fonts.small
+    local flagW = math.min(width - 8, math.max(28, font:getWidth(badge) + 14))
+    local flagH = 27
+    local flagX = (width - flagW) / 2
+    local flagY = 3
+    local notchY = flagY + flagH - 6
+    local isCommon = (deity.rarity or "common") == "common" and (deity.evolutionLevel or 0) == 0
+    local fill = isCommon and { 0.78, 0.82, 0.88, 1 } or color
+
+    love.graphics.setColor(0, 0, 0, 0.82)
+    love.graphics.polygon("fill", flagX, flagY, flagX + flagW, flagY,
+        flagX + flagW, flagY + flagH, flagX + flagW / 2, notchY, flagX, flagY + flagH)
+    love.graphics.setColor(fill)
+    love.graphics.polygon("fill", flagX + 1, flagY + 1, flagX + flagW - 1, flagY + 1,
+        flagX + flagW - 1, flagY + flagH - 1, flagX + flagW / 2, notchY - 1,
+        flagX + 1, flagY + flagH - 1)
+    love.graphics.setColor(1, 1, 1, 0.52)
+    love.graphics.line(flagX + 3, flagY + 2, flagX + flagW - 3, flagY + 2)
+    love.graphics.setLineWidth(0.8)
+    love.graphics.setColor(0.025, 0.035, 0.055, 1)
+    love.graphics.polygon("line", flagX, flagY, flagX + flagW, flagY,
+        flagX + flagW, flagY + flagH, flagX + flagW / 2, notchY, flagX, flagY + flagH)
+
+    local textScale = math.min(1, (flagW - 6) / math.max(1, font:getWidth(badge)))
+    love.graphics.push()
+    love.graphics.translate(flagX + flagW / 2, flagY + 5)
+    love.graphics.scale(textScale)
+    love.graphics.setFont(font)
+    love.graphics.setColor(0.035, 0.045, 0.065, 1)
+    love.graphics.printf(badge, -flagW / (2 * textScale), 0, flagW / textScale, "center")
+    love.graphics.pop()
+end
+
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
     if not d then return end
     w, h = w or 82, h or 118
@@ -1119,8 +1155,7 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     local deityId = d.deityId or d.id
     local deityImage = UI.getDeityImage(deityId)
     local isSpnCard = deityImage and UI.deityImageIsSpnCard[deityId]
-    local rim = d.rarity == "legendary" and UI.COLORS.goldYellow
-        or (d.rarity == "rare" and UI.COLORS.chipsBlue or UI.COLORS.panelBorder)
+    local _, rim = Deities.getRarityBadge(d)
     local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
     g.push("all")
     g.translate(x + w / 2, y + h / 2)
@@ -1132,6 +1167,7 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
         local imageDrawW, imageDrawH = imageW * imageScale, imageH * imageScale
         g.setColor(1, 1, 1, 1)
         g.draw(deityImage, (w - imageDrawW) / 2, (h - imageDrawH) / 2, 0, imageScale, imageScale)
+        drawRarityPennant(d, w)
         g.pop()
         return
     end
@@ -1165,6 +1201,54 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     g.pop()
 end
 
+function UI.drawRoundRewardChoice(offer, mx, my, buttons, viewW, viewH)
+    if not offer or not offer.options then return end
+
+    local panelX, panelY, panelW, panelH = 95, 86, 1090, 548
+    love.graphics.setColor(0, 0, 0, 0.78)
+    love.graphics.rectangle("fill", 0, 0, viewW, viewH)
+    love.graphics.setColor(0.08, 0.11, 0.15, 0.99)
+    UI.drawRoundedRect("fill", panelX, panelY, panelW, panelH, 14)
+    love.graphics.setLineWidth(3)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    UI.drawRoundedRect("line", panelX, panelY, panelW, panelH, 14)
+
+    love.graphics.setFont(UI.fonts.title or UI.fonts.large)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf("PHẦN THƯỞNG VÒNG ẢI " .. tostring(offer.ante or ""), panelX + 20, panelY + 24, panelW - 40, "center")
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(UI.COLORS.textLight)
+    love.graphics.printf("Chọn một lá tiêu hao để nhận", panelX + 20, panelY + 70, panelW - 40, "center")
+
+    local cardW, cardH, gap = 320, 340, 24
+    local startX, cardY = (viewW - (cardW * 3 + gap * 2)) / 2, panelY + 132
+    for i, item in ipairs(offer.options) do
+        local x = startX + (i - 1) * (cardW + gap)
+        local hovered = mx >= x and mx <= x + cardW and my >= cardY and my <= cardY + cardH
+        local color = item.color or UI.COLORS.goldYellow
+        love.graphics.setColor(0, 0, 0, 0.35)
+        UI.drawRoundedRect("fill", x + 3, cardY + 5, cardW, cardH, 12)
+        love.graphics.setColor(0.12, 0.16, 0.21, 1)
+        UI.drawRoundedRect("fill", x, cardY, cardW, cardH, 12)
+        love.graphics.setLineWidth(hovered and 3 or 2)
+        love.graphics.setColor(color)
+        UI.drawRoundedRect("line", x, cardY, cardW, cardH, 12)
+        love.graphics.setFont(UI.fonts.large or UI.fonts.title)
+        love.graphics.setColor(color)
+        love.graphics.printf(item.icon or "✦", x, cardY + 26, cardW, "center")
+        love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf(item.name or "Phần thưởng", x + 14, cardY + 110, cardW - 28, "center")
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textMuted or UI.COLORS.textLight)
+        love.graphics.printf(item.desc or "", x + 22, cardY + 160, cardW - 44, "center")
+        local button = { id = "round_reward_" .. i, rewardIndex = i, x = x + 22, y = cardY + cardH - 54,
+            w = cardW - 44, h = 38, text = "CHỌN", color = color, textColor = { 1, 1, 1, 1 }, font = UI.fonts.small }
+        table.insert(buttons, button)
+        UI.drawButton(button, hovered)
+    end
+end
+
 -- Rich Floating Tooltip for Hộ Linh (Patrons)
 function UI.drawPatronTooltip(d, mx, my, copyTarget)
     if not d then return end
@@ -1186,19 +1270,8 @@ function UI.drawPatronTooltip(d, mx, my, copyTarget)
     love.graphics.setColor(0.78, 0.65, 0.22, 0.95)
     UI.drawRoundedRect("line", ttx, tty, ttW, ttH, 7)
 
-    -- Rarity badge string & color
-    local rText = "[THƯỜNG]"
-    local rCol = { 0.70, 0.75, 0.82, 1 }
-    if d.rarity == "uncommon" then
-        rText = "[HIẾM]"
-        rCol = { 0.22, 0.82, 0.45, 1 }
-    elseif d.rarity == "rare" then
-        rText = "[CỰC PHẨM]"
-        rCol = { 0.25, 0.65, 1.0, 1 }
-    elseif d.rarity == "legendary" then
-        rText = "[TRUYỀN THUYẾT]"
-        rCol = { 0.98, 0.82, 0.22, 1 }
-    end
+    local rarityName, rCol = Deities.getRarityLabel(d)
+    local rText = "[" .. rarityName .. "]"
 
     -- Line 1: Title & Rarity
     love.graphics.setFont(UI.fonts.medium)

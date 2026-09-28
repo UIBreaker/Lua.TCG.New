@@ -1,6 +1,94 @@
 local Rng = require("src.rng")
 local Deities = {}
 
+Deities.RARITIES = {
+    { id = "common", name = "Thường", code = "C", color = { 0.82, 0.84, 0.88, 1 } },
+    { id = "uncommon", name = "Không Thường", code = "UC", color = { 0.28, 0.82, 0.48, 1 } },
+    { id = "rare", name = "Hiếm", code = "R", color = { 0.30, 0.62, 1.00, 1 } },
+    { id = "epic", name = "Sử Thi", code = "E", color = { 0.72, 0.38, 0.94, 1 } },
+    { id = "legendary", name = "Huyền Thoại", code = "L", color = { 1.00, 0.62, 0.22, 1 } },
+    { id = "mythic", name = "Thần Thoại", code = "M", color = { 0.94, 0.28, 0.30, 1 } },
+    { id = "transcendent", name = "Siêu Việt", code = "T", color = { 0.48, 0.90, 0.96, 1 } },
+    { id = "unique", name = "Độc Nhất", code = "UQ", color = { 0.82, 0.70, 1.00, 1 } },
+}
+
+local rarityIndex = {}
+for index, rarity in ipairs(Deities.RARITIES) do rarityIndex[rarity.id] = index end
+
+local function rarityState(deity)
+    local baseTier = tonumber(deity and deity.baseRarityTier)
+        or rarityIndex[deity and (deity.baseRarity or deity.rarity)]
+        or 1
+    baseTier = math.max(1, math.min(#Deities.RARITIES, baseTier))
+    local evolutionLevel = math.max(0, math.floor(tonumber(deity and deity.evolutionLevel) or 0))
+    local absoluteTier = baseTier + evolutionLevel
+    local tier = math.min(#Deities.RARITIES, absoluteTier)
+    return Deities.RARITIES[tier], math.max(0, absoluteTier - #Deities.RARITIES), baseTier, evolutionLevel
+end
+
+function Deities.getRarityBadge(deity)
+    local rarity, overflow = rarityState(deity)
+    return rarity.code .. (overflow > 0 and ("+" .. overflow) or ""), rarity.color
+end
+
+function Deities.getRarityLabel(deity)
+    local rarity, overflow = rarityState(deity)
+    return rarity.name .. (overflow > 0 and (" +" .. overflow) or ""), rarity.color
+end
+
+local function formatEffectNumber(value)
+    if value % 1 == 0 then return tostring(math.floor(value)) end
+    return (string.format("%.2f", value):gsub("0+$", ""):gsub("%.$", ""))
+end
+
+function Deities.evolve(deity)
+    if type(deity) ~= "table" or not deity.id then return false end
+    local rarity, _, baseTier, evolutionLevel = rarityState(deity)
+    deity.baseRarityTier = baseTier
+    deity.baseRarity = deity.baseRarity or rarity.id
+    deity.evolutionLevel = evolutionLevel + 1
+    local nextRarity = rarityState(deity)
+    deity.rarity = nextRarity.id
+    deity.baseDesc = deity.baseDesc or deity.desc or ""
+    local multiplier = 1 + deity.evolutionLevel * 0.5
+    deity.desc = deity.baseDesc:gsub("([+])(%d+%.?%d*)", function(sign, amount)
+        return sign .. formatEffectNumber(tonumber(amount) * multiplier)
+    end)
+    local badge = Deities.getRarityBadge(deity)
+    return true, badge
+end
+
+function Deities.scaleEffect(deity, result)
+    local levels = math.max(0, math.floor(tonumber(deity and deity.evolutionLevel) or 0))
+    if not result or levels == 0 then return result end
+
+    local multiplier = 1 + levels * 0.5
+    for key, value in pairs(result) do
+        if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
+            local scaled = value * multiplier
+            result[key] = scaled
+
+            local message = result.message
+            if message then
+                local number = formatEffectNumber(value)
+                local startAt, endAt = message:find(number, 1, true)
+                if startAt then
+                    local before = startAt > 1 and message:sub(startAt - 1, startAt - 1) or ""
+                    local after = message:sub(endAt + 1, endAt + 1)
+                    if not before:match("[%d%.]") and not after:match("[%d%.]") then
+                        result.message = message:sub(1, startAt - 1) .. formatEffectNumber(scaled) .. message:sub(endAt + 1)
+                    end
+                end
+            end
+        end
+    end
+
+    if type(result.xMult) == "number" and result.xMult > 1 then
+        result.xMult = 1 + (result.xMult - 1) * multiplier
+    end
+    return result
+end
+
 -- Đúng 9 Hộ Linh cơ bản, tất cả bậc C (Common), mỗi lá một hiệu ứng dễ đọc.
 Deities.CATALOG = {
     spirit_pebble = {

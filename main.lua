@@ -89,6 +89,8 @@ local cashOutAnim = nil -- For Cash Out Modal Breakdown
 local shopData = nil
 local chestRewards = {}
 local pendingEquipment = nil
+local pendingEvolutionCard = nil
+local pendingSpeedCard = nil
 local socketingReturnState = "shop"
 local socketingPage = 1
 local socketingMessage = nil
@@ -1044,6 +1046,72 @@ local function useConsumable(idx)
     local c = game.consumables[idx]
     if not c then return false end
 
+    if c.category == "evolution" or c.id == "cons_evolution" then
+        if Deities.getCount(game.deities) == 0 then
+            table.insert(anim.floatingTexts, {
+                text = "Cần có ít nhất một lá SPN để tiến hóa.",
+                color = { 0.82, 0.70, 1, 1 }, x = 640, y = 350, alpha = 2.2,
+            })
+            return false
+        end
+        pendingEvolutionCard = c
+        table.insert(anim.floatingTexts, {
+            text = "CHỌN MỘT LÁ SPN ĐỂ TIẾN HÓA · ESC ĐỂ HỦY",
+            color = { 0.82, 0.70, 1, 1 }, x = 640, y = 310, alpha = 2.4,
+        })
+        Sound.play("card_select")
+        return true
+    end
+
+    if c.category == "speed_single" then
+        if state ~= "playing" or not game.hand or #game.hand == 0 then
+            table.insert(anim.floatingTexts, {
+                text = "Tăng Tốc Đơn chỉ dùng được khi đang có bài trên tay.",
+                color = { 0.48, 0.78, 1, 1 }, x = 640, y = 350, alpha = 2.2,
+            })
+            return false
+        end
+        pendingSpeedCard = c
+        table.insert(anim.floatingTexts, {
+            text = "CHỌN LÁ BÀI TRÊN TAY ĐỂ TĂNG +5 TỐC ĐÁNH · ESC ĐỂ HỦY",
+            color = { 0.48, 0.78, 1, 1 }, x = 640, y = 310, alpha = 2.4,
+        })
+        Sound.play("card_select")
+        return true
+    elseif c.category == "speed_team" then
+        if state ~= "playing" or not game.hand or #game.hand == 0 then
+            table.insert(anim.floatingTexts, {
+                text = "Tăng Tốc Đội chỉ dùng được khi đang có bài trên tay.",
+                color = { 0.38, 0.90, 0.68, 1 }, x = 640, y = 350, alpha = 2.2,
+            })
+            return false
+        end
+        local affected, seenIds = 0, {}
+        for _, handCard in ipairs(game.hand) do
+            local key = handCard.id or handCard
+            if not seenIds[key] then
+                seenIds[key] = true
+                local seenCards = {}
+                for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
+                    for _, copy in ipairs(pile or {}) do
+                        if copy and not seenCards[copy] and (copy == handCard or (handCard.id and copy.id == handCard.id)) then
+                            seenCards[copy] = true
+                            Deck.applyAttackSpeedBonus(copy, 2)
+                        end
+                    end
+                end
+                affected = affected + 1
+            end
+        end
+        table.remove(game.consumables, idx)
+        Sound.play("round_win")
+        table.insert(anim.floatingTexts, {
+            text = "TĂNG TỐC ĐỘI · +2 TỐC ĐÁNH CHO " .. affected .. " LÁ",
+            color = { 0.38, 0.90, 0.68, 1 }, x = 640, y = 350, alpha = 2.8,
+        })
+        return true
+    end
+
     -- 1. Celestial / Planet card
     if c.category == "celestial" or (c.id and c.id:find("planet_")) then
         game.handLevels = game.handLevels or {}
@@ -1324,10 +1392,84 @@ local function activateConsumable(idx, currentState)
     if not card then return false end
     local x, y, w, h = getConsumableSlotRect(idx, currentState)
     if not useConsumable(idx) then return false end
-    spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
+    if card.category ~= "evolution" and card.id ~= "cons_evolution"
+        and card.category ~= "speed_single" then
+        spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
+    end
     return true
+end
+
+local function applyPendingEvolutionAt(mx, my, currentState)
+    if not pendingEvolutionCard then return false end
+    local maxSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    for i = maxSlots, 1, -1 do
+        local x, y, w, h = getDeitySlotRect(i, currentState)
+        local deity = game.deities and game.deities[i]
+        if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
+            local cardIndex
+            for index, card in ipairs(game.consumables or {}) do
+                if card == pendingEvolutionCard then cardIndex = index; break end
+            end
+            if not cardIndex then
+                pendingEvolutionCard = nil
+                return true
+            end
+
+            local evolved, badge = Deities.evolve(deity)
+            if evolved then
+                local card = table.remove(game.consumables, cardIndex)
+                pendingEvolutionCard = nil
+                spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
+                table.insert(anim.floatingTexts, {
+                    text = deity.name .. "  →  " .. badge .. "  ·  " .. (deity.desc or "Chỉ số đã tăng"),
+                    color = { 0.82, 0.70, 1, 1 }, x = x + w / 2, y = y - 8, alpha = 2.5,
+                })
+                Sound.play("xmult_boom")
+            end
+            return true
+        end
+    end
+    return false
+end
+
+local function applyPendingSpeedAt(mx, my)
+    if not pendingSpeedCard then return false end
+    for i = #game.hand, 1, -1 do
+        local card = game.hand[i]
+        local x, y = card.visualX or 0, card.visualY or 0
+        if mx >= x and mx <= x + 100 and my >= y and my <= y + 145 then
+            local rewardIndex
+            for index, item in ipairs(game.consumables or {}) do
+                if item == pendingSpeedCard then rewardIndex = index; break end
+            end
+            if not rewardIndex then pendingSpeedCard = nil; return true end
+
+            local seenCards, selectedSpeed = {}, nil
+            for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
+                for _, copy in ipairs(pile or {}) do
+                    if copy and not seenCards[copy] and (copy == card or (card.id and copy.id == card.id)) then
+                        seenCards[copy] = true
+                        local result = Deck.applyAttackSpeedBonus(copy, 5)
+                        if copy == card then selectedSpeed = result end
+                    end
+                end
+            end
+            local usedCard = table.remove(game.consumables, rewardIndex)
+            pendingSpeedCard = nil
+            local cx, cy = getConsumableSlotRect(rewardIndex, "playing")
+            spawnShopFx("consume", usedCard, cx + 40, cy + 55, 80, 110)
+            table.insert(anim.floatingTexts, {
+                text = "TĂNG TỐC ĐƠN · " .. (card.rankName or "LÁ BÀI") .. (card.suitSymbol or "")
+                    .. " · TỐC ĐÁNH " .. tostring(selectedSpeed or Deck.getCardAttackSpeed(card)),
+                color = { 0.48, 0.78, 1, 1 }, x = x + 50, y = y - 8, alpha = 2.8,
+            })
+            Sound.play("round_win")
+            return true
+        end
+    end
+    return false
 end
 
 local function playSelectedHand()
@@ -1885,6 +2027,11 @@ function love.update(dt)
     local motionDt = hitStopped and 0 or dt
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
+    RunManager.deliverEvolutionRewards(game.run, game)
+    if pendingEvolutionCard and state ~= "playing" and state ~= "shop" then
+        pendingEvolutionCard = nil
+    end
+    if pendingSpeedCard and state ~= "playing" then pendingSpeedCard = nil end
     if state == "chest" or state == "treasure" then
         if anim.chestReveal.state ~= state then
             anim.chestReveal.state = state
@@ -2235,14 +2382,14 @@ function love.update(dt)
     anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
     if anim.displayAura ~= nil and anim.displayFinalScore ~= nil then
         anim.displayAura = anim.displayAura
-            + (anim.displayFinalScore - anim.displayAura) * math.min(1, motionDt * 9)
+            + (anim.displayFinalScore - anim.displayAura) * math.min(1, motionDt * 7.5)
     end
 
     -- Scoring Animation Loop
     if state == "scoring" and anim.active then
         anim.entranceTimer = (anim.entranceTimer or 0) + motionDt
-        anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 2.0 or motionDt)
-        local stepDelay = anim.targetStepDelay or 0.36
+        anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 1.7 or motionDt)
+        local stepDelay = (anim.targetStepDelay or 0.36) * 1.2
 
         if anim.stepTimer >= stepDelay then
             anim.stepTimer = 0
@@ -2637,6 +2784,7 @@ function love.update(dt)
                                 local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(game.deities, di) or d
                                 if effectiveDeity and effectiveDeity.onRoundWin then
                                     local r = effectiveDeity.onRoundWin(game, effectiveDeity)
+                                    r = Deities.scaleEffect(effectiveDeity, r)
                                     if r and r.addGold then deityBonus = deityBonus + r.addGold end
                                     if r and r.message then
                                         local msg = d.isCopyDeity and (d.name .. " (Sao chép): " .. r.message) or r.message
@@ -2855,7 +3003,13 @@ function love.update(dt)
 
                         if game.run then
                             local curBlind = RunManager.getCurrentBlind(game.run)
-                            RunManager.completeCurrentBlind(game.run)
+                            local evolutionReward = RunManager.completeCurrentBlind(game.run, game)
+                            if evolutionReward then
+                                table.insert(anim.floatingTexts, {
+                                    text = "Hoàn tất vòng ải " .. tostring(game.run.ante) .. " · Chọn một trong ba phần thưởng",
+                                    color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
+                                })
+                            end
                             local breakdown = RewardSystem.calculate(curBlind, game, false)
                             game.gold = (game.gold or 0) + breakdown.totalGold
                             cashOutAnim = RewardSystem.newAnimation(breakdown)
@@ -3750,6 +3904,11 @@ local function drawPlayingState()
             local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
             UI.drawPatronCard(d, dx, deityY, deitySlotW, deitySlotH, isHoveredCard,
                 juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            if pendingEvolutionCard then
+                love.graphics.setLineWidth(2.5)
+                love.graphics.setColor(0.84, 0.68, 1, 0.95)
+                UI.drawRoundedRect("line", dx - 2, deityY - 2, deitySlotW + 4, deitySlotH + 4, 6)
+            end
             love.graphics.pop()
         elseif isDropTarget then
             UI.drawSlot("selected", "spm", dx, deityY, deitySlotW, deitySlotH)
@@ -6098,6 +6257,11 @@ local function drawShopState()
             love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
             love.graphics.translate(-sx - deiSlotW / 2, -sy - deiSlotH / 2)
             UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            if pendingEvolutionCard then
+                love.graphics.setLineWidth(2.5)
+                love.graphics.setColor(0.84, 0.68, 1, 0.95)
+                UI.drawRoundedRect("line", sx - 2, sy - 2, deiSlotW + 4, deiSlotH + 4, 6)
+            end
             love.graphics.pop()
 
             -- Drag the whole card to reorder it or offer it at the altar.
@@ -7434,6 +7598,18 @@ local function drawGameOverState()
     UI.drawButton(btnRetry, mx >= btnRetry.x and mx <= btnRetry.x + btnRetry.w and my >= btnRetry.y and my <= btnRetry.y + btnRetry.h)
 end
 
+local function chooseRoundReward(index)
+    local ok, item = RunManager.chooseRoundReward(game, index)
+    if not ok then return false end
+    Sound.play("round_win")
+    table.insert(anim.floatingTexts, {
+        text = "ĐÃ NHẬN: " .. (item.name or "PHẦN THƯỞNG") .. (#(game.pendingRewardCards or {}) > 0 and " · ĐANG CHỜ Ô TIÊU HAO TRỐNG" or ""),
+        color = item.color or UI.COLORS.goldYellow, x = 640, y = 150, alpha = 2.8,
+    })
+    saveRunAtSafePoint()
+    return true
+end
+
 function love.draw()
     if UI.menuBackgroundVideo then
         if state == "menu" then
@@ -7477,8 +7653,8 @@ function love.draw()
 
     love.graphics.push()
     if screenShake > 0 then
-        local sx = (love.math.random() * 2 - 1) * screenShake
-        local sy = (love.math.random() * 2 - 1) * screenShake
+        local sx = (love.math.random() * 2 - 1) * screenShake * 0.7
+        local sy = (love.math.random() * 2 - 1) * screenShake * 0.7
         love.graphics.translate(sx, sy)
     end
 
@@ -7496,6 +7672,9 @@ function love.draw()
         local mx, my = toVirtual(love.mouse.getPosition())
         buttons = {}
         RewardSystem.draw(cashOutAnim, V_WIDTH, V_HEIGHT, mx, my, buttons)
+        if game.pendingRoundRewardChoice and cashOutAnim and cashOutAnim.finished then
+            UI.drawRoundRewardChoice(game.pendingRoundRewardChoice, mx, my, buttons, V_WIDTH, V_HEIGHT)
+        end
     elseif state == "event" then
         drawEventState()
     elseif state == "boss_deity" then
@@ -7650,6 +7829,15 @@ end
 --------------------------------------------------------------------------------
 
 local function handlePlayingMousepressed(mx, my, button)
+    if pendingSpeedCard and button == 1 then
+        applyPendingSpeedAt(mx, my)
+        return true
+    end
+    if pendingEvolutionCard and button == 1 then
+        applyPendingEvolutionAt(mx, my, "playing")
+        return true
+    end
+
     for _, btn in ipairs(buttons) do
         if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             if btn.id == "play" then
@@ -7894,6 +8082,11 @@ local function handleShopMousepressed(mx, my, button)
         return true
     end
 
+    if pendingEvolutionCard and button == 1 then
+        applyPendingEvolutionAt(mx, my, "shop")
+        return true
+    end
+
     -- Left-click starts a drag from a consumable; right-click activates it.
     for j = 1, 3 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
@@ -8058,7 +8251,13 @@ local function debugTeleport(screenId)
     elseif screenId == "CASH_OUT" then
         local blind = RunManager.getCurrentBlind(game.run)
         local breakdown = RewardSystem.calculate(blind, game, false)
-        RunManager.completeCurrentBlind(game.run)
+        local evolutionReward = RunManager.completeCurrentBlind(game.run, game)
+        if evolutionReward then
+            table.insert(anim.floatingTexts, {
+                text = "Hoàn tất vòng ải " .. tostring(game.run.ante) .. " · Chọn một trong ba phần thưởng",
+                color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
+            })
+        end
         game.gold = (game.gold or 0) + breakdown.totalGold
         cashOutAnim = RewardSystem.newAnimation(breakdown)
         state = "CASH_OUT"
@@ -8843,6 +9042,16 @@ function love.mousepressed(x, y, button)
                 Sound.play("shop_buy")
                 return
             else
+                if game.pendingRoundRewardChoice then
+                    for _, btn in ipairs(buttons) do
+                        if btn.id and btn.id:sub(1, 13) == "round_reward_"
+                            and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                            chooseRoundReward(btn.rewardIndex)
+                            return
+                        end
+                    end
+                    return
+                end
                 for _, btn in ipairs(buttons) do
                     if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                         if btn.id == "cashout_continue" then
@@ -9207,6 +9416,12 @@ function love.keypressed(key)
 
     -- Escape closes Modals or toggles In-Game Pause Menu
     if key == "escape" then
+        if pendingEvolutionCard or pendingSpeedCard then
+            pendingEvolutionCard = nil
+            pendingSpeedCard = nil
+            Sound.play("ui_click")
+            return
+        end
         if isCollectionOpen then
             if collectionCategory then
                 collectionCategory = nil
@@ -9287,7 +9502,7 @@ function love.keypressed(key)
             if cashOutAnim and not cashOutAnim.finished then
                 RewardSystem.finishImmediately(cashOutAnim)
                 Sound.play("shop_buy")
-            elseif cashOutAnim and cashOutAnim.finished then
+            elseif cashOutAnim and cashOutAnim.finished and not game.pendingRoundRewardChoice then
                 if not shopData then shopData = Shop.new() end
                 Shop.resetReroll(shopData)
                 Shop.refresh(shopData, game)
@@ -9295,6 +9510,8 @@ function love.keypressed(key)
                 lastActiveState = "shop"
                 Sound.play("card_deal")
             end
+        elseif game.pendingRoundRewardChoice and key >= "1" and key <= "3" and cashOutAnim and cashOutAnim.finished then
+            chooseRoundReward(tonumber(key))
         end
     elseif state == "BLIND_SELECT" then
         if key == "space" or key == "return" then

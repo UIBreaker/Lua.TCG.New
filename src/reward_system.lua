@@ -46,6 +46,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
                     local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(gameState.deities, di) or d
                     if effectiveDeity and effectiveDeity.onRoundWin then
                         local r = effectiveDeity.onRoundWin(gameState, effectiveDeity)
+                        r = Deities.scaleEffect(effectiveDeity, r)
                         if r and r.addGold and r.addGold > 0 then
                             deityBonus = deityBonus + r.addGold
                             table.insert(deityDetails, {

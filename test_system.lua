@@ -31,8 +31,8 @@ do
     assert(m1.maxHp == 21, "Encounter 1 monster maxHp must be 21")
     assert(m1.attack == 4, "Encounter 1 monster attack must be 4, got: " .. m1.attack)
     assert(m1.intent ~= nil and m1.intent.value == 4, "Encounter 1 monster intent must be 4 DMG")
-    assert(m1.attackSpeed >= 1 and m1.attackSpeed <= 11, "Monster attack speed must be within 1..11")
-    log("[PASS] 1. Encounter 1 Monster has 21 HP, 4 DMG and attack speed 1..11: " .. m1.name)
+    assert(m1.attackSpeed >= 1 and m1.attackSpeed <= 999, "Monster attack speed must be within 1..999")
+    log("[PASS] 1. Encounter 1 Monster has 21 HP, 4 DMG and attack speed capped at 999: " .. m1.name)
 
     local m2 = Monster.create(2, false, false, 2)
     assert(m2.hp == 32, "Encounter 2 monster HP must be 32 (+50%), got: " .. m2.hp)

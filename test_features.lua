@@ -4,6 +4,7 @@ local Deities = require("src.deities")
 local Scoring = require("src.scoring")
 local Monster = require("src.monster")
 local Equipment = require("src.equipment")
+local RunManager = require("src.run_manager")
 
 print("=== RUNNING ADVANCED FEATURES TEST ===")
 
@@ -76,7 +77,71 @@ local mirrorBuffs = Equipment.ITEMS.mirror_adjacent.onHandEvaluate(cb, { ca, cb,
 assert(mirrorBuffs[1].addChips == 12 and mirrorBuffs[3].addChips == 12, "Adjacent mirror must add exactly 24 chips")
 print(" Test 5 Passed: Spillover Mirror Adjacent Buff")
 
-print("=== ALL 5 ADVANCED TESTS PASSED! ===")
+-- Test 6: SPN evolution rarity, concrete stats, round reward choice, and attack speed
+local evolvingGame = { deities = {} }
+assert(Deities.addDeity(evolvingGame, Deities.CATALOG.spirit_drum))
+local evolvingDeity = evolvingGame.deities[1]
+local raritySteps = { "UC", "R", "E", "L", "M", "T", "UQ", "UQ+1" }
+for _, expectedBadge in ipairs(raritySteps) do
+    local ok, badge = Deities.evolve(evolvingDeity)
+    assert(ok and badge == expectedBadge, "Expected evolved rarity " .. expectedBadge .. ", got " .. tostring(badge))
+end
+local scaledEffect = Deities.scaleEffect(evolvingDeity, { addMult = 1, message = "+1 Mult" })
+assert(scaledEffect.addMult == 5, "UQ+1 evolution must apply +50% of base power per evolution")
+assert(evolvingDeity.desc:find("+5 Mult", 1, true), "Evolved SPN description should show its concrete current stat")
+assert(not evolvingDeity.desc:find("×", 1, true), "Evolved SPN description should not show a multiplier")
+local scoringGame = { deities = {} }
+assert(Deities.addDeity(scoringGame, Deities.CATALOG.spirit_drum))
+local scoringDeity = scoringGame.deities[1]
+local testHand = Poker.evaluate({ Deck.newCard(2, "hearts") })
+local baseSpnScore = Scoring.calculate(testHand, scoringGame.deities, {})
+assert(Deities.evolve(scoringDeity))
+local evolvedSpnScore = Scoring.calculate(testHand, scoringGame.deities, {})
+assert(evolvedSpnScore.totalMult == baseSpnScore.totalMult + 0.5,
+    "One SPN evolution must increase its original +1 Mult effect by 50%")
+
+local rewardRun = RunManager.newRun()
+rewardRun.ante = 4
+rewardRun.currentBlindIndex = 3
+rewardRun.blinds = RunManager.generateAnteBlinds(4, "aurelia")
+local rewardGame = { consumables = {} }
+assert(RunManager.completeCurrentBlind(rewardRun, rewardGame), "Completing Ante 4 boss should open the reward choice")
+assert(rewardGame.pendingRoundRewardChoice and #rewardGame.pendingRoundRewardChoice.options == 3,
+    "Ante 4 reward must offer Evolution, single speed, and team speed")
+assert(RunManager.chooseRoundReward(rewardGame, 2), "Player should be able to choose the single-card speed reward")
+assert(#rewardGame.consumables == 1 and rewardGame.consumables[1].category == "speed_single",
+    "Chosen speed reward should enter the consumable inventory")
+
+local normalRun = RunManager.newRun()
+normalRun.stats.blindsWon = 3
+local normalGame = { consumables = {} }
+assert(not RunManager.completeCurrentBlind(normalRun, normalGame), "The fourth blind win inside an ante must not trigger a round reward")
+
+local fullRewardRun = RunManager.newRun()
+fullRewardRun.ante = 4
+fullRewardRun.currentBlindIndex = 3
+fullRewardRun.blinds = RunManager.generateAnteBlinds(4, "aurelia")
+local fullRewardGame = { consumables = { {}, {}, {} } }
+RunManager.completeCurrentBlind(fullRewardRun, fullRewardGame)
+assert(RunManager.chooseRoundReward(fullRewardGame, 1), "Player should be able to choose evolution even with full slots")
+assert(#fullRewardGame.consumables == 3 and #fullRewardGame.pendingRewardCards == 1,
+    "Chosen reward must queue safely when all consumable slots are full")
+table.remove(fullRewardGame.consumables, 1)
+RunManager.deliverEvolutionRewards(fullRewardRun, fullRewardGame)
+assert(#fullRewardGame.consumables == 3 and #fullRewardGame.pendingRewardCards == 0,
+    "Queued round reward should enter the first free consumable slot")
+
+local speedCard = Deck.newCard(2, "hearts")
+assert(Deck.applyAttackSpeedBonus(speedCard, 5) == 7, "Single speed card should add +5 speed")
+local speedClone = Deck.cloneCard(speedCard)
+assert(Deck.getCardAttackSpeed(speedClone) == 7, "Attack speed bonus should copy into combat cards")
+Deck.restoreDeck({ speedCard })
+assert(Deck.getCardAttackSpeed(speedCard) == 7, "Attack speed bonus should survive combat deck restoration")
+assert(Deck.applyAttackSpeedBonus(speedCard, 2000) == 999, "Card attack speed must cap at 999")
+assert(Monster.rollAttackSpeed(10000) <= 999, "Monster attack speed must also cap at 999")
+print(" Test 6 Passed: Concrete SPN Stats, Ante 4 Reward Choice, and Attack Speed Range")
+
+print("=== ALL 6 ADVANCED TESTS PASSED! ===")
 love.filesystem.write("adv_test_result.txt", "ALL_PASSED")
 if love and love.audio then love.audio.stop() end
 if love and love.event then love.event.quit(0) end

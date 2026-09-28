@@ -582,7 +582,7 @@ function RunManager.createBlindMonster(blind, gameState)
         maxHp = blind.hp,
         damageLagHp = blind.hp,
         attack = atk,
-        attackSpeed = Monster.rollAttackSpeed(),
+        attackSpeed = Monster.rollAttackSpeed(encounterCount),
         intent = {
             type = "attack",
             value = atk,
@@ -622,12 +622,100 @@ function RunManager.skipCurrentBlind(run, gameState)
 end
 
 -- Complete current blind (on combat victory)
-function RunManager.completeCurrentBlind(run)
+function RunManager.createEvolutionCard()
+    return {
+        id = "cons_evolution",
+        category = "evolution",
+        name = "Tiến Hóa",
+        desc = "Chuột phải dùng, sau đó chọn một lá SPN để tăng một bậc độ hiếm và sức mạnh.",
+        icon = "✦",
+        color = { 0.72, 0.42, 0.96, 1 },
+    }
+end
+
+function RunManager.createSpeedSingleCard()
+    return { id = "cons_speed_single", category = "speed_single", name = "Tăng Tốc Đơn",
+        desc = "Chuột phải dùng trong trận, sau đó chọn một lá bài trên tay để tăng +5 tốc đánh vĩnh viễn.",
+        icon = "➤", color = { 0.30, 0.68, 1, 1 } }
+end
+
+function RunManager.createSpeedTeamCard()
+    return { id = "cons_speed_team", category = "speed_team", name = "Tăng Tốc Đội",
+        desc = "Chuột phải dùng trong trận để tăng +2 tốc đánh vĩnh viễn cho mọi lá đang cầm.",
+        icon = "»", color = { 0.30, 0.86, 0.65, 1 } }
+end
+
+function RunManager.createRoundRewardOptions()
+    return {
+        RunManager.createEvolutionCard(),
+        RunManager.createSpeedSingleCard(),
+        RunManager.createSpeedTeamCard(),
+    }
+end
+
+function RunManager.chooseRoundReward(gameState, index)
+    local offer = gameState and gameState.pendingRoundRewardChoice
+    local reward = offer and offer.options and offer.options[index]
+    if not reward then return false end
+    gameState.consumables = gameState.consumables or {}
+    if #gameState.consumables < 3 then
+        table.insert(gameState.consumables, reward)
+    else
+        gameState.pendingRewardCards = gameState.pendingRewardCards or {}
+        table.insert(gameState.pendingRewardCards, reward)
+    end
+    gameState.pendingRoundRewardChoice = nil
+    return true, reward
+end
+
+function RunManager.deliverEvolutionRewards(run, gameState)
+    if not gameState then return 0 end
+    gameState.consumables = gameState.consumables or {}
+    gameState.pendingEvolutionCards = gameState.pendingEvolutionCards or 0
+
+    local runStats = run and run.stats
+    if runStats then
+        local earned = math.max(0, math.floor(runStats.evolutionRewardsPending or 0))
+        gameState.pendingEvolutionCards = gameState.pendingEvolutionCards + earned
+        runStats.evolutionRewardsPending = 0
+    end
+
+    local delivered = 0
+    while gameState.pendingEvolutionCards > 0 and #gameState.consumables < 3 do
+        table.insert(gameState.consumables, RunManager.createEvolutionCard())
+        gameState.pendingEvolutionCards = gameState.pendingEvolutionCards - 1
+        delivered = delivered + 1
+    end
+    gameState.pendingRewardCards = gameState.pendingRewardCards or {}
+    while #gameState.pendingRewardCards > 0 and #gameState.consumables < 3 do
+        table.insert(gameState.consumables, table.remove(gameState.pendingRewardCards, 1))
+        delivered = delivered + 1
+    end
+    return delivered
+end
+
+function RunManager.completeCurrentBlind(run, gameState)
     local blind = RunManager.getCurrentBlind(run)
+    local rewardEarned = false
     if blind then
         blind.status = "completed"
-        run.stats.blindsWon = run.stats.blindsWon + 1
+        run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
+        local completedAnte = blind.ante or run.ante
+        local isAnteBoss = (blind.index == 3) or (run.currentBlindIndex == 3)
+        run.stats.roundRewardAntes = run.stats.roundRewardAntes or {}
+        if isAnteBoss and completedAnte % 4 == 0 and not run.stats.roundRewardAntes[completedAnte] then
+            run.stats.roundRewardAntes[completedAnte] = true
+            rewardEarned = true
+            if gameState then
+                gameState.pendingRoundRewardChoice = {
+                    ante = completedAnte,
+                    options = RunManager.createRoundRewardOptions(),
+                }
+            end
+        end
     end
+    RunManager.deliverEvolutionRewards(run, gameState)
+    return rewardEarned
 end
 
 -- Advance to the next Blind directly or after leaving the Shop

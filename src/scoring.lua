@@ -619,6 +619,7 @@ function Scoring.calculate(handInfo, deities, context)
                     local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
                     if effectiveDeity and effectiveDeity.onCardScored then
                         local res = effectiveDeity.onCardScored(card, context, effectiveDeity, idx, handInfo.scoringCards)
+                        res = Deities.scaleEffect(effectiveDeity, res)
                         if res then
                             if res.addChips then
                                 bonusChips = bonusChips + res.addChips
@@ -814,6 +815,7 @@ end
             local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
             if effectiveDeity and effectiveDeity.onHandScored then
                 local res = effectiveDeity.onHandScored(handInfo, context, effectiveDeity)
+                res = Deities.scaleEffect(effectiveDeity, res)
                 if res then
                     local addedChips = res.addChips or 0
                     local addedMult = res.addMult or 0

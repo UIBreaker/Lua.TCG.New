@@ -809,10 +809,69 @@ function Shop.reroll(shop, gameState)
     return true
 end
 
+function Shop.getSacrificePrice(item, kind)
+    if kind == "deity" then
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
+    elseif kind == "consumable" then
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
+    elseif kind == "card" then
+        return math.max(1, math.floor(((item and item.sellValue) or 1)))
+    end
+    return 0
+end
+
+function Shop.sellConsumable(gameState, consumableIndex)
+    local item = gameState.consumables and gameState.consumables[consumableIndex]
+    if not item then return false end
+    local price = Shop.getSacrificePrice(item, "consumable")
+    table.remove(gameState.consumables, consumableIndex)
+    gameState.gold = (gameState.gold or 0) + price
+    Sound.play("sell")
+    return true, price
+end
+
+function Shop.sellCard(gameState, targetCard)
+    local deck = gameState.persistentDeck or {}
+    local targetId = type(targetCard) == "table" and targetCard.id or targetCard
+    local deckIndex
+    for i, card in ipairs(deck) do
+        if card == targetCard or (targetId ~= nil and card.id == targetId) then
+            deckIndex = i
+            targetCard = card
+            break
+        end
+    end
+    if not deckIndex or #deck <= 1 then
+        return false, "Bộ bài phải còn ít nhất 1 lá."
+    end
+
+    local price = Shop.getSacrificePrice(targetCard, "card")
+    local cardId = targetCard.id
+    table.remove(deck, deckIndex)
+    for _, pileName in ipairs({ "hand", "deck", "discardPile" }) do
+        local pile = gameState[pileName]
+        if pile then
+            for i = #pile, 1, -1 do
+                local card = pile[i]
+                if card == targetCard or (cardId ~= nil and card.id == cardId) then
+                    table.remove(pile, i)
+                end
+            end
+        end
+    end
+    gameState.gold = (gameState.gold or 0) + price
+    gameState.selectedIndices = {}
+    for i, card in ipairs(gameState.hand or {}) do
+        if card.selected then table.insert(gameState.selectedIndices, i) end
+    end
+    Sound.play("sell")
+    return true, price
+end
+
 function Shop.sellDeity(gameState, deityIndex)
     local d = gameState.deities and gameState.deities[deityIndex]
     if not d then return false end
-    local sellPrice = math.max(1, math.floor((d.cost or 4) / 2))
+    local sellPrice = Shop.getSacrificePrice(d, "deity")
     gameState.gold = (gameState.gold or 0) + sellPrice
     gameState.deities[deityIndex] = nil
     Sound.play("sell")

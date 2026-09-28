@@ -170,6 +170,8 @@ local shopDrag = {
     isDragging = false,
     itemIndex = nil,
     item = nil,
+    sourceKind = nil,
+    sacrificeZone = { x = 1120, y = 492, w = 145, h = 158 },
     startX = 0,
     startY = 0,
     currentX = 0,
@@ -253,29 +255,14 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
         love.graphics.setColor(1, 1, 1, 0.95)
         love.graphics.printf(c.name or "Thẻ Phép", cx + 2, cy + 42, conSlotW - 4, "center")
 
-        -- Use Button
-        local btnUse = {
-            id = "use_consumable_" .. j,
-            text = "DÙNG",
-            x = cx + 8,
-            y = cy + conSlotH - 26,
-            w = conSlotW - 16,
-            h = 20,
-            color = UI.COLORS.btnPlay,
-            font = UI.fonts.tiny,
-            consumableIndex = j,
-        }
-        table.insert(buttons, btnUse)
-        UI.drawButton(btnUse, mx >= btnUse.x and mx <= btnUse.x + btnUse.w and my >= btnUse.y and my <= btnUse.y + btnUse.h, juice and juice.buttonPressedId == btnUse.id)
-
-        if isHover and my < cy + conSlotH - 26 then
+        if isHover then
             -- Tooltip
             local ttW = 210
-            local ttH = 92
+            local ttH = 108
             local ttX = math.min(V_WIDTH - ttW - 10, math.max(10, cx - 40))
             local ttY = cy + conSlotH + 8
-        UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-                UI.truncateUtf8(c.desc or "", 90), UI.fonts, "green")
+            UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
+                UI.truncateUtf8(c.desc or "", 76) .. "\nChuột phải: dùng • Kéo vào Hiến Tế: bán", UI.fonts, "green")
         end
     else
         local isHover = mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH
@@ -322,31 +309,15 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     g.setColor(UI.COLORS.textLight[1], UI.COLORS.textLight[2], UI.COLORS.textLight[3], opacity)
     g.printf(UI.truncateUtf8(c.name or "Thẻ phép", 7), 5, 39, cardW - 10, "center")
 
-    local buttonW = math.min(54, cardW - 16)
-    local button = {
-        id = "use_consumable_" .. index,
-        text = "DÙNG",
-        x = cx + (cardW - buttonW) / 2,
-        y = drawY + cardH - 24,
-        w = buttonW,
-        h = 18,
-        color = UI.COLORS.btnPlay,
-        font = UI.fonts.tiny,
-        consumableIndex = index,
-    }
     g.pop()
     if effectOnly then return end
-    table.insert(buttons, button)
-    UI.drawButton(button,
-        mx >= button.x and mx <= button.x + button.w and my >= button.y and my <= button.y + button.h,
-        juice and juice.buttonPressedId == button.id)
 
-    if hovered and my < button.y then
-        local ttW, ttH = 210, 92
+    if hovered then
+        local ttW, ttH = 210, 108
         local ttX = math.max(10, cx - ttW - 8)
         local ttY = math.max(10, cy - ttH - 8)
         UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-            UI.truncateUtf8(c.desc or "", 90), UI.fonts, "green")
+            UI.truncateUtf8(c.desc or "", 76) .. "\nChuột phải để kích hoạt", UI.fonts, "green")
     end
 end
 
@@ -432,6 +403,8 @@ local function spawnShopFx(kind, item, x, y, w, h)
     end
     if kind == "sell" then
         targetX, targetY = 205, 570
+    elseif kind == "sacrifice" then
+        targetX, targetY = shopDrag.sacrificeZone.x + shopDrag.sacrificeZone.w / 2, shopDrag.sacrificeZone.y + shopDrag.sacrificeZone.h / 2
     elseif kind == "destroy" then
         targetX, targetY = x or 640, (y or 360) - 28
     elseif kind == "consume" then
@@ -447,7 +420,7 @@ local function spawnShopFx(kind, item, x, y, w, h)
         targetY = targetY,
         w = w,
         h = h,
-        duration = kind == "consume" and 0.50 or (kind == "destroy" and 0.72 or (kind == "sell" and 0.82 or 0.92)),
+        duration = kind == "consume" and 0.50 or (kind == "destroy" and 0.72 or ((kind == "sell" or kind == "sacrifice") and 0.82 or 0.92)),
     })
 end
 
@@ -5976,31 +5949,14 @@ local function drawShopState()
             UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
             love.graphics.pop()
 
-            if not isDropTarget then
-                local sellPrice = math.max(1, math.floor((d.cost or 4) / 2))
-                local btnSell = {
-                    id = "sell_" .. i,
-                    text = "Bán +$" .. sellPrice,
-                    x = sx + 6,
-                    y = sy + deiSlotH - 22,
-                    w = deiSlotW - 12,
-                    h = 18,
-                    color = UI.COLORS.btnDiscard,
-                    font = UI.fonts.tiny,
-                    deityIndex = i,
-                }
-                table.insert(buttons, btnSell)
-                UI.drawButton(btnSell, mx >= btnSell.x and mx <= btnSell.x + btnSell.w and my >= btnSell.y and my <= btnSell.y + btnSell.h, juice.buttonPressedId == btnSell.id)
-            end
-
-            -- Drag button covering the card body
+            -- Drag the whole card to reorder it or offer it at the altar.
             local btnDei = {
                 id = "deity_" .. i,
                 text = "",
                 x = sx,
                 y = sy,
                 w = deiSlotW,
-                h = deiSlotH - 24,
+                h = deiSlotH,
                 invisible = true,
                 deityIndex = i,
             }
@@ -6515,9 +6471,9 @@ local function drawShopState()
     -- 4. BOTTOM RIGHT: 3D DECK PILE (Click to open Deck Viewer [Tab])
     ----------------------------------------------------------------------------
     local deckPileX = shopX + shopW + 18
-    local deckPileY = shopY + 416
-    local deckPileW = 106
-    local deckPileH = 158
+    local deckPileY = shopY + 426
+    local deckPileW = 84
+    local deckPileH = 138
 
     local isDeckHovered = (mx >= deckPileX and mx <= deckPileX + deckPileW and my >= deckPileY and my <= deckPileY + deckPileH)
     local drawDeckY = isDeckHovered and (deckPileY - 6) or deckPileY
@@ -6538,12 +6494,12 @@ local function drawShopState()
     love.graphics.setColor(0.95, 0.85, 0.85, 0.25)
     love.graphics.rectangle("line", deckPileX + 8, drawDeckY + 8, deckPileW - 16, deckPileH - 16)
     love.graphics.setFont(UI.fonts.large)
-    love.graphics.printf("🂠", deckPileX, drawDeckY + 42, deckPileW, "center")
+    love.graphics.printf("🂠", deckPileX, drawDeckY + 32, deckPileW, "center")
 
     local deckCountStr = tostring(#(game.deck or {})) .. " / " .. tostring(#(game.persistentDeck or {}))
-    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(deckCountStr, deckPileX, drawDeckY + deckPileH - 24, deckPileW, "center")
+    love.graphics.printf(deckCountStr, deckPileX, drawDeckY + deckPileH - 22, deckPileW, "center")
 
     local btnDeck = {
         id = "open_deck_viewer",
@@ -6570,39 +6526,72 @@ local function drawShopState()
         love.graphics.printf("Xem Toàn Bộ Bài", tipX, tipY + 9, tipW, "center")
     end
 
+    local altar = shopDrag.sacrificeZone
+    local draggingOwned = (shopDrag.active and shopDrag.isDragging and shopDrag.sourceKind ~= nil)
+        or (deityDrag.active and deityDrag.isDragging and state == "shop")
+    local overAltar = draggingOwned and mx >= altar.x and mx <= altar.x + altar.w and my >= altar.y and my <= altar.y + altar.h
+    love.graphics.setColor(overAltar and { 0.30, 0.10, 0.10, 0.98 } or { 0.13, 0.10, 0.12, 0.94 })
+    UI.drawRoundedRect("fill", altar.x, altar.y, altar.w, altar.h, 9)
+    love.graphics.setLineWidth(overAltar and 3 or 1.8)
+    love.graphics.setColor(overAltar and { 1, 0.36, 0.30, 1 } or { 0.75, 0.38, 0.30, 0.9 })
+    UI.drawRoundedRect("line", altar.x, altar.y, altar.w, altar.h, 9)
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf("HIẾN TẾ", altar.x + 5, altar.y + 12, altar.w - 10, "center")
+    love.graphics.setFont(UI.fonts.large)
+    love.graphics.setColor(overAltar and { 1, 0.55, 0.34, 1 } or { 0.85, 0.42, 0.34, 0.9 })
+    love.graphics.printf("✦", altar.x, altar.y + 40, altar.w, "center")
+
+    local sacrificeItem, sacrificeKind
+    if deityDrag.active and deityDrag.isDragging and game.deities then
+        sacrificeItem, sacrificeKind = game.deities[deityDrag.deityIndex], "deity"
+    elseif shopDrag.active and shopDrag.isDragging and shopDrag.sourceKind then
+        sacrificeItem, sacrificeKind = shopDrag.item, shopDrag.sourceKind
+    end
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.setColor(overAltar and { 1, 0.86, 0.68, 1 } or UI.COLORS.textLight)
+    if sacrificeItem then
+        local price = Shop.getSacrificePrice(sacrificeItem, sacrificeKind)
+        love.graphics.printf(overAltar and ("THẢ ĐỂ BÁN\n+$" .. price) or ("THẢ BÀI\nĐỂ NHẬN +$" .. price), altar.x + 7, altar.y + 101, altar.w - 14, "center")
+    else
+        love.graphics.printf("KÉO BÀI HOẶC\nTIÊU HAO VÀO ĐÂY", altar.x + 7, altar.y + 101, altar.w - 14, "center")
+    end
+
     ----------------------------------------------------------------------------
     -- 4b. DRAGGED SHOP ITEM & DEITY ON TOP WITH 3D TILT & DROP ZONE
     ----------------------------------------------------------------------------
     if shopDrag.active and shopDrag.isDragging and shopDrag.item then
-        -- Drop purchase zone indicator at the top
-        local dropZoneX = shopX + 20
-        local dropZoneY = shopY + 12
-        local dropZoneW = shopW - 40
-        local dropZoneH = 46
-        local isOverDropZone = (my < 380 or my < (shopDrag.origY - 40))
-        local canAfford = (game.gold or 0) >= (shopDrag.item.cost or 0)
+        if not shopDrag.sourceKind then
+            -- Existing purchase drop zone for shop stock.
+            local dropZoneX = shopX + 20
+            local dropZoneY = shopY + 12
+            local dropZoneW = shopW - 40
+            local dropZoneH = 46
+            local isOverDropZone = (my < 380 or my < (shopDrag.origY - 40))
+            local canAfford = (game.gold or 0) >= (shopDrag.item.cost or 0)
 
-        if isOverDropZone then
-            love.graphics.setColor(canAfford and { 0.15, 0.65, 0.35, 0.95 } or { 0.75, 0.18, 0.18, 0.95 })
-        else
-            love.graphics.setColor(0.12, 0.16, 0.22, 0.85)
-        end
-        UI.drawRoundedRect("fill", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
-        love.graphics.setColor(isOverDropZone and (canAfford and UI.COLORS.btnPlay or UI.COLORS.multRed) or UI.COLORS.goldYellow)
-        love.graphics.setLineWidth(2)
-        UI.drawRoundedRect("line", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
+            if isOverDropZone then
+                love.graphics.setColor(canAfford and { 0.15, 0.65, 0.35, 0.95 } or { 0.75, 0.18, 0.18, 0.95 })
+            else
+                love.graphics.setColor(0.12, 0.16, 0.22, 0.85)
+            end
+            UI.drawRoundedRect("fill", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
+            love.graphics.setColor(isOverDropZone and (canAfford and UI.COLORS.btnPlay or UI.COLORS.multRed) or UI.COLORS.goldYellow)
+            love.graphics.setLineWidth(2)
+            UI.drawRoundedRect("line", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
 
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(1, 1, 1, 1)
-        local dropText
-        if not canAfford then
-            dropText = "KHÔNG ĐỦ TIỀN - $" .. shopDrag.item.cost
-        elseif isOverDropZone then
-            dropText = "THẢ TẠI ĐÂY ĐỂ MUA - $" .. shopDrag.item.cost
-        else
-            dropText = "KÉO LÊN TRÊN ĐỂ MUA - $" .. shopDrag.item.cost
+            love.graphics.setFont(UI.fonts.medium)
+            love.graphics.setColor(1, 1, 1, 1)
+            local dropText
+            if not canAfford then
+                dropText = "KHÔNG ĐỦ TIỀN - $" .. shopDrag.item.cost
+            elseif isOverDropZone then
+                dropText = "THẢ TẠI ĐÂY ĐỂ MUA - $" .. shopDrag.item.cost
+            else
+                dropText = "KÉO LÊN TRÊN ĐỂ MUA - $" .. shopDrag.item.cost
+            end
+            love.graphics.printf(dropText, dropZoneX, dropZoneY + 10, dropZoneW, "center")
         end
-        love.graphics.printf(dropText, dropZoneX, dropZoneY + 10, dropZoneW, "center")
 
         -- Draw the dragged card floating on top with 3D tilt & elevation
         local dcw = shopDrag.cardW or 124
@@ -6627,6 +6616,11 @@ local function drawShopState()
         UI.drawRoundedRect("fill", 10 + (shopDrag.tiltX or 0) * 12, 16 + (shopDrag.tiltY or 0) * 12, dcw, dch, 10)
 
         -- Card Body
+        if shopDrag.sourceKind == "card" then
+            UI.drawCard(dItem, 0, 0, dcw, dch, true)
+        elseif shopDrag.sourceKind == "consumable" then
+            drawBattleConsumableCard(dItem, 0, 0, dcw, dch, 1, -1000, -1000, false, true, 1)
+        else
         local dragImg = ((dItem.category == "deity" and dItem.deity) and UI.getDeityImage(dItem.deity.id))
                      or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
                      or ((dItem.category == "card" and dItem.card) and UI.getCardImage(dItem.card.suit, dItem.card.rank or dItem.card.rankName))
@@ -6666,13 +6660,18 @@ local function drawShopState()
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf(dItem.name or "Vật Phẩm", 4, 85, dcw - 8, "center")
         end
+        end
 
         -- Price badge
         love.graphics.setColor(0.12, 0.15, 0.19, 0.9)
         UI.drawRoundedRect("fill", 6, dch - 40, dcw - 12, 32, 4)
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf("$" .. dItem.cost, 6, dch - 34, dcw - 12, "center")
+        if shopDrag.sourceKind then
+            love.graphics.printf("HIẾN TẾ +$" .. Shop.getSacrificePrice(dItem, shopDrag.sourceKind), 6, dch - 34, dcw - 12, "center")
+        else
+            love.graphics.printf("$" .. dItem.cost, 6, dch - 34, dcw - 12, "center")
+        end
 
         love.graphics.pop()
     end
@@ -7157,7 +7156,7 @@ local function drawShopFx()
         love.graphics.setBlendMode("add")
         love.graphics.setLineWidth(4)
         local trailColor = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
-            or ((fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 })
+            or ((fx.kind == "sell" or fx.kind == "sacrifice" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 })
         love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], (1 - p) * 0.34)
         love.graphics.line(fx.x, fx.y, x, y)
         love.graphics.setLineWidth(1)
@@ -7165,7 +7164,7 @@ local function drawShopFx()
 
         love.graphics.push()
         love.graphics.translate(x, y)
-        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "consume" and 0.42 or (fx.kind == "sell" and -1.05 or 0.24))
+        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "consume" and 0.42 or ((fx.kind == "sell" or fx.kind == "sacrifice") and -1.05 or 0.24))
         love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
         love.graphics.scale(size, size)
         if fx.kind == "consume" then
@@ -7202,7 +7201,7 @@ local function drawShopFx()
             local angle = i * 2.17
             local radius = p * (20 + i * 2.4)
             local color = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
-                or ((fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.22, 0.08 } or { 1, 0.82, 0.22 })
+                or ((fx.kind == "sell" or fx.kind == "sacrifice" or fx.kind == "destroy") and { 1, 0.22, 0.08 } or { 1, 0.82, 0.22 })
             love.graphics.setColor(color[1], color[2], color[3], 1 - p)
             love.graphics.rectangle("fill", x + math.cos(angle) * radius, y + math.sin(angle) * radius, 3, 3)
         end
@@ -7529,24 +7528,18 @@ local function handlePlayingMousepressed(mx, my, button)
                 isSettingsOpen = true
                 Sound.play("ui_click")
                 return true
-            elseif btn.id:sub(1, 15) == "use_consumable_" then
-                activateConsumable(btn.consumableIndex, "playing")
-                return true
             end
         end
     end
 
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
 
-    -- Check Consumable slots (clicking anywhere on the slot card in combat/blind)
+    -- Left-click never activates a consumable; activation is deliberately right-click only.
     local maxConsumableSlots = math.max(3, game.consumables and #game.consumables or 0)
     for j = maxConsumableSlots, 1, -1 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "playing")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
-            if game.consumables and game.consumables[j] then
-                activateConsumable(j, "playing")
-                return true
-            end
+            return true
         end
     end
 
@@ -7742,15 +7735,25 @@ local function handleShopMousepressed(mx, my, button)
         return true
     end
 
-    -- Check Consumable slots (clicking anywhere on the slot card in shop)
-    local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    -- Left-click starts a drag from a consumable; right-click activates it.
     for j = 1, 3 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
             if game.consumables and game.consumables[j] then
-                activateConsumable(j, "shop")
-                return true
+                shopDrag.active = true
+                shopDrag.isDragging = false
+                shopDrag.itemIndex = nil
+                shopDrag.item = game.consumables[j]
+                shopDrag.sourceKind = "consumable"
+                shopDrag.sourceIndex = j
+                shopDrag.startX, shopDrag.startY = mx, my
+                shopDrag.currentX, shopDrag.currentY = mx, my
+                shopDrag.origX, shopDrag.origY = cx, cy
+                shopDrag.visualX, shopDrag.visualY = cx, cy
+                shopDrag.cardW, shopDrag.cardH = cw, ch
+                shopDrag.tiltX, shopDrag.tiltY = 0, 0
             end
+            return true
         end
     end
 
@@ -7764,6 +7767,8 @@ local function handleShopMousepressed(mx, my, button)
                     shopDrag.isDragging = false
                     shopDrag.itemIndex = gIdx
                     shopDrag.item = it
+                    shopDrag.sourceKind = nil
+                    shopDrag.sourceIndex = nil
                     shopDrag.startX = mx
                     shopDrag.startY = my
                     shopDrag.currentX = mx
@@ -7798,15 +7803,6 @@ local function handleShopMousepressed(mx, my, button)
                     deityDrag.visualY = btn.y
                     return true
                 end
-            elseif btn.id:sub(1, 5) == "sell_" then
-                local sold = game.deities and game.deities[btn.deityIndex]
-                if Shop.sellDeity(game, btn.deityIndex) then
-                    spawnShopFx("sell", sold, btn.x + btn.w / 2, btn.y - 42)
-                end
-                return true
-            elseif btn.id:sub(1, 15) == "use_consumable_" then
-                activateConsumable(btn.consumableIndex, "shop")
-                return true
             elseif btn.id == "reroll" then
                 Shop.reroll(shopData, game)
                 return true
@@ -8359,6 +8355,21 @@ local function handleModalsMousepressed(mx, my, button)
 
         local card = getDeckViewerCardAt(mx, my, modalX, modalY)
         if card then
+            if state == "shop" and button == 1 then
+                shopDrag.active = true
+                shopDrag.isDragging = false
+                shopDrag.itemIndex = nil
+                shopDrag.item = card
+                shopDrag.sourceKind = "card"
+                shopDrag.sourceIndex = nil
+                shopDrag.startX, shopDrag.startY = mx, my
+                shopDrag.currentX, shopDrag.currentY = mx, my
+                shopDrag.origX, shopDrag.origY = mx - 37, my - 54
+                shopDrag.visualX, shopDrag.visualY = shopDrag.origX, shopDrag.origY
+                shopDrag.cardW, shopDrag.cardH = 74, 108
+                shopDrag.tiltX, shopDrag.tiltY = 0, 0
+                return true
+            end
             inspectCardModal = card
             Sound.play("card_deal")
             return true
@@ -9213,6 +9224,10 @@ function love.mousemoved(x, y, dx, dy)
         local dist = math.sqrt((mx - shopDrag.startX)^2 + (my - shopDrag.startY)^2)
         if dist > 6 then
             shopDrag.isDragging = true
+            if shopDrag.sourceKind == "card" and isDeckViewerOpen then
+                isDeckViewerOpen = false
+                Sound.play("card_slide")
+            end
         end
     end
 
@@ -9254,7 +9269,40 @@ function love.mousereleased(x, y, button)
     end
 
     if button == 1 and shopDrag.active then
-        if not shopDrag.isDragging and shopDrag.itemIndex then
+        if shopDrag.sourceKind then
+            if not shopDrag.isDragging and shopDrag.sourceKind == "card" then
+                inspectCardModal = shopDrag.item
+                Sound.play("card_deal")
+            elseif shopDrag.isDragging then
+                local altar = shopDrag.sacrificeZone
+                local droppedOnAltar = state == "shop" and mx >= altar.x and mx <= altar.x + altar.w and my >= altar.y and my <= altar.y + altar.h
+                if droppedOnAltar then
+                    local success, value
+                    if shopDrag.sourceKind == "card" then
+                        success, value = Shop.sellCard(game, shopDrag.item)
+                    elseif shopDrag.sourceKind == "consumable" then
+                        success, value = Shop.sellConsumable(game, shopDrag.sourceIndex)
+                    end
+                    if success then
+                        local item = shopDrag.sourceKind == "card"
+                            and { category = "card", card = shopDrag.item, rank = shopDrag.item.rank, name = shopDrag.item.name }
+                            or { category = "consumable", name = shopDrag.item.name, icon = shopDrag.item.icon, color = shopDrag.item.color }
+                        spawnShopFx("sacrifice", item, mx, my)
+                        table.insert(anim.floatingTexts, {
+                            text = "Hiến tế thành công: +$" .. value,
+                            color = UI.COLORS.goldYellow,
+                            x = altar.x + altar.w / 2,
+                            y = altar.y - 18,
+                            alpha = 1.8,
+                        })
+                    else
+                        Sound.play("cant_afford")
+                    end
+                else
+                    Sound.play("card_slide")
+                end
+            end
+        elseif not shopDrag.isDragging and shopDrag.itemIndex then
             local boughtItem = shopDrag.item
             local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
             if success and boughtItem.category ~= "pack" then
@@ -9298,11 +9346,32 @@ function love.mousereleased(x, y, button)
         shopDrag.isDragging = false
         shopDrag.itemIndex = nil
         shopDrag.item = nil
+        shopDrag.sourceKind = nil
+        shopDrag.sourceIndex = nil
     end
 
     if button == 1 and deityDrag.active then
         if deityDrag.isDragging and deityDrag.deityIndex and game.deities then
             local srcSlot = deityDrag.deityIndex
+            local altar = shopDrag.sacrificeZone
+            if state == "shop" and mx >= altar.x and mx <= altar.x + altar.w and my >= altar.y and my <= altar.y + altar.h then
+                local sold = game.deities[srcSlot]
+                local price = Shop.getSacrificePrice(sold, "deity")
+                if Shop.sellDeity(game, srcSlot) then
+                    spawnShopFx("sacrifice", { category = "deity", deity = sold, id = sold.id, name = sold.name }, mx, my)
+                    table.insert(anim.floatingTexts, {
+                        text = "Hiến tế thành công: +$" .. price,
+                        color = UI.COLORS.goldYellow,
+                        x = altar.x + altar.w / 2,
+                        y = altar.y - 18,
+                        alpha = 1.8,
+                    })
+                end
+                deityDrag.active = false
+                deityDrag.isDragging = false
+                deityDrag.deityIndex = nil
+                return
+            end
             local foundDest = nil
             local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
             local first, last, step = 1, maxDeiSlots, 1

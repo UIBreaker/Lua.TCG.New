@@ -25,9 +25,10 @@ function Button.draw(btn, state, fonts)
     local lift = state == "pressed" and 2 or 0
     local edge = state == "disabled" and Theme.colors.metal or accent
     g.push("all")
-    if state == "pressed" and btn.pressScale and btn.pressScale < 1 then
+    local drawScale = btn.animationScale or (state == "pressed" and btn.pressScale)
+    if drawScale and drawScale ~= 1 then
         g.translate(x + w / 2, y + h / 2)
-        g.scale(btn.pressScale, btn.pressScale)
+        g.scale(drawScale, drawScale)
         g.translate(-x - w / 2, -y - h / 2)
     end
     if btn.backgroundImage then

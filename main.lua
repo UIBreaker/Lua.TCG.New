@@ -388,6 +388,11 @@ local anim = {
     impactY = 0,
     impactColor = { 1, 1, 1, 1 },
     entranceTimer = 0,
+    entryCompleteAt = 0,
+    playButtonPulse = 0,
+    cardTransform = {},
+    energyBolts = {},
+    energyVolleyPending = 0,
     hitStop = 0,
     screenFlash = 0,
     screenDistortion = 0,
@@ -822,7 +827,7 @@ function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
     anim.impactFlash = heavy and 0.38 or 0.32
     anim.impactX, anim.impactY, anim.impactColor = cx, cy, color
     monsterMotion.hit = 0.35
-    screenShake = math.max(screenShake, heavy and 6 or 3)
+    screenShake = math.max(screenShake, heavy and 3.8 or 2.2)
     table.insert(anim.floatingTexts, {
         text = "-" .. UI.formatNumber(actualDamage) .. " HP!",
         color = color,
@@ -1492,6 +1497,7 @@ local function playSelectedHand()
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
     game.lastPlayedHandId = evalResult.type and evalResult.type.id
+    anim.playButtonPulse = 0.12
 
     screenShake = math.max(screenShake or 0, 2.5)
 
@@ -1668,6 +1674,10 @@ local function playSelectedHand()
     anim.fireParticles = {}
     anim.impactFlash = 0
     anim.entranceTimer = 0
+    anim.entryCompleteAt = 0.07 + math.max(0, #playedCards - 1) * 0.055 + 0.24
+    anim.cardTransform = {}
+    anim.energyBolts = {}
+    anim.energyVolleyPending = 0
     anim.hitStop = 0
     anim.screenFlash = 0
     anim.screenDistortion = 0
@@ -2027,6 +2037,7 @@ function love.update(dt)
     local motionDt = hitStopped and 0 or dt
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
+    anim.playButtonPulse = math.max(0, (anim.playButtonPulse or 0) - dt)
     RunManager.deliverEvolutionRewards(game.run, game)
     if pendingEvolutionCard and state ~= "playing" and state ~= "shop" then
         pendingEvolutionCard = nil
@@ -2083,7 +2094,8 @@ function love.update(dt)
 
     -- Smooth Monster damage lag bar
     if game.monster and game.monster.damageLagHp > game.monster.hp then
-        game.monster.damageLagHp = math.max(game.monster.hp, game.monster.damageLagHp - motionDt * (game.monster.maxHp * 0.75))
+        game.monster.damageLagHp = game.monster.hp
+            + (game.monster.damageLagHp - game.monster.hp) * math.exp(-motionDt * 5.5)
     end
 
     -- Smoothly update floating texts
@@ -2122,6 +2134,28 @@ function love.update(dt)
         for idx, age in pairs(anim.cardHit) do
             age = age + dt
             anim.cardHit[idx] = age < 0.36 and age or nil
+        end
+    end
+
+    for idx, age in pairs(anim.cardTransform or {}) do
+        anim.cardTransform[idx] = math.min(0.42, age + motionDt)
+    end
+    for _, bolt in ipairs(anim.energyBolts or {}) do
+        if not bolt.hit then
+            bolt.age = bolt.age + motionDt
+            if bolt.age >= bolt.duration then
+                bolt.age = bolt.duration
+                bolt.hit = true
+                anim.energyVolleyPending = math.max(0, (anim.energyVolleyPending or 1) - 1)
+                anim.hitStop = math.max(anim.hitStop or 0, 0.035)
+                anim.screenFlash = math.max(anim.screenFlash or 0, 0.045)
+                anim.impactFlash = math.max(anim.impactFlash or 0, 0.13)
+                anim.impactX, anim.impactY, anim.impactColor = bolt.targetX, bolt.targetY, UI.COLORS.goldYellow
+                monsterMotion.hit = math.max(monsterMotion.hit or 0, 0.22)
+                screenShake = math.max(screenShake or 0, 1.5)
+                spawnSparks(bolt.targetX, bolt.targetY, 13, UI.COLORS.goldYellow)
+                Sound.play("score_impact", 0.66)
+            end
         end
     end
 
@@ -2388,16 +2422,22 @@ function love.update(dt)
     -- Scoring Animation Loop
     if state == "scoring" and anim.active then
         anim.entranceTimer = (anim.entranceTimer or 0) + motionDt
-        anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 1.7 or motionDt)
+        if anim.entranceTimer >= (anim.entryCompleteAt or 0) then
+            anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 1.7 or motionDt)
+        end
         local stepDelay = (anim.targetStepDelay or 0.36) * 1.2
+        local steps = anim.scoringData.steps
+        local nextStep = steps[anim.currentStepIndex + 1]
+        local waitingForEnergy = nextStep and nextStep.type == "final_score"
+            and (anim.energyVolleyPending or 0) > 0
+        if waitingForEnergy and anim.stepTimer > stepDelay then anim.stepTimer = stepDelay end
 
-        if anim.stepTimer >= stepDelay then
+        if anim.stepTimer >= stepDelay and not waitingForEnergy then
             anim.stepTimer = 0
             anim.currentStepIndex = anim.currentStepIndex + 1
             anim.pitchStep = (anim.pitchStep or 0) + 1
             local pitch = math.min(2.2, 1.0 + (anim.pitchStep - 1) * 0.07)
 
-            local steps = anim.scoringData.steps
             if anim.currentStepIndex <= #steps then
                 local st = steps[anim.currentStepIndex]
 
@@ -2461,6 +2501,21 @@ function love.update(dt)
 
                     local cardCenterX = UI.getScoringCardX(st.cardIndex, #anim.playedCards) + 48
                     local cardCenterY = 295 + 70 - 20
+                    anim.cardTransform[st.cardIndex] = 0
+                    anim.energyVolleyPending = (anim.energyVolleyPending or 0) + 1
+                    table.insert(anim.energyBolts, {
+                        startX = cardCenterX, startY = cardCenterY,
+                        targetX = UI.BATTLE_CENTER_X, targetY = 270,
+                        age = 0, duration = 0.34 + (st.cardIndex % 3) * 0.025,
+                    })
+                    local cardScoreText = "+" .. tostring(st.addedChips) .. " ST"
+                    if st.addedMult and st.addedMult > 0 then
+                        cardScoreText = cardScoreText .. "  +" .. tostring(st.addedMult) .. " Mult"
+                    end
+                    table.insert(anim.floatingTexts, {
+                        text = cardScoreText, color = UI.COLORS.goldYellow,
+                        x = cardCenterX, y = cardCenterY - 34, alpha = 1.35,
+                    })
                     spawnSparks(cardCenterX, cardCenterY, 18, UI.COLORS.goldYellow)
                     if st.card.destroyed then
                         st.card.destroyFx = 0
@@ -2656,7 +2711,7 @@ function love.update(dt)
 
                 elseif st.type == "final_score" then
                     anim.activeCardIndex = nil
-                    local shakeAmt = math.min(6.5, 2.0 + math.log10(math.max(10, st.finalScore)) * 0.9)
+                    local shakeAmt = math.min(3.2, 1.0 + math.log10(math.max(10, st.finalScore)) * 0.45)
                     screenShake = math.max(screenShake, shakeAmt)
                     anim.hitStop = 0.055
                     anim.screenFlash = 0.105
@@ -3776,6 +3831,40 @@ local function drawCombatFeedback()
         love.graphics.setBlendMode("alpha")
     end
 
+    if anim.energyBolts and #anim.energyBolts > 0 then
+        love.graphics.setBlendMode("add")
+        for _, bolt in ipairs(anim.energyBolts) do
+            if not bolt.hit then
+                local dx, dy = bolt.targetX - bolt.startX, bolt.targetY - bolt.startY
+                local length = math.max(1, math.sqrt(dx * dx + dy * dy))
+                local perpX, perpY = -dy / length, dx / length
+                for shard = -2, 2 do
+                    local delay = math.abs(shard) * 0.016
+                    local progress = math.max(0, math.min(1, (bolt.age - delay) / (bolt.duration - delay)))
+                    local eased = 1 - (1 - progress) ^ 3
+                    local offset = shard * 4 * (1 - eased)
+                    local arc = math.sin(eased * math.pi) * 16
+                    local x = bolt.startX + dx * eased + perpX * offset
+                    local y = bolt.startY + dy * eased + perpY * offset - arc
+                    local tailProgress = math.max(0, progress - 0.16)
+                    local tailEased = 1 - (1 - tailProgress) ^ 3
+                    local tailOffset = shard * 4 * (1 - tailEased)
+                    local tailX = bolt.startX + dx * tailEased + perpX * tailOffset
+                    local tailY = bolt.startY + dy * tailEased + perpY * tailOffset
+                        - math.sin(tailEased * math.pi) * 16
+                    local alpha = 0.88 * (1 - progress * 0.18)
+                    love.graphics.setColor(0.72, 0.88, 1, alpha)
+                    love.graphics.setLineWidth(shard == 0 and 3.2 or 1.25)
+                    love.graphics.line(tailX, tailY, x, y)
+                    love.graphics.setColor(1, 0.96, 0.82, alpha)
+                    love.graphics.circle("fill", x, y, shard == 0 and 3.5 or 1.8)
+                end
+            end
+        end
+        love.graphics.setLineWidth(1)
+        love.graphics.setBlendMode("alpha")
+    end
+
     if (anim.impactFlash or 0) > 0 then
         local col = anim.impactColor or UI.COLORS.goldYellow
         local alpha = math.min(1, anim.impactFlash * 4.5)
@@ -4035,6 +4124,10 @@ local function drawPlayingState()
         disabled = not canEndTurn and (not hasSelection or game.handsRemaining <= 0),
         pressScale = 0.95,
     }
+    if anim.playButtonPulse > 0 then
+        local pulseProgress = 1 - anim.playButtonPulse / 0.12
+        btnPlay.animationScale = 1 - 0.05 * (1 - pulseProgress) * math.cos(pulseProgress * math.pi * 2)
+    end
     table.insert(buttons, btnPlay)
     UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h,
         juice.buttonPressedId == btnPlay.id)
@@ -4165,10 +4258,19 @@ local function drawScoringState()
         local start = anim.cardEntryFrom and anim.cardEntryFrom[i] or nil
         local fromX = start and start.x or targetX
         local fromY = start and start.y or 490
-        local entrance = math.max(0, math.min(1, ((anim.entranceTimer or 0) - (i - 1) * 0.055) / 0.23))
+        local cardEntryTime = math.max(0, (anim.entranceTimer or 0) - (i - 1) * 0.055)
+        local liftProgress = math.min(1, cardEntryTime / 0.07)
+        local entrance = math.max(0, math.min(1, (cardEntryTime - 0.07) / 0.24))
         local easedEntrance = 1 - (1 - entrance) ^ 3
         local cx = fromX + (targetX - fromX) * easedEntrance
-        local cy = fromY + (playY - fromY) * easedEntrance
+        local cy
+        if cardEntryTime < 0.07 then
+            local lift = 12 * liftProgress * liftProgress * (3 - 2 * liftProgress)
+            cy = fromY - lift
+        else
+            local launchY = fromY - 12
+            cy = launchY + (playY - launchY) * easedEntrance - math.sin(entrance * math.pi) * 12
+        end
         local isActive = (anim.activeCardIndex == i)
         local isScored = (anim.scoredCards and anim.scoredCards[i] ~= nil)
 
@@ -4213,22 +4315,31 @@ local function drawScoringState()
             love.graphics.setColor(1, 1, 1, 1)
         end
 
-        local dissolve = c.destroyFxActive and (c.destroyFx or 0) or 0
+        local transformAge = anim.cardTransform and anim.cardTransform[i]
+        local transformProgress = transformAge and math.min(1, transformAge / 0.42) or 0
+        local dissolve = math.max(c.destroyFxActive and (c.destroyFx or 0) or 0, transformProgress)
         if dissolve > 0 then
-            local shrink = math.max(0.18, 1 - dissolve * 0.72)
-            love.graphics.push()
-            love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
-            love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
-            love.graphics.scale(shrink, shrink)
-            UI.drawCard(c, -cardW / 2, -cardH / 2, cardW, cardH)
-            love.graphics.pop()
+            local shrink = math.max(0.12, 1 - dissolve * 0.86)
+            if transformProgress < 1 then
+                love.graphics.push()
+                love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
+                love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
+                c.visualScale = c.visualScale * shrink
+                UI.drawCard(c, -cardW / 2, -cardH / 2, cardW, cardH)
+                c.visualScale = c.visualScale / shrink
+                love.graphics.pop()
+            end
 
             love.graphics.setBlendMode("add")
-            for shard = 1, 18 do
-                local phase = shard * 2.37
-                local sx = cx + cardW / 2 + math.cos(phase) * dissolve * (24 + shard * 1.6)
-                local sy = cy + cardH * (1 - dissolve) + math.sin(phase) * 18 - dissolve * shard * 1.3
-                love.graphics.setColor(1, 0.22 + (shard % 3) * 0.16, 0.05, 1 - dissolve)
+            for shard = 1, 12 do
+                local phase = shard * 2.37 + transformProgress * 3
+                local sx = cx + cardW / 2 + math.cos(phase) * dissolve * (12 + shard * 1.4)
+                local sy = cy + cardH / 2 + math.sin(phase) * dissolve * 12 - dissolve * shard
+                if transformAge ~= nil then
+                    love.graphics.setColor(0.72, 0.90, 1, 1 - transformProgress)
+                else
+                    love.graphics.setColor(1, 0.22 + (shard % 3) * 0.16, 0.05, 1 - dissolve)
+                end
                 love.graphics.rectangle("fill", sx, sy, 2 + shard % 4, 2 + shard % 3)
             end
             love.graphics.setBlendMode("alpha")
@@ -4237,7 +4348,7 @@ local function drawScoringState()
         end
 
         -- If actively scoring: Draw golden highlight ring and floating pill above
-        if isActive then
+        if isActive and transformProgress < 0.45 then
             love.graphics.setBlendMode("add")
             love.graphics.setColor(1, 0.72, 0.18, 0.16 + math.sin(juice.ambientTimer * 18) * 0.05)
             UI.drawRoundedRect("fill", cx - 9, cy - 9, cardW + 18, cardH + 18, 12)
@@ -4267,7 +4378,7 @@ local function drawScoringState()
             end
             love.graphics.printf(bonusText, pillX, pillY + 4, pillW, "center")
 
-        elseif isScored then
+        elseif isScored and transformProgress < 0.45 then
             -- Small green check badge below scored card
             local badgeW = 76
             local badgeH = 20

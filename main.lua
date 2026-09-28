@@ -292,10 +292,11 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     end
 end
 
-local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, isTopHovered)
+local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, isTopHovered, effectOnly, opacity)
     if not c then return end
     local g = love.graphics
     local hovered = isTopHovered == true
+    opacity = opacity or 1
     local drawY = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + index * 0.9) * 1.5
     if hovered then drawY = drawY - 2 end
     local accent = c.color or UI.COLORS.hpGreen
@@ -305,20 +306,20 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     g.translate(cx + cardW / 2, drawY + cardH / 2)
     g.scale(scale)
     g.translate(-cardW / 2, -cardH / 2)
-    g.setColor(0, 0, 0, 0.45)
+    g.setColor(0, 0, 0, 0.45 * opacity)
     UI.drawRoundedRect("fill", 3, 4, cardW, cardH, 6)
-    g.setColor(0.055, 0.085, 0.09, 0.98)
+    g.setColor(0.055, 0.085, 0.09, 0.98 * opacity)
     UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 6)
-    g.setColor(accent[1], accent[2], accent[3], hovered and 0.3 or 0.14)
+    g.setColor(accent[1], accent[2], accent[3], (hovered and 0.3 or 0.14) * opacity)
     UI.drawRoundedRect("fill", 3, 3, cardW - 6, 30, 4)
-    g.setColor(accent)
+    g.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * opacity)
     g.setLineWidth(hovered and 2 or 1.25)
     UI.drawRoundedRect("line", 0.5, 0.5, cardW - 1, cardH - 1, 6)
     g.setFont(UI.fonts.medium)
-    g.setColor(1, 1, 1, 1)
+    g.setColor(1, 1, 1, opacity)
     g.printf(c.icon or "✦", 3, 6, cardW - 6, "center")
     g.setFont(UI.fonts.tiny)
-    g.setColor(UI.COLORS.textLight)
+    g.setColor(UI.COLORS.textLight[1], UI.COLORS.textLight[2], UI.COLORS.textLight[3], opacity)
     g.printf(UI.truncateUtf8(c.name or "Thẻ phép", 7), 5, 39, cardW - 10, "center")
 
     local buttonW = math.min(54, cardW - 16)
@@ -334,6 +335,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
         consumableIndex = index,
     }
     g.pop()
+    if effectOnly then return end
     table.insert(buttons, button)
     UI.drawButton(button,
         mx >= button.x and mx <= button.x + button.w and my >= button.y and my <= button.y + button.h,
@@ -411,12 +413,14 @@ local anim = {
     impactY = 0,
     impactColor = { 1, 1, 1, 1 },
     entranceTimer = 0,
+    consumableUseCooldown = 0,
+    chestReveal = { state = nil, timer = 0 },
 }
 
 -- Short-lived visual feedback shared by shop purchases, sales and pack picks.
 local shopFx = {}
 
-local function spawnShopFx(kind, item, x, y)
+local function spawnShopFx(kind, item, x, y, w, h)
     local category = item and item.category
     local targetX, targetY = 1110, 630
     if category == "deity" or (item and item.id and Deities.CATALOG[item.id]) then
@@ -430,6 +434,8 @@ local function spawnShopFx(kind, item, x, y)
         targetX, targetY = 205, 570
     elseif kind == "destroy" then
         targetX, targetY = x or 640, (y or 360) - 28
+    elseif kind == "consume" then
+        targetX, targetY = x or 640, (y or 360) - 26
     end
     table.insert(shopFx, {
         kind = kind,
@@ -439,7 +445,9 @@ local function spawnShopFx(kind, item, x, y)
         life = 0,
         targetX = targetX,
         targetY = targetY,
-        duration = kind == "destroy" and 0.72 or (kind == "sell" and 0.82 or 0.92),
+        w = w,
+        h = h,
+        duration = kind == "consume" and 0.50 or (kind == "destroy" and 0.72 or (kind == "sell" and 0.82 or 0.92)),
     })
 end
 
@@ -468,7 +476,7 @@ local handDrag = {
 
 local getHandCardPosition
 
-local function prepareDrawAnimation(card, order)
+function anim.prepareDrawAnimation(card, order)
     if not card then return end
     order = order or 1
     card.visualX = 1180
@@ -823,6 +831,27 @@ local function toggleCardSelection(index)
     syncCardSelections()
 end
 
+function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
+    if not actualDamage or actualDamage <= 0 then return end
+    local cx, cy = UI.BATTLE_CENTER_X, 270
+    local color = isTrueDamage and { 1, 0.30, 0.46, 1 } or UI.COLORS.hpRed
+    local heavy = defeated or actualDamage >= (game.monster.maxHp or math.huge) * 0.30
+    spawnSparks(cx, cy, heavy and 42 or 28, color)
+    if defeated then spawnSparks(cx, cy, 28, UI.COLORS.goldYellow) end
+    anim.impactFlash = heavy and 0.38 or 0.32
+    anim.impactX, anim.impactY, anim.impactColor = cx, cy, color
+    monsterMotion.hit = 0.35
+    screenShake = math.max(screenShake, heavy and 6 or 3)
+    table.insert(anim.floatingTexts, {
+        text = "-" .. UI.formatNumber(actualDamage) .. " HP!",
+        color = color,
+        x = cx,
+        y = cy - 58,
+        alpha = 2.0,
+    })
+    Sound.play(heavy and "damage_heavy" or "damage_hit")
+end
+
 local function discardSelected()
     if #game.selectedIndices == 0 or game.discardsRemaining <= 0 then return end
 
@@ -885,6 +914,7 @@ local function discardSelected()
                 local trueDmg = card.rank
                 if game.monster and game.monster.hp > 0 then
                     local actualDmg, defeated = Monster.takeDamage(game.monster, trueDmg)
+                    anim.showMonsterDamage(actualDmg, defeated, true)
                     table.insert(anim.floatingTexts, {
                         text = "🩸 [Huyết Tế] " .. card.rankName .. "♥: -" .. actualDmg .. " Sát Thương Chuẩn!",
                         color = { 0.95, 0.25, 0.35, 1 },
@@ -892,7 +922,6 @@ local function discardSelected()
                         y = 440,
                         alpha = 2.2,
                     })
-                    Sound.play("xmult_boom")
                     if defeated then
                         anim.monsterDefeated = true
                         Sound.play("round_win")
@@ -994,7 +1023,7 @@ local function discardSelected()
         if drawn then
             dealOrder = dealOrder + 1
             drawn.selected = false
-            prepareDrawAnimation(drawn, dealOrder)
+            anim.prepareDrawAnimation(drawn, dealOrder)
             if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_fish" then
                 drawn.faceDown = true
             end
@@ -1315,6 +1344,18 @@ local function useConsumable(idx)
     return false
 end
 
+local function activateConsumable(idx, currentState)
+    if anim.consumableUseCooldown > 0 then return false end
+    local card = game.consumables and game.consumables[idx]
+    if not card then return false end
+    local x, y, w, h = getConsumableSlotRect(idx, currentState)
+    if not useConsumable(idx) then return false end
+    spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
+    anim.consumableUseCooldown = 0.20
+    Sound.play("card_activate")
+    return true
+end
+
 local function playSelectedHand()
     if #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
@@ -1391,7 +1432,7 @@ local function playSelectedHand()
                 local drawn = table.remove(game.deck)
                 if drawn then
                     drawn.selected = false
-                    prepareDrawAnimation(drawn, drawnCount + 1)
+                    anim.prepareDrawAnimation(drawn, drawnCount + 1)
                     table.insert(game.hand, drawn)
                     drawnCount = drawnCount + 1
                 end
@@ -1659,8 +1700,86 @@ function love.resize(w, h)
     updateScale()
 end
 
+local function updateCaptureMode()
+    if not isCaptureMode or not Capture then return end
+    Capture.update(game, {
+        startNewGame = startNewGame,
+        openDeckViewer = function() isDeckViewerOpen = true end,
+        closeDeckViewer = function() isDeckViewerOpen = false end,
+        startMonsterEncounter = function(fl, isB)
+            startMonsterEncounter(fl, isB)
+            state = "playing"
+        end,
+        openShop = function()
+            Shop.resetReroll(shopData)
+            Shop.refresh(shopData, game)
+            state = "shop"
+        end,
+        openBossDeity = function()
+            game.bossDeityDraft = Deities.getBossDraftPool(game.deities, 2)
+            state = "boss_deity"
+        end,
+        openInspector = function(card) inspectCardModal = card end,
+        closeInspector = function() inspectCardModal = nil end,
+        openShopTransfer = function() isShopTransferOpen = true end,
+        closeShopTransfer = function() isShopTransferOpen = false end,
+        getShopTransferState = function()
+            return isShopTransferOpen, transferPage, transferSourceCard, transferSourceEqIndex
+        end,
+        openHandbook = function() isHandbookOpen = true end,
+        closeHandbook = function() isHandbookOpen = false end,
+        openRest = function()
+            restStateData = { chosenAction = nil, selectedCard = nil, message = nil }
+            state = "rest"
+        end,
+        openSocketing = function(eq)
+            pendingEquipment = eq or Equipment.ITEMS.gem_fire
+            socketingReturnState = "map"
+            state = "socketing"
+        end,
+        selectCardIndex = function(idx) toggleCardSelection(idx) end,
+        playSelectedHand = function() playSelectedHand() end,
+        setMenuMode = function(m) menuMode = m end,
+        openSettings = function() isSettingsOpen = true end,
+        isDebugEnabled = function() return settings.debugEnabled end,
+        closeSettings = function() isSettingsOpen = false end,
+        openPauseMenu = function() isPauseMenuOpen = true end,
+        closePauseMenu = function() isPauseMenuOpen = false end,
+        openCollection = function(cat)
+            isCollectionOpen = true
+            collectionCategory = cat
+        end,
+        closeCollection = function()
+            isCollectionOpen = false
+            collectionCategory = nil
+        end,
+        openPack = function(packItem)
+            shopData.currentPackOpening = Shop.openPack(packItem, game)
+            shopData.currentPackOpening.animationTimer = 2
+            state = "shop"
+        end,
+        closePack = function() shopData.currentPackOpening = nil end,
+    })
+end
+
 function love.update(dt)
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
+    anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
+    if state == "chest" or state == "treasure" then
+        if anim.chestReveal.state ~= state then
+            anim.chestReveal.state = state
+            anim.chestReveal.timer = isCaptureMode and 0.90 or 0
+            if not isCaptureMode then Sound.play("pack_open") end
+        end
+        local previous = anim.chestReveal.timer
+        anim.chestReveal.timer = math.min(0.90, previous + dt)
+        if previous < 0.48 and anim.chestReveal.timer >= 0.48 then
+            Sound.play("chest_dissolve")
+        end
+    else
+        anim.chestReveal.state = nil
+        anim.chestReveal.timer = 0.90
+    end
     monsterMotion.attack = math.max(0, monsterMotion.attack - dt)
     monsterMotion.hit = math.max(0, monsterMotion.hit - dt)
     if game and game.monster then
@@ -1684,96 +1803,7 @@ function love.update(dt)
         juice.screenShake = 0
     end
 
-    if isCaptureMode and Capture then
-        Capture.update(game, {
-            startNewGame = startNewGame,
-            openDeckViewer = function() isDeckViewerOpen = true end,
-            closeDeckViewer = function() isDeckViewerOpen = false end,
-            startMonsterEncounter = function(fl, isB)
-                startMonsterEncounter(fl, isB)
-                state = "playing"
-            end,
-            openShop = function()
-                Shop.resetReroll(shopData)
-                Shop.refresh(shopData, game)
-                state = "shop"
-            end,
-            openBossDeity = function()
-                game.bossDeityDraft = Deities.getBossDraftPool(game.deities, 2)
-                state = "boss_deity"
-            end,
-            openInspector = function(card)
-                inspectCardModal = card
-            end,
-            closeInspector = function()
-                inspectCardModal = nil
-            end,
-            openShopTransfer = function()
-                isShopTransferOpen = true
-            end,
-            closeShopTransfer = function()
-                isShopTransferOpen = false
-            end,
-            getShopTransferState = function()
-                return isShopTransferOpen, transferPage, transferSourceCard, transferSourceEqIndex
-            end,
-            openHandbook = function()
-                isHandbookOpen = true
-            end,
-            closeHandbook = function()
-                isHandbookOpen = false
-            end,
-            openRest = function()
-                restStateData = { chosenAction = nil, selectedCard = nil, message = nil }
-                state = "rest"
-            end,
-            openSocketing = function(eq)
-                pendingEquipment = eq or Equipment.ITEMS.gem_fire
-                socketingReturnState = "map"
-                state = "socketing"
-            end,
-            selectCardIndex = function(idx)
-                toggleCardSelection(idx)
-            end,
-            playSelectedHand = function()
-                playSelectedHand()
-            end,
-            setMenuMode = function(m)
-                menuMode = m
-            end,
-            openSettings = function()
-                isSettingsOpen = true
-            end,
-            isDebugEnabled = function()
-                return settings.debugEnabled
-            end,
-            closeSettings = function()
-                isSettingsOpen = false
-            end,
-            openPauseMenu = function()
-                isPauseMenuOpen = true
-            end,
-            closePauseMenu = function()
-                isPauseMenuOpen = false
-            end,
-            openCollection = function(cat)
-                isCollectionOpen = true
-                collectionCategory = cat
-            end,
-            closeCollection = function()
-                isCollectionOpen = false
-                collectionCategory = nil
-            end,
-            openPack = function(packItem)
-                shopData.currentPackOpening = Shop.openPack(packItem, game)
-                shopData.currentPackOpening.animationTimer = 2
-                state = "shop"
-            end,
-            closePack = function()
-                shopData.currentPackOpening = nil
-            end,
-        })
-    end
+    updateCaptureMode()
 
     if screenShake > 0 then
         screenShake = math.max(0, screenShake - dt * 15)
@@ -1899,7 +1929,11 @@ function love.update(dt)
 
     if shopData and shopData.currentPackOpening then
         local opening = shopData.currentPackOpening
-        opening.animationTimer = math.min(3.0, (opening.animationTimer or 0) + dt)
+        local previous = opening.animationTimer or 0
+        opening.animationTimer = math.min(3.0, previous + dt)
+        if previous < 0.72 and opening.animationTimer >= 0.72 then
+            Sound.play("chest_dissolve")
+        end
     end
     for i = #shopFx, 1, -1 do
         local fx = shopFx[i]
@@ -2361,26 +2395,10 @@ function love.update(dt)
                     local actualDmg, defeated = Monster.takeDamage(game.monster, st.finalScore)
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
-
-                    -- Keep the impact on the monster, not the removed left HUD.
-                    local mCenterX = UI.BATTLE_CENTER_X
-                    local mCenterY = 270
-                    spawnSparks(mCenterX, mCenterY, 32, UI.COLORS.hpRed)
-                    anim.impactFlash = 0.32
-                    anim.impactX = mCenterX
-                    anim.impactY = mCenterY
-                    anim.impactColor = UI.COLORS.hpRed
-                    table.insert(anim.floatingTexts, {
-                        text = "-" .. UI.formatNumber(actualDmg) .. " HP!",
-                        color = UI.COLORS.hpRed,
-                        x = mCenterX,
-                        y = mCenterY - 58,
-                        alpha = 2.0,
-                    })
+                    anim.showMonsterDamage(actualDmg, defeated, false)
 
                     if defeated then
                         Sound.play("jackpot")
-                        spawnSparks(mCenterX, mCenterY, 40, UI.COLORS.goldYellow)
                         anim.targetStepDelay = 0.60
 
                         -- 1. A♠ Sát Khí tích lũy khi Overkill
@@ -2781,7 +2799,7 @@ function love.update(dt)
                             if drawn then
                                 dealOrder = dealOrder + 1
                                 drawn.selected = false
-                                prepareDrawAnimation(drawn, dealOrder)
+                                anim.prepareDrawAnimation(drawn, dealOrder)
                                 if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_fish" then
                                     drawn.faceDown = true
                                 end
@@ -3500,6 +3518,40 @@ local function drawBattleInfoPanel(m, eval, preview)
     }, UI.fonts, UI.formatNumber)
 end
 
+local function drawCombatFeedback()
+    if anim.particles and #anim.particles > 0 then
+        love.graphics.setBlendMode("add")
+        for _, p in ipairs(anim.particles) do
+            local alpha = math.max(0, p.alpha or (p.life / p.maxLife))
+            local col = p.color or UI.COLORS.goldYellow
+            love.graphics.setColor(p.r or col[1], p.g or col[2], p.b or col[3], alpha)
+            love.graphics.circle("fill", p.x, p.y, p.size * (p.life / p.maxLife))
+        end
+        love.graphics.setBlendMode("alpha")
+    end
+
+    if (anim.impactFlash or 0) > 0 then
+        local col = anim.impactColor or UI.COLORS.goldYellow
+        local alpha = math.min(1, anim.impactFlash * 4.5)
+        local radius = 18 + (0.32 - math.min(0.32, anim.impactFlash)) * 150
+        love.graphics.setBlendMode("add")
+        love.graphics.setLineWidth(4)
+        love.graphics.setColor(col[1], col[2], col[3], alpha)
+        love.graphics.circle("line", anim.impactX or 640, anim.impactY or 360, radius)
+        love.graphics.setLineWidth(1.5)
+        love.graphics.setColor(1, 1, 1, alpha * 0.65)
+        love.graphics.circle("line", anim.impactX or 640, anim.impactY or 360, radius * 0.62)
+        love.graphics.setLineWidth(1)
+        love.graphics.setBlendMode("alpha")
+    end
+
+    for _, ft in ipairs(anim.floatingTexts) do
+        love.graphics.setFont(UI.fonts.large)
+        love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], ft.alpha)
+        love.graphics.printf(ft.text, ft.x - 200, ft.y, 400, "center")
+    end
+end
+
 local function drawPlayingState()
     syncCardSelections()
     local winW, winH = love.graphics.getDimensions()
@@ -3825,6 +3877,7 @@ local function drawPlayingState()
             love.graphics.print("• " .. eq.name .. ": " .. eq.desc, ttx + 12, tty + 14 + s * 22)
         end
     end
+    if state == "playing" then drawCombatFeedback() end
 end
 
 local function drawScoringState()
@@ -3949,40 +4002,7 @@ local function drawScoringState()
 
     -- 3. Sparks and Fire Particles directly on board
     drawRealisticFireParticles()
-
-    if anim.particles and #anim.particles > 0 then
-        love.graphics.setBlendMode("add")
-        for _, p in ipairs(anim.particles) do
-            local alpha = math.max(0, p.alpha or (p.life / p.maxLife))
-            local col = p.color or UI.COLORS.goldYellow
-            love.graphics.setColor(col[1], col[2], col[3], alpha)
-            love.graphics.circle("fill", p.x, p.y, p.size * (p.life / p.maxLife))
-        end
-        love.graphics.setBlendMode("alpha")
-    end
-
-    -- Expanding impact ring ties each score tick to its card/monster target.
-    if (anim.impactFlash or 0) > 0 then
-        local col = anim.impactColor or UI.COLORS.goldYellow
-        local alpha = math.min(1, anim.impactFlash * 4.5)
-        local radius = 18 + (0.32 - math.min(0.32, anim.impactFlash)) * 150
-        love.graphics.setBlendMode("add")
-        love.graphics.setLineWidth(4)
-        love.graphics.setColor(col[1], col[2], col[3], alpha)
-        love.graphics.circle("line", anim.impactX or 640, anim.impactY or 360, radius)
-        love.graphics.setLineWidth(1.5)
-        love.graphics.setColor(1, 1, 1, alpha * 0.65)
-        love.graphics.circle("line", anim.impactX or 640, anim.impactY or 360, radius * 0.62)
-        love.graphics.setLineWidth(1)
-        love.graphics.setBlendMode("alpha")
-    end
-
-    -- 4. Floating Texts directly on board
-    for _, ft in ipairs(anim.floatingTexts) do
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], ft.alpha)
-        love.graphics.printf(ft.text, ft.x - 200, ft.y, 400, "center")
-    end
+    drawCombatFeedback()
 
 end
 
@@ -6710,8 +6730,9 @@ local function drawShopState()
             local entrance = math.min(1, timer / 0.42)
             local eased = 1 - (1 - entrance) ^ 3
             local charge = math.max(0, (timer - 0.42) / 0.48)
+            local dissolve = math.max(0, math.min(1, (timer - 0.67) / 0.23))
             local shake = charge * math.sin(timer * 70) * 7
-            local pulse = 0.70 + eased * 0.30 + math.sin(timer * 24) * 0.018 * charge
+            local pulse = (0.70 + eased * 0.30 + math.sin(timer * 24) * 0.018 * charge) * (1 - dissolve * 0.80)
             local pw, ph = 184 * pulse, 248 * pulse
             local px, py = (V_WIDTH - pw) / 2 + shake, 500 + (150 - 500) * eased
 
@@ -6725,13 +6746,19 @@ local function drawShopState()
             love.graphics.setLineWidth(1)
             love.graphics.setBlendMode("alpha")
             if packImg then
-                love.graphics.setColor(0, 0, 0, 0.5)
+                love.graphics.setColor(0, 0, 0, 0.5 * (1 - dissolve))
                 UI.drawRoundedRect("fill", px + 9, py + 15, pw, ph, 10)
-                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.setColor(1, 1, 1, 1 - dissolve)
                 local iw, ih = packImg:getDimensions()
                 love.graphics.draw(packImg, px + pw / 2, py + ph / 2, shake * 0.002, pw / iw, ph / ih, iw / 2, ih / 2)
             end
             love.graphics.setBlendMode("add")
+            for shard = 1, 24 do
+                local angle = shard * 2.399
+                local radius = dissolve * (32 + shard * 3.2)
+                love.graphics.setColor(1, 0.55 + (shard % 3) * 0.13, 0.20, (1 - dissolve) * dissolve)
+                love.graphics.rectangle("fill", 640 + math.cos(angle) * radius, 278 + math.sin(angle) * radius, 3 + shard % 4, 3 + shard % 4)
+            end
             for ray = 1, 20 do
                 local angle = ray * math.pi * 2 / 20 + timer * 0.8
                 local radius = 95 + charge * 190
@@ -6748,16 +6775,6 @@ local function drawShopState()
                 love.graphics.setColor(1, 0.88, 0.55, flash * 0.55)
                 love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
             end
-            if packImg then
-                local pw, ph = 64, 84
-                local px, py = (V_WIDTH - pw) / 2, 26
-                love.graphics.setColor(1, 1, 1, 1)
-                local iw, ih = packImg:getDimensions()
-                love.graphics.draw(packImg, px, py, 0, pw / iw, ph / ih)
-                love.graphics.setColor(UI.COLORS.goldYellow)
-                UI.drawRoundedRect("line", px, py, pw, ph, 4)
-            end
-
             love.graphics.setFont(UI.fonts.large)
             love.graphics.setColor(UI.COLORS.goldYellow)
             love.graphics.printf("MỞ " .. (pack.name or "GÓI BÀI") .. " — CHỌN 1 THẺ BÀI", 0, 120, V_WIDTH, "center")
@@ -6895,6 +6912,7 @@ local function drawShopState()
         local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
         UI.drawPatronTooltip(hoveredDeityTooltip, mx, my, copyTarget)
     end
+    drawCombatFeedback()
 end
 
 local DEBUG_CATEGORIES = { "jokers", "consumables", "vouchers", "enhancements", "seals", "editions", "packs", "other", "tags", "blinds", "decks" }
@@ -7129,15 +7147,17 @@ local function drawShopFx()
         local item = fx.item or {}
         local travel = 1 - (1 - p) ^ 3
         local x = fx.x + ((fx.targetX or fx.x) - fx.x) * travel
-        local y = fx.y + ((fx.targetY or fx.y) - fx.y) * travel - math.sin(p * math.pi) * (fx.kind == "sell" and 55 or 92)
+        local hop = fx.kind == "consume" and 18 or (fx.kind == "sell" and 55 or 92)
+        local y = fx.y + ((fx.targetY or fx.y) - fx.y) * travel - math.sin(p * math.pi) * hop
         local pop = math.sin(math.min(1, p / 0.24) * math.pi) * 0.16
-        local size = fx.kind == "destroy" and math.max(0.06, 1 + pop - p * 0.96)
+        local size = (fx.kind == "destroy" or fx.kind == "consume") and math.max(0.06, 1 + pop - p * 0.96)
             or (fx.kind == "sell" and math.max(0.12, 1 + pop - p * 0.82) or math.max(0.42, 1 + pop - travel * 0.48))
-        local w, h = 92, 130
+        local w, h = fx.w or 92, fx.h or 130
 
         love.graphics.setBlendMode("add")
         love.graphics.setLineWidth(4)
-        local trailColor = (fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 }
+        local trailColor = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
+            or ((fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 })
         love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], (1 - p) * 0.34)
         love.graphics.line(fx.x, fx.y, x, y)
         love.graphics.setLineWidth(1)
@@ -7145,10 +7165,12 @@ local function drawShopFx()
 
         love.graphics.push()
         love.graphics.translate(x, y)
-        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "sell" and -1.05 or 0.24)
+        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "consume" and 0.42 or (fx.kind == "sell" and -1.05 or 0.24))
         love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
         love.graphics.scale(size, size)
-        if item.category == "deity" or item.id and Deities.CATALOG[item.id] then
+        if fx.kind == "consume" then
+            drawBattleConsumableCard(item, -w / 2, -h / 2, w, h, 1, -1000, -1000, false, true, 1 - p)
+        elseif item.category == "deity" or item.id and Deities.CATALOG[item.id] then
             UI.drawPatronCard(item.deity or item, -w / 2, -h / 2, w, h, false, false, false)
         elseif item.category == "card" or item.rank then
             UI.drawCard(item.card or item, -w / 2, -h / 2, w, h)
@@ -7179,7 +7201,8 @@ local function drawShopFx()
         for i = 1, 12 do
             local angle = i * 2.17
             local radius = p * (20 + i * 2.4)
-            local color = (fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.22, 0.08 } or { 1, 0.82, 0.22 }
+            local color = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
+                or ((fx.kind == "sell" or fx.kind == "destroy") and { 1, 0.22, 0.08 } or { 1, 0.82, 0.22 })
             love.graphics.setColor(color[1], color[2], color[3], 1 - p)
             love.graphics.rectangle("fill", x + math.cos(angle) * radius, y + math.sin(angle) * radius, 3, 3)
         end
@@ -7193,6 +7216,38 @@ local function drawShopFx()
             love.graphics.printf("+$" .. sellPrice, x - 40, y - 30 - coinP * 18, 80, "center")
         end
     end
+end
+
+local function drawChestReveal()
+    local timer = isCaptureMode and 0.90 or (anim.chestReveal.state == state and anim.chestReveal.timer or 0)
+    if timer >= 0.90 then return end
+    local dissolve = math.max(0, math.min(1, (timer - 0.48) / 0.36))
+    local reveal = math.max(0, math.min(1, (timer - 0.52) / 0.38))
+    local g = love.graphics
+    g.push("all")
+    g.setColor(0.02, 0.025, 0.04, 0.94 * (1 - reveal))
+    g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+
+    local cx, cy = V_WIDTH / 2, V_HEIGHT / 2 - 24
+    local chest = battleArt.chest
+    if chest then
+        local iw, ih = chest:getDimensions()
+        local size = math.min(310 / iw, 260 / ih) * (0.92 + math.min(timer / 0.48, 1) * 0.12) * (1 - dissolve * 0.82)
+        g.setColor(1, 1, 1, 1 - dissolve)
+        g.draw(chest, cx, cy, math.sin(timer * 28) * 0.018 * (1 - dissolve), size, size, iw / 2, ih / 2)
+    end
+
+    g.setBlendMode("add")
+    g.setLineWidth(2)
+    g.setColor(1, 0.72, 0.28, (1 - dissolve) * 0.45)
+    g.circle("line", cx, cy, 112 + timer * 42)
+    for shard = 1, 28 do
+        local angle = shard * 2.399
+        local radius = dissolve * (38 + shard * 3.5)
+        g.setColor(1, 0.58 + (shard % 3) * 0.12, 0.20, dissolve * (1 - dissolve))
+        g.rectangle("fill", cx + math.cos(angle) * radius, cy + math.sin(angle) * radius, 3 + shard % 4, 3 + shard % 4)
+    end
+    g.pop()
 end
 
 local function drawGameOverState()
@@ -7312,6 +7367,7 @@ function love.draw()
     end
 
     drawShopFx()
+    if state == "chest" or state == "treasure" then drawChestReveal() end
 
     if isDeckViewerOpen then
         drawDeckViewerModal()
@@ -7474,7 +7530,7 @@ local function handlePlayingMousepressed(mx, my, button)
                 Sound.play("ui_click")
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
-                if useConsumable(btn.consumableIndex) then Sound.play("consume") end
+                activateConsumable(btn.consumableIndex, "playing")
                 return true
             end
         end
@@ -7488,7 +7544,7 @@ local function handlePlayingMousepressed(mx, my, button)
         local cx, cy, cw, ch = getConsumableSlotRect(j, "playing")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
             if game.consumables and game.consumables[j] then
-                if useConsumable(j) then Sound.play("consume") end
+                activateConsumable(j, "playing")
                 return true
             end
         end
@@ -7692,7 +7748,7 @@ local function handleShopMousepressed(mx, my, button)
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
             if game.consumables and game.consumables[j] then
-                if useConsumable(j) then Sound.play("consume") end
+                activateConsumable(j, "shop")
                 return true
             end
         end
@@ -7749,7 +7805,7 @@ local function handleShopMousepressed(mx, my, button)
                 end
                 return true
             elseif btn.id:sub(1, 15) == "use_consumable_" then
-                if useConsumable(btn.consumableIndex) then Sound.play("consume") end
+                activateConsumable(btn.consumableIndex, "shop")
                 return true
             elseif btn.id == "reroll" then
                 Shop.reroll(shopData, game)
@@ -8201,6 +8257,18 @@ local function handleModalsMousepressed(mx, my, button)
 
     -- 2. Right-Click (button == 2) on any card opens Card Inspector Modal
     if button == 2 then
+        if (state == "playing" or state == "shop") and not isDeckViewerOpen
+            and not (shopData and shopData.currentPackOpening) then
+            local count = state == "playing" and math.max(3, game.consumables and #game.consumables or 0) or 3
+            for i = count, 1, -1 do
+                local x, y, w, h = getConsumableSlotRect(i, state)
+                if game.consumables and game.consumables[i]
+                    and mx >= x and mx <= x + w and my >= y and my <= y + h then
+                    activateConsumable(i, state)
+                    return true
+                end
+            end
+        end
         -- In Deck Viewer Modal
         if isDeckViewerOpen then
             local modalW = 1180
@@ -8318,18 +8386,24 @@ function love.mousepressed(x, y, button)
         end
         return
     end
+    if not isCaptureMode and (state == "chest" or state == "treasure")
+        and (anim.chestReveal.state ~= state or anim.chestReveal.timer < 0.90) then
+        return
+    end
 
     -- Track pressed button id for juice animation, tactile mechanical sound & micro-screenshake
-    for _, btn in ipairs(buttons or {}) do
-        if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-            juice.buttonPressedId = btn.id
-            Sound.play("ui_click")
-            if btn.id == "play" or btn.id == "discard" or btn.id == "fight" or btn.id == "fight_blind"
-               or btn.id == "reroll" or btn.id == "leave_shop" or btn.id == "btn_select_combat"
-               or btn.id == "cashout_continue" or btn.id == "skip_blind" or btn.id == "start_game" then
-                juice.screenShake = math.max(juice.screenShake or 0, 2.5)
+    if button == 1 then
+        for _, btn in ipairs(buttons or {}) do
+            if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                juice.buttonPressedId = btn.id
+                Sound.play("ui_click")
+                if btn.id == "play" or btn.id == "discard" or btn.id == "fight" or btn.id == "fight_blind"
+                   or btn.id == "reroll" or btn.id == "leave_shop" or btn.id == "btn_select_combat"
+                   or btn.id == "cashout_continue" or btn.id == "skip_blind" or btn.id == "start_game" then
+                    juice.screenShake = math.max(juice.screenShake or 0, 2.5)
+                end
+                break
             end
-            break
         end
     end
 
@@ -9183,7 +9257,7 @@ function love.mousereleased(x, y, button)
         if not shopDrag.isDragging and shopDrag.itemIndex then
             local boughtItem = shopDrag.item
             local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
-            if success then
+            if success and boughtItem.category ~= "pack" then
                 spawnShopFx("buy", boughtItem, shopDrag.origX + shopDrag.cardW / 2, shopDrag.origY + shopDrag.cardH / 2)
             end
             if success and msg == "open_socketing" and eq then
@@ -9196,7 +9270,7 @@ function love.mousereleased(x, y, button)
                 if (game.gold or 0) >= (shopDrag.item.cost or 0) then
                     local boughtItem = shopDrag.item
                     local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
-                    if success then
+                    if success and boughtItem.category ~= "pack" then
                         spawnShopFx("buy", boughtItem, mx, my)
                     end
                     if success and msg == "open_socketing" and eq then

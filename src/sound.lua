@@ -12,15 +12,18 @@ local gain = {
     card_select = 0.52, card_deselect = 0.46, card_slide = 0.42,
     card_draw = 0.60, card_deal = 0.50, card_play = 0.78,
     chip_tick = 0.40, mult_pop = 0.60, coin = 0.66,
-    score_impact = 0.80, xmult_boom = 0.72, jackpot = 0.72,
+    score_impact = 0.80, damage_hit = 0.70, damage_heavy = 0.76,
+    xmult_boom = 0.72, jackpot = 0.72,
     round_win = 0.72, game_over = 0.72,
     shop_buy = 0.60, shop_reroll = 0.52, pack_open = 0.70,
+    chest_dissolve = 0.62, card_activate = 0.62,
     equip = 0.66, sell = 0.58, consume = 0.65, card_destroy = 0.56,
     cant_afford = 0.55,
 }
 local cooldown = {
     ui_hover = 0.07, ui_click = 0.035, card_slide = 0.035,
     card_draw = 0.025, chip_tick = 0.022, mult_pop = 0.028,
+    damage_hit = 0.05, damage_heavy = 0.08,
 }
 
 local function generateSound(duration, sampleRate, generator)
@@ -94,6 +97,23 @@ function Sound.init()
             local bass = math.sin(2 * math.pi * freq * t)
             local crack = (love.math.random() * 2 - 1) * math.exp(-t * 70)
             return env * 0.72 * bass + crack * 0.22
+        end)
+
+        -- Enemy hit: brief armor crack over a low impact.
+        sounds.damage_hit = generateSound(0.20, rate, function(t, d)
+            local p = t / d
+            local thud = math.sin(2 * math.pi * (150 - 75 * p) * t) * math.exp(-t * 18)
+            local crack = (love.math.random() * 2 - 1) * math.exp(-t * 65)
+            return thud * 0.56 + crack * 0.24
+        end)
+
+        -- Heavier impact for large damage or a finishing blow.
+        sounds.damage_heavy = generateSound(0.35, rate, function(t, d)
+            local p = t / d
+            local bass = math.sin(2 * math.pi * (120 - 75 * p) * t) * math.exp(-t * 9)
+            local breakNoise = (love.math.random() * 2 - 1) * math.exp(-t * 32)
+            local ring = math.sin(2 * math.pi * 620 * t) * math.exp(-t * 18)
+            return bass * 0.66 + breakNoise * 0.23 + ring * 0.14
         end)
 
         -- 4. Chip Tick (Clear crystal bell ping)
@@ -224,6 +244,15 @@ function Sound.init()
             return env * 0.45 * (tearNoise * 0.7 + shimmer * 0.5)
         end)
 
+        -- The chest dissolves after its seal is broken.
+        sounds.chest_dissolve = generateSound(0.48, rate, function(t, d)
+            local p = t / d
+            local dust = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.22
+            local magic = math.sin(2 * math.pi * (940 - 500 * p) * t) * math.exp(-t * 5)
+            local chime = math.sin(2 * math.pi * 1480 * t) * math.exp(-t * 11)
+            return dust + magic * 0.29 + chime * 0.12
+        end)
+
         -- Soft paper drag; the hand reordering action used to be silent.
         sounds.card_slide = generateSound(0.11, rate, function(t, d)
             local p = t / d
@@ -256,6 +285,14 @@ function Sound.init()
             local shimmer = math.sin(2 * math.pi * (620 + 620 * p) * t)
             local body = math.sin(2 * math.pi * 220 * t)
             return (shimmer * 0.42 + body * 0.18) * math.sin(math.pi * p)
+        end)
+
+        -- Right-click card activation: a paper flick followed by a bright rune ping.
+        sounds.card_activate = generateSound(0.30, rate, function(t, d)
+            local p = t / d
+            local paper = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.19
+            local ping = math.sin(2 * math.pi * (740 + 540 * p) * t) * math.exp(-t * 10)
+            return paper + ping * 0.42
         end)
 
         sounds.card_destroy = generateSound(0.34, rate, function(t, d)

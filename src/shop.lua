@@ -4,6 +4,7 @@ local Sound = require("src.sound")
 local Deck = require("src.deck")
 local Deities = require("src.deities")
 local Rng = require("src.rng")
+local CardEffects = require("src.card_effects")
 
 local Shop = {}
 
@@ -13,6 +14,12 @@ Shop.VOUCHERS = {
     { id = "v_discount", name = "Thẻ Thành Viên", desc = "Giảm vĩnh viễn -$2 giá gieo lại tại mọi Cửa Hàng!", cost = 10, color = { 0.35, 0.85, 0.55, 1 }, icon = "🎟️" },
     { id = "v_interest", name = "Sổ Tiết Kiệm", desc = "Nâng trần lãi ngân khố từ +$5 lên tối đa +$10 mỗi ván!", cost = 10, color = { 0.95, 0.80, 0.25, 1 }, icon = "💰" },
     { id = "v_hand_plus", name = "Bùa Hảo Thủ", desc = "Tăng vĩnh viễn +1 lượt đánh mỗi trận!", cost = 10, color = { 0.85, 0.45, 0.95, 1 }, icon = "✋" },
+    { id = "v_welcome", name = "Lời Chào Thương Hội", desc = "Lần đổi hàng đầu tiên ở mỗi cửa hàng miễn phí. Không tăng giá đổi hàng.", cost = 12, color = { 0.38, 0.80, 0.94, 1 }, icon = "↻" },
+    { id = "v_pack_discount", name = "Bản Đồ Kho Báu", desc = "Mọi rương trong shop giảm $2, giá tối thiểu $1. Áp dụng ngay và suốt run.", cost = 14, color = { 0.95, 0.68, 0.30, 1 }, icon = "◇" },
+    { id = "v_apothecary", name = "Lời Thề Dược Sư", desc = "Bình máu trong shop hồi 40 HP thay vì 25 HP, không tăng giá.", cost = 10, color = { 0.39, 0.84, 0.62, 1 }, icon = "+" },
+    { id = "v_altar", name = "Giao Kèo Tro Vàng", desc = "Mỗi lần hiến tế SPN, quân bài hoặc tiêu hao nhận thêm $2 vàng.", cost = 14, color = { 0.94, 0.48, 0.38, 1 }, icon = "✦" },
+    { id = "v_vitality", name = "Trái Tim Bất Diệt", desc = "Tăng vĩnh viễn 20 HP tối đa và hồi ngay 20 HP khi mua.", cost = 12, color = { 0.93, 0.36, 0.51, 1 }, icon = "♥" },
+    { id = "v_second_chance", name = "Quân Cờ Dự Phòng", desc = "Thêm 1 lượt bỏ bài mỗi trận. Nhận ngay 1 lượt bỏ bài khi mua.", cost = 10, color = { 0.65, 0.58, 0.94, 1 }, icon = "♠" },
 }
 
 Shop.PACK_CATALOG = {
@@ -23,6 +30,17 @@ Shop.PACK_CATALOG = {
     { packType = "seal", name = "GÓI CON DẤU", subtitle = "ẤN CHIẾN", desc = "Mở 3 Con Dấu chiến thuật, chọn 1 để đóng lên bài.", cost = 6, rarity = "Con Dấu", color = { 0.95, 0.70, 0.20, 1 }, icon = "🔴" },
     { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
     { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
+    { packType = "hand_styles", name = "RƯƠNG THẾ ĐÁNH", subtitle = "THẾ ĐÁNH", desc = "Mở 3 Bí Tịch ngẫu nhiên trong toàn bộ 9 thế đánh, chọn 1.", cost = 7, rarity = "Bí Tịch", color = { 0.95, 0.72, 0.22, 1 }, icon = "♠" },
+    { packType = "edition", name = "RƯƠNG ẤN BẢN", subtitle = "ẤN BẢN", desc = "Chọn Foil, Holographic hoặc Polychrome để cất hoặc áp dụng lên một lá bài.", cost = 8, rarity = "Ấn Bản", color = { 0.78, 0.48, 0.96, 1 }, icon = "✦" },
+}
+
+Shop.SPN_RARITY_WEIGHTS = {
+    common = 0.614, uncommon = 0.20, rare = 0.10, epic = 0.05,
+    legendary = 0.02, mythic = 0.01, transcendent = 0.005, unique = 0.001,
+}
+Shop.SPN_RARITY_PRICE_MULTIPLIERS = {
+    common = 1, uncommon = 1.5, rare = 2, epic = 3,
+    legendary = 5, mythic = 8, transcendent = 12, unique = 18,
 }
 
 -- Canonical pack reward catalogs. Both the shop and the collection read these
@@ -98,6 +116,23 @@ function Shop.getPackContents(packType)
         return copyList(Shop.SPECTRAL_CARDS)
     elseif packType == "celestial" then
         return copyList(Poker.PLANET_CARDS)
+    elseif packType == "hand_styles" then
+        local result = {}
+        for _, hand in ipairs(Poker.HAND_TYPES_ORDERED or {}) do
+            local book = Poker.SKILL_BOOKS[hand.id]
+            if hand.id == "high_card" then
+                book = {
+                    id = "book_high_card", handId = "high_card", name = "Bí Tịch: Đơn Thủ",
+                    handName = "ĐƠN THỦ (Mậu Thầu)",
+                    desc = "Thế đánh cơ bản; nhận Bí Tịch trùng để tăng cấp độ Đơn Thủ.",
+                    color = { 0.72, 0.78, 0.86, 1 },
+                }
+            end
+            if book then result[#result + 1] = book end
+        end
+        return result
+    elseif packType == "edition" then
+        return CardEffects.getEditionCatalog()
     end
     return {}
 end
@@ -115,23 +150,74 @@ end
 function Shop.resetReroll(shop)
     if not shop then return end
     shop.rerollCost = shop.baseRerollCost or 5
+    shop.rerollCount = 0
+    shop.welcomeRerollUsed = false
+end
+
+function Shop.getRerollCost(shop, gameState)
+    if (gameState.freeRerolls or 0) > 0
+        or (gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed) then
+        return 0
+    end
+    return shop.rerollCost or 5
+end
+
+-- Reprice existing stock as well as future rerolls, without stacking discounts.
+function Shop.applyVoucherStock(shop, gameState)
+    local owned = gameState.vouchers or {}
+    for _, item in ipairs(shop.items or {}) do
+        if item.category == "pack" then
+            item.baseCost = item.baseCost or item.cost
+            item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and 2 or 0))
+        elseif item.category == "heal" then
+            item.healAmt = owned.v_apothecary and 40 or 25
+            item.desc = "Uống lập tức hồi phục tối đa +" .. item.healAmt .. " HP sinh lực."
+        end
+    end
+end
+
+local function cloneDeity(deity)
+    local clone = {}
+    for key, value in pairs(deity or {}) do clone[key] = value end
+    return clone
+end
+
+local function rollSpnRarity()
+    local roll, cumulative = Rng.random(), 0
+    for _, rarity in ipairs(Deities.RARITIES) do
+        cumulative = cumulative + (Shop.SPN_RARITY_WEIGHTS[rarity.id] or 0)
+        if roll < cumulative then return rarity end
+    end
+    return Deities.RARITIES[1]
+end
+
+local function randomStandardCard()
+    local printed = Shop.STANDARD_CARDS[Rng.random(#Shop.STANDARD_CARDS)]
+    return Deck.newCard(printed.rank, printed.suit)
+end
+
+local function appendPackItem(shop, pack)
+    shop.items[#shop.items + 1] = {
+        section = "lower_pack", category = "pack", packType = pack.packType,
+        name = pack.name, subtitle = pack.subtitle, desc = pack.desc,
+        cost = pack.cost, color = pack.color, icon = pack.icon,
+    }
 end
 
 function Shop.refresh(shop, gameState)
     shop.items = {}
-    local unlockedHands = gameState.unlockedHands or {}
-    local userFaction = gameState.selectedFaction or gameState.selectedSuit or "aurelia"
 
     ----------------------------------------------------------------------------
     -- 1. UPPER SECTION CARDS (Thần Hộ Mệnh, Trang Bị Khảm, Quân Bài Tuyển Mộ)
     ----------------------------------------------------------------------------
     -- A. Thần Hộ Mệnh (Deity / Joker equivalent)
-    local availableDeities = Deities.getRandomShopPool(gameState.deities, 2)
+    local availableDeities = Deities.getRandomShopPool(gameState.deities, 1)
     if #availableDeities > 0 then
-        local d = availableDeities[1]
-        local dColor = { 0.95, 0.85, 0.35, 1 }
-        if d.rarity == "rare" then dColor = { 0.95, 0.40, 0.40, 1 }
-        elseif d.rarity == "uncommon" then dColor = { 0.35, 0.70, 0.95, 1 } end
+        local d = cloneDeity(availableDeities[1])
+        local rarity = rollSpnRarity()
+        Deities.setRarity(d, rarity.id)
+        d.cost = math.ceil((tonumber(d.cost) or 4) * (Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity.id] or 1))
+        local dColor = rarity.color or { 0.95, 0.85, 0.35, 1 }
 
         table.insert(shop.items, {
             section = "upper",
@@ -161,22 +247,15 @@ function Shop.refresh(shop, gameState)
         color = eq1.color or { 0.95, 0.75, 0.25, 1 },
     })
 
-    -- C. Quân Bài Chiêu Mộ (Reinforcement Card for Deck)
-    local rewardCard = nil
-    if Rng.random() < 0.5 then
-        rewardCard = Deck.createRewardCard(userFaction)
-    else
-        local rankPool = { 9, 10, 11, 12, 13, 14 }
-        local r = rankPool[Rng.random(#rankPool)]
-        rewardCard = Deck.newCard(r, userFaction)
-    end
+    -- C. Retail card: every rank and suit has an equal chance (52 total).
+    local rewardCard = randomStandardCard()
     table.insert(shop.items, {
         section = "upper",
         category = "card",
         card = rewardCard,
-        name = (rewardCard.roleTitle or "Chiến Binh") .. " " .. rewardCard.rankName .. rewardCard.suitSymbol,
+        name = rewardCard.rankName .. rewardCard.suitSymbol,
         subtitle = "QUÂN BÀI",
-        desc = "Thêm lá " .. (rewardCard.roleTitle or "") .. " " .. rewardCard.rankName .. rewardCard.suitSymbol .. " (+" .. rewardCard.baseChips .. " Chips, Chất " .. rewardCard.suitName .. ") vào bộ bài!",
+        desc = "Thêm lá " .. rewardCard.rankName .. rewardCard.suitSymbol .. " (Chất " .. rewardCard.suitName .. ") vào bộ bài!",
         cost = 4,
         icon = rewardCard.suitSymbol,
         color = rewardCard.color,
@@ -198,59 +277,59 @@ function Shop.refresh(shop, gameState)
         color = { 0.85, 0.45, 0.95, 1 },
     })
 
+    -- E. Healing stays visible in the upper retail row on every visit.
+    table.insert(shop.items, {
+        id = "healing_potion", section = "upper", category = "heal",
+        name = "BÌNH MÁU THÁNH", subtitle = "DƯỢC LIỆU",
+        desc = "Uống lập tức hồi phục tối đa +25 HP sinh lực.",
+        cost = 4, color = { 0.25, 0.85, 0.45, 1 }, icon = "🧪", healAmt = 25,
+    })
+
     ----------------------------------------------------------------------------
     -- 2. LOWER SECTION CARDS (Phiếu Ante / Voucher & Gói Bài Booster Packs)
     ----------------------------------------------------------------------------
-    -- A. Left: Phiếu Ante / Sách Bí Tịch (Voucher Slot)
-    local availableBooks = {}
-    for handId, book in pairs(Poker.SKILL_BOOKS) do
-        if not unlockedHands[handId] then
-            table.insert(availableBooks, book)
+    -- A. Left: permanent voucher. Hand unlocks now come from the hand-style chest.
+    local availableVouchers = {}
+    for _, voucher in ipairs(Shop.VOUCHERS) do
+        if not (gameState.vouchers and gameState.vouchers[voucher.id]) then
+            availableVouchers[#availableVouchers + 1] = voucher
         end
     end
-    for i = #availableBooks, 2, -1 do
-        local j = Rng.random(i)
-        availableBooks[i], availableBooks[j] = availableBooks[j], availableBooks[i]
-    end
+    local v = #availableVouchers > 0 and availableVouchers[Rng.random(#availableVouchers)]
+    if v then table.insert(shop.items, {
+        section = "lower_voucher",
+        category = "voucher",
+        voucherId = v.id,
+        name = v.name,
+        subtitle = "PHIẾU ĐẶC QUYỀN",
+        desc = v.desc,
+        cost = v.cost,
+        color = v.color,
+        icon = v.icon or "🎟️",
+    }) end
 
-    if #availableBooks > 0 then
-        local b = availableBooks[1]
-        table.insert(shop.items, {
-            section = "lower_voucher",
-            category = "book", -- maintains compatibility with Test 9
-            handId = b.handId,
-            name = b.name,
-            subtitle = "PHIẾU BÍ TỊCH",
-            desc = "Mở khóa vĩnh viễn tay bài: " .. b.name .. " (" .. b.desc .. ")",
-            cost = 10,
-            color = { 0.22, 0.72, 0.98, 1 },
-            icon = "📜",
-        })
-    else
-        -- All hands unlocked: offer permanent Ante Voucher
-        local v = Shop.VOUCHERS[Rng.random(#Shop.VOUCHERS)]
-        table.insert(shop.items, {
-            section = "lower_voucher",
-            category = "voucher",
-            voucherId = v.id,
-            name = v.name,
-            subtitle = "PHIẾU ĐẶC QUYỀN",
-            desc = v.desc,
-            cost = v.cost,
-            color = v.color,
-            icon = v.icon or "🎟️",
-        })
+    -- B. Fixed hand-style chest: all nine books form its reward pool.
+    local handChest
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        if pack.packType == "hand_styles" then handChest = pack break end
     end
+    if handChest then appendPackItem(shop, handChest) end
 
-    -- B. Hai gói từ 7 hệ. Tránh lặp lại hai hệ vừa xuất hiện ở lần làm mới trước.
+    -- C. Three random chests, without same-shop duplicates or the two fixed chests.
     local recent = {}
     for _, packType in ipairs(shop.lastPackTypes or {}) do recent[packType] = true end
     local packCatalog = {}
     for _, pack in ipairs(Shop.PACK_CATALOG) do
-        if not recent[pack.packType] then table.insert(packCatalog, pack) end
+        if pack.packType ~= "hand_styles" and pack.packType ~= "edition" and not recent[pack.packType] then
+            table.insert(packCatalog, pack)
+        end
     end
-    if #packCatalog < 2 then
-        for _, pack in ipairs(Shop.PACK_CATALOG) do table.insert(packCatalog, pack) end
+    if #packCatalog < 3 then
+        for _, pack in ipairs(Shop.PACK_CATALOG) do
+            if pack.packType ~= "hand_styles" and pack.packType ~= "edition" then
+                table.insert(packCatalog, pack)
+            end
+        end
     end
 
     for i = #packCatalog, 2, -1 do
@@ -258,52 +337,40 @@ function Shop.refresh(shop, gameState)
         packCatalog[i], packCatalog[j] = packCatalog[j], packCatalog[i]
     end
 
-    local pack1 = packCatalog[1]
-    local pack2 = packCatalog[2]
-    shop.lastPackTypes = { pack1.packType, pack2.packType }
-
-    table.insert(shop.items, {
-        section = "lower_pack",
-        category = "pack",
-        packType = pack1.packType,
-        name = pack1.name,
-        subtitle = pack1.subtitle,
-        desc = pack1.desc,
-        cost = pack1.cost,
-        color = pack1.color,
-        icon = pack1.icon,
-    })
-
-    if (gameState.playerHp or 100) < 60 and Rng.random() < 0.5 then
-        table.insert(shop.items, {
-            section = "lower_pack",
-            category = "heal",
-            name = "BÌNH MÁU THÁNH",
-            subtitle = "DƯỢC LIỆU",
-            desc = "Uống lập tức hồi phục +25 HP sinh lực cho nhân vật!",
-            cost = 4,
-            color = { 0.25, 0.85, 0.45, 1 },
-            icon = "🧪",
-            healAmt = 25,
-        })
-    else
-        table.insert(shop.items, {
-            section = "lower_pack",
-            category = "pack",
-            packType = pack2.packType,
-            name = pack2.name,
-            subtitle = pack2.subtitle,
-            desc = pack2.desc,
-            cost = pack2.cost,
-            color = pack2.color,
-            icon = pack2.icon,
-        })
+    shop.lastPackTypes = {}
+    for i = 1, math.min(3, #packCatalog) do
+        local pack = packCatalog[i]
+        shop.lastPackTypes[#shop.lastPackTypes + 1] = pack.packType
+        appendPackItem(shop, pack)
     end
+
+    -- D. The edition chest is a separate 25% roll, not part of the random trio.
+    if Rng.random() < 0.25 then
+        for _, pack in ipairs(Shop.PACK_CATALOG) do
+            if pack.packType == "edition" then appendPackItem(shop, pack) break end
+        end
+    end
+
+    -- Each freshly generated shop reroll gets its edition chance once.
+    for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
+    Shop.applyVoucherStock(shop, gameState)
+    -- Restored runs rebuild the shop; retain the membership discount too.
+    if gameState.vouchers and gameState.vouchers.v_discount then
+        shop.baseRerollCost = 3
+        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 3 end
+    end
+end
+
+function Shop.applyEdition(card, edition)
+    return CardEffects.setEffect(card, edition)
 end
 
 function Shop.buyItem(shop, itemIndex, gameState)
     local item = shop.items[itemIndex]
     if not item then return false, "Vật phẩm không tồn tại!" end
+    if item.category == "voucher" and gameState.vouchers and gameState.vouchers[item.voucherId] then
+        return false, "Bạn đã sở hữu đặc quyền này!"
+    end
 
     if (gameState.gold or 0) < item.cost then
         Sound.play("cant_afford")
@@ -354,7 +421,14 @@ function Shop.buyItem(shop, itemIndex, gameState)
             gameState.handsRemaining = (gameState.handsRemaining or 4) + 1
         elseif item.voucherId == "v_hand_size" then
             gameState.maxHandSize = (gameState.maxHandSize or 3) + 1
+        elseif item.voucherId == "v_vitality" then
+            gameState.maxPlayerHp = (gameState.maxPlayerHp or 100) + 20
+            gameState.playerHp = math.min(gameState.maxPlayerHp, (gameState.playerHp or 100) + 20)
+        elseif item.voucherId == "v_second_chance" then
+            gameState.maxDiscards = (gameState.maxDiscards or 3) + 1
+            gameState.discardsRemaining = (gameState.discardsRemaining or 0) + 1
         end
+        Shop.applyVoucherStock(shop, gameState)
         return true, "Đã kích hoạt đặc quyền: " .. item.name .. "!"
 
     elseif item.category == "equipment" then
@@ -381,6 +455,10 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return true, "open_pack", packData
 
     elseif item.category == "heal" then
+        if (gameState.playerHp or 100) >= (gameState.maxPlayerHp or 100) then
+            Sound.play("cant_afford")
+            return false, "Sinh lực đang đầy!"
+        end
         gameState.gold = gameState.gold - item.cost
         local healVal = item.healAmt or 25
         gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100) + healVal)
@@ -400,11 +478,14 @@ function Shop.buyItem(shop, itemIndex, gameState)
 end
 
 function Shop.openPack(packItem, gameState)
-    local userFaction = gameState.selectedFaction or gameState.selectedSuit or "aurelia"
     local candidates = {}
 
     if packItem.packType == "buffoon" then
-        candidates = Deities.getRandomShopPool(gameState.deities, 3)
+        for _, deity in ipairs(Deities.getRandomShopPool(gameState.deities, 3)) do
+            local reward = cloneDeity(deity)
+            CardEffects.rollCard(reward)
+            candidates[#candidates + 1] = reward
+        end
 
     elseif packItem.packType == "standard" then
         local enhList = {}
@@ -414,10 +495,11 @@ function Shop.openPack(packItem, gameState)
             end
         end
         for i = 1, 3 do
-            local c = Deck.createRewardCard(userFaction)
+            local c = randomStandardCard()
             if Rng.random(100) <= 70 then
                 c.enhancement = enhList[Rng.random(#enhList)]
             end
+            CardEffects.rollCard(c)
             table.insert(candidates, c)
         end
 
@@ -458,6 +540,17 @@ function Shop.openPack(packItem, gameState)
             planets[i], planets[j] = planets[j], planets[i]
         end
         for i = 1, 3 do table.insert(candidates, planets[i]) end
+
+    elseif packItem.packType == "hand_styles" then
+        local books = Shop.getPackContents("hand_styles")
+        for i = #books, 2, -1 do
+            local j = Rng.random(i)
+            books[i], books[j] = books[j], books[i]
+        end
+        for i = 1, math.min(3, #books) do candidates[i] = books[i] end
+
+    elseif packItem.packType == "edition" then
+        candidates = CardEffects.getEditionCatalog()
     end
 
     return {
@@ -745,6 +838,40 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             shop.currentPackOpening = nil
             return true, "Đã nâng cấp thế bài " .. vName .. " lên Cấp " .. gameState.handLevels[card.handId] .. "!"
         end
+
+    elseif pack.packType == "hand_styles" then
+        gameState.unlockedHands = gameState.unlockedHands or {}
+        gameState.handLevels = gameState.handLevels or {}
+        local handId = card.handId
+        if not handId then return false, "Bí Tịch không hợp lệ!" end
+        if gameState.unlockedHands[handId] then
+            gameState.handLevels[handId] = (gameState.handLevels[handId] or 1) + 1
+            shop.currentPackOpening = nil
+            Sound.play("round_win")
+            return true, "Thế đánh " .. (card.handName or card.name) .. " tăng lên Cấp " .. gameState.handLevels[handId] .. "!"
+        end
+        gameState.unlockedHands[handId] = true
+        gameState.handLevels[handId] = math.max(1, gameState.handLevels[handId] or 1)
+        shop.currentPackOpening = nil
+        Sound.play("shop_buy")
+        return true, "Đã mở khóa thế đánh: " .. (card.handName or card.name) .. "!"
+
+    elseif pack.packType == "edition" then
+        local targetCard = gameState.selectedIndices and gameState.hand
+            and gameState.hand[gameState.selectedIndices[1]]
+        if not targetCard then
+            Sound.play("cant_afford")
+            return false, "Hãy chọn một lá bài trước, hoặc cất Ấn Bản vào ô tiêu hao."
+        end
+        Shop.applyEdition(targetCard, card.edition)
+        for _, pile in ipairs({ gameState.persistentDeck or {}, gameState.hand or {}, gameState.deck or {}, gameState.discardPile or {} }) do
+            for _, copy in ipairs(pile) do
+                if copy and targetCard.id and copy.id == targetCard.id then Shop.applyEdition(copy, card.edition) end
+            end
+        end
+        shop.currentPackOpening = nil
+        Sound.play("round_win")
+        return true, targetCard.rankName .. (targetCard.suitSymbol or "") .. " nhận " .. card.name .. "!"
     end
 
     shop.currentPackOpening = nil
@@ -761,11 +888,12 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
         joker_edition = "joker_spell",
         seal = "seal",
         spectral = "spectral",
-        celestial = "celestial"
+        celestial = "celestial",
+        edition = "edition",
     }
     local cat = validPacks[pack.packType]
     if not cat then
-        return false, "Chỉ có thể cất giữ Thẻ Phép & Hành Tinh vào Ô Tiêu Hao!"
+        return false, "Chỉ có thể cất giữ Thẻ Phép, Hành Tinh và Ấn Bản vào Ô Tiêu Hao!"
     end
 
     gameState.consumables = gameState.consumables or {}
@@ -796,7 +924,13 @@ function Shop.reroll(shop, gameState)
         Sound.play("shop_reroll")
         return true
     end
-    local cost = shop.rerollCost or 5
+    if gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed then
+        shop.welcomeRerollUsed = true
+        Shop.refresh(shop, gameState)
+        Sound.play("shop_reroll")
+        return true
+    end
+    local cost = Shop.getRerollCost(shop, gameState)
     if (gameState.gold or 0) < cost then
         Sound.play("cant_afford")
         return false, "Không đủ tiền làm mới!"
@@ -809,13 +943,14 @@ function Shop.reroll(shop, gameState)
     return true
 end
 
-function Shop.getSacrificePrice(item, kind)
+function Shop.getSacrificePrice(item, kind, gameState)
+    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and 2 or 0
     if kind == "deity" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
     elseif kind == "consumable" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
     elseif kind == "card" then
-        return math.max(1, math.floor(((item and item.sellValue) or 1)))
+        return math.max(1, math.floor(((item and item.sellValue) or 1))) + bonus
     end
     return 0
 end
@@ -823,7 +958,7 @@ end
 function Shop.sellConsumable(gameState, consumableIndex)
     local item = gameState.consumables and gameState.consumables[consumableIndex]
     if not item then return false end
-    local price = Shop.getSacrificePrice(item, "consumable")
+    local price = Shop.getSacrificePrice(item, "consumable", gameState)
     table.remove(gameState.consumables, consumableIndex)
     gameState.gold = (gameState.gold or 0) + price
     Sound.play("sell")
@@ -845,7 +980,7 @@ function Shop.sellCard(gameState, targetCard)
         return false, "Bộ bài phải còn ít nhất 1 lá."
     end
 
-    local price = Shop.getSacrificePrice(targetCard, "card")
+    local price = Shop.getSacrificePrice(targetCard, "card", gameState)
     local cardId = targetCard.id
     table.remove(deck, deckIndex)
     for _, pileName in ipairs({ "hand", "deck", "discardPile" }) do
@@ -871,7 +1006,7 @@ end
 function Shop.sellDeity(gameState, deityIndex)
     local d = gameState.deities and gameState.deities[deityIndex]
     if not d then return false end
-    local sellPrice = Shop.getSacrificePrice(d, "deity")
+    local sellPrice = Shop.getSacrificePrice(d, "deity", gameState)
     gameState.gold = (gameState.gold or 0) + sellPrice
     gameState.deities[deityIndex] = nil
     Sound.play("sell")

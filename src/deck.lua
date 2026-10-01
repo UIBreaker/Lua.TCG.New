@@ -287,6 +287,8 @@ function Deck.getChipValue(rank)
 end
 
 function Deck.getAttackSpeed(rank)
+    rank = tonumber(rank)
+    if not rank then return 1 end
     if rank == 1 or rank == 14 then return 11 end
     if rank >= 11 and rank <= 13 then return 10 end -- J / Q / K
     return math.max(1, math.min(999, tonumber(rank) or 1))
@@ -487,6 +489,7 @@ function Deck.cloneCard(card)
     newC.starterDeckId = card.starterDeckId
     newC.seal = card.seal
     newC.enhancement = card.enhancement
+    newC.edition = card.edition or card.visualEffect
     newC.overchargeStacks = card.overchargeStacks or 0
     newC.isAnchor = card.isAnchor or (card.seal == "seal_anchor" or card.seal == "anchor")
     newC.unlockedSockets = 3

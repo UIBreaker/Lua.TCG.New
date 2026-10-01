@@ -1,4 +1,9 @@
+local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-card-effects" then
+        -- Defer graphics/shader testing until love.load has a live graphics context.
+        cardEffectsSmokeMode = true
+    end
     if a == "--test" then
         local ok, err = pcall(require, "test_system")
         if not ok then
@@ -26,6 +31,7 @@ local Deck = require("src.deck")
 local Poker = require("src.poker")
 local Deities = require("src.deities")
 local Scoring = require("src.scoring")
+local CardEffects = require("src.card_effects")
 local Shop = require("src.shop")
 local Sound = require("src.sound")
 local UI = require("src.ui")
@@ -48,7 +54,7 @@ local Combat = require("src.combat")
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 for _, a in ipairs(arg or {}) do
-    if a == "--capture" then
+    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" then
         isCaptureMode = true
     end
 end
@@ -91,6 +97,7 @@ local chestRewards = {}
 local pendingEquipment = nil
 local pendingEvolutionCard = nil
 local pendingSpeedCard = nil
+local pendingEditionCard = nil
 local socketingReturnState = "shop"
 local socketingPage = 1
 local socketingMessage = nil
@@ -296,6 +303,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     g.translate(cx + cardW / 2, drawY + cardH / 2)
     g.scale(scale)
     g.translate(-cardW / 2, -cardH / 2)
+    UI.CardPhysics.capture(c, 0, 0, cardW, cardH)
     g.setColor(0, 0, 0, 0.45 * opacity)
     UI.drawRoundedRect("fill", 3, 4, cardW, cardH, 6)
     g.setColor(0.055, 0.085, 0.09, 0.98 * opacity)
@@ -323,6 +331,9 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
             UI.truncateUtf8(c.desc or "", 76) .. "\nChuột phải để kích hoạt", UI.fonts, "green")
     end
 end
+
+drawConsumableSlot = UI.CardPhysics.wrap(drawConsumableSlot)
+drawBattleConsumableCard = UI.CardPhysics.wrap(drawBattleConsumableCard, nil, 9)
 
 -- Micro-Animation & Juice System
 juice = {
@@ -363,6 +374,8 @@ local anim = {
     displayChips = 0,
     displayMult = 0,
     displayXMult = 1.0,
+    displayAuraEditionMultiplier = 1.0,
+    displayFlatDamage = 0,
     displayFinalScore = 0,
     displayAura = 0,
     stepTimer = 0,
@@ -1117,6 +1130,16 @@ local function useConsumable(idx)
         return true
     end
 
+    if c.category == "edition" then
+        pendingEditionCard = c
+        table.insert(anim.floatingTexts, {
+            text = "CHỌN LÁ BÀI HOẶC SPN ĐỂ ÁP DỤNG " .. tostring(c.name or "ẤN BẢN") .. " · ESC ĐỂ HỦY",
+            color = c.color or UI.COLORS.goldYellow, x = 640, y = 310, alpha = 2.8,
+        })
+        Sound.play("card_select")
+        return true
+    end
+
     -- 1. Celestial / Planet card
     if c.category == "celestial" or (c.id and c.id:find("planet_")) then
         game.handLevels = game.handLevels or {}
@@ -1400,7 +1423,7 @@ local function activateConsumable(idx, currentState)
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
-        and card.category ~= "speed_single" then
+        and card.category ~= "speed_single" and card.category ~= "edition" then
         spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     end
     return true
@@ -1434,6 +1457,63 @@ local function applyPendingEvolutionAt(mx, my, currentState)
                 Sound.play("xmult_boom")
             end
             return true
+        end
+    end
+    return false
+end
+
+local function applyPendingEditionAt(mx, my, currentState)
+    if not pendingEditionCard then return false end
+    local consumableIndex
+    for index, item in ipairs(game.consumables or {}) do
+        if item == pendingEditionCard then consumableIndex = index break end
+    end
+    if not consumableIndex then pendingEditionCard = nil; return true end
+
+    local maxSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    for i = maxSlots, 1, -1 do
+        local x, y, w, h = getDeitySlotRect(i, currentState)
+        local deity = game.deities and game.deities[i]
+        if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
+            Shop.applyEdition(deity, pendingEditionCard.edition)
+            local used = table.remove(game.consumables, consumableIndex)
+            pendingEditionCard = nil
+            spawnShopFx("consume", used, x + w / 2, y + h / 2, w, h)
+            table.insert(anim.floatingTexts, {
+                text = deity.name .. " nhận " .. tostring(used.name or "Ấn Bản") .. "!",
+                color = used.color or UI.COLORS.goldYellow, x = x + w / 2, y = y - 8, alpha = 2.6,
+            })
+            Sound.play("round_win")
+            return true
+        end
+    end
+
+    if currentState == "playing" then
+        for i = #game.hand, 1, -1 do
+            local card = game.hand[i]
+            local x, y = card.visualX or 0, card.visualY or 0
+            if mx >= x and mx <= x + 100 and my >= y and my <= y + 145 then
+                local applied = false
+                for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
+                    for _, copy in ipairs(pile) do
+                        if copy and (copy == card or (card.id and copy.id == card.id)) then
+                            Shop.applyEdition(copy, pendingEditionCard.edition)
+                            applied = true
+                        end
+                    end
+                end
+                if not applied then Shop.applyEdition(card, pendingEditionCard.edition) end
+                local used = table.remove(game.consumables, consumableIndex)
+                pendingEditionCard = nil
+                local cx, cy, cw, ch = getConsumableSlotRect(consumableIndex, currentState)
+                spawnShopFx("consume", used, cx + cw / 2, cy + ch / 2, cw, ch)
+                table.insert(anim.floatingTexts, {
+                    text = (card.rankName or "LÁ BÀI") .. (card.suitSymbol or "") .. " nhận " .. tostring(used.name or "Ấn Bản") .. "!",
+                    color = used.color or UI.COLORS.goldYellow, x = x + 50, y = y - 8, alpha = 2.6,
+                })
+                Sound.play("round_win")
+                return true
+            end
         end
     end
     return false
@@ -1634,6 +1714,8 @@ local function playSelectedHand()
     anim.displayChips = scoreResult.baseChips
     anim.displayMult = scoreResult.baseMult
     anim.displayXMult = 1.0
+    anim.displayAuraEditionMultiplier = 1.0
+    anim.displayFlatDamage = 0
     anim.displayFinalScore = scoreResult.baseChips * scoreResult.baseMult
     anim.displayAura = 0
     anim.activeCardIndex = nil
@@ -1953,6 +2035,23 @@ function love.load()
     end
     updateScale()
     initShadersAndCanvas()
+    local allCardShadersLoaded, cardShaderCount = CardEffects.load()
+    if cardEffectsSmokeMode then
+        if not allCardShadersLoaded then
+            print("CARD EFFECT TEST FAILED: loaded " .. tostring(cardShaderCount) .. "/3 shaders")
+            love.event.quit(1)
+            return
+        end
+        local testOk, testErr = pcall(require, "tests.card_effects_smoke")
+        if not testOk then
+            print("CARD EFFECT TEST FAILED: " .. tostring(testErr))
+            love.event.quit(1)
+        else
+            print("Card shaders and gameplay effects smoke test passed (3/3 shaders)")
+            love.event.quit(0)
+        end
+        return
+    end
     shopData = Shop.new()
     if not isCaptureMode then
         local loadedGame, loadedState = Persistence.loadRun()
@@ -1967,6 +2066,16 @@ end
 
 function love.resize(w, h)
     updateScale()
+end
+
+function love.focus(focused)
+    if focused then return end
+    UI.CardPhysics.release()
+    handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+    shopDrag.active, shopDrag.isDragging, shopDrag.item = false, false, nil
+    shopDrag.itemIndex, shopDrag.sourceKind, shopDrag.sourceIndex = nil, nil, nil
+    deityDrag.active, deityDrag.isDragging, deityDrag.deityIndex = false, false, nil
+    juice.buttonPressedId = nil
 end
 
 local function updateCaptureMode()
@@ -2028,10 +2137,14 @@ local function updateCaptureMode()
             state = "shop"
         end,
         closePack = function() shopData.currentPackOpening = nil end,
+        getShopData = function() return shopData end,
     })
 end
 
 function love.update(dt)
+    local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
+    UI.CardPhysics.update(dt, physicsMx, physicsMy)
+    CardEffects.update(dt)
     local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
     if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
     local motionDt = hitStopped and 0 or dt
@@ -2042,6 +2155,7 @@ function love.update(dt)
     if pendingEvolutionCard and state ~= "playing" and state ~= "shop" then
         pendingEvolutionCard = nil
     end
+    if pendingEditionCard and state ~= "playing" and state ~= "shop" then pendingEditionCard = nil end
     if pendingSpeedCard and state ~= "playing" then pendingSpeedCard = nil end
     if state == "chest" or state == "treasure" then
         if anim.chestReveal.state ~= state then
@@ -2150,10 +2264,10 @@ function love.update(dt)
                 anim.hitStop = math.max(anim.hitStop or 0, 0.035)
                 anim.screenFlash = math.max(anim.screenFlash or 0, 0.045)
                 anim.impactFlash = math.max(anim.impactFlash or 0, 0.13)
-                anim.impactX, anim.impactY, anim.impactColor = bolt.targetX, bolt.targetY, UI.COLORS.goldYellow
+                anim.impactX, anim.impactY, anim.impactColor = bolt.targetX, bolt.targetY, bolt.color or UI.COLORS.goldYellow
                 monsterMotion.hit = math.max(monsterMotion.hit or 0, 0.22)
                 screenShake = math.max(screenShake or 0, 1.5)
-                spawnSparks(bolt.targetX, bolt.targetY, 13, UI.COLORS.goldYellow)
+                spawnSparks(bolt.targetX, bolt.targetY, 13, bolt.color or UI.COLORS.goldYellow)
                 Sound.play("score_impact", 0.66)
             end
         end
@@ -2195,7 +2309,7 @@ function love.update(dt)
                 c.visualAngle = tangle or 0
                 c.rotation = tangle or 0
             else
-                if not waitingForDeal and not (handDrag.active and handDrag.cardIndex == i and handDrag.isDragging) then
+                if not waitingForDeal then
                     c.visualX = c.visualX + (tx - c.visualX) * math.min(1.0, dt * 18)
                     c.visualY = c.visualY + (ty - c.visualY) * math.min(1.0, dt * 18)
                     local curAngle = c.visualAngle or 0
@@ -2279,15 +2393,7 @@ function love.update(dt)
         end
     end
 
-    -- If dragging a card, update its visual position
-    if handDrag.active and handDrag.isDragging and handDrag.cardIndex then
-        local c = game.hand[handDrag.cardIndex]
-        if c then
-            c.visualX = handDrag.currentX + handDrag.offsetX
-            c.visualY = handDrag.currentY + handDrag.offsetY - 26
-            c.rotation = math.max(-0.25, math.min(0.25, (handDrag.currentX - handDrag.startX) * 0.0015))
-        end
-    end
+    -- CardPhysics owns held visuals; drag controllers only handle logical input.
 
     -- Smooth background shader color interpolation based on active state / blind
     local targetA, targetB, targetC
@@ -2349,22 +2455,7 @@ function love.update(dt)
         end
     end
 
-    -- Update shop card drag position & tilt
-    if shopDrag.active and shopDrag.isDragging then
-        shopDrag.visualX = shopDrag.currentX - shopDrag.cardW / 2
-        shopDrag.visualY = shopDrag.currentY - shopDrag.cardH / 2
-        local mx, my = toVirtual(love.mouse.getPosition())
-        local tX, tY = UI.calculateTilt(mx, my, shopDrag.visualX, shopDrag.visualY, shopDrag.cardW, shopDrag.cardH)
-        shopDrag.tiltX = (shopDrag.tiltX or 0) + (tX - (shopDrag.tiltX or 0)) * math.min(1.0, dt * 16)
-        shopDrag.tiltY = (shopDrag.tiltY or 0) + (tY - (shopDrag.tiltY or 0)) * math.min(1.0, dt * 16)
-        shopDrag.rotation = math.max(-0.2, math.min(0.2, (shopDrag.currentX - shopDrag.startX) * 0.0015))
-    end
 
-    -- Update deity drag position
-    if deityDrag.active and deityDrag.isDragging then
-        deityDrag.visualX = deityDrag.currentX + (deityDrag.offsetX or -41)
-        deityDrag.visualY = deityDrag.currentY + (deityDrag.offsetY or -59)
-    end
 
     -- Smoothly update spark particles
     if anim.particles then
@@ -2477,17 +2568,26 @@ function love.update(dt)
 
                 elseif st.type == "card_scored" then
                     anim.activeCardIndex = st.cardIndex
+                    CardEffects.triggerScorePulse(st.card)
                     anim.scoredCards = anim.scoredCards or {}
                     anim.scoredCards[st.cardIndex] = { addedChips = st.addedChips, addedMult = st.addedMult }
                     anim.displayChips = anim.displayChips + st.addedChips
                     anim.displayMult = anim.displayMult + st.addedMult
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult)
+                    if st.auraMultiplier and st.auraMultiplier > 1 then
+                        anim.displayAuraEditionMultiplier = (anim.displayAuraEditionMultiplier or 1) * st.auraMultiplier
+                    end
+                    anim.displayFlatDamage = (anim.displayFlatDamage or 0) + (st.addedDamage or 0)
+                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
+                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
+                    anim.displayAura = anim.displayFinalScore
                     anim.stepCategory = "LÁ BÀI " .. st.cardIndex .. "/" .. #anim.playedCards
                     local trigStr = ""
                     if st.deityTriggers and #st.deityTriggers > 0 then
                         trigStr = " (" .. st.deityTriggers[1].message .. ")"
                     end
-                    anim.stepLog = "Lá " .. st.card.rankName .. st.card.suitSymbol .. ": +" .. st.addedChips .. " Chips" .. (st.addedMult > 0 and (" & +" .. st.addedMult .. " Mult") or "") .. trigStr
+                    local editionStr = st.auraMultiplier and st.auraMultiplier > 1
+                        and (" · ×" .. string.format("%.2f", st.auraMultiplier) .. " Aura") or ""
+                    anim.stepLog = "Lá " .. st.card.rankName .. st.card.suitSymbol .. ": +" .. st.addedChips .. " Chips" .. (st.addedMult > 0 and (" & +" .. st.addedMult .. " Mult") or "") .. editionStr .. trigStr
 
                     -- Squash & Stretch + Spark burst
                     anim.cardBounce[st.cardIndex] = { scaleX = 0.84, scaleY = 1.28 }
@@ -2506,11 +2606,15 @@ function love.update(dt)
                     table.insert(anim.energyBolts, {
                         startX = cardCenterX, startY = cardCenterY,
                         targetX = UI.BATTLE_CENTER_X, targetY = 270,
+                        color = CardEffects.getBeamColor(st.card),
                         age = 0, duration = 0.34 + (st.cardIndex % 3) * 0.025,
                     })
                     local cardScoreText = "+" .. tostring(st.addedChips) .. " ST"
                     if st.addedMult and st.addedMult > 0 then
                         cardScoreText = cardScoreText .. "  +" .. tostring(st.addedMult) .. " Mult"
+                    end
+                    if st.addedDamage and st.addedDamage > 0 then
+                        cardScoreText = cardScoreText .. "  +" .. tostring(st.addedDamage) .. " ST cố định"
                     end
                     table.insert(anim.floatingTexts, {
                         text = cardScoreText, color = UI.COLORS.goldYellow,
@@ -2543,7 +2647,8 @@ function love.update(dt)
                         anim.bounceScale.mult = 1.45
                         Sound.play("mult_pop", pitch)
                     end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult)
+                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
+                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
                     anim.bounceScale.score = 1.35
                     anim.stepCategory = "HIỆU ỨNG TRANG BỊ"
                     anim.stepLog = st.message
@@ -2640,7 +2745,8 @@ function love.update(dt)
                             alpha = 1.3,
                         })
                     end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult)
+                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
+                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
                     anim.stepCategory = "HỘ LINH: " .. (st.deity and st.deity.name or "BỔ TRỢ"):upper()
                     anim.stepLog = st.message
 
@@ -2704,7 +2810,8 @@ function love.update(dt)
                             alpha = 1.8,
                         })
                     end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult)
+                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
+                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
                     anim.stepCategory = "PHÙ PHÉP HỘ LINH"
                     anim.stepLog = st.message
                     anim.targetStepDelay = 0.38
@@ -2720,8 +2827,9 @@ function love.update(dt)
                     Sound.play("score_impact", 0.95)
                     if st.finalScore >= 1000 then Sound.play("xmult_boom", 0.88) end
                     anim.displayFinalScore = st.finalScore
+                    anim.displayAura = st.finalScore
                     anim.stepCategory = "TỔNG SÁT THƯƠNG"
-                    anim.stepLog = anim.displayChips .. " Chips × " .. anim.displayMult .. " Mult" .. (anim.displayXMult > 1.0 and (" × " .. anim.displayXMult .. " XMult") or "") .. " = " .. st.finalScore .. " Sát thương!"
+                    anim.stepLog = anim.displayChips .. " Chips × " .. anim.displayMult .. " Mult" .. (anim.displayXMult > 1.0 and (" × " .. anim.displayXMult .. " XMult") or "") .. ((st.auraMultiplier or 1) > 1 and (" × " .. string.format("%.2f", st.auraMultiplier) .. " Aura") or "") .. ((st.flatDamageBonus or 0) > 0 and (" + " .. st.flatDamageBonus .. " ST cố định") or "") .. " = " .. st.finalScore .. " Sát thương!"
 
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
                     local actualDmg, defeated = Monster.takeDamage(game.monster, st.finalScore)
@@ -3351,89 +3459,7 @@ local function drawCollectionDetailView()
             local isH = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH and my >= gridY and my <= gridY + gridH)
             if isH then hoveredItem = item end
 
-            -- 3D Tilt calculation
-            local tX, tY = 0, 0
-            if isH then
-                tX, tY = UI.calculateTilt(mx, my, cx, cy, cardW, cardH)
-            end
-
-            love.graphics.push()
-            love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
-            if isH then
-                love.graphics.shear(tX * 0.08, tY * 0.08)
-                love.graphics.scale(1.05, 1.05)
-            end
-            love.graphics.translate(-cardW / 2, -cardH / 2)
-
-            -- Card Body
-            local deityId = (collectionCategory == "jokers" and item.id)
-                or (collectionCategory == "packs" and item.isPackContent and item.deityId)
-            local deityArt = deityId and UI.getDeityImage(deityId)
-            local dImg = deityArt
-                      or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
-                      or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
-                      or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
-                      or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
-            if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityArt then dImg = nil end
-            if deityArt then
-                UI.drawPatronCard(item, 0, 0, cardW, cardH)
-                if isH then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-                end
-            elseif dImg then
-                love.graphics.setColor(0, 0, 0, 0.35)
-                UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
-
-                love.graphics.setColor(1, 1, 1, 1)
-                local iw, ih = dImg:getDimensions()
-                love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)
-
-                if isH then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-                end
-            else
-                local itemCol = item.color or { 0.3, 0.4, 0.5, 1 }
-                love.graphics.setColor(0, 0, 0, 0.35)
-                UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
-
-                love.graphics.setColor(0.18, 0.22, 0.26, 1)
-                UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
-
-                -- Card Header Banner
-                love.graphics.setColor(itemCol[1], itemCol[2], itemCol[3], 0.9)
-                UI.drawRoundedRect("fill", 0, 0, cardW, 26, 8)
-                UI.drawRoundedRect("fill", 0, 16, cardW, 10, 0)
-
-                -- Card Border
-                love.graphics.setLineWidth(isH and 2.5 or 1.5)
-                love.graphics.setColor(isH and UI.COLORS.goldYellow or { itemCol[1], itemCol[2], itemCol[3], 0.8 })
-                UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-
-                UI.drawItemEmblem(item, cardW / 2, 69, 19, itemCol)
-
-                -- Card Name
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(1, 1, 1, 1)
-                local cleanName = UI.truncateUtf8(item.name, 16)
-                love.graphics.printf(cleanName, 4, 100, cardW - 8, "center")
-
-                -- Rarity / Cost pill
-                if item.cost then
-                    love.graphics.setFont(UI.fonts.tiny)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    love.graphics.printf("$" .. item.cost, 0, 134, cardW, "center")
-                elseif item.rarity then
-                    love.graphics.setFont(UI.fonts.tiny)
-                    love.graphics.setColor(UI.COLORS.textMuted)
-                    love.graphics.printf(item.rarity, 0, 134, cardW, "center")
-                end
-            end
-
-            love.graphics.pop()
+            require("ui.card_surfaces").catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
         end
     end
 
@@ -3473,36 +3499,7 @@ local function drawCollectionDetailView()
         local lcy = inspY + 20
         local lcol = inspItem.color or { 0.3, 0.4, 0.5, 1 }
 
-        local deityPreviewId = (collectionCategory == "jokers" and inspItem.id)
-            or (collectionCategory == "packs" and inspItem.isPackContent and inspItem.deityId)
-        local deityPreview = deityPreviewId and UI.getDeityImage(deityPreviewId)
-        local inspImg = deityPreview
-                     or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
-                     or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
-                     or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
-                     or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
-        if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityPreview then inspImg = nil end
-        if deityPreview then
-            UI.drawPatronCard(inspItem, lcx, lcy, lcw, lch)
-        elseif inspImg then
-            love.graphics.setColor(1, 1, 1, 1)
-            local iw, ih = inspImg:getDimensions()
-            love.graphics.draw(inspImg, lcx, lcy, 0, lcw / iw, lch / ih)
-            love.graphics.setLineWidth(2)
-            love.graphics.setColor(lcol)
-            UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
-        else
-            love.graphics.setColor(0.16, 0.20, 0.24, 1)
-            UI.drawRoundedRect("fill", lcx, lcy, lcw, lch, 10)
-            love.graphics.setColor(lcol[1], lcol[2], lcol[3], 0.95)
-            UI.drawRoundedRect("fill", lcx, lcy, lcw, 32, 10)
-            UI.drawRoundedRect("fill", lcx, lcy + 18, lcw, 14, 0)
-            love.graphics.setLineWidth(2)
-            love.graphics.setColor(lcol)
-            UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
-
-            UI.drawItemEmblem(inspItem, lcx + lcw / 2, lcy + 92, 36, lcol)
-        end
+        require("ui.card_surfaces").preview(inspItem, lcx, lcy, lcw, lch, collectionCategory)
 
         -- Item Header Info below card
         local infoY = lcy + lch + 18
@@ -3682,25 +3679,7 @@ local function drawStarterDeckSelect()
     local cardW, cardH = 390, 430
     local cardX, cardY = (V_WIDTH - cardW) / 2, 135
     local hovered = mx >= cardX and mx <= cardX + cardW and my >= cardY and my <= cardY + cardH
-    UI.drawGildedPanel(cardX, cardY, cardW, cardH, deckInfo.color)
-
-    love.graphics.setFont(UI.fonts.title)
-    love.graphics.setColor(deckInfo.color)
-    love.graphics.printf("BỘ BÀI ĐỎ", cardX, cardY + 24, cardW, "center")
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(0.95, 0.15, 0.20, 1)
-    love.graphics.printf("♦  ♥", cardX, cardY + 85, cardW, "center")
-    love.graphics.setColor(0.75, 0.78, 0.84, 1)
-    love.graphics.printf("♠  ♣", cardX, cardY + 145, cardW, "center")
-
-    love.graphics.setColor(0.30, 0.07, 0.09, 0.95)
-    UI.drawRoundedRect("fill", cardX + 34, cardY + 220, cardW - 68, 105, 10)
-    love.graphics.setFont(UI.fonts.regular)
-    love.graphics.setColor(1, 0.86, 0.48, 1)
-    love.graphics.printf("KHỞI ĐẦU: 1 LÁ NGẪU NHIÊN", cardX + 40, cardY + 233, cardW - 80, "center")
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Lá bài được chọn đều từ bộ chuẩn 52 lá.", cardX + 50, cardY + 274, cardW - 100, "center")
+    require("ui.card_surfaces").starter(deckInfo, cardX, cardY, cardW, cardH)
 
     local choose = {
         id = "deck_red", deckId = "red_deck", text = "CHỌN BỘ BÀI ĐỎ",
@@ -3853,10 +3832,11 @@ local function drawCombatFeedback()
                     local tailY = bolt.startY + dy * tailEased + perpY * tailOffset
                         - math.sin(tailEased * math.pi) * 16
                     local alpha = 0.88 * (1 - progress * 0.18)
-                    love.graphics.setColor(0.72, 0.88, 1, alpha)
+                    local boltColor = bolt.color or UI.COLORS.goldYellow
+                    love.graphics.setColor(boltColor[1], boltColor[2], boltColor[3], alpha)
                     love.graphics.setLineWidth(shard == 0 and 3.2 or 1.25)
                     love.graphics.line(tailX, tailY, x, y)
-                    love.graphics.setColor(1, 0.96, 0.82, alpha)
+                    love.graphics.setColor(1, 1, 1, alpha)
                     love.graphics.circle("fill", x, y, shard == 0 and 3.5 or 1.8)
                 end
             end
@@ -3970,9 +3950,7 @@ local function drawPlayingState()
         local isHoveredSlot = (mx >= dx and mx <= dx + deitySlotW and my >= deityY and my <= deityY + deitySlotH)
         local isDropTarget = (deityDrag.active and deityDrag.isDragging and isHoveredSlot and deityDrag.deityIndex ~= i)
 
-        if isDraggedSource then
-            -- The moving card is rendered by the shared drag preview.
-        elseif d then
+        if d then
             local isHoveredCard = hoveredDeityIndex == i
             if isHoveredCard then
                 hoveredDeityTooltip = d
@@ -4036,7 +4014,8 @@ local function drawPlayingState()
         local c = game.hand[i]
         local cx = c.visualX or 0
         local cy = c.visualY or 0
-        local isHovered = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
+        local isHovered = UI.CardPhysics.hit(c, mx, my,
+            mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
         c.hovered = isHovered
         if isHovered and not hoveredCard and not (handDrag.active and handDrag.isDragging) then
             hoveredCard = c
@@ -4049,7 +4028,7 @@ local function drawPlayingState()
 
     -- Draw non-dragged cards in order 1 to #game.hand
     for i, c in ipairs(game.hand) do
-        if not (handDrag.active and handDrag.isDragging and handDrag.cardIndex == i) then
+        do -- Physics lifts the single held card into the shared overlay.
             local cx = c.visualX or 0
             local cy = c.visualY or 0
             if c.dealTrail and c.dealTrail > 0 then
@@ -4074,13 +4053,7 @@ local function drawPlayingState()
         end
     end
 
-    -- Draw dragged card on top of everything with extra elevation shadow
-    if handDrag.active and handDrag.isDragging and handDrag.cardIndex then
-        local dc = game.hand[handDrag.cardIndex]
-        if dc then
-            UI.drawCard(dc, dc.visualX, dc.visualY, cardW, cardH, true)
-        end
-    end
+
 
     -- Draw Balatro hover badge above hovered card
     if hoveredCard and not (handDrag.active and handDrag.isDragging) then
@@ -5156,7 +5129,8 @@ local function getDeckViewerCardAt(mx, my, modalX, modalY)
         local row = math.floor((visibleIndex - 1) / 8)
         local cx = modalX + 24 + col * 84
         local cy = modalY + 128 + row * 118
-        if mx >= cx and mx <= cx + 74 and my >= cy and my <= cy + 108 then
+        if UI.CardPhysics.hit(cards[sourceIndex], mx, my,
+            mx >= cx and mx <= cx + 74 and my >= cy and my <= cy + 108) then
             return cards[sourceIndex]
         end
     end
@@ -5521,7 +5495,7 @@ local function drawSocketingView()
     if eqImg then
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = eqImg:getDimensions()
-        love.graphics.draw(eqImg, panelX + 30, panelY + 12, 0, 56 / iw, 80 / ih)
+        require("ui.card_surfaces").image(equipment, panelX + 30, panelY + 12, 56, 80, eqImg)
         love.graphics.setLineWidth(1.5)
         love.graphics.setColor(eqColor)
         UI.drawRoundedRect("line", panelX + 30, panelY + 12, 56, 80, 6)
@@ -6099,7 +6073,7 @@ local function drawHandbookModal()
                 love.graphics.setColor(0.35, 0.35, 0.40, 0.6)
             end
             local hiw, hih = hImg:getDimensions()
-            love.graphics.draw(hImg, thumbX, thumbY, 0, thumbW / hiw, thumbH / hih)
+            require("ui.card_surfaces").image(h, thumbX, thumbY, thumbW, thumbH, hImg)
             love.graphics.setColor(isUnlocked and { 0.3, 0.7, 0.9, 0.7 } or { 0.3, 0.3, 0.35, 0.4 })
             love.graphics.setLineWidth(1)
             UI.drawRoundedRect("line", thumbX, thumbY, thumbW, thumbH, 4)
@@ -6347,16 +6321,7 @@ local function drawShopState()
         local isDeiHovered = (mx >= sx and mx <= sx + deiSlotW and my >= sy and my <= sy + deiSlotH)
         local isDropTarget = (deityDrag.active and deityDrag.isDragging and isDeiHovered and deityDrag.deityIndex ~= i)
 
-        if isDeiDragged then
-            love.graphics.setColor(0.10, 0.12, 0.15, 0.45)
-            UI.drawRoundedRect("fill", sx, sy, deiSlotW, deiSlotH, 6)
-            love.graphics.setLineWidth(1.5)
-            love.graphics.setColor(0.35, 0.40, 0.48, 0.5)
-            UI.drawRoundedRect("line", sx, sy, deiSlotW, deiSlotH, 6)
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.printf("Vị trí cũ", sx + 4, sy + deiSlotH / 2 - 6, deiSlotW - 8, "center")
-        elseif d then
+        if d then
             if isDeiHovered and not (deityDrag.active and deityDrag.isDragging) then
                 hoveredDeityTooltip = d
                 d.slotIndex = i
@@ -6443,11 +6408,6 @@ local function drawShopState()
     ----------------------------------------------------------------------------
     -- A. UPPER COMPARTMENT (Next Round & Reroll + Upper Cards On Sale)
     ----------------------------------------------------------------------------
-    local upX, upY, upW, upH = shopX + 12, shopY + 12, shopW - 24, 252
-    love.graphics.setColor(0.13, 0.16, 0.20, 0.95)
-    UI.drawRoundedRect("fill", upX, upY, upW, upH, 10)
-    love.graphics.setColor(0.24, 0.30, 0.38, 0.7)
-    UI.drawRoundedRect("line", upX, upY, upW, upH, 10)
 
     -- 1. [Ván Kế Tiếp] Button
     local btnNextRound = {
@@ -6464,11 +6424,11 @@ local function drawShopState()
     UI.drawButton(btnNextRound, mx >= btnNextRound.x and mx <= btnNextRound.x + btnNextRound.w and my >= btnNextRound.y and my <= btnNextRound.y + btnNextRound.h, juice.buttonPressedId == btnNextRound.id)
 
     -- 2. [Gieo Lại] Button
-    local rCost = shopData.rerollCost or 5
+    local rCost = Shop.getRerollCost(shopData, game)
     local canReroll = (game.gold or 0) >= rCost
     local btnReroll = {
         id = "reroll",
-        text = "ĐỔI HÀNG  ◉" .. rCost,
+        text = rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost),
         x = 203,
         y = 653,
         w = 170,
@@ -6490,408 +6450,9 @@ local function drawShopState()
         UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h)
     end
 
-    -- 3. Upper Cards On Sale
-    local upperItems = {}
-    for idx, it in ipairs(shopData.items or {}) do
-        if it.section == "upper" or (not it.section and idx <= 3) then
-            table.insert(upperItems, { item = it, globalIndex = idx })
-        end
-    end
-
-    local cardStartX = upX + 44
-    local cardW = 124
-    local cardH = 186
-    local cardGap = 26
-
-    for cIdx, entry in ipairs(upperItems) do
-        local it = entry.item
-        local gIdx = entry.globalIndex
-        local cx = cardStartX + (cIdx - 1) * (cardW + cardGap)
-        local cy = upY + 36
-
-        local idlePhase = juice.ambientTimer * 1.55 + gIdx * 1.31
-        local idleY = math.sin(idlePhase) * 3.5
-        local isCardHovered = (mx >= cx and mx <= cx + cardW and my >= cy + idleY and my <= cy + idleY + cardH)
-        local drawY = isCardHovered and (cy - 14) or (cy + idleY)
-        local isDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
-
-        if isDragged then
-            love.graphics.setColor(0.24, 0.30, 0.38, 0.45)
-            UI.drawRoundedRect("line", cx, cy, cardW, cardH, 8)
-        else
-            local tX, tY = 0, 0
-            if isCardHovered then
-                tX, tY = UI.calculateTilt(mx, my, cx, drawY, cardW, cardH)
-            end
-
-            love.graphics.push()
-            love.graphics.translate(cx + cardW / 2, drawY + cardH / 2)
-            if isCardHovered then
-                love.graphics.shear(tX * 0.10, tY * 0.10)
-            else
-                love.graphics.rotate(math.sin(idlePhase * 0.72) * 0.009)
-            end
-            love.graphics.translate(-cardW / 2, -cardH / 2)
-
-            -- Floating Price Tag Pill above card
-            local priceTagW = 54
-            local priceTagH = 22
-            local priceTagX = (cardW - priceTagW) / 2
-            local priceTagY = -26
-            love.graphics.setColor(0.18, 0.14, 0.06, 0.98)
-            UI.drawRoundedRect("fill", priceTagX, priceTagY, priceTagW, priceTagH, 4)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", priceTagX, priceTagY, priceTagW, priceTagH, 4)
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("$" .. it.cost, priceTagX, priceTagY + 2, priceTagW, "center")
-
-            -- Card Soft Drop Shadow
-            if isCardHovered then
-                love.graphics.setColor(0, 0, 0, 0.4)
-                UI.drawRoundedRect("fill", -4 + tX * 8, 8 + tY * 8, cardW + 8, cardH, 8)
-            end
-
-            local deityCard = (it.category == "deity") and it.deity
-            local dImg = (deityCard and UI.getDeityImage(deityCard.id))
-                      or ((it.category == "equipment" and it.equipment) and UI.getEquipmentImage(it.equipment.id))
-                      or ((it.category == "card" and it.card) and UI.getCardImage(it.card.suit, it.card.rank or it.card.rankName))
-                      or ((it.category == "hand_expansion" or it.id == "v_hand_size" or it.id == "hand_expansion") and UI.getVoucherImage("v_hand_size"))
-                      or ((it.category == "book" or it.category == "skill_book" or it.handId) and (UI.getHandImage(it.handId or it.id) or UI.getHandImage(it.id)))
-                      or UI.getVoucherImage(it.id)
-                      or UI.getHandImage(it.id)
-            if it.category ~= "equipment" and it.category ~= "card" and it.category ~= "hand_expansion" then
-                dImg = UI.visualImage(dImg)
-            end
-            if deityCard then
-                UI.drawPatronCard(deityCard, 0, 0, cardW, cardH)
-                if isCardHovered then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-                end
-            elseif dImg then
-                love.graphics.setColor(1, 1, 1, 1)
-                local iw, ih = dImg:getDimensions()
-                love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)
-                if isCardHovered then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-                end
-            else
-                -- Card Body
-                local cardColor = it.color or { 0.95, 0.85, 0.35, 1 }
-                love.graphics.setColor(0.18, 0.22, 0.28, 0.98)
-                UI.drawRoundedRect("fill", 0, 0, cardW, cardH, 8)
-                love.graphics.setColor(isCardHovered and UI.COLORS.goldYellow or { cardColor[1] * 0.7, cardColor[2] * 0.7, cardColor[3] * 0.7, 0.8 })
-                love.graphics.setLineWidth(isCardHovered and 2.5 or 1.5)
-                UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-
-                -- Top subtitle banner
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(cardColor)
-                love.graphics.printf(it.subtitle or "THẺ BÀI", 4, 8, cardW - 8, "center")
-
-                UI.drawItemEmblem(it, cardW / 2, 57, 23, cardColor)
-
-                -- Card Title
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(it.name or "Vật Phẩm", 4, 85, cardW - 8, "center")
-
-                -- Bottom effect bar
-                love.graphics.setColor(0.12, 0.15, 0.19, 0.9)
-                UI.drawRoundedRect("fill", 6, cardH - 46, cardW - 12, 38, 4)
-                love.graphics.setFont(UI.fonts.tiny)
-                local shortDesc = UI.truncateUtf8(it.desc, 32)
-                love.graphics.printf(shortDesc, 8, cardH - 42, cardW - 16, "center")
-            end
-
-            love.graphics.pop()
-
-            -- Buy button covering the card
-            local btnCard = {
-                id = "buy_" .. gIdx,
-                text = "",
-                x = cx,
-                y = drawY - 26,
-                w = cardW,
-                h = cardH + 26,
-                invisible = true,
-                itemIndex = gIdx,
-            }
-            table.insert(buttons, btnCard)
-
-            if isCardHovered and not (shopDrag.active and shopDrag.isDragging) then
-                hoveredShopItem = it
-                hoveredItemPos = { x = cx + cardW + 12, y = drawY - 10 }
-            end
-        end
-    end
-
-    ----------------------------------------------------------------------------
-    -- B. LOWER COMPARTMENT (Voucher Slot on Left | Booster Packs on Right)
-    ----------------------------------------------------------------------------
-    local lowX, lowY, lowW, lowH = shopX + 12, shopY + 274, shopW - 24, shopH - 286
-    love.graphics.setColor(0.13, 0.16, 0.20, 0.95)
-    UI.drawRoundedRect("fill", lowX, lowY, lowW, lowH, 10)
-    love.graphics.setColor(0.24, 0.30, 0.38, 0.7)
-    UI.drawRoundedRect("line", lowX, lowY, lowW, lowH, 10)
-
-    -- 1. Left Slot: PHIẾU ANTE 1 / VOUCHER
-    local vSlotX = lowX + 14
-    local vSlotY = lowY + 12
-    local vSlotW = 220
-    local vSlotH = 236
-
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(0.40, 0.46, 0.54, 0.7)
-    local anteLabel = "PHIẾU ANTE " .. (game.act or 1)
-    love.graphics.print(anteLabel, vSlotX + 4, vSlotY + 10)
-
-    local voucherEntry = nil
-    for idx, it in ipairs(shopData.items or {}) do
-        if it.section == "lower_voucher" or it.category == "book" or it.category == "voucher" then
-            voucherEntry = { item = it, globalIndex = idx }
-            break
-        end
-    end
-
-    if voucherEntry then
-        local it = voucherEntry.item
-        local gIdx = voucherEntry.globalIndex
-        local vx = vSlotX + 30
-        local vy = vSlotY + 22
-        local vw = 130
-        local vh = 195
-
-        local idlePhase = juice.ambientTimer * 1.42 + gIdx * 1.17
-        local idleY = math.sin(idlePhase) * 3
-        local isVHovered = (mx >= vx and mx <= vx + vw and my >= vy + idleY and my <= vy + idleY + vh)
-        local drawVY = isVHovered and (vy - 12) or (vy + idleY)
-        local isVDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
-
-        if isVDragged then
-            love.graphics.setColor(0.24, 0.30, 0.38, 0.45)
-            UI.drawRoundedRect("line", vx, vy, vw, vh, 8)
-        else
-            local tX, tY = 0, 0
-            if isVHovered then
-                tX, tY = UI.calculateTilt(mx, my, vx, drawVY, vw, vh)
-            end
-
-            love.graphics.push()
-            love.graphics.translate(vx + vw / 2, drawVY + vh / 2)
-            if isVHovered then
-                love.graphics.shear(tX * 0.10, tY * 0.10)
-            else
-                love.graphics.rotate(math.sin(idlePhase * 0.68) * 0.008)
-            end
-            love.graphics.translate(-vw / 2, -vh / 2)
-
-            -- Floating Price Tag
-            local pw = 52
-            local ph = 22
-            local px = (vw - pw) / 2
-            local py = -24
-            love.graphics.setColor(0.18, 0.14, 0.06, 0.98)
-            UI.drawRoundedRect("fill", px, py, pw, ph, 4)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", px, py, pw, ph, 4)
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("$" .. it.cost, px, py + 2, pw, "center")
-
-            local bImg = (it.category == "book" or it.handId or (it.id and tostring(it.id):find("book_"))) and (UI.getHandImage(it.handId or it.id) or UI.getHandImage(it.id))
-                      or ((it.category == "voucher" or it.voucherId or it.id) and (UI.getVoucherImage(it.voucherId or it.id) or UI.getHandImage(it.voucherId or it.id)))
-            bImg = UI.visualImage(bImg)
-            if bImg then
-                love.graphics.setColor(1, 1, 1, 1)
-                local biw, bih = bImg:getDimensions()
-                love.graphics.draw(bImg, 0, 0, 0, vw / biw, vh / bih)
-                if isVHovered then
-                    love.graphics.setLineWidth(2.5)
-                    love.graphics.setColor(UI.COLORS.goldYellow)
-                    UI.drawRoundedRect("line", 0, 0, vw, vh, 8)
-                end
-            else
-                -- Voucher Card Body
-                love.graphics.setColor(0.15, 0.28, 0.42, 0.98)
-                UI.drawRoundedRect("fill", 0, 0, vw, vh, 8)
-                love.graphics.setColor(isVHovered and UI.COLORS.goldYellow or { 0.35, 0.65, 0.95, 0.9 })
-                love.graphics.setLineWidth(isVHovered and 2.5 or 1.5)
-                UI.drawRoundedRect("line", 0, 0, vw, vh, 8)
-
-                -- Ticket notches
-                love.graphics.setColor(0.13, 0.16, 0.20, 1)
-                love.graphics.circle("fill", 0, vh / 2, 7)
-                love.graphics.circle("fill", vw, vh / 2, 7)
-
-                -- Header
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor({ 0.65, 0.85, 1.0, 1 })
-                love.graphics.printf(it.subtitle or "VOUCHER", 4, 10, vw - 8, "center")
-
-                -- Icon
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(it.icon or "📜", 0, 42, vw, "center")
-
-                -- Name
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(it.name or "Bí Tịch", 6, 110, vw - 12, "center")
-            end
-
-            love.graphics.pop()
-
-            local btnVoucher = {
-                id = "buy_" .. gIdx,
-                text = "",
-                x = vx,
-                y = drawVY - 24,
-                w = vw,
-                h = vh + 24,
-                invisible = true,
-                itemIndex = gIdx,
-            }
-            table.insert(buttons, btnVoucher)
-
-            if isVHovered and not (shopDrag.active and shopDrag.isDragging) then
-                hoveredShopItem = it
-                hoveredItemPos = { x = vx + vw + 12, y = drawVY - 10 }
-            end
-        end
-    else
-        local vx = vSlotX + 30
-        local vy = vSlotY + 22
-        love.graphics.setColor(0.10, 0.12, 0.15, 0.4)
-        UI.drawRoundedRect("fill", vx, vy, 130, 195, 8)
-        love.graphics.setColor(0.20, 0.24, 0.30, 0.3)
-        UI.drawRoundedRect("line", vx, vy, 130, 195, 8)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(0.35, 0.40, 0.45, 0.5)
-        love.graphics.printf("ĐÃ MUA\nPHIẾU ANTE", vx, vy + 85, 130, "center")
-    end
-
-    -- 2. Right Slots: GÓI BÀI (Booster Packs)
-    local packItems = {}
-    for idx, it in ipairs(shopData.items or {}) do
-        if it.section == "lower_pack" or it.category == "pack" or it.category == "heal" then
-            table.insert(packItems, { item = it, globalIndex = idx })
-        end
-    end
-
-    local packStartX = lowX + 270
-    local packW = 140
-    local packH = 195
-    local packGap = 36
-
-    for pIdx, entry in ipairs(packItems) do
-        local it = entry.item
-        local gIdx = entry.globalIndex
-        local px = packStartX + (pIdx - 1) * (packW + packGap)
-        local py = lowY + 32
-
-        local idlePhase = juice.ambientTimer * 1.35 + gIdx * 1.43
-        local idleY = math.sin(idlePhase) * 4
-        local isPackHovered = (mx >= px and mx <= px + packW and my >= py + idleY and my <= py + idleY + packH)
-        local drawPY = isPackHovered and (py - 12) or (py + idleY)
-        local isPackDragged = (shopDrag.active and shopDrag.isDragging and shopDrag.itemIndex == gIdx)
-
-        if isPackDragged then
-            love.graphics.setColor(0.24, 0.30, 0.38, 0.45)
-            UI.drawRoundedRect("line", px, py, packW, packH, 8)
-        else
-            local tX, tY = 0, 0
-            if isPackHovered then
-                tX, tY = UI.calculateTilt(mx, my, px, drawPY, packW, packH)
-            end
-
-            love.graphics.push()
-            love.graphics.translate(px + packW / 2, drawPY + packH / 2)
-            if isPackHovered then
-                love.graphics.shear(tX * 0.10, tY * 0.10)
-            else
-                love.graphics.rotate(math.sin(idlePhase * 0.74) * 0.01)
-            end
-            love.graphics.translate(-packW / 2, -packH / 2)
-
-            -- Floating Price Tag
-            local pw = 52
-            local ph = 22
-            local tagX = (packW - pw) / 2
-            local tagY = -24
-            love.graphics.setColor(0.18, 0.14, 0.06, 0.98)
-            UI.drawRoundedRect("fill", tagX, tagY, pw, ph, 4)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", tagX, tagY, pw, ph, 4)
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("$" .. it.cost, tagX, tagY + 2, pw, "center")
-
-            local packImg = UI.getPackImage(it.packType or it.id) or battleArt.chest
-            if packImg then
-                love.graphics.setColor(1, 1, 1, 1)
-                local iw, ih = packImg:getDimensions()
-                love.graphics.draw(packImg, 0, 0, 0, packW / iw, packH / ih)
-            else
-                -- Metallic Foil Pack Body Fallback
-                local packColor = it.color or { 0.88, 0.35, 0.35, 1 }
-                love.graphics.setColor(packColor[1] * 0.4, packColor[2] * 0.4, packColor[3] * 0.4, 0.98)
-                UI.drawRoundedRect("fill", 0, 0, packW, packH, 8)
-                love.graphics.setColor(isPackHovered and UI.COLORS.goldYellow or packColor)
-                love.graphics.setLineWidth(isPackHovered and 2.5 or 1.5)
-                UI.drawRoundedRect("line", 0, 0, packW, packH, 8)
-
-                -- Crimped Foil Ridges (Top & Bottom)
-                love.graphics.setColor(0.9, 0.9, 0.9, 0.5)
-                for ridge = 0, 11 do
-                    local rx = 6 + ridge * 11
-                    love.graphics.line(rx, 3, rx + 4, 10)
-                    love.graphics.line(rx, packH - 10, rx + 4, packH - 3)
-                end
-
-                -- Metallic Shimmer Band in center
-                love.graphics.setColor(packColor[1], packColor[2], packColor[3], 0.25)
-                UI.drawRoundedRect("fill", 8, 36, packW - 16, 120, 6)
-
-                -- Icon
-                love.graphics.setFont(UI.fonts.huge)
-                love.graphics.printf(it.icon or "📦", 0, 50, packW, "center")
-
-                -- Pack Title
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(it.name or "Gói Bài", 4, 116, packW - 8, "center")
-
-                -- Subtitle
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(packColor)
-                love.graphics.printf(it.subtitle or "BOOSTER", 4, 138, packW - 8, "center")
-            end
-
-            love.graphics.pop()
-
-            -- Invisible buy button
-            local btnPack = {
-                id = "buy_" .. gIdx,
-                text = "",
-                x = px,
-                y = drawPY - 24,
-                w = packW,
-                h = packH + 24,
-                invisible = true,
-                itemIndex = gIdx,
-            }
-            table.insert(buttons, btnPack)
-
-            if isPackHovered and not (shopDrag.active and shopDrag.isDragging) then
-                hoveredShopItem = it
-                hoveredItemPos = { x = px - 260, y = drawPY - 10 }
-            end
-        end
-    end
+    -- Stock rendering is isolated from inventory, drag/drop and modal handling.
+    hoveredShopItem, hoveredItemPos = require("ui.shop_display").draw(
+        shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
     -- 4. BOTTOM RIGHT: 3D DECK PILE (Click to open Deck Viewer [Tab])
@@ -6977,7 +6538,7 @@ local function drawShopState()
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(overAltar and { 1, 0.86, 0.68, 1 } or UI.COLORS.textLight)
     if sacrificeItem then
-        local price = Shop.getSacrificePrice(sacrificeItem, sacrificeKind)
+        local price = Shop.getSacrificePrice(sacrificeItem, sacrificeKind, game)
         love.graphics.printf(overAltar and ("THẢ ĐỂ BÁN\n+$" .. price) or ("THẢ BÀI\nĐỂ NHẬN +$" .. price), altar.x + 7, altar.y + 101, altar.w - 14, "center")
     else
         love.graphics.printf("KÉO BÀI HOẶC\nTIÊU HAO VÀO ĐÂY", altar.x + 7, altar.y + 101, altar.w - 14, "center")
@@ -7019,90 +6580,7 @@ local function drawShopState()
             love.graphics.printf(dropText, dropZoneX, dropZoneY + 10, dropZoneW, "center")
         end
 
-        -- Draw the dragged card floating on top with 3D tilt & elevation
-        local dcw = shopDrag.cardW or 124
-        local dch = shopDrag.cardH or 186
-        local dcx = shopDrag.visualX
-        local dcy = shopDrag.visualY
-        local dItem = shopDrag.item
-
-        love.graphics.push()
-        love.graphics.translate(dcx + dcw / 2, dcy + dch / 2)
-        if shopDrag.rotation and shopDrag.rotation ~= 0 then
-            love.graphics.rotate(shopDrag.rotation)
-        end
-        if shopDrag.tiltX or shopDrag.tiltY then
-            love.graphics.shear((shopDrag.tiltX or 0) * 0.12, (shopDrag.tiltY or 0) * 0.12)
-        end
-        love.graphics.scale(1.15, 1.15)
-        love.graphics.translate(-dcw / 2, -dch / 2)
-
-        -- Elevation drop shadow
-        love.graphics.setColor(0, 0, 0, 0.5)
-        UI.drawRoundedRect("fill", 10 + (shopDrag.tiltX or 0) * 12, 16 + (shopDrag.tiltY or 0) * 12, dcw, dch, 10)
-
-        -- Card Body
-        if shopDrag.sourceKind == "card" then
-            UI.drawCard(dItem, 0, 0, dcw, dch, true)
-        elseif shopDrag.sourceKind == "consumable" then
-            drawBattleConsumableCard(dItem, 0, 0, dcw, dch, 1, -1000, -1000, false, true, 1)
-        else
-        local dragImg = ((dItem.category == "deity" and dItem.deity) and UI.getDeityImage(dItem.deity.id))
-                     or ((dItem.category == "equipment" and dItem.equipment) and UI.getEquipmentImage(dItem.equipment.id))
-                     or ((dItem.category == "card" and dItem.card) and UI.getCardImage(dItem.card.suit, dItem.card.rank or dItem.card.rankName))
-                     or ((dItem.category == "hand_expansion" or dItem.id == "v_hand_size" or dItem.id == "hand_expansion") and UI.getVoucherImage("v_hand_size"))
-                     or ((dItem.category == "book" or dItem.handId or (dItem.id and tostring(dItem.id):find("book_"))) and (UI.getHandImage(dItem.handId or dItem.id) or UI.getHandImage(dItem.id)))
-                     or UI.getVoucherImage(dItem.id)
-                     or UI.getHandImage(dItem.id)
-        if dItem.category ~= "equipment" and dItem.category ~= "card" and dItem.category ~= "hand_expansion" then
-            dragImg = UI.visualImage(dragImg)
-        end
-        if dragImg then
-            love.graphics.setColor(1, 1, 1, 1)
-            local iw, ih = dragImg:getDimensions()
-            love.graphics.draw(dragImg, 0, 0, 0, dcw / iw, dch / ih)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.setLineWidth(2.5)
-            UI.drawRoundedRect("line", 0, 0, dcw, dch, 8)
-        else
-            local dColor = dItem.color or { 0.95, 0.85, 0.35, 1 }
-            love.graphics.setColor(0.18, 0.22, 0.28, 1)
-            UI.drawRoundedRect("fill", 0, 0, dcw, dch, 8)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.setLineWidth(2.5)
-            UI.drawRoundedRect("line", 0, 0, dcw, dch, 8)
-
-            -- Subtitle banner
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(dColor)
-            love.graphics.printf(dItem.subtitle or "THẺ BÀI", 4, 8, dcw - 8, "center")
-
-            -- Icon
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.printf(dItem.icon or "🃏", 0, 40, dcw, "center")
-
-            -- Name
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(dItem.name or "Vật Phẩm", 4, 85, dcw - 8, "center")
-        end
-        end
-
-        -- Price badge
-        love.graphics.setColor(0.12, 0.15, 0.19, 0.9)
-        UI.drawRoundedRect("fill", 6, dch - 40, dcw - 12, 32, 4)
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        if shopDrag.sourceKind then
-            love.graphics.printf("HIẾN TẾ +$" .. Shop.getSacrificePrice(dItem, shopDrag.sourceKind), 6, dch - 34, dcw - 12, "center")
-        else
-            love.graphics.printf("$" .. dItem.cost, 6, dch - 34, dcw - 12, "center")
-        end
-
-        love.graphics.pop()
     end
-
-
 
     ----------------------------------------------------------------------------
     -- 5. BALATRO TOOLTIP BADGE (Floating Info for Hovered Card)
@@ -7142,6 +6620,7 @@ local function drawShopState()
     -- 6. PACK OPENING MODAL OVERLAY (When a Booster Pack is active)
     ----------------------------------------------------------------------------
     if shopData.currentPackOpening then
+        UI.CardPhysics.blockBehind()
         local pData = shopData.currentPackOpening
         local pack = pData.pack
         local cards = pData.cards or {}
@@ -7210,7 +6689,7 @@ local function drawShopState()
             local totalCardsW = #cards * 150 + (#cards - 1) * 32
             local startCardX = (V_WIDTH - totalCardsW) / 2
             local cardY, cW, cH = 210, 150, 260
-            local labels = { buffoon = "HỘ LINH", standard = "QUÂN BÀI", arcana = "TRANG BỊ KHẢM", joker_edition = "PHÙ PHÉP", seal = "CON DẤU", spectral = "BIẾN ĐỔI", celestial = "HÀNH TINH" }
+            local labels = { buffoon = "HỘ LINH", standard = "QUÂN BÀI", arcana = "TRANG BỊ KHẢM", joker_edition = "PHÙ PHÉP", seal = "CON DẤU", spectral = "BIẾN ĐỔI", celestial = "HÀNH TINH", edition = "ẤN BẢN" }
 
             for i, card in ipairs(cards) do
                 local cx = startCardX + (i - 1) * (cW + 32)
@@ -7228,35 +6707,9 @@ local function drawShopState()
                 love.graphics.rotate((1 - eased) * ((i - 2) * 0.24))
                 love.graphics.translate(-cx - cW / 2, -drawCY - cH / 2)
 
-                love.graphics.setColor(0.16, 0.20, 0.26, 0.98)
-                UI.drawRoundedRect("fill", cx, drawCY, cW, cH, 10)
-                love.graphics.setColor(isChoiceHovered and UI.COLORS.goldYellow or (card.color or { 0.45, 0.55, 0.70, 0.8 }))
-                love.graphics.setLineWidth(isChoiceHovered and 3 or 1.5)
-                UI.drawRoundedRect("line", cx, drawCY, cW, cH, 10)
+                require("ui.card_surfaces").reward(card, cx, drawCY, cW, cH, pack.packType, labels[pack.packType], isChoiceHovered)
 
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(card.color or UI.COLORS.goldYellow)
-                love.graphics.printf(labels[pack.packType] or "THẺ BÀI", cx + 4, drawCY + 9, cW - 8, "center")
-
-                local art = UI.getPackCardImage(pack.packType, card)
-                if art then
-                    local iw, ih = art:getDimensions()
-                    local artW, artH = 104, 104
-                    local artScale = math.min(artW / iw, artH / ih)
-                    local drawW, drawH = iw * artScale, ih * artScale
-                    love.graphics.setColor(1, 1, 1, 1)
-                    love.graphics.draw(art, cx + (cW - drawW) / 2, drawCY + 28 + (artH - drawH) / 2, 0, artScale, artScale)
-                end
-
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf(card.name or ((card.rankName or "") .. (card.suitSymbol or "")), cx + 6, drawCY + 138, cW - 12, "center")
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                local desc = card.desc or ("+" .. (card.baseChips or 0) .. " Chips • " .. (card.suitName or card.suitSymbol or ""))
-                love.graphics.printf(desc, cx + 8, drawCY + 163, cW - 16, "center")
-
-                local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial")
+                local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial" or pack.packType == "edition")
                 if ready and isConsumablePack then
                 local btnUse = {
                     id = "choose_pack_" .. i,
@@ -7750,6 +7203,9 @@ function love.draw()
         love.graphics.scale(scale * RENDER_SCALE, scale * RENDER_SCALE)
     end
 
+    UI.CardPhysics.beginFrame(UI.CardPhysics.isLabOpen() or (state ~= "scoring"
+        and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen))
+
     -- A single restrained environment replaces the old shifting neon backdrop.
     if battleArt.background then
         local bw, bh = battleArt.background:getDimensions()
@@ -7806,30 +7262,38 @@ function love.draw()
         drawVictoryState()
     end
 
+    UI.CardPhysics.suspend()
     drawShopFx()
     if state == "chest" or state == "treasure" then drawChestReveal() end
+    UI.CardPhysics.resume()
 
     if isDeckViewerOpen then
+        UI.CardPhysics.blockBehind()
         drawDeckViewerModal()
     end
 
     if isHandbookOpen then
+        UI.CardPhysics.blockBehind()
         drawHandbookModal()
     end
 
     if inspectCardModal then
+        UI.CardPhysics.blockBehind()
         drawCardInspectorModal(inspectCardModal)
     end
 
     if isPauseMenuOpen then
+        UI.CardPhysics.blockBehind()
         drawPauseMenuModal()
     end
 
     if isSettingsOpen then
+        UI.CardPhysics.blockBehind()
         drawSettingsModal()
     end
 
     if isCollectionOpen then
+        UI.CardPhysics.blockBehind()
         if collectionCategory then
             drawCollectionDetailView()
         else
@@ -7873,29 +7337,17 @@ function love.draw()
         end
     end
 
-    -- Dragged Deity floating on top with shadow & glowing border
-    if deityDrag.active and deityDrag.isDragging and game.deities and game.deities[deityDrag.deityIndex] then
-        local d = game.deities[deityDrag.deityIndex]
-        local dw = deityDrag.cardW or 82
-        local dh = deityDrag.cardH or 118
-        local dx = deityDrag.visualX
-        local dy = deityDrag.visualY
 
-        love.graphics.push()
-        love.graphics.translate(dx + dw / 2, dy + dh / 2)
-        love.graphics.scale(1.12, 1.12)
-        love.graphics.translate(-dw / 2, -dh / 2)
-
-        local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, deityDrag.deityIndex)
-        UI.drawPatronCard(d, 0, 0, dw, dh, true, false, false, copyTarget)
-
-        love.graphics.pop()
-    end
 
     if isUiGalleryOpen then
         local galleryMx, galleryMy = toVirtual(love.mouse.getPosition())
         Gallery.draw(UI.fonts, galleryMx, galleryMy)
     end
+
+    UI.CardPhysics.drawLab(UI, CardEffects)
+    UI.CardPhysics.endFrame()
+    UI.CardPhysics.drawDebug()
+    UI.drawCardEffectsDebug()
 
     love.graphics.pop()
 
@@ -7942,6 +7394,10 @@ end
 local function handlePlayingMousepressed(mx, my, button)
     if pendingSpeedCard and button == 1 then
         applyPendingSpeedAt(mx, my)
+        return true
+    end
+    if pendingEditionCard and button == 1 then
+        applyPendingEditionAt(mx, my, "playing")
         return true
     end
     if pendingEvolutionCard and button == 1 then
@@ -8004,7 +7460,8 @@ local function handlePlayingMousepressed(mx, my, button)
     -- Check Deity Slots in Top Bar for Drag & Drop Reordering
     for i = maxDeiSlots, 1, -1 do
         local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
-        if mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh then
+        if UI.CardPhysics.hit(game.deities and game.deities[i], mx, my,
+            mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh) then
             if game.deities and game.deities[i] then
                 deityDrag.active = true
                 deityDrag.isDragging = false
@@ -8031,7 +7488,8 @@ local function handlePlayingMousepressed(mx, my, button)
         local cardW = 100
         local cardH = 145
 
-        if mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH then
+        if UI.CardPhysics.hit(c, mx, my,
+            mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH) then
             handDrag.active = true
             handDrag.cardIndex = i
             handDrag.startX = mx
@@ -8049,6 +7507,10 @@ local function handlePlayingMousepressed(mx, my, button)
 end
 
 local function handleShopMousepressed(mx, my, button)
+    if pendingEditionCard and button == 1 and not isShopTransferOpen then
+        applyPendingEditionAt(mx, my, "shop")
+        return true
+    end
     if isShopTransferOpen then
         for _, btn in ipairs(buttons) do
             if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -8859,6 +8321,16 @@ end
 
 function love.mousepressed(x, y, button)
     local mx, my = toVirtual(x, y)
+    if UI.CardPhysics.isLabOpen() then
+        UI.CardPhysics.press(mx, my, button)
+        return
+    end
+    local physicsButton = false
+    for _, btn in ipairs(buttons or {}) do
+        if not btn.invisible and not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w
+            and my >= btn.y and my <= btn.y + btn.h then physicsButton = true; break end
+    end
+    if not physicsButton then UI.CardPhysics.press(mx, my, button) end
     if isUiGalleryOpen then
         if button == 1 and mx >= 1152 and mx <= 1248 and my >= 20 and my <= 51 then
             isUiGalleryOpen = false
@@ -9481,12 +8953,18 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    UI.CardPhysics.labAction(key, CardEffects)
+    if UI.CardPhysics.keypressed(key) then return end
     if isUiGalleryOpen then
         if key == "escape" or key == "f8" then isUiGalleryOpen = false end
         return
     end
     if key == "f8" then
         isUiGalleryOpen = true
+        return
+    end
+    if key == CardEffects.debugToggleKey then
+        CardEffects.toggleDebug()
         return
     end
     if isDebugOpen then
@@ -9527,9 +9005,10 @@ function love.keypressed(key)
 
     -- Escape closes Modals or toggles In-Game Pause Menu
     if key == "escape" then
-        if pendingEvolutionCard or pendingSpeedCard then
+        if pendingEvolutionCard or pendingSpeedCard or pendingEditionCard then
             pendingEvolutionCard = nil
             pendingSpeedCard = nil
+            pendingEditionCard = nil
             Sound.play("ui_click")
             return
         end
@@ -9732,6 +9211,7 @@ end
 
 function love.mousereleased(x, y, button)
     local mx, my = toVirtual(x, y)
+    if button == 1 then UI.CardPhysics.release() end
     juice.buttonPressedId = nil
 
     if button == 1 and handDrag.active then
@@ -9742,6 +9222,7 @@ function love.mousereleased(x, y, button)
                 card.selectPulse = 1
             end
             toggleCardSelection(handDrag.cardIndex)
+            if card then CardEffects.triggerSelectPulse(card) end
             if card and card.selected then
                 Sound.play("card_select")
             else
@@ -9787,6 +9268,14 @@ function love.mousereleased(x, y, button)
                     end
                 else
                     Sound.play("card_slide")
+                    if shopDrag.sourceKind == "card" and not isDeckViewerOpen then
+                        for _, btn in ipairs(buttons or {}) do
+                            if btn.id == "open_deck_viewer" then
+                                UI.CardPhysics.returnTo(btn.x, btn.y)
+                                break
+                            end
+                        end
+                    end
                 end
             end
         elseif not shopDrag.isDragging and shopDrag.itemIndex then
@@ -9843,7 +9332,7 @@ function love.mousereleased(x, y, button)
             local altar = shopDrag.sacrificeZone
             if state == "shop" and mx >= altar.x and mx <= altar.x + altar.w and my >= altar.y and my <= altar.y + altar.h then
                 local sold = game.deities[srcSlot]
-                local price = Shop.getSacrificePrice(sold, "deity")
+                local price = Shop.getSacrificePrice(sold, "deity", game)
                 if Shop.sellDeity(game, srcSlot) then
                     spawnShopFx("sacrifice", { category = "deity", deity = sold, id = sold.id, name = sold.name }, mx, my)
                     table.insert(anim.floatingTexts, {

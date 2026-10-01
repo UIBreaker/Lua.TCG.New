@@ -115,20 +115,20 @@ local shop = Shop.new()
 Shop.refresh(shop, gameState)
 assert(#shop.items >= 3, "Shop should have at least 3 items")
 
-local foundBook = nil
+local foundVoucher = nil
 for idx, item in ipairs(shop.items) do
-    if item.category == "book" then
-        foundBook = idx
+    if item.category == "voucher" then
+        foundVoucher = idx
         break
     end
 end
-assert(foundBook ~= nil, "Shop should contain at least 1 Skill Book")
-local bookItem = shop.items[foundBook]
-local bookHandId = bookItem.handId
-local success, msg = Shop.buyItem(shop, foundBook, gameState)
-assert(success == true, "Should successfully buy skill book")
-assert(gameState.unlockedHands[bookHandId] == true, "Buying book should unlock hand: " .. bookHandId)
-log("[PASS] 9. Shop sells Skill Books and successfully unlocks hand: " .. bookHandId)
+assert(foundVoucher ~= nil, "Shop should sell a permanent voucher instead of a hand-unlock ticket")
+assert(not gameState.unlockedHands.pair, "shop should not sell a separate hand-unlock ticket")
+local voucherId = shop.items[foundVoucher].voucherId
+local success = Shop.buyItem(shop, foundVoucher, gameState)
+assert(success == true, "Should successfully buy permanent voucher")
+assert(gameState.vouchers[voucherId] == true, "Buying voucher should activate it: " .. voucherId)
+log("[PASS] 9. Shop sells and activates a permanent voucher: " .. voucherId)
 
 -- Test Sell Deity
 table.insert(gameState.deities, { id = "test_d", name = "Test Deity", cost = 6 })
@@ -2045,27 +2045,29 @@ do
     local baseScore = Scoring.calculate(evalBase, {}, {})
     assert(baseScore.baseChips == 5 and baseScore.baseMult == 1, "High Card base stats must be 5x1")
 
-    -- Foil (+50 Chips)
+    -- Foil (+50 flat damage, after Aura calculation)
     local deityFoil = { id = "test_foil", name = "Thần Foil", edition = "foil" }
     local scoreFoil = Scoring.calculate(evalBase, { deityFoil }, {})
-    assert(scoreFoil.totalChips == baseScore.totalChips + 50, "Foil edition must grant exactly +50 Chips, got: " .. (scoreFoil.totalChips - baseScore.totalChips))
+    assert(scoreFoil.totalChips == baseScore.totalChips and scoreFoil.finalScore == baseScore.finalScore + 50,
+        "Foil edition must grant exactly +50 flat damage")
 
     -- Holographic (+10 Mult)
     local deityHolo = { id = "test_holo", name = "Thần Holo", edition = "holo" }
     local scoreHolo = Scoring.calculate(evalBase, { deityHolo }, {})
     assert(scoreHolo.totalMult == baseScore.totalMult + 10, "Holographic edition must grant exactly +10 Mult, got: " .. (scoreHolo.totalMult - baseScore.totalMult))
 
-    -- Polychrome (x1.5 Mult)
+    -- Polychrome (x1.5 final Aura)
     local deityPoly = { id = "test_poly", name = "Thần Poly", edition = "polychrome" }
     local scorePoly = Scoring.calculate(evalBase, { deityPoly }, {})
-    assert(scorePoly.totalMult == math.floor(baseScore.totalMult * 1.5), "Polychrome edition must multiply Mult by 1.5")
+    assert(scorePoly.totalMult == baseScore.totalMult and scorePoly.auraEditionMultiplier == 1.5,
+        "Polychrome edition must multiply final Aura by 1.5")
 
     -- Negative (+1 Joker Slot from base 5)
     local deityNeg = { id = "test_neg", name = "Thần Âm Bản", edition = "negative" }
     local testGame = { deities = { deityNeg } }
     local maxSlots = Deities.getMaxSlots(testGame)
     assert(maxSlots == 6, "Negative edition must expand max Deity slots from base 5 to 6, got: " .. maxSlots)
-    log("[PASS] 75. Joker Editions (Foil +50c, Holo +10m, Poly x1.5m, Negative +1 Slot) verified 100%")
+    log("[PASS] 75. Editions (Foil +50 flat damage, Holo +10 Mult, Poly x1.5 Aura, Negative +1 Slot) verified 100%")
 end
 
 -- 76. Test Joker Spells (Aura, Ectoplasm, Ankh, Hex)
@@ -3124,7 +3126,7 @@ do
     local okVn, imgVn = pcall(UI.getVoucherImage, "Mở Rộng Tay Bài")
     assert(okVn and imgVn ~= nil, "UI.getVoucherImage must return image for Vietnamese name")
 
-    -- C. Exactly three permanent vouchers; hand expansion is intentionally separate.
+    -- C. Permanent vouchers remain separate from repeatable hand expansion.
     local foundVoucher = false
     for _, v in ipairs(Shop.VOUCHERS) do
         if v.id == "v_hand_size" then
@@ -3134,7 +3136,7 @@ do
         end
     end
     assert(not foundVoucher, "v_hand_size must not be mixed into Shop.VOUCHERS")
-    assert(#Shop.VOUCHERS == 3, "Shop must expose exactly Bùa Hảo Thủ, Sổ Tiết Kiệm and Thẻ Thành Viên")
+    assert(#Shop.VOUCHERS == 9, "Shop must expose the three original and six new permanent vouchers")
 
     -- D. Verify in Collection 'vouchers' category
     local vouchers = Collection.getItems("vouchers")
@@ -3148,9 +3150,9 @@ do
         end
     end
     assert(not foundCollVoucher, "Hand expansion must not appear in Collection vouchers category")
-    assert(#vouchers == 3, "Collection vouchers must contain exactly the three permanent vouchers")
+    assert(#vouchers == #Shop.VOUCHERS, "Collection must include every permanent voucher")
 
-    log("[PASS] 105. Hand expansion remains a separate shop upgrade and vouchers are exactly 3")
+    log("[PASS] 105. Hand expansion remains separate and all permanent vouchers are in the collection")
 end
 
 -- 106. Every booster reward resolves artwork and carries opening animation state.

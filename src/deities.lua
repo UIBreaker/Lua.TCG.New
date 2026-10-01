@@ -41,6 +41,30 @@ local function formatEffectNumber(value)
     return (string.format("%.2f", value):gsub("0+$", ""):gsub("%.$", ""))
 end
 
+local function effectMultiplier(deity)
+    local _, _, baseTier, evolutionLevel = rarityState(deity)
+    return 1 + (baseTier - 1 + evolutionLevel) * 0.5
+end
+
+local function scaleDescription(description, multiplier)
+    return (description or ""):gsub("([+])(%d+%.?%d*)", function(sign, amount)
+        return sign .. formatEffectNumber(tonumber(amount) * multiplier)
+    end)
+end
+
+function Deities.setRarity(deity, rarityId)
+    local tier = rarityIndex[rarityId]
+    if type(deity) ~= "table" or not tier then return false end
+
+    deity.baseDesc = deity.baseDesc or deity.desc or ""
+    deity.baseRarityTier = tier
+    deity.baseRarity = rarityId
+    deity.rarity = rarityId
+    deity.evolutionLevel = math.max(0, math.floor(tonumber(deity.evolutionLevel) or 0))
+    deity.desc = scaleDescription(deity.baseDesc, effectMultiplier(deity))
+    return true
+end
+
 function Deities.evolve(deity)
     if type(deity) ~= "table" or not deity.id then return false end
     local rarity, _, baseTier, evolutionLevel = rarityState(deity)
@@ -50,19 +74,15 @@ function Deities.evolve(deity)
     local nextRarity = rarityState(deity)
     deity.rarity = nextRarity.id
     deity.baseDesc = deity.baseDesc or deity.desc or ""
-    local multiplier = 1 + deity.evolutionLevel * 0.5
-    deity.desc = deity.baseDesc:gsub("([+])(%d+%.?%d*)", function(sign, amount)
-        return sign .. formatEffectNumber(tonumber(amount) * multiplier)
-    end)
+    deity.desc = scaleDescription(deity.baseDesc, effectMultiplier(deity))
     local badge = Deities.getRarityBadge(deity)
     return true, badge
 end
 
 function Deities.scaleEffect(deity, result)
-    local levels = math.max(0, math.floor(tonumber(deity and deity.evolutionLevel) or 0))
-    if not result or levels == 0 then return result end
+    local multiplier = effectMultiplier(deity)
+    if not result or multiplier == 1 then return result end
 
-    local multiplier = 1 + levels * 0.5
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier

@@ -1,14 +1,27 @@
 local Capture = {}
 
 local frame = 0
+local shopOnly = false
+local packSkipOnly = false
+local physicsOnly = false
+local shopCaptureAt, shopCaptureSaved, shopCaptureStep
+for _, value in ipairs(arg or {}) do
+    if value == "--capture-shop" then shopOnly = true end
+    if value == "--test-pack-skip" then packSkipOnly = true end
+    if value == "--test-card-physics" then physicsOnly = true end
+end
 local Equipment = require("src.equipment")
 local Deities = require("src.deities")
 
-local function clickVirtual(x, y)
+local function clickVirtual(x, y, release)
     local w, h = love.graphics.getDimensions()
     local scale = math.min(w / 1280, h / 720)
     love.mousepressed((w - 1280 * scale) / 2 + x * scale,
         (h - 720 * scale) / 2 + y * scale, 1)
+    if release then
+        love.mousereleased((w - 1280 * scale) / 2 + x * scale,
+            (h - 720 * scale) / 2 + y * scale, 1)
+    end
 end
 
 local function saveImage(name)
@@ -28,6 +41,44 @@ end
 
 function Capture.update(gameRef, callbacks)
     frame = frame + 1
+    if physicsOnly then return require("tests.card_physics_capture").update(gameRef, callbacks) end
+    if packSkipOnly then
+        return require("tests.pack_skip_capture").update(gameRef, callbacks, clickVirtual)
+    end
+
+    if shopOnly then
+        if frame == 2 then
+            callbacks.startNewGame("red_deck")
+            gameRef.gold = 120
+            gameRef.playerHp = 80
+            callbacks.openShop()
+            love.mouse.setPosition(2, 2)
+            shopCaptureAt = love.timer.getTime() + 3
+        elseif shopCaptureAt and not shopCaptureSaved and love.timer.getTime() >= shopCaptureAt then
+            saveImage("shot_shop_redesign.png")
+            shopCaptureSaved = true
+        elseif shopCaptureSaved and love.timer.getTime() >= shopCaptureAt + 0.2 then
+            -- Let draw rebuild item-index hitboxes after each purchase.
+            if not shopCaptureStep then
+                local deckSize = #gameRef.persistentDeck
+                clickVirtual(498, 225, true)
+                assert(#gameRef.persistentDeck == deckSize + 1, "Retail card hitbox must buy the displayed card")
+                shopCaptureStep = 1
+            elseif shopCaptureStep == 1 then
+                clickVirtual(870, 225, true)
+                assert(gameRef.playerHp == 100, "Potion hitbox must buy and heal")
+                shopCaptureStep = 2
+            else
+                clickVirtual(155, 590, true)
+                local voucherCount = 0
+                for _ in pairs(gameRef.vouchers) do voucherCount = voucherCount + 1 end
+                assert(voucherCount == 1, "Privilege purchase hitbox must activate its voucher")
+                print("Shop layout captured; card, potion and voucher hitboxes verified")
+                love.event.quit(0)
+            end
+        end
+        return
+    end
 
     if frame == 2 then
         saveImage("shot_main_menu.png")

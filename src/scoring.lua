@@ -1,6 +1,7 @@
 local Scoring = {}
 local Deities = require("src.deities")
 local Deck = require("src.deck")
+local CardEffects = require("src.card_effects")
 
 local function isSpade(card)
     if not card then return false end
@@ -40,6 +41,8 @@ function Scoring.calculate(handInfo, deities, context)
 
     local bonusChips = 0
     local bonusMult = 0
+    local auraEditionMultiplier = 1.0
+    local flatDamageBonus = 0
     local xMultTotal = 1.0
     local xMultBonus = 0.0
     local totalHpCost = 0
@@ -645,6 +648,36 @@ function Scoring.calculate(handInfo, deities, context)
 
             -- (Gold / Bounty Seal handled on primary trigger)
 
+            -- Card editions are defined centrally; apply them once for each scoring trigger.
+            local editionBonus = CardEffects.getScoreBonus(card)
+            if editionBonus then
+                local editionChips = editionBonus.chips or 0
+                local editionMult = editionBonus.mult or 0
+                local editionDamage = editionBonus.damage or 0
+                local editionAura = editionBonus.auraMultiplier or 1.0
+                if editionChips ~= 0 then
+                    bonusChips = bonusChips + editionChips
+                    cardEvent.addedChips = cardEvent.addedChips + editionChips
+                end
+                if editionMult ~= 0 then
+                    bonusMult = bonusMult + editionMult
+                    cardEvent.addedMult = cardEvent.addedMult + editionMult
+                end
+                if editionDamage ~= 0 then
+                    flatDamageBonus = flatDamageBonus + editionDamage
+                    cardEvent.addedDamage = (cardEvent.addedDamage or 0) + editionDamage
+                end
+                if editionAura ~= 1.0 then
+                    auraEditionMultiplier = auraEditionMultiplier * editionAura
+                    cardEvent.auraMultiplier = editionAura
+                end
+                cardEvent.message = cardEvent.message .. " | " .. string.upper(CardEffects.getEffectName(card))
+                if editionChips ~= 0 then cardEvent.message = cardEvent.message .. " +" .. editionChips .. " Chips" end
+                if editionMult ~= 0 then cardEvent.message = cardEvent.message .. " +" .. editionMult .. " Mult" end
+                if editionDamage ~= 0 then cardEvent.message = cardEvent.message .. " +" .. editionDamage .. " sát thương cố định" end
+                if editionAura ~= 1.0 then cardEvent.message = cardEvent.message .. " ×" .. editionAura .. " Aura" end
+            end
+
             cardEvent.deityTriggers = deityTriggers
             table.insert(steps, cardEvent)
         end
@@ -750,7 +783,7 @@ end
     if hasKingOfDiamonds and context and context.monster and availableGold > 0 then
         local currentChips = baseChips + bonusChips
         local currentMult = baseMult + bonusMult
-        local currentProjScore = math.floor(currentChips * currentMult * xMultTotal * (1 + totalExtraDamagePct))
+        local currentProjScore = math.floor(currentChips * currentMult * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
         if currentProjScore < context.monster.hp then
             local maxBribe = math.min(5, availableGold)
             local dollarsNeeded = 0
@@ -758,7 +791,7 @@ end
                 dollarsNeeded = d
                 local testChips = currentChips + (d * 30)
                 local testMult = currentMult + (d * 3)
-                local testScore = math.floor(testChips * testMult * xMultTotal * (1 + totalExtraDamagePct))
+                local testScore = math.floor(testChips * testMult * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
                 if testScore >= context.monster.hp then
                     break
                 end
@@ -850,19 +883,18 @@ end
             -- Joker Edition Trigger (Foil +50c, Holo +10m, Polychrome x1.5m)
             if deity.edition then
                 if deity.edition == "foil" then
-                    currentChips = currentChips + 50
-                    bonusChips = bonusChips + 50
+                    flatDamageBonus = flatDamageBonus + 50
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "foil",
-                        addedChips = 50,
+                        addFlatDamage = 50,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
-                        message = "✨ FOIL: " .. deity.name .. " (+50 Chips)!"
+                        message = "✨ FOIL: " .. deity.name .. " (+50 Sát thương cố định)!"
                     })
-                elseif deity.edition == "holo" then
+                elseif deity.edition == "holo" or deity.edition == "holographic" then
                     currentMult = currentMult + 10
                     bonusMult = bonusMult + 10
                     table.insert(steps, {
@@ -876,17 +908,16 @@ end
                         message = "🌈 HOLOGRAPHIC: " .. deity.name .. " (+10 Mult)!"
                     })
                 elseif deity.edition == "polychrome" then
-                    currentMult = math.floor(currentMult * 1.5)
-                    xMultBonus = xMultBonus + 0.5
+                    auraEditionMultiplier = auraEditionMultiplier * 1.5
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "polychrome",
-                        xMult = 1.5,
+                        auraMultiplier = 1.5,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
-                        message = "🌟 POLYCHROME: " .. deity.name .. " (x1.5 Mult)!"
+                        message = "🌟 POLYCHROME: " .. deity.name .. " (x1.5 Aura)!"
                     })
                 end
             end
@@ -897,7 +928,7 @@ end
     local totalChips = currentChips
     local totalMult = currentMult
     local rawScore = math.floor(totalChips * totalMult * cardXMultTotal)
-    local finalScore = math.floor(rawScore * (1 + totalExtraDamagePct))
+    local finalScore = math.floor(rawScore * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
     local finalCombinedXMult = math.min(5.0, 1.0 + xMultBonus)
 
     table.insert(steps, {
@@ -907,9 +938,10 @@ end
         xMult = finalCombinedXMult,
         rawScore = rawScore,
         extraDamagePct = totalExtraDamagePct,
+        auraMultiplier = auraEditionMultiplier,
         finalScore = finalScore,
         bonusGold = bonusGoldAwarded,
-        message = totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. " = " .. finalScore .. " Sát thương!"
+        message = totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. (auraEditionMultiplier > 1 and (" × " .. string.format("%.2f", auraEditionMultiplier) .. " Aura") or "") .. (flatDamageBonus > 0 and (" + " .. flatDamageBonus .. " sát thương cố định") or "") .. " = " .. finalScore .. " Sát thương!"
     })
 
     return {
@@ -922,6 +954,8 @@ end
         xMultTotal = finalCombinedXMult,
         rawScore = rawScore,
         finalScore = finalScore,
+        flatDamageBonus = flatDamageBonus,
+        auraEditionMultiplier = auraEditionMultiplier,
         totalExtraDamagePct = totalExtraDamagePct,
         bonusGoldAwarded = bonusGoldAwarded,
         addArmor = math.min(30, totalArmorGain),

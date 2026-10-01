@@ -6,6 +6,9 @@ local Slot = require("ui.components.slot")
 local HealthBar = require("ui.components.health_bar")
 local Deck = require("src.deck")
 local Deities = require("src.deities")
+local CardEffects = require("src.card_effects")
+UI.CardPhysics = require("src.card_physics")
+UI.drawCardEffectsDebug = CardEffects.drawDebug
 
 -- Color constants
 UI.COLORS = {
@@ -331,7 +334,16 @@ local function drawCardSpeedBadge(card, w, h)
     g.printf(tostring(Deck.getCardAttackSpeed(card)), bx + 13, by + 1, badgeW - 14, "center")
 end
 
-function UI.drawCard(card, x, y, w, h, isFloating)
+local function drawCardEditionRim(card, w, h)
+    if not CardEffects.getEffectName(card) then return end
+    local color = CardEffects.getBeamColor(card)
+    love.graphics.setLineWidth(2)
+    love.graphics.setColor(color[1], color[2], color[3], 0.9)
+    UI.drawRoundedRect("line", -1, -1, w + 2, h + 2, 6)
+end
+
+function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
+    effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY)
     local g = love.graphics
     local rank = tostring(card.rankName or card.rank or "?")
     local cardImage = not card.faceDown and UI.getCardImage(card.suit, card.rank or card.rankName)
@@ -339,20 +351,34 @@ function UI.drawCard(card, x, y, w, h, isFloating)
         or card.suit == "valoria" or card.suit == "aurelia"
     local accent = red and UI.COLORS.suitCrimson or UI.COLORS.suitObsidian
     local selected = card.selected == true
-    local hovered = card.hovered == true
+    local hovered = effectHovered == nil and card.hovered == true or effectHovered == true
     local s = (card.visualScale or 1) * (isFloating and 1.08 or 1)
+    local cardScaleX = (card.scaleX or card.scale or 1) * s
+    local cardScaleY = (card.scaleY or card.scale or 1) * s
+    local shearX = (card.tiltX or 0) * 0.035
+    local shearY = (card.tiltY or 0) * 0.025
+    local fxTiltX, fxTiltY = CardEffects.getTilt(card)
+    shearX, shearY = shearX + fxTiltX, shearY + fxTiltY
+    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, selected) end
+    CardEffects.prepareDraw(card, effectX or x, effectY or y, w, h,
+        effectShearX or shearX, effectShearY or shearY,
+        effectScaleX or cardScaleX, effectScaleY or cardScaleY,
+        UI.virtualMouseX, UI.virtualMouseY)
     g.push("all")
     g.translate(x + w / 2, y + h / 2)
     g.rotate(card.rotation or 0)
-    g.shear((card.tiltX or 0) * 0.035, (card.tiltY or 0) * 0.025)
-    g.scale((card.scaleX or card.scale or 1) * s, (card.scaleY or card.scale or 1) * s)
+    g.shear(shearX, shearY)
+    g.scale(cardScaleX, cardScaleY)
     g.translate(-w / 2, -h / 2)
+    UI.CardPhysics.capture(card, 0, 0, w, h)
     g.setColor(0, 0, 0, isFloating and 0.56 or (selected and 0.44 or 0.30))
     UI.drawRoundedRect("fill", 4, isFloating and 15 or (selected and 11 or 6), w, h, 5)
     if cardImage then
         local imageW, imageH = cardImage:getDimensions()
+        local cardFxActive = CardEffects.beginCard(card)
         g.setColor(1, 1, 1, 1)
         g.draw(cardImage, 0, 0, 0, w / imageW, h / imageH)
+        CardEffects.endCard(cardFxActive)
         if selected or hovered then
             g.setLineWidth(selected and 3 or 2)
             g.setColor(selected and UI.COLORS.cardSelectedBorder or UI.COLORS.chipsBlue)
@@ -382,6 +408,7 @@ function UI.drawCard(card, x, y, w, h, isFloating)
             g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
         end
         drawCardSpeedBadge(card, w, h)
+        drawCardEditionRim(card, w, h)
         g.pop()
         return
     end
@@ -441,6 +468,42 @@ function UI.drawCard(card, x, y, w, h, isFloating)
         end
         drawCardSpeedBadge(card, w, h)
     end
+    drawCardEditionRim(card, w, h)
+    g.pop()
+end
+
+-- Artwork-only version for shop stock: keep the source card face untouched by HUD stats.
+function UI.drawCardFace(card, x, y, w, h, effectHovered,
+    effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY)
+    local image = not card.faceDown and UI.getCardImage(card.suit, card.rank or card.rankName)
+    if not image then return UI.drawCard(card, x, y, w, h, false, effectHovered,
+        effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY) end
+
+    local shearX = (card.tiltX or 0) * 0.035
+    local shearY = (card.tiltY or 0) * 0.025
+    local fxTiltX, fxTiltY = CardEffects.getTilt(card)
+    shearX, shearY = shearX + fxTiltX, shearY + fxTiltY
+    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, card.selected == true) end
+    CardEffects.prepareDraw(card, effectX or x, effectY or y, w, h,
+        effectShearX or shearX, effectShearY or shearY,
+        effectScaleX or card.scaleX or card.scale or 1,
+        effectScaleY or card.scaleY or card.scale or 1,
+        UI.virtualMouseX, UI.virtualMouseY)
+
+    local g = love.graphics
+    g.push("all")
+    g.translate(x + w / 2, y + h / 2)
+    g.rotate(card.rotation or 0)
+    g.shear(shearX, shearY)
+    g.scale(card.scaleX or card.scale or 1, card.scaleY or card.scale or 1)
+    g.translate(-w / 2, -h / 2)
+    UI.CardPhysics.capture(card, 0, 0, w, h)
+    local cardFxActive = CardEffects.beginCard(card)
+    g.setColor(1, 1, 1, card.alpha or 1)
+    local imageW, imageH = image:getDimensions()
+    g.draw(image, 0, 0, 0, w / imageW, h / imageH)
+    CardEffects.endCard(cardFxActive)
+    drawCardEditionRim(card, w, h)
     g.pop()
 end
 
@@ -715,6 +778,9 @@ local PACK_TYPE_MAP = {
     itm_pack = "pack_arcana",
     itm = "pack_arcana",
 
+    -- Shared full-bleed chest illustrations; never fall back to the old icon.
+    hand_styles = "pack_standard",
+    edition = "pack_joker_edition",
     standard = "pack_standard",
     pack_standard = "pack_standard",
     card_pack = "pack_standard",
@@ -1059,9 +1125,14 @@ end
 UI.packRewardImages = UI.packRewardImages or {}
 function UI.getPackCardImage(packType, card)
     card = card or {}
+    -- Closing/skipping animates the chest, not a reward inside it.
+    if card.category == "pack" then
+        return UI.getPackImage(packType or card.packType), false
+    end
     if not UI.useLegacyPixelArt and love.graphics.newCanvas then
         local key = table.concat({ tostring(packType), tostring(card.id or card.handId or card.name or ""),
-            tostring(card.rank or ""), tostring(card.suit or "") }, ":")
+            tostring(card.rank or ""), tostring(card.suit or ""),
+            tostring(CardEffects.getEffectName(card) or "") }, ":")
         if UI.packRewardImages[key] then return UI.packRewardImages[key], true end
         local g = love.graphics
         local canvas = g.newCanvas(128, 176)
@@ -1148,7 +1219,8 @@ local function drawRarityPennant(deity, width)
     love.graphics.pop()
 end
 
-function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget)
+function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget,
+    effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY)
     if not d then return end
     w, h = w or 82, h or 118
     local g = love.graphics
@@ -1157,17 +1229,25 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     local isSpnCard = deityImage and UI.deityImageIsSpnCard[deityId]
     local _, rim = Deities.getRarityBadge(d)
     local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
+    CardEffects.setInteraction(d, isHovered == true, d.selected == true)
+    CardEffects.prepareDraw(d, effectX or x, effectY or y, w, h,
+        effectShearX or 0, effectShearY or 0,
+        effectScaleX or s, effectScaleY or s,
+        UI.virtualMouseX, UI.virtualMouseY)
     g.push("all")
     g.translate(x + w / 2, y + h / 2)
     g.scale(s)
     g.translate(-w / 2, -h / 2)
+    UI.CardPhysics.capture(d, 0, 0, w, h)
     if isSpnCard then
         local imageW, imageH = deityImage:getDimensions()
-        local imageScale = math.min(w / imageW, h / imageH)
-        local imageDrawW, imageDrawH = imageW * imageScale, imageH * imageScale
+        local cardFxActive = CardEffects.beginCard(d)
         g.setColor(1, 1, 1, 1)
-        g.draw(deityImage, (w - imageDrawW) / 2, (h - imageDrawH) / 2, 0, imageScale, imageScale)
+        -- Full-bleed card face: preserve all source artwork without letterboxing.
+        g.draw(deityImage, 0, 0, 0, w / imageW, h / imageH)
+        CardEffects.endCard(cardFxActive)
         drawRarityPennant(d, w)
+        drawCardEditionRim(d, w, h)
         g.pop()
         return
     end
@@ -1203,6 +1283,7 @@ end
 
 function UI.drawRoundRewardChoice(offer, mx, my, buttons, viewW, viewH)
     if not offer or not offer.options then return end
+    UI.CardPhysics.blockBehind()
 
     local panelX, panelY, panelW, panelH = 95, 86, 1090, 548
     love.graphics.setColor(0, 0, 0, 0.78)
@@ -1226,22 +1307,7 @@ function UI.drawRoundRewardChoice(offer, mx, my, buttons, viewW, viewH)
         local x = startX + (i - 1) * (cardW + gap)
         local hovered = mx >= x and mx <= x + cardW and my >= cardY and my <= cardY + cardH
         local color = item.color or UI.COLORS.goldYellow
-        love.graphics.setColor(0, 0, 0, 0.35)
-        UI.drawRoundedRect("fill", x + 3, cardY + 5, cardW, cardH, 12)
-        love.graphics.setColor(0.12, 0.16, 0.21, 1)
-        UI.drawRoundedRect("fill", x, cardY, cardW, cardH, 12)
-        love.graphics.setLineWidth(hovered and 3 or 2)
-        love.graphics.setColor(color)
-        UI.drawRoundedRect("line", x, cardY, cardW, cardH, 12)
-        love.graphics.setFont(UI.fonts.large or UI.fonts.title)
-        love.graphics.setColor(color)
-        love.graphics.printf(item.icon or "✦", x, cardY + 26, cardW, "center")
-        love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(item.name or "Phần thưởng", x + 14, cardY + 110, cardW - 28, "center")
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textMuted or UI.COLORS.textLight)
-        love.graphics.printf(item.desc or "", x + 22, cardY + 160, cardW - 44, "center")
+        require("ui.card_surfaces").round(item, x, cardY, cardW, cardH, hovered)
         local button = { id = "round_reward_" .. i, rewardIndex = i, x = x + 22, y = cardY + cardH - 54,
             w = cardW - 44, h = 38, text = "CHỌN", color = color, textColor = { 1, 1, 1, 1 }, font = UI.fonts.small }
         table.insert(buttons, button)
@@ -1459,5 +1525,9 @@ function UI.drawPlayerHpBar(x, y, w, h, currentHp, maxHp)
     HealthBar.draw(x, y, w, h, currentHp, maxHp, { variant = "green", font = UI.fonts.small,
         label = "MÁU  " .. tostring(currentHp) .. " / " .. tostring(maxHp) .. " HP" })
 end
+
+UI.drawCard = UI.CardPhysics.wrap(UI.drawCard, nil, 7)
+UI.drawCardFace = UI.CardPhysics.wrap(UI.drawCardFace, nil, 6)
+UI.drawPatronCard = UI.CardPhysics.wrap(UI.drawPatronCard, nil, 6)
 
 return UI

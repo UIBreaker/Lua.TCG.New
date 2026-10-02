@@ -59,6 +59,7 @@ local function ticket(item, x, y, w, h, hovered)
 end
 
 local function art(item, x, y, w, h, hovered, mx, my)
+    if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     local tx, ty = 0, 0
     if hovered then tx, ty = UI.calculateTilt(mx, my, x, y, w, h) end
     love.graphics.setColor(C.shadow)
@@ -106,8 +107,18 @@ end
 art = UI.CardPhysics.wrap(art, nil, 6)
 ticket = UI.CardPhysics.wrap(ticket, nil, 6)
 
+local function privilege(item, x, y, w, h, hovered, affordable)
+    if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
+    ticket(item, x + 2, y + 3, 62, 80, hovered)
+    text(item.name, x + 78, y + 4, w - 78, UI.fonts.small, item.color or C.gold)
+    text("HIỆU LỰC SUỐT RUN", x + 78, y + 66, w - 78, nil, C.muted)
+    text(item.desc or "", x, y + 96, w, nil, C.text)
+    text(affordable and ("KÉO ĐỂ MUA · $" .. item.cost) or ("CẦN $" .. item.cost),
+        x, y + 158, w, UI.fonts.small, affordable and C.gold or C.red, "center")
+end
+privilege = UI.CardPhysics.wrap(privilege, nil, 6)
 function Display.draw(shop, game, buttons, drag, mx, my, time)
-    panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Nhấp để mua · Kéo thả để nhận · Rê chuột xem chi tiết", C.cyan)
+    panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Kéo hàng vào bộ bài bên phải để mua · Rê chuột xem chi tiết", C.cyan)
     panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
     panel(294, 368, 699, 256, "KHO RƯƠNG", "Thế đánh · Ba rương ngẫu nhiên · Ấn bản khi xuất hiện", C.purple)
     local hoveredItem, position
@@ -132,14 +143,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
             local dragged = false -- Physics draws held surfaces above the UI.
             local affordable = (game.gold or 0) >= item.cost
             if voucher then
-                if not dragged then
-                    ticket(item, x + 2, y + 3, 62, 80, hovered)
-                    text(item.name, x + 78, y + 4, w - 78, UI.fonts.small, item.color or C.gold)
-                    text("HIỆU LỰC SUỐT RUN", x + 78, y + 66, w - 78, nil, C.muted)
-                    text(item.desc or "", x, y + 96, w, nil, C.text)
-                    local buy = { text = affordable and ("SỞ HỮU · $" .. item.cost) or ("CẦN $" .. item.cost), x = x, y = y + 152, w = w, h = 31, color = UI.COLORS.btnSpecial, font = UI.fonts.small }
-                    UI.drawButton(buy, hovered, false)
-                end
+                privilege(item, x, y, w, h, hovered, affordable)
             else
                 local dy = dragged and y or y + (hovered and -5 or math.sin(time * 1.2 + index) * 1.2)
                 price(item, x, y - 25, w, affordable)
@@ -150,7 +154,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
                 love.graphics.setColor(C.metal)
                 UI.drawRoundedRect("line", x, y, w, h, 6)
             end
-            buttons[#buttons + 1] = { id = "buy_" .. index, text = "", x = x, y = y - (voucher and 0 or 24), w = w, h = h + (voucher and 0 or 45), invisible = true, itemIndex = index }
+            buttons[#buttons + 1] = { id = "buy_" .. index, text = "", x = x, y = y - (voucher and 0 or 6), w = w, h = h + (voucher and 0 or 6), invisible = true, itemIndex = index }
             if hovered and not UI.CardPhysics.isHolding() and not (drag.active and drag.isDragging) then
                 hoveredItem = item
                 position = { x = x + w + 10, y = y + 8 }

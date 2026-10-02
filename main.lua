@@ -54,7 +54,7 @@ local Combat = require("src.combat")
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 for _, a in ipairs(arg or {}) do
-    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" then
+    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" then
         isCaptureMode = true
     end
 end
@@ -182,6 +182,7 @@ local shopDrag = {
     item = nil,
     sourceKind = nil,
     sacrificeZone = { x = 1120, y = 492, w = 145, h = 158 },
+    purchaseZone = { x = 1023, y = 502, w = 84, h = 138 },
     startX = 0,
     startY = 0,
     currentX = 0,
@@ -243,6 +244,7 @@ end
 UI.getDeitySlotRect = getDeitySlotRect
 
 local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
+    if c and c.faceDown then return UI.drawCardBack(cx, cy, conSlotW, conSlotH, c.alpha) end
     if c then
         cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
@@ -291,6 +293,7 @@ end
 
 local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, isTopHovered, effectOnly, opacity)
     if not c then return end
+    if c.faceDown then return UI.drawCardBack(cx, cy, cardW, cardH, opacity or c.alpha) end
     local g = love.graphics
     local hovered = isTopHovered == true
     opacity = opacity or 1
@@ -420,9 +423,13 @@ local shopFx = {}
 
 local function spawnShopFx(kind, item, x, y, w, h)
     local category = item and item.category
-    local targetX, targetY = 1110, 630
+    local targetX, targetY = state == "shop" and (shopDrag.purchaseZone.x + shopDrag.purchaseZone.w / 2) or 1110,
+        state == "shop" and (shopDrag.purchaseZone.y + (shopDrag.purchaseZone.h - 24) / 2) or 630
     if category == "deity" or (item and item.id and Deities.CATALOG[item.id]) then
-        targetX, targetY = 420, 86
+        if state == "shop" then
+            local sx, sy, sw, sh = getDeitySlotRect(math.max(1, Deities.getCount(game.deities)), "shop")
+            targetX, targetY = sx + sw / 2, sy + sh / 2
+        else targetX, targetY = 420, 86 end
     elseif category == "equipment" then
         targetX, targetY = 720, 92
     elseif category == "consumable" then
@@ -1558,7 +1565,7 @@ local function applyPendingSpeedAt(mx, my)
 end
 
 local function playSelectedHand()
-    if #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
+    if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
     local playedCardStarts = {}
@@ -1577,9 +1584,7 @@ local function playSelectedHand()
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
     game.lastPlayedHandId = evalResult.type and evalResult.type.id
-    anim.playButtonPulse = 0.12
-
-    screenShake = math.max(screenShake or 0, 2.5)
+    anim.playButtonPulse = UI.ScoringFeel.config.timing.button
 
     -- Ensure played cards don't draw with selection border and reveal if faceDown
     for _, c in ipairs(playedCards) do
@@ -1671,6 +1676,7 @@ local function playSelectedHand()
             return drawnCount
         end,
     }
+    anim.hpBeforeScoring = game.monster and game.monster.hp or 0
     local scoreResult = Scoring.calculate(evalResult, game.deities, context)
     game.handsPlayedThisCombat = (game.handsPlayedThisCombat or 0) + 1
 
@@ -1704,67 +1710,34 @@ local function playSelectedHand()
     -- Reset consumed discard buffs
     game.discardBuffs = { chips = 0, mult = 0, xMult = 1.0, bonusDamagePct = 0 }
 
-    -- Setup scoring animation
+    -- Setup existing visual state; the queue consumes the already-calculated result.
     anim.active = true
     anim.timer = 0
     anim.scoringData = scoreResult
     anim.playedCards = playedCards
     anim.cardEntryFrom = playedCardStarts
-    anim.currentStepIndex = 1
-    anim.displayChips = scoreResult.baseChips
-    anim.displayMult = scoreResult.baseMult
-    anim.displayXMult = 1.0
-    anim.displayAuraEditionMultiplier = 1.0
-    anim.displayFlatDamage = 0
-    anim.displayFinalScore = scoreResult.baseChips * scoreResult.baseMult
-    anim.displayAura = 0
-    anim.activeCardIndex = nil
-    anim.scoredCards = {}
-    anim.stepLog = evalResult.type.vnName .. ": " .. scoreResult.baseChips .. " Chips × " .. scoreResult.baseMult .. " Mult"
-    anim.stepCategory = "TAY BÀI GỐC"
-    anim.stepTimer = 0
-    anim.playedCards = playedCards
     anim.evalResult = evalResult
+    anim.displayXMult, anim.displayAuraEditionMultiplier, anim.displayFlatDamage = 1, 1, 0
+    anim.activeCardIndex, anim.scoredCards = nil, {}
+    anim.stepTimer, anim.targetStepDelay = 0, 0.2
     anim.floatingTexts = {}
-    anim.playerAttackSpeed = playerSpeed
-    anim.monsterAttackSpeed = monsterSpeed
+    anim.playerAttackSpeed, anim.monsterAttackSpeed = playerSpeed, monsterSpeed
     anim.monsterAttackedBeforePlayer = preScoreAttack ~= nil
     if preScoreAttack then
-        local shownSpeed = playerSpeed % 1 == 0 and tostring(playerSpeed) or string.format("%.1f", playerSpeed)
-        local attackText = "QUÁI TĐ " .. tostring(monsterSpeed) .. " > BẠN " .. shownSpeed
-            .. "  •  -" .. preScoreAttack.damage .. " HP"
-        if preScoreAttack.absorbed > 0 then attackText = attackText .. " (Giáp " .. preScoreAttack.absorbed .. ")" end
         table.insert(anim.floatingTexts, {
-            text = attackText,
-            color = UI.COLORS.hpRed,
-            x = 640,
-            y = 350,
-            alpha = 2.5,
+            text = "QUÁI ĐÁNH TRƯỚC • -" .. preScoreAttack.damage .. " HP",
+            color = UI.COLORS.hpRed, x = 640, y = 350, alpha = 2.0,
         })
     end
-    anim.monsterDefeated = false
-    anim.playerKilled = false
-    anim.earnedGold = 0
-    anim.damageDealt = 0
-    anim.pitchStep = 0
-    anim.targetStepDelay = 0.36
-    anim.cardBounce = {}
-    anim.cardHit = {}
-    anim.deityBounce = {}
-    anim.bounceScale = { chips = 1.35, mult = 1.35, xMult = 1.0, score = 1.35 }
-    anim.particles = {}
-    anim.fireParticles = {}
-    anim.impactFlash = 0
-    anim.entranceTimer = 0
-    anim.entryCompleteAt = 0.07 + math.max(0, #playedCards - 1) * 0.055 + 0.24
-    anim.cardTransform = {}
-    anim.energyBolts = {}
-    anim.energyVolleyPending = 0
-    anim.hitStop = 0
-    anim.screenFlash = 0
-    anim.screenDistortion = 0
-    anim.exitStarted = false
-    anim.exitProgress = 0
+    anim.monsterDefeated, anim.playerKilled, anim.earnedGold, anim.damageDealt = false, false, 0, 0
+    anim.pitchStep, anim.cardBounce, anim.cardHit, anim.deityBounce = 0, {}, {}, {}
+    anim.bounceScale = {chips = 1, mult = 1, xMult = 1, score = 1}
+    anim.particles, anim.fireParticles = {}, {}
+    anim.impactFlash, anim.hitStop, anim.screenFlash, anim.screenDistortion = 0, 0, 0, 0
+    anim.energyVolleyPending, anim.exitProgress, anim.exitStarted = 0, 0, false
+    UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring)
+    anim.entryCompleteAt = UI.ScoringFeel.config.timing.lift + UI.ScoringFeel.config.timing.travel
+        + math.max(0, #playedCards - 1) * UI.ScoringFeel.config.timing.stagger
 
     state = "scoring"
     Sound.play("card_play", 1.0)
@@ -2117,6 +2090,8 @@ local function updateCaptureMode()
         end,
         selectCardIndex = function(idx) toggleCardSelection(idx) end,
         playSelectedHand = function() playSelectedHand() end,
+        getScoringState = function() return anim, state end,
+        setScoringSpeed = function(fast) settings.fastScoring = fast end,
         setMenuMode = function(m) menuMode = m end,
         openSettings = function() isSettingsOpen = true end,
         isDebugEnabled = function() return settings.debugEnabled end,
@@ -2145,6 +2120,8 @@ function love.update(dt)
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
     UI.CardPhysics.update(dt, physicsMx, physicsMy)
     CardEffects.update(dt)
+    UI.ScoringFeel.updateLab(dt)
+    if UI.ScoringFeel.labOpen then updateCaptureMode(); return end
     local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
     if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
     local motionDt = hitStopped and 0 or dt
@@ -2207,7 +2184,7 @@ function love.update(dt)
     end
 
     -- Smooth Monster damage lag bar
-    if game.monster and game.monster.damageLagHp > game.monster.hp then
+    if game.monster and game.monster.damageLagHp and game.monster.damageLagHp > game.monster.hp then
         game.monster.damageLagHp = game.monster.hp
             + (game.monster.damageLagHp - game.monster.hp) * math.exp(-motionDt * 5.5)
     end
@@ -2251,27 +2228,7 @@ function love.update(dt)
         end
     end
 
-    for idx, age in pairs(anim.cardTransform or {}) do
-        anim.cardTransform[idx] = math.min(0.42, age + motionDt)
-    end
-    for _, bolt in ipairs(anim.energyBolts or {}) do
-        if not bolt.hit then
-            bolt.age = bolt.age + motionDt
-            if bolt.age >= bolt.duration then
-                bolt.age = bolt.duration
-                bolt.hit = true
-                anim.energyVolleyPending = math.max(0, (anim.energyVolleyPending or 1) - 1)
-                anim.hitStop = math.max(anim.hitStop or 0, 0.035)
-                anim.screenFlash = math.max(anim.screenFlash or 0, 0.045)
-                anim.impactFlash = math.max(anim.impactFlash or 0, 0.13)
-                anim.impactX, anim.impactY, anim.impactColor = bolt.targetX, bolt.targetY, bolt.color or UI.COLORS.goldYellow
-                monsterMotion.hit = math.max(monsterMotion.hit or 0, 0.22)
-                screenShake = math.max(screenShake or 0, 1.5)
-                spawnSparks(bolt.targetX, bolt.targetY, 13, bolt.color or UI.COLORS.goldYellow)
-                Sound.play("score_impact", 0.66)
-            end
-        end
-    end
+    -- ScoringPresentation owns conversion and projectile timing; sprites never advance independently.
 
     -- Smoothly lerp player hand cards visual positions & rotation
     if game.hand and #game.hand > 0 then
@@ -2472,20 +2429,7 @@ function love.update(dt)
         end
     end
 
-    -- Scoring embers now frame the arena instead of the removed sidebar.
-    if state == "scoring" and anim.active then
-        local multVal = anim.displayMult or 0
-        if multVal >= 20 then
-            local tier = (multVal >= 100) and 3 or ((multVal >= 50) and 2 or 1)
-            spawnFireEmbers(534, 229, 210, 42, tier)
-        end
-
-        local scoreVal = anim.displayFinalScore or 0
-        if scoreVal >= 1000 then
-            local tier = (scoreVal >= 50000) and 3 or ((scoreVal >= 10000) and 2 or 1)
-            spawnFireEmbers(424, 335, 360, 94, tier)
-        end
-    end
+    -- Scoring feedback is event-bound; no frame-rate-dependent continuous particle emission.
 
     if anim.fireParticles then
         for i = #anim.fireParticles, 1, -1 do
@@ -2505,337 +2449,23 @@ function love.update(dt)
     anim.impactFlash = math.max(0, (anim.impactFlash or 0) - dt)
     anim.screenFlash = math.max(0, (anim.screenFlash or 0) - dt)
     anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
-    if anim.displayAura ~= nil and anim.displayFinalScore ~= nil then
-        anim.displayAura = anim.displayAura
-            + (anim.displayFinalScore - anim.displayAura) * math.min(1, motionDt * 7.5)
-    end
-
-    -- Scoring Animation Loop
+    -- The presentation queue yields only when energy has physically reached the enemy.
     if state == "scoring" and anim.active then
-        anim.entranceTimer = (anim.entranceTimer or 0) + motionDt
-        if anim.entranceTimer >= (anim.entryCompleteAt or 0) then
-            anim.stepTimer = anim.stepTimer + (settings.fastScoring and motionDt * 1.7 or motionDt)
-        end
-        local stepDelay = (anim.targetStepDelay or 0.36) * 1.2
+        local st = UI.ScoringFeel.update(anim, motionDt, settings.fastScoring)
         local steps = anim.scoringData.steps
-        local nextStep = steps[anim.currentStepIndex + 1]
-        local waitingForEnergy = nextStep and nextStep.type == "final_score"
-            and (anim.energyVolleyPending or 0) > 0
-        if waitingForEnergy and anim.stepTimer > stepDelay then anim.stepTimer = stepDelay end
-
-        if anim.stepTimer >= stepDelay and not waitingForEnergy then
-            anim.stepTimer = 0
-            anim.currentStepIndex = anim.currentStepIndex + 1
-            anim.pitchStep = (anim.pitchStep or 0) + 1
-            local pitch = math.min(2.2, 1.0 + (anim.pitchStep - 1) * 0.07)
-
-            if anim.currentStepIndex <= #steps then
-                local st = steps[anim.currentStepIndex]
-
-                if st.type == "base_hand" then
-                    anim.activeCardIndex = nil
-                    anim.stepCategory = "TAY BÀI GỐC"
-                    anim.stepLog = st.vnName .. ": " .. st.chips .. " Chips × " .. st.mult .. " Mult cơ bản"
-                    anim.displayChips = st.chips
-                    anim.displayMult = st.mult
-                    anim.displayFinalScore = st.chips * st.mult
-                    anim.bounceScale.chips = 1.35
-                    anim.bounceScale.mult = 1.35
-                    anim.bounceScale.score = 1.35
-                    anim.targetStepDelay = 0.36
-                    Sound.play("chip_tick", pitch)
-
-                elseif st.type == "discard_buff_trigger" then
-                    anim.activeCardIndex = nil
-                    anim.stepCategory = "CHIẾN THUẬT BỎ BÀI"
-                    anim.stepLog = st.message
-                    if st.addedChips and st.addedChips > 0 then
-                        anim.displayChips = anim.displayChips + st.addedChips
-                        anim.bounceScale.chips = 1.35
-                    end
-                    if st.addedMult and st.addedMult > 0 then
-                        anim.displayMult = anim.displayMult + st.addedMult
-                        anim.bounceScale.mult = 1.35
-                    end
-                    if st.xMult and st.xMult > 1.0 then
-                        anim.displayXMult = anim.displayXMult * st.xMult
-                        anim.bounceScale.xMult = 1.45
-                    end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult)
-                    anim.bounceScale.score = 1.40
-                    anim.targetStepDelay = 0.32
-                    Sound.play("chip_tick", pitch)
-
-                elseif st.type == "card_scored" then
-                    anim.activeCardIndex = st.cardIndex
-                    CardEffects.triggerScorePulse(st.card)
-                    anim.scoredCards = anim.scoredCards or {}
-                    anim.scoredCards[st.cardIndex] = { addedChips = st.addedChips, addedMult = st.addedMult }
-                    anim.displayChips = anim.displayChips + st.addedChips
-                    anim.displayMult = anim.displayMult + st.addedMult
-                    if st.auraMultiplier and st.auraMultiplier > 1 then
-                        anim.displayAuraEditionMultiplier = (anim.displayAuraEditionMultiplier or 1) * st.auraMultiplier
-                    end
-                    anim.displayFlatDamage = (anim.displayFlatDamage or 0) + (st.addedDamage or 0)
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
-                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
-                    anim.displayAura = anim.displayFinalScore
-                    anim.stepCategory = "LÁ BÀI " .. st.cardIndex .. "/" .. #anim.playedCards
-                    local trigStr = ""
-                    if st.deityTriggers and #st.deityTriggers > 0 then
-                        trigStr = " (" .. st.deityTriggers[1].message .. ")"
-                    end
-                    local editionStr = st.auraMultiplier and st.auraMultiplier > 1
-                        and (" · ×" .. string.format("%.2f", st.auraMultiplier) .. " Aura") or ""
-                    anim.stepLog = "Lá " .. st.card.rankName .. st.card.suitSymbol .. ": +" .. st.addedChips .. " Chips" .. (st.addedMult > 0 and (" & +" .. st.addedMult .. " Mult") or "") .. editionStr .. trigStr
-
-                    -- Squash & Stretch + Spark burst
-                    anim.cardBounce[st.cardIndex] = { scaleX = 0.84, scaleY = 1.28 }
-                    anim.cardHit[st.cardIndex] = 0
-                    anim.bounceScale.chips = 1.40
-                    if st.addedMult > 0 then
-                        anim.bounceScale.mult = 1.45
-                    end
-                    anim.bounceScale.score = 1.35
-                    screenShake = math.max(screenShake, 2.0)
-
-                    local cardCenterX = UI.getScoringCardX(st.cardIndex, #anim.playedCards) + 48
-                    local cardCenterY = 295 + 70 - 20
-                    anim.cardTransform[st.cardIndex] = 0
-                    anim.energyVolleyPending = (anim.energyVolleyPending or 0) + 1
-                    table.insert(anim.energyBolts, {
-                        startX = cardCenterX, startY = cardCenterY,
-                        targetX = UI.BATTLE_CENTER_X, targetY = 270,
-                        color = CardEffects.getBeamColor(st.card),
-                        age = 0, duration = 0.34 + (st.cardIndex % 3) * 0.025,
-                    })
-                    local cardScoreText = "+" .. tostring(st.addedChips) .. " ST"
-                    if st.addedMult and st.addedMult > 0 then
-                        cardScoreText = cardScoreText .. "  +" .. tostring(st.addedMult) .. " Mult"
-                    end
-                    if st.addedDamage and st.addedDamage > 0 then
-                        cardScoreText = cardScoreText .. "  +" .. tostring(st.addedDamage) .. " ST cố định"
-                    end
-                    table.insert(anim.floatingTexts, {
-                        text = cardScoreText, color = UI.COLORS.goldYellow,
-                        x = cardCenterX, y = cardCenterY - 34, alpha = 1.35,
-                    })
-                    spawnSparks(cardCenterX, cardCenterY, 18, UI.COLORS.goldYellow)
-                    if st.card.destroyed then
-                        st.card.destroyFx = 0
-                        st.card.destroyFxActive = true
-                        spawnSparks(cardCenterX, cardCenterY, 34, { 1.0, 0.32, 0.08, 1 })
-                        Sound.play("xmult_boom", 1.15)
-                    end
-                    anim.impactFlash = 0.18
-                    anim.impactX = cardCenterX
-                    anim.impactY = cardCenterY
-                    anim.impactColor = UI.COLORS.goldYellow
-
-                    anim.targetStepDelay = 0.34
-                    Sound.play("chip_tick", pitch)
-
-                elseif st.type == "equipment_trigger" then
-                    anim.activeCardIndex = nil
-                    if st.addedChips then
-                        anim.displayChips = anim.displayChips + st.addedChips
-                        anim.bounceScale.chips = 1.35
-                        Sound.play("chip_tick", pitch)
-                    end
-                    if st.addedMult then
-                        anim.displayMult = anim.displayMult + st.addedMult
-                        anim.bounceScale.mult = 1.45
-                        Sound.play("mult_pop", pitch)
-                    end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
-                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
-                    anim.bounceScale.score = 1.35
-                    anim.stepCategory = "HIỆU ỨNG TRANG BỊ"
-                    anim.stepLog = st.message
-                    screenShake = math.max(screenShake, 3.0)
-                    anim.targetStepDelay = 0.28
-
-                elseif st.type == "armor_gain" then
-                    anim.activeCardIndex = nil
-                    anim.stepCategory = "PHÒNG NGỰ (GIÁP)"
-                    anim.stepLog = st.message
-                    Sound.play("chip_tick", pitch)
-                    anim.targetStepDelay = 0.35
-                    table.insert(anim.floatingTexts, {
-                        text = "+" .. st.amount .. " GIÁP!",
-                        color = { 0.35, 0.75, 1.0, 1 },
-                        x = 140,
-                        y = 540,
-                        alpha = 2.0,
-                    })
-
-                elseif st.type == "heal_hp" then
-                    anim.activeCardIndex = nil
-                    anim.stepCategory = "HỒI SINH LỰC"
-                    anim.stepLog = st.message
-                    Sound.play("jackpot", pitch)
-                    anim.targetStepDelay = 0.35
-                    table.insert(anim.floatingTexts, {
-                        text = "+" .. st.amount .. " HP!",
-                        color = { 0.25, 0.95, 0.45, 1 },
-                        x = 140,
-                        y = 540,
-                        alpha = 2.0,
-                    })
-
-                elseif st.type == "deity_hand" then
-                    anim.activeCardIndex = nil
-                    if st.addedChips > 0 then
-                        anim.displayChips = anim.displayChips + st.addedChips
-                        anim.bounceScale.chips = 1.35
-                    end
-                    if st.addedMult > 0 then
-                        anim.displayMult = anim.displayMult + st.addedMult
-                        anim.bounceScale.mult = 1.45
-                    end
-
-                    local dIdx = st.slotIndex
-                    if not dIdx and st.deity then
-                        local maxCheckSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 10
-                        for di = 1, maxCheckSlots do
-                            local d = game.deities and game.deities[di]
-                            if d == st.deity or (d and d.id == st.deity.id) then dIdx = di break end
-                        end
-                    end
-                    local dCenterX = 1074
-                    if dIdx then
-                        anim.deityBounce[dIdx] = 1.45
-                        local dx, _, dw = UI.getDeitySlotRect(dIdx, "playing")
-                        dCenterX = dx + dw / 2
-                    end
-                    local dCenterY = 156
-
-                    if st.xMult > 1.0 then
-                        if st.resultingMult then
-                            anim.displayMult = st.resultingMult
-                        else
-                            anim.displayMult = math.floor(anim.displayMult * st.xMult)
-                        end
-                        anim.bounceScale.xMult = 1.65
-                        anim.bounceScale.mult = 1.65
-                        anim.bounceScale.score = 1.70
-                        screenShake = math.max(screenShake, math.min(5.5, 2.0 + st.xMult * 0.8))
-                        Sound.play("xmult_boom", pitch)
-                        spawnSparks(dCenterX, dCenterY, 28, UI.COLORS.xmultGold)
-                        anim.targetStepDelay = 0.54 -- Suspense micro-pause!
-                        table.insert(anim.floatingTexts, {
-                            text = "x" .. string.format("%.2f", st.xMult) .. " XMult!",
-                            color = UI.COLORS.xmultGold,
-                            x = dCenterX,
-                            y = dCenterY - 20,
-                            alpha = 1.5,
-                        })
-                    else
-                        if st.resultingMult then
-                            anim.displayMult = st.resultingMult
-                        end
-                        anim.targetStepDelay = 0.30
-                        Sound.play("mult_pop", pitch)
-                        spawnSparks(dCenterX, dCenterY, 16, UI.COLORS.multRed)
-                        table.insert(anim.floatingTexts, {
-                            text = "+" .. st.addedMult .. " Mult!",
-                            color = UI.COLORS.multRed,
-                            x = dCenterX,
-                            y = dCenterY - 20,
-                            alpha = 1.3,
-                        })
-                    end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
-                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
-                    anim.stepCategory = "HỘ LINH: " .. (st.deity and st.deity.name or "BỔ TRỢ"):upper()
-                    anim.stepLog = st.message
-
-                elseif st.type == "seal_trigger" then
-                    anim.activeCardIndex = st.cardIndex
-                    anim.stepCategory = "CON DẤU (SEAL)"
-                    anim.stepLog = st.message
-                    Sound.play("jackpot", pitch)
-                    anim.targetStepDelay = 0.34
-                    table.insert(anim.floatingTexts, {
-                        text = "KÍCH HOẠT LẠI (DẤU ĐỎ)!",
-                        color = { 0.95, 0.25, 0.25, 1 },
-                        x = UI.getScoringCardX(st.cardIndex, #anim.playedCards) + 48,
-                        y = 300,
-                        alpha = 1.8,
-                    })
-
-                elseif st.type == "deity_edition" then
-                    anim.activeCardIndex = nil
-                    local dIdx = st.slotIndex or 1
-                    local dx, dy, dw, dh = UI.getDeitySlotRect(dIdx, "playing")
-                    local dCenterX = dx + dw / 2
-                    local dCenterY = dy + dh / 2
-                    anim.deityBounce[dIdx] = 1.45
-
-                    if st.edition == "foil" then
-                        anim.displayChips = st.resultingChips or (anim.displayChips + (st.addedChips or 50))
-                        anim.bounceScale.chips = 1.40
-                        Sound.play("chip_tick", pitch)
-                        spawnSparks(dCenterX, dCenterY, 20, { 0.4, 0.7, 1.0, 1 })
-                        table.insert(anim.floatingTexts, {
-                            text = "+50 CHIPS (FOIL)",
-                            color = { 0.4, 0.7, 1.0, 1 },
-                            x = dCenterX,
-                            y = dCenterY - 20,
-                            alpha = 1.6,
-                        })
-                    elseif st.edition == "holo" then
-                        anim.displayMult = st.resultingMult or (anim.displayMult + (st.addedMult or 10))
-                        anim.bounceScale.mult = 1.45
-                        Sound.play("mult_pop", pitch)
-                        spawnSparks(dCenterX, dCenterY, 20, { 0.9, 0.4, 0.9, 1 })
-                        table.insert(anim.floatingTexts, {
-                            text = "+10 MULT (HOLO)",
-                            color = { 0.9, 0.4, 0.9, 1 },
-                            x = dCenterX,
-                            y = dCenterY - 20,
-                            alpha = 1.6,
-                        })
-                    elseif st.edition == "polychrome" then
-                        anim.displayMult = st.resultingMult or math.floor(anim.displayMult * 1.5)
-                        anim.bounceScale.xMult = 1.65
-                        anim.bounceScale.mult = 1.65
-                        Sound.play("xmult_boom", pitch)
-                        spawnSparks(dCenterX, dCenterY, 28, UI.COLORS.xmultGold)
-                        table.insert(anim.floatingTexts, {
-                            text = "x1.5 MULT (POLY)",
-                            color = UI.COLORS.xmultGold,
-                            x = dCenterX,
-                            y = dCenterY - 20,
-                            alpha = 1.8,
-                        })
-                    end
-                    anim.displayFinalScore = math.floor(anim.displayChips * anim.displayMult * anim.displayXMult
-                        * (anim.displayAuraEditionMultiplier or 1)) + (anim.displayFlatDamage or 0)
-                    anim.stepCategory = "PHÙ PHÉP HỘ LINH"
-                    anim.stepLog = st.message
-                    anim.targetStepDelay = 0.38
-
-                elseif st.type == "final_score" then
-                    anim.activeCardIndex = nil
-                    local shakeAmt = math.min(3.2, 1.0 + math.log10(math.max(10, st.finalScore)) * 0.45)
-                    screenShake = math.max(screenShake, shakeAmt)
-                    anim.hitStop = 0.055
-                    anim.screenFlash = 0.105
-                    anim.screenDistortion = 0.12
-                    anim.bounceScale.score = 1.85
-                    Sound.play("score_impact", 0.95)
-                    if st.finalScore >= 1000 then Sound.play("xmult_boom", 0.88) end
-                    anim.displayFinalScore = st.finalScore
-                    anim.displayAura = st.finalScore
-                    anim.stepCategory = "TỔNG SÁT THƯƠNG"
-                    anim.stepLog = anim.displayChips .. " Chips × " .. anim.displayMult .. " Mult" .. (anim.displayXMult > 1.0 and (" × " .. anim.displayXMult .. " XMult") or "") .. ((st.auraMultiplier or 1) > 1 and (" × " .. string.format("%.2f", st.auraMultiplier) .. " Aura") or "") .. ((st.flatDamageBonus or 0) > 0 and (" + " .. st.flatDamageBonus .. " ST cố định") or "") .. " = " .. st.finalScore .. " Sát thương!"
-
+        if st or UI.ScoringFeel.isFinished(anim) then
+            if st then
+                if st.type == "final_score" then
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
                     local actualDmg, defeated = Monster.takeDamage(game.monster, st.finalScore)
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
-                    anim.showMonsterDamage(actualDmg, defeated, false)
+                    UI.ScoringFeel.damageApplied(anim, game.monster.hp, actualDmg)
+                    monsterMotion.hit = 0.24
+                    spawnSparks(UI.BATTLE_CENTER_X, 270,
+                        math.floor(UI.ScoringFeel.config.impact.minParticles
+                            + (UI.ScoringFeel.config.impact.maxParticles - UI.ScoringFeel.config.impact.minParticles)
+                            * anim.sequence.intensity), UI.ScoringFeel.config.color.aura)
 
                     if defeated then
                         Sound.play("jackpot")
@@ -2927,14 +2557,6 @@ function love.update(dt)
                     if st.bonusGold and st.bonusGold > 0 then
                         game.gold = game.gold + st.bonusGold
                     end
-
-                    table.insert(anim.floatingTexts, {
-                        text = "-" .. actualDmg .. " SÁT THƯƠNG!",
-                        color = UI.COLORS.hpRed,
-                        x = 160,
-                        y = 230,
-                        alpha = 1.5,
-                    })
 
                     if defeated then
                         local baseReward = game.monster.isBoss and 15 or (game.monster.isElite and 10 or 4)
@@ -3124,13 +2746,9 @@ function love.update(dt)
                     end
                 end
             else
-                if anim.stepTimer >= 0.12 and not anim.exitStarted then
-                    anim.exitStarted = true
-                    Sound.play("card_slide", 0.86)
-                end
-                anim.exitProgress = math.max(0, math.min(1, (anim.stepTimer - 0.12) / 0.52))
-                if anim.stepTimer >= 0.8 or anim.currentStepIndex > #steps + 1 then
+                if UI.ScoringFeel.isFinished(anim) then
                     anim.active = false
+                    if game.monster then game.monster.damageLagHp = game.monster.hp end
                     anim.playedCards = {}
 
                     -- Resolve from live HP/hand state so stale animation flags can
@@ -3676,14 +3294,14 @@ local function drawStarterDeckSelect()
     love.graphics.printf("Không còn phe phái — chất bài chỉ dùng để tạo thế Poker.", 0, 88, V_WIDTH, "center")
 
     local deckInfo = Deck.STARTER_DECKS.red_deck
-    local cardW, cardH = 390, 430
+    local cardW, cardH = 262, 350
     local cardX, cardY = (V_WIDTH - cardW) / 2, 135
     local hovered = mx >= cardX and mx <= cardX + cardW and my >= cardY and my <= cardY + cardH
     require("ui.card_surfaces").starter(deckInfo, cardX, cardY, cardW, cardH)
 
     local choose = {
-        id = "deck_red", deckId = "red_deck", text = "CHỌN BỘ BÀI ĐỎ",
-        x = cardX + 65, y = cardY + cardH - 70, w = cardW - 130, h = 44,
+        id = "deck_red", deckId = "red_deck", text = "BẮT ĐẦU HÀNH TRÌNH",
+        x = cardX - 24, y = cardY + cardH + 30, w = cardW + 48, h = 44,
         color = deckInfo.color, font = UI.fonts.medium,
     }
     table.insert(buttons, choose)
@@ -3691,9 +3309,8 @@ local function drawStarterDeckSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("1 lá ban đầu • Thu thập thêm bài trong hành trình • Tốc đánh từ 1 đến 11", 0, V_HEIGHT - 50, V_WIDTH, "center")
+    love.graphics.printf("1 lá ban đầu • Thu thập thêm bài trong hành trình • Tốc đánh từ 1 đến 999", 0, V_HEIGHT - 50, V_WIDTH, "center")
 end
-
 local function drawMenu()
     if menuMode == "title" then
         drawMainMenu()
@@ -3748,6 +3365,8 @@ local function drawBattleEnemy(m)
     local t = (juice and juice.ambientTimer) or 0
     local attack = monsterMotion.attack / 0.42
     local hit = monsterMotion.hit / 0.35
+    local recoil, squash, flash = 0, 1, 0
+    if state == "scoring" then recoil, squash, flash = UI.ScoringFeel.enemyReaction(anim); hit = flash end
     local cx, cy = UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.9) * 5
     local size = m.isBoss and 355 or (m.isElite and 325 or 290)
     g.setColor(0, 0, 0, 0.38)
@@ -3757,14 +3376,18 @@ local function drawBattleEnemy(m)
         local iw, ih = enemyImage:getDimensions()
         local fit = math.min(size / iw, size / ih)
         g.push()
-        g.translate(cx + attack * 50 - hit * 14, cy - attack * 20)
+        g.translate(cx + attack * 50 - hit * 5, cy - attack * 20 + recoil)
+        g.scale(squash, 1 / squash)
         g.rotate(math.sin(t * 1.4) * 0.018 - attack * 0.08 + hit * 0.07)
-        g.setColor(1, 1 - hit * 0.58, 1 - hit * 0.58, 1)
+        g.setColor(1, 1 - hit * 0.20, 1 - hit * 0.25, 1)
         g.draw(enemyImage, -iw * fit / 2, -ih * fit / 2, 0, fit, fit)
         g.pop()
     end
     UI.components.EnemyPanel.draw((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu",
-        m.damageLagHp or m.hp, m.maxHp, UI.fonts, UI.BATTLE_CENTER_X, m.hp)
+        state == "scoring" and anim.sequence and anim.sequence.hp or (m.damageLagHp or m.hp),
+        m.maxHp, UI.fonts, UI.BATTLE_CENTER_X,
+        state == "scoring" and anim.sequence and anim.sequence.hp or m.hp,
+        state == "scoring" and anim.sequence and anim.sequence.hpTrail or nil)
 end
 
 local function drawBattleInfoPanel(m, eval, preview)
@@ -3773,7 +3396,7 @@ local function drawBattleInfoPanel(m, eval, preview)
     local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
     local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
     local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
-    local handName = scoring and (anim.evalResult and anim.evalResult.type and anim.evalResult.type.vnName)
+    local handName = scoring and (anim.sequence and anim.sequence.handName)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
     local detail = scoring and (finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
@@ -3782,8 +3405,13 @@ local function drawBattleInfoPanel(m, eval, preview)
     UI.components.HandInfoPanel.draw({
         handName = UI.truncateUtf8(handName, 24), chips = chips, mult = mult, xMult = xMult, aura = aura,
         scoring = scoring, enemyName = UI.truncateUtf8((m and m.name) or "Không rõ", 13),
-        enemyHp = math.max(0, (m and m.hp) or 0), enemyMaxHp = (m and m.maxHp) or 1,
-        enemyBarHp = m and (m.damageLagHp or m.hp) or 0,
+        enemyHp = math.floor(math.max(0, scoring and anim.sequence.hp or (m and m.hp) or 0)), enemyMaxHp = (m and m.maxHp) or 1,
+        enemyBarHp = scoring and anim.sequence.hp or (m and (m.damageLagHp or m.hp) or 0),
+        enemyTrailHp = scoring and anim.sequence.hpTrail,
+        auraIntensity = scoring and anim.sequence.intensity or 0,
+        formula = scoring and anim.sequence.events[anim.sequence.index]
+            and anim.sequence.events[anim.sequence.index].kind == "FORMULA"
+            and UI.ScoringFeel.formula(anim.sequence) or nil,
         intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
         playerSpeed = scoring and anim.playerAttackSpeed
             or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards()) or nil),
@@ -3807,41 +3435,6 @@ local function drawCombatFeedback()
             love.graphics.setColor(p.r or col[1], p.g or col[2], p.b or col[3], alpha)
             love.graphics.circle("fill", p.x, p.y, p.size * (p.life / p.maxLife))
         end
-        love.graphics.setBlendMode("alpha")
-    end
-
-    if anim.energyBolts and #anim.energyBolts > 0 then
-        love.graphics.setBlendMode("add")
-        for _, bolt in ipairs(anim.energyBolts) do
-            if not bolt.hit then
-                local dx, dy = bolt.targetX - bolt.startX, bolt.targetY - bolt.startY
-                local length = math.max(1, math.sqrt(dx * dx + dy * dy))
-                local perpX, perpY = -dy / length, dx / length
-                for shard = -2, 2 do
-                    local delay = math.abs(shard) * 0.016
-                    local progress = math.max(0, math.min(1, (bolt.age - delay) / (bolt.duration - delay)))
-                    local eased = 1 - (1 - progress) ^ 3
-                    local offset = shard * 4 * (1 - eased)
-                    local arc = math.sin(eased * math.pi) * 16
-                    local x = bolt.startX + dx * eased + perpX * offset
-                    local y = bolt.startY + dy * eased + perpY * offset - arc
-                    local tailProgress = math.max(0, progress - 0.16)
-                    local tailEased = 1 - (1 - tailProgress) ^ 3
-                    local tailOffset = shard * 4 * (1 - tailEased)
-                    local tailX = bolt.startX + dx * tailEased + perpX * tailOffset
-                    local tailY = bolt.startY + dy * tailEased + perpY * tailOffset
-                        - math.sin(tailEased * math.pi) * 16
-                    local alpha = 0.88 * (1 - progress * 0.18)
-                    local boltColor = bolt.color or UI.COLORS.goldYellow
-                    love.graphics.setColor(boltColor[1], boltColor[2], boltColor[3], alpha)
-                    love.graphics.setLineWidth(shard == 0 and 3.2 or 1.25)
-                    love.graphics.line(tailX, tailY, x, y)
-                    love.graphics.setColor(1, 1, 1, alpha)
-                    love.graphics.circle("fill", x, y, shard == 0 and 3.5 or 1.8)
-                end
-            end
-        end
-        love.graphics.setLineWidth(1)
         love.graphics.setBlendMode("alpha")
     end
 
@@ -3958,10 +3551,10 @@ local function drawPlayingState()
             end
 
             -- Slot bounce effect
-            local bScale = math.min(1.02, anim.deityBounce and anim.deityBounce[i] or 1.0)
+            local bScale = math.min(state == "scoring" and 1.16 or 1.02, anim.deityBounce and anim.deityBounce[i] or 1.0)
             love.graphics.push()
             local deityFloat = math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2
-            love.graphics.translate(dx + deitySlotW / 2, deityY + deitySlotH / 2 + deityFloat)
+            love.graphics.translate(dx + deitySlotW / 2, deityY + deitySlotH / 2 + deityFloat - (bScale - 1) * 45)
             love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
             if bScale > 1.01 then
                 love.graphics.scale(bScale, bScale)
@@ -4087,18 +3680,18 @@ local function drawPlayingState()
         and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
     local btnPlay = {
         id = canEndTurn and "end_turn" or "play",
-        text = canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài",
+        text = state == "scoring" and "ĐANG TÍNH AURA" or (canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài"),
         x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
         w = 175,
         h = 58,
         font = UI.fonts.small,
         variant = "cyan",
-        disabled = not canEndTurn and (not hasSelection or game.handsRemaining <= 0),
+        disabled = state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
     }
     if anim.playButtonPulse > 0 then
-        local pulseProgress = 1 - anim.playButtonPulse / 0.12
+        local pulseProgress = 1 - anim.playButtonPulse / UI.ScoringFeel.config.timing.button
         btnPlay.animationScale = 1 - 0.05 * (1 - pulseProgress) * math.cos(pulseProgress * math.pi * 2)
     end
     table.insert(buttons, btnPlay)
@@ -4218,6 +3811,7 @@ end
 local function drawScoringState()
     -- Reuse the arena and live left-side breakdown while cards resolve.
     drawPlayingState()
+    UI.ScoringFeel.drawDim(anim)
 
     -- Played cards share the same arena center as the hand and monster.
     local cards = anim.playedCards or {}
@@ -4231,13 +3825,14 @@ local function drawScoringState()
         local start = anim.cardEntryFrom and anim.cardEntryFrom[i] or nil
         local fromX = start and start.x or targetX
         local fromY = start and start.y or 490
-        local cardEntryTime = math.max(0, (anim.entranceTimer or 0) - (i - 1) * 0.055)
-        local liftProgress = math.min(1, cardEntryTime / 0.07)
-        local entrance = math.max(0, math.min(1, (cardEntryTime - 0.07) / 0.24))
+        local timing = UI.ScoringFeel.config.timing
+        local cardEntryTime = math.max(0, (anim.entranceTimer or 0) - (i - 1) * timing.stagger)
+        local liftProgress = math.min(1, cardEntryTime / timing.lift)
+        local entrance = math.max(0, math.min(1, (cardEntryTime - timing.lift) / timing.travel))
         local easedEntrance = 1 - (1 - entrance) ^ 3
         local cx = fromX + (targetX - fromX) * easedEntrance
         local cy
-        if cardEntryTime < 0.07 then
+        if cardEntryTime < timing.lift then
             local lift = 12 * liftProgress * liftProgress * (3 - 2 * liftProgress)
             cy = fromY - lift
         else
@@ -4261,16 +3856,16 @@ local function drawScoringState()
         end
 
         if isActive then
-            cy = cy - 20 -- Lift active card
+            cy = cy - 6 * math.exp(-(anim.sequence.age or 0) * 16) -- Soft scoring lift
         end
 
         local hitAge = anim.cardHit and anim.cardHit[i]
         if hitAge then
-            local force = math.max(0, 1 - hitAge / 0.36)
-            cx = cx + math.sin(hitAge * 118) * 7 * force
-            cy = cy - math.sin(hitAge * 62) * 4 * force
-            c.rotation = c.rotation + math.sin(hitAge * 95) * 0.045 * force
-            c.visualScale = c.visualScale * (1 + 0.11 * force)
+            local force = math.max(0, 1 - hitAge / 0.18)
+            cx = cx + math.sin(hitAge * 118) * 1.8 * force
+            cy = cy - math.sin(hitAge * 62) * 1.5 * force
+            c.rotation = c.rotation + math.sin(hitAge * 95) * 0.015 * force
+            c.visualScale = c.visualScale * (1 + 0.055 * force)
         end
 
         if anim.cardBounce and anim.cardBounce[i] then
@@ -4290,16 +3885,18 @@ local function drawScoringState()
 
         local transformAge = anim.cardTransform and anim.cardTransform[i]
         local transformProgress = transformAge and math.min(1, transformAge / 0.42) or 0
-        local dissolve = math.max(c.destroyFxActive and (c.destroyFx or 0) or 0, transformProgress)
+        local dissolve = transformProgress -- Destruction visuals wait for energy conversion too.
         if dissolve > 0 then
             local shrink = math.max(0.12, 1 - dissolve * 0.86)
             if transformProgress < 1 then
                 love.graphics.push()
                 love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
                 love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
-                c.visualScale = c.visualScale * shrink
-                UI.drawCard(c, -cardW / 2, -cardH / 2, cardW, cardH)
-                c.visualScale = c.visualScale / shrink
+                love.graphics.scale(shrink, shrink)
+                local oldAlpha = c.alpha
+                c.alpha = 1 - transformProgress
+                UI.drawCardFace(c, -cardW / 2, -cardH / 2, cardW, cardH)
+                c.alpha = oldAlpha
                 love.graphics.pop()
             end
 
@@ -4309,7 +3906,8 @@ local function drawScoringState()
                 local sx = cx + cardW / 2 + math.cos(phase) * dissolve * (12 + shard * 1.4)
                 local sy = cy + cardH / 2 + math.sin(phase) * dissolve * 12 - dissolve * shard
                 if transformAge ~= nil then
-                    love.graphics.setColor(0.72, 0.90, 1, 1 - transformProgress)
+                    local beamColor = CardEffects.getBeamColor(c)
+                    love.graphics.setColor(beamColor[1], beamColor[2], beamColor[3], 1 - transformProgress)
                 else
                     love.graphics.setColor(1, 0.22 + (shard % 3) * 0.16, 0.05, 1 - dissolve)
                 end
@@ -4370,6 +3968,7 @@ local function drawScoringState()
     -- 3. Sparks and Fire Particles directly on board
     drawRealisticFireParticles()
     drawCombatFeedback()
+    UI.ScoringFeel.draw(anim, UI)
 
 end
 
@@ -6455,64 +6054,25 @@ local function drawShopState()
         shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
-    -- 4. BOTTOM RIGHT: 3D DECK PILE (Click to open Deck Viewer [Tab])
-    ----------------------------------------------------------------------------
-    local deckPileX = shopX + shopW + 18
-    local deckPileY = shopY + 426
-    local deckPileW = 84
-    local deckPileH = 138
-
-    local isDeckHovered = (mx >= deckPileX and mx <= deckPileX + deckPileW and my >= deckPileY and my <= deckPileY + deckPileH)
-    local drawDeckY = isDeckHovered and (deckPileY - 6) or deckPileY
-
-    -- 3D Stack Offset Cards
-    love.graphics.setColor(0.35, 0.08, 0.08, 0.7)
-    UI.drawRoundedRect("fill", deckPileX, drawDeckY + 6, deckPileW, deckPileH, 6)
-    love.graphics.setColor(0.55, 0.12, 0.12, 0.8)
-    UI.drawRoundedRect("fill", deckPileX, drawDeckY + 3, deckPileW, deckPileH, 6)
-
-    -- Top Card (Balatro Red Card Back Pattern)
-    love.graphics.setColor(0.78, 0.18, 0.18, 1)
-    UI.drawRoundedRect("fill", deckPileX, drawDeckY, deckPileW, deckPileH, 6)
-    love.graphics.setColor(isDeckHovered and UI.COLORS.goldYellow or { 0.95, 0.85, 0.85, 0.9 })
-    love.graphics.setLineWidth(isDeckHovered and 2.5 or 1.5)
-    UI.drawRoundedRect("line", deckPileX, drawDeckY, deckPileW, deckPileH, 6)
-
-    love.graphics.setColor(0.95, 0.85, 0.85, 0.25)
-    love.graphics.rectangle("line", deckPileX + 8, drawDeckY + 8, deckPileW - 16, deckPileH - 16)
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.printf("🂠", deckPileX, drawDeckY + 32, deckPileW, "center")
-
-    local deckCountStr = tostring(#(game.deck or {})) .. " / " .. tostring(#(game.persistentDeck or {}))
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(deckCountStr, deckPileX, drawDeckY + deckPileH - 22, deckPileW, "center")
-
-    local btnDeck = {
-        id = "open_deck_viewer",
-        text = "",
-        x = deckPileX,
-        y = drawDeckY,
-        w = deckPileW,
-        h = deckPileH,
-        invisible = true,
-    }
-    table.insert(buttons, btnDeck)
-
-    if isDeckHovered then
-        local tipW = 150
-        local tipH = 34
-        local tipX = deckPileX - 22
-        local tipY = drawDeckY - 42
-        love.graphics.setColor(0.12, 0.15, 0.18, 0.95)
-        UI.drawRoundedRect("fill", tipX, tipY, tipW, tipH, 4)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", tipX, tipY, tipW, tipH, 4)
+    -- Purchase target and hit test share the same fixed deck bounds.
+    local deck = shopDrag.purchaseZone
+    local isDeckHovered = mx >= deck.x and mx <= deck.x + deck.w and my >= deck.y and my <= deck.y + deck.h
+    local buying = shopDrag.active and shopDrag.isDragging and not shopDrag.sourceKind
+    local canAfford = buying and (game.gold or 0) >= (shopDrag.item.cost or 0)
+    UI.components.DeckCounter.draw(deck.x, deck.y, deck.w, deck.h,
+        #(game.deck or {}), #(game.persistentDeck or {}), UI.fonts, isDeckHovered,
+        buying and (canAfford and UI.COLORS.hpGreen or UI.COLORS.multRed) or nil)
+    table.insert(buttons, { id = "open_deck_viewer", text = "", x = deck.x, y = deck.y,
+        w = deck.w, h = deck.h, invisible = true })
+    if buying then
         love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf("Xem Toàn Bộ Bài", tipX, tipY + 9, tipW, "center")
+        love.graphics.setColor(canAfford and UI.COLORS.hpGreen or UI.COLORS.multRed)
+        love.graphics.printf(canAfford and (isDeckHovered and "THẢ ĐỂ MUA" or "KÉO VÀO ĐÂY") or "KHÔNG ĐỦ VÀNG",
+            deck.x - 9, deck.y - 25, deck.w + 18, "center")
+    elseif isDeckHovered then
+        UI.components.Tooltip.draw(deck.x - 80, deck.y - 65, 160, 50,
+            "BỘ BÀI", "Nhấp để xem · Kéo hàng vào để mua", UI.fonts, "cyan")
     end
-
     local altar = shopDrag.sacrificeZone
     local draggingOwned = (shopDrag.active and shopDrag.isDragging and shopDrag.sourceKind ~= nil)
         or (deityDrag.active and deityDrag.isDragging and state == "shop")
@@ -6545,43 +6105,7 @@ local function drawShopState()
     end
 
     ----------------------------------------------------------------------------
-    -- 4b. DRAGGED SHOP ITEM & DEITY ON TOP WITH 3D TILT & DROP ZONE
-    ----------------------------------------------------------------------------
-    if shopDrag.active and shopDrag.isDragging and shopDrag.item then
-        if not shopDrag.sourceKind then
-            -- Existing purchase drop zone for shop stock.
-            local dropZoneX = shopX + 20
-            local dropZoneY = shopY + 12
-            local dropZoneW = shopW - 40
-            local dropZoneH = 46
-            local isOverDropZone = (my < 380 or my < (shopDrag.origY - 40))
-            local canAfford = (game.gold or 0) >= (shopDrag.item.cost or 0)
-
-            if isOverDropZone then
-                love.graphics.setColor(canAfford and { 0.15, 0.65, 0.35, 0.95 } or { 0.75, 0.18, 0.18, 0.95 })
-            else
-                love.graphics.setColor(0.12, 0.16, 0.22, 0.85)
-            end
-            UI.drawRoundedRect("fill", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
-            love.graphics.setColor(isOverDropZone and (canAfford and UI.COLORS.btnPlay or UI.COLORS.multRed) or UI.COLORS.goldYellow)
-            love.graphics.setLineWidth(2)
-            UI.drawRoundedRect("line", dropZoneX, dropZoneY, dropZoneW, dropZoneH, 8)
-
-            love.graphics.setFont(UI.fonts.medium)
-            love.graphics.setColor(1, 1, 1, 1)
-            local dropText
-            if not canAfford then
-                dropText = "KHÔNG ĐỦ TIỀN - $" .. shopDrag.item.cost
-            elseif isOverDropZone then
-                dropText = "THẢ TẠI ĐÂY ĐỂ MUA - $" .. shopDrag.item.cost
-            else
-                dropText = "KÉO LÊN TRÊN ĐỂ MUA - $" .. shopDrag.item.cost
-            end
-            love.graphics.printf(dropText, dropZoneX, dropZoneY + 10, dropZoneW, "center")
-        end
-
-    end
-
+    -- Stock purchases are accepted only at the deck pile, never above the shop.
     ----------------------------------------------------------------------------
     -- 5. BALATRO TOOLTIP BADGE (Floating Info for Hovered Card)
     ----------------------------------------------------------------------------
@@ -6695,7 +6219,7 @@ local function drawShopState()
                 local cx = startCardX + (i - 1) * (cW + 32)
                 local reveal = math.max(0, math.min(1, (timer - 0.94 - (i - 1) * 0.14) / 0.46))
                 local eased = 1 - (1 - reveal) ^ 3
-                local flipX = math.max(0.035, math.sin(eased * math.pi / 2))
+                local flipX = math.max(0.035, math.abs(math.cos(eased * math.pi)))
                 local ready = reveal >= 0.99
                 local isChoiceHovered = ready and mx >= cx and mx <= cx + cW and my >= cardY and my <= cardY + cH
                 local idleY = ready and math.sin(juice.ambientTimer * 1.8 + i * 1.4) * 3 or 0
@@ -6707,8 +6231,11 @@ local function drawShopState()
                 love.graphics.rotate((1 - eased) * ((i - 2) * 0.24))
                 love.graphics.translate(-cx - cW / 2, -drawCY - cH / 2)
 
-                require("ui.card_surfaces").reward(card, cx, drawCY, cW, cH, pack.packType, labels[pack.packType], isChoiceHovered)
-
+                if eased < 0.5 then
+                    UI.drawCardBack(cx, drawCY, cW, cH)
+                else
+                    require("ui.card_surfaces").reward(card, cx, drawCY, cW, cH, pack.packType, labels[pack.packType], isChoiceHovered)
+                end
                 local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial" or pack.packType == "edition")
                 if ready and isConsumablePack then
                 local btnUse = {
@@ -7046,7 +6573,9 @@ local function drawShopFx()
         local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "consume" and 0.42 or ((fx.kind == "sell" or fx.kind == "sacrifice") and -1.05 or 0.24))
         love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
         love.graphics.scale(size, size)
-        if fx.kind == "consume" then
+        if item.faceDown or (item.reward and item.reward.faceDown) then
+            UI.drawCardBack(-w / 2, -h / 2, w, h)
+        elseif fx.kind == "consume" then
             drawBattleConsumableCard(item, -w / 2, -h / 2, w, h, 1, -1000, -1000, false, true, 1 - p)
         elseif item.category == "deity" or item.id and Deities.CATALOG[item.id] then
             UI.drawPatronCard(item.deity or item, -w / 2, -h / 2, w, h, false, false, false)
@@ -7219,7 +6748,9 @@ function love.draw()
     end
 
     love.graphics.push()
-    if screenShake > 0 then
+    if state == "scoring" and anim.sequence then
+        love.graphics.translate(UI.ScoringFeel.camera(anim))
+    elseif screenShake > 0 then
         local sx = (love.math.random() * 2 - 1) * screenShake * 0.7
         local sy = (love.math.random() * 2 - 1) * screenShake * 0.7
         love.graphics.translate(sx, sy)
@@ -7345,6 +6876,8 @@ function love.draw()
     end
 
     UI.CardPhysics.drawLab(UI, CardEffects)
+    UI.ScoringFeel.drawLab(UI)
+    if state == "scoring" and not UI.ScoringFeel.labOpen then UI.ScoringFeel.drawDebug(anim, UI) end
     UI.CardPhysics.endFrame()
     UI.CardPhysics.drawDebug()
     UI.drawCardEffectsDebug()
@@ -7661,6 +7194,7 @@ local function handleShopMousepressed(mx, my, button)
     end
 
     -- Left-click starts a drag from a consumable; right-click activates it.
+    if button ~= 1 then return true end
     for j = 1, 3 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
@@ -8320,6 +7854,7 @@ local function handleModalsMousepressed(mx, my, button)
 end
 
 function love.mousepressed(x, y, button)
+    if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
     if UI.CardPhysics.isLabOpen() then
         UI.CardPhysics.press(mx, my, button)
@@ -8615,7 +8150,7 @@ function love.mousepressed(x, y, button)
 
     elseif state == "scoring" then
         -- Fast-forward scoring step on click
-        anim.stepTimer = 999
+        UI.ScoringFeel.skipOrFastForward(anim)
         return
 
     elseif state == "CASH_OUT" then
@@ -8953,6 +8488,7 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if UI.ScoringFeel.labKeypressed(key, UI) then return end
     UI.CardPhysics.labAction(key, CardEffects)
     if UI.CardPhysics.keypressed(key) then return end
     if isUiGalleryOpen then
@@ -9085,7 +8621,7 @@ function love.keypressed(key)
         end
     elseif state == "scoring" then
         if key == "space" or key == "return" then
-            anim.stepTimer = 999
+            UI.ScoringFeel.skipOrFastForward(anim)
         end
     elseif state == "CASH_OUT" then
         if key == "space" or key == "return" then
@@ -9278,41 +8814,27 @@ function love.mousereleased(x, y, button)
                     end
                 end
             end
-        elseif not shopDrag.isDragging and shopDrag.itemIndex then
-            local boughtItem = shopDrag.item
-            local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
-            if success and boughtItem.category ~= "pack" then
-                spawnShopFx("buy", boughtItem, shopDrag.origX + shopDrag.cardW / 2, shopDrag.origY + shopDrag.cardH / 2)
-            end
-            if success and msg == "open_socketing" and eq then
-                pendingEquipment = eq
-                socketingReturnState = "shop"
-                state = "socketing"
-            end
-        elseif shopDrag.isDragging and shopDrag.item then
-            if my < 380 or my < (shopDrag.origY - 40) then
-                if (game.gold or 0) >= (shopDrag.item.cost or 0) then
-                    local boughtItem = shopDrag.item
-                    local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
-                    if success and boughtItem.category ~= "pack" then
-                        spawnShopFx("buy", boughtItem, mx, my)
-                    end
-                    if success and msg == "open_socketing" and eq then
+        elseif shopDrag.isDragging and shopDrag.item and shopDrag.itemIndex then
+            local zone = shopDrag.purchaseZone
+            local overDeck = state == "shop" and mx >= zone.x and mx <= zone.x + zone.w
+                and my >= zone.y and my <= zone.y + zone.h
+            -- Reject stale stock and modal transitions before any gold mutation.
+            if overDeck and shopData and not shopData.currentPackOpening
+                and not isDeckViewerOpen and not isSettingsOpen and not isShopTransferOpen
+                and shopData.items[shopDrag.itemIndex] == shopDrag.item then
+                local boughtItem = shopDrag.item
+                local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
+                if success then
+                    if boughtItem.category ~= "pack" then spawnShopFx("buy", boughtItem, mx, my) end
+                    if msg == "open_socketing" and eq then
                         pendingEquipment = eq
                         socketingReturnState = "shop"
                         state = "socketing"
                     end
                 else
-                    Sound.play("cant_afford")
-                    screenShake = 7
-                    table.insert(juice.floatingTexts, {
-                        text = "Không đủ tiền!",
-                        color = UI.COLORS.multRed,
-                        x = mx,
-                        y = my - 20,
-                        vy = -45,
-                        life = 1.0,
-                    })
+                    table.insert(juice.floatingTexts, { text = msg or "Không thể mua!",
+                        color = UI.COLORS.multRed, x = zone.x + zone.w / 2, y = zone.y - 28,
+                        vy = -35, life = 1.2 })
                 end
             else
                 Sound.play("card_slide")

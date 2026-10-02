@@ -4,11 +4,15 @@ local frame = 0
 local shopOnly = false
 local packSkipOnly = false
 local physicsOnly = false
+local scoringOnly = false
+local shopDropOnly = false
 local shopCaptureAt, shopCaptureSaved, shopCaptureStep
 for _, value in ipairs(arg or {}) do
     if value == "--capture-shop" then shopOnly = true end
     if value == "--test-pack-skip" then packSkipOnly = true end
     if value == "--test-card-physics" then physicsOnly = true end
+    if value == "--test-scoring-feel" then scoringOnly = true end
+    if value == "--test-shop-deck-drop" then shopDropOnly = true end
 end
 local Equipment = require("src.equipment")
 local Deities = require("src.deities")
@@ -39,8 +43,19 @@ local function saveImage(name)
     end)
 end
 
+local function buyAtDeck(x, y)
+    clickVirtual(x, y)
+    local w, h = love.graphics.getDimensions()
+    local scale = math.min(w / 1280, h / 720)
+    local px, py = (w - 1280 * scale) / 2 + 1065 * scale, (h - 720 * scale) / 2 + 555 * scale
+    love.mousemoved(px, py, 0, 0)
+    love.mousereleased(px, py, 1)
+end
+
 function Capture.update(gameRef, callbacks)
     frame = frame + 1
+    if shopDropOnly then return require("tests.shop_deck_drop_capture").update(gameRef, callbacks) end
+    if scoringOnly then return require("tests.scoring_feel_capture").update(gameRef, callbacks) end
     if physicsOnly then return require("tests.card_physics_capture").update(gameRef, callbacks) end
     if packSkipOnly then
         return require("tests.pack_skip_capture").update(gameRef, callbacks, clickVirtual)
@@ -61,15 +76,15 @@ function Capture.update(gameRef, callbacks)
             -- Let draw rebuild item-index hitboxes after each purchase.
             if not shopCaptureStep then
                 local deckSize = #gameRef.persistentDeck
-                clickVirtual(498, 225, true)
+                buyAtDeck(498, 225)
                 assert(#gameRef.persistentDeck == deckSize + 1, "Retail card hitbox must buy the displayed card")
                 shopCaptureStep = 1
             elseif shopCaptureStep == 1 then
-                clickVirtual(870, 225, true)
+                buyAtDeck(870, 225)
                 assert(gameRef.playerHp == 100, "Potion hitbox must buy and heal")
                 shopCaptureStep = 2
             else
-                clickVirtual(155, 590, true)
+                buyAtDeck(155, 590)
                 local voucherCount = 0
                 for _ in pairs(gameRef.vouchers) do voucherCount = voucherCount + 1 end
                 assert(voucherCount == 1, "Privilege purchase hitbox must activate its voucher")

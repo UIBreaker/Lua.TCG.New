@@ -118,6 +118,21 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     Core.textLine(data.handName or "Chọn bài để xem", x + 16, y + 41, w - 32,
         drawFonts.body, Theme.colors.text, "left", drawFonts.label)
 
+    if data.scoring then
+        g.push("all")
+        g.setBlendMode("add")
+        for _, metric in ipairs({{x+12, data.chipsBounce or 1, Theme.colors.cyan},
+            {x+116, data.multBounce or 1, Theme.colors.red}}) do
+            local col, pulse = metric[3], math.max(0, metric[2] - 1)
+            g.setColor(col[1], col[2], col[3], math.min(0.22, pulse))
+            g.rectangle("fill", metric[1], y+78, 94, 66, 5)
+        end
+        local pulse = math.max(0, (data.auraBounce or 1) - 1)
+        g.setColor(1, 0.77, 0.34, math.min(0.24, pulse))
+        g.rectangle("fill", x+16, y+175, w-32, 63, 5)
+        g.pop()
+    end
+
     drawMetric(x + 12, y + 78, 94, 66, "SÁT THƯƠNG", fmt(data.chips or 0),
         "cyan", "damage", drawFonts, data.chipsBounce)
     drawMetric(x + 116, y + 78, 94, 66, "CƯỜNG HÓA", fmt(data.mult or 0),
@@ -152,6 +167,13 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     local barX, barY, barW, barH = x + 18, y + 340, w - 36, 16
     local hp, maxHp = math.max(0, tonumber(data.enemyBarHp or data.enemyHp) or 0), tonumber(data.enemyMaxHp) or 1
     local ratio = math.max(0, math.min(1, hp / math.max(1, maxHp)))
+    if data.enemyTrailHp then
+        local trail = math.max(0, math.min(1, data.enemyTrailHp / math.max(1,maxHp)))
+        g.push("all")
+        g.setColor(1,0.68,0.28,0.55)
+        g.rectangle("fill", barX+3,barY+3,(barW-6)*trail,barH-6,2,2)
+        g.pop()
+    end
     if ratio > 0 then
         g.push("all")
         g.setColor(0.76, 0.18, 0.20, 1)
@@ -191,7 +213,7 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     if data.scoring then
         Core.text(data.category or "ĐANG CỘNG AURA", x + 16, y + 535,
             w - 32, drawFonts.label, Theme.colors.gold)
-        Core.text(boundedLines(data.detail or "", drawFonts.detail, w - 32, 3),
+        Core.text(boundedLines(data.formula or data.detail or "", drawFonts.detail, w - 32, 3),
             x + 16, y + 557, w - 32, drawFonts.detail, Theme.colors.text)
     end
 end

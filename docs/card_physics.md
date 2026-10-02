@@ -61,4 +61,14 @@ spring integration; disappeared surfaces release their cached arguments.
   SPN, consumables, shop, all nine packs, viewer return, SPN reorder, collection,
   lab/presets/shaders, lost focus and dt spike. Capture mode doesn't write saves.
 - `lovec.exe . --test-pack-skip`: all nine pack skip/closing animation paths.
-- `lovec.exe . --capture-shop`: card/potion/voucher purchase hitboxes.
+- `lovec.exe . --capture-shop`: card/potion/voucher deck-drop purchase hitboxes.
+- `lovec.exe . --test-shop-deck-drop`: 22 actual input cases (all retail items,
+  privileges and nine packs), invalid drops, insufficient funds/full SPN/full HP,
+  exactly-once purchases and pixel-identical shared backs across nine renderers.
+
+Shop purchases now require a left-button drag onto the deck pile at the right.
+Clicks and drops outside the deck do not buy anything; failed purchases keep
+their stock/gold and return visually to the shelf. Sacrificing owned cards stays
+at the separate altar. The original buying/opening/socketing logic is reused.
+All card families use `UI.drawCardBack` when face-down, backed by the single
+cached `assets/cards/card_back.png`. Deck counters keep their text below the art.

@@ -1,0 +1,10 @@
+[PASS] Skip + closing animation: buffoon
+[PASS] Skip + closing animation: arcana
+[PASS] Skip + closing animation: standard
+[PASS] Skip + closing animation: joker_edition
+[PASS] Skip + closing animation: seal
+[PASS] Skip + closing animation: spectral
+[PASS] Skip + closing animation: celestial
+[PASS] Skip + closing animation: hand_styles
+[PASS] Skip + closing animation: edition
+Pack skip regression passed: bought and skipped all 9 chest types; closing FX rendered; no rewards or refunds

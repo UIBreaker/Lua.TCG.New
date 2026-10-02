@@ -10,6 +10,11 @@ function ProgressBar.draw(x, y, w, h, value, maxValue, options)
     g.push("all")
     Core.color(Theme.colors.inset)
     g.rectangle("fill", x, y, w, h, Theme.radius.small)
+    if options.trailValue then
+        local trail = math.max(0, math.min(1, options.trailValue / math.max(1, maxValue or 1)))
+        Core.color(Theme.colors.gold, 0.58)
+        g.rectangle("fill", x + 3, y + 3, (w - 6) * trail, h - 6, 2, 2)
+    end
     if ratio > 0 then
         Core.color(accent, 0.82)
         g.rectangle("fill", x + 3, y + 3, (w - 6) * ratio, h - 6, 2, 2)

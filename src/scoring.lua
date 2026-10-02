@@ -56,6 +56,21 @@ function Scoring.calculate(handInfo, deities, context)
     local hasBountySeal = false
 
     local steps = {}
+    -- Presentation metadata records already-computed deltas, never re-evaluates a modifier.
+    local function recordTrigger(event, kind, source, chipsBefore, multBefore, xBefore, damageBefore)
+        event.presentationTriggers = event.presentationTriggers or {}
+        table.insert(event.presentationTriggers, {
+            type = kind, card = event.card, cardIndex = event.cardIndex,
+            equipment = source, addedChips = event.addedChips - chipsBefore,
+            addedMult = event.addedMult - multBefore,
+            cardXMultTotal = math.min(5, 1 + xMultBonus),
+            message = (source and source.name or kind) .. ": "
+                .. (event.addedChips - chipsBefore) .. " Sát thương / "
+                .. (event.addedMult - multBefore) .. " Cường hóa"
+                .. (xMultBonus ~= xBefore and (" / ×" .. string.format("%.2f", math.min(5, 1 + xMultBonus))) or ""),
+            extraDamagePct = totalExtraDamagePct - damageBefore,
+        })
+    end
 
     -- Step 1: Base hand values
     local lvlStr = handLevel > 1 and (" (Lv. " .. handLevel .. ")") or ""
@@ -96,6 +111,7 @@ function Scoring.calculate(handInfo, deities, context)
                 addedChips = addedC,
                 addedMult = addedM,
                 xMult = addedX,
+                cardXMultTotal = math.min(5, 1 + xMultBonus),
                 message = "⚡ CHIẾN THUẬT BỎ BÀI: " .. table.concat(msgParts, ", "),
             })
         end
@@ -438,6 +454,7 @@ function Scoring.calculate(handInfo, deities, context)
                 end
             end
 
+            cardEvent.cardXMultTotal = math.min(5, 1 + xMultBonus)
             -- Check Card Equipments ONLY on primary trigger (cTrig == 1):
             -- "Ấn không được kích hoạt lại hiệu ứng trang bị, vàng, hồi máu hoặc tạo giáp"
             if cTrig == 1 then
@@ -445,6 +462,7 @@ function Scoring.calculate(handInfo, deities, context)
                     if eq.onCardScore then
                         local res = eq.onCardScore(card, handInfo.scoringCards, idx, context)
                         if res then
+                            local pc, pm, px, pd = cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct
                             local eqMult = isDiamond(card) and 1.5 or 1.0
                             if res.addChips then
                                 local c = math.floor(res.addChips * eqMult)
@@ -498,12 +516,14 @@ function Scoring.calculate(handInfo, deities, context)
                                     message = (card.rankName or "") .. (card.suitSymbol or "") .. " kích hoạt " .. eq.name .. ": +" .. heal .. " HP!"
                                 })
                             end
+                            recordTrigger(cardEvent, "equipment_trigger", eq, pc, pm, px, pd)
                         end
                     end
                 end
 
                 -- Card Enhancements (Thuật Rèn Bài)
                 if card.enhancement then
+                    local pc, pm, px, pd = cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct
                     local enh = card.enhancement
                     if enh == "enh_armor" or enh == "armor" then
                         bonusChips = bonusChips - 10
@@ -575,6 +595,8 @@ function Scoring.calculate(handInfo, deities, context)
                             cardEvent.message = cardEvent.message .. " | 🛡️ Hậu Vệ (+8 Giáp, +3 Mult)"
                         end
                     end
+                    recordTrigger(cardEvent, "enhancement_trigger",
+                        Deck.ENHANCEMENTS[enh] or Deck.ENHANCEMENTS["enh_" .. enh] or {name = "Thuật rèn " .. enh}, pc, pm, px, pd)
                 end
 
                 -- 6 Battle Seals (Ấn Chiến)
@@ -606,6 +628,11 @@ function Scoring.calculate(handInfo, deities, context)
                 end
             end
 
+            if cTrig == 1 and card.seal and card.seal ~= "blood" and card.seal ~= "seal_blood" and card.seal ~= "red" then
+                recordTrigger(cardEvent, "seal_trigger", Deck.SEALS[card.seal]
+                    or Deck.SEALS["seal_" .. card.seal] or {name = tostring(card.seal)},
+                    cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct)
+            end
             -- Check Deities triggered by card (evaluated sequentially across all slots)
             local deityTriggers = {}
             local maxDeitySlots = 5
@@ -640,6 +667,12 @@ function Scoring.calculate(handInfo, deities, context)
                                 slotIndex = di,
                                 deityName = dName,
                                 message = res.message or effectiveDeity.name
+                            })
+                            cardEvent.presentationTriggers = cardEvent.presentationTriggers or {}
+                            table.insert(cardEvent.presentationTriggers, {
+                                type = "deity_card", card = card, cardIndex = idx, slotIndex = di,
+                                deity = deity, deityName = dName, addedChips = res.addChips or 0,
+                                addedMult = res.addMult or 0, message = dName .. ": " .. (res.message or effectiveDeity.name),
                             })
                         end
                     end
@@ -678,6 +711,17 @@ function Scoring.calculate(handInfo, deities, context)
                 if editionAura ~= 1.0 then cardEvent.message = cardEvent.message .. " ×" .. editionAura .. " Aura" end
             end
 
+            if editionBonus then
+                cardEvent.presentationTriggers = cardEvent.presentationTriggers or {}
+                table.insert(cardEvent.presentationTriggers, {
+                    type = "card_edition", card = card, cardIndex = idx,
+                    addedChips = editionBonus.chips or 0, addedMult = editionBonus.mult or 0,
+                    addedDamage = editionBonus.damage or 0, auraMultiplier = editionBonus.auraMultiplier or 1,
+                    message = string.upper(CardEffects.getEffectName(card)) .. ": "
+                        .. (editionBonus.damage or 0) .. " ST cố định / "
+                        .. (editionBonus.mult or 0) .. " Cường hóa / ×" .. (editionBonus.auraMultiplier or 1) .. " Aura",
+                })
+            end
             cardEvent.deityTriggers = deityTriggers
             table.insert(steps, cardEvent)
         end
@@ -762,6 +806,7 @@ end
             stacks = martyrStacks,
             addedMult = mMult,
             xMult = mXMult,
+            cardXMultTotal = math.min(5, 1 + xMultBonus),
             message = "🩸 DẤU ẤN TỬ ĐẠO: Tiêu thụ " .. martyrStacks .. " điểm (+" .. mMult .. " Mult, x" .. string.format("%.2f", mXMult) .. " XMult)!"
         })
     end
@@ -825,6 +870,7 @@ end
             type = "faction_bonus",
             message = "☀️ Hào Quang Thánh Thiện (Aurelia): +0.15 XMult!",
             xMult = 1.15,
+            cardXMultTotal = math.min(5, 1 + xMultBonus),
         })
     end
 
@@ -936,6 +982,7 @@ end
         totalChips = totalChips,
         totalMult = totalMult,
         xMult = finalCombinedXMult,
+        cardXMultTotal = cardXMultTotal,
         rawScore = rawScore,
         extraDamagePct = totalExtraDamagePct,
         auraMultiplier = auraEditionMultiplier,
@@ -952,6 +999,7 @@ end
         totalChips = totalChips,
         totalMult = totalMult,
         xMultTotal = finalCombinedXMult,
+        cardXMultTotal = cardXMultTotal,
         rawScore = rawScore,
         finalScore = finalScore,
         flatDamageBonus = flatDamageBonus,

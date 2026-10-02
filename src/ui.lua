@@ -1,4 +1,6 @@
 local UI = {}
+UI.drawCardBack = require("ui.components.deck_counter").drawBack
+UI.getCardBackImage = require("ui.components.deck_counter").getImage
 local Theme = require("ui.theme")
 local Panel = require("ui.components.panel")
 local Button = require("ui.components.button")
@@ -8,6 +10,7 @@ local Deck = require("src.deck")
 local Deities = require("src.deities")
 local CardEffects = require("src.card_effects")
 UI.CardPhysics = require("src.card_physics")
+UI.ScoringFeel = require("src.scoring_presentation")
 UI.drawCardEffectsDebug = CardEffects.drawDebug
 
 -- Color constants
@@ -338,7 +341,7 @@ local function drawCardEditionRim(card, w, h)
     if not CardEffects.getEffectName(card) then return end
     local color = CardEffects.getBeamColor(card)
     love.graphics.setLineWidth(2)
-    love.graphics.setColor(color[1], color[2], color[3], 0.9)
+    love.graphics.setColor(color[1], color[2], color[3], 0.9 * (card.alpha or 1))
     UI.drawRoundedRect("line", -1, -1, w + 2, h + 2, 6)
 end
 
@@ -373,6 +376,11 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     UI.CardPhysics.capture(card, 0, 0, w, h)
     g.setColor(0, 0, 0, isFloating and 0.56 or (selected and 0.44 or 0.30))
     UI.drawRoundedRect("fill", 4, isFloating and 15 or (selected and 11 or 6), w, h, 5)
+    if card.faceDown then
+        UI.drawCardBack(0, 0, w, h, card.alpha)
+        g.pop()
+        return
+    end
     if cardImage then
         local imageW, imageH = cardImage:getDimensions()
         local cardFxActive = CardEffects.beginCard(card)
@@ -425,13 +433,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     g.setFont(UI.fonts.large)
     g.print(rank, 8, 3)
     UI.drawSuitSymbol(card.suit, 18, 37, math.min(w, h) * 0.15, accent)
-    if card.faceDown then
-        g.setColor(0.13, 0.19, 0.22, 0.94)
-        UI.drawRoundedRect("fill", 4, 4, w - 8, h - 8, 4)
-        g.setColor(UI.COLORS.goldYellow)
-        g.setFont(UI.fonts.medium)
-        g.printf("?", 0, h / 2 - 13, w, "center")
-    else
+    do
         local cx, cy = w / 2, h * 0.52
         local facet = math.min(w * 0.31, h * 0.22)
         g.setColor(accent[1], accent[2], accent[3], 0.12)
@@ -471,7 +473,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     drawCardEditionRim(card, w, h)
     g.pop()
 end
-
 -- Artwork-only version for shop stock: keep the source card face untouched by HUD stats.
 function UI.drawCardFace(card, x, y, w, h, effectHovered,
     effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY)
@@ -1125,6 +1126,7 @@ end
 UI.packRewardImages = UI.packRewardImages or {}
 function UI.getPackCardImage(packType, card)
     card = card or {}
+    if card.faceDown then return UI.getCardBackImage(), true end
     -- Closing/skipping animates the chest, not a reward inside it.
     if card.category == "pack" then
         return UI.getPackImage(packType or card.packType), false
@@ -1239,6 +1241,11 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     g.scale(s)
     g.translate(-w / 2, -h / 2)
     UI.CardPhysics.capture(d, 0, 0, w, h)
+    if d.faceDown then
+        UI.drawCardBack(0, 0, w, h, d.alpha)
+        g.pop()
+        return
+    end
     if isSpnCard then
         local imageW, imageH = deityImage:getDimensions()
         local cardFxActive = CardEffects.beginCard(d)

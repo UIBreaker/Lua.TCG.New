@@ -3,12 +3,12 @@ local Theme = require("ui.theme")
 local Core = require("ui.components.core")
 local EnemyPanel = {}
 
-function EnemyPanel.draw(name, hp, maxHp, fonts, x, labelHp)
+function EnemyPanel.draw(name, hp, maxHp, fonts, x, labelHp, trailHp)
     x = x or 630
     Core.textLine(name, x - 175, 85, 350, fonts.medium, Theme.colors.text, "center", fonts.small)
     local shownHp = math.max(0, math.floor(labelHp == nil and hp or labelHp))
     HealthBar.draw(x - 168, 111, 336, 24, hp, maxHp, {
-        variant = "red", font = fonts.small,
+        variant = "red", font = fonts.small, trailValue = trailHp,
         label = shownHp .. " / " .. tostring(maxHp or 0) .. " HP",
     })
 end

@@ -5,6 +5,7 @@ local catalogHandles = {}
 
 -- Collection cards, including equipment, vouchers, styles and all pack contents.
 function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
+    if item.faceDown then return UI.drawCardBack(cx, cy, cardW, cardH, item.alpha) end
     -- 3D Tilt calculation
     local tX, tY = 0, 0
     if isH then
@@ -93,6 +94,7 @@ end
 
 -- Pack reward body: choice/keep buttons remain in the existing gameplay handler.
 function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHovered)
+    if card.faceDown then return UI.drawCardBack(cx, drawCY, cW, cH, card.alpha) end
     love.graphics.setColor(0.16, 0.20, 0.26, 0.98)
     UI.drawRoundedRect("fill", cx, drawCY, cW, cH, 10)
     love.graphics.setColor(isChoiceHovered and UI.COLORS.goldYellow or (card.color or { 0.45, 0.55, 0.70, 0.8 }))
@@ -132,6 +134,7 @@ function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHove
 end
 
 function Surfaces.round(item, x, cardY, cardW, cardH, hovered)
+    if item.faceDown then return UI.drawCardBack(x, cardY, cardW, cardH, item.alpha) end
     local color = item.color or UI.COLORS.goldYellow
     love.graphics.setColor(0, 0, 0, 0.35)
     UI.drawRoundedRect("fill", x + 3, cardY + 5, cardW, cardH, 12)
@@ -153,36 +156,17 @@ function Surfaces.round(item, x, cardY, cardW, cardH, hovered)
 end
 
 function Surfaces.image(item, x, y, w, h, image)
+    if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     if not image then return end
     local iw, ih = image:getDimensions()
     love.graphics.draw(image, x, y, 0, w / iw, h / ih)
 end
 
 function Surfaces.starter(deckInfo, cardX, cardY, cardW, cardH)
-    UI.drawGildedPanel(cardX, cardY, cardW, cardH, deckInfo.color)
-
-    love.graphics.setFont(UI.fonts.title)
-    love.graphics.setColor(deckInfo.color)
-    love.graphics.printf("BỘ BÀI ĐỎ", cardX, cardY + 24, cardW, "center")
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(0.95, 0.15, 0.20, 1)
-    love.graphics.printf("♦  ♥", cardX, cardY + 85, cardW, "center")
-    love.graphics.setColor(0.75, 0.78, 0.84, 1)
-    love.graphics.printf("♠  ♣", cardX, cardY + 145, cardW, "center")
-
-    love.graphics.setColor(0.30, 0.07, 0.09, 0.95)
-    UI.drawRoundedRect("fill", cardX + 34, cardY + 220, cardW - 68, 105, 10)
-    love.graphics.setFont(UI.fonts.regular)
-    love.graphics.setColor(1, 0.86, 0.48, 1)
-    love.graphics.printf("KHỞI ĐẦU: 1 LÁ NGẪU NHIÊN", cardX + 40, cardY + 233, cardW - 80, "center")
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Lá bài được chọn đều từ bộ chuẩn 52 lá.", cardX + 50, cardY + 274, cardW - 100, "center")
-
-
+    UI.drawCardBack(cardX, cardY, cardW, cardH)
 end
-
 function Surfaces.preview(inspItem, lcx, lcy, lcw, lch, collectionCategory)
+    if inspItem.faceDown then return UI.drawCardBack(lcx, lcy, lcw, lch, inspItem.alpha) end
     local lcol = inspItem.color or UI.COLORS.goldYellow
     local deityPreviewId = (collectionCategory == "jokers" and inspItem.id)
         or (collectionCategory == "packs" and inspItem.isPackContent and inspItem.deityId)

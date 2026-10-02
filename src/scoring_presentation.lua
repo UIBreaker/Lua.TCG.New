@@ -5,7 +5,7 @@ local Sound = require("src.sound")
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
 local ease = function(t) return 1 - (1 - clamp(t, 0, 1)) ^ 3 end
-local categories = { card_scored = "LÁ BÀI", deity_card = "SPN", deity_hand = "SPN",
+local categories = { card_ability = "KHẢ NĂNG", card_scored = "LÁ BÀI", deity_card = "SPN", deity_hand = "SPN",
     deity_edition = "ẤN BẢN SPN", equipment_trigger = "TRANG BỊ KHẢM", enhancement_trigger = "CƯỜNG HÓA BÀI",
     seal_trigger = "CON DẤU", card_edition = "ẤN BẢN", discard_buff_trigger = "CHIẾN THUẬT BỎ BÀI" }
 
@@ -107,6 +107,10 @@ local function trigger(anim, st)
         anim.cardHit[cardIndex] = 0
         Effects.triggerScorePulse(st.card)
         if st.type == "card_scored" then anim.scoredCards[cardIndex] = st end
+    end
+    if st.type=="card_ability" and st.kind=="copy" and st.source then
+        local sx,sy=sourcePoint(anim,{card=st.source})
+        s.links[#s.links+1]={text="ÉCHO",x=sx,y=sy,tx=x,ty=y,age=0,duration=0.55,color=C.color.enhance,echo=true}
     end
     local beforeChips, beforeMult = anim.displayChips, anim.displayMult
     s.fromChips, s.fromMult = beforeChips, beforeMult
@@ -333,6 +337,7 @@ function Feel.draw(anim, ui)
         local k = ease(l.age / l.duration)
         local x, y = l.x + (l.tx - l.x) * k, l.y + (l.ty - l.y) * k - math.sin(k * math.pi) * 24
         g.setColor(l.color[1], l.color[2], l.color[3], 1 - k * k)
+        if l.echo then g.setLineWidth(2);g.line(l.x,l.y,x,y);g.circle("line",x,y,7+4*k) end
         g.setFont(l.multiply and ui.fonts.medium or ui.fonts.small)
         g.printf(l.text, x - 125, y - 12, 250, "center")
     end

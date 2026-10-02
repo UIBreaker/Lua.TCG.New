@@ -7,6 +7,29 @@ local Surfaces = require("ui.card_surfaces")
 local Test = {}
 local stage, deadline, index = "start", 0, 0
 local cases, current, shop, item, gold, count, size
+local watchingHover, hoverFrame, expectedBody, descriptionCount, bodyCount
+
+local function watchTooltips()
+    local originalDraw, originalDescription, originalPrintf = love.draw, UI.Description.draw, love.graphics.printf
+    UI.Description.draw = function(...)
+        if watchingHover then descriptionCount = descriptionCount + 1 end
+        return originalDescription(...)
+    end
+    love.graphics.printf = function(value, ...)
+        if watchingHover and value == expectedBody then bodyCount = bodyCount + 1 end
+        return originalPrintf(value, ...)
+    end
+    love.draw = function(...)
+        descriptionCount, bodyCount = 0, 0
+        originalDraw(...)
+        if watchingHover then
+            assert(descriptionCount == 1, "Shop must render exactly one cursor tooltip")
+            local inlineDescription = current.category == "voucher" and item.desc == expectedBody and 1 or 0
+            assert(bodyCount == 1 + inlineDescription, "Shop must not render a second legacy description panel")
+            hoverFrame = true
+        end
+    end
+end
 
 local function pointer(x, y, action)
     local w, h = love.graphics.getDimensions()
@@ -70,6 +93,7 @@ end
 function Test.update(game, callbacks)
     if love.timer.getTime() < deadline then return end
     if stage == "start" then
+        watchTooltips()
         callbacks.startNewGame("red_deck")
         callbacks.openShop()
         checkBacks()
@@ -130,6 +154,15 @@ function Test.update(game, callbacks)
         wait("press", 0.35)
     elseif stage == "press" then
         local visual = assert(UI.CardPhysics.getState(item), "Stock surface missing: " .. current.category)
+        pointer(visual.x + visual.w * 0.5, visual.y + visual.h * 0.5)
+        expectedBody = select(2, UI.Description.resolve(item, game))
+        watchingHover, hoverFrame = true, false
+        if current.category == "card" and current.mode == "click" then snapshot("shot_shop_single_tooltip.png") end
+        wait("hover", 0.12)
+    elseif stage == "hover" then
+        assert(hoverFrame, "Hover tooltip must be verified in a rendered frame")
+        watchingHover = false
+        local visual = UI.CardPhysics.getState(item)
         pointer(visual.x + visual.w * 0.5, visual.y + visual.h * 0.5, "press")
         assert(UI.CardPhysics.isHeld(item), "Stock must visibly follow the pointer: " .. current.category)
         wait("move", 0.08)

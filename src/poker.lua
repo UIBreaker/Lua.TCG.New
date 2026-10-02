@@ -414,6 +414,13 @@ function Poker.evaluate(cards, unlockedHands, handLevels)
 
     local function finalizeHand(hand)
         if not hand then return nil end
+        -- Poker membership is unchanged. Resolution order is always visual play order.
+        local members = {}; for _, c in ipairs(hand.scoringCards) do members[c] = true end
+        hand.scoringCards, hand.unscoredCards = {}, {}
+        for _, c in ipairs(cards) do
+            local list = members[c] and hand.scoringCards or hand.unscoredCards
+            list[#list + 1] = c
+        end
         local handId = hand.type.id
         local lvl = (handLevels and handLevels[handId]) or 1
         local stats = Poker.getHandStats(handId, lvl)

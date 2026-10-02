@@ -36,7 +36,7 @@ local BOSSES = {
         debuffId = "damage_resist",
         color = { 0.85, 0.3, 0.8, 1 },
         modifyDamage = function(damage)
-            return math.floor(damage * 0.80)
+            return math.floor(damage * (1-require("src.boss_abilities").config.resist))
         end
     },
     [20] = {
@@ -44,6 +44,7 @@ local BOSSES = {
         title = "TRÙM TỐI CAO (TẦNG 20)",
         desc = "Hư Vô Tận Diệt: Giảm 1 lượt Đổi bài và giới hạn tối đa 4 lá bài mỗi lượt đánh!",
         debuffId = "max_4_cards",
+        maxSelectedCards = 4,
         color = { 1.0, 0.15, 0.15, 1 },
         applyModifier = function(gameState)
             gameState.discardsRemaining = math.max(0, gameState.discardsRemaining - 1)
@@ -148,7 +149,12 @@ Monster.DISRUPTIVE_BOSSES = {
     },
 }
 
-local DISRUPTIVE_KEYS = { "the_needle", "the_water", "the_hook", "the_fish", "the_arm" }
+Monster.BOSSES = BOSSES
+local BossAbilities = require("src.boss_abilities")
+for _, d in pairs(BOSSES) do BossAbilities.attach(d) end
+for _, d in pairs(Monster.DISRUPTIVE_BOSSES) do BossAbilities.attach(d) end
+for id, d in pairs(BossAbilities.newDefinitions) do Monster.DISRUPTIVE_BOSSES[id] = BossAbilities.attach(d) end
+local DISRUPTIVE_KEYS = { "the_needle", "the_water", "the_hook", "the_fish", "the_arm", "black_tax_collector", "memory_eater", "gatekeeper" }
 
 -- Calculate Monster HP: Room 1 = 21 HP, each subsequent encounter grows by +50%.
 function Monster.getHpByEncounter(encounterCount, isBoss, isElite)
@@ -257,7 +263,7 @@ end
 
 function Monster.takeDamage(monster, rawDamage)
     local actualDamage = rawDamage
-    if monster.isBoss and monster.bossData and monster.bossData.modifyDamage then
+    if monster.isBoss and monster.bossData and monster.bossData.modifyDamage and require("src.boss_abilities").passiveEnabled(monster) then
         actualDamage = monster.bossData.modifyDamage(rawDamage)
     end
 

@@ -121,7 +121,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
     panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Kéo hàng vào bộ bài bên phải để mua · Rê chuột xem chi tiết", C.cyan)
     panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
     panel(294, 368, 699, 256, "KHO RƯƠNG", "Thế đánh · Ba rương ngẫu nhiên · Ấn bản khi xuất hiện", C.purple)
-    local hoveredItem, position
+    local hoveredItem
     local packIndex = 0
     local voucherFound = false
     for index, item in ipairs(shop.items or {}) do
@@ -157,7 +157,6 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
             buttons[#buttons + 1] = { id = "buy_" .. index, text = "", x = x, y = y - (voucher and 0 or 6), w = w, h = h + (voucher and 0 or 6), invisible = true, itemIndex = index }
             if hovered and not UI.CardPhysics.isHolding() and not (drag.active and drag.isDragging) then
                 hoveredItem = item
-                position = { x = x + w + 10, y = y + 8 }
             end
         end
     end
@@ -177,7 +176,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         text("ẤN BẢN\n25% xuất hiện\nkhi đổi hàng", 864, 517, 92, nil, C.muted, "center")
     end
     love.graphics.setLineWidth(1)
-    return hoveredItem, position
+    return hoveredItem
 end
 
 return Display

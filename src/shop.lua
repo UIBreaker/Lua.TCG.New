@@ -21,6 +21,25 @@ Shop.VOUCHERS = {
     { id = "v_vitality", name = "Trái Tim Bất Diệt", desc = "Tăng vĩnh viễn 20 HP tối đa và hồi ngay 20 HP khi mua.", cost = 12, color = { 0.93, 0.36, 0.51, 1 }, icon = "♥" },
     { id = "v_second_chance", name = "Quân Cờ Dự Phòng", desc = "Thêm 1 lượt bỏ bài mỗi trận. Nhận ngay 1 lượt bỏ bài khi mua.", cost = 10, color = { 0.65, 0.58, 0.94, 1 }, icon = "♠" },
 }
+local voucherParams={v_discount={discount=2},v_interest={cap=10},v_hand_plus={hands=1},v_welcome={},
+    v_pack_discount={discount=2},v_apothecary={heal=40},v_altar={gold=2},v_vitality={hp=20},v_second_chance={discards=1}}
+local voucherText={
+    v_discount="Giảm giá đổi hàng {discount} Vàng tại mọi shop, giá tối thiểu 1.",
+    v_interest="Trần lãi ngân khố mỗi trận thành {cap} Vàng.",
+    v_hand_plus="Thêm {hands} lượt đánh mỗi trận và nhận ngay khi mua.",
+    v_welcome="Đổi hàng đầu tiên mỗi shop miễn phí, không tăng giá đổi hàng.",
+    v_pack_discount="Mọi rương shop giảm {discount} Vàng, tối thiểu 1; áp dụng ngay và suốt run.",
+    v_apothecary="Bình máu shop hồi {heal} HP, không tăng giá.",
+    v_altar="Hiến tế bán SPN, quân bài hoặc tiêu hao: thêm {gold} Vàng; không tính là tiêu hủy.",
+    v_vitality="HP tối đa +{hp}; hồi ngay {hp} HP khi mua.",
+    v_second_chance="Thêm {discards} lượt bỏ bài mỗi trận và nhận ngay khi mua.",
+}
+function Shop.voucherParams(id) return voucherParams[id] or {} end
+function Shop.voucherDescription(id)
+    local template=voucherText[id];if not template then return nil end
+    return template:gsub("{([%w_]+)}",function(k) return tostring(Shop.voucherParams(id)[k] or 0) end)
+end
+for _,v in ipairs(Shop.VOUCHERS) do v.params=Shop.voucherParams(v.id);v.desc=Shop.voucherDescription(v.id) end
 
 Shop.PACK_CATALOG = {
     { packType = "buffoon", name = "GÓI HỘ LINH", subtitle = "HỘ LINH", desc = "Mở 3 Hộ Linh, chọn 1 để sở hữu.", cost = 4, rarity = "Hộ Linh", color = { 0.88, 0.35, 0.35, 1 }, icon = "🃏" },
@@ -71,6 +90,47 @@ Shop.SPECTRAL_CARDS = {
     { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi toàn bộ lá trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm -1 kích thước tay bài!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
     { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tăng Cấp Độ của TẤT CẢ Thế Đánh lên +1!", icon = "🕳️", color = { 0.30, 0.30, 0.45, 1 } },
 }
+
+Shop.CONSUMABLE_RULES={
+    speed_single={params={speed=5},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Hủy chọn không mất thẻ."},
+    speed_team={params={speed=2},description="Mọi lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Chỉ dùng khi đang chiến đấu và có bài."},
+    spell_aura={params={},description="Một SPN ngẫu nhiên nhận Foil (+50 ST cố định), Holographic (+10 Cường hóa) hoặc Polychrome (×1.5 Aura cuối)."},
+    spell_ectoplasm={params={handLoss=1},description="Một SPN ngẫu nhiên nhận Negative (+1 ô SPN); kích thước tay cơ bản giảm {handLoss}, tối thiểu 1."},
+    spell_ankh={params={},description="Giữ một SPN ngẫu nhiên và một bản sao của nó; xóa mọi SPN khác."},
+    spell_hex={params={},description="Một SPN ngẫu nhiên nhận Polychrome (×1.5 Aura cuối); xóa mọi SPN khác."},
+    spec_familiar={params={count=3},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá J/Q/K cùng chất đã chọn, mỗi lá có một ITM ngẫu nhiên."},
+    spec_grim={params={count=2},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá A cùng chất đã chọn, mỗi lá có một ITM ngẫu nhiên."},
+    spec_incantation={params={count=4},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá ngẫu nhiên 2–10 cùng chất đã chọn, mỗi lá có một ITM."},
+    spec_cryptid={params={count=2},description="Tạo {count} bản sao của lá được chọn (hoặc lá đầu tay/bộ bài). Mỗi bản sao có ID riêng, giữ tiến hóa/trang bị/ấn bản."},
+    spec_immolate={params={count=5,gold=20},description="Tiêu hủy tối đa {count} lá từ đầu tay theo thứ tự hiển thị; nhận {gold} Vàng."},
+    spec_sigil={params={},description="Đổi mọi lá đang trên tay thành cùng chất ngẫu nhiên trong trận; không thay bộ bài lâu dài."},
+    spec_ouija={params={handLoss=1},description="Đổi mọi lá đang trên tay thành cùng rank ngẫu nhiên 2–A trong trận; kích thước tay cơ bản giảm {handLoss}, tối thiểu 1."},
+    spec_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa thế đánh."},
+    celestial={params={levels=1},description=""},
+    planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
+    planet_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
+}
+function Shop.getConsumableParams(item)
+    local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
+    return rule and rule.params or {}
+end
+function Shop.getConsumableDescription(item)
+    if item.id=="spell_aura" then
+        local foil=CardEffects.getDefinition("foil").score
+        local holo=CardEffects.getDefinition("holographic").score
+        local poly=CardEffects.getDefinition("polychrome").score
+        return "Một SPN ngẫu nhiên nhận Foil (+"..foil.damage.." ST cố định), Holographic (+"..holo.mult.." Cường hóa) hoặc Polychrome (×"..poly.auraMultiplier.." Aura cuối)."
+    elseif item.id=="spell_hex" then
+        return "Một SPN ngẫu nhiên nhận Polychrome (×"..CardEffects.getDefinition("polychrome").score.auraMultiplier.." Aura cuối); xóa mọi SPN khác."
+    end
+    local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
+    if item.handId and item.handId~="random" and item.handId~="all" then
+        local scale=Poker.HAND_LEVEL_SCALING[item.handId];local stats=Poker.getHandStats(item.handId,1)
+        if scale then return "Nâng thế đánh "..item.handId.." +"..(rule and rule.params.levels or 1).." cấp: mỗi cấp +"..scale.chips.." ST và +"..scale.mult.." Cường hóa. Nền cấp 1: "..stats.chips.." × "..stats.mult.."; không tự mở khóa." end
+    end
+    if not rule then return nil end
+    return rule.description:gsub("{([%w_]+)}",function(k) return tostring(rule.params[k] or 0) end)
+end
 
 Shop.STANDARD_CARDS = {}
 for _, suit in ipairs({ "hearts", "diamonds", "clubs", "spades" }) do
@@ -168,9 +228,9 @@ function Shop.applyVoucherStock(shop, gameState)
     for _, item in ipairs(shop.items or {}) do
         if item.category == "pack" then
             item.baseCost = item.baseCost or item.cost
-            item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and 2 or 0))
+            item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and Shop.voucherParams("v_pack_discount").discount or 0))
         elseif item.category == "heal" then
-            item.healAmt = owned.v_apothecary and 40 or 25
+            item.healAmt = owned.v_apothecary and Shop.voucherParams("v_apothecary").heal or 25
             item.desc = "Uống lập tức hồi phục tối đa +" .. item.healAmt .. " HP sinh lực."
         end
     end
@@ -405,28 +465,29 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return true, "Đã mở khóa bí tịch: " .. item.name .. "!"
 
     elseif item.category == "voucher" then
+        local p=Shop.voucherParams(item.voucherId)
         gameState.gold = gameState.gold - item.cost
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         gameState.vouchers = gameState.vouchers or {}
         gameState.vouchers[item.voucherId] = true
         if item.voucherId == "v_discount" then
-            shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 5) - 2)
-            shop.rerollCost = math.max(1, shop.rerollCost - 2)
+            shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 5) - p.discount)
+            shop.rerollCost = math.max(1, shop.rerollCost - p.discount)
         elseif item.voucherId == "v_interest" then
-            gameState.maxInterest = 10
+            gameState.maxInterest = p.cap
             gameState.hasSeedMoney = true
         elseif item.voucherId == "v_hand_plus" then
-            gameState.maxHands = (gameState.maxHands or 4) + 1
-            gameState.handsRemaining = (gameState.handsRemaining or 4) + 1
+            gameState.maxHands = (gameState.maxHands or 4) + p.hands
+            gameState.handsRemaining = (gameState.handsRemaining or 4) + p.hands
         elseif item.voucherId == "v_hand_size" then
             gameState.maxHandSize = (gameState.maxHandSize or 3) + 1
         elseif item.voucherId == "v_vitality" then
-            gameState.maxPlayerHp = (gameState.maxPlayerHp or 100) + 20
-            gameState.playerHp = math.min(gameState.maxPlayerHp, (gameState.playerHp or 100) + 20)
+            gameState.maxPlayerHp = (gameState.maxPlayerHp or 100) + p.hp
+            gameState.playerHp = math.min(gameState.maxPlayerHp, (gameState.playerHp or 100) + p.hp)
         elseif item.voucherId == "v_second_chance" then
-            gameState.maxDiscards = (gameState.maxDiscards or 3) + 1
-            gameState.discardsRemaining = (gameState.discardsRemaining or 0) + 1
+            gameState.maxDiscards = (gameState.maxDiscards or 3) + p.discards
+            gameState.discardsRemaining = (gameState.discardsRemaining or 0) + p.discards
         end
         Shop.applyVoucherStock(shop, gameState)
         return true, "Đã kích hoạt đặc quyền: " .. item.name .. "!"
@@ -739,19 +800,15 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
                 Sound.play("cant_afford")
                 return false, "Không tìm thấy lá bài để nhân bản!"
             end
-            local clone1 = Deck.cloneCard(targetCard)
-            clone1.id = "card_" .. tostring(Rng.random(100000, 999999))
-            local clone2 = Deck.cloneCard(targetCard)
-            clone2.id = "card_" .. tostring(Rng.random(100000, 999999))
-            Deck.addCardToDeck(gameState, clone1)
-            Deck.addCardToDeck(gameState, clone2)
-            if gameState.hand then
-                table.insert(gameState.hand, clone1)
-                table.insert(gameState.hand, clone2)
+            for _ = 1, Shop.getConsumableParams(card).count do
+                local clone = Deck.cloneCard(targetCard)
+                clone.id = Deck.newCard(targetCard.rank, targetCard.suit).id
+                Deck.addCardToDeck(gameState, clone)
+                if gameState.hand then table.insert(gameState.hand, clone) end
             end
             Sound.play("round_win")
             shop.currentPackOpening = nil
-            return true, "Cryptid: Tạo 2 bản sao của lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
+            return true, "Cryptid: Tạo " .. Shop.getConsumableParams(card).count .. " bản sao của lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
 
         elseif card.id == "spec_immolate" then
             local destroyed = 0
@@ -944,7 +1001,7 @@ function Shop.reroll(shop, gameState)
 end
 
 function Shop.getSacrificePrice(item, kind, gameState)
-    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and 2 or 0
+    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and Shop.voucherParams("v_altar").gold or 0
     if kind == "deity" then
         return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
     elseif kind == "consumable" then

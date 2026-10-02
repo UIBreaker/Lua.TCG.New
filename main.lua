@@ -54,7 +54,7 @@ local Combat = require("src.combat")
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 for _, a in ipairs(arg or {}) do
-    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" then
+    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
         isCaptureMode = true
     end
 end
@@ -248,7 +248,8 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c then
         cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
-        if isHover then cy = cy - 2 end
+        if isHover then
+            UI.descriptionCandidate = c cy = cy - 2 end
         if not UI.drawSlot(isHover and "hover" or "occupied", "consumable", cx, cy, conSlotW, conSlotH) then
             love.graphics.setColor(0.12, 0.16, 0.22, 0.95)
             UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
@@ -274,7 +275,7 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             local ttX = math.min(V_WIDTH - ttW - 10, math.max(10, cx - 40))
             local ttY = cy + conSlotH + 8
             UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-                UI.truncateUtf8(c.desc or "", 76) .. "\nChuột phải: dùng • Kéo vào Hiến Tế: bán", UI.fonts, "green")
+                UI.truncateUtf8(select(2, UI.Description.resolve(c, game)), 76) .. "\nChuột phải: dùng • Kéo vào Hiến Tế: bán", UI.fonts, "green")
         end
     else
         local isHover = mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH
@@ -331,7 +332,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
         local ttX = math.max(10, cx - ttW - 8)
         local ttY = math.max(10, cy - ttH - 8)
         UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-            UI.truncateUtf8(c.desc or "", 76) .. "\nChuột phải để kích hoạt", UI.fonts, "green")
+            UI.truncateUtf8(select(2, UI.Description.resolve(c, game)), 76) .. "\nChuột phải để kích hoạt", UI.fonts, "green")
     end
 end
 
@@ -713,8 +714,8 @@ local function getMaxSelectableCards()
             end
         end
     end
-    local maxCount = math.min(game.maxHandSize or 3, maxAllowed)
-    if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.maxSelectedCards then
+    local maxCount = math.min(UI.Abilities.handSize(game), maxAllowed)
+    if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.maxSelectedCards and UI.BossAbilities.passiveEnabled(game.monster) then
         maxCount = math.min(maxCount, game.monster.bossData.maxSelectedCards)
     end
     return math.max(1, maxCount)
@@ -787,6 +788,7 @@ end
 
 local function getSelectedCards()
     local selected = {}
+    table.sort(game.selectedIndices)
     for _, idx in ipairs(game.selectedIndices) do
         if game.hand[idx] then
             table.insert(selected, game.hand[idx])
@@ -868,7 +870,7 @@ local function dealCombatHand(recycleDiscard)
     local drawn = Combat.drawCards(game, maxCombatHandSize(), function(card, order)
         anim.prepareDrawAnimation(card, order)
         if game.monster and game.monster.isBoss and game.monster.bossData
-            and game.monster.bossData.debuffId == "the_fish" then
+            and game.monster.bossData.debuffId == "the_fish" and UI.BossAbilities.passiveEnabled(game.monster) then
             card.faceDown = true
         end
     end, recycleDiscard)
@@ -909,6 +911,8 @@ local function discardSelected()
         table.insert(discardedCards, card)
     end
     clearAllSelections()
+
+    UI.Abilities.discard(game, discardedCards)
 
     -- Process Grimdark Faction Passives on Discard
     game.discardBuffs = game.discardBuffs or { chips = 0, mult = 0, xMult = 1.0, bonusDamagePct = 0 }
@@ -1046,6 +1050,7 @@ end
 local function destroyHandCard(index)
     local card = game.hand and game.hand[index]
     if not card then return nil end
+    UI.Abilities.destroy(game, card)
     local x = (card.visualX or 590) + 50
     local y = (card.visualY or 470) + 72
     table.remove(game.hand, index)
@@ -1070,22 +1075,14 @@ local function useConsumable(idx)
     game.consumables = game.consumables or {}
     local c = game.consumables[idx]
     if not c then return false end
+    local p=Shop.getConsumableParams(c)
 
+    if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
     if c.category == "evolution" or c.id == "cons_evolution" then
-        if Deities.getCount(game.deities) == 0 then
-            table.insert(anim.floatingTexts, {
-                text = "Cần có ít nhất một lá SPN để tiến hóa.",
-                color = { 0.82, 0.70, 1, 1 }, x = 640, y = 350, alpha = 2.2,
-            })
-            return false
-        end
-        pendingEvolutionCard = c
-        table.insert(anim.floatingTexts, {
-            text = "CHỌN MỘT LÁ SPN ĐỂ TIẾN HÓA · ESC ĐỂ HỦY",
-            color = { 0.82, 0.70, 1, 1 }, x = 640, y = 310, alpha = 2.4,
-        })
-        Sound.play("card_select")
-        return true
+        return UI.AbilityUI.openEvolution(game, c, function(evolved)
+            spawnShopFx("consume", c, 640, 360, 96, 140)
+            saveRunAtSafePoint()
+        end)
     end
 
     if c.category == "speed_single" then
@@ -1121,7 +1118,7 @@ local function useConsumable(idx)
                     for _, copy in ipairs(pile or {}) do
                         if copy and not seenCards[copy] and (copy == handCard or (handCard.id and copy.id == handCard.id)) then
                             seenCards[copy] = true
-                            Deck.applyAttackSpeedBonus(copy, 2)
+                            Deck.applyAttackSpeedBonus(copy, p.speed)
                         end
                     end
                 end
@@ -1154,7 +1151,7 @@ local function useConsumable(idx)
             local allHands = {}
             for _, ht in pairs(Poker.HAND_TYPES) do table.insert(allHands, ht) end
             local h = allHands[Rng.random(#allHands)]
-            game.handLevels[h.id] = (game.handLevels[h.id] or 1) + 3
+            game.handLevels[h.id] = (game.handLevels[h.id] or 1) + p.levels
             Sound.play("round_win")
             table.remove(game.consumables, idx)
             table.insert(anim.floatingTexts, {
@@ -1167,7 +1164,7 @@ local function useConsumable(idx)
             return true
         elseif c.handId == "all" then
             for _, ht in pairs(Poker.HAND_TYPES) do
-                game.handLevels[ht.id] = (game.handLevels[ht.id] or 1) + 1
+                game.handLevels[ht.id] = (game.handLevels[ht.id] or 1) + p.levels
             end
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
@@ -1180,7 +1177,7 @@ local function useConsumable(idx)
             })
             return true
         else
-            game.handLevels[c.handId] = (game.handLevels[c.handId] or 1) + 1
+            game.handLevels[c.handId] = (game.handLevels[c.handId] or 1) + p.levels
             local hType = nil
             for _, ht in pairs(Poker.HAND_TYPES) do if ht.id == c.handId then hType = ht break end end
             local vName = hType and hType.vnName or c.name
@@ -1233,7 +1230,7 @@ local function useConsumable(idx)
         elseif c.id == "spell_ectoplasm" then
             local chosen = deityList[Rng.random(#deityList)]
             chosen.deity.edition = "negative"
-            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - 1)
+            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - p.handLoss)
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
             table.insert(anim.floatingTexts, {
@@ -1313,8 +1310,8 @@ local function useConsumable(idx)
         if c.id == "spec_familiar" then
             if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
             local ranks = { 11, 12, 13 }
-            for i = 1, 3 do
-                local nc = Deck.newCard(ranks[i], userFaction)
+            for i = 1, p.count do
+                local nc = Deck.newCard(ranks[(i-1)%#ranks+1], userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
                 Deck.addCardToDeck(game, nc)
             end
@@ -1324,7 +1321,7 @@ local function useConsumable(idx)
             return true
         elseif c.id == "spec_grim" then
             if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
-            for i = 1, 2 do
+            for i = 1, p.count do
                 local nc = Deck.newCard(14, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
                 Deck.addCardToDeck(game, nc)
@@ -1335,7 +1332,7 @@ local function useConsumable(idx)
             return true
         elseif c.id == "spec_incantation" then
             if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
-            for i = 1, 4 do
+            for i = 1, p.count do
                 local r = Rng.random(2, 10)
                 local nc = Deck.newCard(r, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
@@ -1355,22 +1352,23 @@ local function useConsumable(idx)
                 target = game.persistentDeck[1]
             end
             if not target then Sound.play("cant_afford") return false end
-            local cl1 = Deck.cloneCard(target)
-            local cl2 = Deck.cloneCard(target)
-            Deck.addCardToDeck(game, cl1)
-            Deck.addCardToDeck(game, cl2)
-            if game.hand then table.insert(game.hand, cl1) table.insert(game.hand, cl2) end
+            for _ = 1, p.count do
+                local clone = Deck.cloneCard(target)
+                clone.id = Deck.newCard(target.rank, target.suit).id
+                Deck.addCardToDeck(game, clone)
+                if game.hand then table.insert(game.hand, clone) end
+            end
             Sound.play("round_win")
             table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🧬 Cryptid: Tạo 2 bản sao của lá " .. (target.rankName or "") .. (target.suitSymbol or "") .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
+            table.insert(anim.floatingTexts, { text = "🧬 Cryptid: Tạo " .. p.count .. " bản sao của lá " .. (target.rankName or "") .. (target.suitSymbol or "") .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
             return true
         elseif c.id == "spec_immolate" then
             local destroyed = 0
-            while game.hand and #game.hand > 0 and destroyed < 5 do
+            while game.hand and #game.hand > 0 and destroyed < p.count do
                 destroyHandCard(1)
                 destroyed = destroyed + 1
             end
-            game.gold = (game.gold or 0) + 20
+            game.gold = (game.gold or 0) + p.gold
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
             table.insert(anim.floatingTexts, { text = "🔥 Immolate: Thiêu rụi " .. destroyed .. " lá, +$20 Vàng!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
@@ -1401,7 +1399,7 @@ local function useConsumable(idx)
                     ch.baseChips = Deck.getChipValue(r)
                 end
             end
-            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - 1)
+            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - p.handLoss)
             Sound.play("round_win")
             table.remove(game.consumables, idx)
             table.insert(anim.floatingTexts, { text = "👁️ Ouija: Đổi bài sang Rank " .. rName .. ", Hand Size: " .. game.maxHandSize .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
@@ -1409,7 +1407,7 @@ local function useConsumable(idx)
         elseif c.id == "spec_black_hole" then
             game.handLevels = game.handLevels or {}
             for _, ht in pairs(Poker.HAND_TYPES) do
-                game.handLevels[ht.id] = (game.handLevels[ht.id] or 1) + 1
+                game.handLevels[ht.id] = (game.handLevels[ht.id] or 1) + p.levels
             end
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
@@ -1427,6 +1425,9 @@ local function activateConsumable(idx, currentState)
     if not card then return false end
     local x, y, w, h = getConsumableSlotRect(idx, currentState)
     if not useConsumable(idx) then return false end
+    local stillStored = false
+    for _, remaining in ipairs(game.consumables or {}) do if remaining == card then stillStored = true end end
+    if not stillStored then UI.Abilities.consumableUsed(game) end
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
@@ -1484,6 +1485,7 @@ local function applyPendingEditionAt(mx, my, currentState)
         if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
             Shop.applyEdition(deity, pendingEditionCard.edition)
             local used = table.remove(game.consumables, consumableIndex)
+            UI.Abilities.consumableUsed(game)
             pendingEditionCard = nil
             spawnShopFx("consume", used, x + w / 2, y + h / 2, w, h)
             table.insert(anim.floatingTexts, {
@@ -1511,6 +1513,7 @@ local function applyPendingEditionAt(mx, my, currentState)
                 end
                 if not applied then Shop.applyEdition(card, pendingEditionCard.edition) end
                 local used = table.remove(game.consumables, consumableIndex)
+            UI.Abilities.consumableUsed(game)
                 pendingEditionCard = nil
                 local cx, cy, cw, ch = getConsumableSlotRect(consumableIndex, currentState)
                 spawnShopFx("consume", used, cx + cw / 2, cy + ch / 2, cw, ch)
@@ -1543,12 +1546,13 @@ local function applyPendingSpeedAt(mx, my)
                 for _, copy in ipairs(pile or {}) do
                     if copy and not seenCards[copy] and (copy == card or (card.id and copy.id == card.id)) then
                         seenCards[copy] = true
-                        local result = Deck.applyAttackSpeedBonus(copy, 5)
+                        local result = Deck.applyAttackSpeedBonus(copy, Shop.getConsumableParams(pendingSpeedCard).speed)
                         if copy == card then selectedSpeed = result end
                     end
                 end
             end
             local usedCard = table.remove(game.consumables, rewardIndex)
+            UI.Abilities.consumableUsed(game)
             pendingSpeedCard = nil
             local cx, cy = getConsumableSlotRect(rewardIndex, "playing")
             spawnShopFx("consume", usedCard, cx + 40, cy + 55, 80, 110)
@@ -1568,6 +1572,18 @@ local function playSelectedHand()
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
+    local evalForChoices = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
+    if not evalForChoices then return end
+    if not game.abilityApproved then
+        local choices = UI.Abilities.choices(game, evalForChoices, playedCards)
+        if #choices > 0 then
+            UI.AbilityUI.openChoices(game, choices, function(decisions)
+                game.abilityApproved = decisions
+                playSelectedHand()
+            end)
+            return
+        end
+    end
     local playedCardStarts = {}
     for i, card in ipairs(playedCards) do
         playedCardStarts[i] = {
@@ -1583,6 +1599,8 @@ local function playSelectedHand()
     game.monsterAttackedBeforePlayer = playerSpeed < monsterSpeed
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
+    UI.Abilities.beginHand(game, evalResult, playedCards, game.abilityApproved)
+    game.abilityApproved = nil
     game.lastPlayedHandId = evalResult.type and evalResult.type.id
     anim.playButtonPulse = UI.ScoringFeel.config.timing.button
 
@@ -1606,27 +1624,11 @@ local function playSelectedHand()
     clearAllSelections()
     syncCardSelections()
 
-    -- The Hook: Boss automatically discards 2 random cards from player's remaining hand
-    if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_hook" then
-        if #game.hand > 0 then
-            local hookedCount = math.min(2, #game.hand)
-            for i = 1, hookedCount do
-                local hIdx = Rng.random(#game.hand)
-                local hooked = table.remove(game.hand, hIdx)
-                if hooked then
-                    hooked.selected = false
-                    table.insert(game.discardPile, hooked)
-                end
-            end
-            table.insert(anim.floatingTexts, {
-                text = "[THE HOOK] Boss giật vứt bỏ " .. hookedCount .. " lá trên tay!",
-                color = { 0.95, 0.45, 0.2, 1 },
-                x = 640,
-                y = 380,
-                alpha = 2.5,
-            })
-            Sound.play("xmult_boom")
-        end
+    -- Boss-forced discards share the normal ability event.
+    local hookedCount=UI.BossAbilities.onPlay(game)
+    if hookedCount>0 then
+        table.insert(anim.floatingTexts,{text="[THE HOOK] Boss giật bỏ "..hookedCount.." lá!",color={0.95,0.45,0.2,1},x=640,y=380,alpha=2.5})
+        Sound.play("xmult_boom")
     end
 
     local preScoreAttack = nil
@@ -1660,6 +1662,7 @@ local function playSelectedHand()
         martyrStacks = game.martyrStacks or 0,
         gold = game.gold or 0,
         unplayedCards = game.hand,
+        hand = game.hand,
         gameState = game,
         drawCards = function(n)
             local drawnCount = 0
@@ -1682,7 +1685,7 @@ local function playSelectedHand()
 
     -- Pha Người Chơi: Kích hoạt Hiệu ứng Trang Bị/Ngọc Khảm sinh tồn trước (+Giáp, +Hồi Máu)
     if scoreResult.addArmor and scoreResult.addArmor > 0 then
-        game.playerArmor = math.min(30, (game.playerArmor or 0) + scoreResult.addArmor)
+        game.playerArmor = math.min(UI.Abilities.config.armorCap, (game.playerArmor or 0) + scoreResult.addArmor)
         game.playerShield = game.playerArmor
     end
     if scoreResult.healHp and scoreResult.healHp > 0 then
@@ -1696,7 +1699,7 @@ local function playSelectedHand()
     -- Overcharged enhancement: unplayed cards in hand gain +5 Chips (max +25)
     for _, c in ipairs(game.hand or {}) do
         if c.enhancement == "enh_overcharged" or c.enhancement == "overcharged" then
-            c.overchargeStacks = math.min(25, (c.overchargeStacks or 0) + 5)
+            c.overchargeStacks = math.min(Deck.ENHANCEMENTS.enh_overcharged.params.maxStacks, (c.overchargeStacks or 0) + Deck.ENHANCEMENTS.enh_overcharged.params.gain)
         end
     end
 
@@ -1746,7 +1749,7 @@ end
 local function endPlayerTurn()
     if not game or not game.monster then return false end
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle"
+        and game.monster.bossData.debuffId == "the_needle" and UI.BossAbilities.passiveEnabled(game.monster)
     if handLimitIsFinal and (game.handsRemaining or 0) <= 0 then return false end
     local canEndTurn = #game.hand == 0 or (game.handsRemaining or 0) <= 0
     local availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
@@ -1755,6 +1758,7 @@ local function endPlayerTurn()
     availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
     if availableCards == 0 then return false end
 
+    UI.Abilities.roundEnd(game)
     local attack = Combat.resolveMonsterAttack(game)
     if not attack then return false end
     monsterMotion.attack = 0.42
@@ -1798,6 +1802,16 @@ local function endPlayerTurn()
         clearAllSelections()
         syncCardSelections()
     end
+    UI.BossAbilities.handEnd(game)
+    UI.Abilities.resolveBossDamage(game)
+    if (game.playerHp or 0) <= 0 then
+        state = "gameover"
+        Persistence.deleteRun()
+        Sound.play("game_over")
+        return true
+    end
+    UI.Abilities.roundStart(game)
+    UI.Abilities.handStart(game)
     state = "playing"
     Sound.play(drawnCards > 0 and "card_deal" or "ui_click")
     return true
@@ -2120,12 +2134,20 @@ function love.update(dt)
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
     UI.CardPhysics.update(dt, physicsMx, physicsMy)
     CardEffects.update(dt)
+    UI.AbilityUI.update(dt)
+    if UI.AbilityUI.current then updateCaptureMode(); return end
     UI.ScoringFeel.updateLab(dt)
     if UI.ScoringFeel.labOpen then updateCaptureMode(); return end
     local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
     if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
     local motionDt = hitStopped and 0 or dt
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
+    if state=="playing" and game and game.abilityCombat then
+        local notices=UI.Abilities.takeFeedback(game)
+        for i=math.max(1,#notices-2),#notices do
+            table.insert(anim.floatingTexts,{text=notices[i].message,color=UI.COLORS.goldYellow,x=640,y=195+(i-math.max(1,#notices-2))*22,alpha=1.4})
+        end
+    end
     anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
     anim.playButtonPulse = math.max(0, (anim.playButtonPulse or 0) - dt)
     RunManager.deliverEvolutionRewards(game.run, game)
@@ -2607,9 +2629,9 @@ function love.update(dt)
                         game.lastRoundDeityRewards = { bonusGold = deityBonus, details = deityDetails or {} }
                         if scoreResult and scoreResult.hasBountySeal and not game.bountySealClaimedThisCombat then
                             game.bountySealClaimedThisCombat = true
-                            deityBonus = deityBonus + 2
+                            deityBonus = deityBonus + Deck.SEALS.seal_bounty.params.gold
                             table.insert(anim.floatingTexts, {
-                                text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +$2 Vàng!",
+                                text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +"..Deck.SEALS.seal_bounty.params.gold.." Vàng!",
                                 color = UI.COLORS.goldYellow,
                                 x = 640,
                                 y = 140,
@@ -2701,18 +2723,8 @@ function love.update(dt)
                         end
                         Sound.play("round_win")
                     else
-                        -- 1. Boss Ability: The Arm degrades scoring cards by -1 rank
-                        if game.monster and game.monster.isBoss and game.monster.bossData and game.monster.bossData.debuffId == "the_arm" then
-                            for _, sc in ipairs(anim.playedCards or {}) do
-                                Deck.degradeCard(sc)
-                            end
-                            table.insert(anim.floatingTexts, {
-                                text = "[THE ARM] Các lá bài bị suy đồi (-1 Rank)!",
-                                color = { 0.85, 0.35, 0.35, 1 },
-                                x = 640,
-                                y = 400,
-                                alpha = 2.5,
-                            })
+                        if UI.BossAbilities.afterScore(game,anim.evalResult and anim.evalResult.scoringCards) then
+                            table.insert(anim.floatingTexts,{text="[THE ARM] Lá tính điểm -1 Rank lâu dài!",color={0.85,0.35,0.35,1},x=640,y=400,alpha=2.5})
                         end
 
                         -- The faster side acts first; ties are resolved in the player's favor.
@@ -2751,6 +2763,7 @@ function love.update(dt)
                     if game.monster then game.monster.damageLagHp = game.monster.hp end
                     anim.playedCards = {}
 
+                    UI.Abilities.finishHand(game)
                     -- Resolve from live HP/hand state so stale animation flags can
                     -- never turn a defeated monster into a game over.
                     local combatOutcome = Combat.getOutcome(game)
@@ -2771,6 +2784,7 @@ function love.update(dt)
                     end
 
                     if anim.monsterDefeated then
+                        UI.Abilities.combatWin(game)
                         -- Combat Victory: purge destroyed cards from persistent deck & restore base ranks
                         Combat.cleanupDestroyedCards(game)
                         if game.persistentDeck then
@@ -2835,6 +2849,7 @@ function love.update(dt)
                             })
                         end
                         dealCombatHand(false)
+                        UI.Abilities.handStart(game)
                         state = "playing"
                         Sound.play("card_deal")
                     end
@@ -3420,6 +3435,7 @@ local function drawBattleInfoPanel(m, eval, preview)
         multBounce = scoring and anim.bounceScale.mult or 1,
         auraBounce = scoring and anim.bounceScale.score or 1,
         debuff = UI.truncateUtf8(m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi", 55),
+        boss = m,
         isBoss = m and m.bossData ~= nil,
         category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA"),
         detail = UI.truncateUtf8(detail, 55),
@@ -3613,9 +3629,7 @@ local function drawPlayingState()
         if isHovered and not hoveredCard and not (handDrag.active and handDrag.isDragging) then
             hoveredCard = c
             hoveredIdx = i
-            if c.equipments and #c.equipments > 0 then
-                hoveredCardTooltip = c
-            end
+            hoveredCardTooltip = c
         end
     end
 
@@ -3674,7 +3688,7 @@ local function drawPlayingState()
 
     -- Left: Chơi Tay Bài [Space]
     local handLimitIsFinal = game.monster and game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle"
+        and game.monster.bossData.debuffId == "the_needle" and UI.BossAbilities.passiveEnabled(game.monster)
     local canEndTurn = not (handLimitIsFinal and (game.handsRemaining or 0) <= 0)
         and (#game.hand == 0 or (game.handsRemaining or 0) <= 0)
         and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
@@ -3780,30 +3794,11 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     if hoveredDeityTooltip then
         local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
-        UI.drawPatronTooltip(hoveredDeityTooltip, mx, my, copyTarget)
+        UI.descriptionCandidate = copyTarget or hoveredDeityTooltip
     end
 
     if hoveredCardTooltip then
-        local c = hoveredCardTooltip
-        local ttW = 280
-        local ttH = 30 + #c.equipments * 26
-        local ttx = math.min(V_WIDTH - ttW - 10, math.max(10, mx + 12))
-        local tty = math.max(10, my - ttH - 10)
-
-        love.graphics.setColor(0.08, 0.10, 0.12, 0.96)
-        UI.drawRoundedRect("fill", ttx, tty, ttW, ttH, 6)
-        love.graphics.setColor(UI.COLORS.chipsBlue)
-        UI.drawRoundedRect("line", ttx, tty, ttW, ttH, 6)
-
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.print("Trang bị trên lá (" .. Equipment.getUsedSlots(c) .. "/" .. Equipment.MAX_SLOTS .. " ô):", ttx + 10, tty + 6)
-
-        for s, eq in ipairs(c.equipments) do
-            love.graphics.setColor(eq.color or UI.COLORS.textLight)
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.print("• " .. eq.name .. ": " .. eq.desc, ttx + 12, tty + 14 + s * 22)
-        end
+        UI.descriptionCandidate = hoveredCardTooltip
     end
     if state == "playing" then drawCombatFeedback() end
 end
@@ -5895,7 +5890,6 @@ local function drawShopState()
 
     local interestBonus = math.min(game.maxInterest or 5, math.floor((game.gold or 0) / 5))
     local hoveredShopItem = nil
-    local hoveredItemPos = nil
     hoveredDeityTooltip = nil
 
     -- SPM and consumables live in a compact right-side rail.
@@ -6050,7 +6044,7 @@ local function drawShopState()
     end
 
     -- Stock rendering is isolated from inventory, drag/drop and modal handling.
-    hoveredShopItem, hoveredItemPos = require("ui.shop_display").draw(
+    hoveredShopItem = require("ui.shop_display").draw(
         shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
@@ -6107,38 +6101,8 @@ local function drawShopState()
     ----------------------------------------------------------------------------
     -- Stock purchases are accepted only at the deck pile, never above the shop.
     ----------------------------------------------------------------------------
-    -- 5. BALATRO TOOLTIP BADGE (Floating Info for Hovered Card)
-    ----------------------------------------------------------------------------
-    if hoveredShopItem and hoveredItemPos then
-        local it = hoveredShopItem
-        local tipW = 250
-        local tipH = 135
-        local tipX = math.max(280, math.min(V_WIDTH - tipW - 20, hoveredItemPos.x))
-        local tipY = math.max(20, math.min(V_HEIGHT - tipH - 20, hoveredItemPos.y))
-
-        love.graphics.setColor(0, 0, 0, 0.6)
-        UI.drawRoundedRect("fill", tipX + 4, tipY + 4, tipW, tipH, 8)
-        love.graphics.setColor(0.11, 0.14, 0.18, 0.98)
-        UI.drawRoundedRect("fill", tipX, tipY, tipW, tipH, 8)
-        love.graphics.setColor(it.color or UI.COLORS.goldYellow)
-        love.graphics.setLineWidth(2)
-        UI.drawRoundedRect("line", tipX, tipY, tipW, tipH, 8)
-
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(it.color or UI.COLORS.goldYellow)
-        love.graphics.print(it.name or "Vật Phẩm", tipX + 14, tipY + 12)
-
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.print(it.subtitle or "CHI TIẾT", tipX + 14, tipY + 34)
-
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(it.desc or "", tipX + 14, tipY + 54, tipW - 28, "left")
-
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        local pStr = it.isSell and ("Giá Bán Lại: +$" .. it.cost) or ("Giá Mua: $" .. it.cost)
-        love.graphics.printf(pStr, tipX + 14, tipY + tipH - 24, tipW - 28, "right")
-    end
+    -- Stock descriptions use the single cursor-following tooltip at end of frame.
+    if hoveredShopItem then UI.descriptionCandidate = hoveredShopItem end
 
     ----------------------------------------------------------------------------
     -- 6. PACK OPENING MODAL OVERLAY (When a Booster Pack is active)
@@ -6315,7 +6279,7 @@ local function drawShopState()
 
     if hoveredDeityTooltip then
         local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
-        UI.drawPatronTooltip(hoveredDeityTooltip, mx, my, copyTarget)
+        UI.descriptionCandidate = copyTarget or hoveredDeityTooltip
     end
     drawCombatFeedback()
 end
@@ -6704,6 +6668,8 @@ local function chooseRoundReward(index)
 end
 
 function love.draw()
+    UI.descriptionCandidate = nil
+    UI.descriptionGame = game
     if UI.menuBackgroundVideo then
         if state == "menu" then
             if not UI.menuBackgroundVideo:isPlaying() then
@@ -6884,6 +6850,10 @@ function love.draw()
 
     love.graphics.pop()
 
+    if UI.descriptionCandidate and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
+        UI.Description.draw(UI, UI.descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
+    end
+    UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
     -- The game layout remains expressed in 1280x720 units; undo that logical
     -- scale before presenting the 1920x1080 render target.
     if mainCanvas then love.graphics.pop() end
@@ -7856,6 +7826,7 @@ end
 function love.mousepressed(x, y, button)
     if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
+    if UI.AbilityUI.press(mx, my, button) then return end
     if UI.CardPhysics.isLabOpen() then
         UI.CardPhysics.press(mx, my, button)
         return
@@ -8488,6 +8459,7 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if UI.AbilityUI.key(key) then return end
     if UI.ScoringFeel.labKeypressed(key, UI) then return end
     UI.CardPhysics.labAction(key, CardEffects)
     if UI.CardPhysics.keypressed(key) then return end

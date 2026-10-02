@@ -1,7 +1,9 @@
 local Deck = require("src.deck")
 local Deities = require("src.deities")
 
-local Combat = {}
+local Abilities = require("src.card_abilities")
+local Boss = require("src.boss_abilities")
+local Combat = { Abilities = Abilities, Boss = Boss }
 
 function Combat.getOutcome(game)
     if not game or not game.monster then return "continue" end
@@ -9,7 +11,7 @@ function Combat.getOutcome(game)
     if game.monster.hp and game.monster.hp <= 0 then return "victory" end
     local noCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) == 0
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle"
+        and game.monster.bossData.debuffId == "the_needle" and Boss.passiveEnabled(game.monster)
     if game.handsRemaining and game.handsRemaining <= 0 and (noCards or handLimitIsFinal) then return "defeat" end
     return "continue"
 end
@@ -27,21 +29,29 @@ function Combat.resolveMonsterAttack(game)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
 
-    local attack = monster.attack or 12
-    local armor = game.playerArmor or game.playerShield or 0
+    if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
+    local baseAttack = (monster.attack or 12)
+    local attack = baseAttack
+    local bossState = Boss.state(monster)
+    if bossState and Boss.passiveEnabled(monster) then attack=attack+(bossState.excess or 0)*Boss.config.gateAttackPerCard end
+    local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
+        and (game.playerHp or 100)<(game.maxPlayerHp or 100)*Boss.config.executionThreshold
+    if execution then attack=attack*Boss.config.executionMultiplier end
+    local armor = execution and 0 or (game.playerArmor or game.playerShield or 0)
     local absorbed = math.min(armor, attack)
     armor = math.floor((armor - absorbed) * 0.5)
     local damage = math.min(attack - absorbed, math.floor((game.maxPlayerHp or 100) * 0.60))
 
-    game.playerArmor = armor
-    game.playerShield = armor
+    damage = Abilities.damageGuard(game, damage)
+    game.playerArmor = execution and (game.playerArmor or game.playerShield or 0) or armor
+    game.playerShield = game.playerArmor
     game.playerHp = math.max(0, (game.playerHp or 100) - damage)
-    monster.attack = math.floor(attack * 1.08 + 0.5)
+    monster.attack = math.floor(baseAttack * 1.08 + 0.5)
     monster.armor = math.floor((monster.armor or 0) * 1.05 + 2)
 
     for _, card in ipairs(game.hand or {}) do
         if card.enhancement == "enh_escort" or card.enhancement == "escort" then
-            game.playerArmor = math.min(30, (game.playerArmor or 0) + 5)
+            game.playerArmor = math.min(30, (game.playerArmor or 0) + Deck.ENHANCEMENTS.enh_escort.params.armor)
             game.playerShield = game.playerArmor
         end
     end
@@ -70,12 +80,15 @@ function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
     end
 
     local drawnCount = 0
-    while #game.hand < (maxHandSize or 0) and #game.deck > 0 do
+    while #game.hand < Abilities.handSize(game, maxHandSize) and #game.deck > 0 do
         local card = table.remove(game.deck)
         card.selected = false
         drawnCount = drawnCount + 1
         if prepareDraw then prepareDraw(card, drawnCount) end
         table.insert(game.hand, card)
+    end
+    if Boss.passiveEnabled(game.monster) and (Boss.key(game.monster)=="faceless" or Boss.key(game.monster)=="the_fish") then
+        for _,c in ipairs(game.hand) do c.faceDown=true end
     end
     return drawnCount
 end
@@ -88,6 +101,9 @@ function Combat.start(game, monster, round)
     assert(game and monster, "Combat.start requires game state and monster")
     game.round = round or 1
     game.monster = monster
+    game.maxSelectableCards = nil
+    game.abilityHand = nil
+    Boss.start(game)
     game.handsRemaining = game.maxHands
     game.playerArmor = 0
     game.playerShield = 0
@@ -159,9 +175,10 @@ function Combat.start(game, monster, round)
         for _, c in ipairs(anchors) do table.insert(game.deck, c) end -- popped first from the end
     end
 
+    Abilities.start(game)
     local maxHandSize = isFaction(game, "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
     local dealOrder = 0
-    while #game.hand < maxHandSize and #game.deck > 0 do
+    while #game.hand < Abilities.handSize(game, maxHandSize) and #game.deck > 0 do
         local card = table.remove(game.deck)
         dealOrder = dealOrder + 1
         card.selected = false
@@ -193,6 +210,7 @@ function Combat.start(game, monster, round)
     else
         Deck.sortBySuit(game.hand)
     end
+    Abilities.handStart(game)
     return { slaughterChips = slaughterChips }
 end
 
@@ -237,6 +255,7 @@ function Combat.cleanupDestroyedCards(game)
         for i = #tbl, 1, -1 do
             local c = tbl[i]
             if c and c.destroyed then
+                Abilities.destroy(game, c)
                 if c.id then
                     destroyedIds[c.id] = true
                     if tonumber(c.id) then destroyedIds[tonumber(c.id)] = true end

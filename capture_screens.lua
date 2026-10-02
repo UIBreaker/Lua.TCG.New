@@ -6,12 +6,14 @@ local packSkipOnly = false
 local physicsOnly = false
 local scoringOnly = false
 local shopDropOnly = false
+local expansionOnly = false
 local shopCaptureAt, shopCaptureSaved, shopCaptureStep
 for _, value in ipairs(arg or {}) do
     if value == "--capture-shop" then shopOnly = true end
     if value == "--test-pack-skip" then packSkipOnly = true end
     if value == "--test-card-physics" then physicsOnly = true end
     if value == "--test-scoring-feel" then scoringOnly = true end
+    if value == "--test-gameplay-expansion" then expansionOnly = true end
     if value == "--test-shop-deck-drop" then shopDropOnly = true end
 end
 local Equipment = require("src.equipment")
@@ -54,6 +56,7 @@ end
 
 function Capture.update(gameRef, callbacks)
     frame = frame + 1
+    if expansionOnly then return require("tests.gameplay_expansion_capture").update(gameRef, callbacks) end
     if shopDropOnly then return require("tests.shop_deck_drop_capture").update(gameRef, callbacks) end
     if scoringOnly then return require("tests.scoring_feel_capture").update(gameRef, callbacks) end
     if physicsOnly then return require("tests.card_physics_capture").update(gameRef, callbacks) end

@@ -3,6 +3,10 @@ local Deities = require("src.deities")
 local Deck = require("src.deck")
 local CardEffects = require("src.card_effects")
 
+local Rng = require("src.rng")
+local Abilities = require("src.card_abilities")
+local Boss = require("src.boss_abilities")
+
 local function isSpade(card)
     if not card then return false end
     if card.disableFactionPassives then return false end
@@ -34,9 +38,14 @@ Damage to Monster = Score * (1 + Total Extra Damage Pct)
 ]]
 
 function Scoring.calculate(handInfo, deities, context)
+    local abilityGame = context and context.gameState
+    local abilityHand = abilityGame and abilityGame.abilityHand
+    if context and context.preview or abilityHand and abilityHand.finished then abilityHand = nil end
     local handType = handInfo.type
     local baseChips = handInfo.chips or (handType and handType.baseChips) or 10
     local baseMult = handInfo.mult or (handType and handType.baseMult) or 1
+    if abilityHand and Boss.key(context.monster)=="echo_knight" and Boss.passiveEnabled(context.monster)
+        and abilityGame.abilityCombat.previousHandType==handType.id then baseMult=0 end
     local handLevel = handInfo.level or 1
 
     local bonusChips = 0
@@ -123,7 +132,9 @@ function Scoring.calculate(handInfo, deities, context)
         for _, eq in ipairs(card.equipments or {}) do
             if eq.onHandEvaluate then
                 local buffs = eq.onHandEvaluate(card, handInfo.scoringCards, i)
-                for targetIdx, buff in pairs(buffs or {}) do
+                for targetIdx = 1, #handInfo.scoringCards do
+                    local buff = buffs and buffs[targetIdx]
+                    if buff then
                     cardExternalBuffs[targetIdx] = cardExternalBuffs[targetIdx] or { chips = 0, mult = 0 }
                     if buff.addChips then
                         cardExternalBuffs[targetIdx].chips = cardExternalBuffs[targetIdx].chips + buff.addChips
@@ -140,6 +151,7 @@ function Scoring.calculate(handInfo, deities, context)
                             message = eq.name .. " -> Lá " .. targetIdx .. ": +" .. buff.addMult .. " Mult",
                             addedMult = buff.addMult,
                         })
+                    end
                     end
                 end
             end
@@ -168,11 +180,27 @@ function Scoring.calculate(handInfo, deities, context)
     -- Step 2: Scoring cards, Roles, Faction Passives & Equipments
     local hasAureliaCard = false
 
-    for idx, card in ipairs(handInfo.scoringCards) do
+    local scoreCursor = 0
+    local afterChoicesApplied = false
+    while true do
+        local job
+        if abilityHand then
+            job = Abilities.nextScore(abilityGame)
+            if not job and not afterChoicesApplied then
+                afterChoicesApplied = true
+                Abilities.applyDecisions(abilityGame, "after")
+                job = Abilities.nextScore(abilityGame)
+            end
+        else
+            scoreCursor = scoreCursor + 1
+            if handInfo.scoringCards[scoreCursor] then job = {card=handInfo.scoringCards[scoreCursor],index=scoreCursor} end
+        end
+        if not job then break end
+        local idx, card = job.index, job.card
         -- Check Boss Debuffs: locked faction or locked royals (Trảm Vương)
         local isPillarLocked = false
         local debuffReason = "KHÓA BÀI"
-        if context and context.monster then
+        if context and context.monster and Boss.passiveEnabled(context.monster) then
             if context.monster.lockedFaction and (card.suit == context.monster.lockedFaction) then
                 isPillarLocked = true
                 debuffReason = "KHÓA PHÁI: Phe " .. (card.suitName or card.suit) .. " bị vô hiệu hóa (0c / 0m)!"
@@ -212,14 +240,14 @@ function Scoring.calculate(handInfo, deities, context)
             local cardTriggers = 1
             local isBloodSeal = (card.seal == "seal_blood" or card.seal == "blood" or card.seal == "red")
             if isBloodSeal and not flags.bloodSealUsedThisCombat then
-                cardTriggers = 2
+                cardTriggers = 1+Deck.SEALS.seal_blood.params.repeats
                 flags.bloodSealUsedThisCombat = true
                 if context then context.bloodSealUsedThisCombat = true end
             end
 
             for cTrig = 1, cardTriggers do
                 if cTrig == 2 then
-                    totalHpCost = totalHpCost + 3
+                    totalHpCost = totalHpCost + Deck.SEALS.seal_blood.params.hpCost
                     table.insert(steps, {
                         type = "seal_trigger",
                         card = card,
@@ -239,6 +267,16 @@ function Scoring.calculate(handInfo, deities, context)
                     addedMult = 0,
                     message = (card.roleIcon or "") .. " " .. card.rankName .. (card.suitSymbol or "") .. " +" .. cardChips .. " Chips"
                 }
+
+            if abilityHand and cTrig == 1 then
+                Abilities.score(abilityGame, card)
+                for _, trigger in ipairs(Abilities.takeFeedback(abilityGame)) do
+                    trigger.cardIndex = idx
+                    cardEvent.presentationTriggers = cardEvent.presentationTriggers or {}
+                    table.insert(cardEvent.presentationTriggers, trigger)
+                end
+                if job.retrigger then cardEvent.message = "TÁI KÍCH HOẠT · " .. cardEvent.message end
+            end
 
             -- Faction Passives per card
             -- 1. ♠️ THIẾT QUÂN THỨ: Chỉ Số Thép (+20 Chips per scored Spade; +40 for legacy Vharos)
@@ -525,35 +563,36 @@ function Scoring.calculate(handInfo, deities, context)
                 if card.enhancement then
                     local pc, pm, px, pd = cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct
                     local enh = card.enhancement
+                    local p=(Deck.getModifier("enhancement",enh) or {params={}}).params
                     if enh == "enh_armor" or enh == "armor" then
-                        bonusChips = bonusChips - 10
-                        totalArmorGain = math.min(30, totalArmorGain + 8)
-                        cardEvent.addedChips = cardEvent.addedChips - 10
-                        cardEvent.message = cardEvent.message .. " | 🛡️ Giáp Hóa (-10c, +8 Giáp)"
+                        bonusChips = bonusChips + p.chips
+                        totalArmorGain = math.min(30, totalArmorGain + p.armor)
+                        cardEvent.addedChips = cardEvent.addedChips + p.chips
+
                     elseif enh == "enh_blood" or enh == "blood" then
-                        bonusMult = bonusMult + 15
-                        totalHpCost = totalHpCost + 4
-                        cardEvent.addedMult = cardEvent.addedMult + 15
-                        cardEvent.message = cardEvent.message .. " | 🩸 Huyết Hóa (+15 Mult, -4 HP)"
+                        bonusMult = bonusMult + p.mult
+                        totalHpCost = totalHpCost + p.hpCost
+                        cardEvent.addedMult = cardEvent.addedMult + p.mult
+
                     elseif enh == "enh_overcharged" or enh == "overcharged" then
                         local stacks = card.overchargeStacks or 0
                         if stacks > 0 then
                             bonusChips = bonusChips + stacks
                             cardEvent.addedChips = cardEvent.addedChips + stacks
-                            cardEvent.message = cardEvent.message .. " | ⚡ Tích Điện (+" .. stacks .. " Chips)"
+
                             card.overchargeStacks = 0
                         end
                     elseif enh == "enh_cursed" or enh == "cursed" then
-                        bonusMult = bonusMult + 20
-                        cardEvent.addedMult = cardEvent.addedMult + 20
+                        bonusMult = bonusMult + p.mult
+                        cardEvent.addedMult = cardEvent.addedMult + p.mult
                         if context and context.monster then
-                            context.monster.enrageStacks = (context.monster.enrageStacks or 0) + 1
+                            context.monster.enrageStacks = (context.monster.enrageStacks or 0) + p.enrage
                         end
-                        cardEvent.message = cardEvent.message .. " | 💀 Nguyền Rủa (+20 Mult, +1 Cuồng Nộ Quái)"
+
                     elseif enh == "enh_brittle" or enh == "brittle" then
-                        xMultBonus = xMultBonus + 0.4
-                        cardEvent.message = cardEvent.message .. " | 💥 Nứt Vỡ (+0.4 XMult)"
-                        if Rng.random(100) <= 25 then
+                        xMultBonus = xMultBonus + p.xMultBonus
+
+                        if Rng.random(100) <= p.chance then
                             card.destroyed = true
                             cardEvent.message = cardEvent.message .. " [VỠ VỤN VĨNH VIỄN]"
                         end
@@ -566,35 +605,36 @@ function Scoring.calculate(handInfo, deities, context)
                             end
                         end
                         if sameCount > 0 then
-                            local hMult = sameCount * 3
+                            local hMult = sameCount * p.mult
                             bonusMult = bonusMult + hMult
                             cardEvent.addedMult = cardEvent.addedMult + hMult
-                            cardEvent.message = cardEvent.message .. " | 🎶 Cộng Hưởng (+" .. hMult .. " Mult)"
+
                         end
                     elseif enh == "enh_boss_hunter" or enh == "boss_hunter" then
                         if context and context.monster and context.monster.isBoss then
-                            bonusChips = bonusChips + 25
-                            bonusMult = bonusMult + 8
-                            cardEvent.addedChips = cardEvent.addedChips + 25
-                            cardEvent.addedMult = cardEvent.addedMult + 8
-                            cardEvent.message = cardEvent.message .. " | 🏹 Săn Boss (+25 Chips, +8 Mult)"
+                            bonusChips = bonusChips + p.chips
+                            bonusMult = bonusMult + p.mult
+                            cardEvent.addedChips = cardEvent.addedChips + p.chips
+                            cardEvent.addedMult = cardEvent.addedMult + p.mult
+
                         end
                     elseif enh == "enh_vanguard" or enh == "vanguard" then
                         if idx == 1 then
-                            bonusChips = bonusChips + 15
-                            bonusMult = bonusMult + 4
-                            cardEvent.addedChips = cardEvent.addedChips + 15
-                            cardEvent.addedMult = cardEvent.addedMult + 4
-                            cardEvent.message = cardEvent.message .. " | ⚔️ Tiên Phong (+15 Chips, +4 Mult)"
+                            bonusChips = bonusChips + p.chips
+                            bonusMult = bonusMult + p.mult
+                            cardEvent.addedChips = cardEvent.addedChips + p.chips
+                            cardEvent.addedMult = cardEvent.addedMult + p.mult
+
                         end
                     elseif enh == "enh_rearguard" or enh == "rearguard" then
                         if idx == #handInfo.scoringCards then
-                            totalArmorGain = math.min(30, totalArmorGain + 8)
-                            bonusMult = bonusMult + 3
-                            cardEvent.addedMult = cardEvent.addedMult + 3
-                            cardEvent.message = cardEvent.message .. " | 🛡️ Hậu Vệ (+8 Giáp, +3 Mult)"
+                            totalArmorGain = math.min(30, totalArmorGain + p.armor)
+                            bonusMult = bonusMult + p.mult
+                            cardEvent.addedMult = cardEvent.addedMult + p.mult
+
                         end
                     end
+                    cardEvent.message = cardEvent.message .. " | " .. Deck.getModifierDescription("enhancement",enh)
                     recordTrigger(cardEvent, "enhancement_trigger",
                         Deck.ENHANCEMENTS[enh] or Deck.ENHANCEMENTS["enh_" .. enh] or {name = "Thuật rèn " .. enh}, pc, pm, px, pd)
                 end
@@ -605,13 +645,13 @@ function Scoring.calculate(handInfo, deities, context)
                 elseif card.seal == "seal_prophecy" or card.seal == "prophecy" or card.seal == "blue" then
                     if context and context.monster then
                         context.monster.showNextIntent = true
-                        context.monster.revealedIntents = 2
+                        context.monster.revealedIntents = Deck.SEALS.seal_prophecy.params.intents
                         cardEvent.message = cardEvent.message .. " | 🔮 Ấn Tiên Tri (Thấu Thị Intent)"
                     end
                 elseif card.seal == "seal_ashen" or card.seal == "ashen" or card.seal == "purple" then
                     card.destroyed = true
                     if context and context.monster then
-                        context.monster.hp = math.max(0, context.monster.hp - 40)
+                        context.monster.hp = math.max(0, context.monster.hp - Deck.SEALS.seal_ashen.params.damage)
                         cardEvent.message = cardEvent.message .. " | 🔥 Ấn Tro Tàn (40 ST Chuẩn & Thiêu Hủy)"
                     end
                 elseif card.seal == "seal_bounty" or card.seal == "bounty" or card.seal == "gold" then
@@ -643,14 +683,18 @@ function Scoring.calculate(handInfo, deities, context)
                     end
                 end
             end
-            for di = 1, maxDeitySlots do
+    for di = 1, maxDeitySlots do
                 local deity = deities and deities[di]
-                if deity then
+                if deity and not (abilityHand and Boss.isSlotLocked(abilityGame, "spn", di)) then
                     local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
                     if effectiveDeity and effectiveDeity.onCardScored then
                         local res = effectiveDeity.onCardScored(card, context, effectiveDeity, idx, handInfo.scoringCards)
                         res = Deities.scaleEffect(effectiveDeity, res)
                         if res then
+                            if abilityHand then
+                                local repeats = Abilities.spnTriggered(abilityGame, di)
+                                for k, v in pairs(res) do if type(v)=="number" and k:sub(1,3)=="add" then res[k]=v*(1+repeats) end end
+                            end
                             if res.addChips then
                                 bonusChips = bonusChips + res.addChips
                                 cardEvent.addedChips = cardEvent.addedChips + res.addChips
@@ -721,6 +765,14 @@ function Scoring.calculate(handInfo, deities, context)
                         .. (editionBonus.damage or 0) .. " ST cố định / "
                         .. (editionBonus.mult or 0) .. " Cường hóa / ×" .. (editionBonus.auraMultiplier or 1) .. " Aura",
                 })
+            end
+            if abilityHand then
+                if card.destroyed then Abilities.destroy(abilityGame, card, abilityHand) end
+                for _, trigger in ipairs(Abilities.takeFeedback(abilityGame)) do
+                    trigger.cardIndex = idx
+                    cardEvent.presentationTriggers = cardEvent.presentationTriggers or {}
+                    table.insert(cardEvent.presentationTriggers, trigger)
+                end
             end
             cardEvent.deityTriggers = deityTriggers
             table.insert(steps, cardEvent)
@@ -890,12 +942,16 @@ end
 
     for di = 1, maxDeitySlots do
         local deity = deities and deities[di]
-        if deity then
+        if deity and not (abilityHand and Boss.isSlotLocked(abilityGame, "spn", di)) then
             local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
             if effectiveDeity and effectiveDeity.onHandScored then
                 local res = effectiveDeity.onHandScored(handInfo, context, effectiveDeity)
                 res = Deities.scaleEffect(effectiveDeity, res)
                 if res then
+                    if abilityHand then
+                        local repeats = Abilities.spnTriggered(abilityGame, di)
+                        for k,v in pairs(res) do if type(v)=="number" and k:sub(1,3)=="add" then res[k]=v*(1+repeats) end end
+                    end
                     local addedChips = res.addChips or 0
                     local addedMult = res.addMult or 0
                     local cardXMult = res.xMult or 1.0
@@ -928,42 +984,43 @@ end
 
             -- Joker Edition Trigger (Foil +50c, Holo +10m, Polychrome x1.5m)
             if deity.edition then
+                local eb=CardEffects.getScoreBonus(deity) or {}
                 if deity.edition == "foil" then
-                    flatDamageBonus = flatDamageBonus + 50
+                    flatDamageBonus = flatDamageBonus + eb.damage
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "foil",
-                        addFlatDamage = 50,
+                        addFlatDamage = eb.damage,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
-                        message = "✨ FOIL: " .. deity.name .. " (+50 Sát thương cố định)!"
+                        message = "✨ FOIL: " .. deity.name .. " (+"..eb.damage.." Sát thương cố định)!"
                     })
                 elseif deity.edition == "holo" or deity.edition == "holographic" then
-                    currentMult = currentMult + 10
-                    bonusMult = bonusMult + 10
+                    currentMult = currentMult + eb.mult
+                    bonusMult = bonusMult + eb.mult
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "holo",
-                        addedMult = 10,
+                        addedMult = eb.mult,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
-                        message = "🌈 HOLOGRAPHIC: " .. deity.name .. " (+10 Mult)!"
+                        message = "🌈 HOLOGRAPHIC: " .. deity.name .. " (+"..eb.mult.." Mult)!"
                     })
                 elseif deity.edition == "polychrome" then
-                    auraEditionMultiplier = auraEditionMultiplier * 1.5
+                    auraEditionMultiplier = auraEditionMultiplier * eb.auraMultiplier
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "polychrome",
-                        auraMultiplier = 1.5,
+                        auraMultiplier = eb.auraMultiplier,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
-                        message = "🌟 POLYCHROME: " .. deity.name .. " (x1.5 Aura)!"
+                        message = "🌟 POLYCHROME: " .. deity.name .. " (×"..eb.auraMultiplier.." Aura)!"
                     })
                 end
             end
@@ -972,6 +1029,12 @@ end
 
     -- Total calculation: card/equipment XMult is additive & capped at x5.0
     local totalChips = currentChips
+    local bossState = context and Boss.state(context.monster)
+    if bossState and Boss.passiveEnabled(context.monster) and bossState.repeatUntil and bossState.repeatUntil >= bossState.handIndex
+        and bossState.repeatHand == handType.id then currentMult = math.max(0, currentMult - context.monster.bossData.active.amount) end
+    if abilityHand then
+        for _, trigger in ipairs(Abilities.takeFeedback(abilityGame)) do table.insert(steps, trigger) end
+    end
     local totalMult = currentMult
     local rawScore = math.floor(totalChips * totalMult * cardXMultTotal)
     local finalScore = math.floor(rawScore * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus

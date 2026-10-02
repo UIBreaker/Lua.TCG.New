@@ -12,6 +12,9 @@ local Persistence = {
 
 local TRANSIENT_GAME_KEYS = {
     map = true,
+    abilityCombat = true,
+    abilityHand = true,
+    abilityApproved = true,
     monster = true,
     deck = true,
     hand = true,
@@ -151,6 +154,8 @@ local function restoreCard(savedCard)
         local equipment = restoreEquipment(savedEquipment)
         if equipment then table.insert(card.equipments, equipment) end
     end
+    card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
+    card.temporaryAbilityLevels, card.abilityState, card.abilityDisabledUntil = nil, nil, nil
     card.maxSockets = Equipment.MAX_SLOTS
     card.unlockedSockets = Equipment.MAX_SLOTS
     card.selected = false

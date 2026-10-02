@@ -1,0 +1,24 @@
+[PASS] Shared card back: nine renderers and all pack previews; no names/rank/stats/edition leakage
+[PASS] Shop deck drop: card / click
+[PASS] Shop deck drop: card / outside
+[PASS] Shop deck drop: card / outside
+[PASS] Shop deck drop: card / outside
+[PASS] Shop deck drop: card / poor
+[PASS] Shop deck drop: deity / full
+[PASS] Shop deck drop: heal / healthy
+[PASS] Shop deck drop: card / buy
+[PASS] Shop deck drop: deity / buy
+[PASS] Shop deck drop: heal / buy
+[PASS] Shop deck drop: hand_expansion / buy
+[PASS] Shop deck drop: voucher / buy
+[PASS] Shop deck drop: equipment / buy
+[PASS] Shop deck drop: pack / buy / buffoon
+[PASS] Shop deck drop: pack / buy / arcana
+[PASS] Shop deck drop: pack / buy / standard
+[PASS] Shop deck drop: pack / buy / joker_edition
+[PASS] Shop deck drop: pack / buy / seal
+[PASS] Shop deck drop: pack / buy / spectral
+[PASS] Shop deck drop: pack / buy / celestial
+[PASS] Shop deck drop: pack / buy / hand_styles
+[PASS] Shop deck drop: pack / buy / edition
+Shop deck-drop + shared card-back regression passed (22 input cases)

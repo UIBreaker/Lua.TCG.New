@@ -443,8 +443,11 @@ RunManager.BOSS_DEBUFFS = {
     },
 }
 
+local BossAbilities = require("src.boss_abilities")
+for _, d in pairs(RunManager.BOSS_DEBUFFS) do BossAbilities.attach(d) end
+for id, d in pairs(BossAbilities.newDefinitions) do RunManager.BOSS_DEBUFFS[id]=BossAbilities.attach(d) end
 RunManager.BOSS_KEYS = {
-    "lock_royals", "the_needle", "the_water", "the_fish", "the_arm", "the_hook", "max_3_cards"
+    "lock_royals", "black_tax_collector", "the_water", "memory_eater", "the_arm", "gatekeeper", "the_hook", "max_3_cards", "the_needle", "the_fish"
 }
 
 -- HP formula:
@@ -627,7 +630,7 @@ function RunManager.createEvolutionCard()
         id = "cons_evolution",
         category = "evolution",
         name = "Tiến Hóa",
-        desc = "Chuột phải dùng, sau đó chọn một lá SPN để tăng một bậc độ hiếm và sức mạnh.",
+        desc = "Chọn lá bài để nâng +1 cấp thông số khả năng, không đổi rank/chất; hoặc nâng một SPN lên bậc kế tiếp.",
         icon = "✦",
         color = { 0.72, 0.42, 0.96, 1 },
     }

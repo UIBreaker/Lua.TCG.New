@@ -126,6 +126,48 @@ Deck.ENHANCEMENTS = {
     },
 }
 
+-- Runtime and descriptions share these values, including old-save aliases.
+Deck.SEALS.seal_blood.params={hpCost=3,repeats=1}
+Deck.SEALS.seal_prophecy.params={intents=2}
+Deck.SEALS.seal_ashen.params={damage=40}
+Deck.SEALS.seal_bounty.params={gold=2}
+Deck.SEALS.seal_anchor.params={}
+Deck.SEALS.seal_purifying.params={cleanses=1}
+Deck.SEALS.seal_blood.desc="Tái kích hoạt điểm cơ bản {repeats} lần, tốn {hpCost} HP; một lần mỗi trận, không lặp trang bị/giáp/hồi máu/vàng."
+Deck.SEALS.seal_prophecy.desc="Khi tính điểm hoặc được chia đầu trận: nhìn thấy {intents} ý định kế tiếp của quái."
+Deck.SEALS.seal_ashen.desc="Khi tính điểm: tiêu hủy vĩnh viễn lá này, gây {damage} sát thương chuẩn trực tiếp; không thưởng Vàng."
+Deck.SEALS.seal_bounty.desc="Tay tính điểm chứa lá này kết liễu quái: thưởng {gold} Vàng."
+Deck.SEALS.seal_anchor.desc="Ưu tiên chia lá này vào tay đầu trận; không tự thêm Giáp hay ngăn bỏ bài."
+Deck.SEALS.seal_purifying.desc="Khi giữ qua lượt quái: tẩy Nội Tại Boss, tối đa {cleanses} lần mỗi trận."
+local enhancementParams={
+    enh_armor={chips=-10,armor=8},enh_blood={mult=15,hpCost=4},
+    enh_overcharged={gain=5,maxStacks=25},enh_cursed={mult=20,enrage=1},
+    enh_brittle={xMultBonus=0.4,chance=25},enh_escort={armor=5},
+    enh_harmonic={mult=3},enh_boss_hunter={chips=25,mult=8},
+    enh_vanguard={chips=15,mult=4},enh_rearguard={armor=8,mult=3},
+}
+local enhancementText={
+    enh_armor="Khi tính điểm: {chips} ST và +{armor} Giáp; không giảm ST cơ bản vĩnh viễn.",
+    enh_blood="Khi tính điểm: tốn {hpCost} HP, +{mult} Cường hóa.",
+    enh_overcharged="Mỗi tay giữ không đánh: tích {gain} ST (tối đa {maxStacks}). Khi tính điểm: xả toàn bộ.",
+    enh_cursed="Khi tính điểm: +{mult} Cường hóa và ghi nhận {enrage} tầng Cuồng Nộ quái; tầng này không nhân sát thương.",
+    enh_brittle="Khi tính điểm: cộng {xMultBonus} vào hệ số Aura; {chance}% tiêu hủy vĩnh viễn.",
+    enh_escort="Khi giữ qua đòn quái: +{armor} Giáp sau khi nhận sát thương.",
+    enh_harmonic="Khi tính điểm: +{mult} Cường hóa mỗi lá khác cùng chất còn giữ trên tay.",
+    enh_boss_hunter="Khi tính điểm trước Boss: +{chips} ST và +{mult} Cường hóa; không có bonus trước quái thường.",
+    enh_vanguard="Lá tính điểm đầu tiên: +{chips} ST và +{mult} Cường hóa.",
+    enh_rearguard="Lá tính điểm cuối cùng: +{armor} Giáp và +{mult} Cường hóa.",
+}
+for id,p in pairs(enhancementParams) do Deck.ENHANCEMENTS[id].params=p;Deck.ENHANCEMENTS[id].desc=enhancementText[id] end
+function Deck.getModifier(kind,id)
+    local catalog=kind=="seal" and Deck.SEALS or Deck.ENHANCEMENTS
+    return catalog[id] or catalog[(kind=="seal" and "seal_" or "enh_")..tostring(id)]
+end
+function Deck.getModifierDescription(kind,id)
+    local d=Deck.getModifier(kind,id);if not d then return "" end
+    return d.desc:gsub("{([%w_]+)}",function(k) return tostring(d.params and d.params[k] or 0) end)
+end
+
 Deck.FACTIONS = {
     aurelia = {
         id = "aurelia",
@@ -345,6 +387,7 @@ function Deck.newCard(rank, suit)
         baseChips = Deck.getChipValue(rank),
         attackSpeed = Deck.getAttackSpeed(rank),
         speedBonus = 0,
+        evolutionLevel = 0,
         role = role.id,
         roleName = role.name,
         roleTitle = role.title,
@@ -442,7 +485,11 @@ end
 -- Reset any in-combat stat modifications back to master card stats
 function Deck.restoreDeck(deck)
     if not deck then return end
+    local seen={}
+    for _,card in ipairs(deck) do Deck.ensureNextCardId(card.id) end
     for _, card in ipairs(deck) do
+        if not card.id or seen[tostring(card.id)] then card.id=nextCardId;nextCardId=nextCardId+1 end
+        seen[tostring(card.id)]=true
         local bRank = card.baseRank or card.rank
         card.rank = bRank
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
@@ -458,6 +505,10 @@ function Deck.restoreDeck(deck)
         card.selected = false
         card.hovered = false
         card.faceDown = false
+        card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
+        card.temporaryAbilityLevels = nil
+        card.abilityState = nil
+        card.abilityDisabledUntil = nil
     end
     return deck
 end
@@ -465,6 +516,7 @@ end
 -- Clone card cleanly with separate table reference for combat
 function Deck.cloneCard(card)
     local newC = Deck.newCard(card.baseRank or card.rank, card.suit)
+    newC.evolutionLevel = card.evolutionLevel or 0
     newC.id = card.id -- Preserve exact persistent card identity
     Deck.ensureNextCardId(card.id)
     newC.baseRank = card.baseRank or card.rank
@@ -527,6 +579,7 @@ function Deck.devourCard(targetCard, sacrificedCard, gameState)
         targetCard.baseChips = (targetCard.baseChips or Deck.getChipValue(targetCard.rank)) + 15
         
         -- Remove sacrificedCard from persistent deck
+        if gameState then require("src.card_abilities").destroy(gameState,sacrificedCard) end
         if gameState and gameState.persistentDeck then
             for idx, c in ipairs(gameState.persistentDeck) do
                 if c.id == sacrificedCard.id then
@@ -544,6 +597,7 @@ function Deck.devourCard(targetCard, sacrificedCard, gameState)
             return false, "Chúa Tể Bầy Sâu chỉ ăn thịt lá bài của phe phái khác!"
         end
         if gameState then
+            require("src.card_abilities").destroy(gameState,sacrificedCard)
             gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100) + 20)
             gameState.discardsRemaining = (gameState.discardsRemaining or 3) + 2
             if gameState.persistentDeck then

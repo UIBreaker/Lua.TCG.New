@@ -11,7 +11,7 @@ Equipment.ITEMS = {
         color = { 0.95, 0.35, 0.20, 1 },
         desc = "+18 Chips; thành +30 Chips nếu lá nằm ngoài cùng",
         onCardScore = function(card, playedCards, cardIndex)
-            local chips = (cardIndex == 1 or cardIndex == #playedCards) and 30 or 18
+            local chips = (cardIndex == 1 or cardIndex == #playedCards) and Equipment.ITEMS.gem_fire.params.edge or Equipment.ITEMS.gem_fire.params.chips
             return { addChips = chips, message = "+" .. chips .. " Chips (Đá Tiên Phong)" }
         end,
     },
@@ -21,7 +21,7 @@ Equipment.ITEMS = {
         color = { 1.00, 0.50, 0.10, 1 },
         desc = "+4 Mult; thành +8 Mult nếu đánh đúng 3 lá",
         onCardScore = function(card, playedCards)
-            local mult = #playedCards == 3 and 8 or 4
+            local mult = #playedCards == Equipment.ITEMS.gem_blast.params.count and Equipment.ITEMS.gem_blast.params.combo or Equipment.ITEMS.gem_blast.params.mult
             return { addMult = mult, message = "+" .. mult .. " Mult (Đá Tam Kích)" }
         end,
     },
@@ -35,7 +35,7 @@ Equipment.ITEMS = {
             for _, index in ipairs({ cardIndex - 1, cardIndex + 1 }) do
                 local adjacent = playedCards[index]
                 if adjacent and adjacent.suit ~= card.suit then
-                    buffs[index] = { addChips = 12, message = "+12 Chips (Gương Dị Chất)" }
+                    buffs[index] = { addChips = Equipment.ITEMS.mirror_adjacent.params.chips, message = "+12 Chips (Gương Dị Chất)" }
                 end
             end
             return buffs
@@ -51,7 +51,7 @@ Equipment.ITEMS = {
             for _, other in ipairs(playedCards) do
                 if other.suit == card.suit then count = count + 1 end
             end
-            local mult = math.min(8, count * 2)
+            local mult = math.min(Equipment.ITEMS.storm_eye.params.cap, count * Equipment.ITEMS.storm_eye.params.mult)
             return { [cardIndex] = { addMult = mult, message = "+" .. mult .. " Mult (Mắt Đồng Chất)" } }
         end,
     },
@@ -62,7 +62,7 @@ Equipment.ITEMS = {
         desc = "Nhận +$2 Vàng khi lá A này tạo Aura",
         onCardScore = function(card)
             if card and card.rank == 14 then
-                return { addGold = 2, message = "+$2 Vàng (Đồng Tiền Át)" }
+                return { addGold = Equipment.ITEMS.lucky_coin.params.gold, message = "+$2 Vàng (Đồng Tiền Át)" }
             end
         end,
     },
@@ -72,7 +72,7 @@ Equipment.ITEMS = {
         color = { 0.35, 0.65, 0.95, 1 },
         desc = "+6 Giáp; thành +12 Giáp nếu chỉ đánh 1–2 lá",
         onCardScore = function(card, playedCards)
-            local armor = #playedCards <= 2 and 12 or 6
+            local armor = #playedCards <= Equipment.ITEMS.ward_stone.params.count and Equipment.ITEMS.ward_stone.params.small or Equipment.ITEMS.ward_stone.params.armor
             return { addArmor = armor, message = "+" .. armor .. " Giáp (Đá Thủ Thế)" }
         end,
     },
@@ -84,8 +84,8 @@ Equipment.ITEMS = {
         onCardScore = function(card, playedCards, cardIndex, context)
             local hp = context and (context.playerHp or (context.gameState and context.gameState.playerHp))
             local maxHp = context and (context.maxPlayerHp or (context.gameState and context.gameState.maxPlayerHp))
-            if hp and maxHp and hp < maxHp * 0.5 then
-                return { healHp = 4, message = "+4 HP (Ngọc Cấp Cứu)" }
+            if hp and maxHp and hp < maxHp * Equipment.ITEMS.vitality_gem.params.threshold then
+                return { healHp = Equipment.ITEMS.vitality_gem.params.heal, message = "+4 HP (Ngọc Cấp Cứu)" }
             end
         end,
     },
@@ -95,7 +95,7 @@ Equipment.ITEMS = {
         color = { 0.85, 0.10, 0.25, 1 },
         desc = "+10% sát thương, nhưng mất 2 HP khi kích hoạt",
         onCardScore = function()
-            return { extraDamagePct = 0.10, hpCost = 2, message = "+10% Sát thương, -2 HP (Nhẫn Liều Mạng)" }
+            return { extraDamagePct = Equipment.ITEMS.blood_ring.params.damagePercent / 100, hpCost = Equipment.ITEMS.blood_ring.params.hpCost, message = "+10% Sát thương, -2 HP (Nhẫn Liều Mạng)" }
         end,
     },
     void_catalyst = {
@@ -104,10 +104,36 @@ Equipment.ITEMS = {
         color = { 0.85, 0.35, 0.95, 1 },
         desc = "Tốn 2 hốc: +30 Chips và +10 Mult khi lá tạo Aura",
         onCardScore = function()
-            return { addChips = 30, addMult = 10, message = "+30 Chips, +10 Mult (Xúc Tác Hư Không)" }
+            return { addChips = Equipment.ITEMS.void_catalyst.params.chips, addMult = Equipment.ITEMS.void_catalyst.params.mult, message = "+30 Chips, +10 Mult (Xúc Tác Hư Không)" }
         end,
     },
 }
+
+local values = {
+    gem_fire={chips=18,edge=30}, gem_blast={mult=4,combo=8,count=3}, mirror_adjacent={chips=12},
+    storm_eye={mult=2,cap=8},lucky_coin={gold=2},ward_stone={armor=6,small=12,count=2},
+    vitality_gem={heal=4,threshold=0.5},blood_ring={damagePercent=10,hpCost=2},void_catalyst={chips=30,mult=10},
+}
+local templates = {
+    gem_fire="+{chips} Sát thương; +{edge} ở vị trí đầu/cuối của vùng tính điểm.",
+    gem_blast="+{mult} Cường hóa; +{combo} khi đúng {count} lá tính điểm.",
+    mirror_adjacent="Mỗi lá kề bên khác chất trong vùng tính điểm: +{chips} Sát thương.",
+    storm_eye="+{mult} Cường hóa mỗi lá cùng chất trong vùng tính điểm, tối đa {cap}.",
+    lucky_coin="Lá A tính điểm: +{gold} Vàng.",
+    ward_stone="+{armor} Giáp; +{small} khi có tối đa {count} lá tính điểm.",
+    vitality_gem="+{heal} HP nếu HP dưới {thresholdPercent}% tối đa.",
+    blood_ring="+{damagePercent}% sát thương; mất {hpCost} HP khi tính điểm.",
+    void_catalyst="Chiếm 2 hốc: +{chips} Sát thương và +{mult} Cường hóa.",
+}
+for id,p in pairs(values) do Equipment.ITEMS[id].params=p;Equipment.ITEMS[id].descriptionTemplate=templates[id] end
+function Equipment.getDescription(item)
+    local def=Equipment.ITEMS[item.id];if not def then return item.desc or "" end
+    return def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
+        local n=k=="thresholdPercent" and def.params.threshold*100 or def.params[k]
+        return string.format("%g",n or 0)
+    end)
+end
+for _,item in pairs(Equipment.ITEMS) do item.desc=Equipment.getDescription(item) end
 
 Equipment.POOL = {
     "gem_fire", "gem_blast", "mirror_adjacent", "storm_eye", "lucky_coin",

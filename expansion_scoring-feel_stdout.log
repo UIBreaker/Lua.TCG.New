@@ -1,0 +1,5 @@
+Real scoring case 1 passed: 63 AURA / 63 actual damage / 4.57s
+Real scoring case 2 passed: 1388116 AURA / 1388116 actual damage / 6.10s
+Real scoring case 3 passed: 1388116 AURA / 694058 actual damage / 10.46s
+Real scoring case 4 passed: 13122 AURA / 13122 actual damage / 5.80s
+LÖVE scoring renderer/audio/input/HP lifecycle and isolated Feel Lab passed; mean frame 4.49ms over 5997 frames

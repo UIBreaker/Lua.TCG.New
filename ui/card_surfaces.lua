@@ -7,6 +7,7 @@ local catalogHandles = {}
 function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
     if item.faceDown then return UI.drawCardBack(cx, cy, cardW, cardH, item.alpha) end
     -- 3D Tilt calculation
+    if isH and not item.faceDown then UI.descriptionCandidate = item end
     local tX, tY = 0, 0
     if isH then
         tX, tY = UI.calculateTilt(mx, my, cx, cy, cardW, cardH)
@@ -105,6 +106,7 @@ function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHove
     love.graphics.setColor(card.color or UI.COLORS.goldYellow)
     love.graphics.printf(label or "THẺ BÀI", cx + 4, drawCY + 9, cW - 8, "center")
 
+    if isChoiceHovered and not card.faceDown then UI.descriptionCandidate = card end
     local art = UI.getPackCardImage(packType, card)
     if art then
         local iw, ih = art:getDimensions()
@@ -127,7 +129,7 @@ function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHove
     love.graphics.printf(card.name or ((card.rankName or "") .. (card.suitSymbol or "")), cx + 6, drawCY + 138, cW - 12, "center")
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textLight)
-    local desc = card.desc or ("+" .. (card.baseChips or 0) .. " Chips • " .. (card.suitName or card.suitSymbol or ""))
+    local desc = UI.truncateUtf8(select(2,UI.Description.resolve(card,UI.descriptionGame)),112)
     love.graphics.printf(desc, cx + 8, drawCY + 163, cW - 16, "center")
 
 

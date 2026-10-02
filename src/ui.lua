@@ -11,6 +11,10 @@ local Deities = require("src.deities")
 local CardEffects = require("src.card_effects")
 UI.CardPhysics = require("src.card_physics")
 UI.ScoringFeel = require("src.scoring_presentation")
+UI.Abilities = require("src.card_abilities")
+UI.BossAbilities = require("src.boss_abilities")
+UI.Description = require("src.card_description")
+UI.AbilityUI = require("ui.ability_choices")
 UI.drawCardEffectsDebug = CardEffects.drawDebug
 
 -- Color constants
@@ -355,6 +359,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     local accent = red and UI.COLORS.suitCrimson or UI.COLORS.suitObsidian
     local selected = card.selected == true
     local hovered = effectHovered == nil and card.hovered == true or effectHovered == true
+    if hovered and not card.faceDown then UI.descriptionCandidate = card end
     local s = (card.visualScale or 1) * (isFloating and 1.08 or 1)
     local cardScaleX = (card.scaleX or card.scale or 1) * s
     local cardScaleY = (card.scaleY or card.scale or 1) * s
@@ -1224,6 +1229,7 @@ end
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget,
     effectX, effectY, effectShearX, effectShearY, effectScaleX, effectScaleY)
     if not d then return end
+    if isHovered and not d.faceDown then UI.descriptionCandidate = d end
     w, h = w or 82, h or 118
     local g = love.graphics
     local deityId = d.deityId or d.id
@@ -1324,57 +1330,7 @@ end
 
 -- Rich Floating Tooltip for Hộ Linh (Patrons)
 function UI.drawPatronTooltip(d, mx, my, copyTarget)
-    if not d then return end
-    local ttW = 310
-    local ttH = 110
-    local ttx = math.min(1280 - ttW - 12, math.max(12, mx + 14))
-    local tty = math.min(720 - ttH - 12, math.max(12, my + 18))
-
-    -- Drop shadow
-    love.graphics.setColor(0, 0, 0, 0.75)
-    UI.drawRoundedRect("fill", ttx + 4, tty + 5, ttW, ttH, 7)
-
-    -- Background: Deep Void Obsidian Parchment
-    love.graphics.setColor(0.08, 0.09, 0.11, 0.98)
-    UI.drawRoundedRect("fill", ttx, tty, ttW, ttH, 7)
-
-    -- Gilded Frame & Corner Brackets
-    love.graphics.setLineWidth(1.5)
-    love.graphics.setColor(0.78, 0.65, 0.22, 0.95)
-    UI.drawRoundedRect("line", ttx, tty, ttW, ttH, 7)
-
-    local rarityName, rCol = Deities.getRarityLabel(d)
-    local rText = "[" .. rarityName .. "]"
-
-    -- Line 1: Title & Rarity
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(0.98, 0.88, 0.45, 1)
-    love.graphics.print(d.name, ttx + 12, tty + 8)
-
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(rCol)
-    local rW = UI.fonts.small:getWidth(rText)
-    love.graphics.print(rText, ttx + ttW - rW - 12, tty + 13)
-
-    -- Divider Line
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(0.35, 0.30, 0.22, 0.8)
-    love.graphics.line(ttx + 10, tty + 36, ttx + ttW - 10, tty + 36)
-
-    -- Line 2: Mechanics Description
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(0.94, 0.95, 0.98, 1)
-    local desc = d.desc or ""
-    if d.isCopyDeity then
-        desc = copyTarget and ("Sao chép năng lực của " .. copyTarget.name) or "Đặt bên trái 1 Hộ Linh khác để sao chép"
-    end
-    love.graphics.printf(desc, ttx + 12, tty + 42, ttW - 24, "left")
-
-    -- Line 3: Grimdark Lore Flavor Quote
-    local lore = d.lore or "Một tàn tích cổ xưa thì thầm trong bóng đêm vô tận..."
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(0.62, 0.58, 0.52, 0.85)
-    love.graphics.printf('"' .. lore .. '"', ttx + 12, tty + 84, ttW - 24, "left")
+    UI.Description.draw(UI, copyTarget or d, mx, my, UI.descriptionGame)
 end
 
 function UI.formatNumber(num)

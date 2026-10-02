@@ -61,7 +61,7 @@ function Deities.setRarity(deity, rarityId)
     deity.baseRarity = rarityId
     deity.rarity = rarityId
     deity.evolutionLevel = math.max(0, math.floor(tonumber(deity.evolutionLevel) or 0))
-    deity.desc = scaleDescription(deity.baseDesc, effectMultiplier(deity))
+    deity.desc = Deities.getDescription(deity)
     return true
 end
 
@@ -74,7 +74,7 @@ function Deities.evolve(deity)
     local nextRarity = rarityState(deity)
     deity.rarity = nextRarity.id
     deity.baseDesc = deity.baseDesc or deity.desc or ""
-    deity.desc = scaleDescription(deity.baseDesc, effectMultiplier(deity))
+    deity.desc = Deities.getDescription(deity)
     local badge = Deities.getRarityBadge(deity)
     return true, badge
 end
@@ -109,79 +109,39 @@ function Deities.scaleEffect(deity, result)
     return result
 end
 
--- Đúng 9 Hộ Linh cơ bản, tất cả bậc C (Common), mỗi lá một hiệu ứng dễ đọc.
-Deities.CATALOG = {
-    spirit_pebble = {
-        id = "spirit_pebble", name = "Cổ Thạch", rarity = "common", cost = 4,
-        desc = "+20 Chips cho mỗi tay bài",
-        lore = "Cổ thạch trấn giữ linh lực bền bỉ qua từng lượt.",
-        onHandScored = function() return { addChips = 20, message = "+20 Chips" } end,
-    },
-    spirit_ember = {
-        id = "spirit_ember", name = "Tàn Hỏa", rarity = "common", cost = 4,
-        desc = "+4 Mult cho mỗi tay bài",
-        lore = "Đốm lửa cuối cùng vẫn âm ỉ bùng lên sức mạnh.",
-        onHandScored = function() return { addMult = 4, message = "+4 Mult" } end,
-    },
-    spirit_blade = {
-        id = "spirit_blade", name = "Kiếm Ảnh", rarity = "common", cost = 4,
-        desc = "Mỗi lá tạo Aura nhận +8 Chips",
-        lore = "Lưỡi kiếm vô hình gia hộ từng lá bài được đánh ra.",
-        onCardScored = function() return { addChips = 8, message = "+8 Chips" } end,
-    },
-    spirit_drum = {
-        id = "spirit_drum", name = "Trống Lôi", rarity = "common", cost = 4,
-        desc = "Mỗi lá tạo Aura nhận +1 Mult",
-        lore = "Tiếng trống sấm vang lên theo từng lá bài.",
-        onCardScored = function() return { addMult = 1, message = "+1 Mult" } end,
-    },
-    spirit_pair = {
-        id = "spirit_pair", name = "Song Đôi", rarity = "common", cost = 4,
-        desc = "+6 Mult khi đánh Đôi",
-        lore = "Hai linh ảnh cộng hưởng khi một đôi xuất hiện.",
-        onHandScored = function(hand)
-            if hand and hand.type and hand.type.id == "pair" then
-                return { addMult = 6, message = "Đôi +6 Mult" }
-            end
-        end,
-    },
-    spirit_straight = {
-        id = "spirit_straight", name = "Lộ Kiếm", rarity = "common", cost = 4,
-        desc = "+30 Chips khi đánh Sảnh",
-        lore = "Kiếm khí mở đường thẳng qua mọi chướng ngại.",
-        onHandScored = function(hand)
-            if hand and hand.type and hand.type.id == "straight" then
-                return { addChips = 30, message = "Sảnh +30 Chips" }
-            end
-        end,
-    },
-    spirit_flush = {
-        id = "spirit_flush", name = "Đồng Chất", rarity = "common", cost = 4,
-        desc = "+5 Mult khi đánh Thùng",
-        lore = "Những linh ấn cùng chất hợp thành một dòng sức mạnh.",
-        onHandScored = function(hand)
-            if hand and hand.type and hand.type.id == "flush" then
-                return { addMult = 5, message = "Thùng +5 Mult" }
-            end
-        end,
-    },
-    spirit_crown = {
-        id = "spirit_crown", name = "Huyết Vương", rarity = "common", cost = 4,
-        desc = "Mỗi lá J, Q hoặc K tạo Aura nhận +15 Chips",
-        lore = "Vương miện cổ ban sức mạnh cho các bậc hoàng gia.",
-        onCardScored = function(card)
-            if card and card.rank and card.rank >= 11 and card.rank <= 13 then
-                return { addChips = 15, message = "Hoàng Gia +15 Chips" }
-            end
-        end,
-    },
-    spirit_coin = {
-        id = "spirit_coin", name = "Kim Tệ", rarity = "common", cost = 4,
-        desc = "+$2 Vàng sau khi thắng một Blind",
-        lore = "Linh kim sinh sôi sau mỗi chiến thắng.",
-        onRoundWin = function() return { addGold = 2, message = "+$2 Vàng" } end,
-    },
+-- Numeric values are shared by callbacks and descriptions.
+Deities.CATALOG = {}
+local entries = {
+    {"spirit_pebble","Cổ Thạch","hand","addChips",20,nil,"+{value} Sát thương mỗi tay."},
+    {"spirit_ember","Tàn Hỏa","hand","addMult",4,nil,"+{value} Cường hóa mỗi tay."},
+    {"spirit_blade","Kiếm Ảnh","card","addChips",8,nil,"Mỗi lá tạo Aura nhận +{value} Chips"},
+    {"spirit_drum","Trống Lôi","card","addMult",1,nil,"Mỗi lá tạo Aura nhận +{value} Mult"},
+    {"spirit_pair","Song Đôi","hand","addMult",6,"pair","Đôi: +{value} Cường hóa."},
+    {"spirit_straight","Lộ Kiếm","hand","addChips",30,"straight","Sảnh: +{value} Sát thương."},
+    {"spirit_flush","Đồng Chất","hand","addMult",5,"flush","Thùng: +{value} Cường hóa."},
+    {"spirit_crown","Huyết Vương","card","addChips",15,"royal","Mỗi lá J/Q/K tính điểm: +{value} Sát thương."},
+    {"spirit_coin","Kim Tệ","win","addGold",2,nil,"Thắng trận: +{value} Vàng."},
 }
+for _, row in ipairs(entries) do
+    local entry={id=row[1],name=row[2],trigger=row[3],stat=row[4],values={value=row[5]},condition=row[6],
+        descriptionTemplate=row[7],rarity="common",cost=4,lore="Hộ linh đồng hành cùng các lá bài."}
+    entry.desc=row[7]:gsub("{value}",tostring(row[5]));entry.baseDesc=entry.desc
+    local function callback(subject)
+        if entry.condition=="royal" and not (subject and subject.rank>=11 and subject.rank<=13) then return nil end
+        if entry.condition and entry.condition~="royal" and not (subject and subject.type and subject.type.id==entry.condition) then return nil end
+        return {[entry.stat]=entry.values.value,message=entry.desc}
+    end
+    if entry.trigger=="card" then entry.onCardScored=callback
+    elseif entry.trigger=="hand" then entry.onHandScored=callback
+    else entry.onRoundWin=callback end
+    Deities.CATALOG[entry.id]=entry
+end
+function Deities.getDescription(deity)
+    local def=Deities.CATALOG[deity.id]
+    if not def then return deity.desc or "" end
+    local value=def.values.value*effectMultiplier(deity)
+    return def.descriptionTemplate:gsub("{value}",formatEffectNumber(value))
+end
 
 function Deities.getCount(deities)
     local count = 0

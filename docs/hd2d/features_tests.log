@@ -1,0 +1,9 @@
+=== RUNNING ADVANCED FEATURES TEST ===
+ Test 1 Passed: Mono-Suit Deck (52 cards all Hearts)
+ Test 2 Passed: Explicit normal/boss encounters and HP scaling
+ Test 3 Passed: 3 Equipment Slots and Duplicate Guard
+ Test 4 Passed: Equipment Chips, Mult, and Gold Integration
+ Test 5 Passed: Spillover Mirror Adjacent Buff
+ Test 6 Passed: Concrete SPN Stats, Ante 4 Reward Choice, and Attack Speed Range
+=== ALL 6 ADVANCED TESTS PASSED! ===
+AL lib: (EE) alc_cleanup: 1 device not closed

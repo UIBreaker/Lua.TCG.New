@@ -1,0 +1,3 @@
+LOW: 361 frames, mean 3.83 ms, p95 4.54 ms
+MEDIUM: 354 frames, mean 3.91 ms, p95 4.76 ms
+HIGH: 345 frames, mean 4.00 ms, p95 4.94 ms

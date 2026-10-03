@@ -2,6 +2,8 @@
 local Feel = { config = require("config.scoring_feel_config"), debug = false, labOpen = false }
 local Effects = require("src.card_effects")
 local Sound = require("src.sound")
+local Attacks = require("src.hand_attacks")
+Feel.Attacks = Attacks
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
 local ease = function(t) return 1 - (1 - clamp(t, 0, 1)) ^ 3 end
@@ -9,15 +11,14 @@ local categories = { card_ability = "KHẢ NĂNG", card_scored = "LÁ BÀI", dei
     deity_edition = "ẤN BẢN SPN", equipment_trigger = "TRANG BỊ KHẢM", enhancement_trigger = "CƯỜNG HÓA BÀI",
     seal_trigger = "CON DẤU", card_edition = "ẤN BẢN", discard_buff_trigger = "CHIẾN THUẬT BỎ BÀI" }
 
-function Feel.intensity(aura)
-    return clamp(math.log(math.max(0, aura or 0) + 1) / math.log(10) / C.aura.expectedMagnitude, 0, 1)
-end
+function Feel.intensity(aura, target) return Attacks.power(aura, target) end
 
 local function append(q, kind, duration, source, index)
     q[#q + 1] = {kind = kind, duration = duration, source = source, sourceIndex = index}
 end
 
-function Feel.start(anim, result, ui, deities, initialHp)
+function Feel.start(anim, result, ui, deities, initialHp, enemy, handId)
+    local attack = Attacks.new(result, anim.playedCards, ui, enemy and (enemy.targetAura or enemy.maxHp), handId)
     local q, t = {}, C.timing
     append(q, "ENTRY", t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
     local base = result.steps[1]
@@ -48,21 +49,21 @@ function Feel.start(anim, result, ui, deities, initialHp)
             end
         end
     end
-    local intensity = Feel.intensity(result.finalScore)
+    local intensity = attack.intensity
     append(q, "FORMULA", t.formula, result.steps[#result.steps], #result.steps)
     append(q, "AURA_COUNT", t.countMin + (t.countMax - t.countMin) * intensity)
     append(q, "AURA_PEAK", t.peak)
-    append(q, "ENERGY_CONVERSION", t.conversion)
-    if result.finalScore >= C.aura.convergenceThreshold then append(q, "CONVERGENCE", t.convergence) end
-    append(q, "ANTICIPATION", t.releaseMin + (t.releaseMax - t.releaseMin) * intensity)
-    append(q, "ATTACK", t.beam)
-    append(q, "ENEMY_IMPACT", t.impact, result.steps[#result.steps], #result.steps)
-    append(q, "SETTLE", t.settle)
+    append(q, "ENERGY_CONVERSION", attack.profile.timing[1])
+    append(q, "ANTICIPATION", attack.profile.timing[2])
+    if attack.tier >= 4 then append(q, "CONVERGENCE", attack.tier == 5 and Attacks.config.silence or Attacks.config.convergence) end
+    append(q, "ATTACK", attack.profile.timing[3])
+    append(q, "ENEMY_IMPACT", attack.profile.timing[4], result.steps[#result.steps], #result.steps)
+    append(q, "SETTLE", math.max(attack.profile.timing[5], t.trailDelay+t.trail-attack.profile.timing[4]))
     anim.sequence = {events = q, index = 1, age = 0, time = 0, entered = false, finished = false,
-        intensity = intensity, result = result, ui = ui, deities = deities or {},
+        attack = attack, intensity = intensity, result = result, ui = ui, deities = deities or {},
         hp = initialHp or 0, hpTrail = initialHp or 0, hpBefore = initialHp or 0,
-        cameraAge = C.timing.camera, damageApplied = false, energy = {}, links = {},
-        high = result.finalScore >= C.aura.convergenceThreshold, tickAge = 0, milestone = 1000}
+        cameraAge = Attacks.config.camera.duration, damageApplied = false, energy = {}, links = {},
+        high = attack.tier >= 3, tickAge = 0, milestone = 1000}
     anim.displayChips, anim.displayMult, anim.displayFinalScore, anim.displayAura = 0, 0, 0, 0
     anim.displayXMult, anim.displayAuraEditionMultiplier, anim.displayFlatDamage = 1, 1, 0
     anim.currentStepIndex, anim.entranceTimer = 0, 0
@@ -146,6 +147,7 @@ end
 
 local function enter(anim, ev)
     local s, t = anim.sequence, C.timing
+    Attacks.enter(s.attack, ev.kind)
     if ev.sourceIndex then anim.currentStepIndex = ev.sourceIndex end
     s.multiply = false
     if ev.kind == "HAND_REVEAL" then
@@ -187,27 +189,22 @@ local function enter(anim, ev)
         for _, card in ipairs(anim.playedCards) do Effects.triggerScorePulse(card) end
     elseif ev.kind == "ENERGY_CONVERSION" then
         anim.stepCategory, anim.stepLog = "CHUYỂN HÓA NĂNG LƯỢNG", "Bài chuyển thành năng lượng"
-        s.coreColor = {0,0,0,1}
-        for i, card in ipairs(anim.playedCards) do
+        for i,card in ipairs(anim.playedCards) do
             anim.cardTransform[i] = 0
-            s.energy[i] = {x = s.ui.getScoringCardX(i, #anim.playedCards) + 48, y = 365,
-                color = Effects.getBeamColor(card)}
-            for channel=1,3 do s.coreColor[channel] = s.coreColor[channel] + s.energy[i].color[channel]/#anim.playedCards end
             Effects.triggerScorePulse(card)
         end
-        play(s, "charge")
+        -- Hand charge hook owns this beat.
     elseif ev.kind == "CONVERGENCE" then anim.stepCategory = "HỘI TỤ NĂNG LƯỢNG"
     elseif ev.kind == "ANTICIPATION" then anim.stepCategory = "TÍCH NĂNG"
     elseif ev.kind == "ATTACK" then
         anim.stepCategory, anim.stepLog = "PHÓNG NĂNG LƯỢNG", "Năng lượng lao vào quái"
-        play(s, "release")
+        -- Hand release hook owns this beat.
     elseif ev.kind == "ENEMY_IMPACT" then
         s.cameraAge = 0
-        anim.hitStop = C.impact.minHitStop + (C.impact.maxHitStop - C.impact.minHitStop) * s.intensity
-        anim.screenFlash = 0.035 + 0.055 * s.intensity
-        anim.screenDistortion = s.intensity >= 0.66 and 0.10 or 0
+        anim.hitStop = s.attack.profile.hitStop[s.attack.tier]
+        -- Impact illumination belongs to the world renderer, preserving sharp UI.
         anim.stepCategory, anim.stepLog = "ĐÁNH TRÚNG", "Năng lượng chạm quái"
-        play(s, s.high and "heavyImpact" or "impact")
+        -- Hand impact hook owns this beat.
     elseif ev.kind == "SETTLE" then anim.stepCategory = "ỔN ĐỊNH" end
 end
 
@@ -235,7 +232,7 @@ function Feel.update(anim, dt, fast)
     local speed = s.forward and C.speed.forward or (fast and C.speed.fast or C.speed.normal)
     dt = clamp(dt, 0, C.maxFrameDt) * speed
     s.time = s.time + dt
-    s.cameraAge = math.min(C.timing.camera, s.cameraAge + dt)
+    s.cameraAge = math.min(Attacks.config.camera.duration, s.cameraAge + dt)
     for i = #s.links, 1, -1 do
         local p = s.links[i]
         p.age = p.age + dt
@@ -260,6 +257,7 @@ function Feel.update(anim, dt, fast)
         local consumed = math.min(dt, math.max(0, ev.duration - s.age))
         s.age, dt = s.age + consumed, dt - consumed
         local p = clamp(s.age / ev.duration, 0, 1)
+        Attacks.update(s.attack, ev.kind, p)
         if ev.kind == "ENTRY" then anim.entranceTimer = s.age
         elseif ev.kind == "BASE_DAMAGE" or ev.kind == "BASE_ENHANCE" or ev.kind == "TRIGGER" or ev.kind == "FORMULA" then
             local wait = s.multiply and C.timing.multiplyAnticipation or 0
@@ -276,7 +274,11 @@ function Feel.update(anim, dt, fast)
                 repeat s.milestone = s.milestone * 10 until anim.displayAura < s.milestone
             end
         elseif ev.kind == "ENERGY_CONVERSION" then
-            for i in ipairs(anim.playedCards) do anim.cardTransform[i] = p * 0.42 end
+            for i in ipairs(anim.playedCards) do
+                local order = s.attack.sources[i].order
+                local stagger = s.attack.profile.id == "straight" and (order-1)*0.09 or 0
+                anim.cardTransform[i] = clamp((p-stagger)/(1-stagger),0,1)*0.42
+            end
         end
         if s.age < ev.duration then break end
         if ev.kind == "TRIGGER" or ev.kind == "BASE_DAMAGE" or ev.kind == "BASE_ENHANCE" or ev.kind == "FORMULA" then
@@ -301,19 +303,19 @@ end
 function Feel.camera(anim)
     local s = anim.sequence
     if not s then return 0, 0 end
-    local p = clamp(s.cameraAge / C.timing.camera, 0, 1)
-    local amount = C.impact.minKick + (C.impact.maxKick - C.impact.minKick) * s.intensity
+    local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
+    local amount = 0.5 + Attacks.config.camera.maxKick * s.intensity
     local decay = (1 - p)^3
     -- Beam travels upwards, so the initial camera kick is directional rather than random.
-    return math.sin(p * 30) * amount * 0.30 * decay, (-amount + math.sin(p * 36) * amount * 0.45) * decay
+    return (s.attack.profile.camera.x + math.sin(p * 30) * 0.20) * amount * decay, (-amount + math.sin(p * 36) * amount * 0.45) * decay
 end
 
 function Feel.enemyReaction(anim)
     local s = anim.sequence
     if not s then return 0, 1, 0 end
-    local p = clamp(s.cameraAge / C.timing.camera, 0, 1)
+    local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2
-    return -C.impact.maxKnockback * s.intensity * math.sin(p * math.pi),
+    return -Attacks.config.camera.maxRecoil * (s.attack.tier>1 and s.intensity or 0) * math.sin(p * math.pi),
         1 + math.sin(p * math.pi) * 0.05 * s.intensity, hit
 end
 
@@ -341,57 +343,15 @@ function Feel.draw(anim, ui)
         g.setFont(l.multiply and ui.fonts.medium or ui.fonts.small)
         g.printf(l.text, x - 125, y - 12, 250, "center")
     end
-    local phase = ev.kind
-    local energyPhase = phase == "ENERGY_CONVERSION" or phase == "CONVERGENCE" or phase == "ANTICIPATION" or phase == "ATTACK"
-    if energyPhase then
-        local coreX, coreY = cx, 350
-        g.setBlendMode("add")
-        for i, source in ipairs(s.energy) do
-            local targetX, targetY = s.high and coreX or cx, s.high and coreY or 270
-            local travel = phase == "ENERGY_CONVERSION" and 0 or (phase == "CONVERGENCE" and ease(p) or 1)
-            if not s.high then travel = phase == "ATTACK" and ease(clamp((p - (i - 1) * 0.025) / 0.90, 0, 1)) or 0 end
-            for shard = 1, 6 do
-                local ox = math.cos(shard * 2.37 + s.time * 6) * 14 * (1 - travel)
-                local oy = math.sin(shard * 2.37 + s.time * 6) * 12 * (1 - travel)
-                local x = source.x + (targetX - source.x) * travel + ox
-                local y = source.y + (targetY - source.y) * travel + oy
-                g.setColor(source.color[1], source.color[2], source.color[3], 0.65)
-                g.setLineWidth(1 + 1.8 * s.intensity)
-                g.line(x, y, x - (targetX - source.x) * 0.12 * travel, y - (targetY - source.y) * 0.12 * travel + 5)
-                g.circle("fill", x, y, 1.7 + 1.3 * s.intensity)
-            end
-        end
-        if s.high and phase ~= "ENERGY_CONVERSION" then
-            local charge = phase == "ANTICIPATION" and (1 - p * 0.3) or 1
-            local radius = (7 + 13 * s.intensity) * charge
-            local col = s.coreColor or C.color.aura
-            g.setColor(col[1], col[2], col[3], 0.16)
-            g.circle("fill", coreX, coreY, radius * 1.65)
-            g.setColor(col[1], col[2], col[3], 0.8)
-            g.circle("line", coreX, coreY, radius + math.sin(s.time * 24) * 2)
-            g.setColor(1, 0.93, 0.78, 0.8)
-            g.circle("fill", coreX, coreY, radius * 0.43)
-            if phase == "ATTACK" then
-                local y = coreY + (270 - coreY) * ease(p)
-                g.setColor(col[1], col[2], col[3], 0.36)
-                g.setLineWidth(6 + 16 * s.intensity)
-                g.line(coreX, coreY, cx, y)
-                g.setColor(1, 0.96, 0.86, 0.95)
-                g.setLineWidth(2 + 5 * s.intensity)
-                g.line(coreX, coreY, cx, y)
-                g.circle("fill", cx, y, radius * 0.35)
-            end
-        end
-    end
-    if s.cameraAge < C.timing.camera and s.impactDispatched then
-        local k = s.cameraAge / C.timing.camera
-        g.setBlendMode("add")
-        g.setColor(1, 0.83, 0.48, (1 - k) * 0.6)
-        g.setLineWidth(2)
-        g.circle("line", cx, 270, 8 + k * (28 + 55 * s.intensity))
-        if s.high then g.circle("line", cx, 270, 16 + k * 105) end
-    end
     g.pop()
+end
+
+function Feel.drawWorld(anim, ui)
+    local s = anim.sequence
+    if not s then return end
+    local ev = s.events[s.index]
+    if not ev then return end
+    Attacks.draw(s.attack, ev.kind, clamp(s.age/ev.duration,0,1), s.impactDispatched and s.cameraAge or nil)
 end
 
 function Feel.drawDim(anim)
@@ -427,14 +387,28 @@ function Feel.labKeypressed(key, ui)
     if key == C.labKey then Feel.labOpen = not Feel.labOpen; return true end
     if not Feel.labOpen then return false end
     if key == "escape" then Feel.labOpen = false
+    elseif key == "r" then Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
+    elseif key == "right" or key == "left" then
+        Feel.labHand = ((Feel.labHand or 1)-1+(key == "right" and 1 or -1))%#Attacks.config.order+1
+        Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
     elseif key == "tab" then Feel.labFast = not Feel.labFast
     elseif key == "space" and Feel.labAnim then Feel.skipOrFastForward(Feel.labAnim)
     else
         local index = tonumber(key)
         if index and index >= 1 and index <= 5 then
             local Deck = require("src.deck")
-            local aura = 10 ^ (index + 1)
-            local cards = {Deck.newCard(8, "spades"), Deck.newCard(8, "hearts"), Deck.newCard(8, "clubs")}
+            Feel.labTier = index
+            local id = Attacks.config.order[Feel.labHand or 1]
+            local ratios = {0.25,0.75,1.5,3,5}
+            local aura = 10 ^ (index + 1) -- Existing tier-key compatibility.
+            local target = aura/ratios[index]
+            local presets = {
+                high_card={14},pair={8,8},two_pair={8,8,11,11},three_of_a_kind={8,8,8},
+                straight={7,8,9,10,11},flush={2,5,8,11,14},full_house={8,8,8,11,11},
+                four_of_a_kind={8,8,8,8},straight_flush={10,11,12,13,14},
+            }
+            local cards = {}
+            for i,rank in ipairs(presets[id]) do cards[i]=Deck.newCard(rank, (id=="flush" or id=="straight_flush") and "spades" or ({"spades","hearts","clubs","diamonds"})[(i-1)%4+1]) end
             for i, card in ipairs(cards) do Effects.setEffect(card, ({"foil", "holographic", "polychrome"})[i]) end
             local a = {playedCards = cards, cardBounce = {}, cardHit = {}, deityBounce = {}, scoredCards = {},
                 bounceScale = {chips=1,mult=1,score=1}, displayFlatDamage=0, displayAuraEditionMultiplier=1,
@@ -445,7 +419,7 @@ function Feel.labKeypressed(key, ui)
             steps[#steps+1] = {type="deity_hand", addedChips=0, addedMult=0, xMult=aura/100,
                 resultingChips=100, resultingMult=aura/100, message="SPN thử: ×" .. aura/100}
             steps[#steps+1] = {type="final_score", finalScore=aura}
-            Feel.start(a, {steps=steps, totalChips=100, totalMult=aura/100, rawScore=aura, finalScore=aura}, ui, {}, aura*1.2)
+            Feel.start(a, {steps=steps, totalChips=100, totalMult=aura/100, rawScore=aura, finalScore=aura}, ui, {}, aura*1.2, {targetAura=target}, id)
             Feel.labAnim = a
         end
     end
@@ -455,7 +429,9 @@ end
 function Feel.updateLab(dt)
     if Feel.labOpen and Feel.labAnim then
         local a = Feel.labAnim
+        if (a.hitStop or 0)>0 then a.hitStop=math.max(0,a.hitStop-dt);return end
         if Feel.update(a, dt, Feel.labFast) then Feel.damageApplied(a, a.sequence.hpBefore - a.sequence.result.finalScore, a.sequence.result.finalScore) end
+        for _,text in ipairs(a.floatingTexts) do text.alpha=math.max(0,text.alpha-dt*2);text.y=text.y-dt*30 end
     end
 end
 
@@ -463,13 +439,13 @@ function Feel.drawLab(ui)
     if not Feel.labOpen then return end
     local g = love.graphics
     g.push("all")
-    g.setColor(0.035, 0.055, 0.07, 0.98); g.rectangle("fill", 0, 0, 1280, 720)
+    g.setColor(0.035, 0.055, 0.07, 1); g.rectangle("fill", 0, 0, 1280, 720)
     g.setColor(1, 0.80, 0.40, 1); g.setFont(ui.fonts.medium)
-    g.print("SCORING FEEL LAB — 1:100   2:1K   3:10K   4:100K   5:1M", 255, 32)
-    g.setFont(ui.fonts.small); g.print("Tab: Normal/Fast • Space: Fast-forward • F5: debug • F6/Esc: đóng", 255, 64)
+    g.print("HAND VFX LAB — 1..5: NORMAL / STRONG / POWERFUL / EXTREME / TRANSCEND", 255, 32)
+    g.setFont(ui.fonts.small); g.print("←/→: hand • R: replay • Tab: Normal/Fast • Space: forward • F6/Esc: đóng", 255, 64)
     local a = Feel.labAnim
     if a then
-        ui.components.HandInfoPanel.draw({handName="FEEL LAB", scoring=true, chips=a.displayChips, mult=a.displayMult,
+        ui.components.HandInfoPanel.draw({handName=a.sequence.attack.profile.name .. " / " .. Attacks.config.tierNames[a.sequence.attack.tier], scoring=true, chips=a.displayChips, mult=a.displayMult,
             aura=a.displayAura, chipsBounce=a.bounceScale.chips, multBounce=a.bounceScale.mult,
             auraBounce=a.bounceScale.score, enemyHp=math.floor(a.sequence.hp), enemyBarHp=a.sequence.hp,
             enemyTrailHp=a.sequence.hpTrail, enemyMaxHp=a.sequence.hpBefore, category=a.stepCategory,
@@ -480,15 +456,27 @@ function Feel.drawLab(ui)
         Feel.drawDim(a)
         for i, card in ipairs(a.playedCards) do
             local progress = (a.cardTransform[i] or 0) / 0.42
+            local dx,dy,rotation,shrink=Attacks.cardPose(a.sequence.attack,i,progress)
             if progress < 1 then
                 g.setColor(1,1,1,1-progress)
                 local oldAlpha = card.alpha
                 card.alpha = 1-progress
-                ui.drawCardFace(card, ui.getScoringCardX(i,#a.playedCards), 295, 96, 140)
+                g.push();g.translate(ui.getScoringCardX(i,#a.playedCards)+48+dx,365+dy)
+                g.rotate(rotation);g.scale(shrink,shrink)
+                ui.Polish.dissolve(ui,-48,-70,96,140,progress,a.sequence.attack.color,
+                    function(x,y,w,h) ui.drawCardFace(card,x,y,w,h) end)
+                g.pop()
+                Attacks.fragments(a.sequence.attack,i,progress,ui.getScoringCardX(i,#a.playedCards)+48,365)
                 card.alpha = oldAlpha
             end
         end
-        Feel.draw(a,ui); Feel.drawDebug(a,ui)
+        Feel.drawWorld(a,ui); Feel.draw(a,ui)
+        for _,text in ipairs(a.floatingTexts) do
+            g.push();g.translate(text.x,text.y);g.scale(text.scale,text.scale)
+            g.setFont(ui.fonts.medium);g.setColor(text.color[1],text.color[2],text.color[3],math.min(1,text.alpha))
+            g.printf(text.text,-150,0,300,"center");g.pop()
+        end
+        Feel.drawDebug(a,ui)
     end
     g.pop()
 end

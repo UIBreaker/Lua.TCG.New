@@ -48,12 +48,13 @@ function Modal.press(mx,my,button)
     local m=Modal.current;if not m then return false end
     if button~=1 then return true end
     for _,b in ipairs(m.buttons or {}) do
-        if mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
+        if not b.disabled and mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
             if b.id=="cancel" then close()
             elseif b.id=="decline" then Modal.choose(nil)
             elseif b.id=="confirm" then Modal.confirm()
             elseif b.id=="prev" then m.page=math.max(1,m.page-1)
             elseif b.id=="next" then m.page=m.page+1
+            elseif b.id=="tab_cards" or b.id=="tab_deities" then m.filter=b.id=="tab_cards" and "cards" or "deities";m.page=1;m.selected=nil
             elseif m.mode=="choices" then Modal.choose(b.index)
             else m.selected=m.cards[b.index];Sound.play("card_select") end
             return true
@@ -80,6 +81,7 @@ function Modal.draw(UI,mx,my)
     end
     if not m then return end
     UI.CardPhysics.blockBehind()
+    if m.mode=="evolution" then return require("ui.evolution_picker").draw(UI,m,mx,my) end
     love.graphics.setColor(0,0,0,0.84);love.graphics.rectangle("fill",0,0,1280,720)
     love.graphics.setColor(0.075,0.1,0.13,1);love.graphics.rectangle("fill",65,45,1150,630,12,12)
     love.graphics.setColor(0.85,0.7,0.36,1);love.graphics.rectangle("line",65,45,1150,630,12,12)

@@ -20,7 +20,7 @@ local font = {
 }
 local fonts = {tiny = font, small = font, regular = font, medium = font, large = font}
 local g = {}
-for _, name in ipairs({"push", "pop", "setColor", "setLineWidth", "setBlendMode", "line", "polygon", "setFont"}) do
+for _, name in ipairs({"push", "pop", "translate", "scale", "rotate", "setColor", "setLineWidth", "setBlendMode", "line", "polygon", "setFont"}) do
     g[name] = function() end
 end
 function g.getFont() return font end

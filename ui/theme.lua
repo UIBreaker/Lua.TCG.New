@@ -1,10 +1,11 @@
+local Visual = require("config.visual_config")
 local Theme = {
     virtualWidth = 1920,
     virtualHeight = 1080,
     colors = {
         charcoal = {0.035, 0.053, 0.067, 1},
-        surface = {0.066, 0.094, 0.115, 0.97},
-        raised = {0.10, 0.14, 0.17, 0.98},
+        surface = {0.052, 0.074, 0.096, Visual.ui.surfaceAlpha},
+        raised = {0.08, 0.11, 0.145, Visual.ui.raisedAlpha},
         inset = {0.035, 0.055, 0.071, 0.96},
         metal = {0.24, 0.30, 0.33, 1},
         gold = {0.77, 0.62, 0.39, 1},
@@ -17,7 +18,7 @@ local Theme = {
         muted = {0.67, 0.73, 0.77, 1},
         shadow = {0.01, 0.02, 0.03, 0.56},
     },
-    border = {thin = 1, regular = 1.5, focus = 2},
+    border = {thin = 1, regular = 1, focus = 1.5},
     spacing = {xs = 4, sm = 8, md = 12, lg = 18, xl = 24},
     radius = {small = 4, medium = 7, large = 10},
     typography = {tiny = 12, small = 14, regular = 17, medium = 22, title = 28},

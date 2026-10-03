@@ -1,6 +1,8 @@
 local UI = require("src.ui")
 local Theme = require("ui.theme")
 local Shop = require("src.shop")
+local Visual = require("config.visual_config")
+local Lighting = require("render.lighting")
 
 local Display = {}
 local C = Theme.colors
@@ -18,11 +20,14 @@ local function text(value, x, y, width, font, color, align)
 end
 
 local function panel(x, y, w, h, title, note, accent)
-    love.graphics.setColor(C.surface)
+    -- Display bays let the chamber show through; labels have a quiet opaque rail.
+    love.graphics.setColor(C.surface[1], C.surface[2], C.surface[3], 0.28)
     UI.drawRoundedRect("fill", x, y, w, h, 9)
-    love.graphics.setColor(C.metal)
+    love.graphics.setColor(C.metal[1],C.metal[2],C.metal[3],0.55)
     love.graphics.setLineWidth(1)
-    UI.drawRoundedRect("line", x, y, w, h, 9)
+    love.graphics.line(x+10,y+h,x+w-10,y+h)
+    love.graphics.setColor(0.015,0.025,0.038,0.82)
+    UI.drawRoundedRect("fill",x+6,y+6,w-12,48,5)
     love.graphics.setColor(accent or C.gold)
     love.graphics.rectangle("fill", x + 14, y + 14, 3, 12)
     text(title, x + 25, y + 11, w - 40, UI.fonts.small, accent or C.gold)
@@ -62,8 +67,13 @@ local function art(item, x, y, w, h, hovered, mx, my)
     if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     local tx, ty = 0, 0
     if hovered then tx, ty = UI.calculateTilt(mx, my, x, y, w, h) end
-    love.graphics.setColor(C.shadow)
-    UI.drawRoundedRect("fill", x + 3, y + 6, w, h, 6)
+    love.graphics.setColor(0.005,0.008,0.015,Visual.shop.shadow)
+    love.graphics.ellipse("fill",x+w/2,y+h+3,w*0.49,hovered and 12 or 8)
+    if Visual.enabled and hovered then
+        love.graphics.push("all");love.graphics.setBlendMode("add")
+        Lighting.glow(x+w/2,y+h*0.45,w*0.95,item.color or C.gold,Visual.shop.focusedLight)
+        love.graphics.pop()
+    end
     love.graphics.push()
     love.graphics.translate(x + w / 2, y + h / 2)
     love.graphics.shear(tx * 0.07, ty * 0.07)
@@ -117,6 +127,38 @@ local function privilege(item, x, y, w, h, hovered, affordable)
         x, y + 158, w, UI.fonts.small, affordable and C.gold or C.red, "center")
 end
 privilege = UI.CardPhysics.wrap(privilege, nil, 6)
+local function position(item,index,packIndex)
+    if item.section=="upper" then return 67+((retailOrder[item.category] or index)-1)*186,151,118,176 end
+    if item.category=="voucher" or item.category=="book" then return 48,422,218,186 end
+    if item.category=="pack" then return 318+(packIndex-1)*134,435,112,158 end
+end
+function Display.drawWorld(shop,time)
+    if not shop then return end
+    local g=love.graphics;local packIndex=0
+    g.push("all")
+    for index,item in ipairs(UI.Polish.items(shop) or {}) do
+        if item.category=="pack" and item.section~="upper" then packIndex=packIndex+1 end
+        local x,y,w,h=position(item,index,packIndex)
+        if x and item.category~="voucher" and item.category~="book" then
+            local focus=UI.Polish.focus and UI.Polish.focus.item==item
+            local color=item.color or item.deity and (item.deity.color or C.gold) or C.gold
+            local rarity=item.rarity or item.deity and item.deity.rarity
+            g.setColor(0.015,0.023,0.035,0.88)
+            g.polygon("fill",x-12,y+h+8,x+w+12,y+h+8,x+w+18,y+h+20,x-18,y+h+20)
+            g.setColor(0.42,0.35,0.23,0.42);g.line(x-12,y+h+8,x+w+12,y+h+8)
+            if Visual.enabled and Visual.effects.lighting then
+                g.setBlendMode("add")
+                local strength=focus and Visual.shop.focusedLight or Visual.shop.spotlight
+                if rarity=="rare" or rarity=="legendary" then strength=strength*1.4 end
+                Lighting.glow(x+w/2,y+h*0.6,w*1.2,color,strength)
+                g.setColor(color[1],color[2],color[3],strength*0.10)
+                g.polygon("fill",x+w/2-10,y-50,x+w/2+10,y-50,x+w+20,y+h,x-20,y+h)
+                g.setBlendMode("alpha")
+            end
+        end
+    end
+    g.pop()
+end
 function Display.draw(shop, game, buttons, drag, mx, my, time)
     panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Nhấp chọn hàng → MUA · Rê chuột xem chi tiết", C.cyan)
     panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
@@ -130,15 +172,9 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         local retail = item.section == "upper"
         local voucher = item.category == "voucher" or item.category == "book"
         local pack = item.category == "pack"
-        if retail then
-            x, y, w, h = 67 + ((retailOrder[item.category] or index) - 1) * 186, 151, 118, 176
-        elseif voucher then
-            voucherFound = true
-            x, y, w, h = 48, 422, 218, 186
-        elseif pack then
-            packIndex = packIndex + 1
-            x, y, w, h = 318 + (packIndex - 1) * 134, 435, 112, 158
-        end
+        if voucher then voucherFound=true end
+        if pack and not retail then packIndex=packIndex+1 end
+        x,y,w,h=position(item,index,packIndex)
         if x then
             hovered = mx >= x and mx <= x + w and my >= y - (voucher and 0 or 24) and my <= y + h + (voucher and 0 or 21)
             local dragged = false -- Physics draws held surfaces above the UI.

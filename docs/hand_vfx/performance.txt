@@ -1,0 +1,9 @@
+Final LÖVE VFX Lab run: 90/90 cases passed (9 hands x 5 Aura tiers x Normal/Fast).
+Mean frame: 3.58 ms; raw peak: 244.58 ms; frames: 22322.
+After 120 ms warm-up per case: P95 4.31 ms; P99 4.79 ms; >16.67 ms: 12/19704 frames.
+Uncapped local wall-clock intervals. PNG capture/encoding is enabled and spikes are not filtered out.
+Not a GPU benchmark or a guarantee for other hardware.
+Lua: 270/270 real-calculator presentation sequences passed at 30/60/144 FPS and both speeds.
+Existing poker tests and scoring-presentation tests passed.
+Real combat: all 9 resolver profiles passed, with LOW/MEDIUM/HIGH quality coverage.
+Existing real-scoring capture: 4/4 cases passed, including boss 50% damage conversion and lethal impact.

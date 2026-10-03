@@ -9,7 +9,13 @@ function Panel.draw(x, y, w, h, options)
     local accent = options.accent or Theme.accent(options.variant)
     local r = math.min(options.radius or Theme.radius.medium, w / 4, h / 4)
     g.push("all")
-    if options.image and g.draw then
+    if options.worldBackdrop then
+        g.setColor(0.008,0.015,0.027,0.20)
+        g.rectangle("fill",x,y,w,h,r,r)
+        Core.color(accent,0.28);g.setLineWidth(Theme.border.thin)
+        g.rectangle("line",x+1,y+1,w-2,h-2,r,r)
+        Core.ornament(x,y,w,h,accent)
+    elseif options.image and g.draw then
         local imageW, imageH = options.image:getDimensions()
         if imageW > 0 and imageH > 0 then
             g.setColor(1, 1, 1, 1)
@@ -19,11 +25,14 @@ function Panel.draw(x, y, w, h, options)
         Core.color(Theme.colors.shadow, Theme.shadows.alpha)
         g.rectangle("fill", x + Theme.shadows.x, y + Theme.shadows.y, w, h, r, r)
         Core.gradient(x, y, w, h, Theme.colors.raised, Theme.colors.surface, r)
+        -- Quiet engraved grain, with no Canvas or random allocations.
+        Core.color(Theme.colors.gold, require("config.visual_config").ui.textureAlpha)
+        for row = 10, h - 5, 17 do g.line(x + 8, y + row, x + w - 8, y + row) end
         Core.color(Theme.colors.metal, 0.52)
         g.setLineWidth(Theme.border.regular)
         g.rectangle("line", x + 1, y + 1, w - 2, h - 2, r, r)
         if w > 10 and h > 10 then
-            Core.color(accent, options.focused and 0.96 or 0.72)
+            Core.color(accent, options.focused and 0.96 or 0.48)
             g.setLineWidth(options.focused and Theme.border.focus or Theme.border.thin)
             g.rectangle("line", x + 3, y + 3, w - 6, h - 6, math.max(1, r - 2), math.max(1, r - 2))
         end

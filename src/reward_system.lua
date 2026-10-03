@@ -1,6 +1,7 @@
 local UI = require("src.ui")
 local Sound = require("src.sound")
 local Deities = require("src.deities")
+local Visual = require("config.visual_config")
 
 local RewardSystem = {}
 
@@ -452,12 +453,12 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         g.setLineWidth(1); UI.drawRoundedRect("line", px, py, pw, ph, 12)
     end
     g.push("all")
-    g.setColor(0.008, 0.016, 0.028, 0.94); g.rectangle("fill", 0, 0, width, height)
+    g.setColor(0.008, 0.016, 0.028, Visual.reward.veil); g.rectangle("fill", 0, 0, width, height)
     -- Soft stepped halos and a recessed frame keep the ceremony above the board.
     for i = 5, 1, -1 do
         g.setColor(0, 0, 0, 0.07); UI.drawRoundedRect("fill", x - i * 3, y + i * 2, w + i * 6, h + i * 4, 20)
     end
-    g.setColor(0.04, 0.057, 0.083, 1); UI.drawRoundedRect("fill", x, y, w, h, 18)
+    g.setColor(0.04, 0.057, 0.083, Visual.reward.panelAlpha); UI.drawRoundedRect("fill", x, y, w, h, 18)
     g.setColor(0.62, 0.47, 0.23, 0.55); g.setLineWidth(1); UI.drawRoundedRect("line", x, y, w, h, 18)
     g.setColor(0.97, 0.76, 0.35, 0.8); g.rectangle("fill", x + 32, y, 90, 2)
     -- Victory seal, drawn as geometry to stay sharp at every resolution.

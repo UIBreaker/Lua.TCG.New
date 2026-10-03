@@ -21,10 +21,31 @@ local gain = {
     cant_afford = 0.55,
 }
 local rewardAliases = {
+    enemy_death_hit = "damage_heavy", enemy_ash_break = "chest_dissolve",
+    defeat_hit = "damage_heavy", defeat_collapse = "card_destroy",
+    defeat_ambience = "game_over", defeat_text_reveal = "score_impact",
     reward_coin_spawn = "coin", reward_coin_land = "coin", reward_coin_collect = "coin",
     reward_gold_total = "shop_buy", reward_loot_reveal = "card_deal",
     reward_rare_reveal = "jackpot", reward_chest_open = "pack_open",
 }
+local attackAliases = {
+    highcard_compress="consume", pair_slash_1="card_play", pair_slash_2="card_slide",
+    twopair_orbit_a="equip", twopair_orbit_b="card_play",
+    threekind_node_1="chip_tick", threekind_node_2="mult_pop", threekind_node_3="xmult_boom",
+    straight_step_1="chip_tick", straight_step_2="chip_tick", straight_step_3="mult_pop",
+    straight_step_4="mult_pop", straight_step_5="card_play", flush_wave="consume",
+    fullhouse_core_a="equip", fullhouse_core_b="mult_pop", fullhouse_core_merge="xmult_boom",
+    fourkind_seal_1="equip", fourkind_seal_2="equip", fourkind_seal_3="equip", fourkind_seal_4="equip",
+    straightflush_blade_summon="card_deal", straightflush_barrage="card_play", straightflush_final="damage_heavy",
+}
+gain.enemy_death_hit, gain.enemy_ash_break = 0.68, 0.48
+gain.defeat_hit, gain.defeat_collapse, gain.defeat_ambience, gain.defeat_text_reveal = 0.64, 0.40, 0.24, 0.36
+for _,id in ipairs(require("config.hand_vfx_config").order) do
+    attackAliases[id.."_charge"]="consume"
+    attackAliases[id.."_release"]="card_play"
+    attackAliases[id.."_impact"]=id=="high_card" and "damage_hit" or "damage_heavy"
+end
+for hook,source in pairs(attackAliases) do rewardAliases[hook]=source;gain[hook]=0.60 end
 gain.reward_coin_spawn, gain.reward_coin_land, gain.reward_coin_collect = 0.22, 0.18, 0.42
 gain.reward_gold_total, gain.reward_loot_reveal, gain.reward_rare_reveal, gain.reward_chest_open = 0.62, 0.34, 0.65, 0.56
 local cooldown = {
@@ -361,11 +382,17 @@ function Sound.has(name)
     return sounds[rewardAliases[name] or name] ~= nil
 end
 
+function Sound.silence(duration)
+    Sound.quietUntil=((love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock())+math.min(0.08,duration or 0.06)
+    for _,voice in ipairs(activeVoices) do voice:stop() end
+end
+
 function Sound.play(name, pitch)
     if not enabled or masterVolume <= 0 then return false end
     local s = sounds[rewardAliases[name] or name]
     if not s then return false end
     local now = (love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock()
+    if now < (Sound.quietUntil or 0) then return false end
     if now - (lastPlayed[name] or -math.huge) < (cooldown[name] or 0) then return false end
     lastPlayed[name] = now
 

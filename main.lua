@@ -36,6 +36,9 @@ local Shop = require("src.shop")
 local Sound = require("src.sound")
 local UI = require("src.ui")
 local Theme = require("ui.theme")
+local Renderer = require("render.renderer")
+local DeathVFX = require("src.death_vfx")
+UI.ChestChoices = require("ui.chest_choices")
 local Layout = require("ui.layout")
 local Gallery = require("ui.gallery")
 local Monster = require("src.monster")
@@ -53,8 +56,13 @@ local Combat = require("src.combat")
 
 io.stdout:setvbuf("no")
 local isCaptureMode = false
+local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
-    if a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
+    if a == "--test-evolution-ui" then isCaptureMode = true end
+    if a == "--test-shop-chest" then isCaptureMode = true end
+    if a == "--test-chest-vfx" then isCaptureMode = true; chestAnimationCaptureMode = true end
+    if a == "--test-death-vfx" then isCaptureMode = true end
+    if a == "--test-hand-vfx-combat" or a == "--test-hand-vfx" or a == "--test-hd2d" or a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
         isCaptureMode = true
     end
 end
@@ -77,15 +85,6 @@ local offsetY = 0
 
 -- Graphics Pipeline: Canvas & Shaders
 local mainCanvas = nil
-local bgShader = nil
-local crtShader = nil
-local impactShader = nil
-
-local bgCurrentColors = {
-    a = { 0.72, 0.10, 0.14 },
-    b = { 0.08, 0.32, 0.75 },
-    c = { 0.85, 0.20, 0.25 },
-}
 
 -- Run data
 local game = GameState.new("red_deck")
@@ -95,6 +94,7 @@ local cashOutAnim = nil -- For Cash Out Modal Breakdown
 local shopData = nil
 local chestRewards = {}
 local pendingEquipment = nil
+
 local pendingEvolutionCard = nil
 local pendingSpeedCard = nil
 local pendingEditionCard = nil
@@ -161,6 +161,8 @@ local settings = {
     fullscreen = false,
     crtEnabled = false,
     debugEnabled = false,
+    graphicsQuality = "HIGH",
+    cinematicEnabled = true,
 }
 
 local function saveSettings()
@@ -245,6 +247,14 @@ UI.getDeitySlotRect = getDeitySlotRect
 
 local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c and c.faceDown then return UI.drawCardBack(cx, cy, conSlotW, conSlotH, c.alpha) end
+    if c and (c.category=="stored_card" or c.category=="stored_equipment") then
+        local item=c.card or Equipment.ITEMS[c.equipmentId]
+        if item then
+            local hovered=mx>=cx and mx<=cx+conSlotW and my>=cy and my<=cy+conSlotH
+            require("ui.card_surfaces").fullReward(item,cx,cy,conSlotW,conSlotH,c.card and "standard" or "arcana",hovered)
+            return
+        end
+    end
     if c then
         cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
@@ -739,6 +749,7 @@ local function startBlindCombat(blind)
 end
 
 local function startNewGame(chosenDeck)
+    anim.pendingStoredEquipment=nil
     Persistence.deleteRun()
     GameState.resetRun(game, chosenDeck or "red_deck")
     pendingCombatNode = nil
@@ -826,13 +837,29 @@ local function toggleCardSelection(index)
     syncCardSelections()
 end
 
+local function beginPlayerDefeat(played)
+    if state == "defeating" then return end
+    DeathVFX.startPlayer(UI.BATTLE_CENTER_X, Renderer.quality)
+    DeathVFX.monster = game.monster
+    DeathVFX.cards = {}
+    if #(game.hand or {}) == 0 then
+        for i,c in ipairs(played or anim.playedCards or {}) do DeathVFX.cards[i] = c end
+    end
+    state = "defeating"
+    buttons = {}
+    screenShake = 0
+    isPauseMenuOpen, isSettingsOpen, isDeckViewerOpen, isHandbookOpen = false, false, false, false
+    inspectCardModal = nil
+    UI.CardPhysics.release()
+end
+
 function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
     if not actualDamage or actualDamage <= 0 then return end
     local cx, cy = UI.BATTLE_CENTER_X, 270
     local color = isTrueDamage and { 1, 0.30, 0.46, 1 } or UI.COLORS.hpRed
     local heavy = defeated or actualDamage >= (game.monster.maxHp or math.huge) * 0.30
     spawnSparks(cx, cy, heavy and 42 or 28, color)
-    if defeated then spawnSparks(cx, cy, 28, UI.COLORS.goldYellow) end
+    if defeated then DeathVFX.startEnemy(game.monster, cx, Renderer.quality) end
     anim.impactFlash = heavy and 0.38 or 0.32
     anim.impactX, anim.impactY, anim.impactColor = cx, cy, color
     monsterMotion.hit = 0.35
@@ -1065,6 +1092,20 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    if c.category == "stored_card" then
+        Deck.addCardToDeck(game, c.card)
+        table.remove(game.consumables, idx)
+        Sound.play("card_deal")
+        return true
+    elseif c.category == "stored_equipment" then
+        local equipment = Equipment.ITEMS[c.equipmentId]
+        if not equipment then return false end
+        pendingEquipment, anim.pendingStoredEquipment = equipment, c
+        socketingReturnState = state == "playing" and "playing" or "shop"
+        state = "socketing"
+        Sound.play("card_select")
+        return true
+    end
     if c.category == "evolution" or c.id == "cons_evolution" then
         local x,y,w,h = getConsumableSlotRect(idx,state)
         return UI.AbilityUI.openEvolution(game, c, function(evolved)
@@ -1617,9 +1658,8 @@ local function playSelectedHand()
             screenShake = 16
             Sound.play("score_impact", 0.72)
             if game.playerHp <= 0 then
-                state = "gameover"
+                beginPlayerDefeat(playedCards)
                 Persistence.deleteRun()
-                Sound.play("game_over")
                 return
             end
         end
@@ -1716,7 +1756,7 @@ local function playSelectedHand()
     anim.particles, anim.fireParticles = {}, {}
     anim.impactFlash, anim.hitStop, anim.screenFlash, anim.screenDistortion = 0, 0, 0, 0
     anim.energyVolleyPending, anim.exitProgress, anim.exitStarted = 0, 0, false
-    UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring)
+    UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring, game.monster)
     anim.entryCompleteAt = UI.ScoringFeel.config.timing.lift + UI.ScoringFeel.config.timing.travel
         + math.max(0, #playedCards - 1) * UI.ScoringFeel.config.timing.stagger
 
@@ -1758,9 +1798,8 @@ local function endPlayerTurn()
     })
 
     if attack.killedPlayer then
-        state = "gameover"
+        beginPlayerDefeat()
         Persistence.deleteRun()
-        Sound.play("game_over")
         return true
     end
 
@@ -1783,9 +1822,8 @@ local function endPlayerTurn()
     UI.BossAbilities.handEnd(game)
     UI.Abilities.resolveBossDamage(game)
     if (game.playerHp or 0) <= 0 then
-        state = "gameover"
+        beginPlayerDefeat()
         Persistence.deleteRun()
-        Sound.play("game_over")
         return true
     end
     UI.Abilities.roundStart(game)
@@ -1834,130 +1872,13 @@ end
 -- SHADERS & CANVAS PIPELINE
 --------------------------------------------------------------------------------
 
-local bgShaderCode = [[
-extern number u_time;
-extern vec2 u_resolution;
-extern vec3 u_color_a;
-extern vec3 u_color_b;
-extern vec3 u_color_c;
-
-vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-    vec2 uv = screen_coords / u_resolution;
-    vec2 p = uv * 2.0 - 1.0;
-    p.x *= u_resolution.x / u_resolution.y;
-
-    number t = u_time * 0.35;
-    vec2 q = vec2(
-        sin(p.x * 2.2 + t + sin(p.y * 1.8 - t * 0.5)),
-        cos(p.y * 2.0 - t * 0.8 + cos(p.x * 1.6 + t * 0.4))
-    );
-    vec2 r = vec2(
-        sin(q.x * 3.1 + p.y * 1.5 + t * 0.7),
-        cos(q.y * 2.8 + p.x * 1.4 - t * 0.6)
-    );
-
-    number f = 0.5 + 0.5 * sin(r.x * 3.0 + r.y * 3.0 + t);
-    number f2 = 0.5 + 0.5 * cos(length(q) * 4.0 - t * 1.2);
-
-    vec3 col = mix(u_color_a, u_color_b, clamp(f * 1.2 - 0.1, 0.0, 1.0));
-    col = mix(col, u_color_c, clamp(pow(f2, 3.0) * 0.6, 0.0, 1.0));
-
-    number vignette = clamp(1.0 - length(p * 0.45) * 0.65, 0.0, 1.0);
-    col *= vignette;
-
-    return vec4(col, 1.0) * color;
-}
-]]
-
-local crtShaderCode = [[
-extern vec2 u_resolution;
-extern number u_time;
-extern number u_curvature;
-extern number u_chroma;
-extern number u_scanlines;
-extern number u_vignette;
-extern number u_impact;
-
-vec2 curveUV(vec2 uv) {
-    uv = uv * 2.0 - 1.0;
-    vec2 offset = abs(uv.yx) / vec2(6.0, 4.5);
-    uv = uv + uv * offset * offset * (u_curvature / 0.05);
-    return uv * 0.5 + 0.5;
-}
-
-vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-    vec2 uv = texture_coords;
-    vec2 impactDelta = uv - vec2(0.5, 0.5);
-    number impactDistance = length(impactDelta);
-    vec2 impactDirection = impactDistance > 0.0001 ? impactDelta / impactDistance : vec2(0.0, 1.0);
-    number impactWave = sin(impactDistance * 105.0 + u_impact * 24.0)
-        * exp(-impactDistance * 7.0) * u_impact;
-    uv += impactDirection * impactWave * 0.0028;
-    vec2 curved_uv = curveUV(uv);
-
-    if (curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0) {
-        return vec4(0.012, 0.012, 0.018, 1.0);
-    }
-
-    vec2 distFromCenter = curved_uv - 0.5;
-    number aberration = length(distFromCenter) * (u_chroma + u_impact * 0.00075);
-
-    number r = Texel(texture, curved_uv + distFromCenter * aberration).r;
-    number g = Texel(texture, curved_uv).g;
-    number b = Texel(texture, curved_uv - distFromCenter * aberration).b;
-    vec3 sceneColor = vec3(r, g, b);
-
-    number scanline = sin(curved_uv.y * u_resolution.y * 3.14159265);
-    scanline = 1.0 - (1.0 - scanline * 0.5 - 0.5) * u_scanlines;
-    sceneColor *= scanline;
-
-    number roll = sin(curved_uv.y * 18.0 - u_time * 6.0) * 0.012;
-    sceneColor += roll;
-
-    number vig = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
-    number vignetteAmount = clamp(pow(16.0 * vig, u_vignette), 0.0, 1.0);
-    sceneColor *= vignetteAmount;
-
-    return vec4(sceneColor, 1.0) * color;
-}
-]]
-
-local impactShaderCode = [[
-extern number u_strength;
-
-vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-    vec2 uv = texture_coords;
-    vec2 delta = uv - vec2(0.5, 0.5);
-    number distanceFromCenter = length(delta);
-    vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
-    number ripple = sin(distanceFromCenter * 112.0 + u_strength * 28.0)
-        * exp(-distanceFromCenter * 7.5) * u_strength;
-    vec2 offset = direction * ripple * 0.0024;
-    vec2 redUv = clamp(uv + offset, vec2(0.0), vec2(1.0));
-    vec2 blueUv = clamp(uv - offset, vec2(0.0), vec2(1.0));
-    vec4 base = Texel(texture, uv);
-    vec3 shifted = vec3(Texel(texture, redUv).r, base.g, Texel(texture, blueUv).b);
-    number edgeFlash = exp(-abs(distanceFromCenter - 0.16) * 72.0) * u_strength * 0.09;
-    shifted += vec3(edgeFlash, edgeFlash * 0.76, edgeFlash * 0.48);
-    return vec4(mix(base.rgb, shifted, clamp(u_strength * 1.4, 0.0, 1.0)), base.a) * color;
-}
-]]
-
 local function initShadersAndCanvas()
     if love.graphics and love.graphics.newCanvas then
-        mainCanvas = love.graphics.newCanvas(RENDER_WIDTH, RENDER_HEIGHT)
-        mainCanvas:setFilter("linear", "linear")
+        local ok, canvas = pcall(love.graphics.newCanvas, RENDER_WIDTH, RENDER_HEIGHT)
+        mainCanvas = ok and canvas or nil
+        if mainCanvas then mainCanvas:setFilter("linear", "linear") end
     end
-    if love.graphics and love.graphics.newShader then
-        local okBg, shaderBg = pcall(love.graphics.newShader, bgShaderCode)
-        if okBg then bgShader = shaderBg end
 
-        local okCrt, shaderCrt = pcall(love.graphics.newShader, crtShaderCode)
-        if okCrt then crtShader = shaderCrt end
-
-        local okImpact, shaderImpact = pcall(love.graphics.newShader, impactShaderCode)
-        if okImpact then impactShader = shaderImpact end
-    end
 end
 
 --------------------------------------------------------------------------------
@@ -2001,6 +1922,10 @@ function love.load()
     end
     updateScale()
     initShadersAndCanvas()
+    Renderer.config.enabled = settings.cinematicEnabled
+    Renderer.crtEnabled = settings.crtEnabled
+    Renderer.load(battleArt, settings.graphicsQuality)
+    DeathVFX.load()
     local allCardShadersLoaded, cardShaderCount = CardEffects.load()
     if cardEffectsSmokeMode then
         if not allCardShadersLoaded then
@@ -2095,8 +2020,11 @@ local function updateCaptureMode()
         selectCardIndex = function(idx) toggleCardSelection(idx) end,
         playSelectedHand = function() playSelectedHand() end,
         getScoringState = function() return anim, state end,
+        previewPlayerDefeat = beginPlayerDefeat,
+        endPlayerTurn = endPlayerTurn,
         setScoringSpeed = function(fast) settings.fastScoring = fast end,
         setMenuMode = function(m) menuMode = m end,
+        setCaptureState = function(value) state = value end,
         openSettings = function() isSettingsOpen = true end,
         isDebugEnabled = function() return settings.debugEnabled end,
         closeSettings = function() isSettingsOpen = false end,
@@ -2110,14 +2038,20 @@ local function updateCaptureMode()
             isCollectionOpen = false
             collectionCategory = nil
         end,
-        openPack = function(packItem)
+        openPack = function(packItem, animated)
             shopData.currentPackOpening = Shop.openPack(packItem, game)
-            shopData.currentPackOpening.animationTimer = 2
+            shopData.currentPackOpening.animationTimer = animated and 0 or UI.ChestChoices.finished()
             state = "shop"
         end,
         closePack = function() shopData.currentPackOpening = nil end,
         getShopData = function() return shopData end,
         getButtons = function() return buttons end,
+        previewChest = function(rewards,boss)
+            if boss then chestRewards=rewards else treasureRewards=rewards end
+            socketingReturnState="map";anim.chestReveal.state=nil
+            state=boss and "chest" or "treasure"
+        end,
+        activateStoredReward = useConsumable,
         getRewardAnimation = function() return cashOutAnim, state end,
         openReward = function(tableId)
             local blind = RunManager.getCurrentBlind(game.run)
@@ -2132,6 +2066,23 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    if DeathVFX.kind and state ~= "playing" and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and state ~= "chest" and state ~= "treasure" and not (state == "shop" and shopData and shopData.currentPackOpening) then DeathVFX.reset() end
+    if DeathVFX.monster and DeathVFX.monster ~= game.monster then DeathVFX.reset() end
+    if (state == "playing" or state == "scoring") and game.monster and (game.monster.hp or 1) <= 0 then
+        DeathVFX.startEnemy(game.monster, UI.BATTLE_CENTER_X, Renderer.quality)
+    end
+    DeathVFX.update(dt)
+    local cameraX, cameraY = 0, 0
+    if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
+    Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
+        game and game.monster, anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
+    if state == "defeating" then
+        if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
+        juice.ambientTimer = juice.ambientTimer + dt
+        updateCaptureMode()
+        if not DeathVFX.busy() then state = "gameover" end
+        return
+    end
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
     UI.CardPhysics.update(dt, physicsMx, physicsMy)
     CardEffects.update(dt)
@@ -2162,17 +2113,18 @@ function love.update(dt)
     if state == "chest" or state == "treasure" then
         if anim.chestReveal.state ~= state then
             anim.chestReveal.state = state
-            anim.chestReveal.timer = isCaptureMode and 0.90 or 0
-            if not isCaptureMode then Sound.play("pack_open") end
+            anim.chestReveal.timer = isCaptureMode and not chestAnimationCaptureMode and UI.ChestChoices.finished() or 0
+            if anim.chestReveal.timer == 0 then DeathVFX.startChest(Renderer.quality) end
         end
         local previous = anim.chestReveal.timer
-        anim.chestReveal.timer = math.min(0.90, previous + dt)
-        if previous < 0.48 and anim.chestReveal.timer >= 0.48 then
-            Sound.play("chest_dissolve")
+        anim.chestReveal.timer = math.min(UI.ChestChoices.finished(), previous + dt)
+        for i=1,3 do
+            local flipAt = DeathVFX.config.chest.flipAt + (i-1)*DeathVFX.config.chest.stagger
+            if previous < flipAt and anim.chestReveal.timer >= flipAt then Sound.play("card_deal", 0.85+i*0.08) end
         end
     else
         anim.chestReveal.state = nil
-        anim.chestReveal.timer = 0.90
+        anim.chestReveal.timer = UI.ChestChoices.finished()
     end
     monsterMotion.attack = math.max(0, monsterMotion.attack - motionDt)
     monsterMotion.hit = math.max(0, monsterMotion.hit - motionDt)
@@ -2335,9 +2287,14 @@ function love.update(dt)
     if shopData and shopData.currentPackOpening and not UI.Polish.busy() then
         local opening = shopData.currentPackOpening
         local previous = opening.animationTimer or 0
-        opening.animationTimer = math.min(3.0, previous + dt)
-        if previous < 0.72 and opening.animationTimer >= 0.72 then
-            Sound.play("chest_dissolve")
+        if not opening.ashStarted then
+            opening.ashStarted = true
+            if previous < DeathVFX.config.chest.duration then DeathVFX.startChest(Renderer.quality) end
+        end
+        opening.animationTimer = math.min(UI.ChestChoices.finished(), previous + dt)
+        for i=1,3 do
+            local flipAt=DeathVFX.config.chest.flipAt+(i-1)*DeathVFX.config.chest.stagger
+            if previous<flipAt and opening.animationTimer>=flipAt then Sound.play("card_deal",0.85+i*0.08) end
         end
     end
     for i = #shopFx, 1, -1 do
@@ -2384,47 +2341,8 @@ function love.update(dt)
 
     -- CardPhysics owns held visuals; drag controllers only handle logical input.
 
-    -- Smooth background shader color interpolation based on active state / blind
-    local targetA, targetB, targetC
-    if state == "menu" then
-        targetA = { 0.72, 0.10, 0.14 }
-        targetB = { 0.08, 0.32, 0.75 }
-        targetC = { 0.85, 0.20, 0.25 }
-    elseif state == "shop" then
-        targetA = { 0.11, 0.06, 0.18 }
-        targetB = { 0.22, 0.10, 0.32 }
-        targetC = { 0.55, 0.32, 0.12 }
-    elseif state == "CASH_OUT" then
-        targetA = { 0.14, 0.11, 0.05 }
-        targetB = { 0.28, 0.22, 0.08 }
-        targetC = { 0.60, 0.48, 0.14 }
-    elseif state == "BLIND_SELECT" then
-        targetA = { 0.05, 0.07, 0.14 }
-        targetB = { 0.09, 0.14, 0.26 }
-        targetC = { 0.18, 0.32, 0.55 }
-    elseif (state == "playing" or state == "scoring") and game.monster and game.monster.isBoss then
-        targetA = { 0.18, 0.04, 0.06 }
-        targetB = { 0.38, 0.08, 0.10 }
-        targetC = { 0.70, 0.15, 0.15 }
-    elseif state == "playing" or state == "scoring" then
-        targetA = { 0.05, 0.16, 0.11 }
-        targetB = { 0.10, 0.32, 0.22 }
-        targetC = { 0.18, 0.48, 0.30 }
-    else
-        targetA = { 0.06, 0.08, 0.14 }
-        targetB = { 0.12, 0.15, 0.24 }
-        targetC = { 0.25, 0.35, 0.50 }
-    end
-
     if state == "CASH_OUT" and cashOutAnim then
         RewardSystem.update(cashOutAnim, dt * (settings.fastScoring and 2 or 1))
-    end
-
-    local colLerp = math.min(1.0, dt * 4.0)
-    for i = 1, 3 do
-        bgCurrentColors.a[i] = bgCurrentColors.a[i] + (targetA[i] - bgCurrentColors.a[i]) * colLerp
-        bgCurrentColors.b[i] = bgCurrentColors.b[i] + (targetB[i] - bgCurrentColors.b[i]) * colLerp
-        bgCurrentColors.c[i] = bgCurrentColors.c[i] + (targetC[i] - bgCurrentColors.c[i]) * colLerp
     end
 
     -- Update tilt for hand cards
@@ -2483,7 +2401,8 @@ function love.update(dt)
     anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
     -- The presentation queue yields only when energy has physically reached the enemy.
     if state == "scoring" and anim.active then
-        local st = UI.ScoringFeel.update(anim, motionDt, settings.fastScoring)
+        local deathStop = DeathVFX.enemyActive(game.monster) and DeathVFX.age < DeathVFX.stop
+        local st = UI.ScoringFeel.update(anim, deathStop and 0 or motionDt, settings.fastScoring)
         local steps = anim.scoringData.steps
         if st or UI.ScoringFeel.isFinished(anim) then
             if st then
@@ -2494,12 +2413,10 @@ function love.update(dt)
                     anim.monsterDefeated = defeated
                     UI.ScoringFeel.damageApplied(anim, game.monster.hp, actualDmg)
                     monsterMotion.hit = 0.24
-                    spawnSparks(UI.BATTLE_CENTER_X, 270,
-                        math.floor(UI.ScoringFeel.config.impact.minParticles
-                            + (UI.ScoringFeel.config.impact.maxParticles - UI.ScoringFeel.config.impact.minParticles)
-                            * anim.sequence.intensity), UI.ScoringFeel.config.color.aura)
+                    -- HandAttacks draws capped directional impact sparks; avoid duplicate radial burst.
 
                     if defeated then
+                        DeathVFX.startEnemy(game.monster, UI.BATTLE_CENTER_X, Renderer.quality)
                         Sound.play("jackpot")
                         anim.targetStepDelay = 0.60
 
@@ -2763,16 +2680,14 @@ function love.update(dt)
 
                         if game.playerHp <= 0 then
                             anim.playerKilled = true
-                            Sound.play("game_over")
                     end
                     end
                 end
             else
                 if UI.ScoringFeel.isFinished(anim) then
+                    if DeathVFX.enemyActive(game.monster) and DeathVFX.busy() then return end
                     anim.active = false
                     if game.monster then game.monster.damageLagHp = game.monster.hp end
-                    anim.playedCards = {}
-
                     UI.Abilities.finishHand(game)
                     -- Resolve from live HP/hand state so stale animation flags can
                     -- never turn a defeated monster into a game over.
@@ -2781,17 +2696,17 @@ function love.update(dt)
                     anim.playerKilled = combatOutcome == "defeat" and game.playerHp ~= nil and game.playerHp <= 0
 
                     if anim.playerKilled then
-                        state = "gameover"
+                        beginPlayerDefeat()
                         Persistence.deleteRun()
-                        Sound.play("game_over")
                         return
                     end
                     if combatOutcome == "defeat" then
-                        state = "gameover"
+                        beginPlayerDefeat()
                         Persistence.deleteRun()
-                        Sound.play("game_over")
                         return
                     end
+
+                    anim.playedCards = {}
 
                     if anim.monsterDefeated then
                         UI.Abilities.combatWin(game)
@@ -2874,30 +2789,12 @@ end
 -- DRAW FUNCTIONS
 --------------------------------------------------------------------------------
 
-local function drawMenuBackground()
-    local g = love.graphics
-    local video = battleArt.menuVideo
-    g.setColor(1, 1, 1, 1)
-    if video then
-        local width, height = video:getDimensions()
-        if width > 0 and height > 0 then
-            local scale = math.max(V_WIDTH / width, V_HEIGHT / height)
-            g.draw(video, (V_WIDTH - width * scale) / 2, (V_HEIGHT - height * scale) / 2, 0, scale, scale)
-            return
-        end
-    end
-    if battleArt.menuWorld then
-        local width, height = battleArt.menuWorld:getDimensions()
-        g.draw(battleArt.menuWorld, 0, 0, 0, V_WIDTH / width, V_HEIGHT / height)
-    end
-end
-
 local function drawMainMenu()
     local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    drawMenuBackground()
+    -- Menu video / painting is rendered in the shared World Canvas.
     g.setColor(0.01, 0.02, 0.05, 0.18)
     g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
@@ -2967,9 +2864,8 @@ local function drawCollectionModal()
     local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
-    drawMenuBackground()
-    g.setColor(0.01, 0.02, 0.04, 0.78)
-    g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+    -- World backdrop is supplied by Renderer.
+    Renderer.veil()
     UI.drawGildedPanel(60, 34, 1160, 640)
 
     g.setFont(UI.fonts.title)
@@ -3020,8 +2916,8 @@ local function drawCollectionDetailView()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    drawMenuBackground()
-    love.graphics.setColor(0.01, 0.02, 0.04, 0.84)
+    -- World backdrop is supplied by Renderer.
+    love.graphics.setColor(0.01, 0.02, 0.04, Renderer.config.ui.veil)
     love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
 
     local cat = Collection.getCategoryById(collectionCategory) or { title = "Danh Mục", sub = "" }
@@ -3177,8 +3073,7 @@ end
 
 local function drawFactionSelect()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(UI.COLORS.bg)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -3298,9 +3193,8 @@ end
 
 local function drawStarterDeckSelect()
     local winW, winH = love.graphics.getDimensions()
-    drawMenuBackground()
-    love.graphics.setColor(0.01, 0.02, 0.04, 0.74)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    -- World backdrop is supplied by Renderer.
+    Renderer.veil()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
@@ -3385,30 +3279,21 @@ local function drawBattleHud(m, mx, my)
     for _, btn in ipairs(hudButtons) do table.insert(buttons, btn) end
 end
 
-local function drawBattleEnemy(m)
+local function drawBattleEnemyWorld(m)
     if not m then return end
-    local g = love.graphics
     local t = (juice and juice.ambientTimer) or 0
-    local attack = monsterMotion.attack / 0.42
-    local hit = monsterMotion.hit / 0.35
+    local attack, hit = monsterMotion.attack / 0.42, monsterMotion.hit / 0.35
     local recoil, squash, flash = 0, 1, 0
     if state == "scoring" then recoil, squash, flash = UI.ScoringFeel.enemyReaction(anim); hit = flash end
-    local cx, cy = UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.9) * 5
-    local size = m.isBoss and 355 or (m.isElite and 325 or 290)
-    g.setColor(0, 0, 0, 0.38)
-    g.ellipse("fill", cx, 414, size * 0.38, 23)
     local enemyImage = m.isBoss and battleArt.enemyBoss or (m.isElite and battleArt.enemyElite or battleArt.enemySmall)
-    if enemyImage then
-        local iw, ih = enemyImage:getDimensions()
-        local fit = math.min(size / iw, size / ih)
-        g.push()
-        g.translate(cx + attack * 50 - hit * 5, cy - attack * 20 + recoil)
-        g.scale(squash, 1 / squash)
-        g.rotate(math.sin(t * 1.4) * 0.018 - attack * 0.08 + hit * 0.07)
-        g.setColor(1, 1 - hit * 0.20, 1 - hit * 0.25, 1)
-        g.draw(enemyImage, -iw * fit / 2, -ih * fit / 2, 0, fit, fit)
-        g.pop()
-    end
+    local size = m.isBoss and 355 or (m.isElite and 325 or 290)
+    if DeathVFX.enemyActive(m) and DeathVFX.drawEnemy(enemyImage, UI.BATTLE_CENTER_X, 270, size) then return end
+    Renderer.entity.draw(enemyImage, UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.1) * Renderer.config.boss.sway,
+        size, t, attack, hit, recoil, squash, Renderer.scene.preset, Renderer.eventStrength)
+end
+
+local function drawBattleEnemy(m)
+    if not m then return end
     UI.components.EnemyPanel.draw((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu",
         state == "scoring" and anim.sequence and anim.sequence.hp or (m.damageLagHp or m.hp),
         m.maxHp, UI.fonts, UI.BATTLE_CENTER_X,
@@ -3421,7 +3306,7 @@ local function drawBattleInfoPanel(m, eval, preview)
     local chips = scoring and (anim.displayChips or 0) or (preview and preview.totalChips or 0)
     local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
     local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
-    local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or (preview and preview.finalScore or 0)
+    local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or 0
     local handName = scoring and (anim.sequence and anim.sequence.handName)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
@@ -3501,17 +3386,8 @@ end
 
 local function drawPlayingState()
     syncCardSelections()
-    local winW, winH = love.graphics.getDimensions()
-    if battleArt.background then
-        love.graphics.setColor(1, 1, 1, 1)
-        local bw, bh = battleArt.background:getDimensions()
-        love.graphics.draw(battleArt.background, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    else
-        love.graphics.setColor(UI.COLORS.felt)
-        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-    end
-
     local mx, my = toVirtual(love.mouse.getPosition())
+    if state == "defeating" or state == "gameover" then mx,my=-1000,-1000 end
     hoveredDeityTooltip = nil
     hoveredCardTooltip = nil
     buttons = {}
@@ -3667,13 +3543,21 @@ local function drawPlayingState()
                 UI.drawRoundedRect("fill", cx - 6, cy - 6, cardW + 12, cardH + 14, 11)
                 love.graphics.setBlendMode("alpha")
             end
-            UI.drawCard(c, cx, cy, cardW, cardH)
+            if state == "defeating" or (state == "gameover" and DeathVFX.kind == "player") then
+                DeathVFX.drawCard(UI, c, cx, cy, cardW, cardH, i)
+            else UI.drawCard(c, cx, cy, cardW, cardH) end
         end
     end
 
 
 
     -- Draw Balatro hover badge above hovered card
+    if state == "defeating" or (state == "gameover" and DeathVFX.kind == "player") then
+        hoveredCard = nil
+        for i,c in ipairs(DeathVFX.cards or {}) do
+            DeathVFX.drawCard(UI,c,UI.BATTLE_CENTER_X-50+(i-(#DeathVFX.cards+1)/2)*110,466,cardW,cardH,i)
+        end
+    end
     if hoveredCard and not (handDrag.active and handDrag.isDragging) then
         UI.drawCardHoverBadge(hoveredCard, hoveredCard.visualX or 0, hoveredCard.visualY or 0, cardW, cardH)
     end
@@ -3817,7 +3701,7 @@ end
 local function drawScoringState()
     -- Reuse the arena and live left-side breakdown while cards resolve.
     drawPlayingState()
-    UI.ScoringFeel.drawDim(anim)
+    -- World dimming is handled before sharp gameplay/UI in Renderer.
 
     -- Played cards share the same arena center as the hand and monster.
     local cards = anim.playedCards or {}
@@ -3893,31 +3777,18 @@ local function drawScoringState()
         local transformProgress = transformAge and math.min(1, transformAge / 0.42) or 0
         local dissolve = transformProgress -- Destruction visuals wait for energy conversion too.
         if dissolve > 0 then
-            local shrink = math.max(0.12, 1 - dissolve * 0.86)
+            local dx, dy, rotation, shrink = UI.ScoringFeel.Attacks.cardPose(anim.sequence.attack, i, dissolve)
             if transformProgress < 1 then
                 love.graphics.push()
-                love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
-                love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
+                love.graphics.translate(cx + cardW / 2 + dx, cy + cardH / 2 + dy)
+                love.graphics.rotate(rotation)
                 love.graphics.scale(shrink, shrink)
                 UI.Polish.dissolve(UI, -cardW/2, -cardH/2, cardW, cardH, transformProgress, CardEffects.getBeamColor(c),
                     function(x,y,w,h) UI.drawCardFace(c,x,y,w,h) end)
                 love.graphics.pop()
             end
 
-            love.graphics.setBlendMode("add")
-            for shard = 1, 12 do
-                local phase = shard * 2.37 + transformProgress * 3
-                local sx = cx + cardW / 2 + math.cos(phase) * dissolve * (12 + shard * 1.4)
-                local sy = cy + cardH / 2 + math.sin(phase) * dissolve * 12 - dissolve * shard
-                if transformAge ~= nil then
-                    local beamColor = CardEffects.getBeamColor(c)
-                    love.graphics.setColor(beamColor[1], beamColor[2], beamColor[3], 1 - transformProgress)
-                else
-                    love.graphics.setColor(1, 0.22 + (shard % 3) * 0.16, 0.05, 1 - dissolve)
-                end
-                love.graphics.rectangle("fill", sx, sy, 2 + shard % 4, 2 + shard % 3)
-            end
-            love.graphics.setBlendMode("alpha")
+            UI.ScoringFeel.Attacks.fragments(anim.sequence.attack, i, dissolve, cx+cardW/2, cy+cardH/2)
         else
             UI.drawCard(c, cx, cy, cardW, cardH)
         end
@@ -3978,8 +3849,7 @@ end
 
 local function drawBlindSelectState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.06, 0.08, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -4230,8 +4100,7 @@ end
 
 local function drawVictoryState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.05, 0.08, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -4315,8 +4184,7 @@ end
 
 local function drawMap()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.06, 0.08, 0.11, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -4500,8 +4368,7 @@ end
 
 local function drawEventState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.07, 0.08, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -4617,8 +4484,7 @@ end
 
 local function drawBossDeityDraftState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.05, 0.10, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -4993,79 +4859,34 @@ local function drawDeckViewerModal()
     end
 end
 
-local function drawChestState()
-    local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.06, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-
-    local mx, my = toVirtual(love.mouse.getPosition())
-
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("👑 RƯƠNG THƯỞNG BOSS CHIẾN THẮNG! 👑", 0, 40, V_WIDTH, "center")
-
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Chọn 1 trong 3 phần thưởng để bổ sung vào kho báu của bạn:", 0, 105, V_WIDTH, "center")
-
-    buttons = {}
-    local boxW = 340
-    local boxH = 380
-    local startX = (V_WIDTH - (3 * boxW + 2 * 30)) / 2
-    local boxY = 160
-
-    for i, rew in ipairs(chestRewards) do
-        local bx = startX + (i - 1) * (boxW + 30)
-        local isHovered = (mx >= bx and mx <= bx + boxW and my >= boxY and my <= boxY + boxH)
-
-        love.graphics.setColor(0.14, 0.16, 0.22, 1)
-        UI.drawRoundedRect("fill", bx, boxY, boxW, boxH, 12)
-
-        love.graphics.setLineWidth(isHovered and 3 or 1.5)
-        love.graphics.setColor(rew.color or UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", bx, boxY, boxW, boxH, 12)
-
-        -- Title
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(rew.color or UI.COLORS.goldYellow)
-        love.graphics.printf(rew.title, bx + 10, boxY + 20, boxW - 20, "center")
-
-        -- Card or Gem Display
-        if rew.type == "card" then
-            local cw = 90
-            local ch = 130
-            UI.drawCard(rew.card, bx + (boxW - cw) / 2, boxY + 65, cw, ch)
-        else
-            -- Gem icon box
-            love.graphics.setColor(rew.item.color[1], rew.item.color[2], rew.item.color[3], 0.25)
-            UI.drawRoundedRect("fill", bx + (boxW - 120) / 2, boxY + 70, 120, 100, 8)
-            love.graphics.setColor(rew.item.color)
-            love.graphics.circle("fill", bx + boxW / 2, boxY + 120, 32)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.printf(rew.item.name, bx + 10, boxY + 175, boxW - 20, "center")
-        end
-
-        -- Description
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(rew.desc, bx + 16, boxY + 225, boxW - 32, "center")
-
-        -- Select Button
-        local btnChoose = {
-            id = "chest_" .. i,
-            text = (rew.type == "card") and "NHẬN VÀO BỘ BÀI" or "GẮN VÀO LÁ BÀI",
-            x = bx + 40,
-            y = boxY + boxH - 55,
-            w = boxW - 80,
-            h = 42,
-            color = UI.COLORS.btnPlay,
-            font = UI.fonts.regular,
-            rewardIndex = i,
-        }
-        table.insert(buttons, btnChoose)
-        UI.drawButton(btnChoose, mx >= btnChoose.x and mx <= btnChoose.x + btnChoose.w and my >= btnChoose.y and my <= btnChoose.y + btnChoose.h)
+function UI.ChestChoices.claim(rew, keep, isBossChest)
+    if keep then
+        game.consumables=game.consumables or {}
+        if #game.consumables>=3 then Sound.play("cant_afford");return false end
+        local item=rew.card or rew.item
+        game.consumables[#game.consumables+1]={category=rew.type=="card" and "stored_card" or "stored_equipment",
+            card=rew.card,equipmentId=rew.item and rew.item.id,name=item.name or rew.title,
+            desc=rew.desc,color=rew.color,icon=rew.type=="card" and "♠" or "◆"}
+        Sound.play("shop_buy")
+    elseif rew.type=="card" then
+        Deck.addCardToDeck(game,rew.card);Sound.play("card_deal")
+    else
+        pendingEquipment=rew.item;anim.pendingStoredEquipment=nil
+        if not isBossChest then socketingReturnState="map" end
+        state="socketing";return true
     end
+    if game.currentNodeId and game.map then Map.onNodeCompleted(game.map,game.currentNodeId) end
+    if isBossChest and socketingReturnState=="next_act" then
+        game.act=game.act+1;game.map=Map.generate(game.act);game.currentNodeId=nil
+    end
+    state="map";saveRunAtSafePoint();return true
+end
+
+local function drawChestState()
+    Renderer.veil()
+    local mx,my=toVirtual(love.mouse.getPosition())
+    buttons={}
+    UI.ChestChoices.draw(chestRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG CHIẾN THẮNG",mx,my,buttons,#(game.consumables or {})>=3)
 end
 
 local SOCKETING_PAGE_SIZE = 10
@@ -5083,8 +4904,7 @@ end
 
 local function drawSocketingView()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.08, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local equipment = pendingEquipment
@@ -5244,83 +5064,15 @@ local function generateTreasureRewards()
 end
 
 local function drawTreasureState()
-    local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.06, 0.12, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-
-    local mx, my = toVirtual(love.mouse.getPosition())
-
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("RƯƠNG BÁU CỔ ĐẠI (TẦNG " .. (game.map and game.map.currentFloor or 1) .. ")", 0, 40, V_WIDTH, "center")
-
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Bạn khai mở một rương báu cổ xưa. Hãy chọn 1 phần thưởng miễn phí:", 0, 105, V_WIDTH, "center")
-
-    buttons = {}
-    local boxW = 340
-    local boxH = 380
-    local startX = (V_WIDTH - (3 * boxW + 2 * 30)) / 2
-    local boxY = 160
-
-    for i, rew in ipairs(treasureRewards) do
-        local bx = startX + (i - 1) * (boxW + 30)
-        local isHovered = (mx >= bx and mx <= bx + boxW and my >= boxY and my <= boxY + boxH)
-
-        love.graphics.setColor(0.14, 0.16, 0.22, 1)
-        UI.drawRoundedRect("fill", bx, boxY, boxW, boxH, 12)
-
-        love.graphics.setLineWidth(isHovered and 3 or 1.5)
-        love.graphics.setColor(rew.color or UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", bx, boxY, boxW, boxH, 12)
-
-        -- Title
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(rew.color or UI.COLORS.goldYellow)
-        love.graphics.printf(rew.title, bx + 10, boxY + 20, boxW - 20, "center")
-
-        -- Card or Gem Display
-        if rew.type == "card" then
-            local cw = 90
-            local ch = 130
-            UI.drawCard(rew.card, bx + (boxW - cw) / 2, boxY + 65, cw, ch)
-        else
-            love.graphics.setColor(rew.item.color[1], rew.item.color[2], rew.item.color[3], 0.25)
-            UI.drawRoundedRect("fill", bx + (boxW - 120) / 2, boxY + 70, 120, 100, 8)
-            love.graphics.setColor(rew.item.color)
-            love.graphics.circle("fill", bx + boxW / 2, boxY + 120, 32)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.printf(rew.item.name, bx + 10, boxY + 175, boxW - 20, "center")
-        end
-
-        -- Description
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(rew.desc, bx + 16, boxY + 225, boxW - 32, "center")
-
-        -- Select Button
-        local btnChoose = {
-            id = "treasure_" .. i,
-            text = (rew.type == "card") and "NHẬN VÀO BỘ BÀI" or "GẮN VÀO LÁ BÀI",
-            x = bx + 40,
-            y = boxY + boxH - 55,
-            w = boxW - 80,
-            h = 42,
-            color = UI.COLORS.btnPlay,
-            font = UI.fonts.regular,
-            rewardIndex = i,
-        }
-        table.insert(buttons, btnChoose)
-        UI.drawButton(btnChoose, mx >= btnChoose.x and mx <= btnChoose.x + btnChoose.w and my >= btnChoose.y and my <= btnChoose.y + btnChoose.h)
-    end
+    Renderer.veil()
+    local mx,my=toVirtual(love.mouse.getPosition())
+    buttons={}
+    UI.ChestChoices.draw(treasureRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG BÁU CỔ ĐẠI",mx,my,buttons,#(game.consumables or {})>=3)
 end
 
 local function drawRestState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.12, 0.10, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    Renderer.veil()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -5814,6 +5566,23 @@ local function drawSettingsModal()
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf("CÀI ĐẶT TRÒ CHƠI", modalX, modalY + 24, modalW, "center")
 
+    -- Separate visual controls preserve all established settings hit regions.
+    local visualX, visualY = modalX + modalW + 14, modalY + 70
+    UI.drawGildedPanel(visualX, visualY, 220, 208)
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf("THẾ GIỚI ĐIỆN ẢNH", visualX + 12, visualY + 16, 196, "center")
+    local qualityButton = {id="setting_quality", text="CHẤT LƯỢNG: "..Renderer.quality,
+        x=visualX+12,y=visualY+52,w=196,h=34,font=UI.fonts.small}
+    local cinemaButton = {id="setting_cinematic", text=settings.cinematicEnabled and "HIỆU ỨNG: BẬT" or "HIỆU ỨNG: TẮT",
+        x=visualX+12,y=visualY+98,w=196,h=34,font=UI.fonts.small}
+    for _,btn in ipairs({qualityButton,cinemaButton}) do
+        buttons[#buttons+1]=btn
+        UI.drawButton(btn,mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
+    end
+    love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("F1: kiểm tra render\nUI luôn sắc nét",visualX+12,visualY+151,196,"center")
+
     -- 1. SFX Volume Option
     local row1Y = modalY + 80
     love.graphics.setFont(UI.fonts.regular)
@@ -5892,17 +5661,6 @@ end
 
 local function drawShopState()
     local winW, winH = love.graphics.getDimensions()
-    if battleArt.background then
-        love.graphics.setColor(1, 1, 1, 1)
-        local bw, bh = battleArt.background:getDimensions()
-        love.graphics.draw(battleArt.background, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-    else
-        love.graphics.setColor(UI.COLORS.felt)
-        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-    end
-    love.graphics.setColor(0.01, 0.03, 0.06, 0.76)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
-
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
     UI.Polish.goldPosition = UI.Polish.config.gold
@@ -6020,7 +5778,7 @@ local function drawShopState()
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
 
     local shopX, shopY, shopW, shopH = 20, 76, 985, 560
-    UI.drawGildedPanel(shopX, shopY, shopW, shopH)
+    UI.components.Panel.draw(shopX, shopY, shopW, shopH, {worldBackdrop=true})
 
     ----------------------------------------------------------------------------
     -- A. UPPER COMPARTMENT (Next Round & Reroll + Upper Cards On Sale)
@@ -6100,158 +5858,15 @@ local function drawShopState()
 
         local packImg = UI.getPackImage(pack.packType or pack.id)
         local timer = pData.animationTimer or 0
-        if timer < 0.90 then
-            local entrance = math.min(1, timer / 0.42)
-            local eased = 1 - (1 - entrance) ^ 3
-            local charge = math.max(0, (timer - 0.42) / 0.48)
-            local dissolve = math.max(0, math.min(1, (timer - 0.67) / 0.23))
-            local shake = charge * math.sin(timer * 70) * 7
-            local pulse = (0.70 + eased * 0.30 + math.sin(timer * 24) * 0.018 * charge) * (1 - dissolve * 0.80)
-            local pw, ph = 184 * pulse, 248 * pulse
-            local px, py = (V_WIDTH - pw) / 2 + shake, 500 + (150 - 500) * eased
-
-            love.graphics.setBlendMode("add")
-            for ring = 1, 3 do
-                local radius = 75 + charge * (70 + ring * 26)
-                love.graphics.setColor(1, 0.58 + ring * 0.08, 0.12, charge * (0.22 - ring * 0.035))
-                love.graphics.setLineWidth(2)
-                love.graphics.circle("line", 640, 278, radius)
-            end
-            love.graphics.setLineWidth(1)
-            love.graphics.setBlendMode("alpha")
-            if packImg then
-                love.graphics.setColor(0, 0, 0, 0.5 * (1 - dissolve))
-                UI.drawRoundedRect("fill", px + 9, py + 15, pw, ph, 10)
-                love.graphics.setColor(1, 1, 1, 1 - dissolve)
-                local iw, ih = packImg:getDimensions()
-                love.graphics.draw(packImg, px + pw / 2, py + ph / 2, shake * 0.002, pw / iw, ph / ih, iw / 2, ih / 2)
-            end
-            love.graphics.setBlendMode("add")
-            for shard = 1, 24 do
-                local angle = shard * 2.399
-                local radius = dissolve * (32 + shard * 3.2)
-                love.graphics.setColor(1, 0.55 + (shard % 3) * 0.13, 0.20, (1 - dissolve) * dissolve)
-                love.graphics.rectangle("fill", 640 + math.cos(angle) * radius, 278 + math.sin(angle) * radius, 3 + shard % 4, 3 + shard % 4)
-            end
-            for ray = 1, 20 do
-                local angle = ray * math.pi * 2 / 20 + timer * 0.8
-                local radius = 95 + charge * 190
-                love.graphics.setColor(1, 0.72, 0.18, charge * 0.62)
-                love.graphics.line(640 + math.cos(angle) * 62, 278 + math.sin(angle) * 82, 640 + math.cos(angle) * radius, 278 + math.sin(angle) * radius)
-            end
-            love.graphics.setBlendMode("alpha")
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf(charge < 0.65 and (pack.name or "GÓI BÀI") or "XÉ NIÊM PHONG...", 0, 446, V_WIDTH, "center")
-        else
-            local flash = math.max(0, 1 - (timer - 0.90) / 0.22)
-            if flash > 0 then
-                love.graphics.setColor(1, 0.88, 0.55, flash * 0.55)
-                love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-            end
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("MỞ " .. (pack.name or "GÓI BÀI") .. " — CHỌN 1 THẺ BÀI", 0, 120, V_WIDTH, "center")
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf("Mỗi lựa chọn đều hiển thị artwork và hiệu ứng trước khi nhận.", 0, 168, V_WIDTH, "center")
-
-            local totalCardsW = #cards * 150 + (#cards - 1) * 32
-            local startCardX = (V_WIDTH - totalCardsW) / 2
-            local cardY, cW, cH = 210, 150, 260
-            local labels = { buffoon = "HỘ LINH", standard = "QUÂN BÀI", arcana = "TRANG BỊ KHẢM", joker_edition = "PHÙ PHÉP", seal = "CON DẤU", spectral = "BIẾN ĐỔI", celestial = "HÀNH TINH", edition = "ẤN BẢN" }
-
-            for i, card in ipairs(cards) do
-                local cx = startCardX + (i - 1) * (cW + 32)
-                local reveal = math.max(0, math.min(1, (timer - 0.94 - (i - 1) * 0.14) / 0.46))
-                local eased = 1 - (1 - reveal) ^ 3
-                local flipX = math.max(0.035, math.abs(math.cos(eased * math.pi)))
-                local ready = reveal >= 0.99
-                local isChoiceHovered = ready and mx >= cx and mx <= cx + cW and my >= cardY and my <= cardY + cH
-                local idleY = ready and math.sin(juice.ambientTimer * 1.8 + i * 1.4) * 3 or 0
-                local drawCY = isChoiceHovered and (cardY - 16) or (cardY + idleY + (1 - eased) * 75)
-
-                love.graphics.push()
-                love.graphics.translate(cx + cW / 2, drawCY + cH / 2)
-                love.graphics.scale(flipX, 0.82 + eased * 0.18)
-                love.graphics.rotate((1 - eased) * ((i - 2) * 0.24))
-                love.graphics.translate(-cx - cW / 2, -drawCY - cH / 2)
-
-                if eased < 0.5 then
-                    UI.drawCardBack(cx, drawCY, cW, cH)
-                else
-                    require("ui.card_surfaces").reward(card, cx, drawCY, cW, cH, pack.packType, labels[pack.packType], isChoiceHovered)
-                end
-                local isConsumablePack = (pack.packType == "joker_edition" or pack.packType == "seal" or pack.packType == "spectral" or pack.packType == "celestial" or pack.packType == "edition")
-                if ready and isConsumablePack then
-                local btnUse = {
-                    id = "choose_pack_" .. i,
-                    text = "DÙNG NGAY",
-                    x = cx + 8,
-                    y = drawCY + cH - 56,
-                    w = cW - 16,
-                    h = 24,
-                    color = UI.COLORS.btnPlay,
-                    font = UI.fonts.tiny,
-                    cardIndex = i,
-                }
-                table.insert(buttons, btnUse)
-                UI.drawButton(btnUse, mx >= btnUse.x and mx <= btnUse.x + btnUse.w and my >= btnUse.y and my <= btnUse.y + btnUse.h, juice and juice.buttonPressedId == btnUse.id)
-
-                local btnKeep = {
-                    id = "keep_pack_" .. i,
-                    text = "GIỮ LẠI",
-                    x = cx + 8,
-                    y = drawCY + cH - 28,
-                    w = cW - 16,
-                    h = 24,
-                    color = { 0.20, 0.48, 0.75, 1 },
-                    font = UI.fonts.tiny,
-                    cardIndex = i,
-                }
-                table.insert(buttons, btnKeep)
-                UI.drawButton(btnKeep, mx >= btnKeep.x and mx <= btnKeep.x + btnKeep.w and my >= btnKeep.y and my <= btnKeep.y + btnKeep.h, juice and juice.buttonPressedId == btnKeep.id)
-                elseif ready then
-                local btnPick = {
-                    id = "choose_pack_" .. i,
-                    text = "CHỌN LÁ NÀY",
-                    x = cx + 12,
-                    y = drawCY + cH - 36,
-                    w = cW - 24,
-                    h = 28,
-                    color = UI.COLORS.btnPlay,
-                    font = UI.fonts.tiny,
-                    cardIndex = i,
-                }
-                table.insert(buttons, btnPick)
-                UI.drawButton(btnPick, mx >= btnPick.x and mx <= btnPick.x + btnPick.w and my >= btnPick.y and my <= btnPick.y + btnPick.h, juice and juice.buttonPressedId == btnPick.id)
-                end
-                love.graphics.pop()
-
-                if reveal > 0 and reveal < 0.72 then
-                    love.graphics.setBlendMode("add")
-                    for spark = 1, 8 do
-                        local a = spark * 2.41 + i
-                        local radius = reveal * 52
-                        love.graphics.setColor(1, 0.78, 0.22, (1 - reveal) * 0.8)
-                        love.graphics.circle("fill", cx + cW / 2 + math.cos(a) * radius, drawCY + cH / 2 + math.sin(a) * radius, 2.5)
-                    end
-                    love.graphics.setBlendMode("alpha")
-                end
-            end
-
-            local btnSkip = {
-            id = "skip_pack",
-            text = "BỎ QUA GÓI BÀI",
-            x = (V_WIDTH - 200) / 2,
-            y = cardY + cH + 20,
-            w = 200,
-            h = 38,
-            color = UI.COLORS.btnDiscard,
-            font = UI.fonts.small,
-        }
-            table.insert(buttons, btnSkip)
-            UI.drawButton(btnSkip, mx >= btnSkip.x and mx <= btnSkip.x + btnSkip.w and my >= btnSkip.y and my <= btnSkip.y + btnSkip.h, juice.buttonPressedId == btnSkip.id)
+        UI.ChestChoices.draw(cards,timer,pack.name or "MỞ RƯƠNG",mx,my,buttons,#game.consumables>=3,pack.packType)
+        if timer < DeathVFX.config.chest.duration and DeathVFX.kind=="chest" then
+            DeathVFX.drawEnemy(packImg,640,328,DeathVFX.config.chest.size)
+            DeathVFX.drawParticles()
+        end
+        if timer >= DeathVFX.config.chest.cardsAt then
+            local btn={id="skip_pack",text="BỎ QUA RƯƠNG BÀI",x=540,y=674,w=200,h=34,color=UI.COLORS.btnDiscard,font=UI.fonts.small}
+            buttons[#buttons+1]=btn
+            UI.drawButton(btn,mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
         end
     end
 
@@ -6579,54 +6194,38 @@ local function drawShopFx()
 end
 
 local function drawChestReveal()
-    local timer = isCaptureMode and 0.90 or (anim.chestReveal.state == state and anim.chestReveal.timer or 0)
-    if timer >= 0.90 then return end
-    local dissolve = math.max(0, math.min(1, (timer - 0.48) / 0.36))
-    local reveal = math.max(0, math.min(1, (timer - 0.52) / 0.38))
-    local g = love.graphics
-    g.push("all")
-    g.setColor(0.02, 0.025, 0.04, 0.94 * (1 - reveal))
-    g.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-
-    local cx, cy = V_WIDTH / 2, V_HEIGHT / 2 - 24
-    local chest = battleArt.chest
-    if chest then
-        local iw, ih = chest:getDimensions()
-        local size = math.min(310 / iw, 260 / ih) * (0.92 + math.min(timer / 0.48, 1) * 0.12) * (1 - dissolve * 0.82)
-        g.setColor(1, 1, 1, 1 - dissolve)
-        g.draw(chest, cx, cy, math.sin(timer * 28) * 0.018 * (1 - dissolve), size, size, iw / 2, ih / 2)
-    end
-
-    g.setBlendMode("add")
-    g.setLineWidth(2)
-    g.setColor(1, 0.72, 0.28, (1 - dissolve) * 0.45)
-    g.circle("line", cx, cy, 112 + timer * 42)
-    for shard = 1, 28 do
-        local angle = shard * 2.399
-        local radius = dissolve * (38 + shard * 3.5)
-        g.setColor(1, 0.58 + (shard % 3) * 0.12, 0.20, dissolve * (1 - dissolve))
-        g.rectangle("fill", cx + math.cos(angle) * radius, cy + math.sin(angle) * radius, 3 + shard % 4, 3 + shard % 4)
-    end
+    if DeathVFX.kind ~= "chest" then return end
+    local timer=anim.chestReveal.timer
+    if timer>=DeathVFX.config.chest.duration then return end
+    local g=love.graphics;g.push("all")
+    local veil=math.max(0,1-timer/DeathVFX.config.chest.cardsAt)
+    g.setColor(0.009,0.013,0.025,veil*0.72);g.rectangle("fill",0,0,V_WIDTH,V_HEIGHT)
+    DeathVFX.drawEnemy(battleArt.chest,640,328,DeathVFX.config.chest.size)
+    DeathVFX.drawParticles()
     g.pop()
 end
 
 local function drawGameOverState()
     local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.08, 0.05, 0.05, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    if DeathVFX.kind == "player" then
+        DeathVFX.drawPlayer(UI)
+    else Renderer.veil() end
 
     local mx, my = toVirtual(love.mouse.getPosition())
+    local reveal = DeathVFX.uiProgress()
 
-    love.graphics.setFont(UI.fonts.huge)
-    love.graphics.setColor(UI.COLORS.multRed)
-    love.graphics.printf("BẠN ĐÃ BỊ ĐÁNH BẠI!", 0, 160, V_WIDTH, "center")
+    if DeathVFX.kind ~= "player" then
+        love.graphics.setFont(UI.fonts.huge)
+        love.graphics.setColor(UI.COLORS.multRed)
+        love.graphics.printf("BẠN ĐÃ BỊ ĐÁNH BẠI!", 0, 160, V_WIDTH, "center")
+    end
 
     love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(0.85, 0.82, 0.83, reveal)
     love.graphics.printf("Dừng bước tại Round " .. game.round .. " trước " .. (game.monster and game.monster.name or "Quái Vật"), 0, 240, V_WIDTH, "center")
 
     love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.setColor(0.63,0.61,0.67,reveal)
     love.graphics.printf("Máu quái còn lại: " .. (game.monster and game.monster.hp or 0) .. " HP", 0, 290, V_WIDTH, "center")
 
     buttons = {}
@@ -6640,8 +6239,12 @@ local function drawGameOverState()
         color = UI.COLORS.btnPlay,
         font = UI.fonts.medium,
     }
-    table.insert(buttons, btnRetry)
-    UI.drawButton(btnRetry, mx >= btnRetry.x and mx <= btnRetry.x + btnRetry.w and my >= btnRetry.y and my <= btnRetry.y + btnRetry.h)
+    if reveal > 0 then
+        table.insert(buttons, btnRetry)
+        UI.drawButton(btnRetry, state == "gameover" and mx >= btnRetry.x and mx <= btnRetry.x + btnRetry.w and my >= btnRetry.y and my <= btnRetry.y + btnRetry.h)
+        love.graphics.setColor(0.012,0.013,0.024,(1-reveal)*0.97)
+        love.graphics.rectangle("fill",btnRetry.x-2,btnRetry.y-2,btnRetry.w+4,btnRetry.h+4,6,6)
+    end
 end
 
 local function chooseRoundReward(index)
@@ -6675,6 +6278,8 @@ function love.draw()
     end
     UI.currentPressedBtnId = juice and juice.buttonPressedId
 
+    Renderer.beginFrame(mainCanvas)
+
     -- 1. If Canvas is enabled, render the game into mainCanvas
     if mainCanvas then
         love.graphics.setCanvas({ mainCanvas, stencil = true })
@@ -6687,29 +6292,18 @@ function love.draw()
         love.graphics.scale(scale * RENDER_SCALE, scale * RENDER_SCALE)
     end
 
-    UI.CardPhysics.beginFrame(UI.CardPhysics.isLabOpen() or (state ~= "scoring"
+    UI.CardPhysics.beginFrame(UI.CardPhysics.isLabOpen() or (state ~= "scoring" and state ~= "defeating" and state ~= "gameover"
         and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen))
 
-    -- A single restrained environment replaces the old shifting neon backdrop.
-    if battleArt.background then
-        local bw, bh = battleArt.background:getDimensions()
-        love.graphics.setColor(0.48, 0.55, 0.56, 1)
-        love.graphics.draw(battleArt.background, 0, 0, 0, V_WIDTH / bw, V_HEIGHT / bh)
-        love.graphics.setColor(0.02, 0.04, 0.05, 0.56)
-        love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-    else
-        love.graphics.setColor(UI.COLORS.bg)
-        love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-    end
+    Renderer.drawWorld(function()
+        if state == "playing" or state == "scoring" or state == "defeating" or (state == "gameover" and DeathVFX.kind == "player") then drawBattleEnemyWorld(game.monster) end
+        if state == "shop" then require("ui.shop_display").drawWorld(shopData, Renderer.scene.time) end
+    end, function()
+        if state == "scoring" then UI.ScoringFeel.drawWorld(anim, UI) end
+        if DeathVFX.enemyActive(game.monster) and (state == "playing" or state == "scoring") then DeathVFX.drawParticles() end
+    end)
 
     love.graphics.push()
-    if state == "scoring" and anim.sequence then
-        love.graphics.translate(UI.ScoringFeel.camera(anim))
-    elseif screenShake > 0 then
-        local sx = (love.math.random() * 2 - 1) * screenShake * 0.7
-        local sy = (love.math.random() * 2 - 1) * screenShake * 0.7
-        love.graphics.translate(sx, sy)
-    end
 
     if state == "menu" then
         drawMenu()
@@ -6721,6 +6315,10 @@ function love.draw()
         drawPlayingState()
     elseif state == "scoring" then
         drawScoringState()
+    elseif state == "defeating" then
+        drawPlayingState()
+        if DeathVFX.age >= DeathVFX.config.player.textAt then drawGameOverState() else DeathVFX.drawPlayer(UI) end
+        buttons = {}
     elseif state == "CASH_OUT" then
         local mx, my = toVirtual(love.mouse.getPosition())
         buttons = {}
@@ -6743,6 +6341,7 @@ function love.draw()
     elseif state == "treasure" then
         drawTreasureState()
     elseif state == "gameover" then
+        if DeathVFX.kind == "player" then drawPlayingState() end
         drawGameOverState()
     elseif state == "victory" then
         drawVictoryState()
@@ -6788,7 +6387,7 @@ function love.draw()
     end
 
     -- In-game sleek Pause / Menu button at top right
-    if state ~= "menu" and state ~= "playing" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
+    if state ~= "menu" and state ~= "playing" and state ~= "defeating" and state ~= "gameover" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
         local mx, my = toVirtual(love.mouse.getPosition())
         local btnMenu = {
             id = "open_pause_menu",
@@ -6812,7 +6411,7 @@ function love.draw()
     end
 
     -- Floating juice notifications
-    if state ~= "CASH_OUT" and juice.floatingTexts and #juice.floatingTexts > 0 then
+    if state ~= "CASH_OUT" and state ~= "defeating" and state ~= "gameover" and juice.floatingTexts and #juice.floatingTexts > 0 then
         for _, ft in ipairs(juice.floatingTexts) do
             local alpha = math.max(0, math.min(1.0, ft.life / 0.35))
             love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], (ft.color[4] or 1) * alpha)
@@ -6840,18 +6439,20 @@ function love.draw()
     if state == "shop" and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not isCollectionOpen and not isShopTransferOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
         UI.Polish.draw(UI, game, buttons, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
-    elseif not UI.AbilityUI.current and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
+    elseif state ~= "defeating" and state ~= "gameover" and not UI.AbilityUI.current and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not isCollectionOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
         UI.Polish.draw(UI, game, {}, -1000, -1000)
     end
     love.graphics.pop()
 
-    if UI.descriptionCandidate and state ~= "scoring" and UI.Polish.tooltipAllowed(UI.descriptionCandidate)
+    if UI.descriptionCandidate and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and UI.Polish.tooltipAllowed(UI.descriptionCandidate)
         and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
         UI.Description.draw(UI, UI.descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
     UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
     UI.Description.finishFrame()
+    Renderer.drawTransition()
+    Renderer.drawDebug(UI.fonts.tiny)
     -- The game layout remains expressed in 1280x720 units; undo that logical
     -- scale before presenting the 1920x1080 render target.
     if mainCanvas then love.graphics.pop() end
@@ -6863,22 +6464,8 @@ function love.draw()
         love.graphics.setColor(0.02, 0.02, 0.03, 1)
         love.graphics.rectangle("fill", 0, 0, winW, winH)
 
-        local impactStrength = math.max(0, math.min(1, (anim.screenDistortion or 0) / 0.12))
-        if settings.crtEnabled and crtShader then
-            love.graphics.setShader(crtShader)
-            if crtShader:hasUniform("u_resolution") then crtShader:send("u_resolution", { RENDER_WIDTH, RENDER_HEIGHT }) end
-            if crtShader:hasUniform("u_time") then crtShader:send("u_time", juice.ambientTimer or 0) end
-            if crtShader:hasUniform("u_curvature") then crtShader:send("u_curvature", 0.002) end
-            if crtShader:hasUniform("u_chroma") then crtShader:send("u_chroma", 0.0003) end
-            if crtShader:hasUniform("u_scanlines") then crtShader:send("u_scanlines", 0.035) end
-            if crtShader:hasUniform("u_vignette") then crtShader:send("u_vignette", 0.04) end
-            if crtShader:hasUniform("u_impact") then crtShader:send("u_impact", impactStrength) end
-        elseif impactStrength > 0 and impactShader then
-            love.graphics.setShader(impactShader)
-            if impactShader:hasUniform("u_strength") then impactShader:send("u_strength", impactStrength) end
-        else
-            love.graphics.setShader()
-        end
+        -- World-only postprocessing has already run. Output UI is never distorted.
+        love.graphics.setShader()
 
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
@@ -7093,7 +6680,7 @@ local function handleShopMousepressed(mx, my, button)
     -- Intercept clicks if Booster Pack is currently being opened
     if shopData and shopData.currentPackOpening then
         for _, btn in ipairs(buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+            if not btn.disabled and (not btn.cardIndex or UI.ChestChoices.ready(shopData.currentPackOpening.animationTimer or 0,btn.cardIndex)) and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                 if btn.id:sub(1, 12) == "choose_pack_" then
                     local opening = shopData.currentPackOpening
                     local reward = opening.cards and opening.cards[btn.cardIndex]
@@ -7436,6 +7023,20 @@ local function handleModalsMousepressed(mx, my, button)
                         return true
                     elseif btn.id == "setting_crt" then
                         settings.crtEnabled = not settings.crtEnabled
+                        Renderer.crtEnabled = settings.crtEnabled
+                        saveSettings()
+                        Sound.play("ui_click")
+                        return true
+                    elseif btn.id == "setting_quality" then
+                        local nextQuality = {LOW="MEDIUM",MEDIUM="HIGH",HIGH="LOW"}
+                        settings.graphicsQuality = nextQuality[Renderer.quality]
+                        Renderer.setQuality(settings.graphicsQuality)
+                        saveSettings()
+                        Sound.play("ui_click")
+                        return true
+                    elseif btn.id == "setting_cinematic" then
+                        settings.cinematicEnabled = not settings.cinematicEnabled
+                        Renderer.config.enabled = settings.cinematicEnabled
                         saveSettings()
                         Sound.play("ui_click")
                         return true
@@ -7774,6 +7375,7 @@ local function handleModalsMousepressed(mx, my, button)
 end
 
 function love.mousepressed(x, y, button)
+    if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
     if UI.AbilityUI.press(mx, my, button) then return end
@@ -7811,7 +7413,7 @@ function love.mousepressed(x, y, button)
         return
     end
     if not isCaptureMode and (state == "chest" or state == "treasure")
-        and (anim.chestReveal.state ~= state or anim.chestReveal.timer < 0.90) then
+        and (anim.chestReveal.state ~= state or anim.chestReveal.timer < DeathVFX.config.chest.cardsAt) then
         return
     end
 
@@ -8183,56 +7785,16 @@ function love.mousepressed(x, y, button)
             end
         end
 
-    elseif state == "chest" then
-        for _, btn in ipairs(buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-                local rew = chestRewards[btn.rewardIndex]
-                if rew then
-                    if rew.type == "card" then
-                        Deck.addCardToDeck(game, rew.card)
-                        Sound.play("card_deal")
-                        if socketingReturnState == "next_act" then
-                            if game.currentNodeId and game.map then
-                                Map.onNodeCompleted(game.map, game.currentNodeId)
-                            end
-                            game.act = game.act + 1
-                            game.map = Map.generate(game.act)
-                            game.currentNodeId = nil
-                            state = "map"
-                        else
-                            state = "map"
-                        end
-                    elseif rew.type == "equipment" then
-                        pendingEquipment = rew.item
-                        state = "socketing"
-                    end
-                    return
-                end
+    elseif state == "chest" or state == "treasure" then
+        local isBossChest=state=="chest"
+        local rewards=isBossChest and chestRewards or treasureRewards
+        for _,btn in ipairs(buttons) do
+            if btn.rewardIndex and not btn.disabled and UI.ChestChoices.ready(anim.chestReveal.timer,btn.rewardIndex)
+                and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local rew=rewards[btn.rewardIndex]
+                if rew then UI.ChestChoices.claim(rew,btn.keep,isBossChest);return end
             end
         end
-
-    elseif state == "treasure" then
-        for _, btn in ipairs(buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-                local rew = treasureRewards[btn.rewardIndex]
-                if rew then
-                    if rew.type == "card" then
-                        Deck.addCardToDeck(game, rew.card)
-                        Sound.play("card_deal")
-                        if game.currentNodeId and game.map then
-                            Map.onNodeCompleted(game.map, game.currentNodeId)
-                        end
-                        state = "map"
-                    elseif rew.type == "equipment" then
-                        pendingEquipment = rew.item
-                        socketingReturnState = "map"
-                        state = "socketing"
-                    end
-                    return
-                end
-            end
-        end
-
     elseif state == "rest" then
         for _, btn in ipairs(buttons) do
             if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -8290,6 +7852,7 @@ function love.mousepressed(x, y, button)
                     Sound.play("card_deal", 1.05)
                     return
                 elseif btn.id == "skip_socket" then
+                    anim.pendingStoredEquipment=nil
                     if game.pendingRewardEquipment then
                         game.pendingRewardEquipment = nil
                         table.remove(game.rewardPacks, 1)
@@ -8307,6 +7870,8 @@ function love.mousepressed(x, y, button)
                         state = "map"
                     elseif socketingReturnState == "shop" then
                         state = "shop"
+                    elseif socketingReturnState == "playing" then
+                        state = "playing"
                     elseif socketingReturnState == "map" then
                         if game.currentNodeId and game.map then
                             Map.onNodeCompleted(game.map, game.currentNodeId)
@@ -8347,6 +7912,13 @@ function love.mousepressed(x, y, button)
                         end
                     end
                     Sound.play("equip")
+                    if anim.pendingStoredEquipment then
+                        for i,c in ipairs(game.consumables or {}) do
+                            if c==anim.pendingStoredEquipment then table.remove(game.consumables,i);break end
+                        end
+                        anim.pendingStoredEquipment=nil
+                        UI.Abilities.consumableUsed(game)
+                    end
                     if game.pendingRewardEquipment then
                         game.pendingRewardEquipment = nil
                         table.remove(game.rewardPacks, 1)
@@ -8364,6 +7936,8 @@ function love.mousepressed(x, y, button)
                         state = "map"
                     elseif socketingReturnState == "shop" then
                         state = "shop"
+                    elseif socketingReturnState == "playing" then
+                        state = "playing"
                     elseif socketingReturnState == "map" then
                         if game.currentNodeId and game.map then
                             Map.onNodeCompleted(game.map, game.currentNodeId)
@@ -8442,6 +8016,8 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
+    if Renderer.keypressed(key) then return end
     if state == "shop" and UI.Polish.busy() then return end
     if key == "escape" and UI.Polish.focus then UI.Polish.clearFocus();UI.Description.reset();return end
     if (key == "tab" or key == "b" or key == "h") and UI.Polish.focus then UI.Polish.clearFocus() end
@@ -8622,6 +8198,7 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if isCollectionOpen and collectionCategory then
         collectionScrollY = (collectionScrollY or 0) - y * 45
         local items = Collection.getItems(collectionCategory)
@@ -8635,6 +8212,7 @@ function love.wheelmoved(x, y)
 end
 
 function love.mousemoved(x, y, dx, dy)
+    if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
 
     -- Button hover sound tracking
@@ -8708,6 +8286,7 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousereleased(x, y, button)
+    if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
     if button == 1 then UI.CardPhysics.release() end
     juice.buttonPressedId = nil

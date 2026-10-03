@@ -60,6 +60,23 @@ local function buyFocused(x, y)
 end
 
 function Capture.update(gameRef, callbacks)
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-evolution-ui" then return require("tests.evolution_ui_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-shop-chest" then return require("tests.shop_chest_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-chest-vfx" then return require("tests.chest_vfx_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-death-vfx" then return require("tests.death_vfx_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-hand-vfx-combat" then return require("tests.hand_vfx_combat_capture").update(gameRef, callbacks) end
+        if value == "--test-hand-vfx" then return require("tests.hand_vfx_capture").update() end
+        if value == "--test-hd2d" then return require("tests.hd2d_capture").update(gameRef, callbacks) end
+    end
     if backCropOnly then return require("tests.card_back_crop").update() end
     frame = frame + 1
     shopCaptureGame = gameRef

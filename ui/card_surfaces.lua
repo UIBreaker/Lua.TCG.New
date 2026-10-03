@@ -93,6 +93,35 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
     love.graphics.pop()
 end
 
+-- Full-bleed reward face. Actions and names are laid out below the card.
+function Surfaces.fullReward(item,x,y,w,h,packType,hovered)
+    local g=love.graphics;g.push("all")
+    g.setColor(0,0,0,0.45);g.rectangle("fill",x+4,y+7,w,h,8,8)
+    local art=(packType=="arcana" and UI.getEquipmentImage(item.id))
+        or (packType=="standard" and UI.getCardImage(item.suit,item.rank or item.rankName))
+        or (packType=="buffoon" and UI.getDeityImage(item.id))
+        or ((packType=="celestial" or packType=="hand_styles") and UI.getHandImage(item.handId or item.id))
+    local backdrop=not art and UI.getPackImage(packType)
+    art=art or backdrop
+    if art then
+        g.setColor(1,1,1,1);g.draw(art,x,y,0,w/art:getWidth(),h/art:getHeight())
+        if backdrop then
+            local col=item.color or UI.COLORS.goldYellow
+            g.setColor(col[1],col[2],col[3],0.28);g.rectangle("fill",x,y,w,h)
+            g.setColor(0.025,0.035,0.06,0.75);g.circle("fill",x+w/2,y+h/2,w*0.30)
+            UI.drawItemEmblem(item,x+w/2,y+h/2,w*0.24,col)
+        end
+    else
+        g.setColor(0.12,0.14,0.20,1);g.rectangle("fill",x,y,w,h,8,8)
+        UI.drawItemEmblem(item,x+w/2,y+h/2,w*0.25,item.color or UI.COLORS.goldYellow)
+    end
+    if hovered then
+        UI.descriptionCandidate=item;g.setColor(0.92,0.78,0.49,0.9);g.setLineWidth(2)
+        g.rectangle("line",x-2,y-2,w+4,h+4,8,8)
+    end
+    g.pop()
+end
+
 -- Pack reward body: choice/keep buttons remain in the existing gameplay handler.
 function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHovered)
     if card.faceDown then return UI.drawCardBack(cx, drawCY, cW, cH, card.alpha) end
@@ -126,11 +155,27 @@ function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHove
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf(card.name or ((card.rankName or "") .. (card.suitSymbol or "")), cx + 6, drawCY + 138, cW - 12, "center")
+    require("ui.components.core").textLine(card.name or ((card.rankName or "") .. (card.suitSymbol or "")),
+        cx + 6, drawCY + 138, cW - 12, UI.fonts.small, UI.COLORS.textLight, "center", UI.fonts.tiny)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textLight)
-    local desc = UI.truncateUtf8(select(2,UI.Description.resolve(card,UI.descriptionGame)),112)
-    love.graphics.printf(desc, cx + 8, drawCY + 163, cW - 16, "center")
+    -- Reserve the action region. Full ability/evolution details remain in hover.
+    local font = UI.fonts.tiny
+    local _, lines = font:getWrap(select(2,UI.Description.resolve(card,UI.descriptionGame)), cW - 16)
+    local count = math.max(1, math.min(3, math.floor((cH - 163 - 58) / font:getHeight())))
+    local shown = {}
+    for i = 1, math.min(count, #lines) do shown[i] = lines[i] end
+    if #lines > count then
+        local last = shown[count]
+        while #last > 0 and font:getWidth(last .. "…") > cW - 16 do
+            local utf8 = require("utf8")
+            last = last:sub(1, (utf8.offset(last, -1) or 1) - 1)
+        end
+        shown[count] = last .. "…"
+    end
+    love.graphics.printf(table.concat(shown, "\n"), cx + 8, drawCY + 163, cW - 16, "center")
+    love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("Rê chuột: chi tiết", cx + 8, drawCY + cH - 57, cW - 16, "center")
 
 
 end

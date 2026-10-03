@@ -380,8 +380,12 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     g.scale(cardScaleX, cardScaleY)
     g.translate(-w / 2, -h / 2)
     UI.CardPhysics.capture(card, 0, 0, w, h)
-    g.setColor(0, 0, 0, isFloating and 0.56 or (selected and 0.44 or 0.30))
-    UI.drawRoundedRect("fill", 4, isFloating and 15 or (selected and 11 or 6), w, h, 5)
+    -- Height changes softness, offset and opacity; the artwork/material stays sharp.
+    local height = isFloating and 15 or selected and 11 or hovered and 9 or 4
+    for band = 3, 1, -1 do
+        g.setColor(0.005, 0.009, 0.017, (0.32 - height * 0.006) / 3)
+        UI.drawRoundedRect("fill", 3 - band, height - band, w + band * 2, h + band * 2, 5 + band)
+    end
     if card.faceDown then
         UI.drawCardBack(0, 0, w, h, card.alpha)
         g.pop()

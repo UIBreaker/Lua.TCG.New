@@ -3,6 +3,8 @@ local Shop = require("src.shop")
 local UI = require("src.ui")
 local Deck = require("src.deck")
 local Test = {}
+local P=require("src.persistence");P.deleteRun=function() return true end;P.saveRun=function() return true end;P.saveSettings=function() return true end
+function love.errorhandler(message) print(debug.traceback(message,2));return function() return 1 end end
 local stage, packIndex, settleUntil = "start", 0, 0
 local paidGold, initialDeckCount
 
@@ -43,7 +45,8 @@ function Test.update(game, callbacks, click)
         shop.currentPackOpening.animationTimer = 2
         stage = "skip"
     elseif stage == "skip" then
-        click(640, 509, true)
+        local skip;for _,btn in ipairs(callbacks.getButtons()) do if btn.id=="skip_pack" then skip=btn end end
+        assert(skip,"shop skip action");click(skip.x+skip.w/2,skip.y+skip.h/2,true)
         assert(callbacks.getShopData().currentPackOpening == nil, "Skip button must close the purchased pack")
         assert(game.gold == paidGold, "Skipping must not charge again or refund the pack")
         settleUntil = love.timer.getTime() + 0.9

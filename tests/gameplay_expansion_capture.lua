@@ -6,6 +6,7 @@ local Boss=UI.BossAbilities
 local Run=require("src.run_manager")
 local Layout=require("ui.layout")
 local Test={}
+local Persistence=require("src.persistence");Persistence.deleteRun=function() return true end;Persistence.saveRun=function() return true end;Persistence.saveSettings=function() return true end
 local stage="start";local deadline=0;local started=0;local target;local cards
 local function click(x,y,button)
     local w,h=love.graphics.getDimensions();local s=math.min(w/1280,h/720)
@@ -41,7 +42,7 @@ function Test.update(game,callbacks)
     elseif stage=="select_evolution" then
         local m=UI.AbilityUI.current
         assert(#m.cards==53,"all owned standard instances eligible")
-        click(245,220)
+        local button=assert(m.buttons[3]);click(button.x+button.w/2,button.y+button.h/2)
         assert(m.selected==target)
         nextStage("preview")
     elseif stage=="preview" then

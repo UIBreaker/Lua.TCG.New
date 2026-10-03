@@ -1,0 +1,15 @@
+AL lib: (EE) alc_cleanup: 1 device not closed
+=== RUNNING POKER & SCORING TESTS ===
+ Test 1 Passed: High Card
+ Test 2 Passed: Pair
+ Test 3 Passed: Two Pair
+ Test 4 Passed: Three of a Kind
+ Test 5 Passed: Straight (Ace High)
+ Test 6 Passed: Straight (Ace Low)
+ Test 7 Passed: Flush
+ Test 8 Passed: Full House
+ Test 9 Passed: Four of a Kind
+ Test 10 Passed: Straight Flush
+Scoring calculation result: 104 Chips x 12 Mult x 1 XMult = 1248
+ Test 11 Passed: Scoring Formula & Deities Integration
+=== ALL 11 TESTS PASSED SUCCESSFULLY! ===

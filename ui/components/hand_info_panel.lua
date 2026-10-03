@@ -8,6 +8,7 @@ local PANEL_IMAGE = "assets/ui/hand_info_panel_v2.png"
 local ICON_IMAGE = "assets/ui/hand_info_icons_v2.png"
 local ICON_INDEX = {damage = 1, power = 2, aura = 3, health = 4, intent = 5, trait = 6}
 local loaded, panelImage, iconImage, iconQuads, iconCellW, iconCellH = false, nil, nil, {}, 0, 0
+local auraBackground
 
 local function loadImages()
     if loaded then return end
@@ -17,6 +18,8 @@ local function loadImages()
     if ok and image then
         panelImage = image
         image:setFilter("linear", "linear")
+        local w,h=image:getDimensions()
+        auraBackground=love.graphics.newQuad(w*9/222,h*0.66,w*204/222,h*77/615,w,h)
     end
 
     ok, image = pcall(love.graphics.newImage, ICON_IMAGE)
@@ -109,6 +112,10 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         g.push("all")
         g.setColor(1, 1, 1, 1)
         g.draw(panelImage, x, y, 0, w / iw, h / ih)
+        if not data.scoring then
+            -- Use the panel's own empty texture to remove the baked aura frame.
+            g.draw(panelImage,auraBackground,x+9,y+174,0,w/iw,h/ih)
+        end
         g.pop()
     else
         Panel.draw(x, y, w, h)
@@ -142,7 +149,8 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         .. ((data.xMult or 1) > 1 and (" × " .. string.format("%.2f", data.xMult)) or ""),
         x + 12, y + 151, w - 24, drawFonts.label, Theme.colors.muted, "center")
 
-    local auraLabel = data.scoring and "AURA ĐANG CỘNG" or "AURA DỰ KIẾN"
+    if data.scoring then
+    local auraLabel = "AURA ĐANG CỘNG"
     Core.text(auraLabel, x + 20, y + 181, w - 40, drawFonts.label, Theme.colors.gold, "center")
     drawIcon("aura", x + 27, y + 207, 24)
     local auraText = tostring(fmt(data.aura or 0))
@@ -154,6 +162,8 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     love.graphics.translate(-auraCenterX, -(y + 216))
     Core.text(auraText, x + 56, y + 202, w - 80, auraFont, Theme.colors.gold, "center")
     love.graphics.pop()
+
+    end
 
     drawIcon("trait", x + 14, y + 267, 19)
     Core.text("QUÁI VẬT", x + 39, y + 268, w - 53, drawFonts.title, Theme.colors.gold)

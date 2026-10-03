@@ -188,7 +188,11 @@ function Persistence.makeSnapshot(game, activeState)
     return {
         version = Persistence.SAVE_VERSION,
         rngState = Rng.getState(),
-        activeState = activeState == "victory" and "victory" or "BLIND_SELECT",
+        activeState = activeState == "victory" and "victory"
+            or (activeState == "CASH_OUT" and game.pendingVictoryReward and "CASH_OUT")
+            or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
+            or (activeState == "shop" and #(game.rewardPacks or {}) > 0 and "shop")
+            or "BLIND_SELECT",
         game = savedGame,
     }
 end
@@ -204,6 +208,11 @@ function Persistence.restoreSnapshot(snapshot)
     game.persistentDeck = {}
     for _, savedCard in ipairs(snapshot.game.persistentDeck or {}) do
         table.insert(game.persistentDeck, restoreCard(savedCard))
+    end
+    for _, opening in ipairs(game.rewardPacks or {}) do
+        if opening.pack and opening.pack.packType == "standard" then
+            for i, card in ipairs(opening.cards or {}) do opening.cards[i] = restoreCard(card) end
+        end
     end
     game.masterDeck = game.persistentDeck
     game.deities = {}

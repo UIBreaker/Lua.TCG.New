@@ -1,0 +1,27 @@
+return {
+    hoverDelay = 0.20,
+    hoverResponse = 18,
+    hoverScale = 1.03,
+    focusScale = 1.08,
+    focusLift = 10,
+    dim = 0.24,
+    buy = 0.55,
+    buyFlightStart = 0.45, -- Fractions of the configured buy duration.
+    buyFlightEnd = 0.91,
+    coinStart = 0.18,
+    coinTravel = 0.45,
+    sell = 0.45,
+    dissolve = 0.35,
+    application = 0.45,
+    popup = 0.85,
+    reroll = 0.78,
+    stagger = 0.035,
+    flip = 0.09,
+    flipGroup = 5, -- Parallel row-sized groups keep a full shop under 0.8s.
+    arrival = 0.22,
+    fastFactor = 2,
+    shards = 8,
+    gold = { x = 325, y = 35 },
+    viewerGold = { x = 970, y = 72 },
+    deck = { x = 1065, y = 565 },
+}

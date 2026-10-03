@@ -94,278 +94,532 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
     }
 end
 
--- Initialize animated state for Cash Out screen
-function RewardSystem.newAnimation(breakdown)
-    local lines = {}
+local Rng = require("src.rng")
+local Deck = require("src.deck")
+local Shop = require("src.shop")
+local Run = require("src.run_manager")
+local Config = require("config.reward_loot")
+RewardSystem.config = Config
 
-    -- 1. Nguồn 1: Thưởng Cơ Bản (Blind Reward)
-    if breakdown.wasSkipped then
-        table.insert(lines, {
-            label = "1. THƯỞNG CƠ BẢN (SKIP BLIND)",
-            desc = breakdown.tag and ("Bỏ qua nhận Thẻ Bùa Ấn: " .. breakdown.tag.name) or "Đã bỏ qua ải",
-            valText = "$0",
-            valNum = 0,
-            icon = "⏭️",
-            color = { 0.7, 0.75, 0.85, 1 },
-        })
-    else
-        local bTitle = breakdown.blind and breakdown.blind.title or "ẢI CHIẾN THẮNG"
-        table.insert(lines, {
-            label = "1. THƯỞNG CƠ BẢN (" .. bTitle .. ")",
-            desc = "Hoàn thành mục tiêu Aura của Blind",
-            valText = "+$" .. breakdown.basePayout,
-            valNum = breakdown.basePayout,
-            icon = "🏆",
-            color = UI.COLORS.goldYellow,
-        })
-    end
-
-    -- 2. Nguồn 2: Lượt Đánh Thừa (Remaining Hands)
-    if breakdown.unusedHandsBonus > 0 then
-        table.insert(lines, {
-            label = "2. LƯỢT ĐÁNH THỪA (REMAINING HANDS)",
-            desc = breakdown.handsLeft .. " lượt ra đòn chưa dùng (+$1 mỗi Hand)",
-            valText = "+$" .. breakdown.unusedHandsBonus,
-            valNum = breakdown.unusedHandsBonus,
-            icon = "✋",
-            color = UI.COLORS.btnBlue,
-        })
-    else
-        table.insert(lines, {
-            label = "2. LƯỢT ĐÁNH THỪA (REMAINING HANDS)",
-            desc = "Không còn lượt đánh thừa nào (+$1/Hand)",
-            valText = "$0",
-            valNum = 0,
-            icon = "✋",
-            color = UI.COLORS.textMuted,
-        })
-    end
-
-    -- 3. Nguồn 3: Tiền Lãi (Interest)
-    local maxCap = breakdown.maxInterest or 5
-    if breakdown.interestBonus > 0 then
-        local capStr = (maxCap > 5) and (" (Trần Lãi: +$" .. maxCap .. " từ Seed Money)") or (" (Trần Lãi: +$5 khi có $25)")
-        local intDesc = breakdown.isGilded and ("+$1 mỗi $4 sở hữu (Không giới hạn trần! Có $" .. breakdown.currentGold .. ")") or ("+$1 cho mỗi $5 đang sở hữu (Có $" .. breakdown.currentGold .. ")" .. capStr)
-        table.insert(lines, {
-            label = "3. TIỀN LÃI TIẾT KIỆM (INTEREST)",
-            desc = intDesc,
-            valText = "+$" .. breakdown.interestBonus,
-            valNum = breakdown.interestBonus,
-            icon = "🏦",
-            color = { 0.35, 0.95, 0.55, 1 },
-        })
-    else
-        local capStr = (maxCap > 5) and " (Trần: +$10)" or " (Trần: +$5)"
-        table.insert(lines, {
-            label = "3. TIỀN LÃI TIẾT KIỆM (INTEREST)",
-            desc = breakdown.isGilded and "Cần tối thiểu $4 trong túi để sinh lãi" or ("+$1 mỗi $5 sở hữu (Cần tối thiểu $5 trong túi)" .. capStr),
-            valText = "$0",
-            valNum = 0,
-            icon = "🏦",
-            color = UI.COLORS.textMuted,
-        })
-    end
-
-    -- 4. Nguồn 4: Hiệu Ứng Bổ Trợ (Vouchers & Jokers)
-    if #breakdown.deityDetails > 0 then
-        for _, dd in ipairs(breakdown.deityDetails) do
-            table.insert(lines, {
-                label = "4. HIỆU ỨNG BỔ TRỢ (" .. dd.name:upper() .. ")",
-                desc = dd.message,
-                valText = "+$" .. dd.amount,
-                valNum = dd.amount,
-                icon = "👑",
-                color = { 0.95, 0.45, 0.85, 1 },
-            })
-        end
-    end
-
-    -- 5. Đặc quyền Valoria (nếu có)
-    if breakdown.isValoria and breakdown.factionBonus > 0 then
-        table.insert(lines, {
-            label = "ĐẶC QUYỀN PHE VALORIA (+25%)",
-            desc = "Quân lương viện trợ Nhân Loại",
-            valText = "+$" .. breakdown.factionBonus,
-            valNum = breakdown.factionBonus,
-            icon = "⚔️",
-            color = { 0.98, 0.85, 0.25, 1 },
-        })
-    end
-
-    return {
-        breakdown = breakdown,
-        lines = lines,
-        timer = 0,
-        revealedCount = 0,
-        totalRevealed = false,
-        displayTotal = 0,
-        lineInterval = 0.35,
-        finished = false,
-        buttonActive = false,
-        soundPlayed = {},
-    }
+local function copy(t)
+    local out = {}
+    for k, v in pairs(t or {}) do out[k] = v end
+    return out
 end
 
--- Update cash out animation
-function RewardSystem.update(anim, dt)
-    if not anim or anim.finished then return end
-
-    anim.timer = anim.timer + dt
-
-    -- Unroll lines one by one
-    local targetLines = math.min(#anim.lines, math.floor(anim.timer / anim.lineInterval))
-    if targetLines > anim.revealedCount then
-        anim.revealedCount = targetLines
-        Sound.play("coin")
+-- One selection per roll, including arbitrary non-normalized weights.
+function RewardSystem.weighted(entries, random, modifier)
+    local total, weights = 0, {}
+    for i, entry in ipairs(entries) do
+        local weight = math.max(0, modifier and modifier(entry) or entry.weight or 0)
+        weights[i], total = weight, total + weight
     end
+    if total <= 0 then return "gold_bonus" end
+    local value = (random or Rng.random)() * total
+    for i, entry in ipairs(entries) do
+        value = value - weights[i]
+        if value < 0 then return entry.id end
+    end
+    return entries[#entries].id
+end
 
-    -- Once all lines unrolled, count up total
-    if anim.revealedCount >= #anim.lines then
-        local totalDelay = #anim.lines * anim.lineInterval + 0.2
-        if anim.timer >= totalDelay then
-            if not anim.totalRevealed then
-                anim.totalRevealed = true
-                Sound.play("shop_buy")
+local function fallback(reward, reason)
+    reward.type, reward.packType, reward.card, reward.opening = "GOLD", nil, nil, nil
+    reward.amount, reward.name, reward.rarity = Config.fallbackGold, "VÀNG BÙ", "common"
+    reward.metadata = {reason = reason}
+    return reward
+end
+
+local rollTable
+local function createReward(id, game, source, depth)
+    local reward = copy(Config.definitions[id] or Config.definitions.gold_bonus)
+    reward.id, reward.source, reward.amount = id, source, 1
+    if reward.type == "GOLD" then
+        reward.amount = Rng.random(Config.goldBonus[1], Config.goldBonus[2])
+    elseif reward.type == "PLAYING_CARD" then
+        reward.card = Deck.newCard(Rng.random(2, 14), Deck.SUIT_ORDER[Rng.random(#Deck.SUIT_ORDER)])
+        reward.name = reward.card.rankName .. reward.card.suitSymbol
+    elseif reward.packType then
+        if reward.packType == "buffoon" and Deities.getCount(game.deities or {}) >= Deities.getMaxSlots(game) then
+            return fallback(reward, "Không còn ô SPN trống")
+        end
+        local pack
+        for _, item in ipairs(Shop.PACK_CATALOG) do
+            if item.packType == reward.packType then pack = copy(item); break end
+        end
+        if not pack then return fallback(reward, "Gói không còn hợp lệ") end
+        pack.cost, pack.category, pack.rewardPack = 0, "pack", true
+        reward.opening = Shop.openPack(pack, game)
+        if #reward.opening.cards == 0 then return fallback(reward, "Không còn nội dung gói hợp lệ") end
+    elseif reward.type == "CONSUMABLE" then
+        local options = reward.consumable == "evolution" and {Run.createEvolutionCard()} or {Run.createSpeedSingleCard(), Run.createSpeedTeamCard()}
+        reward.card = options[Rng.random(#options)]
+        reward.name = reward.card.name
+        if #(game.consumables or {}) >= 3 then return fallback(reward, "Ô tiêu hao đã đầy") end
+    elseif reward.type == "CHEST" then
+        if depth >= 2 then return fallback(reward, "Giới hạn rương lồng nhau") end
+        reward.children = rollTable(reward.tableId, game, "RƯƠNG", depth + 1)
+    end
+    return reward
+end
+
+rollTable = function(tableId, game, source, depth, modifier)
+    local tableData = Config.tables[tableId] or Config.tables.normal_enemy
+    local rewards = {}
+    for _ = 1, Rng.random(tableData.rolls[1], tableData.rolls[2]) do
+        local id = RewardSystem.weighted(tableData.entries, nil, modifier)
+        rewards[#rewards + 1] = createReward(id, game, source, depth or 0)
+    end
+    return rewards
+end
+
+local function visit(rewards, fn)
+    for _, reward in ipairs(rewards or {}) do
+        if reward.children then visit(reward.children, fn) else fn(reward) end
+    end
+end
+
+-- The transaction is committed before presentation; animation never grants loot.
+function RewardSystem.begin(breakdown, game, context)
+    if game.pendingVictoryReward then return game.pendingVictoryReward end
+    context = context or {}
+    local boss = breakdown.blind and breakdown.blind.type == "boss"
+    local bossData = game.monster and game.monster.bossData or {}
+    local key = bossData.id or (breakdown.blind and breakdown.blind.debuff and breakdown.blind.debuff.id)
+    local tableId = context.lootTableId or (breakdown.blind and breakdown.blind.lootTableId)
+        or bossData.lootTableId or (boss and Config.bossOverrides[key]) or (boss and "boss" or "normal_enemy")
+    local modifier = context.weightModifier or function(entry)
+        local def = Config.definitions[entry.id]
+        local pity = Config.pity
+        return entry.weight + (pity.enabled and def and def.packType and (game.rewardPackDrought or 0) >= pity.after and pity.extraPackWeight or 0)
+    end
+    local result = {breakdown = breakdown, tableId = tableId, loot = {}, bonusGold = 0, claimed = false}
+    if not breakdown.wasSkipped then result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier) end
+    local hadPack = false
+    game.rewardPacks = game.rewardPacks or {}
+    game.consumables = game.consumables or {}
+    visit(result.loot, function(reward)
+        if reward.type == "CONSUMABLE" and #game.consumables >= 3 then fallback(reward, "Ô tiêu hao đã đầy") end
+        if reward.type == "GOLD" then
+            result.bonusGold = result.bonusGold + reward.amount
+        elseif reward.type == "PLAYING_CARD" then
+            Deck.addCardToDeck(game, reward.card)
+        elseif reward.type == "CONSUMABLE" then
+            table.insert(game.consumables, reward.card)
+        elseif reward.opening then
+            table.insert(game.rewardPacks, reward.opening)
+            hadPack = true
+        end
+        reward.claimed = true
+    end)
+    result.earnedGold = breakdown.totalGold + result.bonusGold
+    game.gold = (game.gold or 0) + result.earnedGold
+    result.claimed = true
+    game.pendingVictoryReward = result
+    if not breakdown.wasSkipped then game.rewardPackDrought = hadPack and 0 or (game.rewardPackDrought or 0) + 1 end
+    return result
+end
+
+-- Saved candidates retain identity/rarity; restore SPN callbacks from the catalog.
+function RewardSystem.openNextPack(game, shop)
+    if shop.currentPackOpening then return false end
+    local opening = game.rewardPacks and game.rewardPacks[1]
+    if not opening then return false end
+    if opening.pack.packType == "buffoon" and Deities.getCount(game.deities or {}) >= Deities.getMaxSlots(game) then
+        game.gold = (game.gold or 0) + Config.fallbackGold
+        table.remove(game.rewardPacks, 1)
+        Sound.play("reward_gold_total")
+        return true, "SPN đã đầy: +$" .. Config.fallbackGold .. " vàng bù"
+    end
+    if opening.pack.packType == "buffoon" then
+        for _, card in ipairs(opening.cards) do
+            for k, v in pairs(Deities.CATALOG[card.id] or {}) do
+                if type(v) == "function" then card[k] = v end
             end
-            -- Count up total
-            if anim.displayTotal < anim.breakdown.totalGold then
-                anim.displayTotal = math.min(anim.breakdown.totalGold, anim.displayTotal + math.max(1, math.floor(anim.breakdown.totalGold * dt * 4)))
+        end
+    end
+    opening.animationTimer = 0
+    shop.currentPackOpening = opening
+    Sound.play("pack_open")
+    return true
+end
+
+function RewardSystem.completePack(game, shop, opening)
+    if opening and opening.pack.rewardPack and not shop.currentPackOpening and game.rewardPacks and game.rewardPacks[1] == opening then
+        table.remove(game.rewardPacks, 1)
+        return true
+    end
+    return false
+end
+
+local function setState(anim, state)
+    anim.state, anim.phaseTime = state, 0
+end
+
+function RewardSystem.newAnimation(breakdown, result)
+    result = result or {loot = {}, bonusGold = 0, earnedGold = breakdown.totalGold}
+    local lines = {
+        {label = breakdown.wasSkipped and "ĐÃ BỎ QUA ẢI" or "THƯỞNG TRẬN", valNum = breakdown.basePayout},
+        {label = "LƯỢT ĐÁNH CÒN DƯ", valNum = breakdown.unusedHandsBonus},
+        {label = "TIỀN LÃI", valNum = breakdown.interestBonus, interest = true},
+    }
+    if breakdown.deityBonus > 0 then lines[#lines + 1] = {label = "THƯỞNG HỘ LINH", valNum = breakdown.deityBonus} end
+    if breakdown.factionBonus > 0 then lines[#lines + 1] = {label = "VIỆN TRỢ VALORIA", valNum = breakdown.factionBonus} end
+    local slots = {}
+    for _, reward in ipairs(result.loot) do
+        slots[#slots + 1] = {reward = reward, chest = reward.type == "CHEST"}
+        for _, child in ipairs(reward.children or {}) do slots[#slots + 1] = {reward = child, parent = reward} end
+    end
+    return {breakdown = breakdown, result = result, lines = lines, slots = slots, coins = {},
+        state = "ENTER", timer = 0, phaseTime = 0, revealedCount = 0, revealedLoot = 0,
+        displayTotal = 0, walletTotal = breakdown.currentGold, totalRevealed = false,
+        pulse = 0, finished = false, buttonActive = false, visualSeed = 17, coinsSpawned = 0}
+end
+
+-- Local presentation RNG: effects cannot advance the saved gameplay generator.
+local function visualRandom(anim)
+    anim.visualSeed = (anim.visualSeed * 48271) % 2147483647
+    return anim.visualSeed / 2147483647
+end
+
+local function spawnCoins(anim, amount, row, interest)
+    if amount <= 0 then return end
+    local budget = math.max(1, math.floor(Config.maxCoins / (#anim.lines + #anim.slots + 1)))
+    local count = math.min(amount, budget, math.max(0, Config.maxCoins - anim.coinsSpawned))
+    if count == 0 then
+        if #anim.coins > 0 then anim.coins[#anim.coins].amount = anim.coins[#anim.coins].amount + amount
+        else
+            anim.displayTotal = anim.displayTotal + amount
+            anim.walletTotal = anim.breakdown.currentGold + anim.displayTotal
+            anim.pulse = 0.07
+        end
+        return
+    end
+    for i = 1, count do
+        local r = visualRandom(anim)
+        local batch = math.floor(amount / count) + (i <= amount % count and 1 or 0)
+        local startY = -72 + (row - 1) * 30
+        anim.coins[#anim.coins + 1] = {type = "reward_coin", x = -250 + r * 65,
+            y = startY, floorY = startY + 40, vx = 80 + r * 180, vy = -150 - r * 100,
+            rotation = r * 6.28, angularVelocity = 4 + r * 9, age = -i * 0.018,
+            amount = batch, interest = interest, phase = "SPAWN"}
+        anim.coinsSpawned = anim.coinsSpawned + 1
+    end
+    Sound.play("reward_coin_spawn", 0.96 + visualRandom(anim) * 0.08)
+end
+
+local function updateCoins(anim, dt)
+    for i = #anim.coins, 1, -1 do
+        local coin = anim.coins[i]
+        coin.age = coin.age + dt
+        if coin.age >= 0 then
+            coin.rotation = coin.rotation + coin.angularVelocity * dt
+            if coin.phase == "SPAWN" then
+                coin.vy = coin.vy + 1500 * dt
+                coin.x, coin.y = coin.x + coin.vx * dt, coin.y + coin.vy * dt
+                if coin.y >= coin.floorY and coin.vy > 0 then
+                    coin.y, coin.vy, coin.phase = coin.floorY, -coin.vy * 0.27, "BOUNCE"
+                    coin.bouncedAt = coin.age
+                    Sound.play("reward_coin_land", 0.94 + visualRandom(anim) * 0.1)
+                end
+            elseif coin.phase == "BOUNCE" then
+                coin.vy = coin.vy + 1200 * dt
+                coin.x, coin.y = coin.x + coin.vx * dt, coin.y + coin.vy * dt
+                if coin.age - coin.bouncedAt >= 0.1 then coin.phase = "MAGNETIZE" end
             else
-                anim.buttonActive = true
-                anim.finished = true
+                local blend = math.min(1, dt * 15)
+                coin.x, coin.y = coin.x * (1 - blend), coin.y * (1 - blend)
+                if math.abs(coin.x) + math.abs(coin.y) < 5 then
+                    anim.displayTotal = anim.displayTotal + coin.amount
+                    anim.walletTotal = anim.breakdown.currentGold + anim.displayTotal
+                    anim.pulse = 0.07
+                    Sound.play("reward_coin_collect", 0.98 + (anim.displayTotal % 5) * 0.025)
+                    table.remove(anim.coins, i)
+                end
             end
         end
     end
 end
 
--- Immediately skip to finished state
-function RewardSystem.finishImmediately(anim)
-    if not anim then return end
-    anim.revealedCount = #anim.lines
-    anim.totalRevealed = true
-    anim.displayTotal = anim.breakdown.totalGold
-    anim.buttonActive = true
-    anim.finished = true
+local function revealSlot(anim, index)
+    local slot = anim.slots[index]
+    slot.revealedAt, anim.revealedLoot = anim.timer, index
+    local reward = slot.reward
+    local rarity = Config.rarities[reward.rarity] or Config.rarities.common
+    Sound.play(slot.chest and "reward_chest_open" or (rarity.strength >= 3 and "reward_rare_reveal" or "reward_loot_reveal"))
+    if reward.type == "GOLD" then spawnCoins(anim, reward.amount, #anim.lines + 1) end
 end
 
--- Render Cash Out Modal Screen
-function RewardSystem.draw(anim, V_WIDTH, V_HEIGHT, mx, my, buttonsTable)
+function RewardSystem.update(anim, dt)
     if not anim then return end
-
-    -- Dim backdrop
-    love.graphics.setColor(0, 0, 0, 0.78)
-    love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
-
-    -- Cash Out Certificate Box
-    local modalW = 680
-    local modalH = 500
-    local modalX = (V_WIDTH - modalW) / 2
-    local modalY = (V_HEIGHT - modalH) / 2 - 10
-
-    -- Background Card
-    love.graphics.setColor(0.10, 0.13, 0.17, 0.98)
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setLineWidth(3)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
-
-    -- Header Ribbon
-    local bTitle = (anim.breakdown.blind and anim.breakdown.blind.title) or "ẢI CHIẾN THẮNG"
-    local bName = (anim.breakdown.blind and anim.breakdown.blind.name) or ""
-    love.graphics.setFont(UI.fonts.title or UI.fonts.large)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("TỔNG KẾT CHIẾN LỢI PHẨM", modalX, modalY + 20, modalW, "center")
-
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    local subHeaderText = anim.breakdown.wasSkipped and ("ĐÃ BỎ QUA: " .. bTitle) or ("HẠ GỤC: " .. bTitle .. " — " .. bName)
-    love.graphics.printf(subHeaderText, modalX, modalY + 62, modalW, "center")
-
-    -- Decorative divider
-    love.graphics.setColor(0.35, 0.45, 0.55, 0.5)
-    love.graphics.line(modalX + 30, modalY + 92, modalX + modalW - 30, modalY + 92)
-
-    -- Draw Revealed Lines
-    local startY = modalY + 106
-    local rowH = 46
-
-    for i = 1, anim.revealedCount do
-        local line = anim.lines[i]
-        if line then
-            local ry = startY + (i - 1) * rowH
-
-            -- Row background alternating
-            love.graphics.setColor(0.14, 0.18, 0.23, 0.85)
-            UI.drawRoundedRect("fill", modalX + 30, ry, modalW - 60, rowH - 6, 6)
-
-            -- Icon
-            love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.print(line.icon or "💰", modalX + 44, ry + 7)
-
-            -- Label & Desc
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(line.color or UI.COLORS.textLight)
-            love.graphics.print(line.label, modalX + 85, ry + 5)
-
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.print(line.desc, modalX + 85, ry + 24)
-
-            -- Value Amount
-            love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
-            love.graphics.setColor(line.color or UI.COLORS.goldYellow)
-            love.graphics.printf(line.valText, modalX + modalW - 170, ry + 9, 130, "right")
+    -- Fixed steps keep physics and transitions stable through slow frames.
+    anim.accumulator = (anim.accumulator or 0) + dt
+    while anim.accumulator >= 1 / 120 do
+        local step = 1 / 120
+        anim.accumulator = anim.accumulator - step
+        anim.timer, anim.phaseTime = anim.timer + step, anim.phaseTime + step
+        anim.pulse = math.max(0, anim.pulse - step * 0.55)
+        updateCoins(anim, step)
+        local state = anim.state
+        if state == "ENTER" and anim.phaseTime >= 0.12 then setState(anim, "GOLD_BREAKDOWN")
+        elseif state == "GOLD_BREAKDOWN" and anim.phaseTime >= Config.rowInterval then
+            anim.revealedCount = anim.revealedCount + 1
+            local line = anim.lines[anim.revealedCount]
+            spawnCoins(anim, line.valNum, anim.revealedCount, line.interest)
+            anim.phaseTime = 0
+            if anim.revealedCount == #anim.lines then setState(anim, "COIN_RAIN") end
+        elseif state == "COIN_RAIN" and #anim.coins == 0 then
+            anim.totalRevealed, anim.pulse = true, 0.16
+            Sound.play("reward_gold_total")
+            setState(anim, "GOLD_SETTLE")
+        elseif state == "GOLD_SETTLE" and anim.phaseTime >= 0.15 then setState(anim, "LOOT_PREPARE")
+        elseif state == "LOOT_PREPARE" then
+            if anim.revealedLoot == #anim.slots then setState(anim, "SUMMARY")
+            else
+                local slot = anim.slots[anim.revealedLoot + 1]
+                local rarity = Config.rarities[slot.reward.rarity] or Config.rarities.common
+                setState(anim, rarity.strength >= 3 and "RARE_REVEAL" or "LOOT_REVEAL")
+            end
+        elseif (state == "LOOT_REVEAL" or state == "RARE_REVEAL") then
+            local slot = anim.slots[anim.revealedLoot + 1]
+            local wait = Config.lootInterval + (state == "RARE_REVEAL" and Config.rarePause or 0) + (slot.chest and 0.25 or 0)
+            if anim.phaseTime >= wait then revealSlot(anim, anim.revealedLoot + 1); setState(anim, "LOOT_PREPARE") end
+        elseif state == "SUMMARY" and #anim.coins == 0 and anim.phaseTime >= 0.24 then
+            anim.displayTotal = anim.result.earnedGold
+            anim.walletTotal = anim.breakdown.currentGold + anim.displayTotal
+            anim.finished, anim.buttonActive = true, true
         end
     end
+end
 
-    -- Bottom Total Box
-    local totalBoxY = modalY + modalH - 120
+function RewardSystem.finishImmediately(anim)
+    if not anim or anim.finished then return end
+    anim.coins = {}
+    anim.revealedCount, anim.revealedLoot = #anim.lines, #anim.slots
+    for _, slot in ipairs(anim.slots) do slot.revealedAt = anim.timer - 1 end
+    anim.totalRevealed, anim.finished, anim.buttonActive = true, true, true
+    anim.displayTotal = anim.result.earnedGold
+    anim.walletTotal, anim.pulse = anim.breakdown.currentGold + anim.displayTotal, 0.16
+    setState(anim, "SUMMARY")
+    Sound.play("reward_gold_total")
+end
 
-    -- Formula summary text
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(0.70, 0.80, 0.90, 0.85)
-    love.graphics.printf("Công thức: Tổng Tiền = Thưởng Blind + Hands Còn Lại + min(floor(Tiền/5), Trần Lãi) + Thưởng Hộ Linh", modalX, totalBoxY - 18, modalW, "center")
+local coinSprite, chestArt
+local function getCoinSprite()
+    if coinSprite then return coinSprite end
+    coinSprite = love.graphics.newCanvas(96, 96)
+    love.graphics.push("all")
+    love.graphics.setCanvas(coinSprite)
+    love.graphics.clear(0, 0, 0, 0)
+    local g = love.graphics
+    g.origin()
+    g.setScissor()
+    g.setShader()
+    g.scale(3)
+    g.setColor(0.22, 0.11, 0.025); g.circle("fill", 16, 17.5, 13)
+    g.setColor(0.69, 0.39, 0.07); g.circle("fill", 16, 16.5, 13)
+    g.setColor(1, 0.78, 0.25); g.circle("fill", 16, 15, 12.5)
+    g.setColor(1, 0.93, 0.60); g.setLineWidth(1); g.circle("line", 16, 15, 11)
+    g.setColor(0.77, 0.47, 0.10); g.circle("fill", 16, 15, 8.7)
+    g.setColor(0.96, 0.68, 0.19); g.circle("fill", 16, 14.6, 8)
+    g.setFont(UI.fonts.small); g.setColor(0.42, 0.23, 0.045); g.printf("$", 2, 6.2, 28, "center")
+    g.setColor(1, 0.96, 0.72); g.arc("line", "open", 16, 15, 11.2, -2.7, -0.8)
+    g.setCanvas()
+    g.pop()
+    return coinSprite
+end
 
-    love.graphics.setColor(0.08, 0.10, 0.13, 0.95)
-    UI.drawRoundedRect("fill", modalX + 30, totalBoxY, modalW - 60, 48, 8)
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    UI.drawRoundedRect("line", modalX + 30, totalBoxY, modalW - 60, 48, 8)
+local function inside(mx, my, x, y, w, h)
+    return mx >= x and mx <= x + w and my >= y and my <= y + h
+end
 
-    love.graphics.setFont(UI.fonts.regular)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("TỔNG TIỀN VÀNG THU ĐƯỢC:", modalX + 50, totalBoxY + 14)
-
-    love.graphics.setFont(UI.fonts.large or UI.fonts.title)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    local displayValStr = anim.totalRevealed and ("+$" .. anim.displayTotal .. " VÀNG") or "..."
-    love.graphics.printf(displayValStr, modalX + modalW - 270, totalBoxY + 8, 230, "right")
-
-    -- Continue Button
-    local btnW = 320
-    local btnH = 46
-    local btnX = (V_WIDTH - btnW) / 2
-    local btnY = modalY + modalH - 58
-
-    local btnContinue = {
-        id = "cashout_continue",
-        text = "TIẾP TỤC ĐẾN CỬA HÀNG ➔",
-        x = btnX,
-        y = btnY,
-        w = btnW,
-        h = btnH,
-        color = { 0.22, 0.72, 0.42, 1 },
-        textColor = { 1, 1, 1, 1 },
-        font = UI.fonts.regular,
-    }
-
-    if buttonsTable then
-        table.insert(buttonsTable, btnContinue)
+function RewardSystem.draw(anim, width, height, mx, my, buttons)
+    if not anim then return end
+    local g = love.graphics
+    local w, h = 1040, 660
+    local x, y = (width - w) / 2, (height - h) / 2
+    local gold = {1, 0.80, 0.39}
+    local muted = {0.57, 0.65, 0.73}
+    local sprite = getCoinSprite()
+    local function coin(cx, cy, size, rotation)
+        g.setColor(1, 1, 1)
+        g.draw(sprite, cx, cy, rotation or 0, size / 96, size / 96, 48, 48)
     end
+    local function panel(px, py, pw, ph, warm)
+        g.setColor(warm and 0.11 or 0.055, warm and 0.095 or 0.075, warm and 0.065 or 0.105, 1)
+        UI.drawRoundedRect("fill", px, py, pw, ph, 12)
+        g.setColor(warm and 0.64 or 0.22, warm and 0.47 or 0.29, warm and 0.21 or 0.37, warm and 0.6 or 0.5)
+        g.setLineWidth(1); UI.drawRoundedRect("line", px, py, pw, ph, 12)
+    end
+    g.push("all")
+    g.setColor(0.008, 0.016, 0.028, 0.94); g.rectangle("fill", 0, 0, width, height)
+    -- Soft stepped halos and a recessed frame keep the ceremony above the board.
+    for i = 5, 1, -1 do
+        g.setColor(0, 0, 0, 0.07); UI.drawRoundedRect("fill", x - i * 3, y + i * 2, w + i * 6, h + i * 4, 20)
+    end
+    g.setColor(0.04, 0.057, 0.083, 1); UI.drawRoundedRect("fill", x, y, w, h, 18)
+    g.setColor(0.62, 0.47, 0.23, 0.55); g.setLineWidth(1); UI.drawRoundedRect("line", x, y, w, h, 18)
+    g.setColor(0.97, 0.76, 0.35, 0.8); g.rectangle("fill", x + 32, y, 90, 2)
+    -- Victory seal, drawn as geometry to stay sharp at every resolution.
+    local cx, cy = x + 62, y + 61
+    g.setColor(0.98, 0.73, 0.27, 0.09); g.circle("fill", cx, cy, 30)
+    g.setColor(0.88, 0.68, 0.32, 0.55); g.circle("line", cx, cy, 29)
+    g.setColor(gold); g.polygon("fill", cx - 15, cy - 9, cx - 7, cy - 2, cx, cy - 15, cx + 7, cy - 2, cx + 15, cy - 9, cx + 12, cy + 10, cx - 12, cy + 10)
+    g.setColor(0.99, 0.88, 0.59); g.rectangle("fill", cx - 11, cy + 13, 22, 3, 1)
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("KẾT QUẢ TRẬN ĐẤU", x + 110, y + 24)
+    g.setFont(UI.fonts.title); g.setColor(gold)
+    g.print(anim.breakdown.wasSkipped and "QUÂN LƯƠNG" or "CHIẾN THẮNG", x + 108, y + 43)
+    local blind = anim.breakdown.blind or {}
+    g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
+    g.printf((blind.title or "ẢI CHIẾN THẮNG") .. "  /  " .. (blind.name or ""), x + 580, y + 38, w - 614, "right")
+    g.setFont(UI.fonts.tiny); g.setColor(muted)
+    g.printf(anim.finished and "PHẦN THƯỞNG ĐÃ ĐƯỢC CỘNG" or "ĐANG KIỂM KÊ PHẦN THƯỞNG", x + 580, y + 64, w - 614, "right")
+    g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + 99, x + w - 32, y + 99)
 
-    local isHovered = (mx >= btnX and mx <= btnX + btnW and my >= btnY and my <= btnY + btnH)
-    UI.drawButton(btnContinue, isHovered)
+    local leftX, leftW = x + 32, 536
+    local rightX, rightW = x + 586, 422
+    panel(leftX, y + 118, leftW, 205)
+    panel(rightX, y + 118, rightW, 205, true)
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("CHI TIẾT THƯỞNG", leftX + 20, y + 133)
+    g.printf("XU VÀNG", leftX + leftW - 112, y + 133, 92, "right")
+    local rowY = y + 160
+    for i, line in ipairs(anim.lines) do
+        local ry = rowY + (i - 1) * 29
+        local revealed = i <= anim.revealedCount
+        if revealed then
+            g.setColor(line.interest and 0.13 or 0.11, line.interest and 0.32 or 0.16, line.interest and 0.23 or 0.22, 0.45)
+            UI.drawRoundedRect("fill", leftX + 12, ry, leftW - 24, 26, 5)
+        end
+        g.setColor(revealed and gold or muted); g.circle("fill", leftX + 26, ry + 13, 2)
+        g.setFont(UI.fonts.small); g.setColor(line.interest and revealed and {0.48, 0.89, 0.67} or revealed and UI.COLORS.textLight or muted)
+        g.print(line.label, leftX + 40, ry + 5)
+        if revealed then coin(leftX + leftW - 87, ry + 13, 21) end
+        g.setFont(UI.fonts.regular); g.setColor(revealed and gold or muted)
+        g.printf(revealed and "+" .. line.valNum or "—", leftX + leftW - 72, ry + 3, 50, "right")
+        if revealed and inside(mx, my, leftX + 12, ry, leftW - 24, 26) then
+            UI.descriptionCandidate = {hoverKey = line, name = line.label, desc = line.interest and (anim.breakdown.isGilded and "+1 xu mỗi 4 xu, không giới hạn." or "+1 xu mỗi 5 xu. Trần lãi: " .. anim.breakdown.maxInterest .. " xu" .. (anim.breakdown.interestBonus >= anim.breakdown.maxInterest and " · Lãi tối đa." or "")) or "Nguồn thưởng được cộng vào túi vàng khi kết thúc trận.", color = gold}
+        end
+    end
+    local tx, ty = rightX + 114, y + 208
+    for i = 4, 1, -1 do
+        g.setColor(1, 0.71, 0.20, 0.012); g.circle("fill", tx, ty, 35 + i * 10)
+    end
+    coin(tx, ty, 85)
+    g.setFont(UI.fonts.tiny); g.setColor(gold); g.print("TỔNG XU NHẬN ĐƯỢC", rightX + 177, y + 139)
+    g.push(); g.translate(rightX + 174, y + 162); g.scale(1 + anim.pulse)
+    g.setFont(UI.fonts.huge); g.setColor(1, 0.87, 0.52)
+    g.print("+" .. anim.displayTotal, 0, 0); g.pop()
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("XU VÀNG", rightX + 179, y + 222)
+    g.setColor(0.71, 0.54, 0.28, 0.28); g.line(rightX + 20, y + 253, rightX + rightW - 20, y + 253)
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("SỐ DƯ TÚI VÀNG", rightX + 20, y + 269)
+    coin(rightX + 220, y + 286, 28)
+    g.setFont(UI.fonts.small); g.setColor(muted); g.printf(tostring(anim.breakdown.currentGold), rightX + 242, y + 278, 47, "right")
+    g.setColor(gold); g.print("→", rightX + 301, y + 278)
+    g.setFont(UI.fonts.medium); g.setColor(UI.COLORS.textLight); g.printf(tostring(anim.walletTotal), rightX + 322, y + 273, 78, "right")
+    if inside(mx, my, rightX, y + 118, rightW, 205) then
+        UI.descriptionCandidate = {hoverKey = anim, name = "TỔNG XU NHẬN ĐƯỢC", desc = "Thưởng bảo đảm: " .. anim.breakdown.totalGold .. " xu\nVàng thưởng từ chiến lợi phẩm: " .. anim.result.bonusGold .. " xu\nTổng cộng: " .. anim.result.earnedGold .. " xu. Tiền được cộng một lần; số dư bên dưới bao gồm tiền đang có.", color = gold}
+    end
+    for _, c in ipairs(anim.coins) do
+        if c.age >= 0 then
+            g.setColor(1, 0.80, 0.32, 0.14); g.circle("fill", tx + c.x, ty + c.y, 18)
+            coin(tx + c.x, ty + c.y, 37, c.rotation)
+        end
+    end
+    g.setFont(UI.fonts.medium); g.setColor(UI.COLORS.textLight); g.print("CHIẾN LỢI PHẨM", x + 32, y + 343)
+    g.setFont(UI.fonts.tiny); g.setColor(muted)
+    g.printf(anim.finished and "ĐÃ THU THẬP  /  " .. #anim.slots .. " VẬT PHẨM" or "ĐANG MỞ PHẦN THƯỞNG", x + w - 332, y + 350, 300, "right")
+    local n = #anim.slots
+    local slotW = math.min(188, (w - 80) / math.max(1, n) - 12)
+    local slotH, gap = 174, 12
+    local startX = x + (w - (n * (slotW + gap) - gap)) / 2
+    if n == 0 then
+        g.setColor(UI.COLORS.textMuted); g.printf(anim.breakdown.wasSkipped and "Đã nhận phần thưởng bỏ qua ải" or "Không có chiến lợi phẩm thêm", x, y + 447, w, "center")
+    end
+    for i, slot in ipairs(anim.slots) do
+        local reward = slot.reward
+        local rarity = Config.rarities[reward.rarity] or Config.rarities.common
+        local sx, sy = startX + (i - 1) * (slotW + gap), y + 378
+        local revealed = i <= anim.revealedLoot
+        local active = i == anim.revealedLoot + 1 and (anim.state == "RARE_REVEAL" or anim.state == "LOOT_REVEAL")
+        local progress = revealed and math.min(1, (anim.timer - (slot.revealedAt or 0)) / 0.24) or 0
+        panel(sx, sy, slotW, slotH)
+        g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], active and 0.18 + math.sin(anim.timer * 16) * 0.06 or 0.07)
+        UI.drawRoundedRect("fill", sx - 4, sy - 4, slotW + 8, slotH + 8, 12)
+        g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], revealed and 0.9 or active and 0.7 or 0.2)
+        g.setLineWidth(1); UI.drawRoundedRect("line", sx, sy, slotW, slotH, 12)
+        g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], revealed and 0.85 or 0.25)
+        g.rectangle("fill", sx + 14, sy, slotW - 28, 2)
+        local chestDrop = slot.chest and active and math.max(0, 1 - anim.phaseTime / 0.18) or 0
+        local chestShake = slot.chest and active and anim.phaseTime > 0.18 and math.sin(anim.phaseTime * 65) * 2 or 0
+        g.push(); g.translate(sx + slotW / 2 + chestShake, sy + 72 - chestDrop * 45 - (1 - progress) * (revealed and (slot.parent and 36 or 12) or 0))
+        g.scale(revealed and not slot.chest and math.max(0.08, math.abs(math.cos(progress * math.pi))) or 1, 1)
+        local art
+        if slot.chest and (active or revealed) then
+            if not chestArt then chestArt = g.newImage("assets/scene/treasure_chest.png") end
+            art = chestArt
+        elseif revealed and progress >= 0.5 then
+            if reward.packType then art = UI.getPackImage(reward.packType)
+            elseif reward.card and reward.type == "PLAYING_CARD" then
+                UI.drawCardFace(reward.card, -28, -42, 56, 80, false)
+            elseif reward.card then
+                g.setFont(UI.fonts.large); g.setColor(rarity.color); g.printf(reward.card.icon or "✦", -slotW / 2, -18, slotW, "center")
+            else
+                coin(0, 0, 67)
+            end
+        else
+            UI.drawCardBack(-28, -42, 56, 80)
+            g.setFont(UI.fonts.large); g.setColor(rarity.color); g.printf("?", -slotW / 2, -18, slotW, "center")
+        end
+        if art then
+            g.setColor(1, 1, 1)
+            local iw, ih = art:getDimensions()
+            local artScale = math.min(slotW * 0.68 / iw, 80 / ih)
+            g.draw(art, 0, -2, slot.chest and math.sin(anim.timer * 5) * (1 - progress) * 0.05 or 0, artScale, artScale, iw / 2, ih / 2)
+        end
+        g.pop()
+        if slot.chest and active and anim.phaseTime > 0.18 then
+            local dust = math.min(1, (anim.phaseTime - 0.18) / 0.3)
+            for j = 1, 6 do
+                g.setColor(0.85, 0.73, 0.52, (1 - dust) * 0.35)
+                g.circle("fill", sx + slotW / 2 + (j - 3.5) * dust * 18, sy + 110 - math.sin(j) * dust * 7, 2 + dust * 3)
+            end
+        end
+        if revealed then
+            if rarity.strength >= 3 and progress < 1 then
+                for j = 1, 8 do
+                    local angle = j * math.pi / 4
+                    local radius = 20 + progress * 65
+                    g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], 1 - progress)
+                    g.circle("fill", sx + slotW / 2 + math.cos(angle) * radius, sy + 65 + math.sin(angle) * radius, 2)
+                end
+            end
+            g.setFont(UI.fonts.tiny); g.setColor(rarity.color)
+            g.printf(rarity.label, sx + 4, sy + 10, slotW - 8, "center")
+            g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
+            g.printf(reward.type == "GOLD" and "+" .. reward.amount .. " XU VÀNG" or reward.name, sx + 8, sy + 117, slotW - 16, "center")
+            g.setFont(UI.fonts.tiny); g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], 0.12)
+            UI.drawRoundedRect("fill", sx + slotW / 2 - 40, sy + 147, 80, 19, 5)
+            g.setColor(rarity.color); g.printf(slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 150, slotW - 8, "center")
+            if inside(mx, my, sx, sy, slotW, slotH) then
+                if reward.type == "PLAYING_CARD" then UI.descriptionCandidate = reward.card
+                else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
+            end
+        end
+    end
+    g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + h - 88, x + w - 32, y + h - 88)
+    local btn = {id = "cashout_continue", text = anim.finished and "ĐẾN CỬA HÀNG  →" or "NHẬN NHANH PHẦN THƯỞNG", x = x + w - 362, y = y + h - 66, w = 330, h = 46,
+        color = gold, font = UI.fonts.regular, variant = "gold"}
+    if buttons then buttons[#buttons + 1] = btn end
+    local hovered = inside(mx, my, btn.x, btn.y, btn.w, btn.h)
+    g.setColor(hovered and 1 or 0.93, hovered and 0.84 or 0.73, hovered and 0.49 or 0.33)
+    UI.drawRoundedRect("fill", btn.x, btn.y, btn.w, btn.h, 8)
+    g.setColor(1, 0.91, 0.66, 0.8); UI.drawRoundedRect("line", btn.x, btn.y, btn.w, btn.h, 8)
+    g.setFont(btn.font); g.setColor(0.13, 0.10, 0.055); g.printf(btn.text, btn.x, btn.y + 13, btn.w, "center")
+    g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
+    g.print(anim.finished and "Phần thưởng đã được cất vào hành trang" or "Xu và vật phẩm đang được thu thập", x + 32, y + h - 64)
+    g.setFont(UI.fonts.tiny); g.setColor(muted)
+    g.print(anim.finished and "ENTER / SPACE  ·  Tiếp tục hành trình" or "ENTER / SPACE / CLICK  ·  Nhận ngay", x + 32, y + h - 40)
+    g.pop()
 end
 
 return RewardSystem

@@ -15,6 +15,7 @@ UI.Abilities = require("src.card_abilities")
 UI.BossAbilities = require("src.boss_abilities")
 UI.Description = require("src.card_description")
 UI.AbilityUI = require("ui.ability_choices")
+UI.Polish = require("src.ux_polish")
 UI.drawCardEffectsDebug = CardEffects.drawDebug
 
 -- Color constants
@@ -367,7 +368,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     local shearY = (card.tiltY or 0) * 0.025
     local fxTiltX, fxTiltY = CardEffects.getTilt(card)
     shearX, shearY = shearX + fxTiltX, shearY + fxTiltY
-    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, selected) end
+    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, selected or UI.Polish.isFocused(card)) end
     CardEffects.prepareDraw(card, effectX or x, effectY or y, w, h,
         effectShearX or shearX, effectShearY or shearY,
         effectScaleX or cardScaleX, effectScaleY or cardScaleY,
@@ -489,7 +490,7 @@ function UI.drawCardFace(card, x, y, w, h, effectHovered,
     local shearY = (card.tiltY or 0) * 0.025
     local fxTiltX, fxTiltY = CardEffects.getTilt(card)
     shearX, shearY = shearX + fxTiltX, shearY + fxTiltY
-    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, card.selected == true) end
+    if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, card.selected == true or UI.Polish.isFocused(card)) end
     CardEffects.prepareDraw(card, effectX or x, effectY or y, w, h,
         effectShearX or shearX, effectShearY or shearY,
         effectScaleX or card.scaleX or card.scale or 1,
@@ -1237,7 +1238,7 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     local isSpnCard = deityImage and UI.deityImageIsSpnCard[deityId]
     local _, rim = Deities.getRarityBadge(d)
     local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
-    CardEffects.setInteraction(d, isHovered == true, d.selected == true)
+    CardEffects.setInteraction(d, isHovered == true, d.selected == true or UI.Polish.isFocused(d))
     CardEffects.prepareDraw(d, effectX or x, effectY or y, w, h,
         effectShearX or 0, effectShearY or 0,
         effectScaleX or s, effectScaleY or s,

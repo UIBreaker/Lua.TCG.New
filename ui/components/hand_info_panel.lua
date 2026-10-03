@@ -209,15 +209,14 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     if data.isBoss and data.boss then
         local Boss=require("src.boss_abilities")
         local m=data.boss;local bs=Boss.state(m);local a=m.bossData.active
-        local summary=(m.bossData.name or m.name or "Boss").."\n"..(Boss.passiveEnabled(m) and "NỘI TẠI ĐANG BẬT" or "NỘI TẠI VÔ HIỆU")
-            .."\n"..boundedLines(Boss.passiveDescription(m),drawFonts.detail,w-32,2)
-            .."\n"..(a and a.name or "").." · SAU "..(bs and bs.activeCountdown or 1).." tay\n"..Boss.activeDescription(m)
+        local summary=(Boss.passiveEnabled(m) and "NỘI TẠI ĐANG BẬT" or "NỘI TẠI VÔ HIỆU")
+            .."\n"..(a and a.name or "").." · SAU "..(bs and bs.activeCountdown or 1).." tay"
+            .."\n"..boundedLines(Boss.activeDescription(m),drawFonts.detail,w-32,2)
             ..(bs and bs.cancelNextActive>0 and "\nĐÃ PHONG ẤN CHỦ ĐỘNG" or "")
-            ..(bs and bs.delayNextAction>0 and ("\nTRÌ HOÃN +"..bs.delayNextAction) or "")
-        Core.text(boundedLines(summary,drawFonts.detail,w-32,9),x+16,traitY+25,w-32,drawFonts.detail,Theme.colors.text)
+        Core.text(boundedLines(summary,drawFonts.detail,w-32,5),x+16,traitY+25,w-32,drawFonts.detail,Theme.colors.text)
         local UI=require("src.ui");local mx,my=UI.virtualMouseX or 0,UI.virtualMouseY or 0
         if mx>=x and mx<=x+w and my>=traitY and my<=traitY+165 then
-            UI.Description.draw(UI,{name=m.name,desc=Boss.describe(m)},mx,my)
+            UI.descriptionCandidate={name=m.name,desc=Boss.describe(m),hoverKey=m}
         end
     else
     Core.text(boundedLines(data.debuff or "Không có hiệu ứng bất lợi",

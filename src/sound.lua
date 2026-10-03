@@ -20,11 +20,20 @@ local gain = {
     equip = 0.66, sell = 0.58, consume = 0.65, card_destroy = 0.56,
     cant_afford = 0.55,
 }
+local rewardAliases = {
+    reward_coin_spawn = "coin", reward_coin_land = "coin", reward_coin_collect = "coin",
+    reward_gold_total = "shop_buy", reward_loot_reveal = "card_deal",
+    reward_rare_reveal = "jackpot", reward_chest_open = "pack_open",
+}
+gain.reward_coin_spawn, gain.reward_coin_land, gain.reward_coin_collect = 0.22, 0.18, 0.42
+gain.reward_gold_total, gain.reward_loot_reveal, gain.reward_rare_reveal, gain.reward_chest_open = 0.62, 0.34, 0.65, 0.56
 local cooldown = {
     ui_hover = 0.07, ui_click = 0.035, card_slide = 0.035,
     card_draw = 0.025, chip_tick = 0.022, mult_pop = 0.028,
     damage_hit = 0.05, damage_heavy = 0.08,
 }
+
+cooldown.reward_coin_spawn, cooldown.reward_coin_land, cooldown.reward_coin_collect = 0.055, 0.065, 0.035
 
 local function generateSound(duration, sampleRate, generator)
     local sampleCount = math.floor(duration * sampleRate)
@@ -349,12 +358,12 @@ function Sound.setMenuMusicEnabled(shouldPlay)
 end
 
 function Sound.has(name)
-    return sounds[name] ~= nil
+    return sounds[rewardAliases[name] or name] ~= nil
 end
 
 function Sound.play(name, pitch)
     if not enabled or masterVolume <= 0 then return false end
-    local s = sounds[name]
+    local s = sounds[rewardAliases[name] or name]
     if not s then return false end
     local now = (love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock()
     if now - (lastPlayed[name] or -math.huge) < (cooldown[name] or 0) then return false end

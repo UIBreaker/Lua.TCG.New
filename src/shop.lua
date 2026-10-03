@@ -86,8 +86,8 @@ Shop.SPECTRAL_CARDS = {
     { id = "spec_incantation", name = "Incantation", subtitle = "CHÚ THUẬT", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 4 lá Quân Số (2-10) có trang bị vào bộ bài!", icon = "🕯️", color = { 0.95, 0.60, 0.30, 1 } },
     { id = "spec_cryptid", name = "Cryptid", subtitle = "DỊ THỂ", desc = "Nhân bản 1 lá bài đã chọn trên tay thành 2 bản sao y hệt!", icon = "👥", color = { 0.40, 0.75, 0.95, 1 } },
     { id = "spec_immolate", name = "Immolate", subtitle = "THIÊU RỤI", desc = "Hủy tối đa 5 lá ngẫu nhiên trên tay, lập tức nhận +$20 Tiền Vàng!", icon = "🔥", color = { 0.95, 0.40, 0.20, 1 } },
-    { id = "spec_sigil", name = "Sigil", subtitle = "ẤN KÝ", desc = "Biến đổi toàn bộ lá trên tay thành cùng 1 chất ngẫu nhiên!", icon = "🔯", color = { 0.50, 0.85, 0.65, 1 } },
-    { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi toàn bộ lá trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm -1 kích thước tay bài!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
+    { id = "spec_sigil", name = "Sigil", subtitle = "ẤN KÝ", desc = "Biến đổi vĩnh viễn toàn bộ lá trên tay thành cùng 1 chất ngẫu nhiên!", icon = "🔯", color = { 0.50, 0.85, 0.65, 1 } },
+    { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi vĩnh viễn toàn bộ lá trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm vĩnh viễn -1 kích thước tay bài!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
     { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tăng Cấp Độ của TẤT CẢ Thế Đánh lên +1!", icon = "🕳️", color = { 0.30, 0.30, 0.45, 1 } },
 }
 
@@ -103,8 +103,8 @@ Shop.CONSUMABLE_RULES={
     spec_incantation={params={count=4},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá ngẫu nhiên 2–10 cùng chất đã chọn, mỗi lá có một ITM."},
     spec_cryptid={params={count=2},description="Tạo {count} bản sao của lá được chọn (hoặc lá đầu tay/bộ bài). Mỗi bản sao có ID riêng, giữ tiến hóa/trang bị/ấn bản."},
     spec_immolate={params={count=5,gold=20},description="Tiêu hủy tối đa {count} lá từ đầu tay theo thứ tự hiển thị; nhận {gold} Vàng."},
-    spec_sigil={params={},description="Đổi mọi lá đang trên tay thành cùng chất ngẫu nhiên trong trận; không thay bộ bài lâu dài."},
-    spec_ouija={params={handLoss=1},description="Đổi mọi lá đang trên tay thành cùng rank ngẫu nhiên 2–A trong trận; kích thước tay cơ bản giảm {handLoss}, tối thiểu 1."},
+    spec_sigil={params={},description="Đổi mọi lá đang trên tay thành cùng chất ngẫu nhiên vĩnh viễn trong bộ bài."},
+    spec_ouija={params={handLoss=1},description="Đổi mọi lá đang trên tay thành cùng rank ngẫu nhiên 2–A vĩnh viễn trong bộ bài; kích thước tay cơ bản giảm vĩnh viễn {handLoss}, tối thiểu 1."},
     spec_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa thế đánh."},
     celestial={params={levels=1},description=""},
     planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
@@ -743,12 +743,17 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
 
     elseif pack.packType == "spectral" then
         local userFaction = gameState.selectedFaction or gameState.selectedSuit or "aurelia"
+        local function destroyCard(target)
+            require("src.card_abilities").destroy(gameState, target)
+            require("src.combat").cleanupDestroyedCards(gameState)
+            gameState.selectedIndices = {}
+            for i, remaining in ipairs(gameState.hand or {}) do
+                if remaining.selected then table.insert(gameState.selectedIndices, i) end
+            end
+        end
         if card.id == "spec_familiar" then
             if gameState.hand and #gameState.hand > 0 then
-                table.remove(gameState.hand, Rng.random(#gameState.hand))
-            end
-            if gameState.persistentDeck and #gameState.persistentDeck > 0 then
-                table.remove(gameState.persistentDeck, Rng.random(#gameState.persistentDeck))
+                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
             local ranks = { 11, 12, 13 }
             for i = 1, 3 do
@@ -763,10 +768,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
 
         elseif card.id == "spec_grim" then
             if gameState.hand and #gameState.hand > 0 then
-                table.remove(gameState.hand, Rng.random(#gameState.hand))
-            end
-            if gameState.persistentDeck and #gameState.persistentDeck > 0 then
-                table.remove(gameState.persistentDeck, Rng.random(#gameState.persistentDeck))
+                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
             for i = 1, 2 do
                 local nc = Deck.newCard(14, userFaction)
@@ -779,10 +781,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
 
         elseif card.id == "spec_incantation" then
             if gameState.hand and #gameState.hand > 0 then
-                table.remove(gameState.hand, Rng.random(#gameState.hand))
-            end
-            if gameState.persistentDeck and #gameState.persistentDeck > 0 then
-                table.remove(gameState.persistentDeck, Rng.random(#gameState.persistentDeck))
+                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
             for i = 1, 4 do
                 local r = Rng.random(2, 10)
@@ -813,15 +812,8 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         elseif card.id == "spec_immolate" then
             local destroyed = 0
             while gameState.hand and #gameState.hand > 0 and destroyed < 5 do
-                table.remove(gameState.hand, 1)
+                destroyCard(gameState.hand[1])
                 destroyed = destroyed + 1
-            end
-            if gameState.persistentDeck then
-                local dDeck = 0
-                while #gameState.persistentDeck > 3 and dDeck < destroyed do
-                    table.remove(gameState.persistentDeck, 1)
-                    dDeck = dDeck + 1
-                end
             end
             gameState.gold = (gameState.gold or 0) + 20
             Sound.play("xmult_boom")
@@ -834,10 +826,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             local fInfo = Deck.SUITS[targetSuit]
             if gameState.hand then
                 for _, c in ipairs(gameState.hand) do
-                    c.suit = targetSuit
-                    c.suitName = Deck.STANDARD_SUIT_NAMES[targetSuit] or fInfo.name
-                    c.suitSymbol = fInfo.symbol
-                    c.color = fInfo.color
+                    Deck.transformCard(gameState, c, nil, targetSuit)
                 end
             end
             Sound.play("round_win")
@@ -849,9 +838,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             local rName = Deck.RANK_NAMES[r] or tostring(r)
             if gameState.hand then
                 for _, c in ipairs(gameState.hand) do
-                    c.rank = r
-                    c.rankName = rName
-                    c.baseChips = Deck.getChipValue(r)
+                    Deck.transformCard(gameState, c, r)
                 end
             end
             gameState.maxHandSize = math.max(1, (gameState.maxHandSize or 3) - 1)
@@ -974,16 +961,17 @@ function Shop.skipPack(shop)
     Sound.play("ui_click")
 end
 
-function Shop.reroll(shop, gameState)
+function Shop.reroll(shop, gameState, refresh)
+    local refreshShop = refresh or Shop.refresh
     if gameState and (gameState.freeRerolls or 0) > 0 then
         gameState.freeRerolls = gameState.freeRerolls - 1
-        Shop.refresh(shop, gameState)
+        refreshShop(shop, gameState)
         Sound.play("shop_reroll")
         return true
     end
     if gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed then
         shop.welcomeRerollUsed = true
-        Shop.refresh(shop, gameState)
+        refreshShop(shop, gameState)
         Sound.play("shop_reroll")
         return true
     end
@@ -995,7 +983,7 @@ function Shop.reroll(shop, gameState)
     gameState.gold = gameState.gold - cost
     shop.rerollCount = (shop.rerollCount or 0) + 1
     shop.rerollCost = cost + 1 + shop.rerollCount
-    Shop.refresh(shop, gameState)
+    refreshShop(shop, gameState)
     Sound.play("shop_reroll")
     return true
 end

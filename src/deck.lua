@@ -514,6 +514,36 @@ function Deck.restoreDeck(deck)
 end
 
 -- Clone card cleanly with separate table reference for combat
+-- Spectral transformations must update the master card as well as combat copies.
+function Deck.transformCard(game, card, rank, suit)
+    local function apply(copy)
+        if suit then
+            local info = Deck.SUITS[suit] or Deck.FACTIONS[suit]
+            copy.suit = info.id
+            copy.suitName = Deck.STANDARD_SUIT_NAMES[suit] or info.name
+            copy.suitSymbol, copy.color = info.symbol, info.color
+        end
+        if rank then
+            copy.baseRank, copy.rank = rank, rank
+            copy.rankName = Deck.RANK_NAMES[rank] or tostring(rank)
+            copy.baseChips = Deck.getChipValue(rank) + (copy.bonusBaseChips or 0)
+            local role = Deck.getCardRole(rank)
+            copy.role, copy.roleName, copy.roleTitle = role.id, role.name, role.title
+            copy.roleIcon, copy.roleDesc = role.icon, role.desc
+            Deck.getCardAttackSpeed(copy)
+        end
+        local ace = copy.rank == 1 or copy.rank == 14
+        copy.isWildSuit = not copy.disableFactionPassives and ace and (copy.suit == "elaris" or copy.suit == "clubs")
+        copy.isDualRankAce = not copy.disableFactionPassives and ace and (copy.suit == "vharos" or copy.suit == "spades")
+    end
+    apply(card)
+    for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
+        for _, copy in ipairs(pile) do
+            if copy ~= card and card.id ~= nil and copy.id == card.id then apply(copy) end
+        end
+    end
+end
+
 function Deck.cloneCard(card)
     local newC = Deck.newCard(card.baseRank or card.rank, card.suit)
     newC.evolutionLevel = card.evolutionLevel or 0
@@ -629,7 +659,7 @@ function Deck.addCardToDeck(gameState, card)
     card.baseRank = card.baseRank or card.rank
     card.rank = card.baseRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
-    card.baseChips = Deck.getChipValue(card.rank)
+    card.baseChips = card.isPrimalDrone and 50 or Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0)
     Deck.getCardAttackSpeed(card)
     local role = Deck.getCardRole(card.rank)
     card.role = role.id

@@ -7,12 +7,12 @@ local paramLabels={armor="Giáp",returnArmor="Giáp khi trả bài",healPercent=
 function Modal.openChoices(game,choices,callback)
     Modal.current={mode="choices",game=game,choices=choices,index=1,decisions={},callback=callback,page=1}
 end
-function Modal.openEvolution(game,consumable,callback)
+function Modal.openEvolution(game,consumable,callback,sourceRect)
     local cards={}
     for _,c in ipairs(game.persistentDeck or {}) do if A.definition(c) and (c.evolutionLevel or 0)<A.config.maxEvolutionLevel then cards[#cards+1]=c end end
     for i=1,Deities.getMaxSlots(game) do if game.deities and game.deities[i] then cards[#cards+1]=game.deities[i] end end
     if #cards==0 then return false end
-    Modal.current={mode="evolution",game=game,consumable=consumable,cards=cards,page=1,callback=callback}
+    Modal.current={mode="evolution",game=game,consumable=consumable,cards=cards,page=1,callback=callback,sourceRect=sourceRect}
     return true
 end
 local function close() Modal.current=nil;Sound.play("card_deselect") end
@@ -33,11 +33,13 @@ function Modal.confirm()
     local m=Modal.current;local c=m and m.selected;if not c then return false end
     local index;for i,item in ipairs(m.game.consumables or {}) do if item==m.consumable then index=i;break end end
     if not index then close();return false end
+    local UI=require("src.ui");local before=UI.Polish.snapshot(m.game)
     local success=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c)
     if not success then return false end
     table.remove(m.game.consumables,index);A.consumableUsed(m.game)
+    UI.Polish.changed(UI,m.game,before,m.consumable,m.sourceRect)
     Effects.triggerScorePulse(c)
-    Modal.toast={card=c,age=0,text="TIẾN HÓA · "..(c.name or (c.rankName..c.suitSymbol))}
+    Modal.toast=nil -- Changed-value feedback is anchored to the target instead.
     Modal.current=nil;Sound.play("xmult_boom")
     if m.callback then m.callback(c) end
     return true

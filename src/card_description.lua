@@ -5,6 +5,15 @@ local Equipment = require("src.equipment")
 local Deck = require("src.deck")
 local Effects = require("src.card_effects")
 local D = {}
+local hoverItem, hoverAge, offered = nil, 0, false
+function D.update(dt)
+    hoverAge = hoverAge + dt
+end
+function D.reset() hoverItem=nil;hoverAge=0 end
+function D.finishFrame()
+    if not offered then D.reset() end
+    offered=false
+end
 D.glossary = {
     {"Tái kích hoạt","Lặp điểm và hiệu ứng của cùng lá; không tính lại điểm nền của thế bài."},
     {"Giữ","Nằm trên tay, không được chơi trong tay vừa kết thúc."},
@@ -77,14 +86,24 @@ function D.resolve(item,game)
 end
 function D.draw(UI,item,mx,my,game)
     if not item or item.faceDown then return end
+    offered=true
+    local key=item.hoverKey or item.card or item.deity or item.equipment or item
+    if key~=hoverItem then hoverItem=key;hoverAge=0 end
+    if hoverAge < require("config.ux_polish_config").hoverDelay then return end
     local title,body=D.resolve(item,game)
-    local w=350;local font=UI.fonts.tiny or UI.fonts.small
+    local w=320;local font=UI.fonts.tiny or UI.fonts.small
     local _,lines=font:getWrap(body,w-24)
     local titleFont=UI.fonts.small
     local _,titleLines=titleFont:getWrap(title,w-24)
     local bodyY=16+#titleLines*titleFont:getHeight()
     local h=math.min(690,bodyY+12+#lines*font:getHeight())
-    local x=math.max(10,math.min(1270-w,mx+14));local y=math.max(10,math.min(710-h,my+14))
+    local surface=UI.CardPhysics.getState(key) or UI.CardPhysics.getState(item)
+    local r=surface and UI.Polish and UI.Polish.rect(UI,item)
+    if UI.Polish and UI.Polish.focus then r=UI.Polish.focus.rect end
+    local right=r and r.x+r.w+24 or mx+16
+    local left=r and r.x-w-24 or mx-w-16
+    local x=math.max(10,math.min(1270-w,right+w<=1270 and right or left))
+    local y=math.max(10,math.min(710-h,my+14))
     love.graphics.setColor(0.06,0.085,0.11,0.98);love.graphics.rectangle("fill",x,y,w,h,8,8)
     love.graphics.setColor(0.9,0.72,0.36,1);love.graphics.rectangle("line",x,y,w,h,8,8)
     love.graphics.setFont(titleFont);love.graphics.printf(title,x+12,y+10,w-24)

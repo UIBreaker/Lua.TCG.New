@@ -1,4 +1,5 @@
 local Capture = {}
+local backCropOnly = false
 
 local frame = 0
 local shopOnly = false
@@ -7,8 +8,14 @@ local physicsOnly = false
 local scoringOnly = false
 local shopDropOnly = false
 local expansionOnly = false
+local polishOnly = false
+local rewardOnly = false
 local shopCaptureAt, shopCaptureSaved, shopCaptureStep
+local shopCaptureGame
 for _, value in ipairs(arg or {}) do
+    if value == "--test-card-back-crop" then backCropOnly = true end
+    if value == "--test-ux-polish" then polishOnly = true end
+    if value == "--test-reward-ceremony" then rewardOnly = true end
     if value == "--capture-shop" then shopOnly = true end
     if value == "--test-pack-skip" then packSkipOnly = true end
     if value == "--test-card-physics" then physicsOnly = true end
@@ -45,17 +52,19 @@ local function saveImage(name)
     end)
 end
 
-local function buyAtDeck(x, y)
-    clickVirtual(x, y)
-    local w, h = love.graphics.getDimensions()
-    local scale = math.min(w / 1280, h / 720)
-    local px, py = (w - 1280 * scale) / 2 + 1065 * scale, (h - 720 * scale) / 2 + 555 * scale
-    love.mousemoved(px, py, 0, 0)
-    love.mousereleased(px, py, 1)
+local function buyFocused(x, y)
+    clickVirtual(x, y, true)
+    local UI = require("src.ui")
+    local button = assert(UI.Polish.button(shopCaptureGame), "focused purchase button")
+    clickVirtual(button.x+button.w/2,button.y+button.h/2,true)
 end
 
 function Capture.update(gameRef, callbacks)
+    if backCropOnly then return require("tests.card_back_crop").update() end
     frame = frame + 1
+    shopCaptureGame = gameRef
+    if polishOnly then return require("tests.ux_polish_capture").update(gameRef, callbacks) end
+    if rewardOnly then return require("tests.reward_ceremony_capture").update(gameRef, callbacks) end
     if expansionOnly then return require("tests.gameplay_expansion_capture").update(gameRef, callbacks) end
     if shopDropOnly then return require("tests.shop_deck_drop_capture").update(gameRef, callbacks) end
     if scoringOnly then return require("tests.scoring_feel_capture").update(gameRef, callbacks) end
@@ -77,17 +86,20 @@ function Capture.update(gameRef, callbacks)
             shopCaptureSaved = true
         elseif shopCaptureSaved and love.timer.getTime() >= shopCaptureAt + 0.2 then
             -- Let draw rebuild item-index hitboxes after each purchase.
+            if require("src.ui").Polish.busy() then return end
             if not shopCaptureStep then
                 local deckSize = #gameRef.persistentDeck
-                buyAtDeck(498, 225)
+                buyFocused(498, 225)
                 assert(#gameRef.persistentDeck == deckSize + 1, "Retail card hitbox must buy the displayed card")
                 shopCaptureStep = 1
+                shopCaptureAt = love.timer.getTime() + 0.60
             elseif shopCaptureStep == 1 then
-                buyAtDeck(870, 225)
+                buyFocused(870, 225)
                 assert(gameRef.playerHp == 100, "Potion hitbox must buy and heal")
                 shopCaptureStep = 2
+                shopCaptureAt = love.timer.getTime() + 0.60
             else
-                buyAtDeck(155, 590)
+                buyFocused(155, 590)
                 local voucherCount = 0
                 for _ in pairs(gameRef.vouchers) do voucherCount = voucherCount + 1 end
                 assert(voucherCount == 1, "Privilege purchase hitbox must activate its voucher")

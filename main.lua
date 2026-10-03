@@ -54,7 +54,7 @@ local Combat = require("src.combat")
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 for _, a in ipairs(arg or {}) do
-    if a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
+    if a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
         isCaptureMode = true
     end
 end
@@ -268,15 +268,6 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
         love.graphics.setColor(1, 1, 1, 0.95)
         love.graphics.printf(c.name or "Thẻ Phép", cx + 2, cy + 42, conSlotW - 4, "center")
 
-        if isHover then
-            -- Tooltip
-            local ttW = 210
-            local ttH = 108
-            local ttX = math.min(V_WIDTH - ttW - 10, math.max(10, cx - 40))
-            local ttY = cy + conSlotH + 8
-            UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-                UI.truncateUtf8(select(2, UI.Description.resolve(c, game)), 76) .. "\nChuột phải: dùng • Kéo vào Hiến Tế: bán", UI.fonts, "green")
-        end
     else
         local isHover = mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH
         if not UI.drawSlot(isHover and "hover" or "empty", "consumable", cx, cy, conSlotW, conSlotH) then
@@ -294,6 +285,7 @@ end
 
 local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, isTopHovered, effectOnly, opacity)
     if not c then return end
+    if state == "shop" and not effectOnly and UI.Polish.hiddenOwned(c) then return end
     if c.faceDown then return UI.drawCardBack(cx, cy, cardW, cardH, opacity or c.alpha) end
     local g = love.graphics
     local hovered = isTopHovered == true
@@ -327,13 +319,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     g.pop()
     if effectOnly then return end
 
-    if hovered then
-        local ttW, ttH = 210, 108
-        local ttX = math.max(10, cx - ttW - 8)
-        local ttY = math.max(10, cy - ttH - 8)
-        UI.components.Tooltip.draw(ttX, ttY, ttW, ttH, c.name,
-            UI.truncateUtf8(select(2, UI.Description.resolve(c, game)), 76) .. "\nChuột phải để kích hoạt", UI.fonts, "green")
-    end
+    if hovered then UI.descriptionCandidate = c end
 end
 
 drawConsumableSlot = UI.CardPhysics.wrap(drawConsumableSlot)
@@ -421,6 +407,7 @@ local anim = {
 
 -- Short-lived visual feedback shared by shop purchases, sales and pack picks.
 local shopFx = {}
+UI.Polish.drawConsumable = drawBattleConsumableCard
 
 local function spawnShopFx(kind, item, x, y, w, h)
     local category = item and item.category
@@ -455,7 +442,7 @@ local function spawnShopFx(kind, item, x, y, w, h)
         targetY = targetY,
         w = w,
         h = h,
-        duration = kind == "consume" and 0.50 or (kind == "destroy" and 0.72 or ((kind == "sell" or kind == "sacrifice") and 0.82 or 0.92)),
+        duration = kind == "consume" and UI.Polish.config.dissolve or (kind == "destroy" and 0.72 or ((kind == "sell" or kind == "sacrifice") and 0.82 or 0.92)),
     })
 end
 
@@ -1079,10 +1066,11 @@ local function useConsumable(idx)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
     if c.category == "evolution" or c.id == "cons_evolution" then
+        local x,y,w,h = getConsumableSlotRect(idx,state)
         return UI.AbilityUI.openEvolution(game, c, function(evolved)
-            spawnShopFx("consume", c, 640, 360, 96, 140)
+            spawnShopFx("consume", c, x+w/2, y+h/2, w, h)
             saveRunAtSafePoint()
-        end)
+        end, {x=x,y=y,w=w,h=h})
     end
 
     if c.category == "speed_single" then
@@ -1379,10 +1367,7 @@ local function useConsumable(idx)
             local fInfo = Deck.SUITS[targetSuit]
             if game.hand then
                 for _, ch in ipairs(game.hand) do
-                    ch.suit = targetSuit
-                    ch.suitName = Deck.STANDARD_SUIT_NAMES[targetSuit] or fInfo.name
-                    ch.suitSymbol = fInfo.symbol
-                    ch.color = fInfo.color
+                    Deck.transformCard(game, ch, nil, targetSuit)
                 end
             end
             Sound.play("round_win")
@@ -1394,9 +1379,7 @@ local function useConsumable(idx)
             local rName = Deck.RANK_NAMES[r] or tostring(r)
             if game.hand then
                 for _, ch in ipairs(game.hand) do
-                    ch.rank = r
-                    ch.rankName = rName
-                    ch.baseChips = Deck.getChipValue(r)
+                    Deck.transformCard(game, ch, r)
                 end
             end
             game.maxHandSize = math.max(1, (game.maxHandSize or 3) - p.handLoss)
@@ -1424,7 +1407,9 @@ local function activateConsumable(idx, currentState)
     local card = game.consumables and game.consumables[idx]
     if not card then return false end
     local x, y, w, h = getConsumableSlotRect(idx, currentState)
+    local before = UI.Polish.snapshot(game)
     if not useConsumable(idx) then return false end
+    UI.Polish.changed(UI, game, before, card, {x=x,y=y,w=w,h=h})
     local stillStored = false
     for _, remaining in ipairs(game.consumables or {}) do if remaining == card then stillStored = true end end
     if not stillStored then UI.Abilities.consumableUsed(game) end
@@ -1472,6 +1457,7 @@ end
 
 local function applyPendingEditionAt(mx, my, currentState)
     if not pendingEditionCard then return false end
+    local before = UI.Polish.snapshot(game)
     local consumableIndex
     for index, item in ipairs(game.consumables or {}) do
         if item == pendingEditionCard then consumableIndex = index break end
@@ -1487,11 +1473,9 @@ local function applyPendingEditionAt(mx, my, currentState)
             local used = table.remove(game.consumables, consumableIndex)
             UI.Abilities.consumableUsed(game)
             pendingEditionCard = nil
-            spawnShopFx("consume", used, x + w / 2, y + h / 2, w, h)
-            table.insert(anim.floatingTexts, {
-                text = deity.name .. " nhận " .. tostring(used.name or "Ấn Bản") .. "!",
-                color = used.color or UI.COLORS.goldYellow, x = x + w / 2, y = y - 8, alpha = 2.6,
-            })
+            local cx,cy,cw,ch = getConsumableSlotRect(consumableIndex,currentState)
+            spawnShopFx("consume", used, cx+cw/2, cy+ch/2, cw, ch)
+            UI.Polish.changed(UI, game, before, used, {x=cx,y=cy,w=cw,h=ch})
             Sound.play("round_win")
             return true
         end
@@ -1517,10 +1501,7 @@ local function applyPendingEditionAt(mx, my, currentState)
                 pendingEditionCard = nil
                 local cx, cy, cw, ch = getConsumableSlotRect(consumableIndex, currentState)
                 spawnShopFx("consume", used, cx + cw / 2, cy + ch / 2, cw, ch)
-                table.insert(anim.floatingTexts, {
-                    text = (card.rankName or "LÁ BÀI") .. (card.suitSymbol or "") .. " nhận " .. tostring(used.name or "Ấn Bản") .. "!",
-                    color = used.color or UI.COLORS.goldYellow, x = x + 50, y = y - 8, alpha = 2.6,
-                })
+                UI.Polish.changed(UI, game, before, used, {x=cx,y=cy,w=cw,h=ch})
                 Sound.play("round_win")
                 return true
             end
@@ -1531,6 +1512,7 @@ end
 
 local function applyPendingSpeedAt(mx, my)
     if not pendingSpeedCard then return false end
+    local before = UI.Polish.snapshot(game)
     for i = #game.hand, 1, -1 do
         local card = game.hand[i]
         local x, y = card.visualX or 0, card.visualY or 0
@@ -1556,11 +1538,7 @@ local function applyPendingSpeedAt(mx, my)
             pendingSpeedCard = nil
             local cx, cy = getConsumableSlotRect(rewardIndex, "playing")
             spawnShopFx("consume", usedCard, cx + 40, cy + 55, 80, 110)
-            table.insert(anim.floatingTexts, {
-                text = "TĂNG TỐC ĐƠN · " .. (card.rankName or "LÁ BÀI") .. (card.suitSymbol or "")
-                    .. " · TỐC ĐÁNH " .. tostring(selectedSpeed or Deck.getCardAttackSpeed(card)),
-                color = { 0.48, 0.78, 1, 1 }, x = x + 50, y = y - 8, alpha = 2.8,
-            })
+            UI.Polish.changed(UI, game, before, usedCard, {x=cx,y=cy,w=80,h=110})
             Sound.play("round_win")
             return true
         end
@@ -1989,6 +1967,7 @@ end
 function love.load()
     Rng.seed(os.time())
     UI.initFonts()
+    UI.Polish.load()
     local nativePrint, nativePrintf = love.graphics.print, love.graphics.printf
     love.graphics.print = function(value, ...)
         return nativePrint(UI.localizeText(value), ...)
@@ -2047,6 +2026,17 @@ function love.load()
             state = loadedState or "BLIND_SELECT"
             lastActiveState = state
             hasRunStarted = true
+            if state == "CASH_OUT" and game.pendingVictoryReward then
+                local result = game.pendingVictoryReward
+                cashOutAnim = RewardSystem.newAnimation(result.breakdown, result)
+            elseif state == "socketing" and game.pendingRewardEquipment then
+                pendingEquipment = game.pendingRewardEquipment
+                socketingReturnState = "shop"
+                Shop.refresh(shopData, game)
+            elseif state == "shop" then
+                Shop.refresh(shopData, game)
+                RewardSystem.openNextPack(game, shopData)
+            end
         end
     end
 end
@@ -2127,6 +2117,17 @@ local function updateCaptureMode()
         end,
         closePack = function() shopData.currentPackOpening = nil end,
         getShopData = function() return shopData end,
+        getButtons = function() return buttons end,
+        getRewardAnimation = function() return cashOutAnim, state end,
+        openReward = function(tableId)
+            local blind = RunManager.getCurrentBlind(game.run)
+            RunManager.completeCurrentBlind(game.run, game)
+            game.pendingVictoryReward = nil
+            local breakdown = RewardSystem.calculate(blind, game, false)
+            local result = RewardSystem.begin(breakdown, game, {lootTableId = tableId})
+            cashOutAnim = RewardSystem.newAnimation(breakdown, result)
+            state, lastActiveState = "CASH_OUT", "CASH_OUT"
+        end,
     })
 end
 
@@ -2134,6 +2135,8 @@ function love.update(dt)
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
     UI.CardPhysics.update(dt, physicsMx, physicsMy)
     CardEffects.update(dt)
+    UI.Polish.update(dt, settings.fastScoring, state, shopData)
+    UI.Description.update(dt)
     UI.AbilityUI.update(dt)
     if UI.AbilityUI.current then updateCaptureMode(); return end
     UI.ScoringFeel.updateLab(dt)
@@ -2322,7 +2325,14 @@ function love.update(dt)
     juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * math.min(1.0, dt * 10)
     juice.handRankBounce = juice.handRankBounce + (1.0 - juice.handRankBounce) * math.min(1.0, dt * 10)
 
-    if shopData and shopData.currentPackOpening then
+    if state == "shop" and shopData and not UI.Polish.busy() and not shopData.currentPackOpening then
+        local opened, message = RewardSystem.openNextPack(game, shopData)
+        if opened then
+            saveRunAtSafePoint()
+            if message then table.insert(anim.floatingTexts, {text = message, color = UI.COLORS.goldYellow, x = 640, y = 200, alpha = 2}) end
+        end
+    end
+    if shopData and shopData.currentPackOpening and not UI.Polish.busy() then
         local opening = shopData.currentPackOpening
         local previous = opening.animationTimer or 0
         opening.animationTimer = math.min(3.0, previous + dt)
@@ -2332,7 +2342,7 @@ function love.update(dt)
     end
     for i = #shopFx, 1, -1 do
         local fx = shopFx[i]
-        fx.life = fx.life + dt
+        fx.life = fx.life + dt * (settings.fastScoring and UI.Polish.config.fastFactor or 1)
         if fx.life >= fx.duration then table.remove(shopFx, i) end
     end
     for _, card in ipairs(anim.playedCards or {}) do
@@ -2345,7 +2355,7 @@ function love.update(dt)
     if game.gold and juice.lastGold and game.gold ~= juice.lastGold then
         if game.gold > juice.lastGold then
             juice.goldBounce = 1.35
-            spawnJuiceText("+$" .. (game.gold - juice.lastGold) .. " Vàng", 485, 89, UI.COLORS.goldYellow, 1.2)
+            if not UI.Polish.busy() then spawnJuiceText("+$" .. (game.gold - juice.lastGold) .. " Vàng", 485, 89, UI.COLORS.goldYellow, 0.85) end
         end
         juice.lastGold = game.gold
     end
@@ -2407,7 +2417,7 @@ function love.update(dt)
     end
 
     if state == "CASH_OUT" and cashOutAnim then
-        RewardSystem.update(cashOutAnim, dt)
+        RewardSystem.update(cashOutAnim, dt * (settings.fastScoring and 2 or 1))
     end
 
     local colLerp = math.min(1.0, dt * 4.0)
@@ -2806,10 +2816,11 @@ function love.update(dt)
                                 })
                             end
                             local breakdown = RewardSystem.calculate(curBlind, game, false)
-                            game.gold = (game.gold or 0) + breakdown.totalGold
-                            cashOutAnim = RewardSystem.newAnimation(breakdown)
+                            local rewardResult = RewardSystem.begin(breakdown, game)
+                            cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
                             state = "CASH_OUT"
                             lastActiveState = "CASH_OUT"
+                            saveRunAtSafePoint()
                             Sound.play("round_win")
                         elseif game.monster.isBoss then
                             -- Boss defeated: 2 Deities appear, pick 1 of 2!
@@ -3888,10 +3899,8 @@ local function drawScoringState()
                 love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
                 love.graphics.rotate(dissolve * ((i % 2 == 0) and 0.22 or -0.22))
                 love.graphics.scale(shrink, shrink)
-                local oldAlpha = c.alpha
-                c.alpha = 1 - transformProgress
-                UI.drawCardFace(c, -cardW / 2, -cardH / 2, cardW, cardH)
-                c.alpha = oldAlpha
+                UI.Polish.dissolve(UI, -cardW/2, -cardH/2, cardW, cardH, transformProgress, CardEffects.getBeamColor(c),
+                    function(x,y,w,h) UI.drawCardFace(c,x,y,w,h) end)
                 love.graphics.pop()
             end
 
@@ -4767,6 +4776,15 @@ local function drawDeckViewerModal()
     }
     UI.drawButton(closeBtn, mx >= closeBtn.x and mx <= closeBtn.x + closeBtn.w and my >= closeBtn.y and my <= closeBtn.y + closeBtn.h)
 
+    if state == "shop" then
+        UI.Polish.goldPosition=UI.Polish.config.viewerGold
+        love.graphics.setFont(UI.fonts.small);love.graphics.setColor(UI.COLORS.goldYellow)
+        love.graphics.push()
+        love.graphics.translate(970,72);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-970,-72)
+        love.graphics.printf("◉ $"..tostring(game.gold or 0),905,61,130,"center")
+        love.graphics.pop()
+    end
+
     -- Gather all cards in the full deck
     local allCards = getDeckViewerCards()
 
@@ -4867,7 +4885,7 @@ local function drawDeckViewerModal()
             love.graphics.translate(cx + cw / 2, cy + ch / 2 + driftY - (isHov and 4 or 0))
             love.graphics.rotate(driftR)
             love.graphics.translate(-cw / 2, -ch / 2)
-            UI.drawCard(c, 0, 0, cw, ch)
+            if not (state == "shop" and UI.Polish.hiddenOwned(c)) then UI.drawCard(c, 0, 0, cw, ch) end
             love.graphics.pop()
         end
     end
@@ -5887,6 +5905,7 @@ local function drawShopState()
 
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
+    UI.Polish.goldPosition = UI.Polish.config.gold
 
     local interestBonus = math.min(game.maxInterest or 5, math.floor((game.gold or 0) / 5))
     local hoveredShopItem = nil
@@ -5925,7 +5944,9 @@ local function drawShopState()
             love.graphics.translate(sx + deiSlotW / 2, sy + deiSlotH / 2 + math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2)
             love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
             love.graphics.translate(-sx - deiSlotW / 2, -sy - deiSlotH / 2)
-            UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            if not UI.Polish.hiddenOwned(d) then
+                UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
+            end
             if pendingEvolutionCard then
                 love.graphics.setLineWidth(2.5)
                 love.graphics.setColor(0.84, 0.68, 1, 0.95)
@@ -5991,7 +6012,10 @@ local function drawShopState()
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.print("CỬA HÀNG", 30, 24)
     love.graphics.setFont(UI.fonts.small)
+    love.graphics.push()
+    love.graphics.translate(325,35);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-325,-35)
     love.graphics.print("◉ " .. tostring(game.gold or 0) .. "   •   Lãi +" .. tostring(interestBonus), 260, 28)
+    love.graphics.pop()
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
 
@@ -6028,7 +6052,8 @@ local function drawShopState()
         h = 42,
         color = canReroll and UI.COLORS.btnSpecial or UI.COLORS.btnNormal,
         font = UI.fonts.small,
-        disabled = not canReroll,
+        animationScale = UI.Polish.job and UI.Polish.job.kind == "flip" and (1-0.05*math.sin(math.min(1,UI.Polish.job.age/0.12)*math.pi)) or 1,
+        disabled = not canReroll or UI.Polish.busy(),
     }
     table.insert(buttons, btnReroll)
     UI.drawButton(btnReroll, mx >= btnReroll.x and mx <= btnReroll.x + btnReroll.w and my >= btnReroll.y and my <= btnReroll.y + btnReroll.h, juice.buttonPressedId == btnReroll.id)
@@ -6048,66 +6073,23 @@ local function drawShopState()
         shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
-    -- Purchase target and hit test share the same fixed deck bounds.
+    -- Deck is now a viewer, not a purchase drop target.
     local deck = shopDrag.purchaseZone
-    local isDeckHovered = mx >= deck.x and mx <= deck.x + deck.w and my >= deck.y and my <= deck.y + deck.h
-    local buying = shopDrag.active and shopDrag.isDragging and not shopDrag.sourceKind
-    local canAfford = buying and (game.gold or 0) >= (shopDrag.item.cost or 0)
-    UI.components.DeckCounter.draw(deck.x, deck.y, deck.w, deck.h,
-        #(game.deck or {}), #(game.persistentDeck or {}), UI.fonts, isDeckHovered,
-        buying and (canAfford and UI.COLORS.hpGreen or UI.COLORS.multRed) or nil)
-    table.insert(buttons, { id = "open_deck_viewer", text = "", x = deck.x, y = deck.y,
-        w = deck.w, h = deck.h, invisible = true })
-    if buying then
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(canAfford and UI.COLORS.hpGreen or UI.COLORS.multRed)
-        love.graphics.printf(canAfford and (isDeckHovered and "THẢ ĐỂ MUA" or "KÉO VÀO ĐÂY") or "KHÔNG ĐỦ VÀNG",
-            deck.x - 9, deck.y - 25, deck.w + 18, "center")
-    elseif isDeckHovered then
-        UI.components.Tooltip.draw(deck.x - 80, deck.y - 65, 160, 50,
-            "BỘ BÀI", "Nhấp để xem · Kéo hàng vào để mua", UI.fonts, "cyan")
-    end
-    local altar = shopDrag.sacrificeZone
-    local draggingOwned = (shopDrag.active and shopDrag.isDragging and shopDrag.sourceKind ~= nil)
-        or (deityDrag.active and deityDrag.isDragging and state == "shop")
-    local overAltar = draggingOwned and mx >= altar.x and mx <= altar.x + altar.w and my >= altar.y and my <= altar.y + altar.h
-    love.graphics.setColor(overAltar and { 0.30, 0.10, 0.10, 0.98 } or { 0.13, 0.10, 0.12, 0.94 })
-    UI.drawRoundedRect("fill", altar.x, altar.y, altar.w, altar.h, 9)
-    love.graphics.setLineWidth(overAltar and 3 or 1.8)
-    love.graphics.setColor(overAltar and { 1, 0.36, 0.30, 1 } or { 0.75, 0.38, 0.30, 0.9 })
-    UI.drawRoundedRect("line", altar.x, altar.y, altar.w, altar.h, 9)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("HIẾN TẾ", altar.x + 5, altar.y + 12, altar.w - 10, "center")
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(overAltar and { 1, 0.55, 0.34, 1 } or { 0.85, 0.42, 0.34, 0.9 })
-    love.graphics.printf("✦", altar.x, altar.y + 40, altar.w, "center")
-
-    local sacrificeItem, sacrificeKind
-    if deityDrag.active and deityDrag.isDragging and game.deities then
-        sacrificeItem, sacrificeKind = game.deities[deityDrag.deityIndex], "deity"
-    elseif shopDrag.active and shopDrag.isDragging and shopDrag.sourceKind then
-        sacrificeItem, sacrificeKind = shopDrag.item, shopDrag.sourceKind
-    end
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(overAltar and { 1, 0.86, 0.68, 1 } or UI.COLORS.textLight)
-    if sacrificeItem then
-        local price = Shop.getSacrificePrice(sacrificeItem, sacrificeKind, game)
-        love.graphics.printf(overAltar and ("THẢ ĐỂ BÁN\n+$" .. price) or ("THẢ BÀI\nĐỂ NHẬN +$" .. price), altar.x + 7, altar.y + 101, altar.w - 14, "center")
-    else
-        love.graphics.printf("KÉO BÀI HOẶC\nTIÊU HAO VÀO ĐÂY", altar.x + 7, altar.y + 101, altar.w - 14, "center")
-    end
-
-    ----------------------------------------------------------------------------
-    -- Stock purchases are accepted only at the deck pile, never above the shop.
-    ----------------------------------------------------------------------------
-    -- Stock descriptions use the single cursor-following tooltip at end of frame.
+    local isDeckHovered = mx >= deck.x and mx <= deck.x+deck.w and my >= deck.y and my <= deck.y+deck.h
+    UI.components.DeckCounter.draw(deck.x,deck.y,deck.w,deck.h,#(game.deck or {}),#(game.persistentDeck or {}),UI.fonts,isDeckHovered)
+    table.insert(buttons,{id="open_deck_viewer",text="",x=deck.x,y=deck.y,w=deck.w,h=deck.h,invisible=true})
+    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("NHẤP ĐỂ XEM BỘ BÀI", deck.x-20,deck.y+deck.h+6,deck.w+40,"center")
+    love.graphics.setFont(UI.fonts.small);love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf("GIAO DỊCH",1125,520,130,"center")
+    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("Chọn SPN, tiêu hao\nhoặc lá trong bộ bài\nđể xem giá bán.",1125,556,130,"center")
     if hoveredShopItem then UI.descriptionCandidate = hoveredShopItem end
 
     ----------------------------------------------------------------------------
     -- 6. PACK OPENING MODAL OVERLAY (When a Booster Pack is active)
     ----------------------------------------------------------------------------
-    if shopData.currentPackOpening then
+    if shopData.currentPackOpening and not UI.Polish.busy() then
         UI.CardPhysics.blockBehind()
         local pData = shopData.currentPackOpening
         local pack = pData.pack
@@ -6518,8 +6500,8 @@ local function drawShopFx()
         local x = fx.x + ((fx.targetX or fx.x) - fx.x) * travel
         local hop = fx.kind == "consume" and 18 or (fx.kind == "sell" and 55 or 92)
         local y = fx.y + ((fx.targetY or fx.y) - fx.y) * travel - math.sin(p * math.pi) * hop
-        local pop = math.sin(math.min(1, p / 0.24) * math.pi) * 0.16
-        local size = (fx.kind == "destroy" or fx.kind == "consume") and math.max(0.06, 1 + pop - p * 0.96)
+        local pop = math.sin(math.min(1, p / 0.24) * math.pi) * (fx.kind == "consume" and 0.06 or 0.12)
+        local size = (fx.kind == "destroy" or fx.kind == "consume") and math.max(0.90, 1 + pop - p * 0.08)
             or (fx.kind == "sell" and math.max(0.12, 1 + pop - p * 0.82) or math.max(0.42, 1 + pop - travel * 0.48))
         local w, h = fx.w or 92, fx.h or 130
 
@@ -6534,10 +6516,17 @@ local function drawShopFx()
 
         love.graphics.push()
         love.graphics.translate(x, y)
-        local spin = fx.kind == "destroy" and 1.55 or (fx.kind == "consume" and 0.42 or ((fx.kind == "sell" or fx.kind == "sacrifice") and -1.05 or 0.24))
+        local spin = fx.kind == "destroy" and 0.10 or (fx.kind == "consume" and 0.05 or ((fx.kind == "sell" or fx.kind == "sacrifice") and -1.05 or 0.24))
         love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
         love.graphics.scale(size, size)
-        if item.faceDown or (item.reward and item.reward.faceDown) then
+        if fx.kind == "consume" or fx.kind == "destroy" then
+            love.graphics.setBlendMode("add")
+            love.graphics.setColor(trailColor[1],trailColor[2],trailColor[3],math.sin(math.min(1,p/0.34)*math.pi)*0.22)
+            UI.drawRoundedRect("line",-w/2-3,-h/2-3,w+6,h+6,7)
+            love.graphics.setBlendMode("alpha")
+            UI.Polish.dissolve(UI, -w/2, -h/2, w, h, math.max(0,(p-0.34)/0.66)^1.5,
+                trailColor, function(x,y,cw,ch) UI.Polish.renderItem(UI,item,x,y,cw,ch) end)
+        elseif item.faceDown or (item.reward and item.reward.faceDown) then
             UI.drawCardBack(-w / 2, -h / 2, w, h)
         elseif fx.kind == "consume" then
             drawBattleConsumableCard(item, -w / 2, -h / 2, w, h, 1, -1000, -1000, false, true, 1 - p)
@@ -6569,7 +6558,7 @@ local function drawShopFx()
         love.graphics.pop()
 
         love.graphics.setBlendMode("add")
-        for i = 1, 12 do
+        for i = 1, UI.Polish.config.shards do
             local angle = i * 2.17
             local radius = p * (20 + i * 2.4)
             local color = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
@@ -6823,7 +6812,7 @@ function love.draw()
     end
 
     -- Floating juice notifications
-    if juice.floatingTexts and #juice.floatingTexts > 0 then
+    if state ~= "CASH_OUT" and juice.floatingTexts and #juice.floatingTexts > 0 then
         for _, ft in ipairs(juice.floatingTexts) do
             local alpha = math.max(0, math.min(1.0, ft.life / 0.35))
             love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], (ft.color[4] or 1) * alpha)
@@ -6848,12 +6837,21 @@ function love.draw()
     UI.CardPhysics.drawDebug()
     UI.drawCardEffectsDebug()
 
+    if state == "shop" and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
+        and not isCollectionOpen and not isShopTransferOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
+        UI.Polish.draw(UI, game, buttons, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+    elseif not UI.AbilityUI.current and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
+        and not isCollectionOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
+        UI.Polish.draw(UI, game, {}, -1000, -1000)
+    end
     love.graphics.pop()
 
-    if UI.descriptionCandidate and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
+    if UI.descriptionCandidate and state ~= "scoring" and UI.Polish.tooltipAllowed(UI.descriptionCandidate)
+        and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
         UI.Description.draw(UI, UI.descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
     UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+    UI.Description.finishFrame()
     -- The game layout remains expressed in 1280x720 units; undo that logical
     -- scale before presenting the 1920x1080 render target.
     if mainCanvas then love.graphics.pop() end
@@ -7010,6 +7008,7 @@ local function handlePlayingMousepressed(mx, my, button)
 end
 
 local function handleShopMousepressed(mx, my, button)
+    if UI.Polish.busy() then return true end
     if pendingEditionCard and button == 1 and not isShopTransferOpen then
         applyPendingEditionAt(mx, my, "shop")
         return true
@@ -7067,9 +7066,11 @@ local function handleShopMousepressed(mx, my, button)
                         Sound.play("cant_afford")
                         return true
                     end
+                    local before = UI.Polish.snapshot(game)
                     local ok, msg = Shop.transferEquipment(transferSourceCard, transferSourceEqIndex, c)
                     transferMessage = msg
                     if ok then
+                        UI.Polish.changed(UI, game, before, chosenEq)
                         transferSourceEqIndex = nil
                     end
                     return true
@@ -7096,14 +7097,20 @@ local function handleShopMousepressed(mx, my, button)
                 if btn.id:sub(1, 12) == "choose_pack_" then
                     local opening = shopData.currentPackOpening
                     local reward = opening.cards and opening.cards[btn.cardIndex]
+                    local before = UI.Polish.snapshot(game)
                     local ok, action, eq = Shop.choosePackCard(shopData, btn.cardIndex, game)
+                    if ok and action == "open_socketing" and opening.pack.rewardPack then
+                        game.pendingRewardEquipment = eq
+                    elseif ok and RewardSystem.completePack(game, shopData, opening) then saveRunAtSafePoint() end
                     if ok then
+                        UI.Polish.changed(UI, game, before, reward)
                         spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
                     end
                     if ok and action == "open_socketing" and eq then
                         pendingEquipment = eq
                         socketingReturnState = "shop"
                         state = "socketing"
+                        if game.pendingRewardEquipment then saveRunAtSafePoint() end
                     elseif ok and type(action) == "string" then
                         table.insert(anim.floatingTexts, {
                             text = action,
@@ -7126,6 +7133,7 @@ local function handleShopMousepressed(mx, my, button)
                     local opening = shopData.currentPackOpening
                     local reward = opening.cards and opening.cards[btn.cardIndex]
                     local ok, msg = Shop.keepPackCard(shopData, btn.cardIndex, game)
+                    if ok and RewardSystem.completePack(game, shopData, opening) then saveRunAtSafePoint() end
                     if ok then
                         spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
                     end
@@ -7148,8 +7156,10 @@ local function handleShopMousepressed(mx, my, button)
                     end
                     return true
                 elseif btn.id == "skip_pack" then
-                    local skippedPack = shopData.currentPackOpening.pack
+                    local skippedOpening = shopData.currentPackOpening
+                    local skippedPack = skippedOpening.pack
                     Shop.skipPack(shopData)
+                    if RewardSystem.completePack(game, shopData, skippedOpening) then saveRunAtSafePoint() end
                     spawnShopFx("sell", { category = "pack", packType = skippedPack.packType, name = skippedPack.name }, btn.x + btn.w / 2, btn.y)
                     return true
                 end
@@ -7163,77 +7173,28 @@ local function handleShopMousepressed(mx, my, button)
         return true
     end
 
-    -- Left-click starts a drag from a consumable; right-click activates it.
+    -- Left click focuses; right click activation remains handled by the input router.
     if button ~= 1 then return true end
     for j = 1, 3 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
-            if game.consumables and game.consumables[j] then
-                shopDrag.active = true
-                shopDrag.isDragging = false
-                shopDrag.itemIndex = nil
-                shopDrag.item = game.consumables[j]
-                shopDrag.sourceKind = "consumable"
-                shopDrag.sourceIndex = j
-                shopDrag.startX, shopDrag.startY = mx, my
-                shopDrag.currentX, shopDrag.currentY = mx, my
-                shopDrag.origX, shopDrag.origY = cx, cy
-                shopDrag.visualX, shopDrag.visualY = cx, cy
-                shopDrag.cardW, shopDrag.cardH = cw, ch
-                shopDrag.tiltX, shopDrag.tiltY = 0, 0
-            end
+            UI.Polish.focusItem(game.consumables and game.consumables[j], "consumable", j, {x=cx,y=cy,w=cw,h=ch})
             return true
         end
     end
-
     for _, btn in ipairs(buttons) do
         if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
             if btn.id:sub(1, 4) == "buy_" then
-                local gIdx = btn.itemIndex
-                local it = shopData.items and shopData.items[gIdx]
-                if it then
-                    shopDrag.active = true
-                    shopDrag.isDragging = false
-                    shopDrag.itemIndex = gIdx
-                    shopDrag.item = it
-                    shopDrag.sourceKind = nil
-                    shopDrag.sourceIndex = nil
-                    shopDrag.startX = mx
-                    shopDrag.startY = my
-                    shopDrag.currentX = mx
-                    shopDrag.currentY = my
-                    shopDrag.origX = btn.x
-                    shopDrag.origY = btn.y
-                    shopDrag.visualX = btn.x
-                    shopDrag.visualY = btn.y
-                    shopDrag.cardW = btn.w
-                    shopDrag.cardH = btn.h
-                    shopDrag.tiltX = 0
-                    shopDrag.tiltY = 0
-                    return true
-                end
+                local item = shopData.items and shopData.items[btn.itemIndex]
+                if item ~= btn.stockItem then return true end -- Reject a hitbox from the previous stock frame.
+                UI.Polish.focusItem(item, "stock", btn.itemIndex, {x=btn.x,y=btn.y,w=btn.w,h=btn.h})
+                return true
             elseif btn.id:sub(1, 6) == "deity_" then
-                local dIdx = btn.deityIndex
-                if game.deities and game.deities[dIdx] then
-                    deityDrag.active = true
-                    deityDrag.isDragging = false
-                    deityDrag.deityIndex = dIdx
-                    deityDrag.startX = mx
-                    deityDrag.startY = my
-                    deityDrag.currentX = mx
-                    deityDrag.currentY = my
-                    deityDrag.origX = btn.x
-                    deityDrag.origY = btn.y
-                    deityDrag.cardW = btn.w
-                    deityDrag.cardH = btn.h
-                    deityDrag.offsetX = btn.x - mx
-                    deityDrag.offsetY = btn.y - my
-                    deityDrag.visualX = btn.x
-                    deityDrag.visualY = btn.y
-                    return true
-                end
+                UI.Polish.focusItem(game.deities and game.deities[btn.deityIndex], "deity", btn.deityIndex,
+                    {x=btn.x,y=btn.y,w=btn.w,h=btn.h})
+                return true
             elseif btn.id == "reroll" then
-                Shop.reroll(shopData, game)
+                UI.Polish.reroll(shopData, game)
                 return true
             elseif btn.id == "open_shop_transfer" then
                 isShopTransferOpen = true
@@ -7335,8 +7296,8 @@ local function debugTeleport(screenId)
                 color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
             })
         end
-        game.gold = (game.gold or 0) + breakdown.totalGold
-        cashOutAnim = RewardSystem.newAnimation(breakdown)
+        local rewardResult = RewardSystem.begin(breakdown, game)
+        cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
         state = "CASH_OUT"
     elseif screenId == "scoring" then
         startBlindCombat(RunManager.getCurrentBlind(game.run))
@@ -7791,18 +7752,7 @@ local function handleModalsMousepressed(mx, my, button)
         local card = getDeckViewerCardAt(mx, my, modalX, modalY)
         if card then
             if state == "shop" and button == 1 then
-                shopDrag.active = true
-                shopDrag.isDragging = false
-                shopDrag.itemIndex = nil
-                shopDrag.item = card
-                shopDrag.sourceKind = "card"
-                shopDrag.sourceIndex = nil
-                shopDrag.startX, shopDrag.startY = mx, my
-                shopDrag.currentX, shopDrag.currentY = mx, my
-                shopDrag.origX, shopDrag.origY = mx - 37, my - 54
-                shopDrag.visualX, shopDrag.visualY = shopDrag.origX, shopDrag.origY
-                shopDrag.cardW, shopDrag.cardH = 74, 108
-                shopDrag.tiltX, shopDrag.tiltY = 0, 0
+                UI.Polish.focusItem(card, "card", nil, UI.Polish.rect(UI, card, {x=mx-37,y=my-54,w=74,h=108}))
                 return true
             end
             inspectCardModal = card
@@ -7827,6 +7777,22 @@ function love.mousepressed(x, y, button)
     if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
     if UI.AbilityUI.press(mx, my, button) then return end
+    if state == "shop" and UI.Polish.busy() then return end
+    if button == 2 and UI.Polish.focus then UI.Polish.clearFocus() end
+    if state == "shop" and button == 1 and not isSettingsOpen and not isPauseMenuOpen
+        and not isHandbookOpen and not isCollectionOpen and not isShopTransferOpen
+        and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
+        local confirm = UI.Polish.button(game)
+        if confirm and mx >= confirm.x and mx <= confirm.x+confirm.w and my >= confirm.y and my <= confirm.y+confirm.h then
+            UI.Polish.confirm(shopData, game, function(action, equipment)
+                if action == "open_socketing" and equipment then
+                    pendingEquipment=equipment;socketingReturnState="shop";state="socketing"
+                end
+            end)
+            return
+        end
+        UI.Polish.clearFocus()
+    end
     if UI.CardPhysics.isLabOpen() then
         UI.CardPhysics.press(mx, my, button)
         return
@@ -7836,7 +7802,7 @@ function love.mousepressed(x, y, button)
         if not btn.invisible and not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w
             and my >= btn.y and my <= btn.y + btn.h then physicsButton = true; break end
     end
-    if not physicsButton then UI.CardPhysics.press(mx, my, button) end
+    if not physicsButton and state ~= "shop" then UI.CardPhysics.press(mx, my, button) end
     if isUiGalleryOpen then
         if button == 1 and mx >= 1152 and mx <= 1248 and my >= 20 and my <= 51 then
             isUiGalleryOpen = false
@@ -7856,7 +7822,7 @@ function love.mousepressed(x, y, button)
                 juice.buttonPressedId = btn.id
                 Sound.play("ui_click")
                 if btn.id == "play" or btn.id == "discard" or btn.id == "fight" or btn.id == "fight_blind"
-                   or btn.id == "reroll" or btn.id == "leave_shop" or btn.id == "btn_select_combat"
+                   or btn.id == "leave_shop" or btn.id == "btn_select_combat"
                    or btn.id == "cashout_continue" or btn.id == "skip_blind" or btn.id == "start_game" then
                     juice.screenShake = math.max(juice.screenShake or 0, 2.5)
                 end
@@ -7979,10 +7945,11 @@ function love.mousepressed(x, y, button)
                         local ok, msg, tag = RunManager.skipCurrentBlind(game.run, game)
                         if ok then
                             local breakdown = RewardSystem.calculate(blind, game, true)
-                            game.gold = (game.gold or 0) + breakdown.totalGold
-                            cashOutAnim = RewardSystem.newAnimation(breakdown)
+                            local rewardResult = RewardSystem.begin(breakdown, game)
+                            cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
                             state = "CASH_OUT"
                             lastActiveState = "CASH_OUT"
+                            saveRunAtSafePoint()
                             Sound.play("coin")
                             return
                         end
@@ -8148,6 +8115,10 @@ function love.mousepressed(x, y, button)
                             Shop.resetReroll(shopData)
                             Shop.refresh(shopData, game)
                             state = "shop"
+                            cashOutAnim.state = "EXIT"
+                            game.pendingVictoryReward = nil
+                            RewardSystem.openNextPack(game, shopData)
+                            saveRunAtSafePoint()
                             lastActiveState = "shop"
                             Sound.play("card_deal")
                             return
@@ -8319,6 +8290,10 @@ function love.mousepressed(x, y, button)
                     Sound.play("card_deal", 1.05)
                     return
                 elseif btn.id == "skip_socket" then
+                    if game.pendingRewardEquipment then
+                        game.pendingRewardEquipment = nil
+                        table.remove(game.rewardPacks, 1)
+                    end
                     pendingEquipment = nil
                     socketingPage = 1
                     socketingMessage = nil
@@ -8340,6 +8315,7 @@ function love.mousepressed(x, y, button)
                     else
                         state = "map"
                     end
+                    if state == "shop" then saveRunAtSafePoint() end
                     return
                 end
             end
@@ -8354,8 +8330,10 @@ function love.mousepressed(x, y, button)
             local pageIndex = deckIndex - firstCard + 1
             local cx, cy, cardW, cardH = getSocketingCardRect(pageIndex)
             if mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH then
+                local before = UI.Polish.snapshot(game)
                 local success, msg = Equipment.attach(c, pendingEquipment)
                 if success then
+                    UI.Polish.changed(UI, game, before, pendingEquipment)
                     -- Sync equipment to persistentDeck if c is not already pc
                     if game.persistentDeck then
                         for _, pc in ipairs(game.persistentDeck) do
@@ -8369,6 +8347,10 @@ function love.mousepressed(x, y, button)
                         end
                     end
                     Sound.play("equip")
+                    if game.pendingRewardEquipment then
+                        game.pendingRewardEquipment = nil
+                        table.remove(game.rewardPacks, 1)
+                    end
                     pendingEquipment = nil
                     socketingPage = 1
                     socketingMessage = nil
@@ -8390,6 +8372,7 @@ function love.mousepressed(x, y, button)
                     else
                         state = "map"
                     end
+                    if state == "shop" then saveRunAtSafePoint() end
                     return
                 else
                     Sound.play("card_deselect")
@@ -8459,6 +8442,9 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if state == "shop" and UI.Polish.busy() then return end
+    if key == "escape" and UI.Polish.focus then UI.Polish.clearFocus();UI.Description.reset();return end
+    if (key == "tab" or key == "b" or key == "h") and UI.Polish.focus then UI.Polish.clearFocus() end
     if UI.AbilityUI.key(key) then return end
     if UI.ScoringFeel.labKeypressed(key, UI) then return end
     UI.CardPhysics.labAction(key, CardEffects)
@@ -8605,6 +8591,10 @@ function love.keypressed(key)
                 Shop.resetReroll(shopData)
                 Shop.refresh(shopData, game)
                 state = "shop"
+                cashOutAnim.state = "EXIT"
+                game.pendingVictoryReward = nil
+                RewardSystem.openNextPack(game, shopData)
+                saveRunAtSafePoint()
                 lastActiveState = "shop"
                 Sound.play("card_deal")
             end
@@ -8785,31 +8775,6 @@ function love.mousereleased(x, y, button)
                         end
                     end
                 end
-            end
-        elseif shopDrag.isDragging and shopDrag.item and shopDrag.itemIndex then
-            local zone = shopDrag.purchaseZone
-            local overDeck = state == "shop" and mx >= zone.x and mx <= zone.x + zone.w
-                and my >= zone.y and my <= zone.y + zone.h
-            -- Reject stale stock and modal transitions before any gold mutation.
-            if overDeck and shopData and not shopData.currentPackOpening
-                and not isDeckViewerOpen and not isSettingsOpen and not isShopTransferOpen
-                and shopData.items[shopDrag.itemIndex] == shopDrag.item then
-                local boughtItem = shopDrag.item
-                local success, msg, eq = Shop.buyItem(shopData, shopDrag.itemIndex, game)
-                if success then
-                    if boughtItem.category ~= "pack" then spawnShopFx("buy", boughtItem, mx, my) end
-                    if msg == "open_socketing" and eq then
-                        pendingEquipment = eq
-                        socketingReturnState = "shop"
-                        state = "socketing"
-                    end
-                else
-                    table.insert(juice.floatingTexts, { text = msg or "Không thể mua!",
-                        color = UI.COLORS.multRed, x = zone.x + zone.w / 2, y = zone.y - 28,
-                        vy = -35, life = 1.2 })
-                end
-            else
-                Sound.play("card_slide")
             end
         end
         shopDrag.active = false

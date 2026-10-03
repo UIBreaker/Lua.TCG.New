@@ -26,32 +26,22 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
     local deityId = (collectionCategory == "jokers" and item.id)
         or (collectionCategory == "packs" and item.isPackContent and item.deityId)
     local deityArt = deityId and UI.getDeityImage(deityId)
-    local dImg = deityArt
+    local consumableArt = UI.getConsumableImage(item)
+    local dImg = consumableArt or deityArt
               or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
               or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
               or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
               or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
-    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityArt then dImg = nil end
+    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityArt and not consumableArt and not UI.illustratedImages[dImg] then dImg = nil end
     if deityArt then
-        UI.drawPatronCard(item, 0, 0, cardW, cardH)
-        if isH then
-            love.graphics.setLineWidth(2.5)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-        end
+        UI.drawPatronCard(item, 0, 0, cardW, cardH, isH)
     elseif dImg then
         love.graphics.setColor(0, 0, 0, 0.35)
         UI.drawRoundedRect("fill", 2, 4, cardW, cardH, 8)
 
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = dImg:getDimensions()
-        love.graphics.draw(dImg, 0, 0, 0, cardW / iw, cardH / ih)
-
-        if isH then
-            love.graphics.setLineWidth(2.5)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
-        end
+        UI.CardFrame.image(dImg, 0, 0, cardW, cardH)
     else
         local itemCol = item.color or { 0.3, 0.4, 0.5, 1 }
         love.graphics.setColor(0, 0, 0, 0.35)
@@ -65,10 +55,6 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
         UI.drawRoundedRect("fill", 0, 0, cardW, 26, 8)
         UI.drawRoundedRect("fill", 0, 16, cardW, 10, 0)
 
-        -- Card Border
-        love.graphics.setLineWidth(isH and 2.5 or 1.5)
-        love.graphics.setColor(isH and UI.COLORS.goldYellow or { itemCol[1], itemCol[2], itemCol[3], 0.8 })
-        UI.drawRoundedRect("line", 0, 0, cardW, cardH, 8)
 
         UI.drawItemEmblem(item, cardW / 2, 69, 19, itemCol)
 
@@ -90,21 +76,29 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
         end
     end
 
+    if not deityArt then UI.drawCardBorder(0, 0, cardW, cardH, isH and UI.COLORS.goldYellow, nil, item) end
     love.graphics.pop()
 end
 
 -- Full-bleed reward face. Actions and names are laid out below the card.
-function Surfaces.fullReward(item,x,y,w,h,packType,hovered)
+function Surfaces.fullReward(item,x,y,w,h,packType,hovered,opacity)
+    if item.faceDown then return UI.drawCardBack(x,y,w,h,item.alpha) end
+    opacity=opacity or 1
     local g=love.graphics;g.push("all")
-    g.setColor(0,0,0,0.45);g.rectangle("fill",x+4,y+7,w,h,8,8)
-    local art=(packType=="arcana" and UI.getEquipmentImage(item.id))
+    g.setColor(0,0,0,0.45*opacity);g.rectangle("fill",x+4,y+7,w,h,8,8)
+    if packType == "buffoon" then
+        UI.drawPatronCard(item,x,y,w,h,hovered)
+        g.pop();return
+    end
+    local art=UI.getConsumableImage(item) or (item.handId and UI.getHandImage(item.handId))
+        or (packType=="arcana" and UI.getEquipmentImage(item.id))
         or (packType=="standard" and UI.getCardImage(item.suit,item.rank or item.rankName))
         or (packType=="buffoon" and UI.getDeityImage(item.id))
         or ((packType=="celestial" or packType=="hand_styles") and UI.getHandImage(item.handId or item.id))
     local backdrop=not art and UI.getPackImage(packType)
     art=art or backdrop
     if art then
-        g.setColor(1,1,1,1);g.draw(art,x,y,0,w/art:getWidth(),h/art:getHeight())
+        g.setColor(1,1,1,opacity);UI.CardFrame.image(art,x,y,w,h)
         if backdrop then
             local col=item.color or UI.COLORS.goldYellow
             g.setColor(col[1],col[2],col[3],0.28);g.rectangle("fill",x,y,w,h)
@@ -115,21 +109,19 @@ function Surfaces.fullReward(item,x,y,w,h,packType,hovered)
         g.setColor(0.12,0.14,0.20,1);g.rectangle("fill",x,y,w,h,8,8)
         UI.drawItemEmblem(item,x+w/2,y+h/2,w*0.25,item.color or UI.COLORS.goldYellow)
     end
-    if hovered then
-        UI.descriptionCandidate=item;g.setColor(0.92,0.78,0.49,0.9);g.setLineWidth(2)
-        g.rectangle("line",x-2,y-2,w+4,h+4,8,8)
-    end
+    if hovered then UI.descriptionCandidate=item end
+    UI.drawCardBorder(x,y,w,h,hovered and UI.COLORS.goldYellow,opacity,item)
     g.pop()
 end
 
 -- Pack reward body: choice/keep buttons remain in the existing gameplay handler.
 function Surfaces.reward(card, cx, drawCY, cW, cH, packType, label, isChoiceHovered)
     if card.faceDown then return UI.drawCardBack(cx, drawCY, cW, cH, card.alpha) end
+    local artwork = UI.getConsumableImage(card) or (packType == "arcana" and UI.getEquipmentImage(card.id))
+    if artwork then return Surfaces.fullReward(card, cx, drawCY, cW, cH, packType, isChoiceHovered) end
     love.graphics.setColor(0.16, 0.20, 0.26, 0.98)
     UI.drawRoundedRect("fill", cx, drawCY, cW, cH, 10)
-    love.graphics.setColor(isChoiceHovered and UI.COLORS.goldYellow or (card.color or { 0.45, 0.55, 0.70, 0.8 }))
-    love.graphics.setLineWidth(isChoiceHovered and 3 or 1.5)
-    UI.drawRoundedRect("line", cx, drawCY, cW, cH, 10)
+    UI.drawCardBorder(cx, drawCY, cW, cH, isChoiceHovered and UI.COLORS.goldYellow, nil, card)
 
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(card.color or UI.COLORS.goldYellow)
@@ -182,14 +174,15 @@ end
 
 function Surfaces.round(item, x, cardY, cardW, cardH, hovered)
     if item.faceDown then return UI.drawCardBack(x, cardY, cardW, cardH, item.alpha) end
+    if UI.getConsumableImage(item) then
+        return Surfaces.fullReward(item, x, cardY, cardW, cardH, nil, hovered)
+    end
     local color = item.color or UI.COLORS.goldYellow
     love.graphics.setColor(0, 0, 0, 0.35)
     UI.drawRoundedRect("fill", x + 3, cardY + 5, cardW, cardH, 12)
     love.graphics.setColor(0.12, 0.16, 0.21, 1)
     UI.drawRoundedRect("fill", x, cardY, cardW, cardH, 12)
-    love.graphics.setLineWidth(hovered and 3 or 2)
-    love.graphics.setColor(color)
-    UI.drawRoundedRect("line", x, cardY, cardW, cardH, 12)
+    UI.drawCardBorder(x, cardY, cardW, cardH, hovered and UI.COLORS.goldYellow, nil, item)
     love.graphics.setFont(UI.fonts.large or UI.fonts.title)
     love.graphics.setColor(color)
     love.graphics.printf(item.icon or "✦", x, cardY + 26, cardW, "center")
@@ -206,7 +199,8 @@ function Surfaces.image(item, x, y, w, h, image)
     if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     if not image then return end
     local iw, ih = image:getDimensions()
-    love.graphics.draw(image, x, y, 0, w / iw, h / ih)
+    UI.CardFrame.image(image, x, y, w, h)
+    UI.drawCardBorder(x,y,w,h,nil,nil,item)
 end
 
 function Surfaces.starter(deckInfo, cardX, cardY, cardW, cardH)
@@ -218,30 +212,26 @@ function Surfaces.preview(inspItem, lcx, lcy, lcw, lch, collectionCategory)
     local deityPreviewId = (collectionCategory == "jokers" and inspItem.id)
         or (collectionCategory == "packs" and inspItem.isPackContent and inspItem.deityId)
     local deityPreview = deityPreviewId and UI.getDeityImage(deityPreviewId)
-    local inspImg = deityPreview
+    local consumableArt = UI.getConsumableImage(inspItem)
+    local inspImg = consumableArt or deityPreview
                  or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
                  or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
                  or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
                  or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
-    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityPreview then inspImg = nil end
+    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityPreview and not consumableArt and not UI.illustratedImages[inspImg] then inspImg = nil end
     if deityPreview then
         UI.drawPatronCard(inspItem, lcx, lcy, lcw, lch)
     elseif inspImg then
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = inspImg:getDimensions()
         require("ui.card_surfaces").image(inspItem, lcx, lcy, lcw, lch, inspImg)
-        love.graphics.setLineWidth(2)
-        love.graphics.setColor(lcol)
-        UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
     else
         love.graphics.setColor(0.16, 0.20, 0.24, 1)
         UI.drawRoundedRect("fill", lcx, lcy, lcw, lch, 10)
         love.graphics.setColor(lcol[1], lcol[2], lcol[3], 0.95)
         UI.drawRoundedRect("fill", lcx, lcy, lcw, 32, 10)
         UI.drawRoundedRect("fill", lcx, lcy + 18, lcw, 14, 0)
-        love.graphics.setLineWidth(2)
-        love.graphics.setColor(lcol)
-        UI.drawRoundedRect("line", lcx, lcy, lcw, lch, 10)
+        UI.drawCardBorder(lcx,lcy,lcw,lch,nil,nil,inspItem)
 
         UI.drawItemEmblem(inspItem, lcx + lcw / 2, lcy + 92, 36, lcol)
     end

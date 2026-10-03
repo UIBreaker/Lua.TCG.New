@@ -1,319 +1,14 @@
 local Monster = require("src.monster")
-local Deities = require("src.deities")
-local Deck = require("src.deck")
-local Rng = require("src.rng")
 
 local RunManager = {}
 
--- 8 Ante per run, 3 Blinds per Ante
-RunManager.MAX_ANTE = 8
+-- 20 campaign stages, 3 mandatory encounters per stage.
+RunManager.MAX_ANTE = 20
 
--- 6 Pacts (Khế Ước) with harsh tradeoffs & Wanted level tracking
--- Unified Skip Pacts (Khế Ước Bỏ Ải): Nhận ngay -> Món nợ -> Thời hạn món nợ
-RunManager.SKIP_PACTS = {
-    {
-        id = "pact_blood_loan",
-        name = "Khoản Vay Máu",
-        icon = "🩸",
-        color = { 0.90, 0.20, 0.20, 1 },
-        instantDesc = "+$15 Vàng vào ngân khố",
-        debtDesc = "-15 Max HP vĩnh viễn",
-        durationDesc = "Toàn bộ ván chơi",
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 15
-            gameState.maxPlayerHp = math.max(10, (gameState.maxPlayerHp or 100) - 15)
-            gameState.playerHp = math.min(gameState.maxPlayerHp, gameState.playerHp or 100)
-            return "+$15 Vàng | Nợ: -15 Max HP cả ván!"
-        end,
-    },
-    {
-        id = "pact_great_hunt",
-        name = "Cuộc Săn Lớn",
-        icon = "🏹",
-        color = { 0.95, 0.60, 0.20, 1 },
-        instantDesc = "+$10 Vàng & 1 Rương Thần Binh",
-        debtDesc = "Quái trận sau x1.5 HP & +30% ATK",
-        durationDesc = "1 trận kế tiếp",
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 10
-            gameState.pendingGreatHunt = true
-            return "+$10 Vàng & Rương | Nợ: Quái trận sau x1.5 HP & +30% ATK!"
-        end,
-    },
-    {
-        id = "pact_forbidden_forge",
-        name = "Lò Rèn Cấm",
-        icon = "⚒️",
-        color = { 0.85, 0.35, 0.95, 1 },
-        instantDesc = "Nhận 1 Trang Bị Huyền Thoại",
-        debtDesc = "+2 Độ Truy Nã (+16% chỉ số Quái)",
-        durationDesc = "Toàn bộ ván chơi",
-        apply = function(gameState)
-            local Equipment = require("src.equipment")
-            if gameState.persistentDeck and #gameState.persistentDeck > 0 then
-                local targetCard = gameState.persistentDeck[1]
-                targetCard.unlockedSockets = math.max(targetCard.unlockedSockets or 1, 2)
-                Equipment.attach(targetCard, Equipment.ITEMS.void_catalyst)
-            end
-            gameState.wantedLevel = (gameState.wantedLevel or 0) + 2
-            return "Đã nhận Trang Bị Huyền Thoại | Nợ: +2 Độ Truy Nã (+16% stats quái)!"
-        end,
-    },
-    {
-        id = "pact_silent_march",
-        name = "Hành Quân Im Lặng",
-        icon = "🤫",
-        color = { 0.45, 0.70, 0.85, 1 },
-        instantDesc = "Nhận 1 Hộ Linh ngẫu nhiên",
-        debtDesc = "Trận kế tiếp bị trừ 1 Lượt Đánh (Hand)",
-        durationDesc = "1 trận kế tiếp",
-        apply = function(gameState)
-            local pool = Deities.getRandomShopPool(gameState.deities or {}, 1, gameState)
-            if pool and pool[1] then
-                Deities.addDeity(gameState, pool[1])
-            end
-            gameState.pendingLostHandNextCombat = true
-            return "Đã nhận Hộ Linh | Nợ: -1 Lượt Đánh trận kế tiếp!"
-        end,
-    },
-    {
-        id = "pact_gravedigger",
-        name = "Giao Kèo Người Đào Mộ",
-        icon = "⚰️",
-        color = { 0.75, 0.35, 0.85, 1 },
-        instantDesc = "Nhận Hộ Linh Người Giữ Mộ Cổ",
-        debtDesc = "Thiêu hủy 2 lá bài Rank thấp nhất",
-        durationDesc = "Ngay lập tức",
-        apply = function(gameState)
-            if gameState.persistentDeck and #gameState.persistentDeck > 3 then
-                local removed = 0
-                for i = #gameState.persistentDeck, 1, -1 do
-                    local c = gameState.persistentDeck[i]
-                    if c and (not c.equipments or #c.equipments == 0) and c.rank <= 6 then
-                        table.remove(gameState.persistentDeck, i)
-                        removed = removed + 1
-                        if removed >= 2 then break end
-                    end
-                end
-            end
-            Deities.addDeity(gameState, Deities.CATALOG.spirit_pebble)
-            return "Đã thỉnh Người Giữ Mộ Cổ | Nợ: Đã thiêu hủy 2 lá bài yếu!"
-        end,
-    },
-    {
-        id = "pact_smuggler_map",
-        name = "Bản Đồ Buôn Lậu",
-        icon = "🗺️",
-        color = { 0.85, 0.75, 0.25, 1 },
-        instantDesc = "+$12 Tiền Vàng tuồn lậu",
-        debtDesc = "Cửa hàng kế tiếp tăng giá +25%",
-        durationDesc = "Shop kế tiếp",
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 12
-            gameState.shopInflation = (gameState.shopInflation or 1.0) * 1.25
-            return "+$12 Vàng | Nợ: Giá hàng Shop kế tiếp tăng 25%!"
-        end,
-    },
-    {
-        id = "pact_bloodless_vow",
-        name = "Lời Thề Không Máu",
-        icon = "🛡️",
-        color = { 0.30, 0.85, 0.50, 1 },
-        instantDesc = "Hồi phục toàn bộ 100% Max HP",
-        debtDesc = "Cấm hồi máu trong 2 trận tiếp theo",
-        durationDesc = "2 trận kế tiếp",
-        apply = function(gameState)
-            gameState.playerHp = gameState.maxPlayerHp or 100
-            gameState.noHealCombatCount = 2
-            return "Hồi đầy HP | Nợ: Không thể hồi máu trong 2 trận kế tiếp!"
-        end,
-    },
-    {
-        id = "pact_blind_gamble",
-        name = "Đánh Cược Mù",
-        icon = "🎲",
-        color = { 0.95, 0.40, 0.30, 1 },
-        instantDesc = "+$20 Vàng & 2 Lượt Reroll miễn phí",
-        debtDesc = "Boss Ante này tăng +30% HP & Cuồng Nộ",
-        durationDesc = "Trận Boss Ante này",
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 20
-            gameState.freeRerolls = (gameState.freeRerolls or 0) + 2
-            gameState.anteBossEnraged = true
-            return "+$20 Vàng & 2 Reroll | Nợ: Boss Ante tăng +30% HP & Cuồng Nộ!"
-        end,
-    },
-}
+-- Retired pools are empty so older save data cannot grant skip rewards.
+RunManager.SKIP_PACTS = {}
+RunManager.TAGS = {}
 
--- Ensure each skip pact has unified desc field for backward compatibility
-for _, p in ipairs(RunManager.SKIP_PACTS) do
-    p.desc = p.instantDesc .. " | Nợ: " .. p.debtDesc .. " (" .. p.durationDesc .. ")"
-end
-
--- 6 Pacts (Khế Ước) with harsh tradeoffs & Wanted level tracking
-RunManager.PACTS = {
-    {
-        id = "pact_blood_loan",
-        name = "Khoản Vay Máu",
-        desc = "Nhận ngay +$15 Vàng, nhưng -15 Max HP vĩnh viễn!",
-        icon = "🩸",
-        color = { 0.90, 0.20, 0.20, 1 },
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 15
-            gameState.maxPlayerHp = math.max(10, (gameState.maxPlayerHp or 100) - 15)
-            gameState.playerHp = math.min(gameState.maxPlayerHp, gameState.playerHp or 100)
-            return "+$15 Vàng, -15 Max HP từ Khoản Vay Máu!"
-        end,
-    },
-    {
-        id = "pact_great_hunt",
-        name = "Cuộc Săn Lớn",
-        desc = "Quái trận sau x1.5 HP & +30% ATK, nhưng thắng thưởng +$10 & 1 Hòm Đồ!",
-        icon = "🏹",
-        color = { 0.95, 0.60, 0.20, 1 },
-        apply = function(gameState)
-            gameState.pendingGreatHunt = true
-            return "Khế Ước: Quái trận sau trâu hơn, nhưng chiến lợi phẩm hậu hĩnh!"
-        end,
-    },
-    {
-        id = "pact_forbidden_forge",
-        name = "Lò Rèn Cấm",
-        desc = "Khảm ngay 1 Trang Bị Huyền Thoại, nhưng tăng +2 Wanted Level (+16% stats Quái)!",
-        icon = "⚒️",
-        color = { 0.85, 0.35, 0.95, 1 },
-        apply = function(gameState)
-            local Equipment = require("src.equipment")
-            local targetCard = (gameState.persistentDeck and gameState.persistentDeck[1])
-            if targetCard then
-                targetCard.unlockedSockets = math.max(targetCard.unlockedSockets or 1, 2)
-                Equipment.attach(targetCard, Equipment.ITEMS.void_catalyst)
-            end
-            gameState.wantedLevel = (gameState.wantedLevel or 0) + 2
-            return "Đã khảm Xúc Tác Hư Không, Wanted Level tăng lên " .. gameState.wantedLevel .. "!"
-        end,
-    },
-    {
-        id = "pact_fog_shortcut",
-        name = "Đường Tắt Mù Sương",
-        desc = "Bỏ qua trận đánh; trận kế tiếp bắt đầu với 0 Giáp và Quái có sẵn 2 tầng Cuồng Nộ!",
-        icon = "🌫️",
-        color = { 0.50, 0.70, 0.80, 1 },
-        apply = function(gameState)
-            gameState.fogShortcutActive = true
-            return "Đã đi Đường Tắt Mù Sương! Trận kế tiếp sẽ vô cùng cam go."
-        end,
-    },
-    {
-        id = "pact_resurrection",
-        name = "Thỏa Ước Phục Sinh",
-        desc = "Nhận 1 lần hồi sinh khi chết (30% HP), nhưng Quái Ante này tăng +20% HP!",
-        icon = "☥",
-        color = { 0.30, 0.85, 0.50, 1 },
-        apply = function(gameState)
-            gameState.hasResurrectionPact = true
-            gameState.anteMonsterHpMod = (gameState.anteMonsterHpMod or 1.0) * 1.2
-            return "Đã lập Thỏa Ước Phục Sinh: Hồi sinh 1 lần, nhưng quái Ante tăng +20% HP!"
-        end,
-    },
-    {
-        id = "pact_ambush",
-        name = "Phục Kích",
-        desc = "Bắt đầu trận với 5 lá trên tay thay vì 3, nhưng mất quyền Đổi Bài (0 Discard) trận đó!",
-        icon = "🗡️",
-        color = { 0.95, 0.85, 0.25, 1 },
-        apply = function(gameState)
-            gameState.ambushActive = true
-            return "Kích hoạt Phục Kích: Khởi đầu với 5 lá trên tay, nhưng không thể đổi bài!"
-        end,
-    },
-}
-
--- Legacy Tag reward pool for skipping Blinds (kept for backwards compatibility)
-RunManager.TAGS = {
-    {
-        id = "tag_gold_bag",
-        name = "Túi Vàng Cực Lớn",
-        desc = "Nhận ngay +$8 Vàng vào kho bạc!",
-        icon = "💰",
-        color = { 0.95, 0.82, 0.22, 1 },
-        apply = function(gameState)
-            gameState.gold = (gameState.gold or 0) + 8
-            return "+$8 Vàng từ Túi Vàng!"
-        end,
-    },
-    {
-        id = "tag_card_pack",
-        name = "Gói Quân Binh Miễn Phí",
-        desc = "Thêm ngay 1 lá bài quý ngẫu nhiên vào bộ bài!",
-        icon = "🃏",
-        color = { 0.35, 0.75, 0.95, 1 },
-        apply = function(gameState)
-            local userFaction = gameState.selectedFaction or gameState.selectedSuit or "aurelia"
-            local card = Deck.createRewardCard(userFaction)
-            Deck.addCardToDeck(gameState, card)
-            return "Đã nhận lá " .. card.rankName .. (card.suitSymbol or "") .. " vào bộ bài!"
-        end,
-    },
-    {
-        id = "tag_rare_deity",
-        name = "Hộ Linh Xuất Hiện",
-        desc = "Nhận ngay 1 Hộ Linh ngẫu nhiên trợ chiến!",
-        icon = "👑",
-        color = { 0.95, 0.45, 0.25, 1 },
-        apply = function(gameState)
-            local pool = Deities.getRandomShopPool(gameState.deities or {}, 1, gameState)
-            if pool and pool[1] then
-                Deities.addDeity(gameState, pool[1])
-                return "Đã nhận Hộ Linh: " .. pool[1].name .. "!"
-            end
-            return "Đã nhận Hộ Linh!"
-        end,
-    },
-    {
-        id = "tag_free_equipment",
-        name = "Rương Rèn Thần Binh",
-        desc = "Nhận ngay 1 món Trang Bị / Ngọc Khảm ngẫu nhiên!",
-        icon = "💎",
-        color = { 0.85, 0.45, 0.95, 1 },
-        apply = function(gameState)
-            local Equipment = require("src.equipment")
-            local eq = Equipment.getRandomEquipment()
-            if gameState.persistentDeck and #gameState.persistentDeck > 0 and eq then
-                local targetCard = gameState.persistentDeck[1]
-                targetCard.unlockedSockets = math.max(targetCard.unlockedSockets or 1, eq.slotsNeeded or 1)
-                Equipment.attach(targetCard, eq)
-                return "Đã khảm " .. eq.name .. " vào lá " .. targetCard.rankName .. (targetCard.suitSymbol or "")
-            end
-            return "Đã nhận trang bị mới!"
-        end,
-    },
-    {
-        id = "tag_free_reroll",
-        name = "Xúc Xắc Thần Bí (D6)",
-        desc = "Shop kế tiếp nhận 2 lượt Gieo lại (Reroll) miễn phí!",
-        icon = "🎲",
-        color = { 0.45, 0.85, 0.45, 1 },
-        apply = function(gameState)
-            gameState.freeRerolls = (gameState.freeRerolls or 0) + 2
-            return "+2 Lượt Reroll miễn phí cho Shop tiếp theo!"
-        end,
-    },
-    {
-        id = "tag_heal",
-        name = "Bình Sinh Mệnh",
-        desc = "Hồi phục ngay +30 HP sinh lực!",
-        icon = "🧪",
-        color = { 0.25, 0.85, 0.45, 1 },
-        apply = function(gameState)
-            local maxHp = gameState.maxPlayerHp or 100
-            gameState.playerHp = math.min(maxHp, (gameState.playerHp or 100) + 30)
-            return "Đã hồi phục +30 HP sinh lực!"
-        end,
-    },
-}
-
--- Boss Debuffs pool
 RunManager.BOSS_DEBUFFS = {
     -- Faction Locks
     lock_aurelia = {
@@ -443,6 +138,7 @@ RunManager.BOSS_DEBUFFS = {
     },
 }
 
+local Expedition = require("src.expedition")
 local BossAbilities = require("src.boss_abilities")
 for _, d in pairs(RunManager.BOSS_DEBUFFS) do BossAbilities.attach(d) end
 for id, d in pairs(BossAbilities.newDefinitions) do RunManager.BOSS_DEBUFFS[id]=BossAbilities.attach(d) end
@@ -471,13 +167,6 @@ function RunManager.calculateBlindHp(ante, blindType)
     return smallHp
 end
 
--- Generate a random pact for small / big blind skip
-local function getRandomTag()
-    local pool = RunManager.SKIP_PACTS
-    local idx = Rng.random(#pool)
-    return pool[idx]
-end
-
 -- Generate 3 blinds for a given Ante
 function RunManager.generateAnteBlinds(ante, starterFaction)
     local a = math.max(1, ante or 1)
@@ -490,8 +179,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
     local bKey = RunManager.BOSS_KEYS[((a - 1) % #RunManager.BOSS_KEYS) + 1]
     local bossDebuff = RunManager.BOSS_DEBUFFS[bKey] or RunManager.BOSS_DEBUFFS.the_needle
 
-    local smallPact = getRandomTag()
-    local bigPact = getRandomTag()
+    bossDebuff = Expedition.bossData(a, Monster.DISRUPTIVE_BOSSES, bossDebuff)
 
     local blinds = {
         {
@@ -502,10 +190,8 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
             ante = a,
             hp = smallHp,
             baseReward = 3,
-            canSkip = true,
+            canSkip = false,
             status = "upcoming", -- "upcoming", "current", "completed", "skipped"
-            skipPact = smallPact,
-            tag = smallPact,
             color = { 0.25, 0.65, 0.95, 1 },
             icon = "⚔️",
         },
@@ -517,10 +203,8 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
             ante = a,
             hp = bigHp,
             baseReward = 4,
-            canSkip = true,
+            canSkip = false,
             status = "upcoming",
-            skipPact = bigPact,
-            tag = bigPact,
             color = { 0.95, 0.60, 0.20, 1 },
             icon = "👹",
         },
@@ -540,6 +224,14 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
         },
     }
 
+    for i, blind in ipairs(blinds) do
+        local identity = Expedition.decorate({isBoss=i==3, isElite=i==2, bossData=blind.debuff}, a, (a-1)*3+i)
+        if identity.human then
+            blind.name, blind.title, blind.color = identity.name, identity.title, identity.color
+            blind.cardSuit, blind.cardRank, blind.kingdom = identity.cardSuit, identity.cardRank, identity.kingdom
+        end
+        blind.stage, blind.regionId = a, Expedition.region(a).id
+    end
     blinds[1].status = "current"
     return blinds
 end
@@ -571,7 +263,7 @@ function RunManager.getCurrentBlind(run)
 end
 
 -- Create Monster instance for the current Blind
-function RunManager.createBlindMonster(blind, gameState)
+function RunManager.createBlindMonster(blind, gameState, preview)
     local isBoss = (blind.type == "boss")
     local isElite = (blind.type == "big")
     local encounterCount = (blind.ante - 1) * 3 + blind.index
@@ -585,7 +277,7 @@ function RunManager.createBlindMonster(blind, gameState)
         maxHp = blind.hp,
         damageLagHp = blind.hp,
         attack = atk,
-        attackSpeed = Monster.rollAttackSpeed(encounterCount),
+        attackSpeed = preview and 1 or Monster.rollAttackSpeed(encounterCount),
         intent = {
             type = "attack",
             value = atk,
@@ -602,26 +294,12 @@ function RunManager.createBlindMonster(blind, gameState)
         m.bossData = blind.debuff
     end
 
-    return m
+    return Expedition.decorate(m, blind.ante, encounterCount)
 end
 
--- Skip current blind (Small / Big)
-function RunManager.skipCurrentBlind(run, gameState)
-    local blind = RunManager.getCurrentBlind(run)
-    if not blind or not blind.canSkip then
-        return false, "Ải này không thể bỏ qua!"
-    end
-
-    blind.status = "skipped"
-    run.stats.blindsSkipped = run.stats.blindsSkipped + 1
-
-    local pact = blind.skipPact or blind.tag
-    local tagMsg = ""
-    if pact and pact.apply then
-        tagMsg = pact.apply(gameState)
-    end
-
-    return true, tagMsg, pact
+-- Compatibility guard for old callers: skipping never changes the run.
+function RunManager.skipCurrentBlind()
+    return false, "Mọi trận đấu phải được hoàn thành."
 end
 
 -- Complete current blind (on combat victory)
@@ -701,9 +379,11 @@ function RunManager.completeCurrentBlind(run, gameState)
     local blind = RunManager.getCurrentBlind(run)
     local rewardEarned = false
     if blind then
+        if blind.status == "completed" then return false end
         blind.status = "completed"
         run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
         local completedAnte = blind.ante or run.ante
+        if completedAnte == 20 and blind.type == "boss" then run.travelPermit = true end
         local isAnteBoss = (blind.index == 3) or (run.currentBlindIndex == 3)
         run.stats.roundRewardAntes = run.stats.roundRewardAntes or {}
         if isAnteBoss and completedAnte % 4 == 0 and not run.stats.roundRewardAntes[completedAnte] then
@@ -722,9 +402,11 @@ function RunManager.completeCurrentBlind(run, gameState)
 end
 
 -- Advance to the next Blind directly or after leaving the Shop
--- Returns: true if game continues, false + "victory" if Ante 8 Boss defeated!
+-- Returns: true if game continues, false + "victory" if Stage 20 Boss defeated!
 function RunManager.advanceBlind(run, gameState)
     if not run then return false end
+    local current = RunManager.getCurrentBlind(run)
+    if not current or current.status ~= "completed" then return false, "incomplete" end
     run.shopsVisitedInAnte = (run.shopsVisitedInAnte or 0) + 1
 
     if run.currentBlindIndex < 3 then
@@ -733,7 +415,7 @@ function RunManager.advanceBlind(run, gameState)
         return true, "next_blind"
     else
         -- Finished Boss Blind of the current Ante
-        if run.ante >= run.maxAnte and not run.endless then
+        if run.ante >= RunManager.MAX_ANTE and not run.endless then
             run.victory = true
             return false, "victory"
         else

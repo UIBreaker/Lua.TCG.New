@@ -270,6 +270,9 @@ function P.changed(UI,game,before,source,sourceRect)
     end
 end
 function P.renderItem(UI,item,x,y,w,h)
+    if UI.getConsumableImage(item) or (item.handId and UI.getHandImage(item.handId)) then
+        return require("ui.card_surfaces").fullReward(item,x,y,w,h,item.packType,false)
+    end
     if item.rank then return UI.drawCard(item,x,y,w,h) end
     if require("src.deities").CATALOG[item.id] then return UI.drawPatronCard(item,x,y,w,h) end
     if item.category~="pack" and not item.card and not item.deity and not item.equipment
@@ -306,7 +309,7 @@ function P.draw(UI,game,buttons,mx,my)
         local size=1+math.sin(clamp(t/0.36)*math.pi)*(job.kind=="sell" and -0.04 or 0.06)-flight*0.55
         g.push("all");g.translate(x,y);g.rotate(flight*0.12+(job.kind=="sell" and math.sin(t*25)*0.008*(1-t) or 0));g.scale(size)
         if job.kind=="sell" then
-            g.setColor(1,0.77,0.25,math.max(0,1-t*4));g.rectangle("line",-r.w/2-2,-r.h/2-2,r.w+4,r.h+4,5,5)
+            UI.drawCardBorder(-r.w/2,-r.h/2,r.w,r.h,{1,0.77,0.25,math.max(0,1-t*4)})
             P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.18)/0.55),{1,0.77,0.25},function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
         else drawItem(job.item,-r.w/2,-r.h/2,r.w,r.h) end
         g.pop()
@@ -335,7 +338,7 @@ function P.draw(UI,game,buttons,mx,my)
         g.setColor(c[1],c[2],c[3],1-p);g.circle("fill",x,y,5)
         local contact=math.max(0,a.age-Config.application*0.6)
         g.setColor(c[1],c[2],c[3],a.hit and math.max(0,0.6-contact*3) or 0.22)
-        g.setLineWidth(2);g.rectangle("line",r.x-3,r.y-3,r.w+6,r.h+6,5,5)
+        UI.drawCardBorder(r.x,r.y,r.w,r.h,{c[1],c[2],c[3],a.hit and math.max(0,0.6-contact*3) or 0.22})
         if a.hit and contact<0.10 then
             g.setColor(c[1],c[2],c[3],0.08*(1-contact/0.10));g.rectangle("fill",r.x,r.y,r.w,r.h,5,5)
         end

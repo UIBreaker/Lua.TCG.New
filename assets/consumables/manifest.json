@@ -1,0 +1,173 @@
+{
+  "mode": "built-in image_gen",
+  "cards": [
+    {
+      "id": "spec_familiar",
+      "name": "Familiar / Linh Thú",
+      "subject": "a majestic spectral owl conjuring three jeweled royal playing cards as a fourth card dissolves; violet magic",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Familiar / Linh Thú. Subject and actual ability: a majestic spectral owl conjuring three jeweled royal playing cards as a fourth card dissolves; violet magic. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_familiar.png"
+    },
+    {
+      "id": "spec_grim",
+      "name": "Grim / Tử Thần",
+      "subject": "hooded reaper conjuring two radiant ace cards with gemstone fittings from one sacrificed card; crimson",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Grim / Tử Thần. Subject and actual ability: hooded reaper conjuring two radiant ace cards with gemstone fittings from one sacrificed card; crimson. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_grim.png"
+    },
+    {
+      "id": "spec_incantation",
+      "name": "Incantation / Chú Thuật",
+      "subject": "four numbered cards emerging from a burning sacrificial card around a ritual candle and open spellbook; amber",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Incantation / Chú Thuật. Subject and actual ability: four numbered cards emerging from a burning sacrificial card around a ritual candle and open spellbook; amber. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_incantation.png"
+    },
+    {
+      "id": "spec_cryptid",
+      "name": "Cryptid / Dị Thể",
+      "subject": "one enchanted playing card reflected into two identical spectral duplicates by a mysterious blue creature; icy blue",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Cryptid / Dị Thể. Subject and actual ability: one enchanted playing card reflected into two identical spectral duplicates by a mysterious blue creature; icy blue. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_cryptid.png"
+    },
+    {
+      "id": "spec_immolate",
+      "name": "Immolate / Thiêu Rụi",
+      "subject": "five playing cards burning into a fountain of gold coins in a ritual brazier; orange fire",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Immolate / Thiêu Rụi. Subject and actual ability: five playing cards burning into a fountain of gold coins in a ritual brazier; orange fire. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_immolate.png"
+    },
+    {
+      "id": "spec_sigil",
+      "name": "Sigil / Ấn Ký",
+      "subject": "four different suit symbols drawn into a glowing sigil and transformed into matching suit cards; emerald",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Sigil / Ấn Ký. Subject and actual ability: four different suit symbols drawn into a glowing sigil and transformed into matching suit cards; emerald. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_sigil.png"
+    },
+    {
+      "id": "spec_ouija",
+      "name": "Ouija / Cầu Cơ",
+      "subject": "haunted planchette and spectral eye aligning a fan of cards to one identical rank, one card vanishing; purple",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ouija / Cầu Cơ. Subject and actual ability: haunted planchette and spectral eye aligning a fan of cards to one identical rank, one card vanishing; purple. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_ouija.png"
+    },
+    {
+      "id": "spec_black_hole",
+      "name": "Black Hole / Hố Đen",
+      "subject": "cosmic black hole surrounded by nine ascending constellations of battle formations; indigo gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Black Hole / Hố Đen. Subject and actual ability: cosmic black hole surrounded by nine ascending constellations of battle formations; indigo gold. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spec_black_hole.png"
+    },
+    {
+      "id": "spell_aura",
+      "name": "Aura / Hào Quang",
+      "subject": "guardian spirit crowned by silver foil, violet hologram and rainbow halos; gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Aura / Hào Quang. Subject and actual ability: guardian spirit crowned by silver foil, violet hologram and rainbow halos; gold. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spell_aura.png"
+    },
+    {
+      "id": "spell_ectoplasm",
+      "name": "Ectoplasm / Ngoại Chất",
+      "subject": "green ghost escaping an inverted black guardian card and opening an extra spectral slot as a hand card fades",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ectoplasm / Ngoại Chất. Subject and actual ability: green ghost escaping an inverted black guardian card and opening an extra spectral slot as a hand card fades. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spell_ectoplasm.png"
+    },
+    {
+      "id": "spell_ankh",
+      "name": "Ankh / Thánh Giá",
+      "subject": "golden Egyptian ankh duplicating a guardian spirit into twins while other spectral figures dissolve",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ankh / Thánh Giá. Subject and actual ability: golden Egyptian ankh duplicating a guardian spirit into twins while other spectral figures dissolve. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spell_ankh.png"
+    },
+    {
+      "id": "spell_hex",
+      "name": "Hex / Lời Nguyền",
+      "subject": "a guardian spirit in a rainbow curse crystal with other spirits crumbling around it; magenta",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Hex / Lời Nguyền. Subject and actual ability: a guardian spirit in a rainbow curse crystal with other spirits crumbling around it; magenta. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "spell_hex.png"
+    },
+    {
+      "id": "seal_blood",
+      "name": "Ấn Huyết",
+      "subject": "blood-red wax seal shaped like a drop, two echoing playing cards linked to a bleeding ritual chalice",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Huyết. Subject and actual ability: blood-red wax seal shaped like a drop, two echoing playing cards linked to a bleeding ritual chalice. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_blood.png"
+    },
+    {
+      "id": "seal_prophecy",
+      "name": "Ấn Tiên Tri",
+      "subject": "blue wax seal with an oracle eye, a crystal orb revealing two shadowy future monster attacks",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Tiên Tri. Subject and actual ability: blue wax seal with an oracle eye, a crystal orb revealing two shadowy future monster attacks. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_prophecy.png"
+    },
+    {
+      "id": "seal_ashen",
+      "name": "Ấn Tro Tàn",
+      "subject": "ash-gray wax seal on a burning card, a phoenix-shaped blast striking a monster silhouette",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Tro Tàn. Subject and actual ability: ash-gray wax seal on a burning card, a phoenix-shaped blast striking a monster silhouette. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_ashen.png"
+    },
+    {
+      "id": "seal_bounty",
+      "name": "Ấn Truy Nã",
+      "subject": "gold wax seal on a bounty scroll, a defeated beast silhouette and gold reward coins",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Truy Nã. Subject and actual ability: gold wax seal on a bounty scroll, a defeated beast silhouette and gold reward coins. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_bounty.png"
+    },
+    {
+      "id": "seal_anchor",
+      "name": "Ấn Neo",
+      "subject": "teal anchor wax seal anchoring a playing card to the front of a spectral deck in a storm",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Neo. Subject and actual ability: teal anchor wax seal anchoring a playing card to the front of a spectral deck in a storm. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_anchor.png"
+    },
+    {
+      "id": "seal_purifying",
+      "name": "Ấn Thanh Tẩy",
+      "subject": "ivory wax seal radiating cleansing light that breaks dark thorn chains around a guardian card",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Ấn Thanh Tẩy. Subject and actual ability: ivory wax seal radiating cleansing light that breaks dark thorn chains around a guardian card. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "seal_purifying.png"
+    },
+    {
+      "id": "edition_foil",
+      "name": "FOIL",
+      "subject": "silver metallic playing card reflecting sharp glinting blades of light; icy silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: FOIL. Subject and actual ability: silver metallic playing card reflecting sharp glinting blades of light; icy silver. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "edition_foil.png"
+    },
+    {
+      "id": "edition_holographic",
+      "name": "HOLOGRAPHIC",
+      "subject": "violet holographic playing card radiating layered luminous geometric projections and energy rings",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: HOLOGRAPHIC. Subject and actual ability: violet holographic playing card radiating layered luminous geometric projections and energy rings. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "edition_holographic.png"
+    },
+    {
+      "id": "edition_polychrome",
+      "name": "POLYCHROME",
+      "subject": "iridescent prism playing card amplifying a rainbow aura through luminous prismatic crystals",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: POLYCHROME. Subject and actual ability: iridescent prism playing card amplifying a rainbow aura through luminous prismatic crystals. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "edition_polychrome.png"
+    },
+    {
+      "id": "cons_evolution",
+      "name": "Tiến Hóa",
+      "subject": "one enchanted card ascending three luminous steps, evolving from a faint spirit to a powerful crowned guardian; purple gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Tiến Hóa. Subject and actual ability: one enchanted card ascending three luminous steps, evolving from a faint spirit to a powerful crowned guardian; purple gold. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "cons_evolution.png"
+    },
+    {
+      "id": "cons_speed_single",
+      "name": "Tăng Tốc Đơn",
+      "subject": "one enchanted playing card hurtling forward like a blue lightning spear, sharp motion trails",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Tăng Tốc Đơn. Subject and actual ability: one enchanted playing card hurtling forward like a blue lightning spear, sharp motion trails. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "cons_speed_single.png"
+    },
+    {
+      "id": "cons_speed_team",
+      "name": "Tăng Tốc Đội",
+      "subject": "a squadron of enchanted playing cards surging forward together in synchronized emerald lightning trails",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Reference style: polished detailed anime fantasy illustration, dramatic glowing magic, gemstone and metal materials, sharp linework like existing SPN/ITM cards. Card identity: Tăng Tốc Đội. Subject and actual ability: a squadron of enchanted playing cards surging forward together in synchronized emerald lightning trails. Fill the entire rectangular image edge to edge with scene, no blank margins or external background, no frame, no lettering or numbers or watermark. Strong central silhouette readable at thumbnail size, elaborate atmospheric environment, premium illustrated collectible artwork.",
+      "file": "cons_speed_team.png"
+    }
+  ]
+}

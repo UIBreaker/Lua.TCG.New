@@ -39,6 +39,10 @@ local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
 local DeathVFX = require("src.death_vfx")
 local EnemyArt = require("src.enemy_art")
+local EnemyGroup = require("src.enemy_group")
+local EnemyFormation = require("ui.enemy_formation")
+local Expedition = require("src.expedition")
+local ExpeditionSelect = require("ui.expedition_select")
 UI.ChestChoices = require("ui.chest_choices")
 local Layout = require("ui.layout")
 local Gallery = require("ui.gallery")
@@ -54,13 +58,20 @@ local Persistence = require("src.persistence")
 local Rng = require("src.rng")
 local GameState = require("src.game_state")
 local Combat = require("src.combat")
+local EnemyAttack = require("src.enemy_attack_presentation")
 
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-hand-drag-select" then isCaptureMode = true end
+    if a == "--test-expedition" then isCaptureMode = true end
+    if a == "--test-enemy-attacks" then isCaptureMode = true end
+    if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
     if a == "--test-shop-chest" then isCaptureMode = true end
+    if a == "--test-consumable-art" then isCaptureMode = true end
+    if a == "--test-illustrated-art" then isCaptureMode = true end
     if a == "--test-chest-vfx" then isCaptureMode = true; chestAnimationCaptureMode = true end
     if a == "--test-death-vfx" then isCaptureMode = true end
     if a == "--test-hand-vfx-combat" or a == "--test-hand-vfx" or a == "--test-hd2d" or a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
@@ -90,7 +101,7 @@ local mainCanvas = nil
 -- Run data
 local game = GameState.new("red_deck")
 
-local pendingCombatNode = nil -- For Encounter / Skip Blind modal
+local pendingCombatNode = nil -- For encounter preview
 local cashOutAnim = nil -- For Cash Out Modal Breakdown
 local shopData = nil
 local chestRewards = {}
@@ -259,6 +270,9 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
     if c then
         cy = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + j * 0.9) * 2
         local isHover = (mx >= cx and mx <= cx + conSlotW and my >= cy and my <= cy + conSlotH)
+        if UI.getConsumableImage(c) or (c.handId and UI.getHandImage(c.handId)) then
+            return require("ui.card_surfaces").fullReward(c, cx, cy, conSlotW, conSlotH, c.packType, isHover)
+        end
         if isHover then
             UI.descriptionCandidate = c cy = cy - 2 end
         if not UI.drawSlot(isHover and "hover" or "occupied", "consumable", cx, cy, conSlotW, conSlotH) then
@@ -266,7 +280,7 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
             love.graphics.setLineWidth(isHover and 2 or 1.5)
             love.graphics.setColor(c.color or UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", cx, cy, conSlotW, conSlotH, 6)
+            UI.drawCardBorder(cx, cy, conSlotW, conSlotH, isHover and UI.COLORS.goldYellow)
         end
 
         -- Icon
@@ -311,6 +325,15 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     g.scale(scale)
     g.translate(-cardW / 2, -cardH / 2)
     UI.CardPhysics.capture(c, 0, 0, cardW, cardH)
+    local artwork = UI.getConsumableImage(c) or (c.handId and UI.getHandImage(c.handId))
+    if artwork or c.category == "stored_card" or c.category == "stored_equipment" then
+        local item = c.card or (c.equipmentId and Equipment.ITEMS[c.equipmentId]) or c
+        require("ui.card_surfaces").fullReward(item, 0, 0, cardW, cardH,
+            c.card and "standard" or (c.equipmentId and "arcana" or c.packType), hovered, opacity)
+        g.pop()
+        if hovered then UI.descriptionCandidate = c end
+        return
+    end
     g.setColor(0, 0, 0, 0.45 * opacity)
     UI.drawRoundedRect("fill", 3, 4, cardW, cardH, 6)
     g.setColor(0.055, 0.085, 0.09, 0.98 * opacity)
@@ -319,7 +342,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     UI.drawRoundedRect("fill", 3, 3, cardW - 6, 30, 4)
     g.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * opacity)
     g.setLineWidth(hovered and 2 or 1.25)
-    UI.drawRoundedRect("line", 0.5, 0.5, cardW - 1, cardH - 1, 6)
+    UI.drawCardBorder(0, 0, cardW, cardH, hovered and UI.COLORS.goldYellow, opacity)
     g.setFont(UI.fonts.medium)
     g.setColor(1, 1, 1, opacity)
     g.printf(c.icon or "✦", 3, 6, cardW - 6, "center")
@@ -774,7 +797,7 @@ local function startNewGame(chosenDeck)
     -- 20-floor map remains available to screenshot/dev tooling only.
     game.map = nil
 
-    -- Initialize Balatro Run Loop (8 Ante, 3 Blinds per Ante)
+    -- Initialize expedition campaign (20 stages, 3 encounters per stage).
     game.run = RunManager.newRun(game.selectedFaction)
     state = "BLIND_SELECT"
     hasRunStarted = true
@@ -838,6 +861,75 @@ local function toggleCardSelection(index)
     syncCardSelections()
 end
 
+local function handInputBlocked()
+    return state ~= "playing" or anim.enemyTurn or UI.AbilityUI.current
+        or isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isCollectionOpen
+        or isDeckViewerOpen or inspectCardModal or isDebugOpen or isUiGalleryOpen
+        or UI.ScoringFeel.labOpen or UI.CardPhysics.isLabOpen()
+        or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy())
+end
+
+local function selectHandDragCard(index)
+    local card = game.hand[index]
+    if not card or handDrag.visited[card] then return end
+    handDrag.visited[card] = true
+    if (card.selected == true) == handDrag.selecting then return end
+    if handDrag.selecting and #game.selectedIndices >= getMaxSelectableCards() then
+        if not handDrag.limitNotified then
+            handDrag.limitNotified = true
+            table.insert(anim.floatingTexts, {
+                text = "Tối đa " .. getMaxSelectableCards() .. " lá",
+                color = UI.COLORS.goldYellow, x = UI.BATTLE_CENTER_X or 640,
+                y = 405, alpha = 1.2, scale = 0.65,
+            })
+        end
+        return
+    end
+    toggleCardSelection(index)
+    card.selectPulse = 1
+    CardEffects.triggerSelectPulse(card)
+end
+
+local function sweepHandSelection(mx, my)
+    local fromX, fromY = handDrag.currentX, handDrag.currentY
+    local steps = math.max(1, math.ceil(math.max(math.abs(mx - fromX), math.abs(my - fromY)) / 4))
+    -- Sample the whole mouse path so a fast swipe cannot skip intervening cards.
+    for step = 1, steps do
+        local x, y = fromX + (mx - fromX) * step / steps, fromY + (my - fromY) * step / steps
+        for i = #handDrag.hitRects, 1, -1 do
+            local rect = handDrag.hitRects[i]
+            if x >= rect.x and x <= rect.right and y >= rect.y and y <= rect.bottom then
+                selectHandDragCard(i)
+                break
+            end
+        end
+    end
+    handDrag.currentX, handDrag.currentY = mx, my
+end
+
+local function beginHandDrag(mx, my, index, reorder)
+    handDrag.active, handDrag.isDragging = true, false
+    handDrag.cardIndex = index
+    handDrag.startX, handDrag.startY = mx, my
+    handDrag.currentX, handDrag.currentY = mx, my
+    handDrag.mode = reorder and "reorder" or "select"
+    handDrag.selecting = not (index and game.hand[index].selected)
+    handDrag.visited, handDrag.hitRects, handDrag.limitNotified = {}, {}, false
+    for i, card in ipairs(game.hand) do
+        local x, y, w, h = getHandCardPosition(i, #game.hand)
+        handDrag.hitRects[i] = {
+            x = x - 4, right = x + w + 4,
+            y = math.min(y - 56, card.visualY or y),
+            bottom = math.max(y + h + 8, (card.visualY or y) + h),
+        }
+    end
+    if not reorder then
+        -- Selection never picks up a card or waits for a direction threshold.
+        UI.CardPhysics.release()
+        if index then selectHandDragCard(index) end
+    end
+end
+
 local function beginPlayerDefeat(played)
     if state == "defeating" then return end
     DeathVFX.startPlayer(UI.BATTLE_CENTER_X, Renderer.quality)
@@ -856,7 +948,7 @@ end
 
 function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
     if not actualDamage or actualDamage <= 0 then return end
-    local cx, cy = UI.BATTLE_CENTER_X, 270
+    local cx, cy = (game.monster and game.monster.screenX) or UI.BATTLE_CENTER_X, 270
     local color = isTrueDamage and { 1, 0.30, 0.46, 1 } or UI.COLORS.hpRed
     local heavy = defeated or actualDamage >= (game.monster.maxHp or math.huge) * 0.30
     spawnSparks(cx, cy, heavy and 42 or 28, color)
@@ -1467,7 +1559,7 @@ end
 local function applyPendingEvolutionAt(mx, my, currentState)
     if not pendingEvolutionCard then return false end
     local maxSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    for i = maxSlots, 1, -1 do
+    for i = 1, maxSlots do
         local x, y, w, h = getDeitySlotRect(i, currentState)
         local deity = game.deities and game.deities[i]
         if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
@@ -1507,7 +1599,7 @@ local function applyPendingEditionAt(mx, my, currentState)
     if not consumableIndex then pendingEditionCard = nil; return true end
 
     local maxSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    for i = maxSlots, 1, -1 do
+    for i = 1, maxSlots do
         local x, y, w, h = getDeitySlotRect(i, currentState)
         local deity = game.deities and game.deities[i]
         if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
@@ -1588,7 +1680,33 @@ local function applyPendingSpeedAt(mx, my)
     return false
 end
 
+local function startEnemyAttack(phase, speed, done, played)
+    anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
+        local heavy = hit.damage >= 8
+        screenShake = math.max(screenShake or 0, heavy and 11 or 6)
+        anim.hitStop = heavy and 0.095 or 0.065
+        anim.screenFlash, anim.screenDistortion = 0.12, 0.16
+        anim.impactFlash = 0.24
+        local hitX = enemy.screenX or UI.BATTLE_CENTER_X
+        anim.impactX, anim.impactY, anim.impactColor = hitX, 454, UI.COLORS.hpRed
+        spawnSparks(hitX, 454, heavy and 20 or 12, UI.COLORS.hpRed)
+        Sound.play(heavy and "damage_heavy" or "damage_hit", 0.78)
+        table.insert(anim.floatingTexts, {
+            text = (hit.blocked and "ĐÒN BỊ CHẶN" or ("-" .. hit.damage .. " HP"))
+                .. (hit.absorbed > 0 and (" • GIÁP ĐỠ " .. hit.absorbed) or ""),
+            color = UI.COLORS.hpRed, x = hitX, y = 478, alpha = 1.6,
+        })
+    end, function()
+        if (game.playerHp or 0) <= 0 then
+            beginPlayerDefeat(played)
+            Persistence.deleteRun()
+        else done() end
+    end)
+    return anim.enemyTurn ~= nil
+end
+
 local function playSelectedHand()
+    if anim.enemyTurn then return end
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
@@ -1651,121 +1769,105 @@ local function playSelectedHand()
         Sound.play("xmult_boom")
     end
 
-    local preScoreAttack = nil
-    if game.monsterAttackedBeforePlayer then
-        preScoreAttack = Combat.resolveMonsterAttack(game)
-        if preScoreAttack then
-            monsterMotion.attack = 0.42
-            screenShake = 16
-            Sound.play("score_impact", 0.72)
-            if game.playerHp <= 0 then
-                beginPlayerDefeat(playedCards)
-                Persistence.deleteRun()
-                return
-            end
-        end
-    end
-
-    -- Calculate scoring steps & equipment
-    local context = {
-        handsRemaining = game.handsRemaining,
-        discardsRemaining = game.discardsRemaining,
-        round = game.round,
-        monster = game.monster,
-        discardBuffs = game.discardBuffs,
-        selectedSuit = game.selectedSuit,
-        selectedFaction = game.selectedFaction,
-        playedHandsHistory = game.playedHandsHistory,
-        starterDeckId = game.starterDeckId,
-        handsPlayedThisCombat = game.handsPlayedThisCombat or 0,
-        martyrStacks = game.martyrStacks or 0,
-        gold = game.gold or 0,
-        unplayedCards = game.hand,
-        hand = game.hand,
-        gameState = game,
-        drawCards = function(n)
-            local drawnCount = 0
-            local maxHand = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris" or game.selectedFaction == "clubs" or game.selectedFaction == "feral_swarm") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
-            while #game.hand < maxHand and #game.deck > 0 and drawnCount < n do
-                local drawn = table.remove(game.deck)
-                if drawn then
-                    drawn.selected = false
-                    anim.prepareDrawAnimation(drawn, drawnCount + 1)
-                    table.insert(game.hand, drawn)
-                    drawnCount = drawnCount + 1
+    local function beginScoring()
+        -- Calculate scoring steps & equipment
+        local context = {
+            handsRemaining = game.handsRemaining,
+            discardsRemaining = game.discardsRemaining,
+            round = game.round,
+            monster = game.monster,
+            discardBuffs = game.discardBuffs,
+            selectedSuit = game.selectedSuit,
+            selectedFaction = game.selectedFaction,
+            playedHandsHistory = game.playedHandsHistory,
+            starterDeckId = game.starterDeckId,
+            handsPlayedThisCombat = game.handsPlayedThisCombat or 0,
+            martyrStacks = game.martyrStacks or 0,
+            gold = game.gold or 0,
+            unplayedCards = game.hand,
+            hand = game.hand,
+            gameState = game,
+            drawCards = function(n)
+                local drawnCount = 0
+                local maxHand = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris" or game.selectedFaction == "clubs" or game.selectedFaction == "feral_swarm") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
+                while #game.hand < maxHand and #game.deck > 0 and drawnCount < n do
+                    local drawn = table.remove(game.deck)
+                    if drawn then
+                        drawn.selected = false
+                        anim.prepareDrawAnimation(drawn, drawnCount + 1)
+                        table.insert(game.hand, drawn)
+                        drawnCount = drawnCount + 1
+                    end
                 end
-            end
-            return drawnCount
-        end,
-    }
-    anim.hpBeforeScoring = game.monster and game.monster.hp or 0
-    local scoreResult = Scoring.calculate(evalResult, game.deities, context)
-    game.handsPlayedThisCombat = (game.handsPlayedThisCombat or 0) + 1
+                return drawnCount
+            end,
+        }
+        anim.hpBeforeScoring = game.monster and game.monster.hp or 0
+        local scoreResult = Scoring.calculate(evalResult, game.deities, context)
+        game.handsPlayedThisCombat = (game.handsPlayedThisCombat or 0) + 1
 
-    -- Pha Người Chơi: Kích hoạt Hiệu ứng Trang Bị/Ngọc Khảm sinh tồn trước (+Giáp, +Hồi Máu)
-    if scoreResult.addArmor and scoreResult.addArmor > 0 then
-        game.playerArmor = math.min(UI.Abilities.config.armorCap, (game.playerArmor or 0) + scoreResult.addArmor)
-        game.playerShield = game.playerArmor
-    end
-    if scoreResult.healHp and scoreResult.healHp > 0 then
-        local maxHp = game.maxPlayerHp or 100
-        game.playerHp = math.min(maxHp, (game.playerHp or 100) + scoreResult.healHp)
-    end
-    if scoreResult.hpCost and scoreResult.hpCost > 0 then
-        game.playerHp = math.max(0, (game.playerHp or 100) - scoreResult.hpCost)
-    end
-
-    -- Overcharged enhancement: unplayed cards in hand gain +5 Chips (max +25)
-    for _, c in ipairs(game.hand or {}) do
-        if c.enhancement == "enh_overcharged" or c.enhancement == "overcharged" then
-            c.overchargeStacks = math.min(Deck.ENHANCEMENTS.enh_overcharged.params.maxStacks, (c.overchargeStacks or 0) + Deck.ENHANCEMENTS.enh_overcharged.params.gain)
+        -- Pha Người Chơi: Kích hoạt Hiệu ứng Trang Bị/Ngọc Khảm sinh tồn trước (+Giáp, +Hồi Máu)
+        if scoreResult.addArmor and scoreResult.addArmor > 0 then
+            game.playerArmor = math.min(UI.Abilities.config.armorCap, (game.playerArmor or 0) + scoreResult.addArmor)
+            game.playerShield = game.playerArmor
         end
-    end
+        if scoreResult.healHp and scoreResult.healHp > 0 then
+            local maxHp = game.maxPlayerHp or 100
+            game.playerHp = math.min(maxHp, (game.playerHp or 100) + scoreResult.healHp)
+        end
+        if scoreResult.hpCost and scoreResult.hpCost > 0 then
+            game.playerHp = math.max(0, (game.playerHp or 100) - scoreResult.hpCost)
+        end
 
-    -- Reset consumed martyr stacks
-    game.martyrStacks = 0
-    -- Record played hand in history for repeated hand bonuses (e.g. Thần Điệp Kích)
-    game.playedHandsHistory = game.playedHandsHistory or {}
-    if evalResult and evalResult.type and evalResult.type.id then
-        game.playedHandsHistory[evalResult.type.id] = (game.playedHandsHistory[evalResult.type.id] or 0) + 1
-    end
-    -- Reset consumed discard buffs
-    game.discardBuffs = { chips = 0, mult = 0, xMult = 1.0, bonusDamagePct = 0 }
+        -- Overcharged enhancement: unplayed cards in hand gain +5 Chips (max +25)
+        for _, c in ipairs(game.hand or {}) do
+            if c.enhancement == "enh_overcharged" or c.enhancement == "overcharged" then
+                c.overchargeStacks = math.min(Deck.ENHANCEMENTS.enh_overcharged.params.maxStacks, (c.overchargeStacks or 0) + Deck.ENHANCEMENTS.enh_overcharged.params.gain)
+            end
+        end
 
-    -- Setup existing visual state; the queue consumes the already-calculated result.
-    anim.active = true
-    anim.timer = 0
-    anim.scoringData = scoreResult
-    anim.playedCards = playedCards
-    anim.cardEntryFrom = playedCardStarts
-    anim.evalResult = evalResult
-    anim.displayXMult, anim.displayAuraEditionMultiplier, anim.displayFlatDamage = 1, 1, 0
-    anim.activeCardIndex, anim.scoredCards = nil, {}
-    anim.stepTimer, anim.targetStepDelay = 0, 0.2
-    anim.floatingTexts = {}
-    anim.playerAttackSpeed, anim.monsterAttackSpeed = playerSpeed, monsterSpeed
-    anim.monsterAttackedBeforePlayer = preScoreAttack ~= nil
-    if preScoreAttack then
-        table.insert(anim.floatingTexts, {
-            text = "QUÁI ĐÁNH TRƯỚC • -" .. preScoreAttack.damage .. " HP",
-            color = UI.COLORS.hpRed, x = 640, y = 350, alpha = 2.0,
-        })
-    end
-    anim.monsterDefeated, anim.playerKilled, anim.earnedGold, anim.damageDealt = false, false, 0, 0
-    anim.pitchStep, anim.cardBounce, anim.cardHit, anim.deityBounce = 0, {}, {}, {}
-    anim.bounceScale = {chips = 1, mult = 1, xMult = 1, score = 1}
-    anim.particles, anim.fireParticles = {}, {}
-    anim.impactFlash, anim.hitStop, anim.screenFlash, anim.screenDistortion = 0, 0, 0, 0
-    anim.energyVolleyPending, anim.exitProgress, anim.exitStarted = 0, 0, false
-    UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring, game.monster)
-    anim.entryCompleteAt = UI.ScoringFeel.config.timing.lift + UI.ScoringFeel.config.timing.travel
-        + math.max(0, #playedCards - 1) * UI.ScoringFeel.config.timing.stagger
+        -- Reset consumed martyr stacks
+        game.martyrStacks = 0
+        -- Record played hand in history for repeated hand bonuses (e.g. Thần Điệp Kích)
+        game.playedHandsHistory = game.playedHandsHistory or {}
+        if evalResult and evalResult.type and evalResult.type.id then
+            game.playedHandsHistory[evalResult.type.id] = (game.playedHandsHistory[evalResult.type.id] or 0) + 1
+        end
+        -- Reset consumed discard buffs
+        game.discardBuffs = { chips = 0, mult = 0, xMult = 1.0, bonusDamagePct = 0 }
 
-    state = "scoring"
-    Sound.play("card_play", 1.0)
+        -- Setup existing visual state; the queue consumes the already-calculated result.
+        anim.active = true
+        anim.timer = 0
+        anim.scoringData = scoreResult
+        anim.playedCards = playedCards
+        anim.cardEntryFrom = playedCardStarts
+        anim.evalResult = evalResult
+        anim.displayXMult, anim.displayAuraEditionMultiplier, anim.displayFlatDamage = 1, 1, 0
+        anim.activeCardIndex, anim.scoredCards = nil, {}
+        anim.stepTimer, anim.targetStepDelay = 0, 0.2
+        anim.floatingTexts = {}
+        anim.playerAttackSpeed, anim.monsterAttackSpeed = playerSpeed, monsterSpeed
+        anim.monsterAttackedBeforePlayer = game.monsterAttackedBeforePlayer
+        anim.counterAttackStarted = false
+        anim.monsterDefeated, anim.playerKilled, anim.earnedGold, anim.damageDealt = false, false, 0, 0
+        anim.pitchStep, anim.cardBounce, anim.cardHit, anim.deityBounce = 0, {}, {}, {}
+        anim.bounceScale = {chips = 1, mult = 1, xMult = 1, score = 1}
+        anim.particles, anim.fireParticles = {}, {}
+        anim.impactFlash, anim.hitStop, anim.screenFlash, anim.screenDistortion = 0, 0, 0, 0
+        anim.energyVolleyPending, anim.exitProgress, anim.exitStarted = 0, 0, false
+        UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring, game.monster)
+        anim.entryCompleteAt = UI.ScoringFeel.config.timing.lift + UI.ScoringFeel.config.timing.travel
+            + math.max(0, #playedCards - 1) * UI.ScoringFeel.config.timing.stagger
+
+        state = "scoring"
+        Sound.play("card_play", 1.0)
+    end
+    if not startEnemyAttack("before", playerSpeed, beginScoring, playedCards) then beginScoring() end
 end
 
 local function endPlayerTurn()
+    if anim.enemyTurn then return true end
     if not game or not game.monster then return false end
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
         and game.monster.bossData.debuffId == "the_needle" and UI.BossAbilities.passiveEnabled(game.monster)
@@ -1778,59 +1880,37 @@ local function endPlayerTurn()
     if availableCards == 0 then return false end
 
     UI.Abilities.roundEnd(game)
-    local attack = Combat.resolveMonsterAttack(game)
-    if not attack then return false end
-    monsterMotion.attack = 0.42
-    screenShake = math.max(screenShake or 0, 10)
-    anim.hitStop = 0.06
-    anim.screenFlash = 0.075
-    anim.screenDistortion = 0.09
-    anim.impactFlash = 0.16
-    anim.impactX, anim.impactY, anim.impactColor = UI.BATTLE_CENTER_X, 414, UI.COLORS.hpRed
-    spawnSparks(UI.BATTLE_CENTER_X, 414, 16, UI.COLORS.hpRed)
-    Sound.play(attack.damage >= 8 and "damage_heavy" or "damage_hit")
-    table.insert(anim.floatingTexts, {
-        text = "QUÁI ĐẬP CUỐI LƯỢT  •  -" .. attack.damage .. " HP"
-            .. (attack.absorbed > 0 and ("  •  GIÁP " .. attack.absorbed) or ""),
-        color = UI.COLORS.hpRed,
-        x = UI.BATTLE_CENTER_X,
-        y = 390,
-        alpha = 2.2,
-    })
-
-    if attack.killedPlayer then
-        beginPlayerDefeat()
-        Persistence.deleteRun()
-        return true
+    local function finishTurn()
+        Combat.onPlayerTurnEnd(game)
+        local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(game)
+        if cleansed then
+            table.insert(anim.floatingTexts, {
+                text = "✨ " .. cleanseMsg, color = UI.COLORS.hpGreen,
+                x = 640, y = 300, alpha = 2.5,
+            })
+        end
+        game.handsRemaining = game.turnHandLimit or game.maxHands or game.handsRemaining or 0
+        local drawnCards = 0
+        if #game.hand == 0 then
+            drawnCards = dealCombatHand(true)
+        else
+            clearAllSelections()
+            syncCardSelections()
+        end
+        UI.BossAbilities.handEnd(game)
+        UI.Abilities.resolveBossDamage(game)
+        require("src.enemy_abilities").handEnd(game)
+        if (game.playerHp or 0) <= 0 then
+            beginPlayerDefeat()
+            Persistence.deleteRun()
+            return true
+        end
+        UI.Abilities.roundStart(game)
+        UI.Abilities.handStart(game)
+        state = "playing"
+        Sound.play(drawnCards > 0 and "card_deal" or "ui_click")
     end
-
-    Combat.onPlayerTurnEnd(game)
-    local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(game)
-    if cleansed then
-        table.insert(anim.floatingTexts, {
-            text = "✨ " .. cleanseMsg, color = UI.COLORS.hpGreen,
-            x = 640, y = 300, alpha = 2.5,
-        })
-    end
-    game.handsRemaining = game.turnHandLimit or game.maxHands or game.handsRemaining or 0
-    local drawnCards = 0
-    if #game.hand == 0 then
-        drawnCards = dealCombatHand(true)
-    else
-        clearAllSelections()
-        syncCardSelections()
-    end
-    UI.BossAbilities.handEnd(game)
-    UI.Abilities.resolveBossDamage(game)
-    if (game.playerHp or 0) <= 0 then
-        beginPlayerDefeat()
-        Persistence.deleteRun()
-        return true
-    end
-    UI.Abilities.roundStart(game)
-    UI.Abilities.handStart(game)
-    state = "playing"
-    Sound.play(drawnCards > 0 and "card_deal" or "ui_click")
+    if not startEnemyAttack(nil, nil, finishTurn) then return false end
     return true
 end
 
@@ -1897,7 +1977,7 @@ function love.load()
     love.graphics.printf = function(value, ...)
         return nativePrintf(UI.localizeText(value), ...)
     end
-    for key, path in pairs({ background = "assets/scene/shrine_lowpoly.png", menuWorld = "assets/scene/menu_world_v2.png", menuLogo = "assets/scene/menu_logo_v2.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }) do
+    for key, path in pairs({ background = "assets/scene/shrine_lowpoly.png", humanContinent = "assets/scene/expedition_human.png", expeditionShip = "assets/scene/expedition_ship.png", mysteriousCoast = "assets/scene/expedition_coast.png", menuWorld = "assets/scene/menu_world_v2.png", menuLogo = "assets/scene/menu_logo_v2.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }) do
         if love.filesystem.getInfo(path) then
             local ok, image = pcall(love.graphics.newImage, path)
             if ok then
@@ -2076,16 +2156,21 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    if handDrag.active and handInputBlocked() then
+        UI.CardPhysics.release()
+        handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+    end
     if DeathVFX.kind and state ~= "playing" and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and state ~= "chest" and state ~= "treasure" and not (state == "shop" and shopData and shopData.currentPackOpening) then DeathVFX.reset() end
     if DeathVFX.monster and DeathVFX.monster ~= game.monster then DeathVFX.reset() end
     if (state == "playing" or state == "scoring") and game.monster and (game.monster.hp or 1) <= 0 then
-        DeathVFX.startEnemy(game.monster, UI.BATTLE_CENTER_X, Renderer.quality)
+        DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality)
     end
     DeathVFX.update(dt)
+    if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
     local cameraX, cameraY = 0, 0
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
-        game and game.monster, anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
+        game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory") and {stage=game.run and game.run.ante or 1} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
     if state == "defeating" then
         if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
         juice.ambientTimer = juice.ambientTimer + dt
@@ -2409,6 +2494,14 @@ function love.update(dt)
     anim.impactFlash = math.max(0, (anim.impactFlash or 0) - dt)
     anim.screenFlash = math.max(0, (anim.screenFlash or 0) - dt)
     anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
+    if anim.enemyTurn then
+        local turn = anim.enemyTurn
+        if EnemyAttack.update(turn, game, motionDt) then
+            anim.enemyTurn = nil
+            turn.onDone()
+        end
+        return
+    end
     -- The presentation queue yields only when energy has physically reached the enemy.
     if state == "scoring" and anim.active then
         local deathStop = DeathVFX.enemyActive(game.monster) and DeathVFX.age < DeathVFX.stop
@@ -2426,7 +2519,7 @@ function love.update(dt)
                     -- HandAttacks draws capped directional impact sparks; avoid duplicate radial burst.
 
                     if defeated then
-                        DeathVFX.startEnemy(game.monster, UI.BATTLE_CENTER_X, Renderer.quality)
+                        DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality)
                         Sound.play("jackpot")
                         anim.targetStepDelay = 0.60
 
@@ -2664,30 +2757,6 @@ function love.update(dt)
                             table.insert(anim.floatingTexts,{text="[THE ARM] Lá tính điểm -1 Rank lâu dài!",color={0.85,0.35,0.35,1},x=640,y=400,alpha=2.5})
                         end
 
-                        -- The faster side acts first; ties are resolved in the player's favor.
-                        local attackResult = nil
-                        if not anim.monsterAttackedBeforePlayer then
-                            attackResult = Combat.resolveMonsterAttack(game)
-                        end
-                        if attackResult then
-                            monsterMotion.attack = 0.42
-                            screenShake = 16
-                            Sound.play("score_impact", 0.72)
-                            local counterMsg = "[BẠN TĐ " .. tostring(attackResult.playerSpeed)
-                                .. " ≥ QUÁI " .. tostring(attackResult.monsterSpeed) .. "] QUÁI PHẢN CÔNG -"
-                                .. attackResult.damage .. " HP!"
-                            if attackResult.absorbed > 0 then
-                                counterMsg = counterMsg .. " Giáp đỡ " .. attackResult.absorbed
-                            end
-                            table.insert(anim.floatingTexts, {
-                                text = counterMsg,
-                                color = UI.COLORS.hpRed,
-                                x = 640,
-                                y = 350,
-                                alpha = 2.5,
-                            })
-                        end
-
                         if game.playerHp <= 0 then
                             anim.playerKilled = true
                     end
@@ -2696,6 +2765,10 @@ function love.update(dt)
             else
                 if UI.ScoringFeel.isFinished(anim) then
                     if DeathVFX.enemyActive(game.monster) and DeathVFX.busy() then return end
+                    if not anim.counterAttackStarted and Combat.getOutcome(game) ~= "victory" then
+                        anim.counterAttackStarted = true
+                        if startEnemyAttack("after", anim.playerAttackSpeed, function() end) then return end
+                    end
                     anim.active = false
                     if game.monster then game.monster.damageLagHp = game.monster.hp end
                     UI.Abilities.finishHand(game)
@@ -2784,6 +2857,7 @@ function love.update(dt)
                                 alpha = 3.0,
                             })
                         end
+                        EnemyGroup.ensureTarget(game)
                         dealCombatHand(false)
                         UI.Abilities.handStart(game)
                         state = "playing"
@@ -3280,8 +3354,8 @@ end
 local function drawBattleHud(m, mx, my)
     local hudButtons = UI.components.TopHUD.draw({
         ante = (game.run and game.run.ante) or game.act or 1,
-        round = (game.run and game.run.blindIndex) or game.round or 1,
-        enemyName = m and (m.isBoss or m.isElite) and m.name or "Tiểu Yêu",
+        round = (game.run and game.run.currentBlindIndex) or game.round or 1,
+        enemyName = m and m.name or "Đối thủ",
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
         discards = game.discardsRemaining or 0,
@@ -3291,24 +3365,13 @@ end
 
 local function drawBattleEnemyWorld(m)
     if not m then return end
-    local t = (juice and juice.ambientTimer) or 0
-    local attack, hit = monsterMotion.attack / 0.42, monsterMotion.hit / 0.35
-    local recoil, squash, flash = 0, 1, 0
-    if state == "scoring" then recoil, squash, flash = UI.ScoringFeel.enemyReaction(anim); hit = flash end
-    local enemyImage = EnemyArt.image(m, battleArt)
-    local size = m.isBoss and 355 or (m.isElite and 325 or 290)
-    if DeathVFX.enemyActive(m) and DeathVFX.drawEnemy(enemyImage, UI.BATTLE_CENTER_X, 270, size) then return end
-    Renderer.entity.draw(enemyImage, UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.1) * Renderer.config.boss.sway,
-        size, t, attack, hit, recoil, squash, Renderer.scene.preset, Renderer.eventStrength)
+    EnemyFormation.world(game,UI,Renderer,EnemyArt,DeathVFX,battleArt,juice.ambientTimer or 0,monsterMotion,state=="scoring" and anim or nil,anim.enemyTurn)
 end
 
 local function drawBattleEnemy(m)
     if not m then return end
-    UI.components.EnemyPanel.draw((m.isBoss or m.isElite) and (m.name or "Quái") or "Tiểu Yêu",
-        state == "scoring" and anim.sequence and anim.sequence.hp or (m.damageLagHp or m.hp),
-        m.maxHp, UI.fonts, UI.BATTLE_CENTER_X,
-        state == "scoring" and anim.sequence and anim.sequence.hp or m.hp,
-        state == "scoring" and anim.sequence and anim.sequence.hpTrail or nil)
+    local mx,my=toVirtual(love.mouse.getPosition())
+    EnemyFormation.hud(game,UI,mx,my,anim.enemyTurn)
 end
 
 local function drawBattleInfoPanel(m, eval, preview)
@@ -3337,10 +3400,11 @@ local function drawBattleInfoPanel(m, eval, preview)
         playerSpeed = scoring and anim.playerAttackSpeed
             or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards()) or nil),
         enemySpeed = m and (m.attackSpeed or 1),
+        humanEnemy = m and m.human,
         chipsBounce = scoring and anim.bounceScale.chips or 1,
         multBounce = scoring and anim.bounceScale.mult or 1,
         auraBounce = scoring and anim.bounceScale.score or 1,
-        debuff = UI.truncateUtf8(m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi", 55),
+        debuff = m and m.enemyAbility and (m.enemyAbility.name..": "..m.enemyAbility.desc) or UI.truncateUtf8(m and m.bossData and m.bossData.desc or "Không có hiệu ứng bất lợi", 55),
         boss = m,
         isBoss = m and m.bossData ~= nil,
         category = finished and "KẾT QUẢ" or (anim.stepCategory or "ĐANG CỘNG AURA"),
@@ -3349,6 +3413,18 @@ local function drawBattleInfoPanel(m, eval, preview)
 end
 
 local function drawCombatFeedback()
+    local turn = anim.enemyTurn
+    if not turn and state == "scoring" and anim.sequence then
+        local ev = anim.sequence.events[anim.sequence.index]
+        local label = ev and (ev.kind == "ANTICIPATION" and "BẠN CHUẨN BỊ RA ĐÒN"
+            or ev.kind == "ATTACK" and "BẠN TẤN CÔNG!"
+            or ev.kind == "ENEMY_IMPACT" and "BẠN ĐÁNH TRÚNG QUÁI")
+        if label then
+            love.graphics.setFont(UI.fonts.medium)
+            love.graphics.setColor(1, 0.83, 0.42, 1)
+            love.graphics.printf(label, 310, 438, 640, "center")
+        end
+    end
     if anim.particles and #anim.particles > 0 then
         love.graphics.setBlendMode("add")
         for _, p in ipairs(anim.particles) do
@@ -3440,7 +3516,8 @@ local function drawPlayingState()
 
     local hoveredDeityIndex = nil
     if not (deityDrag.active and deityDrag.isDragging) then
-        for i = maxDeiSlots, 1, -1 do
+        -- The fan exposes right corners, where rarity pennants are anchored.
+        for i = 1, maxDeiSlots do
             local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
             local d = game.deities and game.deities[i]
             if d and mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh then
@@ -3449,7 +3526,7 @@ local function drawPlayingState()
             end
         end
     end
-    for i = 1, maxDeiSlots do
+    for i = maxDeiSlots, 1, -1 do
         local dx, deityY, deitySlotW, deitySlotH = getDeitySlotRect(i, "playing")
         local d = game.deities and game.deities[i]
         local isDraggedSource = (deityDrag.active and deityDrag.isDragging and deityDrag.deityIndex == i)
@@ -3480,7 +3557,7 @@ local function drawPlayingState()
             if pendingEvolutionCard then
                 love.graphics.setLineWidth(2.5)
                 love.graphics.setColor(0.84, 0.68, 1, 0.95)
-                UI.drawRoundedRect("line", dx - 2, deityY - 2, deitySlotW + 4, deitySlotH + 4, 6)
+                UI.drawCardBorder(dx, deityY, deitySlotW, deitySlotH, UI.COLORS.goldYellow)
             end
             love.graphics.pop()
         elseif isDropTarget then
@@ -3574,8 +3651,9 @@ local function drawPlayingState()
 
     -- Hand count badge (e.g. 3/3) above action buttons
     local maxHandSize = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
-    local handCountText = #game.hand .. "/" .. maxHandSize
-    local hcW = 60
+    local handCountText = #game.hand .. "/" .. maxHandSize .. "  •  Chọn "
+        .. #game.selectedIndices .. "/" .. getMaxSelectableCards()
+    local hcW = 150
     local hcH = 22
     local hcX = UI.BATTLE_CENTER_X - hcW / 2
     local hcY = 608
@@ -3583,6 +3661,9 @@ local function drawPlayingState()
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(handCountText, hcX, hcY + 3, hcW, "center")
+    love.graphics.setColor(UI.COLORS.textMuted)
+    love.graphics.printf("Giữ chuột: rê chọn • Shift + kéo: đổi vị trí", UI.BATTLE_ARENA_X,
+        704, UI.BATTLE_ARENA_W, "center")
 
     ----------------------------------------------------------------------------
     -- 5. BALATRO ACTION BUTTONS ROW
@@ -3599,14 +3680,14 @@ local function drawPlayingState()
         and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
     local btnPlay = {
         id = canEndTurn and "end_turn" or "play",
-        text = state == "scoring" and "ĐANG TÍNH AURA" or (canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài"),
+        text = state == "scoring" and not anim.enemyTurn and "ĐANG TÍNH AURA" or (canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài"),
         x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
         w = 175,
         h = 58,
         font = UI.fonts.small,
         variant = "cyan",
-        disabled = state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
+        disabled = anim.enemyTurn ~= nil or state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
     }
     if anim.playButtonPulse > 0 then
@@ -3811,7 +3892,7 @@ local function drawScoringState()
             love.graphics.setBlendMode("alpha")
             love.graphics.setLineWidth(3)
             love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", cx - 2, cy - 2, cardW + 4, cardH + 4, 8)
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.goldYellow)
 
             -- Floating pill above card
             local pillW = 120
@@ -3858,254 +3939,8 @@ local function drawScoringState()
 end
 
 local function drawBlindSelectState()
-    local winW, winH = love.graphics.getDimensions()
-    Renderer.veil()
-
     local mx, my = toVirtual(love.mouse.getPosition())
-    buttons = {}
-
-    -- Top Header Panel
-    love.graphics.setColor(UI.COLORS.panelBg)
-    UI.drawRoundedRect("fill", 20, 15, V_WIDTH - 40, 75, 8)
-    love.graphics.setColor(UI.COLORS.panelBorder)
-    UI.drawRoundedRect("line", 20, 15, V_WIDTH - 40, 75, 8)
-
-    local currentAnte = game.run and game.run.ante or 1
-    local maxAnte = game.run and game.run.maxAnte or 8
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("VÒNG ANTE " .. currentAnte .. " / " .. maxAnte .. " — CHỌN ẢI THỬ THÁCH", 40, 22)
-
-    local interestVal = math.min(5, math.floor(game.gold / 5))
-    local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("MÁU: " .. (game.playerHp or 100) .. "/" .. (game.maxPlayerHp or 100) .. " HP   |   TIỀN VÀNG: $" .. game.gold .. " (Lãi: +$" .. interestVal .. "/trận)   |   HỘ LINH: " .. Deities.getCount(game.deities) .. "/" .. maxDeiSlots .. "   |   BỘ BÀI: " .. #(game.persistentDeck or {}) .. " lá", 40, 56)
-
-    -- Right Action Buttons (Handbook, Deck Viewer, Options)
-    local btnHandbook = {
-        id = "open_handbook",
-        text = "SỔ TAY",
-        x = V_WIDTH - 440,
-        y = 25,
-        w = 120,
-        h = 55,
-        color = { 0.22, 0.45, 0.35, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnHandbook)
-    UI.drawButton(btnHandbook, mx >= btnHandbook.x and mx <= btnHandbook.x + btnHandbook.w and my >= btnHandbook.y and my <= btnHandbook.y + btnHandbook.h)
-
-    local btnDeck = {
-        id = "open_deck_viewer",
-        text = "XEM BÀI",
-        x = V_WIDTH - 305,
-        y = 25,
-        w = 125,
-        h = 55,
-        color = { 0.25, 0.35, 0.55, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnDeck)
-    UI.drawButton(btnDeck, mx >= btnDeck.x and mx <= btnDeck.x + btnDeck.w and my >= btnDeck.y and my <= btnDeck.y + btnDeck.h)
-
-    local btnOpts = {
-        id = "open_options",
-        text = "CÀI ĐẶT",
-        x = V_WIDTH - 165,
-        y = 25,
-        w = 125,
-        h = 55,
-        color = { 0.28, 0.32, 0.38, 1 },
-        font = UI.fonts.small,
-    }
-    table.insert(buttons, btnOpts)
-    UI.drawButton(btnOpts, mx >= btnOpts.x and mx <= btnOpts.x + btnOpts.w and my >= btnOpts.y and my <= btnOpts.y + btnOpts.h)
-
-    -- Center 3 Blind Cards
-    local blinds = (game.run and game.run.blinds) or {}
-    local cardW = 360
-    local cardH = 550
-    local gap = 40
-    local totalW = 3 * cardW + 2 * gap
-    local startX = (V_WIDTH - totalW) / 2
-    local startY = 115
-
-    for i = 1, 3 do
-        local blind = blinds[i]
-        if blind then
-            local bx = startX + (i - 1) * (cardW + gap)
-            local by = startY
-            local isCurrent = (blind.status == "current")
-            local isCompleted = (blind.status == "completed")
-            local isSkipped = (blind.status == "skipped")
-            local isUpcoming = (blind.status == "upcoming")
-
-            -- Card Body
-            if isCurrent then
-                love.graphics.setColor(0.12, 0.15, 0.21, 0.98)
-            elseif isCompleted or isSkipped then
-                love.graphics.setColor(0.08, 0.10, 0.13, 0.85)
-            else
-                love.graphics.setColor(0.09, 0.11, 0.15, 0.90)
-            end
-            UI.drawRoundedRect("fill", bx, by, cardW, cardH, 14)
-
-            -- Border
-            love.graphics.setLineWidth(isCurrent and 3 or 2)
-            if isCurrent then
-                love.graphics.setColor(blind.color or UI.COLORS.goldYellow)
-            elseif isCompleted then
-                love.graphics.setColor(0.25, 0.65, 0.35, 0.8)
-            elseif isSkipped then
-                love.graphics.setColor(0.55, 0.55, 0.55, 0.5)
-            else
-                love.graphics.setColor(0.22, 0.26, 0.34, 0.6)
-            end
-            UI.drawRoundedRect("line", bx, by, cardW, cardH, 14)
-
-            -- Header Ribbon / Badge
-            local headerColor = blind.color or { 0.3, 0.6, 0.9, 1 }
-            love.graphics.setColor(headerColor[1], headerColor[2], headerColor[3], isCurrent and 0.9 or 0.4)
-            UI.drawRoundedRect("fill", bx + 12, by + 12, cardW - 24, 44, 8)
-
-            love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.printf(blind.title, bx + 12, by + 22, cardW - 24, "center")
-
-            -- Icon
-            love.graphics.setFont(UI.fonts.huge or UI.fonts.title)
-            love.graphics.printf(blind.icon or "⚔️", bx, by + 70, cardW, "center")
-
-            -- Blind Name
-            love.graphics.setFont(UI.fonts.large)
-            love.graphics.setColor(isCurrent and (blind.color or UI.COLORS.goldYellow) or UI.COLORS.textLight)
-            love.graphics.printf(blind.name, bx + 10, by + 130, cardW - 20, "center")
-
-            -- HP Requirement Section
-            love.graphics.setColor(0.07, 0.09, 0.12, 0.9)
-            UI.drawRoundedRect("fill", bx + 24, by + 175, cardW - 48, 75, 8)
-            love.graphics.setColor(0.20, 0.24, 0.30, 0.8)
-            UI.drawRoundedRect("line", bx + 24, by + 175, cardW - 48, 75, 8)
-
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.printf("MỤC TIÊU HP", bx + 24, by + 185, cardW - 48, "center")
-
-            love.graphics.setFont(UI.fonts.large or UI.fonts.title)
-            love.graphics.setColor(UI.COLORS.chipsBlue or { 0.3, 0.7, 1, 1 })
-            love.graphics.printf(UI.formatNumber(blind.hp) .. " HP", bx + 24, by + 210, cardW - 48, "center")
-
-            -- Base Reward
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("Thưởng thắng: +$" .. blind.baseReward .. " Vàng", bx + 20, by + 265, cardW - 40, "center")
-
-            -- Tag or Boss Debuff Details Box
-            local detailY = by + 300
-            local detailH = 150
-            love.graphics.setColor(0.06, 0.08, 0.11, 0.95)
-            UI.drawRoundedRect("fill", bx + 18, detailY, cardW - 36, detailH, 8)
-
-            if blind.type == "boss" and blind.debuff then
-                love.graphics.setColor(0.85, 0.25, 0.35, 0.8)
-                UI.drawRoundedRect("line", bx + 18, detailY, cardW - 36, detailH, 8)
-
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(0.95, 0.35, 0.35, 1)
-                love.graphics.printf("⚠️ HIỆU ỨNG ÁP CHẾ (DEBUFF)", bx + 24, detailY + 12, cardW - 48, "center")
-
-                love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
-                love.graphics.setColor(1, 0.9, 0.9, 1)
-                love.graphics.printf(blind.debuff.title or blind.debuff.name, bx + 24, detailY + 38, cardW - 48, "center")
-
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.textLight)
-                love.graphics.printf(blind.debuff.desc or "", bx + 26, detailY + 68, cardW - 52, "center")
-            else
-                -- Tag reward for skip
-                love.graphics.setColor(0.25, 0.35, 0.45, 0.6)
-                UI.drawRoundedRect("line", bx + 18, detailY, cardW - 36, detailH, 8)
-
-                love.graphics.setFont(UI.fonts.small)
-                love.graphics.setColor(UI.COLORS.goldYellow)
-                love.graphics.printf("KHẾ ƯỚC BỎ ẢI", bx + 24, detailY + 6, cardW - 48, "center")
-
-                local pact = blind.skipPact or blind.tag
-                if pact then
-                    love.graphics.setFont(UI.fonts.small)
-                    love.graphics.setColor(pact.color or UI.COLORS.textLight)
-                    love.graphics.printf((pact.icon or "📜") .. " " .. pact.name, bx + 24, detailY + 26, cardW - 48, "center")
-
-                    love.graphics.setFont(UI.fonts.tiny)
-                    if pact.instantDesc and pact.debtDesc then
-                        love.graphics.setColor(UI.COLORS.hpGreen)
-                        love.graphics.printf("🎁 Nhận ngay: " .. pact.instantDesc, bx + 24, detailY + 48, cardW - 48, "left")
-                        love.graphics.setColor(UI.COLORS.multRed)
-                        love.graphics.printf("⚠️ Món nợ: " .. pact.debtDesc, bx + 24, detailY + 68, cardW - 48, "left")
-                        love.graphics.setColor(UI.COLORS.textMuted)
-                        love.graphics.printf("⏳ Thời hạn: " .. (pact.durationDesc or "1 trận"), bx + 24, detailY + 88, cardW - 48, "left")
-                    else
-                        love.graphics.setColor(UI.COLORS.textLight)
-                        love.graphics.printf(pact.desc or "", bx + 26, detailY + 54, cardW - 52, "center")
-                    end
-                end
-            end
-
-            -- Status Stamp or Interactive Buttons
-            if isCompleted then
-                love.graphics.setColor(0.18, 0.65, 0.32, 0.95)
-                UI.drawRoundedRect("fill", bx + 30, by + cardH - 72, cardW - 60, 52, 8)
-                love.graphics.setFont(UI.fonts.medium)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf("✓ ĐÃ VƯỢT QUA", bx + 30, by + cardH - 58, cardW - 60, "center")
-            elseif isSkipped then
-                love.graphics.setColor(0.35, 0.38, 0.42, 0.85)
-                UI.drawRoundedRect("fill", bx + 30, by + cardH - 72, cardW - 60, 52, 8)
-                love.graphics.setFont(UI.fonts.medium)
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.printf("⏭ ĐÃ BỎ QUA", bx + 30, by + cardH - 58, cardW - 60, "center")
-            elseif isUpcoming then
-                love.graphics.setColor(0.15, 0.18, 0.22, 0.7)
-                UI.drawRoundedRect("fill", bx + 30, by + cardH - 72, cardW - 60, 52, 8)
-                love.graphics.setFont(UI.fonts.regular)
-                love.graphics.setColor(UI.COLORS.textMuted)
-                love.graphics.printf("CHƯA MỞ KHÓA", bx + 30, by + cardH - 58, cardW - 60, "center")
-            elseif isCurrent then
-                local btnFightW = blind.canSkip and ((cardW - 48) * 0.58) or (cardW - 48)
-                local btnFight = {
-                    id = "fight_blind",
-                    text = "CHIẾN ĐẤU ⚔️",
-                    x = bx + 24,
-                    y = by + cardH - 72,
-                    w = btnFightW,
-                    h = 52,
-                    color = { 0.22, 0.70, 0.38, 1 },
-                    textColor = { 1, 1, 1, 1 },
-                    font = UI.fonts.medium or UI.fonts.regular,
-                }
-                table.insert(buttons, btnFight)
-                UI.drawButton(btnFight, mx >= btnFight.x and mx <= btnFight.x + btnFight.w and my >= btnFight.y and my <= btnFight.y + btnFight.h)
-
-                if blind.canSkip then
-                    local btnSkipW = (cardW - 48) * 0.38
-                    local btnSkip = {
-                        id = "skip_blind",
-                        text = "BỎ QUA ⏭️",
-                        x = bx + 24 + btnFightW + 8,
-                        y = by + cardH - 72,
-                        w = btnSkipW,
-                        h = 52,
-                        color = { 0.85, 0.55, 0.20, 1 },
-                        textColor = { 1, 1, 1, 1 },
-                        font = UI.fonts.small,
-                    }
-                    table.insert(buttons, btnSkip)
-                    UI.drawButton(btnSkip, mx >= btnSkip.x and mx <= btnSkip.x + btnSkip.w and my >= btnSkip.y and my <= btnSkip.y + btnSkip.h)
-                end
-            end
-        end
-    end
+    buttons = ExpeditionSelect.draw(game, UI, mx, my)
 end
 
 local function drawVictoryState()
@@ -4128,11 +3963,11 @@ local function drawVictoryState()
 
     love.graphics.setFont(UI.fonts.title or UI.fonts.large)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("CHIẾN THẮNG HUYỀN THOẠI! 🏆", modalX, modalY + 35, modalW, "center")
+    love.graphics.printf("GIẤY PHÉP VIỄN CHINH", modalX, modalY + 35, modalW, "center")
 
     love.graphics.setFont(UI.fonts.medium or UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Bạn đã chinh phục hoàn toàn 8 Vòng Ante của LUA.TCG!", modalX, modalY + 95, modalW, "center")
+    love.graphics.printf("Đã vượt 20 ải. Liên minh cấp giấy phép viễn chinh!", modalX, modalY + 95, modalW, "center")
 
     -- Divider
     love.graphics.setColor(0.3, 0.4, 0.5, 0.5)
@@ -4142,9 +3977,9 @@ local function drawVictoryState()
     local stats = game.run and game.run.stats or {}
     local statRows = {
         { label = "BỘ BÀI KHỞI ĐẦU:", val = "BỘ BÀI ĐỎ", color = { 0.95, 0.28, 0.30, 1 } },
-        { label = "VÒNG ĐẠT ĐƯỢC:", val = "ANTE 8 / 8 (HOÀN THÀNH)", color = UI.COLORS.goldYellow },
-        { label = "SỐ ẢI ĐÃ CHIẾN THẮNG:", val = tostring(stats.blindsWon or 0) .. " Ải", color = { 0.35, 0.85, 0.45, 1 } },
-        { label = "SỐ ẢI ĐÃ BỎ QUA (SKIP):", val = tostring(stats.blindsSkipped or 0) .. " Ải", color = { 0.85, 0.65, 0.35, 1 } },
+        { label = "VÒNG ĐẠT ĐƯỢC:", val = "ẢI 20 / 20 (HOÀN THÀNH)", color = UI.COLORS.goldYellow },
+        { label = "SỐ TRẬN ĐÃ CHIẾN THẮNG:", val = tostring(stats.blindsWon or 0) .. " Trận", color = { 0.35, 0.85, 0.45, 1 } },
+        { label = "GIẤY PHÉP DI CHUYỂN:", val = "ĐÃ CẤP • LÊN TÀU", color = { 0.35, 0.80, 0.85, 1 } },
         { label = "TỔNG TIỀN VÀNG CÒN LẠI:", val = "$" .. tostring(game.gold or 0), color = UI.COLORS.goldYellow },
         { label = "SỐ HỘ LINH:", val = tostring(Deities.getCount(game.deities)) .. " Hộ Linh", color = { 0.85, 0.45, 0.95, 1 } },
     }
@@ -4178,7 +4013,7 @@ local function drawVictoryState()
     }
     local btnEndless = {
         id = "victory_endless",
-        text = "CHẾ ĐỘ VÔ TẬN ➔",
+        text = "LÊN TÀU • ẢI 21 ➔",
         x = modalX + modalW - 45 - btnW,
         y = btnY,
         w = btnW,
@@ -4286,7 +4121,7 @@ local function drawMap()
     table.insert(buttons, btnScrollEnd)
     UI.drawButton(btnScrollEnd, mx >= btnScrollEnd.x and mx <= btnScrollEnd.x + btnScrollEnd.w and my >= btnScrollEnd.y and my <= btnScrollEnd.y + btnScrollEnd.h)
 
-    -- Modal: Chuẩn Bị Giao Chiến / Bỏ Qua Nhận Thưởng (Skip Blind)
+    -- Modal: Chuẩn bị giao chiến
     if pendingCombatNode then
         love.graphics.setColor(0, 0, 0, 0.78)
         love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
@@ -4323,17 +4158,9 @@ local function drawMap()
         love.graphics.setColor(0.30, 0.38, 0.45, 0.8)
         love.graphics.line(mx0 + 35, my0 + 128, mx0 + mw - 35, my0 + 128)
 
-        -- Skip Tag Section
-        local tag = pendingCombatNode.skipTag
-        if tag then
-            love.graphics.setFont(UI.fonts.regular)
-            love.graphics.setColor(tag.color or UI.COLORS.goldYellow)
-            love.graphics.printf("Thẻ Thưởng Bỏ Qua (Skip Tag): " .. tag.name, mx0 + 20, my0 + 144, mw - 40, "center")
-
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf(tag.desc .. "\n(Rủi ro: Bỏ qua ải = Không có thưởng vàng ván & Quái sau mạnh hơn!)", mx0 + 30, my0 + 175, mw - 60, "center")
-        end
+        love.graphics.setFont(UI.fonts.regular)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf("Vượt trận đấu để nhận chiến lợi phẩm và mở đường tiếp theo.", mx0+30, my0+160, mw-60, "center")
 
         -- Action Buttons
         local btnFight = {
@@ -4341,19 +4168,9 @@ local function drawMap()
             text = "VÀO CHIẾN ĐẤU",
             x = mx0 + 40,
             y = my0 + 245,
-            w = 260,
+            w = mw - 80,
             h = 52,
             color = UI.COLORS.btnPlay,
-            font = UI.fonts.regular,
-        }
-        local btnSkip = {
-            id = "modal_skip_node",
-            text = ">> BỎ QUA NHẬN THƯỞNG",
-            x = mx0 + mw - 300,
-            y = my0 + 245,
-            w = 260,
-            h = 52,
-            color = { 0.88, 0.52, 0.18, 1 },
             font = UI.fonts.regular,
         }
         local btnClose = {
@@ -4367,11 +4184,9 @@ local function drawMap()
             font = UI.fonts.small,
         }
         table.insert(buttons, btnFight)
-        table.insert(buttons, btnSkip)
         table.insert(buttons, btnClose)
 
         UI.drawButton(btnFight, mx >= btnFight.x and mx <= btnFight.x + btnFight.w and my >= btnFight.y and my <= btnFight.y + btnFight.h)
-        UI.drawButton(btnSkip, mx >= btnSkip.x and mx <= btnSkip.x + btnSkip.w and my >= btnSkip.y and my <= btnSkip.y + btnSkip.h)
         UI.drawButton(btnClose, mx >= btnClose.x and mx <= btnClose.x + btnClose.w and my >= btnClose.y and my <= btnClose.y + btnClose.h)
     end
 end
@@ -4938,9 +4753,6 @@ local function drawSocketingView()
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = eqImg:getDimensions()
         require("ui.card_surfaces").image(equipment, panelX + 30, panelY + 12, 56, 80, eqImg)
-        love.graphics.setLineWidth(1.5)
-        love.graphics.setColor(eqColor)
-        UI.drawRoundedRect("line", panelX + 30, panelY + 12, 56, 80, 6)
     else
         love.graphics.setColor(eqColor[1], eqColor[2], eqColor[3], 0.22)
         love.graphics.circle("fill", panelX + 58, panelY + panelH / 2, 34)
@@ -4985,13 +4797,13 @@ local function drawSocketingView()
             UI.drawRoundedRect("fill", cx, cy, cardW, cardH, 8)
             love.graphics.setLineWidth(2)
             love.graphics.setColor(UI.COLORS.multRed)
-            UI.drawRoundedRect("line", cx, cy, cardW, cardH, 8)
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.multRed)
             love.graphics.setFont(UI.fonts.medium)
             love.graphics.printf(reason and reason:find("cùng loại") and "ĐÃ CÓ" or "THIẾU Ô", cx, cy + cardH / 2 - 12, cardW, "center")
         elseif isHovered then
             love.graphics.setLineWidth(3)
             love.graphics.setColor(UI.COLORS.hpGreen)
-            UI.drawRoundedRect("line", cx - 2, cy - 2, cardW + 4, cardH + 4, 9)
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.hpGreen)
         end
 
         local usedSlots = Equipment.getUsedSlots(c)
@@ -5448,9 +5260,6 @@ local function drawHandbookModal()
             end
             local hiw, hih = hImg:getDimensions()
             require("ui.card_surfaces").image(h, thumbX, thumbY, thumbW, thumbH, hImg)
-            love.graphics.setColor(isUnlocked and { 0.3, 0.7, 0.9, 0.7 } or { 0.3, 0.3, 0.35, 0.4 })
-            love.graphics.setLineWidth(1)
-            UI.drawRoundedRect("line", thumbX, thumbY, thumbW, thumbH, 4)
         end
 
         -- Status Badge (Left)
@@ -5718,7 +5527,7 @@ local function drawShopState()
             if pendingEvolutionCard then
                 love.graphics.setLineWidth(2.5)
                 love.graphics.setColor(0.84, 0.68, 1, 0.95)
-                UI.drawRoundedRect("line", sx - 2, sy - 2, deiSlotW + 4, deiSlotH + 4, 6)
+                UI.drawCardBorder(sx, sy, deiSlotW, deiSlotH, UI.COLORS.goldYellow)
             end
             love.graphics.pop()
 
@@ -6061,10 +5870,10 @@ drawShopTransferView = function()
         love.graphics.setLineWidth(isSource and 3 or 2)
         if isSource then
             love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", x - 3, y - 3, w + 6, h + 6, 8)
+            UI.drawCardBorder(x, y + float - (hovered and 5 or 0), w, h, UI.COLORS.goldYellow)
         elseif chosenEq then
             love.graphics.setColor(canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
-            UI.drawRoundedRect("line", x - 2, y - 2, w + 4, h + 4, 8)
+            UI.drawCardBorder(x, y + float - (hovered and 5 or 0), w, h, canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
         end
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(Equipment.getUsedSlots(card) > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)
@@ -6147,7 +5956,7 @@ local function drawShopFx()
         if fx.kind == "consume" or fx.kind == "destroy" then
             love.graphics.setBlendMode("add")
             love.graphics.setColor(trailColor[1],trailColor[2],trailColor[3],math.sin(math.min(1,p/0.34)*math.pi)*0.22)
-            UI.drawRoundedRect("line",-w/2-3,-h/2-3,w+6,h+6,7)
+            UI.drawCardBorder(-w/2,-h/2,w,h,{trailColor[1],trailColor[2],trailColor[3],math.sin(math.min(1,p/0.34)*math.pi)*0.22})
             love.graphics.setBlendMode("alpha")
             UI.Polish.dissolve(UI, -w/2, -h/2, w, h, math.max(0,(p-0.34)/0.66)^1.5,
                 trailColor, function(x,y,cw,ch) UI.Polish.renderItem(UI,item,x,y,cw,ch) end)
@@ -6159,6 +5968,8 @@ local function drawShopFx()
             UI.drawPatronCard(item.deity or item, -w / 2, -h / 2, w, h, false, false, false)
         elseif item.category == "card" or item.rank then
             UI.drawCard(item.card or item, -w / 2, -h / 2, w, h)
+        elseif UI.getConsumableImage(item) or (item.handId and UI.getHandImage(item.handId)) then
+            require("ui.card_surfaces").fullReward(item, -w / 2, -h / 2, w, h, item.packType, false)
         else
             love.graphics.setColor(0.12, 0.16, 0.22, 0.98)
             UI.drawRoundedRect("fill", -w / 2, -h / 2, w, h, 8)
@@ -6397,7 +6208,7 @@ function love.draw()
     end
 
     -- In-game sleek Pause / Menu button at top right
-    if state ~= "menu" and state ~= "playing" and state ~= "defeating" and state ~= "gameover" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
+    if state ~= "menu" and state ~= "BLIND_SELECT" and state ~= "playing" and state ~= "defeating" and state ~= "gameover" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
         local mx, my = toVirtual(love.mouse.getPosition())
         local btnMenu = {
             id = "open_pause_menu",
@@ -6490,6 +6301,8 @@ end
 --------------------------------------------------------------------------------
 
 local function handlePlayingMousepressed(mx, my, button)
+    if button ~= 1 then return false end
+    if button==1 and EnemyFormation.press(game,mx,my) then Sound.play("ui_click");return true end
     if pendingSpeedCard and button == 1 then
         applyPendingSpeedAt(mx, my)
         return true
@@ -6556,7 +6369,7 @@ local function handlePlayingMousepressed(mx, my, button)
     end
 
     -- Check Deity Slots in Top Bar for Drag & Drop Reordering
-    for i = maxDeiSlots, 1, -1 do
+    for i = 1, maxDeiSlots do
         local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
         if UI.CardPhysics.hit(game.deities and game.deities[i], mx, my,
             mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh) then
@@ -6579,24 +6392,34 @@ local function handlePlayingMousepressed(mx, my, button)
         end
     end
 
-    for i = #game.hand, 1, -1 do
-        local c = game.hand[i]
-        local cx = c.visualX or 0
-        local cy = c.visualY or 0
-        local cardW = 100
-        local cardH = 145
+    -- Prefer the surface actually drawn under the cursor, then tolerate stale physics.
+    for pass = 1, 2 do
+        for i = #game.hand, 1, -1 do
+            local c = game.hand[i]
+            local cx = c.visualX or 0
+            local cy = c.visualY or 0
+            local cardW = 100
+            local cardH = 145
 
-        if UI.CardPhysics.hit(c, mx, my,
-            mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH) then
-            handDrag.active = true
-            handDrag.cardIndex = i
-            handDrag.startX = mx
-            handDrag.startY = my
-            handDrag.currentX = mx
-            handDrag.currentY = my
-            handDrag.offsetX = cx - mx
-            handDrag.offsetY = cy - my
-            handDrag.isDragging = false
+            local slotX, slotY, slotW, slotH = getHandCardPosition(i, #game.hand)
+            local stableHit = mx >= slotX and mx <= slotX + slotW
+                and my >= slotY - 56 and my <= slotY + slotH + 8
+            local hit = pass == 1 and UI.CardPhysics.hit(c, mx, my,
+                mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
+            if hit or (pass == 2 and stableHit) then
+                beginHandDrag(mx, my, i, love.keyboard.isDown("lshift", "rshift"))
+                return true
+            end
+        end
+    end
+
+    -- A sweep may start in a gap or just beside the hand.
+    if #game.hand > 0 then
+        local left, top, _, height = getHandCardPosition(1, #game.hand)
+        local right, lastY, width = getHandCardPosition(#game.hand, #game.hand)
+        if mx >= left - 18 and mx <= right + width + 18
+            and my >= math.min(top, lastY) - 56 and my <= math.max(top, lastY) + height + 8 then
+            beginHandDrag(mx, my, nil, false)
             return true
         end
     end
@@ -7385,6 +7208,7 @@ local function handleModalsMousepressed(mx, my, button)
 end
 
 function love.mousepressed(x, y, button)
+    if anim.enemyTurn then return end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
@@ -7435,7 +7259,7 @@ function love.mousepressed(x, y, button)
                 Sound.play("ui_click")
                 if btn.id == "play" or btn.id == "discard" or btn.id == "fight" or btn.id == "fight_blind"
                    or btn.id == "leave_shop" or btn.id == "btn_select_combat"
-                   or btn.id == "cashout_continue" or btn.id == "skip_blind" or btn.id == "start_game" then
+                   or btn.id == "cashout_continue" or btn.id == "start_game" then
                     juice.screenShake = math.max(juice.screenShake or 0, 2.5)
                 end
                 break
@@ -7551,21 +7375,6 @@ function love.mousepressed(x, y, button)
                         startBlindCombat(blind)
                         return
                     end
-                elseif btn.id == "skip_blind" then
-                    local blind = RunManager.getCurrentBlind(game.run)
-                    if blind and blind.canSkip and blind.status == "current" then
-                        local ok, msg, tag = RunManager.skipCurrentBlind(game.run, game)
-                        if ok then
-                            local breakdown = RewardSystem.calculate(blind, game, true)
-                            local rewardResult = RewardSystem.begin(breakdown, game)
-                            cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
-                            state = "CASH_OUT"
-                            lastActiveState = "CASH_OUT"
-                            saveRunAtSafePoint()
-                            Sound.play("coin")
-                            return
-                        end
-                    end
                 elseif btn.id == "open_handbook" then
                     isHandbookOpen = true
                     Sound.play("ui_click")
@@ -7584,7 +7393,7 @@ function love.mousepressed(x, y, button)
         return
 
     elseif state == "map" then
-        -- Handle clicks on Encounter / Skip Blind modal if open
+        -- Handle clicks on encounter preview if open
         if pendingCombatNode then
             for _, btn in ipairs(buttons) do
                 if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -7601,19 +7410,6 @@ function love.mousepressed(x, y, button)
                             state = "playing"
                             Sound.play("card_deal")
                         end
-                        return
-                    elseif btn.id == "modal_skip_node" then
-                        local node = pendingCombatNode
-                        pendingCombatNode = nil
-                        local ok, rewardMsg, tag = Map.skipCombatNode(game, node.id)
-                        table.insert(anim.floatingTexts, {
-                            text = "🎁 BỎ QUA ẢI: " .. rewardMsg,
-                            color = (tag and tag.color) or UI.COLORS.goldYellow,
-                            x = 640,
-                            y = 360,
-                            alpha = 3.0,
-                        })
-                        Sound.play("round_win")
                         return
                     elseif btn.id == "modal_close_preview" then
                         pendingCombatNode = nil
@@ -8003,8 +7799,9 @@ function love.mousepressed(x, y, button)
                     if game.run then
                         game.run.endless = true
                         game.run.victory = false
-                        game.run.maxAnte = 999
-                        game.run.ante = (game.run.ante or 8) + 1
+                        game.run.maxAnte = RunManager.MAX_ANTE
+                        game.run.travelPermit = true
+                        game.run.ante = (game.run.ante or 20) + 1
                         game.run.currentBlindIndex = 1
                         game.run.shopsVisitedInAnte = 0
                         game.run.blinds = RunManager.generateAnteBlinds(game.run.ante, game.selectedFaction)
@@ -8026,6 +7823,11 @@ function love.mousepressed(x, y, button)
 end
 
 function love.keypressed(key)
+    if handDrag.active then
+        UI.CardPhysics.release()
+        handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+    end
+    if anim.enemyTurn and key ~= "escape" then return end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if Renderer.keypressed(key) then return end
     if state == "shop" and UI.Polish.busy() then return end
@@ -8222,6 +8024,10 @@ function love.wheelmoved(x, y)
 end
 
 function love.mousemoved(x, y, dx, dy)
+    if handDrag.active and handInputBlocked() then
+        UI.CardPhysics.release()
+        handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+    end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
 
@@ -8238,15 +8044,15 @@ function love.mousemoved(x, y, dx, dy)
     end
     juice.lastHoveredButtonId = currentHoveredBtn
 
-    if handDrag.active and handDrag.cardIndex and state == "playing" then
-        handDrag.currentX = mx
-        handDrag.currentY = my
-        local dist = math.sqrt((mx - handDrag.startX)^2 + (my - handDrag.startY)^2)
-        if dist > 7 then
+    if handDrag.active and state == "playing" then
+        local deltaX, deltaY = mx - handDrag.startX, my - handDrag.startY
+        if deltaX * deltaX + deltaY * deltaY > 7 * 7 then
             handDrag.isDragging = true
         end
 
-        if handDrag.isDragging then
+        if handDrag.mode == "select" then
+            sweepHandSelection(mx, my)
+        elseif handDrag.mode == "reorder" and handDrag.isDragging then
             local nearest, nearestDistance = handDrag.cardIndex, math.huge
             for slot = 1, #game.hand do
                 local slotX, _, slotW = getHandCardPosition(slot, #game.hand)
@@ -8268,6 +8074,7 @@ function love.mousemoved(x, y, dx, dy)
                 Sound.play("card_slide", 0.96 + nearest * 0.015)
             end
         end
+        if handDrag.mode ~= "select" then handDrag.currentX, handDrag.currentY = mx, my end
     end
 
     if shopDrag.active and state == "shop" then
@@ -8296,13 +8103,20 @@ function love.mousemoved(x, y, dx, dy)
 end
 
 function love.mousereleased(x, y, button)
+    if button == 1 then
+        UI.CardPhysics.release()
+        if handDrag.active and handInputBlocked() then
+            handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+        end
+    end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
-    if button == 1 then UI.CardPhysics.release() end
     juice.buttonPressedId = nil
 
     if button == 1 and handDrag.active then
-        if not handDrag.isDragging and handDrag.cardIndex then
+        if handDrag.mode == "select" then
+            sweepHandSelection(mx, my)
+        elseif not handDrag.isDragging and handDrag.cardIndex then
             local card = game.hand[handDrag.cardIndex]
             if card then
                 card.visualScale = 1.15
@@ -8310,11 +8124,6 @@ function love.mousereleased(x, y, button)
             end
             toggleCardSelection(handDrag.cardIndex)
             if card then CardEffects.triggerSelectPulse(card) end
-            if card and card.selected then
-                Sound.play("card_select")
-            else
-                Sound.play("card_deselect")
-            end
         elseif handDrag.isDragging then
             Sound.play("card_slide")
         end
@@ -8399,9 +8208,6 @@ function love.mousereleased(x, y, button)
             local foundDest = nil
             local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
             local first, last, step = 1, maxDeiSlots, 1
-            if state == "playing" or state == "scoring" then
-                first, last, step = maxDeiSlots, 1, -1
-            end
             -- Prefer the visually exposed cards; only use an invisible empty
             -- destination when the pointer is outside every occupied card.
             for i = first, last, step do

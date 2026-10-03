@@ -34,6 +34,7 @@ function DebugTools.setAnte(game, value, blindIndex)
     game.run.ante = ante
     game.run.maxAnte = math.max(RunManager.MAX_ANTE, ante)
     game.run.endless = ante > RunManager.MAX_ANTE
+    game.run.travelPermit = ante > RunManager.MAX_ANTE
     game.run.victory = false
     game.run.currentBlindIndex = math.max(1, math.min(3, blindIndex or 1))
     game.run.shopsVisitedInAnte = 0
@@ -44,6 +45,7 @@ function DebugTools.setAnte(game, value, blindIndex)
     end
     game.currentBlind = nil
     game.monster = nil
+    game.enemies = nil
     return true, "Đã chuyển đến Ante " .. ante .. ", Blind " .. game.run.currentBlindIndex
 end
 

@@ -16,6 +16,9 @@ local TRANSIENT_GAME_KEYS = {
     abilityHand = true,
     abilityApproved = true,
     monster = true,
+    enemies = true,
+    enemyPoison = true,
+    enemyFeedback = true,
     deck = true,
     hand = true,
     discardPile = true,
@@ -89,12 +92,6 @@ local function serialize(value, indent, seen)
     return table.concat(parts)
 end
 
-local function findTag(tagId)
-    for _, tag in ipairs(RunManager.TAGS) do
-        if tag.id == tagId then return tag end
-    end
-end
-
 local function snapshotRun(run)
     if not run then return nil end
     local result = {
@@ -105,6 +102,7 @@ local function snapshotRun(run)
         currentBlindIndex = run.currentBlindIndex,
         victory = run.victory,
         endless = run.endless,
+        travelPermit = run.travelPermit,
         shopsVisitedInAnte = run.shopsVisitedInAnte,
         stats = sanitize(run.stats),
         blinds = {},
@@ -122,19 +120,22 @@ local function restoreRun(saved, faction)
     if not saved then return RunManager.newRun(faction) end
     local run = RunManager.newRun(saved.selectedFaction or saved.faction or faction)
     run.ante = math.max(1, tonumber(saved.ante) or 1)
-    run.maxAnte = math.max(run.ante, tonumber(saved.maxAnte) or RunManager.MAX_ANTE)
+    run.maxAnte = RunManager.MAX_ANTE
     run.currentBlindIndex = math.max(1, math.min(3, tonumber(saved.currentBlindIndex) or 1))
     run.victory = saved.victory == true
-    run.endless = saved.endless == true
+    run.endless = saved.endless == true or run.ante > 20
+    run.travelPermit = saved.travelPermit == true or run.ante > 20
+    if run.ante < 20 then run.victory = false end
     run.shopsVisitedInAnte = tonumber(saved.shopsVisitedInAnte) or 0
     run.stats = sanitize(saved.stats) or run.stats
     run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction)
     for i, blind in ipairs(run.blinds) do
         local savedBlind = saved.blinds and saved.blinds[i]
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
-        if savedBlind and savedBlind.tagId then
-            blind.tag = findTag(savedBlind.tagId) or blind.tag
-        end
+        if blind.status == "skipped" then blind.status = i == run.currentBlindIndex and "current" or "upcoming" end
+    end
+    if saved.victory and run.ante < 20 and run.blinds[run.currentBlindIndex].status == "completed" then
+        RunManager.advanceBlind(run)
     end
     return run
 end
@@ -226,13 +227,16 @@ function Persistence.restoreSnapshot(snapshot)
     if snapshot.rngState then Rng.setState(snapshot.rngState) end
     game.map = nil
     game.monster = nil
+    game.enemies = nil
     game.deck = {}
     game.hand = {}
     game.discardPile = {}
     game.selectedIndices = {}
     game.currentNodeId = nil
     Deck.restoreDeck(game.persistentDeck)
-    return game, snapshot.activeState or "BLIND_SELECT"
+    local restoredState = snapshot.activeState or "BLIND_SELECT"
+    if restoredState == "victory" and not game.run.victory then restoredState = "BLIND_SELECT" end
+    return game, restoredState
 end
 
 function Persistence.encode(value)

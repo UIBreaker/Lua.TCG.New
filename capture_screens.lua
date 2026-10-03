@@ -61,6 +61,26 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _, value in ipairs(arg or {}) do
+        if value == "--test-illustrated-art" then return require("tests.illustrated_art_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-consumable-art" then return require("tests.consumable_art_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-hand-drag-select" then
+            local ok, err = pcall(require("tests.hand_drag_select_capture").update, gameRef, callbacks)
+            if not ok then print("DRAG SELECT FAILED: " .. tostring(err)); love.event.quit(1) end
+            return
+        end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-enemy-attacks" then return require("tests.enemy_attack_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-expedition" then return require("tests.expedition_capture").update(gameRef, callbacks) end
+        if value == "--test-enemy-groups" then return require("tests.enemy_group_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
         if value == "--test-evolution-ui" then return require("tests.evolution_ui_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do

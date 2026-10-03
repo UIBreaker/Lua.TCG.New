@@ -237,6 +237,7 @@ function Monster.create(round, isBossOverride, isEliteOverride, encounterCountOv
             bossTemplate = BOSSES[round] or Monster.DISRUPTIVE_BOSSES.the_needle
         end
 
+        if not bossKeyOverride then bossTemplate = require("src.expedition").bossData(round, Monster.DISRUPTIVE_BOSSES, bossTemplate) end
         monster.name = bossTemplate.name
         monster.title = bossTemplate.title
         monster.desc = bossTemplate.desc
@@ -258,16 +259,18 @@ function Monster.create(round, isBossOverride, isEliteOverride, encounterCountOv
         monster.color = { 0.8, 0.35, 0.25, 1 }
     end
 
-    return monster
+    return require("src.expedition").decorate(monster, round, encounterCount)
 end
 
 function Monster.takeDamage(monster, rawDamage)
-    local actualDamage = rawDamage
+    local actualDamage = math.max(0,rawDamage or 0)
     if monster.isBoss and monster.bossData and monster.bossData.modifyDamage and require("src.boss_abilities").passiveEnabled(monster) then
         actualDamage = monster.bossData.modifyDamage(rawDamage)
     end
 
+    actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage)
     monster.hp = math.max(0, monster.hp - actualDamage)
+    require("src.enemy_abilities").revive(monster)
 
     -- Boss Phase 2 Transition at <= 50% HP
     if monster.isBoss and monster.phase == 1 and monster.hp > 0 and monster.hp <= math.floor(monster.maxHp * 0.5) then
@@ -278,7 +281,7 @@ function Monster.takeDamage(monster, rawDamage)
         monster.phase2Triggered = true
     end
 
-    local defeated = (monster.hp <= 0)
+    local defeated = (monster.hp <= 0) and (not monster.group or require("src.enemy_group").alive(monster.group)==0)
     return actualDamage, defeated
 end
 

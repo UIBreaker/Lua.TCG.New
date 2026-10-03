@@ -1,5 +1,6 @@
 local Theme = require("ui.theme")
 local Core = require("ui.components.core")
+local Frame = require("ui.components.card_frame")
 local DeckCounter = {}
 local image, loaded = nil, false
 
@@ -60,12 +61,12 @@ function DeckCounter.drawBack(x, y, w, h, alpha)
     g.push("all")
     g.setColor(1, 1, 1, alpha or 1)
     if art then
-        local iw, ih = art:getDimensions()
-        g.draw(art, x, y, 0, w / iw, h / ih)
+        Frame.image(art, x, y, w, h)
     else
         g.setColor(0.06, 0.10, 0.18, alpha or 1)
         g.rectangle("fill", x, y, w, h)
     end
+    Frame.draw(x, y, w, h, nil, alpha)
     g.pop()
 end
 
@@ -77,9 +78,7 @@ function DeckCounter.draw(x, y, w, h, remaining, total, fonts, hovered, dropColo
     DeckCounter.drawBack(x + 1, y + 3, w - 1, artH, 0.8)
     DeckCounter.drawBack(x, y, w, artH)
     if hovered or dropColor then
-        Core.color(dropColor or Theme.colors.gold)
-        g.setLineWidth(dropColor and 3 or 1.5)
-        g.rectangle("line", x - 2, y - 2, w + 4, artH + 4, 5, 5)
+        Frame.draw(x, y, w, artH, dropColor or Theme.colors.gold)
     end
     Core.text(tostring(remaining) .. " / " .. tostring(total), x, y + h - 17,
         w, fonts.tiny, Theme.colors.text, "center")

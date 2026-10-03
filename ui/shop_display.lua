@@ -49,8 +49,6 @@ local function ticket(item, x, y, w, h, hovered)
     UI.drawRoundedRect("fill", x, y, w, h, 7)
     love.graphics.setColor(accent[1], accent[2], accent[3], hovered and 1 or 0.65)
     love.graphics.setLineWidth(hovered and 2 or 1)
-    UI.drawRoundedRect("line", x, y, w, h, 7)
-    UI.drawRoundedRect("line", x + 6, y + 6, w - 12, h - 12, 4)
     for i = 0, 4 do
         love.graphics.circle("line", x + w / 2, y + h * 0.40, w * 0.23 + i * 2)
     end
@@ -61,6 +59,7 @@ local function ticket(item, x, y, w, h, hovered)
     love.graphics.setColor(C.surface)
     love.graphics.circle("fill", x, y + h * 0.72, 5)
     love.graphics.circle("fill", x + w, y + h * 0.72, 5)
+    UI.drawCardBorder(x, y, w, h, hovered and C.gold)
 end
 
 local function art(item, x, y, w, h, hovered, mx, my)
@@ -84,13 +83,13 @@ local function art(item, x, y, w, h, hovered, mx, my)
     elseif item.card then
         UI.drawCardFace(item.card, 0, 0, w, h, hovered, x, y, tx * 0.07, ty * 0.07, 1, 1)
     else
-        local image = item.equipment and UI.getEquipmentImage(item.equipment.id)
+        local image = UI.getConsumableImage(item) or (item.equipment and UI.getEquipmentImage(item.equipment.id))
             or (item.category == "hand_expansion" and UI.getVoucherImage("v_hand_size"))
             or (item.category == "pack" and UI.getPackImage(item.packType))
         if image then
             love.graphics.setColor(1, 1, 1, 1)
-            local iw, ih = image:getDimensions()
-            love.graphics.draw(image, 0, 0, 0, w / iw, h / ih)
+            UI.CardFrame.image(image, 0, 0, w, h)
+            UI.drawCardBorder(0, 0, w, h, hovered and C.gold)
         elseif item.category == "heal" then
             -- A potion silhouette replaces the old generic text/gem card.
             local a = item.color or C.green
@@ -107,6 +106,7 @@ local function art(item, x, y, w, h, hovered, mx, my)
             UI.drawRoundedRect("fill", w * 0.35, h * 0.18, w * 0.30, h * 0.06, 3)
             love.graphics.setColor(1, 1, 1, 0.55)
             UI.drawRoundedRect("fill", w * 0.30, h * 0.40, 4, h * 0.20, 2)
+            UI.drawCardBorder(0, 0, w, h, hovered and C.gold)
         else
             ticket(item, 0, 0, w, h, hovered)
         end

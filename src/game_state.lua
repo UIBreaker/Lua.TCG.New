@@ -61,6 +61,8 @@ function GameState.resetRun(game, faction)
     game.eventOutcomeText = nil
     game.bossDeityDraft = {}
     game.monster = nil
+    game.enemies = nil
+    game.enemyPoison = 0
     game.playerShield = 0
     game.playerArmor = 0
     game.deck = {}

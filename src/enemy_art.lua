@@ -1,5 +1,5 @@
 -- Presentation-only asset selection. Boss data can change after monster creation.
-local Art = { images = {} }
+local Art = { images = {}, cards = {} }
 Art.normal = { "forest_goblin", "lava_golem", "swamp_wraith", "frost_wolf", "desert_scorpion", "ancient_skeleton" }
 Art.bosses = {
     "lock_royals", "black_tax_collector", "the_water", "memory_eater", "the_arm",
@@ -8,6 +8,8 @@ Art.bosses = {
 }
 function Art.key(monster)
     if not monster then return nil end
+    if monster.human then return monster.cardSuit .. "_" .. require("src.expedition").rankName(monster.cardRank) end
+    if monster.artKey then return monster.artKey end
     if monster.isBoss then
         local data = monster.bossData or {}
         return data.debuffId or data.id
@@ -16,7 +18,11 @@ function Art.key(monster)
         return Art.normal[((monster.round or monster.encounterCount or 1) - 1) % #Art.normal + 1]
     end
 end
-function Art.path(key) return "assets/scene/enemies/" .. key .. ".png" end
+function Art.path(key)
+    local human = key and key:match("^(%a+)_([%dJQKA]+)$")
+    return (human and (human=="hearts" or human=="diamonds" or human=="clubs" or human=="spades"))
+        and "assets/cards/"..key..".png" or "assets/scene/enemies/"..key..".png"
+end
 function Art.load()
     for _, list in ipairs({ Art.normal, Art.bosses }) do
         for _, key in ipairs(list) do
@@ -29,7 +35,21 @@ function Art.load()
     end
 end
 function Art.image(monster, fallback)
-    return Art.images[Art.key(monster)] or
+    if monster.human then
+        return require("src.ui").getCardImage(monster.cardSuit, monster.cardRank)
+    end
+    local illustration=Art.images[Art.key(monster)] or
         (monster.isBoss and fallback.enemyBoss or monster.isElite and fallback.enemyElite or fallback.enemySmall)
+    if monster.creatureCard then
+        local key=Art.key(monster).."_"..tostring(monster.cardRank or 2)
+        if not Art.cards[key] then
+            local path="assets/scene/enemy_cards/"..key..".png"
+            if love.filesystem.getInfo(path) then
+                Art.cards[key]=love.graphics.newImage(path);Art.cards[key]:setFilter("linear","linear")
+            end
+        end
+        return Art.cards[key] or require("ui.enemy_card").image(monster,illustration)
+    end
+    return illustration
 end
 return Art

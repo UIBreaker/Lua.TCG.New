@@ -37,7 +37,7 @@ Boss.newDefinitions = {
         color={0.3,0.8,0.7,1},desc="Đầu tay có hơn 5 lá: mỗi lá dư tăng 1 tấn công trong tay đó. Không giảm kích thước tay."},
 }
 function Boss.attach(def)
-    if def then def.active=Boss.actives[def.debuffId or def.id]; def.activeCooldown=def.active and def.active.cooldown end
+    if def and not def.expeditionActive then def.active=Boss.actives[def.debuffId or def.id]; def.activeCooldown=def.active and def.active.cooldown end
     return def
 end
 function Boss.key(monster) return monster and monster.bossData and (monster.bossData.debuffId or monster.bossData.id) end

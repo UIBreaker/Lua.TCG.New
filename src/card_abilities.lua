@@ -205,6 +205,7 @@ function A.finishHand(game)
     combat(game).previousHandType=ctx.handInfo.type.id
     Boss.handEnd(game)
     A.resolveBossDamage(game)
+    require("src.enemy_abilities").handEnd(game)
 end
 function A.roundEnd(game)
     local ctx={unusedDiscards=game.discardsRemaining or 0}

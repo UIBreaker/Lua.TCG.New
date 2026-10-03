@@ -1,7 +1,7 @@
 -- Presentation only. Hand IDs match Poker.HAND_TYPES; no gameplay values here.
 local C = {
     auraTiers = {0.5, 1, 2, 4}, tierNames = {"NORMAL", "STRONG", "POWERFUL", "EXTREME", "TRANSCEND"},
-    fallbackTarget = 1000, silence = 0.06, convergence = 0.04, hitStop = {0.020, 0.030, 0.045, 0.065, 0.090},
+    fallbackTarget = 1000, silence = 0.06, convergence = 0.04, hitStop = {0.055, 0.070, 0.085, 0.105, 0.130},
     quality = {low = 8, medium = 16, high = 28},
     camera = {duration = 0.28, maxKick = 5, maxRecoil = 16, zoom = 0.018},
     trail = {segments = 12, length = 0.24, glow = 2.8},
@@ -36,4 +36,10 @@ C.hands.full_house.rhythmPhase="ANTICIPATION"
 C.hands.four_of_a_kind.rhythmPhase="ANTICIPATION"
 local beatTimes={high_card={0},pair={0,0.30},two_pair={0,0.25},three_of_a_kind={0,0.3,0.6},straight={0,0.13,0.26,0.39,0.52},flush={0},full_house={0,0.30,0.85},four_of_a_kind={0,0.2,0.4,0.6},straight_flush={0,0.24,0.78}}
 for id,times in pairs(beatTimes) do C.hands[id].soundHooks.beatTimes=times end
+for _, hand in pairs(C.hands) do
+    hand.timing[2] = math.max(0.30, hand.timing[2]) -- Readable windup before release.
+    hand.timing[3] = math.max(0.26, hand.timing[3])
+    hand.timing[4] = math.max(0.22, hand.timing[4])
+    hand.timing[5] = math.max(0.55, hand.timing[5])
+end
 return C

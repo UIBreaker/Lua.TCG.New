@@ -493,23 +493,13 @@ assert(calcInterest(25) == 3, "25 gold yields 3 interest (cap)")
 assert(calcInterest(99) == 3, "99 gold yields 3 interest (capped at 3)")
 log("[PASS] 29. Tiền Lãi (Interest) verified: +$1 per $5 stored, capped at +$3 per combat")
 
--- 25. Test Skip Blind & Tag Rewards
-local testMap = Map.generate(1)
-local testCombatNode = testMap.nodes["f1_1"]
-assert(testCombatNode.skipTag ~= nil, "Combat node must have an assigned skipTag")
-assert(testCombatNode.skipTag.name ~= nil, "skipTag must have a display name")
-local simState = {
-    gold = 10,
-    map = testMap,
-    persistentDeck = Deck.createStarterDeck("aurelia"),
-    monsterEncounterCount = 1,
-}
-local initialEncounter = simState.monsterEncounterCount
-local skipOk, skipMsg, tag = Map.skipCombatNode(simState, "f1_1")
-assert(skipOk == true, "skipCombatNode must execute successfully")
-assert(simState.monsterEncounterCount == initialEncounter + 1, "Skipping increases encounterCount (+50% HP next fight)")
-assert(testCombatNode.visited == true, "Skipped node marked as visited/completed")
-log("[PASS] 30. Skip Blind & Tag Rewards verified: node completed with tag reward: " .. (tag.name or ""))
+-- 25. Retired map skipping cannot grant rewards or move the player.
+local testMap=Map.generate(1)
+local simState={gold=10,map=testMap,monsterEncounterCount=1}
+assert(not testMap.nodes.f1_1.skipTag)
+assert(not Map.skipCombatNode(simState,"f1_1"))
+assert(simState.gold==10 and simState.monsterEncounterCount==1 and not testMap.nodes.f1_1.visited)
+log("[PASS] 30. Map skipping retired without mutation")
 
 -- 26. Test 5 Disruptive Boss Abilities (The Needle, The Water, The Hook, The Fish, The Arm)
 -- A. The Needle (1 Hand only)
@@ -828,10 +818,10 @@ end
 do
     local testRun = RunManager.newRun("aurelia")
     assert(testRun.ante == 1, "Initial Ante must be 1")
-    assert(testRun.maxAnte == 8, "Max Ante must be 8")
+    assert(testRun.maxAnte == 20, "Campaign must have 20 stages")
     assert(#testRun.blinds == 3, "Must have exactly 3 blinds per Ante")
-    assert(testRun.blinds[1].type == "small" and testRun.blinds[1].baseReward == 3 and testRun.blinds[1].canSkip == true, "Small blind properties verified")
-    assert(testRun.blinds[2].type == "big" and testRun.blinds[2].baseReward == 4 and testRun.blinds[2].canSkip == true, "Big blind properties verified")
+    assert(testRun.blinds[1].type == "small" and testRun.blinds[1].baseReward == 3 and testRun.blinds[1].canSkip == false, "Small blind properties verified")
+    assert(testRun.blinds[2].type == "big" and testRun.blinds[2].baseReward == 4 and testRun.blinds[2].canSkip == false, "Big blind properties verified")
     assert(testRun.blinds[3].type == "boss" and testRun.blinds[3].baseReward == 5 and testRun.blinds[3].canSkip == false, "Boss blind properties verified")
     assert(testRun.blinds[3].debuff ~= nil and testRun.blinds[3].debuff.title ~= nil, "Boss blind must have an assigned disruptive debuff")
     log("[PASS] 48. RunManager.newRun & 3-Blind Ante structure verified (Small/Big canSkip, Boss debuff active)")
@@ -895,12 +885,10 @@ end
 do
     local tagRun = RunManager.newRun("valoria")
     local mockShopGame = { gold = 20, selectedFaction = "valoria", freeRerolls = 0 }
-    tagRun.blinds[1].tag = RunManager.TAGS[5] -- tag_free_reroll (+2 free rerolls)
-    tagRun.blinds[1].skipPact = RunManager.TAGS[5]
-    local skipOk, skipMsg, tag = RunManager.skipCurrentBlind(tagRun, mockShopGame)
-    assert(skipOk == true, "Small blind should be skippable")
-    assert(tagRun.blinds[1].status == "skipped", "Blind status should be skipped")
-    assert(mockShopGame.freeRerolls == 2, "Tag should grant 2 free rerolls")
+    assert(not RunManager.skipCurrentBlind(tagRun,mockShopGame))
+    assert(tagRun.blinds[1].status=="current" and mockShopGame.freeRerolls==0)
+    -- Free rerolls from unrelated rewards still work.
+    mockShopGame.freeRerolls=2
 
     local testShop = Shop.new()
     -- Reroll 1 consumes 1 free reroll without spending gold
@@ -926,12 +914,12 @@ do
     log("[PASS] 50. Skip Blind Tags, Free Reroll Tag, and Shop Reroll mechanics ($5 -> $7 -> reset $5) verified")
 end
 
--- 51. Test Full 8-Ante Progression and Victory Condition
+-- 51. Test Full 20-Ante Progression and Victory Condition
 do
     local progRun = RunManager.newRun("aurelia")
     local progGame = { gold = 10, selectedFaction = "aurelia" }
 
-    for a = 1, 8 do
+    for a = 1, 20 do
         assert(progRun.ante == a, "Ante should match loop: " .. a)
         assert(progRun.currentBlindIndex == 1, "Ante " .. a .. " starts at Blind 1")
 
@@ -951,17 +939,17 @@ do
         RunManager.completeCurrentBlind(progRun)
         local cont3, r3 = RunManager.advanceAfterShop(progRun, progGame)
 
-        if a < 8 then
+        if a < 20 then
             assert(cont3 == true and r3 == "next_ante", "Ante " .. a .. " boss win should advance to next ante")
             assert(progRun.ante == a + 1, "Ante should be " .. (a + 1))
             assert(progRun.currentBlindIndex == 1, "New ante must start at Blind 1")
         else
-            assert(cont3 == false and r3 == "victory", "Ante 8 boss win MUST trigger victory!")
+            assert(cont3 == false and r3 == "victory", "Ante 20 boss win MUST trigger victory!")
             assert(progRun.victory == true, "progRun.victory must be true")
         end
     end
-    assert(progRun.stats.blindsWon == 24, "Player should have won 24 blinds total across 8 Antes")
-    log("[PASS] 51. Full 8-Ante Progression (3 Blinds & 3 Shops per Ante) and Ante 8 VICTORY verified")
+    assert(progRun.stats.blindsWon == 60, "Player should have won 60 blinds total across 20 Antes")
+    log("[PASS] 51. Full 20-Ante Progression (3 Blinds & 3 Shops per Ante) and Ante 20 VICTORY verified")
 end
 
 -- 52. Test ♠️ THIẾT QUÂN THỨ (The Iron Axiom / Spades Archetype)
@@ -1334,7 +1322,7 @@ do
         -- 2. Small Blind: Chiến đấu & Thắng
         local sb = RunManager.getCurrentBlind(run)
         assert(sb ~= nil and sb.type == "small", "First blind must be Small Blind")
-        assert(sb.canSkip == true, "Small Blind can be skipped")
+        assert(sb.canSkip == false, "Small Blind must be fought")
 
         local monster = RunManager.createBlindMonster(sb, mockGame)
         assert(monster.hp == sb.hp, "Monster HP matches Small Blind HP")
@@ -1382,19 +1370,11 @@ do
         Shop.resetReroll(shop)
         assert(shop.rerollCost == 5, "Reroll cost resets to $5 for new blind")
 
-        -- 5. Big Blind: Bỏ qua (Skip) lấy Bùa Thưởng (Tag)
-        local bb = RunManager.getCurrentBlind(run)
-        assert(bb ~= nil and bb.type == "big", "Second blind must be Big Blind")
-        assert(bb.canSkip == true, "Big Blind can be skipped")
-
-        local skipOk, skipMsg, tag = RunManager.skipCurrentBlind(run, mockGame)
-        assert(skipOk == true, "Skipping Big Blind must succeed")
-        assert(bb.status == "skipped", "Big Blind marked as skipped")
-        assert(tag ~= nil, "Skip must award a tag")
-
-        -- Cash Out khi Bỏ qua
-        local skipBreakdown = RewardSystem.calculate(bb, mockGame, true)
-        assert(skipBreakdown.basePayout == 0, "Skipped blind grants $0 base reward")
+        -- 5. Big Blind must be beaten; attempted skip does nothing.
+        local bb=RunManager.getCurrentBlind(run)
+        assert(bb.type=="big" and not bb.canSkip)
+        assert(not RunManager.skipCurrentBlind(run,mockGame) and bb.status=="current")
+        RunManager.completeCurrentBlind(run)
 
         -- Chuyển sang Boss Blind
         local contBoss = RunManager.advanceAfterShop(run, mockGame)
@@ -1443,9 +1423,9 @@ do
     -- 58. Test Toàn Vẹn Dữ Liệu Bộ Sưu Tập Toàn Thư (Collection Compendium)
     local Collection = require("src.collection")
     local categories = Collection.getCategories()
-    assert(#categories == 11, "Collection must have exactly 11 categories, got: " .. #categories)
+    assert(#categories == 10, "Collection has 10 categories after retiring skip pacts")
 
-    local expectedCats = { "jokers", "decks", "vouchers", "consumables", "enhancements", "seals", "editions", "packs", "tags", "blinds", "other" }
+    local expectedCats = { "jokers", "decks", "vouchers", "consumables", "enhancements", "seals", "editions", "packs", "blinds", "other" }
     for _, catId in ipairs(expectedCats) do
         local cat = Collection.getCategoryById(catId)
         assert(cat ~= nil, "Category " .. catId .. " must exist in Collection")
@@ -1944,14 +1924,16 @@ do
 
     -- Test advanceAfterShop in endless mode
     local run = RunManager.newRun("aurelia")
-    run.ante = 8
+    run.ante = 20
     run.currentBlindIndex = 3
     run.endless = true
     run.maxAnte = 999
+    run.blinds = RunManager.generateAnteBlinds(run.ante)
+    RunManager.completeCurrentBlind(run)
     local cont, reason = RunManager.advanceAfterShop(run, { selectedFaction = "aurelia" })
     assert(cont == true, "Endless mode must continue instead of ending in victory")
     assert(reason == "next_ante", "Endless mode advances to next_ante")
-    assert(run.ante == 9, "Endless mode advances run.ante to 9, got: " .. run.ante)
+    assert(run.ante == 21, "Endless mode advances run.ante to 9, got: " .. run.ante)
     assert(#run.blinds == 3, "Ante 9 must have 3 blinds generated")
     log("[PASS] 71. Endless Mode scaling and progression beyond Ante 8 verified 100%")
 end
@@ -1959,10 +1941,12 @@ end
 -- 72. Test Victory Modal Options
 do
     local run = RunManager.newRun("aurelia")
-    run.ante = 8
+    run.ante = 20
     run.currentBlindIndex = 3
-    run.maxAnte = 8
+    run.maxAnte = 20
     run.endless = false
+    run.blinds = RunManager.generateAnteBlinds(run.ante)
+    RunManager.completeCurrentBlind(run)
     local cont, reason = RunManager.advanceAfterShop(run, { selectedFaction = "aurelia" })
     assert(cont == false and reason == "victory", "Standard Ante 8 completion must trigger victory")
     assert(run.victory == true, "run.victory must be true")
@@ -2533,14 +2517,12 @@ end
 
 -- 90. Test Phase 5: 6 Pacts & Wanted Level
 do
-    assert(#RunManager.PACTS >= 6, "Must have at least 6 Pacts, got: " .. #RunManager.PACTS)
+    assert(#RunManager.SKIP_PACTS == 0, "Skip pacts have been retired")
     local pactGame = { gold = 5, maxPlayerHp = 100, playerHp = 100, wantedLevel = 0 }
     
     -- Pact 1: Blood Loan (+$15 gold, -15 Max HP)
-    local pBlood = RunManager.PACTS[1]
-    pBlood.apply(pactGame)
-    assert(pactGame.gold == 20, "Blood Loan must grant +$15 gold")
-    assert(pactGame.maxPlayerHp == 85, "Blood Loan must reduce Max HP to 85")
+    assert(not RunManager.skipCurrentBlind(RunManager.newRun(), pactGame))
+    assert(pactGame.gold == 5 and pactGame.maxPlayerHp == 100)
 
     -- Wanted Level scaling: +8% per level
     pactGame.wantedLevel = 3
@@ -2553,7 +2535,7 @@ end
 do
     -- Intent rotation
     local simBoss = Monster.create(1, true, false, 1, "echo_knight")
-    assert(simBoss.name == "HIỆP SĨ VỌNG ÂM", "Echo Knight boss created successfully")
+    assert(simBoss.bossData.debuffId == "echo_knight" and simBoss.human, "Human boss retains Echo Knight abilities")
     assert(simBoss.phase == 1, "Boss starts in Phase 1")
 
     -- Phase 2 Transition at <= 50% HP
@@ -2750,27 +2732,11 @@ do
     log("[PASS] 97. Tactical equipment roles, enhancements & Common spirit compatibility verified 100%")
 end
 
--- 98. Test Khế Ước Bỏ Ải (3-Part Unified Schema & Skip Execution)
+-- 98. Mandatory-combat expedition progression and presentation.
 do
-    assert(type(RunManager.SKIP_PACTS) == "table", "SKIP_PACTS must be a table")
-    assert(#RunManager.SKIP_PACTS >= 8, "Must have at least 8 Khế Ước Bỏ Ải")
-    for _, p in ipairs(RunManager.SKIP_PACTS) do
-        assert(type(p.instantDesc) == "string", "Pact must have instantDesc: " .. tostring(p.name))
-        assert(type(p.debtDesc) == "string", "Pact must have debtDesc: " .. tostring(p.name))
-        assert(type(p.durationDesc) == "string", "Pact must have durationDesc: " .. tostring(p.name))
-        assert(type(p.apply) == "function", "Pact must have apply function: " .. tostring(p.name))
-    end
-
-    -- Test skip application with 3-part pact
-    local run = RunManager.newRun("aurelia")
-    local pactState = { gold = 10, maxPlayerHp = 100, playerHp = 100 }
-    run.blinds[1].skipPact = RunManager.SKIP_PACTS[1] -- pact_blood_loan
-    local okSkip, skipMsg, appliedPact = RunManager.skipCurrentBlind(run, pactState)
-    assert(okSkip == true, "skipCurrentBlind must succeed")
-    assert(run.blinds[1].status == "skipped", "Blind status must become skipped")
-    assert(pactState.gold == 25, "Blood loan instant +$15 gold applied")
-    assert(pactState.maxPlayerHp == 85, "Blood loan debt -15 Max HP applied")
-    log("[PASS] 98. Khế Ước Bỏ Ải (3-Part Unified Schema & Skip Execution) verified 100%")
+    assert(#RunManager.SKIP_PACTS==0 and #RunManager.TAGS==0)
+    require("tests.expedition_smoke")
+    log("[PASS] 98. Expedition campaign and boundaries verified")
 end
 
 -- 99. Test Đồng Bộ Dữ Liệu Bộ Sưu Tập Toàn Thư (Single Source of Truth & Dynamic Compendium)
@@ -3213,7 +3179,7 @@ do
     assert(DebugTools.setAnte(gs, "27", 3))
     assert(gs.run.ante == 27 and gs.run.currentBlindIndex == 3 and gs.run.blinds[3].status == "current")
     assert(gs.run.blinds[3].hp == RunManager.calculateBlindHp(27, "boss"))
-    assert(DebugTools.setAnte(gs, "1", 1) and gs.run.maxAnte == 8 and not gs.run.endless)
+    assert(DebugTools.setAnte(gs, "1", 1) and gs.run.maxAnte == 20 and not gs.run.endless)
 
     local target = gs.persistentDeck[1]
     local function grant(cat, wantedId)
@@ -3237,7 +3203,7 @@ do
     end
     assert(#gs.persistentDeck == oldCount + 1, "Debug grant should add the chosen pack card")
     local pact = Collection.getItems("tags")[1]
-    assert(DebugTools.grantCollectionItem(gs, shop, "tags", pact, target))
+    assert(not pact and not DebugTools.grantCollectionItem(gs, shop, "tags", pact, target))
     local blind = Collection.getItems("blinds")[1]
     local blindOk, blindAction, blindId = DebugTools.grantCollectionItem(gs, shop, "blinds", blind, target)
     assert(blindOk and blindAction == "blind" and blindId == blind.id)

@@ -1,0 +1,222 @@
+{
+  "mode": "built-in image_gen",
+  "style": "Full-bleed illustrated fantasy matching the consumable series",
+  "cards": [
+    {
+      "group": "spn",
+      "id": "spirit_pebble",
+      "name": "Cổ Thạch",
+      "file": "assets/deities/illustrated/spirit_pebble.png",
+      "abilitySubject": "an ancient monumental stone guardian awakening above a fan of playing cards, runic rock fragments channeling power into the entire hand; slate blue and gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Cổ Thạch. Subject reflecting actual gameplay ability: an ancient monumental stone guardian awakening above a fan of playing cards, runic rock fragments channeling power into the entire hand; slate blue and gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_ember",
+      "name": "Tàn Hỏa",
+      "file": "assets/deities/illustrated/spirit_ember.png",
+      "abilitySubject": "an ember guardian born from a sacred brazier, smoldering wings pouring flame aura across a hand of cards; amber crimson",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Tàn Hỏa. Subject reflecting actual gameplay ability: an ember guardian born from a sacred brazier, smoldering wings pouring flame aura across a hand of cards; amber crimson. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_blade",
+      "name": "Kiếm Ảnh",
+      "file": "assets/deities/illustrated/spirit_blade.png",
+      "abilitySubject": "a spectral swordswoman surrounded by luminous blue shadow swords, each blade blessing a separate enchanted playing card; azure violet",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Kiếm Ảnh. Subject reflecting actual gameplay ability: a spectral swordswoman surrounded by luminous blue shadow swords, each blade blessing a separate enchanted playing card; azure violet. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_drum",
+      "name": "Trống Lôi",
+      "file": "assets/deities/illustrated/spirit_drum.png",
+      "abilitySubject": "a mighty thunder spirit striking a floating ornate war drum, lightning ripples energizing every playing card around it; cyan gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Trống Lôi. Subject reflecting actual gameplay ability: a mighty thunder spirit striking a floating ornate war drum, lightning ripples energizing every playing card around it; cyan gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_pair",
+      "name": "Song Đôi",
+      "file": "assets/deities/illustrated/spirit_pair.png",
+      "abilitySubject": "two mirrored guardian spirits with twin matching enchanted cards, their auras joining into one radiant bond; turquoise silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Song Đôi. Subject reflecting actual gameplay ability: two mirrored guardian spirits with twin matching enchanted cards, their auras joining into one radiant bond; turquoise silver. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_straight",
+      "name": "Lộ Kiếm",
+      "file": "assets/deities/illustrated/spirit_straight.png",
+      "abilitySubject": "an ethereal swordmaster opening a straight path of successive floating cards, a long golden sword-light joining them into a devastating chain; golden blue",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Lộ Kiếm. Subject reflecting actual gameplay ability: an ethereal swordmaster opening a straight path of successive floating cards, a long golden sword-light joining them into a devastating chain; golden blue. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_flush",
+      "name": "Đồng Chất",
+      "file": "assets/deities/illustrated/spirit_flush.png",
+      "abilitySubject": "a regal emerald spirit channeling one shared luminous suit symbol into five matching-suit playing cards; emerald jade",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Đồng Chất. Subject reflecting actual gameplay ability: a regal emerald spirit channeling one shared luminous suit symbol into five matching-suit playing cards; emerald jade. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_crown",
+      "name": "Huyết Vương",
+      "file": "assets/deities/illustrated/spirit_crown.png",
+      "abilitySubject": "a blood king wearing a jeweled crimson crown, blessing three royal cards representing jack queen king with crimson blade energy; blood red gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Huyết Vương. Subject reflecting actual gameplay ability: a blood king wearing a jeweled crimson crown, blessing three royal cards representing jack queen king with crimson blade energy; blood red gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "spn",
+      "id": "spirit_coin",
+      "name": "Kim Tệ",
+      "file": "assets/deities/illustrated/spirit_coin.png",
+      "abilitySubject": "a golden wealth guardian holding a radiant ancient coin above a defeated monster, golden victory coins swirling around; gold emerald",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Kim Tệ. Subject reflecting actual gameplay ability: a golden wealth guardian holding a radiant ancient coin above a defeated monster, golden victory coins swirling around; gold emerald. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "gem_fire",
+      "name": "Đá Tiên Phong",
+      "file": "assets/equipment/illustrated/gem_fire.png",
+      "abilitySubject": "a fiery ruby spearhead gemstone empowering the first and last cards of a spectral battle formation; crimson orange gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Đá Tiên Phong. Subject reflecting actual gameplay ability: a fiery ruby spearhead gemstone empowering the first and last cards of a spectral battle formation; crimson orange gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "gem_blast",
+      "name": "Đá Tam Kích",
+      "file": "assets/equipment/illustrated/gem_blast.png",
+      "abilitySubject": "three flaming gemstone spearheads converging on exactly three enchanted playing cards, explosive triple strike; amber gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Đá Tam Kích. Subject reflecting actual gameplay ability: three flaming gemstone spearheads converging on exactly three enchanted playing cards, explosive triple strike; amber gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "mirror_adjacent",
+      "name": "Gương Dị Chất",
+      "file": "assets/equipment/illustrated/mirror_adjacent.png",
+      "abilitySubject": "an ornate cyan crystal mirror splitting two empowering beams toward neighboring cards with different suit symbols; cyan silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Gương Dị Chất. Subject reflecting actual gameplay ability: an ornate cyan crystal mirror splitting two empowering beams toward neighboring cards with different suit symbols; cyan silver. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "storm_eye",
+      "name": "Mắt Đồng Chất",
+      "file": "assets/equipment/illustrated/storm_eye.png",
+      "abilitySubject": "a green thunder-eye gemstone gathering identical suit symbols from matching playing cards in a storm vortex; emerald cyan",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Mắt Đồng Chất. Subject reflecting actual gameplay ability: a green thunder-eye gemstone gathering identical suit symbols from matching playing cards in a storm vortex; emerald cyan. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "lucky_coin",
+      "name": "Đồng Tiền Át",
+      "file": "assets/equipment/illustrated/lucky_coin.png",
+      "abilitySubject": "an elaborate radiant gold coin and a single ace playing card showering newly conjured golden coins; gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Đồng Tiền Át. Subject reflecting actual gameplay ability: an elaborate radiant gold coin and a single ace playing card showering newly conjured golden coins; gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "ward_stone",
+      "name": "Đá Thủ Thế",
+      "file": "assets/equipment/illustrated/ward_stone.png",
+      "abilitySubject": "a sapphire ward stone projecting a strong shield around one or two playing cards, dark arrows shattering against it; sapphire silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Đá Thủ Thế. Subject reflecting actual gameplay ability: a sapphire ward stone projecting a strong shield around one or two playing cards, dark arrows shattering against it; sapphire silver. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "vitality_gem",
+      "name": "Ngọc Cấp Cứu",
+      "file": "assets/equipment/illustrated/vitality_gem.png",
+      "abilitySubject": "a brilliant emerald heart gemstone releasing restorative light into a wounded warrior's hands and fading life energy; emerald gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Ngọc Cấp Cứu. Subject reflecting actual gameplay ability: a brilliant emerald heart gemstone releasing restorative light into a wounded warrior's hands and fading life energy; emerald gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "blood_ring",
+      "name": "Nhẫn Liều Mạng",
+      "file": "assets/equipment/illustrated/blood_ring.png",
+      "abilitySubject": "an ornate crimson ring with sharp blood-ruby thorns, a drop of blood transforming into a fierce damage aura around a blade; crimson black gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Nhẫn Liều Mạng. Subject reflecting actual gameplay ability: an ornate crimson ring with sharp blood-ruby thorns, a drop of blood transforming into a fierce damage aura around a blade; crimson black gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "itm",
+      "id": "void_catalyst",
+      "name": "Xúc Tác Hư Không",
+      "file": "assets/equipment/illustrated/void_catalyst.png",
+      "abilitySubject": "a black-violet void sphere suspended in an ornate double-socket crystal mechanism, two streams of raw force and amplification feeding a playing card; violet gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: Xúc Tác Hư Không. Subject reflecting actual gameplay ability: a black-violet void sphere suspended in an ornate double-socket crystal mechanism, two streams of raw force and amplification feeding a playing card; violet gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "high_card",
+      "name": "ĐƠN THỦ",
+      "file": "assets/hands/illustrated/high_card.png",
+      "abilitySubject": "one lone martial warrior channeling a single enchanted playing card into a piercing blue energy spear; icy blue silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: ĐƠN THỦ. Subject reflecting actual gameplay ability: one lone martial warrior channeling a single enchanted playing card into a piercing blue energy spear; icy blue silver. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "pair",
+      "name": "SONG ĐAO",
+      "file": "assets/hands/illustrated/pair.png",
+      "abilitySubject": "a graceful martial swordfighter wielding exactly two matching curved blades crossing in a luminous X slash, two matching cards; cyan silver",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: SONG ĐAO. Subject reflecting actual gameplay ability: a graceful martial swordfighter wielding exactly two matching curved blades crossing in a luminous X slash, two matching cards; cyan silver. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "two_pair",
+      "name": "SONG ĐÔI",
+      "file": "assets/hands/illustrated/two_pair.png",
+      "abilitySubject": "two pairs of enchanted swords orbiting a martial guardian, exactly four blades in two distinct pairs with four cards, orbital collapse; jade turquoise",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: SONG ĐÔI. Subject reflecting actual gameplay ability: two pairs of enchanted swords orbiting a martial guardian, exactly four blades in two distinct pairs with four cards, orbital collapse; jade turquoise. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "three_of_a_kind",
+      "name": "TAM HOA",
+      "file": "assets/hands/illustrated/three_of_a_kind.png",
+      "abilitySubject": "three radiant violet lotus-shaped magical nodes forming a perfect triangle around a martial sorceress, exactly three matching cards powering the triangular seal; violet gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: TAM HOA. Subject reflecting actual gameplay ability: three radiant violet lotus-shaped magical nodes forming a perfect triangle around a martial sorceress, exactly three matching cards powering the triangular seal; violet gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "straight",
+      "name": "TRƯỜNG LONG",
+      "file": "assets/hands/illustrated/straight.png",
+      "abilitySubject": "a magnificent golden dragon formed from a chain of consecutive enchanted playing cards, surging along a flowing sword-light path; amber gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: TRƯỜNG LONG. Subject reflecting actual gameplay ability: a magnificent golden dragon formed from a chain of consecutive enchanted playing cards, surging along a flowing sword-light path; amber gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "flush",
+      "name": "ĐỒNG KHÍ",
+      "file": "assets/hands/illustrated/flush.png",
+      "abilitySubject": "five matching-suit enchanted cards merging into one enormous tidal wave of shared energy, a serene martial master shaping the coherent wave; azure blue",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: ĐỒNG KHÍ. Subject reflecting actual gameplay ability: five matching-suit enchanted cards merging into one enormous tidal wave of shared energy, a serene martial master shaping the coherent wave; azure blue. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "full_house",
+      "name": "HỖN NGUYÊN",
+      "file": "assets/hands/illustrated/full_house.png",
+      "abilitySubject": "a martial alchemist fusing one cluster of three cards and one cluster of two cards into a blazing primordial yin-yang energy core; orange violet gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: HỖN NGUYÊN. Subject reflecting actual gameplay ability: a martial alchemist fusing one cluster of three cards and one cluster of two cards into a blazing primordial yin-yang energy core; orange violet gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "four_of_a_kind",
+      "name": "TỨ TƯỢNG",
+      "file": "assets/hands/illustrated/four_of_a_kind.png",
+      "abilitySubject": "four guardian beasts dragon tiger phoenix tortoise at four cardinal points, four matching cards creating a square seal and intersecting beams around a martial master; crimson gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: TỨ TƯỢNG. Subject reflecting actual gameplay ability: four guardian beasts dragon tiger phoenix tortoise at four cardinal points, four matching cards creating a square seal and intersecting beams around a martial master; crimson gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    },
+    {
+      "group": "hand",
+      "id": "straight_flush",
+      "name": "VẠN KIẾM QUY TÔNG",
+      "file": "assets/hands/illustrated/straight_flush.png",
+      "abilitySubject": "an ascendant sword immortal commanding thousands of luminous sword fragments into one grand converging blade storm, five consecutive matching-suit cards beneath; violet silver gold",
+      "prompt": "Use case: stylized-concept. Asset type: full-bleed portrait collectible fantasy game card, 2:3 aspect ratio. Match the new consumable card series: polished detailed anime fantasy illustration, dramatic glowing magic, richly ornamented gemstone and metal materials, sharp elegant linework, atmospheric ruined palaces and floating architecture, premium painterly collectible art. Card identity: VẠN KIẾM QUY TÔNG. Subject reflecting actual gameplay ability: an ascendant sword immortal commanding thousands of luminous sword fragments into one grand converging blade storm, five consecutive matching-suit cards beneath; violet silver gold. Fill the entire rectangular image edge to edge with the illustrated scene, no blank margins, no frame, no letters, no text, no watermark. Strong central silhouette readable at thumbnail size, distinct color palette and subject."
+    }
+  ]
+}

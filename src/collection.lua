@@ -80,15 +80,6 @@ Collection.CATEGORIES = {
         badge = "5",
     },
     {
-        id = "tags",
-        title = "Khế Ước",
-        sub = "Đánh Đổi & Truy Nã",
-        col = "right",
-        btnColor = { 0.92, 0.28, 0.22, 1 },
-        badge = "6",
-        alert = true,
-    },
-    {
         id = "blinds",
         title = "Blind",
         sub = "Quái & Dị Biến Boss",
@@ -312,21 +303,6 @@ function Collection.getItems(category)
             end
         end
 
-    elseif category == "tags" then
-        -- Include Unified Skip Pacts
-        if RunManager.SKIP_PACTS then
-            for _, pact in ipairs(RunManager.SKIP_PACTS) do
-                table.insert(items, {
-                    id = pact.id,
-                    name = pact.name,
-                    subtitle = "KHẾ ƯỚC BỎ ẢI",
-                    rarity = "Khế Ước",
-                    desc = "🎁 Nhận ngay: " .. (pact.instantDesc or "") .. "\n⚠️ Món nợ: " .. (pact.debtDesc or "") .. "\n⏳ Thời hạn: " .. (pact.durationDesc or "Toàn bộ ván chơi"),
-                    icon = pact.icon or "📜",
-                    color = pact.color or { 0.95, 0.82, 0.22, 1 },
-                })
-            end
-        end
     elseif category == "blinds" then
         -- Normal, Elite, and Bosses
         table.insert(items, {
@@ -334,7 +310,7 @@ function Collection.getItems(category)
             name = "Small Blind (Cược Nhỏ)",
             subtitle = "VÒNG ĐẤU CƠ BẢN",
             rarity = "Tiêu Chuẩn",
-            desc = "Mục tiêu Aura chuẩn theo Ante hiện tại. Có thể Bỏ Qua để nhận Thẻ Thưởng Skip Tag!",
+            desc = "Trận đấu bắt buộc với nhà thám hiểm. Từ ải 41 mới gặp quái vật.",
             icon = "🔷",
             color = { 0.35, 0.65, 0.95, 1 },
         })
@@ -343,12 +319,12 @@ function Collection.getItems(category)
             name = "Big Blind (Cược Lớn)",
             subtitle = "VÒNG ĐẤU THỬ THÁCH",
             rarity = "Thử Thách",
-            desc = "Mục tiêu 1.5x Aura. Thưởng nhiều Vàng hơn và có thể Bỏ Qua nhận Thẻ Thưởng quý!",
+            desc = "Trận tinh anh bắt buộc, mục tiêu 1.5x HP và thưởng nhiều Vàng hơn.",
             icon = "🔶",
             color = { 0.95, 0.55, 0.20, 1 },
         })
 
-        -- Only show bosses that the active 8-Ante run can actually generate.
+        -- Only show bosses that the active expedition can actually generate.
         for _, id in ipairs(RunManager.BOSS_KEYS or {}) do
             local boss = RunManager.BOSS_DEBUFFS[id]
             if boss then

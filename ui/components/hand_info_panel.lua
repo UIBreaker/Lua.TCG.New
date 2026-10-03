@@ -166,13 +166,13 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     end
 
     drawIcon("trait", x + 14, y + 267, 19)
-    Core.text("QUÁI VẬT", x + 39, y + 268, w - 53, drawFonts.title, Theme.colors.gold)
+    Core.text(data.humanEnemy and "ĐỐI THỦ" or "QUÁI VẬT", x + 39, y + 268, w - 53, drawFonts.title, Theme.colors.gold)
     Core.textLine(data.enemyName or "Không rõ", x + 16, y + 293, w - 32,
         drawFonts.body, Theme.colors.text, "left", drawFonts.label)
 
     drawIcon("health", x + 16, y + 318, 15)
-    Core.text("MÁU " .. tostring(data.enemyHp or 0) .. "/" .. tostring(data.enemyMaxHp or 0),
-        x + 38, y + 317, w - 54, drawFonts.label, Theme.colors.muted)
+    Core.textLine("MÁU " .. fmt(data.enemyHp or 0) .. "/" .. fmt(data.enemyMaxHp or 0),
+        x + 38, y + 317, w - 54, drawFonts.label, Theme.colors.muted, "left", drawFonts.detail)
 
     local barX, barY, barW, barH = x + 18, y + 340, w - 36, 16
     local hp, maxHp = math.max(0, tonumber(data.enemyBarHp or data.enemyHp) or 0), tonumber(data.enemyMaxHp) or 1
@@ -202,11 +202,12 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     local enemySpeed = tonumber(data.enemySpeed)
     if enemySpeed then
         local playerSpeed = tonumber(data.playerSpeed)
-        local speedText = "TỐC ĐÁNH QUÁI " .. tostring(enemySpeed)
+        local enemyLabel = data.humanEnemy and "ĐỐI THỦ" or "QUÁI"
+        local speedText = "TỐC ĐÁNH " .. enemyLabel .. " " .. tostring(enemySpeed)
         local speedColor = Theme.colors.red
         if playerSpeed then
             local shownPlayerSpeed = playerSpeed % 1 == 0 and tostring(playerSpeed) or string.format("%.1f", playerSpeed)
-            speedText = "TỐC ĐÁNH " .. shownPlayerSpeed .. " • QUÁI " .. tostring(enemySpeed)
+            speedText = "TỐC ĐÁNH " .. shownPlayerSpeed .. " • " .. enemyLabel .. " " .. tostring(enemySpeed)
             speedColor = playerSpeed >= enemySpeed and Theme.colors.cyan or Theme.colors.red
         end
         Core.textLine(speedText, x + 16, speedY, w - 32, drawFonts.detail, speedColor, "left", drawFonts.detail)
@@ -230,8 +231,14 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         end
     else
     Core.text(boundedLines(data.debuff or "Không có hiệu ứng bất lợi",
-        drawFonts.detail, w - 32, 2), x + 16, traitY + 25, w - 32,
+        drawFonts.detail, w - 32, 5), x + 16, traitY + 25, w - 32,
         drawFonts.detail, Theme.colors.muted)
+    if data.boss and data.boss.enemyAbility then
+        local UI=require("src.ui");local mx,my=UI.virtualMouseX or 0,UI.virtualMouseY or 0
+        if mx>=x and mx<=x+w and my>=traitY and my<=traitY+165 then
+            UI.descriptionCandidate={name=data.boss.name,desc=data.debuff,hoverKey=data.boss}
+        end
+    end
 
     end
 

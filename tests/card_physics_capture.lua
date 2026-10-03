@@ -17,7 +17,13 @@ local function pointer(x, y, action)
     local scale = math.min(w / 1280, h / 720)
     local px, py = (w - 1280 * scale) / 2 + x * scale, (h - 720 * scale) / 2 + y * scale
     love.mouse.setPosition(px, py)
-    if action == "press" then love.mousepressed(px, py, 1)
+    if action == "press" then
+        local isDown = love.keyboard.isDown
+        if current and current.label == "battle hand" then
+            love.keyboard.isDown = function(...) return true end -- Shift + drag holds a hand card.
+        end
+        love.mousepressed(px, py, 1)
+        love.keyboard.isDown = isDown
     elseif action == "release" then love.mousereleased(px, py, 1)
     else love.mousemoved(px, py, 0, 0) end
 end

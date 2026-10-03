@@ -1,5 +1,6 @@
 local C=require("config.visual_config")
 local L=require("render.lighting")
+local Frame=require("ui.components.card_frame")
 local Entity={}
 function Entity.load()
     local ok,shader=pcall(love.graphics.newShader,"shaders/world_entity.glsl")
@@ -13,7 +14,7 @@ function Entity.shadow(x,y,size,height)
     end
     g.setColor(0.003,0.006,0.011,0.23/(1+height*0.08));g.ellipse("fill",x,y,size*0.20,7)
 end
-function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventStrength)
+function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventStrength,cardSurface,frameHighlight,card)
     if not image then return end
     local g=love.graphics;local iw,ih=image:getDimensions(); local fit=math.min(size/iw,size/ih)
     g.push("all")
@@ -21,16 +22,24 @@ function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventSt
     if C.enabled and C.effects.lighting then
         g.setBlendMode("add");L.glow(x,y,size*0.47,preset.lightTint,0.025+eventStrength*0.06);g.setBlendMode("alpha")
     end
-    g.translate(x+attack*50-hit*5,y-attack*20+recoil)
-    local breath=C.enabled and 1+math.sin(time*1.35)*C.boss.breath or 1
-    g.scale(squash/breath,breath/squash)
-    g.rotate(math.sin(time*0.7)*0.008-attack*0.08+hit*0.07)
-    if Entity.shader and C.enabled and C.effects.lighting then
+    g.translate(x,y+attack*76+recoil)
+    local breath=not cardSurface and C.enabled and 1+math.sin(time*1.35)*C.boss.breath or 1
+    local advance=1+math.max(0,attack)*0.08
+    g.scale(squash/breath*advance,breath/squash*advance)
+    if not cardSurface then g.rotate(math.sin(time*0.7)*0.008+hit*0.07) end
+    if Entity.shader and C.enabled and C.effects.lighting and not cardSurface then
         local shader=Entity.shader;shader:send("texel",{1/iw,1/ih});shader:send("ambientTint",preset.ambientColor)
         shader:send("rimTint",preset.lightTint);shader:send("rimStrength",C.boss.rim)
         shader:send("tintStrength",C.boss.tint);shader:send("eventLight",eventStrength);g.setShader(shader)
     end
     g.setColor(1,1-hit*0.20,1-hit*0.25,1)
-    g.draw(image,-iw*fit/2,-ih*fit/2,0,fit,fit);g.pop()
+    if cardSurface then
+        Frame.image(image,-iw*fit/2,-ih*fit/2,iw*fit,ih*fit)
+        local highlight=math.abs(attack)>0.01 and {1,0.67,0.34,1} or frameHighlight
+        Frame.draw(-iw*fit/2,-ih*fit/2,iw*fit,ih*fit,highlight,nil,card)
+    else
+        g.draw(image,-iw*fit/2,-ih*fit/2,0,fit,fit)
+    end
+    g.pop()
 end
 return Entity

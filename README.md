@@ -31,6 +31,14 @@
 
 ---
 
+## Điều khiển chọn bài
+
+- Nhấp chuột trái để chọn hoặc bỏ chọn một lá.
+- Giữ chuột trái trên lá bài và rê ngang qua tay bài để chọn nhiều lá. Bắt đầu từ lá đã chọn để bỏ chọn các lá đi qua.
+- Rê ngang hoặc chéo đều chọn được; có thể bắt đầu từ khoảng trống ngay cạnh tay bài. Lá đầu tiên phản hồi ngay khi nhấn chuột.
+- Giữ Shift và kéo để đổi thứ tự bài.
+- Rê chọn tuân theo giới hạn số lá của các bí tịch đã mở khóa.
+
 
 ## 📜 Giấy Phép & Bản Quyền (License)
 

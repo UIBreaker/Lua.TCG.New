@@ -19,6 +19,7 @@ end
 
 function Feel.start(anim, result, ui, deities, initialHp, enemy, handId)
     local attack = Attacks.new(result, anim.playedCards, ui, enemy and (enemy.targetAura or enemy.maxHp), handId)
+    attack.cx=enemy and enemy.screenX or attack.cx
     local q, t = {}, C.timing
     append(q, "ENTRY", t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
     local base = result.steps[1]

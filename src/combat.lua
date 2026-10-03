@@ -3,12 +3,14 @@ local Deities = require("src.deities")
 
 local Abilities = require("src.card_abilities")
 local Boss = require("src.boss_abilities")
+local Group = require("src.enemy_group")
+local EnemyAbilities = require("src.enemy_abilities")
 local Combat = { Abilities = Abilities, Boss = Boss }
 
 function Combat.getOutcome(game)
     if not game or not game.monster then return "continue" end
     if game.playerHp and game.playerHp <= 0 then return "defeat" end
-    if game.monster.hp and game.monster.hp <= 0 then return "victory" end
+    if Group.alive(Group.members(game))==0 then return "victory" end
     local noCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) == 0
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
         and game.monster.bossData.debuffId == "the_needle" and Boss.passiveEnabled(game.monster)
@@ -25,13 +27,13 @@ function Combat.getAverageAttackSpeed(cards)
     return count > 0 and (total / count) or 0
 end
 
-function Combat.resolveMonsterAttack(game)
+local function resolveOneAttack(game)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
     local baseAttack = (monster.attack or 12)
-    local attack = baseAttack
+    local attack = baseAttack + EnemyAbilities.attackBonus(game,monster)
     local bossState = Boss.state(monster)
     if bossState and Boss.passiveEnabled(monster) then attack=attack+(bossState.excess or 0)*Boss.config.gateAttackPerCard end
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
@@ -48,6 +50,7 @@ function Combat.resolveMonsterAttack(game)
     game.playerHp = math.max(0, (game.playerHp or 100) - damage)
     monster.attack = math.floor(baseAttack * 1.08 + 0.5)
     monster.armor = math.floor((monster.armor or 0) * 1.05 + 2)
+    EnemyAbilities.afterAttack(game,monster,damage)
 
     for _, card in ipairs(game.hand or {}) do
         if card.enhancement == "enh_escort" or card.enhancement == "escort" then
@@ -64,6 +67,31 @@ function Combat.resolveMonsterAttack(game)
         playerSpeed = game.lastPlayerAttackSpeed or 0,
         monsterSpeed = monster.attackSpeed or 1,
     }
+end
+
+-- Each living enemy acts on its own side of the player's speed, exactly once.
+function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
+    if not game or not game.monster then return nil end
+    local target=game.monster
+    local result
+    for _,m in ipairs(Group.members(game)) do
+        local fast=(m.attackSpeed or 1)>(playerSpeed or game.lastPlayerAttackSpeed or 0)
+        if m.hp>0 and (not attacker or m==attacker) and (not phase or phase=="before" and fast or phase=="after" and not fast) then
+            game.monster=m
+            local attack=resolveOneAttack(game)
+            if attack then
+                if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
+                result.attack=result.attack+attack.attack;result.absorbed=result.absorbed+attack.absorbed
+                result.damage=result.damage+attack.damage;result.attackerCount=result.attackerCount+1
+                result.monsterSpeed=math.max(result.monsterSpeed,m.attackSpeed or 1)
+                result.killedPlayer=attack.killedPlayer
+                result.blocked=attack.blocked
+            end
+            if (game.playerHp or 0)<=0 then break end
+        end
+    end
+    game.monster=target
+    return result
 end
 
 function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
@@ -101,6 +129,12 @@ function Combat.start(game, monster, round)
     assert(game and monster, "Combat.start requires game state and monster")
     game.round = round or 1
     game.monster = monster
+    game.enemies=Group.build(monster)
+    game.enemyPoison=0;game.enemyFeedback=nil
+    for i,m in ipairs(game.enemies) do
+        if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
+        EnemyAbilities.start(m)
+    end
     game.maxSelectableCards = nil
     game.abilityHand = nil
     Boss.start(game)

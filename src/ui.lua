@@ -1,4 +1,6 @@
 local UI = {}
+UI.CardFrame = require("ui.components.card_frame")
+UI.drawCardBorder = UI.CardFrame.draw
 UI.drawCardBack = require("ui.components.deck_counter").drawBack
 UI.getCardBackImage = require("ui.components.deck_counter").getImage
 local Theme = require("ui.theme")
@@ -14,6 +16,7 @@ UI.ScoringFeel = require("src.scoring_presentation")
 UI.Abilities = require("src.card_abilities")
 UI.BossAbilities = require("src.boss_abilities")
 UI.Description = require("src.card_description")
+UI.getConsumableImage = require("src.consumable_art").get
 UI.AbilityUI = require("ui.ability_choices")
 UI.Polish = require("src.ux_polish")
 UI.drawCardEffectsDebug = CardEffects.drawDebug
@@ -60,8 +63,9 @@ function UI.getScoringCardX(index, count)
 end
 
 UI.useLegacyPixelArt = false
+UI.illustratedImages = setmetatable({}, { __mode = "k" })
 function UI.visualImage(image)
-    return UI.useLegacyPixelArt and image or nil
+    return (UI.useLegacyPixelArt or UI.illustratedImages[image]) and image or nil
 end
 
 function UI.sanitizeText(str)
@@ -342,12 +346,9 @@ local function drawCardSpeedBadge(card, w, h)
     g.printf(tostring(Deck.getCardAttackSpeed(card)), bx + 13, by + 1, badgeW - 14, "center")
 end
 
-local function drawCardEditionRim(card, w, h)
-    if not CardEffects.getEffectName(card) then return end
-    local color = CardEffects.getBeamColor(card)
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(color[1], color[2], color[3], 0.9 * (card.alpha or 1))
-    UI.drawRoundedRect("line", -1, -1, w + 2, h + 2, 6)
+local function drawCardEditionRim(card, w, h, highlight)
+    local color = highlight or (CardEffects.getEffectName(card) and CardEffects.getBeamColor(card))
+    UI.drawCardBorder(0, 0, w, h, color, card.alpha or 1, card)
 end
 
 function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
@@ -395,13 +396,8 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         local imageW, imageH = cardImage:getDimensions()
         local cardFxActive = CardEffects.beginCard(card)
         g.setColor(1, 1, 1, 1)
-        g.draw(cardImage, 0, 0, 0, w / imageW, h / imageH)
+        UI.CardFrame.image(cardImage, 0, 0, w, h)
         CardEffects.endCard(cardFxActive)
-        if selected or hovered then
-            g.setLineWidth(selected and 3 or 2)
-            g.setColor(selected and UI.COLORS.cardSelectedBorder or UI.COLORS.chipsBlue)
-            UI.drawRoundedRect("line", 0, 0, w, h, 5)
-        end
         local slots = (Equipment and Equipment.MAX_SLOTS) or 3
         for i = 1, slots do
             local eq = card.equipments and card.equipments[i]
@@ -426,7 +422,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
             g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
         end
         drawCardSpeedBadge(card, w, h)
-        drawCardEditionRim(card, w, h)
+        drawCardEditionRim(card, w, h, selected and UI.COLORS.cardSelectedBorder or hovered and UI.COLORS.chipsBlue)
         g.pop()
         return
     end
@@ -436,9 +432,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     g.polygon("fill", 4, 4, w - 4, 4, w * 0.72, h * 0.32, w * 0.18, h * 0.49)
     g.setColor(0.55, 0.62, 0.61, 0.11)
     g.polygon("fill", 4, h * 0.72, w * 0.72, h * 0.32, w - 4, h - 4, 4, h - 4)
-    g.setLineWidth(selected and 3 or (hovered and 2 or 1.2))
-    g.setColor(selected and UI.COLORS.cardSelectedBorder or (hovered and UI.COLORS.chipsBlue or UI.COLORS.cardBorder))
-    UI.drawRoundedRect("line", 0, 0, w, h, 5)
     g.setColor(accent)
     g.setFont(UI.fonts.large)
     g.print(rank, 8, 3)
@@ -480,7 +473,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         end
         drawCardSpeedBadge(card, w, h)
     end
-    drawCardEditionRim(card, w, h)
+    drawCardEditionRim(card, w, h, selected and UI.COLORS.cardSelectedBorder or hovered and UI.COLORS.chipsBlue)
     g.pop()
 end
 -- Artwork-only version for shop stock: keep the source card face untouched by HUD stats.
@@ -512,7 +505,7 @@ function UI.drawCardFace(card, x, y, w, h, effectHovered,
     local cardFxActive = CardEffects.beginCard(card)
     g.setColor(1, 1, 1, card.alpha or 1)
     local imageW, imageH = image:getDimensions()
-    g.draw(image, 0, 0, 0, w / imageW, h / imageH)
+    UI.CardFrame.image(image, 0, 0, w, h)
     CardEffects.endCard(cardFxActive)
     drawCardEditionRim(card, w, h)
     g.pop()
@@ -721,8 +714,12 @@ function UI.getDeityImage(deityId)
         return UI.deityImages[deityId] or nil
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
-        local path = "assets/deities/spn/" .. deityId .. ".png"
+        local path = "assets/deities/illustrated/" .. deityId .. ".png"
         local okInfo, info = pcall(love.filesystem.getInfo, path)
+        if not (okInfo and info) then
+            path = "assets/deities/spn/" .. deityId .. ".png"
+            okInfo, info = pcall(love.filesystem.getInfo, path)
+        end
         local isSpnCard = okInfo and info ~= nil
         if not isSpnCard then
             path = "assets/deities/generated/" .. deityId .. ".png"
@@ -758,8 +755,12 @@ function UI.getEquipmentImage(equipId)
         return UI.equipmentImages[equipId] or nil
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
-        local path = "assets/equipment/" .. equipId .. ".png"
+        local path = "assets/equipment/illustrated/" .. equipId .. ".png"
         local okInfo, info = pcall(love.filesystem.getInfo, path)
+        if not (okInfo and info) then
+            path = "assets/equipment/" .. equipId .. ".png"
+            okInfo, info = pcall(love.filesystem.getInfo, path)
+        end
         if okInfo and info then
             local okImg, img = pcall(love.graphics.newImage, path)
             if okImg and img then
@@ -899,6 +900,7 @@ function UI.getHandImage(handId)
     end
     if love and love.graphics and love.graphics.newImage and love.filesystem and love.filesystem.getInfo then
         local candidates = {
+            "assets/hands/illustrated/" .. mapped .. ".png",
             "assets/hands/hand_" .. mapped .. ".png",
             "assets/hands/" .. mapped .. ".png",
             "assets/hands/" .. handId .. ".png",
@@ -909,8 +911,10 @@ function UI.getHandImage(handId)
                 local okImg, img = pcall(love.graphics.newImage, path)
                 if okImg and img then
                     if img.setFilter then
-                        img:setFilter("nearest", "nearest")
+                        local filter = path:find("/illustrated/", 1, true) and "linear" or "nearest"
+                        img:setFilter(filter, filter)
                     end
+                    if path:find("/illustrated/", 1, true) then UI.illustratedImages[img] = true end
                     UI.handImages[mapped] = img
                     return img
                 end
@@ -1141,6 +1145,11 @@ function UI.getPackCardImage(packType, card)
     if card.category == "pack" then
         return UI.getPackImage(packType or card.packType), false
     end
+    local canonicalId = require("src.consumable_art").id(card)
+    local artwork = UI.getConsumableImage(card)
+        or (packType == "arcana" and UI.getEquipmentImage(canonicalId))
+        or ((packType == "celestial" or packType == "hand_styles") and UI.getHandImage(card.handId or canonicalId))
+    if artwork then return artwork, true end
     if not UI.useLegacyPixelArt and love.graphics.newCanvas then
         local key = table.concat({ tostring(packType), tostring(card.id or card.handId or card.name or ""),
             tostring(card.rank or ""), tostring(card.suit or ""),
@@ -1196,14 +1205,11 @@ end
 
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 
-local function drawRarityPennant(deity, width)
+local function drawRarityPennant(deity, width, height)
     local badge, color = Deities.getRarityBadge(deity)
     local font = UI.fonts.small
-    local flagW = math.min(width - 8, math.max(28, font:getWidth(badge) + 14))
-    local flagH = 27
-    local flagX = (width - flagW) / 2
-    local flagY = 3
-    local notchY = flagY + flagH - 6
+    local flagX, flagY, flagW, flagH = UI.CardFrame.pennantRect(width, height)
+    local notchY = flagY + flagH * 0.73
     local isCommon = (deity.rarity or "common") == "common" and (deity.evolutionLevel or 0) == 0
     local fill = isCommon and { 0.78, 0.82, 0.88, 1 } or color
 
@@ -1221,9 +1227,9 @@ local function drawRarityPennant(deity, width)
     love.graphics.polygon("line", flagX, flagY, flagX + flagW, flagY,
         flagX + flagW, flagY + flagH, flagX + flagW / 2, notchY, flagX, flagY + flagH)
 
-    local textScale = math.min(1, (flagW - 6) / math.max(1, font:getWidth(badge)))
+    local textScale = math.min(1, (flagW - 5) / math.max(1, font:getWidth(badge)), flagH * 0.55 / font:getHeight())
     love.graphics.push()
-    love.graphics.translate(flagX + flagW / 2, flagY + 5)
+    love.graphics.translate(flagX + flagW / 2, flagY + flagH * 0.12)
     love.graphics.scale(textScale)
     love.graphics.setFont(font)
     love.graphics.setColor(0.035, 0.045, 0.065, 1)
@@ -1262,10 +1268,10 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
         local cardFxActive = CardEffects.beginCard(d)
         g.setColor(1, 1, 1, 1)
         -- Full-bleed card face: preserve all source artwork without letterboxing.
-        g.draw(deityImage, 0, 0, 0, w / imageW, h / imageH)
+        UI.CardFrame.image(deityImage, 0, 0, w, h)
         CardEffects.endCard(cardFxActive)
-        drawRarityPennant(d, w)
-        drawCardEditionRim(d, w, h)
+        drawCardEditionRim(d, w, h, (isHovered or isDropTarget) and UI.COLORS.goldYellow)
+        drawRarityPennant(d, w, h)
         g.pop()
         return
     end
@@ -1275,9 +1281,6 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     UI.drawRoundedRect("fill", 0, 0, w, h, 5)
     g.setColor(rim[1], rim[2], rim[3], 0.25)
     g.polygon("fill", 4, 4, w - 4, 4, w * 0.66, h * 0.52, 4, h * 0.62)
-    g.setColor(rim)
-    g.setLineWidth(isHovered and 2 or 1)
-    UI.drawRoundedRect("line", 0, 0, w, h, 5)
     if deityImage then
         local imageW, imageH = deityImage:getDimensions()
         local imageY = 22
@@ -1291,11 +1294,8 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
         g.circle("fill", w / 2, h * 0.55, w * 0.27)
         UI.drawRelicSigil(d.id, w / 2, h * 0.55, math.min(w * 0.38, h * 0.33), rim)
     end
-    if isDropTarget then
-        g.setLineWidth(3)
-        g.setColor(UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", 2, 2, w - 4, h - 4, 5)
-    end
+    drawCardEditionRim(d, w, h, (isHovered or isDropTarget) and UI.COLORS.goldYellow)
+    drawRarityPennant(d, w, h)
     g.pop()
 end
 
@@ -1319,15 +1319,18 @@ function UI.drawRoundRewardChoice(offer, mx, my, buttons, viewW, viewH)
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.printf("Chọn một lá tiêu hao để nhận", panelX + 20, panelY + 70, panelW - 40, "center")
 
-    local cardW, cardH, gap = 320, 340, 24
+    local cardW, cardH, gap = 200, 300, 112
     local startX, cardY = (viewW - (cardW * 3 + gap * 2)) / 2, panelY + 132
     for i, item in ipairs(offer.options) do
         local x = startX + (i - 1) * (cardW + gap)
         local hovered = mx >= x and mx <= x + cardW and my >= cardY and my <= cardY + cardH
         local color = item.color or UI.COLORS.goldYellow
         require("ui.card_surfaces").round(item, x, cardY, cardW, cardH, hovered)
-        local button = { id = "round_reward_" .. i, rewardIndex = i, x = x + 22, y = cardY + cardH - 54,
-            w = cardW - 44, h = 38, text = "CHỌN", color = color, textColor = { 1, 1, 1, 1 }, font = UI.fonts.small }
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf(item.name or "Thẻ tiêu hao", x - 24, cardY + cardH + 8, cardW + 48, "center")
+        local button = { id = "round_reward_" .. i, rewardIndex = i, x = x, y = cardY + cardH + 36,
+            w = cardW, h = 38, text = "CHỌN", color = color, textColor = { 1, 1, 1, 1 }, font = UI.fonts.small }
         table.insert(buttons, button)
         UI.drawButton(button, hovered)
     end

@@ -38,6 +38,7 @@ local UI = require("src.ui")
 local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
 local DeathVFX = require("src.death_vfx")
+local EnemyArt = require("src.enemy_art")
 UI.ChestChoices = require("ui.chest_choices")
 local Layout = require("ui.layout")
 local Gallery = require("ui.gallery")
@@ -1905,6 +1906,7 @@ function love.load()
             end
         end
     end
+    EnemyArt.load()
     local menuVideoPath = "assets/scene/menu_background.ogv"
     if love.filesystem.getInfo(menuVideoPath) then
         local ok, video = pcall(love.graphics.newVideo, menuVideoPath, { audio = false })
@@ -1926,6 +1928,14 @@ function love.load()
     Renderer.crtEnabled = settings.crtEnabled
     Renderer.load(battleArt, settings.graphicsQuality)
     DeathVFX.load()
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-enemy-art" then
+            require("tests.enemy_art_smoke")
+            require("tests.enemy_art_gallery")
+            love.event.quit()
+            return
+        end
+    end
     local allCardShadersLoaded, cardShaderCount = CardEffects.load()
     if cardEffectsSmokeMode then
         if not allCardShadersLoaded then
@@ -3285,7 +3295,7 @@ local function drawBattleEnemyWorld(m)
     local attack, hit = monsterMotion.attack / 0.42, monsterMotion.hit / 0.35
     local recoil, squash, flash = 0, 1, 0
     if state == "scoring" then recoil, squash, flash = UI.ScoringFeel.enemyReaction(anim); hit = flash end
-    local enemyImage = m.isBoss and battleArt.enemyBoss or (m.isElite and battleArt.enemyElite or battleArt.enemySmall)
+    local enemyImage = EnemyArt.image(m, battleArt)
     local size = m.isBoss and 355 or (m.isElite and 325 or 290)
     if DeathVFX.enemyActive(m) and DeathVFX.drawEnemy(enemyImage, UI.BATTLE_CENTER_X, 270, size) then return end
     Renderer.entity.draw(enemyImage, UI.BATTLE_CENTER_X, 270 + math.sin(t * 1.1) * Renderer.config.boss.sway,

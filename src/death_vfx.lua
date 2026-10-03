@@ -3,6 +3,7 @@ local C=require("config.death_vfx_config")
 local Sound=require("src.sound")
 local Camera=require("render.camera")
 local Light=require("render.lighting")
+local EnemyArt=require("src.enemy_art")
 local D={config=C,pool={},silhouettes={},count=0,age=0}
 local function clamp(x) return math.max(0,math.min(1,x)) end
 local function ramp(t,a,b) local p=clamp((t-a)/(b-a));return p*p*(3-2*p) end
@@ -11,7 +12,11 @@ function D.load()
     local ok,shader=pcall(love.graphics.newShader,"shaders/enemy_ash_dissolve.glsl")
     if ok then D.shader=shader else D.shaderError=tostring(shader);print("[Death VFX] shader fallback: "..D.shaderError) end
     for i=1,C.particles.max do D.pool[i]={} end
-    for key,path in pairs({chest="assets/scene/treasure_chest.png",mini="assets/scene/enemy_small_lowpoly.png",elite="assets/scene/enemy_elite_lowpoly.png",boss="assets/scene/enemy_boss_lowpoly.png"}) do
+    local paths={chest="assets/scene/treasure_chest.png",mini="assets/scene/enemy_small_lowpoly.png",elite="assets/scene/enemy_elite_lowpoly.png",boss="assets/scene/enemy_boss_lowpoly.png"}
+    for _,list in ipairs({EnemyArt.normal,EnemyArt.bosses}) do
+        for _,key in ipairs(list) do paths[key]=EnemyArt.path(key) end
+    end
+    for key,path in pairs(paths) do
         local loaded,data=pcall(love.image.newImageData,path)
         if loaded then
             local points={};local w,h=data:getDimensions();local longest=math.max(w,h)
@@ -35,7 +40,7 @@ function D.startEnemy(monster,x,quality)
     if not monster or D.seen==monster then return false end
     D.kind,D.monster,D.seen,D.age,D.count="enemy",monster,monster,0,0
     D.preset=monster.isBoss and C.enemy.boss or monster.isElite and C.enemy.elite or C.enemy.mini
-    D.points=D.silhouettes[monster.isBoss and "boss" or monster.isElite and "elite" or "mini"]
+    D.points=D.silhouettes[EnemyArt.key(monster)] or D.silhouettes[monster.isBoss and "boss" or monster.isElite and "elite" or "mini"]
     D.duration,D.stop,D.x,D.y=D.preset.duration,D.preset.stop,x or 640,270
     D.limit=math.min(C.particles.max,math.floor((C.particles[quality] or C.particles.HIGH)*D.preset.count))
     D.burst=false;Sound.play("enemy_death_hit")

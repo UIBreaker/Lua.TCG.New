@@ -121,6 +121,8 @@ local entries = {
     {"spirit_flush","Đồng Chất","hand","addMult",5,"flush","Thùng: +{value} Cường hóa."},
     {"spirit_crown","Huyết Vương","card","addChips",15,"royal","Mỗi lá J/Q/K tính điểm: +{value} Sát thương."},
     {"spirit_coin","Kim Tệ","win","addGold",2,nil,"Thắng trận: +{value} Vàng."},
+    {"spirit_ward","Băng Vệ","start","addArmor",10,nil,"Vào trận: +{value} Giáp."},
+    {"spirit_echo","Dội Lôi","attack","addSplashPct",20,nil,"Mỗi lần đánh: gây {value}% tổng AURA lên 1 quái còn sống ngẫu nhiên ngay bên cạnh mục tiêu."},
 }
 for _, row in ipairs(entries) do
     local entry={id=row[1],name=row[2],trigger=row[3],stat=row[4],values={value=row[5]},condition=row[6],
@@ -133,6 +135,8 @@ for _, row in ipairs(entries) do
     end
     if entry.trigger=="card" then entry.onCardScored=callback
     elseif entry.trigger=="hand" then entry.onHandScored=callback
+    elseif entry.trigger=="start" then entry.onRoundStart=callback
+    elseif entry.trigger=="attack" then entry.onAttack=callback
     else entry.onRoundWin=callback end
     Deities.CATALOG[entry.id]=entry
 end

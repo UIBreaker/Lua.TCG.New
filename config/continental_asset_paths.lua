@@ -197,6 +197,8 @@ return {
     ["spirit_pair"] = "assets/cards/continental/spn/spirit_pair.png",
     ["spirit_pebble"] = "assets/cards/continental/spn/spirit_pebble.png",
     ["spirit_straight"] = "assets/cards/continental/spn/spirit_straight.png",
+    ["spirit_ward"] = "assets/cards/continental/spn/spirit_ward.png",
+    ["spirit_echo"] = "assets/cards/continental/spn/spirit_echo.png",
     ["hand_expansion"] = "assets/cards/continental/utility/hand_expansion.png",
     ["healing_potion"] = "assets/cards/continental/utility/healing_potion.png",
     ["v_altar"] = "assets/cards/continental/voucher/v_altar.png",
@@ -212,4 +214,11 @@ return {
     ["ed_holo"] = "assets/cards/continental/edition/edition_holographic.png",
     ["ed_poly"] = "assets/cards/continental/edition/edition_polychrome.png",
     ["v_hand_size"] = "assets/cards/continental/utility/hand_expansion.png",
+
+    ["soul_reaper"] = "assets/cards/continental/utility/soul_reaper.png",
+    ["soul_worldblade"] = "assets/cards/continental/itm/soul_worldblade.png",
+    ["soul_crown"] = "assets/cards/continental/itm/soul_crown.png",
+    ["soul_bastion"] = "assets/cards/continental/itm/soul_bastion.png",
+    ["soul_heart"] = "assets/cards/continental/itm/soul_heart.png",
+    ["soul_hourglass"] = "assets/cards/continental/itm/soul_hourglass.png",
 }

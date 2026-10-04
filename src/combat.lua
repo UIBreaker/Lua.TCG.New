@@ -7,6 +7,41 @@ local Group = require("src.enemy_group")
 local EnemyAbilities = require("src.enemy_abilities")
 local Combat = { Abilities = Abilities, Boss = Boss }
 
+function Combat.resolvePlayerAttack(game, aura)
+    local Monster = require("src.monster")
+    local target = game.monster
+    local locked = {}
+    for slot = 1, Deities.getMaxSlots(game) do locked[slot] = Boss.isSlotLocked(game, "spn", slot) end
+    local damage = Monster.takeDamage(target, aura)
+    local splashHits = {}
+    for slot = 1, Deities.getMaxSlots(game) do
+        local deity = game.deities and game.deities[slot]
+        if deity and deity.onAttack and not locked[slot] then
+            local neighbors = {}
+            local members = Group.members(game)
+            for index, enemy in ipairs(members) do
+                if enemy == target then
+                    for _, adjacent in ipairs({index - 1, index + 1}) do
+                        local neighbor = members[adjacent]
+                        if neighbor and neighbor.hp > 0 then neighbors[#neighbors + 1] = neighbor end
+                    end
+                    break
+                end
+            end
+            if #neighbors > 0 then
+                local result = Deities.scaleEffect(deity, deity.onAttack())
+                local amount = math.floor(math.max(0, aura) * (result.addSplashPct or 0) / 100)
+                if amount > 0 then
+                    local enemy = neighbors[require("src.rng").random(#neighbors)]
+                    local actual = Monster.takeDamage(enemy, amount)
+                    splashHits[#splashHits + 1] = {enemy=enemy, damage=actual, deity=deity, slotIndex=slot}
+                end
+            end
+        end
+    end
+    return damage, Group.alive(Group.members(game)) == 0, splashHits
+end
+
 function Combat.getOutcome(game)
     if not game or not game.monster then return "continue" end
     if game.playerHp and game.playerHp <= 0 then return "defeat" end
@@ -159,7 +194,9 @@ function Combat.start(game, monster, round)
     for slot = 1, maxSlots do
         local deity = game.deities and game.deities[slot]
         if deity and deity.onRoundStart then
-            local result = deity.onRoundStart(game)
+            local result = Deities.scaleEffect(deity, deity.onRoundStart(game))
+            game.playerArmor = math.min(Abilities.config.armorCap, game.playerArmor + (result and result.addArmor or 0))
+            game.playerShield = game.playerArmor
             game.discardsRemaining = game.discardsRemaining + (result and result.addDiscards or 0)
             game.handsRemaining = game.handsRemaining + (result and result.addHands or 0)
         end
@@ -309,6 +346,7 @@ function Combat.cleanupDestroyedCards(game)
             local pc = game.persistentDeck[i]
             local isDestroyed = pc and (pc.destroyed or (pc.id and (destroyedIds[pc.id] or (tonumber(pc.id) and destroyedIds[tonumber(pc.id)]) or destroyedIds[tostring(pc.id)])))
             if isDestroyed then
+                require("src.souls").award(game, pc)
                 table.remove(game.persistentDeck, i)
             end
         end

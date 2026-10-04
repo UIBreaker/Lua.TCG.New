@@ -128,6 +128,7 @@ local templates = {
 for id,p in pairs(values) do Equipment.ITEMS[id].params=p;Equipment.ITEMS[id].descriptionTemplate=templates[id] end
 function Equipment.getDescription(item)
     local def=Equipment.ITEMS[item.id];if not def then return item.desc or "" end
+    if not def.descriptionTemplate then return def.desc or "" end
     return def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
         local n=k=="thresholdPercent" and def.params.threshold*100 or def.params[k]
         return string.format("%g",n or 0)
@@ -139,6 +140,31 @@ Equipment.POOL = {
     "gem_fire", "gem_blast", "mirror_adjacent", "storm_eye", "lucky_coin",
     "ward_stone", "vitality_gem", "blood_ring", "void_catalyst",
 }
+
+-- Soul relics never enter the ordinary random equipment pool.
+Equipment.SOUL_POOL = {"soul_worldblade", "soul_crown", "soul_bastion", "soul_heart", "soul_hourglass"}
+local relics = {
+    {id="soul_worldblade",name="Kiếm Diệt Thế",cost=32,slotsNeeded=2,color={0.95,0.42,0.18,1},
+        desc="Chiếm 2 hốc: +120 Sát thương và +35% sát thương khi tính điểm.",effect={addChips=120,extraDamagePct=0.35}},
+    {id="soul_crown",name="Vương Miện Hư Không",cost=28,slotsNeeded=2,color={0.72,0.42,1,1},
+        desc="Chiếm 2 hốc: +30 Cường hóa khi tính điểm.",effect={addMult=30}},
+    {id="soul_bastion",name="Khiên Thành Trì",cost=22,slotsNeeded=1,color={0.35,0.72,1,1},
+        desc="+30 Giáp và +60 Sát thương khi tính điểm.",effect={addArmor=30,addChips=60}},
+    {id="soul_heart",name="Tim Cổ Thụ",cost=24,slotsNeeded=1,color={0.35,0.92,0.58,1},
+        desc="Hồi 18 HP khi tính điểm, tối đa HP tối đa.",effect={healHp=18}},
+    {id="soul_hourglass",name="Đồng Hồ Tận Thế",cost=30,slotsNeeded=2,color={0.92,0.76,0.4,1},
+        desc="Chiếm 2 hốc: +80 Sát thương và +20 Cường hóa khi tính điểm.",effect={addChips=80,addMult=20}},
+}
+for _, relic in ipairs(relics) do
+    local effect, name = relic.effect, relic.name
+    relic.rarity, relic.soulOnly = "mythic", true
+    relic.onCardScore = function()
+        local result = {message=name}
+        for key,value in pairs(effect) do result[key]=value end
+        return result
+    end
+    Equipment.ITEMS[relic.id] = relic
+end
 
 function Equipment.getUsedSlots(card)
     local total = 0

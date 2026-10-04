@@ -1,0 +1,7 @@
+# Soul Bazaar environment
+
+File: `assets/scene/soul_bazaar.png`
+
+Generated with built-in image_gen. Landscape 16:9, game environment background; no card/UI frame baked in.
+
+Create a premium production game environment background, wide landscape 16:9, high resolution PNG. Cinematic painterly Western dark fantasy matching Continental Expedition world. A breathtaking Soul Bazaar on an ancient floating stone terrace over a vast abyss, monumental weathered western gothic arches, antique bronze astrolabe structures, a giant controlled violet eclipse portal high in the upper center, blue-violet soul rivers flowing between distant floating cliff islands with ruined castles. Two tall weathered dark pillars at extreme left and extreme right frame the vista, sparse warm antique gold lamps, cool pale teal wisps in thin atmospheric mist, sophisticated restrained cinematic lighting, reflective obsidian foreground floor. At upper third open vista and clear layered depth, at central and lower area calm dark open surfaces for overlaying game merchandise. No people, no merchant, no cards, no merchandise, no UI, no text or lettering, no border. Grand welcoming mysterious sacred market, not horror gore. Large clear forms, medium detail, no dense tiny ornament, no East Asian architecture, no white blown-out lights. Rich purple navy and antique gold palette with restrained cyan accent. Make this feel like an expensive fantasy game shop backdrop, dramatic architecture and monumental depth, readable behind interface.

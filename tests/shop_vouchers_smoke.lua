@@ -40,16 +40,15 @@ for _, item in ipairs(shop.items) do
     if item.category == "pack" then assert(item.cost == math.max(1, item.baseCost - 2)) end
 end
 buy("v_apothecary")
-for i, item in ipairs(shop.items) do
-    if item.category == "heal" then
-        assert(item.healAmt == 40 and item.cost == 4 and item.desc:find("40"))
-        local hp = game.playerHp
-        assert(Shop.buyItem(shop, i, game) and game.playerHp == hp + 40)
-        break
-    end
-end
+game.persistentDeck={Deck.newCard(2,"clubs"),Deck.newCard(3,"clubs")}
+game.consumables={Shop.destructionItem().consumable};assert(Shop.activateDestruction(game,game.consumables[1]))
+assert(Shop.destroyCard(game,game.persistentDeck[1]) and game.playerHp==48)
+shop.items[#shop.items+1]=Shop.healingItem("upper")
+local hp=game.playerHp
+assert(Shop.buyItem(shop,#shop.items,game) and game.playerHp==hp)
+assert(game.consumables[1].id=="healing_potion" and game.consumables[1].healAmt==25)
 buy("v_vitality")
-assert(game.maxPlayerHp == 120 and game.playerHp == 100)
+assert(game.maxPlayerHp == 120 and game.playerHp == 68)
 buy("v_second_chance")
 assert(game.maxDiscards == 4 and game.discardsRemaining == 4)
 buy("v_altar")
@@ -61,7 +60,7 @@ gold = game.gold
 assert(Shop.sellDeity(game, 1) and game.gold == gold + 6)
 game.persistentDeck = { Deck.newCard(2, "clubs"), Deck.newCard(3, "clubs") }
 gold = game.gold
-assert(Shop.sellCard(game, game.persistentDeck[1]) and game.gold == gold + 3)
+assert(not Shop.sellCard(game, game.persistentDeck[1]) and game.gold == gold)
 
 -- Duplicate purchases cannot charge gold or apply the stat bonus twice.
 shop.items = { { category = "voucher", voucherId = "v_vitality", cost = 12 } }

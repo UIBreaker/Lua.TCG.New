@@ -12,7 +12,7 @@ function love.conf(t)
     t.window.minwidth = 960
     t.window.minheight = 540
     t.window.fullscreen = false
-    t.window.vsync = 0
+    t.window.vsync = 1
     t.window.highdpi = true
 
     t.modules.audio = true

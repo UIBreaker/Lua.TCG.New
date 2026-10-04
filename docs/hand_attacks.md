@@ -30,9 +30,9 @@ Use `aura / enemy.targetAura`; use `enemy.maxHp` when targetAura is absent, and 
 
 | Tier | Ratio | Hit stop |
 |---|---|---|
-| NORMAL | < 0.5 | 20 ms |
-| STRONG | 0.5 to <1 | 30 ms |
-| POWERFUL | 1 to <2 | 45 ms |
+| NORMAL | < 0.5 | 25 ms |
+| STRONG | 0.5 to <1 | 35 ms |
+| POWERFUL | 1 to <2 | 50 ms |
 | EXTREME | 2 to <4 | 65 ms |
 | TRANSCEND | >=4 | 90 ms |
 
@@ -71,6 +71,14 @@ Audio hooks reuse existing synthesized sources rather than new bespoke recording
 
 The HD2D GPU smoke runs inside the real-combat capture and verifies all five shaders, seven presets, three qualities, Canvas/shader reuse, UI bypass, state restoration, GPU fallback and gameplay RNG isolation. Bare Lua cannot run the GPU/UI-only tests; they require LÖVE.
 
+## Motion polish (2026-10-04)
+
+Charge progress is continuous across conversion, anticipation and convergence. Every projectile takes its launch origin from the final charge pose; later frames cannot move its origin or reshape the trail behind it. The shared position sampler drives both the head and the entire curved, tapered ribbon mesh. Windup pulls away from the target, with light orbital drift; release accelerates with a 2.2 power curve. Flush uses a smoother fluid curve instead. Card conversion has eased translation, a small lift and delayed shrink.
+
+Pair and Two Pair have curved slash silhouettes with narrow blade cores. Straight Flush has depth-scaled blades, staggered convergence and early blade fading so the final giant blade remains readable. Contact starts with a narrow hot flash, followed by each hand's impact and a quickly expanding shockwave. Sparks travel back against the incoming attack. Camera and boss reaction use one damped rebound; the first hit frame already contains compression and recoil. Hit stop is 25/35/50/65/90 ms. Removed universal minimum windup/flight/impact/settle overrides that made all hands uniformly sluggish.
+
+New regression assertions cover 135 hand/tier/quality combinations for phase continuity and stable launch origins, alongside the existing 270 real-calculator sequences. No scoring or damage behavior changes.
+
 ## Performance
 
-Local uncapped LÖVE run with screenshots enabled: 90 Lab cases, mean frame 3.58 ms, raw peak 244.58 ms. Excluding the first 120 ms of each case: P95 4.31 ms, P99 4.79 ms, 12/19704 frames exceeded 16.67 ms. PNG capture/encoding and asset warm-up are included in the harness and can cause spikes. These are wall-clock frame intervals, not isolated GPU timings or a guarantee for other hardware. Latest final-run measurements are recorded in `docs/hand_vfx/performance.txt`.
+Local uncapped LÖVE run with screenshots enabled: 90 Lab cases, mean frame 3.51 ms, raw peak 242.01 ms. Excluding the first 120 ms of each case: P95 4.14 ms, P99 4.65 ms, 13/21459 frames exceeded 16.67 ms. PNG capture/encoding and asset warm-up are included in the harness and can cause spikes. These are wall-clock frame intervals, not isolated GPU timings or a guarantee for other hardware. Latest final-run measurements are recorded in `docs/hand_vfx/performance.txt`.

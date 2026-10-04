@@ -27,6 +27,8 @@ local TRANSIENT_GAME_KEYS = {
     eventOutcomeText = true,
     bossDeityDraft = true,
     currentNodeId = true,
+    soulDestroyActive = true,
+    soulDestroyConsumable = true,
 }
 
 local function sanitize(value, seen)
@@ -235,6 +237,10 @@ function Persistence.restoreSnapshot(snapshot)
     game.currentNodeId = nil
     Deck.restoreDeck(game.persistentDeck)
     local restoredState = snapshot.activeState or "BLIND_SELECT"
+    game.souls = math.max(0, tonumber(game.souls) or 0)
+    game.shopMode = game.shopMode == "soul" and "soul" or "normal"
+    game.soulDestroyActive = false
+    if game.pendingRewardEquipment then game.pendingRewardEquipment = restoreEquipment(game.pendingRewardEquipment) end
     if restoredState == "victory" and not game.run.victory then restoredState = "BLIND_SELECT" end
     return game, restoredState
 end

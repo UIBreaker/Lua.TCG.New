@@ -56,6 +56,7 @@ for _, id in ipairs({"gold_bonus", "playing_card", "card_pack", "spn_pack", "itm
     for _ = 1, 1500 do
         Reward.update(anim, 1 / 120)
         maxActive = math.max(maxActive, #anim.coins)
+        assert(#anim.sparks <= C.presentation.maxSparks, "spark budget must hold")
         for _, coin in ipairs(anim.coins) do
             sawCoin = true
             sawBounce = sawBounce or coin.phase == "BOUNCE"
@@ -72,8 +73,10 @@ for _, id in ipairs({"gold_bonus", "playing_card", "card_pack", "spn_pack", "itm
     for _, delay in ipairs({0, 0.5, 1.5, 2.8}) do
         local fast = Reward.newAnimation(result.breakdown, result)
         Reward.update(fast, delay)
+        local alreadySettled = fast.finished
         Reward.finishImmediately(fast); Reward.finishImmediately(fast); Reward.update(fast, 0.3)
         assert(fast.finished and fast.displayTotal == result.earnedGold and #fast.coins == 0)
+        assert(alreadySettled or #fast.sparks == 0, "fast-forward clears unfinished reveal effects")
         assert(g.gold == gold and Rng.getState() == state)
     end
     local saved = Persistence.makeSnapshot(g, "CASH_OUT")
@@ -148,4 +151,18 @@ local capped = Reward.newAnimation(large.breakdown, large)
 Reward.update(capped, 10)
 assert(capped.finished and capped.displayTotal == large.earnedGold and capped.coinsSpawned == 1)
 C.maxCoins = savedCap
+for _, fps in ipairs({30, 60, 144}) do
+    local presented = Reward.newAnimation(large.breakdown, large)
+    local rngBefore = Rng.getState()
+    local previousGold = 0
+    for _ = 1, fps * 12 do
+        Reward.update(presented, 1 / fps)
+        assert(presented.displayTotal >= previousGold, "counter must remain monotonic")
+        assert(#presented.sparks <= C.presentation.maxSparks)
+        previousGold = presented.displayTotal
+        if presented.finished then break end
+    end
+    assert(presented.finished and presented.displayTotal == large.earnedGold)
+    assert(Rng.getState() == rngBefore, "cinematic effects cannot alter gameplay RNG")
+end
 print("Reward ceremony smoke passed: formulas, all loot, coins, skip, RNG, save/load, capacity, packs, bosses")

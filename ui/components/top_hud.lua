@@ -60,7 +60,8 @@ local function drawHealth(data, fonts)
     local g = love.graphics
     local hp = math.max(0, tonumber(data.hp) or 0)
     local maxHp = math.max(1, tonumber(data.maxHp) or 1)
-    local x, y, w, h = 231, 20, 187, 34
+    local armor = math.max(0, tonumber(data.armor) or 0)
+    local x, y, w, h = 231, 32, 187, 23
     local ratio = math.max(0, math.min(1, hp / maxHp))
 
     Core.color({0.025, 0.11, 0.075, 0.94})
@@ -70,10 +71,23 @@ local function drawHealth(data, fonts)
             {0.18, 0.70, 0.42, 1}, {0.08, 0.38, 0.24, 1}, 3)
     end
 
-    drawIcon("heart", x + 5, y + 3, 28)
+    -- A distinct armor layer sits above HP, including an explicit empty state.
+    Core.color({0.025,0.07,0.12,0.98})
+    g.rectangle("fill", x, 16, w, 14, 3, 3)
+    local armorRatio = math.min(1, armor / math.max(1, data.armorCap or 30))
+    if armorRatio > 0 then
+        Core.color({0.10,0.42,0.67,1})
+        g.rectangle("fill", x+1, 17, (w-2)*armorRatio, 12, 2, 2)
+    end
+    Core.color({0.45,0.83,1,0.9})
+    g.setLineWidth(1)
+    g.rectangle("line", x, 16, w, 14, 3, 3)
+    Core.text("GIÁP " .. tostring(math.floor(armor)), x+4, 16, w-8, fonts.hudArmor,
+        {0.75,0.94,1,1}, "center")
+    drawIcon("heart", x + 5, y, 23)
     local label = "MÁU " .. tostring(math.floor(hp)) .. " / " .. tostring(math.floor(maxHp))
     local font = fitText(label, w - 40, fonts.hudStat, fonts.hudSmall)
-    Core.textLine(label, x + 35, y + 7, w - 40, font, Theme.colors.text, "center", fonts.hudSmall)
+    Core.textLine(label, x + 30, y + (h-font:getHeight())/2, w - 35, font, Theme.colors.text, "center", fonts.hudSmall)
 end
 
 local function drawActionButton(spec, mx, my, pressedId, fonts)
@@ -115,7 +129,7 @@ function TopHUD.draw(data, fonts, mx, my, pressedId)
     local hudSmall = fonts.hudSmall or defaultFont
     local hudStat = fonts.hudStat or defaultFont
     local hudButton = fonts.hudButton or defaultFont
-    local hudFonts = {hudTitle = hudTitle, hudSmall = hudSmall, hudStat = hudStat,
+    local hudFonts = {hudTitle = hudTitle, hudSmall = hudSmall, hudStat = hudStat, hudArmor = fonts.tiny or hudSmall,
         hudButton = hudButton}
     local a = loadAssets()
 
@@ -128,8 +142,14 @@ function TopHUD.draw(data, fonts, mx, my, pressedId)
     Core.textLine(data.enemyName or "Tiểu Yêu", 88, 39, 124, hudSmall, Theme.colors.text, "center")
     drawHealth(data, hudFonts)
 
-    drawIcon("coin", 430, 23, 28)
-    Core.textLine(tostring(data.gold or 0), 460, 26, 48, hudStat, Theme.colors.gold, "left", hudSmall)
+    g.push("all")
+    g.translate(470,37)
+    g.scale(data.goldBounce or 1)
+    g.translate(-470,-37)
+    drawIcon("coin", 430, 14, 25)
+    Core.textLine(tostring(data.gold or 0), 460, 17, 48, hudStat, Theme.colors.gold, "left", hudSmall)
+    Core.textLine(tostring(data.souls or 0).." LH", 430, 43, 78, hudFonts.hudArmor, Theme.colors.purple, "center")
+    g.pop()
 
     drawIcon("cards", 519, 22, 30)
     Core.textLine("LƯỢT " .. tostring(data.hands or 0) .. "/" .. tostring(data.maxHands or 0),

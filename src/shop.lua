@@ -5,8 +5,15 @@ local Deck = require("src.deck")
 local Deities = require("src.deities")
 local Rng = require("src.rng")
 local CardEffects = require("src.card_effects")
+local Souls = require("src.souls")
 
 local Shop = {}
+
+Shop.SOUL_SUPPORT = {
+    {id="cons_evolution",factory="createEvolutionCard",cost=12},
+    {id="cons_speed_single",factory="createSpeedSingleCard",cost=6},
+    {id="cons_speed_team",factory="createSpeedTeamCard",cost=10},
+}
 
 -- Public catalogs are shared with the collection screen so every listed item
 -- is obtainable and every obtainable shop item is documented in one place.
@@ -22,15 +29,15 @@ Shop.VOUCHERS = {
     { id = "v_second_chance", name = "Quân Cờ Dự Phòng", desc = "Thêm 1 lượt bỏ bài mỗi trận. Nhận ngay 1 lượt bỏ bài khi mua.", cost = 10, color = { 0.65, 0.58, 0.94, 1 }, icon = "♠" },
 }
 local voucherParams={v_discount={discount=2},v_interest={cap=10},v_hand_plus={hands=1},v_welcome={},
-    v_pack_discount={discount=2},v_apothecary={heal=40},v_altar={gold=2},v_vitality={hp=20},v_second_chance={discards=1}}
+    v_pack_discount={discount=2},v_apothecary={heal=8},v_altar={gold=2},v_vitality={hp=20},v_second_chance={discards=1}}
 local voucherText={
     v_discount="Giảm giá đổi hàng {discount} Vàng tại mọi shop, giá tối thiểu 1.",
     v_interest="Trần lãi ngân khố mỗi trận thành {cap} Vàng.",
     v_hand_plus="Thêm {hands} lượt đánh mỗi trận và nhận ngay khi mua.",
     v_welcome="Đổi hàng đầu tiên mỗi shop miễn phí, không tăng giá đổi hàng.",
     v_pack_discount="Mọi rương shop giảm {discount} Vàng, tối thiểu 1; áp dụng ngay và suốt run.",
-    v_apothecary="Bình máu shop hồi {heal} HP, không tăng giá.",
-    v_altar="Hiến tế bán SPN, quân bài hoặc tiêu hao: thêm {gold} Vàng; không tính là tiêu hủy.",
+    v_apothecary="Mỗi lần dùng Lá Tiêu Hủy thành công: hồi {heal} HP, không vượt HP tối đa.",
+    v_altar="Hiến tế bán SPN hoặc tiêu hao: thêm {gold} Vàng; không áp dụng cho tiêu hủy quân bài.",
     v_vitality="HP tối đa +{hp}; hồi ngay {hp} HP khi mua.",
     v_second_chance="Thêm {discards} lượt bỏ bài mỗi trận và nhận ngay khi mua.",
 }
@@ -229,9 +236,6 @@ function Shop.applyVoucherStock(shop, gameState)
         if item.category == "pack" then
             item.baseCost = item.baseCost or item.cost
             item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and Shop.voucherParams("v_pack_discount").discount or 0))
-        elseif item.category == "heal" then
-            item.healAmt = owned.v_apothecary and Shop.voucherParams("v_apothecary").heal or 25
-            item.desc = "Uống lập tức hồi phục tối đa +" .. item.healAmt .. " HP sinh lực."
         end
     end
 end
@@ -266,6 +270,29 @@ end
 
 function Shop.refresh(shop, gameState)
     shop.items = {}
+    shop.soulMode = gameState.shopMode == "soul"
+    if shop.soulMode then
+        for _, id in ipairs(Equipment.SOUL_POOL) do
+            local eq = Equipment.ITEMS[id]
+            if not (gameState.soulShopPurchased or {})[id] then
+                shop.items[#shop.items+1] = {id=id,section="soul",category="equipment",equipment=eq,
+                    name=eq.name,subtitle="DI VẬT LINH HỒN",desc=eq.desc,cost=eq.cost,currency="souls",color=eq.color}
+            end
+        end
+        for _, offer in ipairs(Shop.SOUL_SUPPORT) do
+            if not (gameState.soulShopPurchased or {})[offer.id] then
+                local card = require("src.run_manager")[offer.factory]()
+                shop.items[#shop.items+1] = {id=card.id,section="soul_support",category="soul_consumable",consumable=card,
+                    name=card.name,desc=card.desc,cost=offer.cost,currency="souls",color=card.color}
+            end
+        end
+        if not (gameState.soulShopPurchased or {}).soul_reaper then
+            local utility = Shop.destructionItem("soul_utility")
+            utility.currency = "souls"
+            shop.items[#shop.items+1] = utility
+        end
+        return
+    end
 
     ----------------------------------------------------------------------------
     -- 1. UPPER SECTION CARDS (Thần Hộ Mệnh, Trang Bị Khảm, Quân Bài Tuyển Mộ)
@@ -337,13 +364,7 @@ function Shop.refresh(shop, gameState)
         color = { 0.85, 0.45, 0.95, 1 },
     })
 
-    -- E. Healing stays visible in the upper retail row on every visit.
-    table.insert(shop.items, {
-        id = "healing_potion", section = "upper", category = "heal",
-        name = "BÌNH MÁU THÁNH", subtitle = "DƯỢC LIỆU",
-        desc = "Uống lập tức hồi phục tối đa +25 HP sinh lực.",
-        cost = 4, color = { 0.25, 0.85, 0.45, 1 }, icon = "🧪", healAmt = 25,
-    })
+    table.insert(shop.items, Rng.random() < 0.5 and Shop.healingItem("upper") or Shop.destructionItem("upper"))
 
     ----------------------------------------------------------------------------
     -- 2. LOWER SECTION CARDS (Phiếu Ante / Voucher & Gói Bài Booster Packs)
@@ -428,6 +449,22 @@ end
 function Shop.buyItem(shop, itemIndex, gameState)
     local item = shop.items[itemIndex]
     if not item then return false, "Vật phẩm không tồn tại!" end
+    if item.currency == "souls" then
+        if not shop.soulMode or (gameState.souls or 0) < item.cost then
+            return false, "Không đủ linh hồn!"
+        end
+        if item.category ~= "equipment" and not item.consumable then return false, "Không thể đổi vật phẩm này." end
+        if item.consumable and #(gameState.consumables or {}) >= 3 then return false, "Ô tiêu hao đã đầy (3/3)." end
+        gameState.souls = gameState.souls - item.cost
+        gameState.soulShopPurchased = gameState.soulShopPurchased or {}
+        gameState.soulShopPurchased[item.id] = true
+        table.remove(shop.items, itemIndex)
+        Sound.play("shop_buy")
+        if item.category == "equipment" then return true, "open_socketing", item.equipment end
+        gameState.consumables = gameState.consumables or {}
+        table.insert(gameState.consumables, item.consumable)
+        return true, "Đã cất "..item.name.." vào ô tiêu hao. Chuột phải để dùng."
+    end
     if item.category == "voucher" and gameState.vouchers and gameState.vouchers[item.voucherId] then
         return false, "Bạn đã sở hữu đặc quyền này!"
     end
@@ -435,6 +472,16 @@ function Shop.buyItem(shop, itemIndex, gameState)
     if (gameState.gold or 0) < item.cost then
         Sound.play("cant_afford")
         return false, "Không đủ tiền vàng!"
+    end
+
+    if item.consumable then
+        gameState.consumables = gameState.consumables or {}
+        if #gameState.consumables >= 3 then return false, "Ô tiêu hao đã đầy (3/3)." end
+        gameState.gold = gameState.gold - item.cost
+        table.insert(gameState.consumables, item.consumable)
+        table.remove(shop.items, itemIndex)
+        Sound.play("shop_buy")
+        return true, "Đã cất "..item.name.." vào ô tiêu hao. Chuột phải để dùng."
     end
 
     if item.category == "deity" then
@@ -703,6 +750,9 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             local cloned = {}
             for k, v in pairs(chosen.deity) do cloned[k] = v end
             -- Clear all other slots and put two copies in slots 1 and 2
+            for _, entry in ipairs(deityList) do
+                if entry.deity ~= chosen.deity then require("src.souls").award(gameState,entry.deity) end
+            end
             gameState.deities = { [1] = chosen.deity, [2] = cloned }
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
@@ -716,6 +766,9 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             local chosen = deityList[Rng.random(#deityList)]
             chosen.deity.edition = "polychrome"
             local kept = chosen.deity
+            for _, entry in ipairs(deityList) do
+                if entry.deity ~= kept then require("src.souls").award(gameState,entry.deity) end
+            end
             gameState.deities = { [1] = kept }
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
@@ -962,6 +1015,7 @@ function Shop.skipPack(shop)
 end
 
 function Shop.reroll(shop, gameState, refresh)
+    if shop.soulMode then return false, "Di vật linh hồn không đổi hàng." end
     local refreshShop = refresh or Shop.refresh
     if gameState and (gameState.freeRerolls or 0) > 0 then
         gameState.freeRerolls = gameState.freeRerolls - 1
@@ -1010,7 +1064,55 @@ function Shop.sellConsumable(gameState, consumableIndex)
     return true, price
 end
 
-function Shop.sellCard(gameState, targetCard)
+function Shop.sellCard()
+    return false, "Không thể bán quân bài. Hãy kích hoạt Lá Tiêu Hủy trong shop."
+end
+
+function Shop.destructionItem(section)
+    local item = {id="soul_reaper",section=section,category="destroy",cost=4,name="Lá Tiêu Hủy",
+        subtitle="NGHI LỄ LINH HỒN",color={0.69,0.42,0.96,1},
+        desc="Tiêu hao một lần trong shop: chọn một quân bài rồi xác nhận tiêu hủy để nhận linh hồn. Giữ ít nhất 1 lá; hủy chọn không mất thẻ."}
+    item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color}
+    return item
+end
+
+function Shop.healingItem(section)
+    local item={id="healing_potion",section=section,category="heal",cost=4,name="Bình Máu",
+        color={0.35,0.9,0.6,1},desc="Tiêu hao một lần: hồi 25 HP, không vượt sinh lực tối đa."}
+    item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color,healAmt=25}
+    return item
+end
+
+function Shop.activateDestruction(gameState, consumable)
+    for _,card in ipairs(gameState.consumables or {}) do
+        if card==consumable and card.id=="soul_reaper" then
+            gameState.soulDestroyActive=true
+            gameState.soulDestroyConsumable=card
+            return true
+        end
+    end
+    return false
+end
+
+function Shop.getSoulValue(card)
+    return Souls.value(card)
+end
+
+function Shop.enterSoulShop(gameState)
+    if gameState.pendingSoulShop then
+        gameState.shopMode = "soul"
+        gameState.pendingSoulShop = false
+        gameState.soulShopPurchased = {}
+    end
+end
+
+function Shop.destroyCard(gameState, targetCard)
+    if not gameState.soulDestroyActive then return false, "Kích hoạt Lá Tiêu Hủy trước." end
+    local consumableIndex
+    for i,card in ipairs(gameState.consumables or {}) do
+        if card==gameState.soulDestroyConsumable and card.id=="soul_reaper" then consumableIndex=i;break end
+    end
+    if not consumableIndex then return false, "Cần một Lá Tiêu Hủy trong ô tiêu hao." end
     local deck = gameState.persistentDeck or {}
     local targetId = type(targetCard) == "table" and targetCard.id or targetCard
     local deckIndex
@@ -1025,7 +1127,7 @@ function Shop.sellCard(gameState, targetCard)
         return false, "Bộ bài phải còn ít nhất 1 lá."
     end
 
-    local price = Shop.getSacrificePrice(targetCard, "card", gameState)
+    local price = Shop.getSoulValue(targetCard)
     local cardId = targetCard.id
     table.remove(deck, deckIndex)
     for _, pileName in ipairs({ "hand", "deck", "discardPile" }) do
@@ -1039,12 +1141,21 @@ function Shop.sellCard(gameState, targetCard)
             end
         end
     end
-    gameState.gold = (gameState.gold or 0) + price
+    Souls.award(gameState, targetCard)
+    if gameState.vouchers and gameState.vouchers.v_apothecary then
+        gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100)+Shop.voucherParams("v_apothecary").heal)
+    end
+    gameState.soulDestroyActive = false
+    table.remove(gameState.consumables, consumableIndex)
+    gameState.soulDestroyConsumable = nil
+    require("src.card_abilities").consumableUsed(gameState)
+    gameState.masterDeck = deck
+    targetCard.destroyed = true
     gameState.selectedIndices = {}
     for i, card in ipairs(gameState.hand or {}) do
         if card.selected then table.insert(gameState.selectedIndices, i) end
     end
-    Sound.play("sell")
+    Sound.play("card_destroy")
     return true, price
 end
 

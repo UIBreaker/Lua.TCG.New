@@ -1,5 +1,6 @@
 local Definitions = require("config.scene_definitions")
 local C = require("config.visual_config")
+local Weather = require("render.weather")
 local Scene = { definitions = Definitions }
 function Scene.load(art)
     Scene.art = art; Scene.textures={}; Scene.time=0
@@ -15,6 +16,7 @@ end
 function Scene.update(dt, state, monster)
     Scene.time=Scene.time+dt
     Scene.name, Scene.definition, Scene.preset = Definitions.resolve(state, monster)
+    Scene.weather = Scene.name == "battle" and Weather.resolve(monster) or nil
 end
 local function imageCover(image,brightness,tint)
     local g=love.graphics; local w,h=image:getDimensions(); local fit=math.max(1280/w,720/h)
@@ -52,7 +54,7 @@ local function drawLayer(layer,particleCap)
             local a=i*math.pi/6
             g.line(630+math.cos(a)*215,417+math.sin(a)*38,630+math.cos(a)*229,417+math.sin(a)*43)
         end
-    elseif layer.kind=="fog" and C.effects.fog and C.enabled then
+    elseif layer.kind=="fog" and not Scene.weather and C.effects.fog and C.enabled then
         local f=p.fogColor; local density=C.fog.density*p.fogDensity
         for i=1,9 do
             local x=160+i*106+math.sin(t*C.fog.speed+i*1.7)*50+math.sin(i*1.7)*(Scene.attackPulse or 0)*25
@@ -62,7 +64,7 @@ local function drawLayer(layer,particleCap)
                 g.ellipse("fill",x,y,110+band*16,10+band*8)
             end
         end
-    elseif layer.kind=="particles" and C.effects.particles and C.enabled then
+    elseif layer.kind=="particles" and not Scene.weather and C.effects.particles and C.enabled then
         local color=p.particleType=="embers" and C.palette.reward or p.lightTint
         -- Deterministic analytic particles: no gameplay RNG or per-frame tables.
         for i=1,particleCap do
@@ -107,6 +109,11 @@ function Scene.draw(stage,camera,quality,depthShader)
         if layer.stage==stage then
             Scene.drawSingle(layer,camera,quality,depthShader)
         end
+    end
+    if Scene.weather then
+        g.push("all"); camera.apply(C.enabled and 0.4 or 0)
+        Weather.draw(stage, Scene.time, Scene.preset, Scene.weather, quality)
+        g.pop()
     end
 end
 return Scene

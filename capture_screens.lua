@@ -61,6 +61,22 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _, value in ipairs(arg or {}) do
+        if value == "--test-animation" then
+            local ok, err = pcall(require("tests.animation_capture").update, gameRef, callbacks)
+            if not ok then print("ANIMATION FAILED: " .. tostring(err)); love.event.quit(1) end
+            return
+        end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-soul-shop" then return require("tests.soul_shop_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-combat-feedback" then return require("tests.combat_feedback_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-weather" then return require("tests.weather_capture").update(gameRef, callbacks) end
+    end
+    for _, value in ipairs(arg or {}) do
         if value == "--test-illustrated-art" then return require("tests.illustrated_art_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do

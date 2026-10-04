@@ -53,6 +53,8 @@ for _, stored in ipairs({ false, true }) do
         A.start(game)
         local oldSuit, oldGold, oldSize = target.suit, game.gold, game.maxHandSize
         local firstId = game.persistentDeck[1].id
+        local originalValues={}
+        for _,card in ipairs(game.persistentDeck) do originalValues[card.id]=Shop.getSoulValue(card) end
         local id = definition.id
         if stored then applyStored(game, definition)
         else
@@ -93,7 +95,13 @@ for _, stored in ipairs({ false, true }) do
         end
         local expected = {}
         for _, card in ipairs(game.persistentDeck) do expected[#expected + 1] = Deck.cloneCard(card) end
+        local expectedSouls=0
+        for id,value in pairs(originalValues) do
+            if not contains(game.persistentDeck,id) then expectedSouls=expectedSouls+value end
+        end
+        assert(game.souls==expectedSouls,"spectral destruction must award souls exactly once")
         local restored = assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(game, "shop")))
+        assert(restored.souls==game.souls)
         assert(restored.maxHandSize == game.maxHandSize and restored.gold == game.gold)
         for key, level in pairs(game.handLevels) do assert(restored.handLevels[key] == level) end
         Combat.start(restored, Monster.create(1, false, false, 1), 2)

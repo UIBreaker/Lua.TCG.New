@@ -42,6 +42,10 @@ A blind or boss can set `lootTableId`. `begin(breakdown, game, context)` also ac
 
 ## Presentation
 
+The cinematic upgrade adds a moving dust backdrop, broad light shafts, animated victory seal, staged reward rows, depth-scaled coins with spin/shadows and reusable trail points, collection sparks and a gold shock ring. Rare loot gets a local spotlight, expanding ring, star burst and short rarity callout. Chest contents rise from their parent chest toward their slot. Hover lifts and lightly tilts the complete card; packs and consumables use the current Continental loaders and shared card frame. No new bitmap art or card frames are introduced.
+
+Effects use only the private presentation RNG and are capped at 40 coins and 72 sparks. Particle rendering respects `visual_config.effects.particles`. Settings live in `reward_loot.presentation`; the existing sequence timing and fast-forward remain intact. The received number scales down for long values and the encounter title truncates to prevent overlap. The smoke test exercises monotonic totals and effect budgets at 30/60/144 FPS.
+
 The victory panel uses a framed charcoal-and-gold layout: itemized income at left, a large coin and earned amount at right, and the wallet before/after directly underneath. Currency uses coin icons and explicit XU VÀNG labels. Loot cards retain image aspect ratios and separate rarity, name and claimed status. The footer provides a gold continue button and context-sensitive keyboard instructions.
 
 `ENTER → GOLD_BREAKDOWN → COIN_RAIN → GOLD_SETTLE → LOOT_PREPARE → LOOT_REVEAL / RARE_REVEAL → SUMMARY → EXIT`

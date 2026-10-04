@@ -4,6 +4,7 @@ local Deities = require("src.deities")
 local Equipment = require("src.equipment")
 local Deck = require("src.deck")
 local Effects = require("src.card_effects")
+local DescriptionView = require("ui.components.card_description")
 local D = {}
 local hoverItem, hoverAge, offered = nil, 0, false
 function D.update(dt)
@@ -91,12 +92,9 @@ function D.draw(UI,item,mx,my,game)
     if key~=hoverItem then hoverItem=key;hoverAge=0 end
     if hoverAge < require("config.ux_polish_config").hoverDelay then return end
     local title,body=D.resolve(item,game)
-    local w=320;local font=UI.fonts.tiny or UI.fonts.small
-    local _,lines=font:getWrap(body,w-24)
-    local titleFont=UI.fonts.small
-    local _,titleLines=titleFont:getWrap(title,w-24)
-    local bodyY=16+#titleLines*titleFont:getHeight()
-    local h=math.min(690,bodyY+12+#lines*font:getHeight())
+    local model=DescriptionView.model(item,title,body)
+    local layout=DescriptionView.layout(model,UI.fonts)
+    local w,h=layout.w*layout.scale,layout.h*layout.scale
     local surface=UI.CardPhysics.getState(key) or UI.CardPhysics.getState(item)
     local r=surface and UI.Polish and UI.Polish.rect(UI,item)
     if UI.Polish and UI.Polish.focus then r=UI.Polish.focus.rect end
@@ -104,9 +102,6 @@ function D.draw(UI,item,mx,my,game)
     local left=r and r.x-w-24 or mx-w-16
     local x=math.max(10,math.min(1270-w,right+w<=1270 and right or left))
     local y=math.max(10,math.min(710-h,my+14))
-    love.graphics.setColor(0.06,0.085,0.11,0.98);love.graphics.rectangle("fill",x,y,w,h,8,8)
-    love.graphics.setColor(0.9,0.72,0.36,1);love.graphics.rectangle("line",x,y,w,h,8,8)
-    love.graphics.setFont(titleFont);love.graphics.printf(title,x+12,y+10,w-24)
-    love.graphics.setFont(font);love.graphics.setColor(0.94,0.95,0.98,1);love.graphics.printf(body,x+12,y+bodyY,w-24)
+    DescriptionView.draw(model,layout,x,y)
 end
 return D

@@ -142,6 +142,9 @@ function R.drawDebug(font)
                 or view=="DOF" and layer.blurAmount>0
             if visible then Scene.drawSingle(layer,Camera,C.qualities[R.quality],R.depthShader) end
         end
+        if Scene.weather and (view=="FOG" or view=="PARTICLES") then
+            require("render.weather").draw("after",Scene.time,Scene.preset,Scene.weather,C.qualities[R.quality],view)
+        end
     end
     if font then g.setFont(font) end
     g.setColor(0.005,0.008,0.015,0.95);g.rectangle("fill",14,82,550,view=="LAYERS" and 214 or 114,6,6)

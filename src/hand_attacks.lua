@@ -3,6 +3,10 @@ local A = {config=require("config.hand_vfx_config")}
 local C=A.config
 local clamp=function(x) return math.max(0,math.min(1,x)) end
 local mix=function(a,b,p) return a+(b-a)*p end
+local smooth=function(p) p=clamp(p);return p*p*(3-2*p) end
+local flight=function(p) return clamp(p)^C.motion.releasePower end
+local projectileCount, paths, sample
+
 function A.power(aura,target)
     target=tonumber(target) or C.fallbackTarget
     if target<=0 then target=C.fallbackTarget end
@@ -20,7 +24,7 @@ function A.new(result,cards,ui,target,handId)
     local profile=C.hands[id] or C.hands.high_card
     local intensity,tier,ratio=A.power(result.finalScore,target)
     local a={profile=profile,intensity=intensity,tier=tier,ratio=ratio, color=profile.colorProfile,
-        sources={},rankOrder={},beat=0,quality="high",cx=ui.BATTLE_CENTER_X}
+        sources={},rankOrder={},launch={},ribbon={},seal={},beat=0,charge=0,orbit=0,quality="high",cx=ui.BATTLE_CENTER_X}
     local groups={}
     for i,card in ipairs(cards) do
         groups[card.rank]=(groups[card.rank] or 0)+1
@@ -40,12 +44,26 @@ function A.new(result,cards,ui,target,handId)
     return a
 end
 function A.enter(a,phase)
+    a.phase=phase
     a.beat=0
+    if phase=="ENERGY_CONVERSION" then a.charge,a.orbit=0,0;a.launch={} end
+    if phase=="ATTACK" then
+        -- Freeze precisely the last charge pose: origin must never move while its trail is flying.
+        a.charge=1;a.orbit=1.2
+        for i=1,projectileCount(a) do
+            local x,y=sample(a,i,"ANTICIPATION",1)
+            a.launch[i]={x=x,y=y}
+        end
+    end
     if phase=="CONVERGENCE" and a.tier==5 then require("src.sound").silence(C.silence) end
     local key=({ENERGY_CONVERSION="charge",ATTACK="release",ENEMY_IMPACT="impact"})[phase]
     if key then require("src.sound").play(a.profile.soundHooks[key],0.9+a.intensity*0.3) end
 end
 function A.update(a,phase,p)
+    if phase=="ENERGY_CONVERSION" then a.charge=p*0.55
+    elseif phase=="ANTICIPATION" then a.charge=0.55+p*0.45
+    elseif phase=="CONVERGENCE" then a.charge=1 end
+    a.orbit=a.charge*1.2
     if phase~=(a.profile.rhythmPhase or "ATTACK") then return end
     local beats=a.profile.soundHooks.beats
     local n=0
@@ -60,73 +78,125 @@ local function glow(g,col,alpha,width,x1,y1,x2,y2)
 end
 local function blade(g,a,x,y,angle,size,alpha)
     g.push();g.translate(x,y);g.rotate(angle)
-    g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.18)
-    g.ellipse("fill",0,0,size*0.32,size*1.5)
-    g.setColor(a.color[1],a.color[2],a.color[3],alpha)
-    g.polygon("fill",0,-size,-size*0.12,size*0.55,0,size*0.38,size*0.12,size*0.55)
-    g.setColor(1,1,1,alpha);g.line(0,-size,0,size*0.38);g.pop()
+    -- Long tapered silhouette with a hot thin spine; no opaque oval around every blade.
+    g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.10)
+    g.polygon("fill",0,-size*1.2,-size*0.22,size*0.65,0,size*0.25,size*0.22,size*0.65)
+    g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.8)
+    g.polygon("fill",0,-size,-size*0.08,size*0.52,0,size*0.22,size*0.08,size*0.52)
+    g.setColor(0.94,0.99,1,alpha*C.motion.coreAlpha)
+    g.polygon("fill",0,-size,-size*0.022,size*0.32,size*0.022,size*0.32)
+    g.pop()
 end
-local function trail(g,a,x0,y0,x1,y1,p,bend,width)
-    local segments=math.min(C.trail.segments,C.quality[a.quality])
-    local length=C.trail.length*(0.6+a.intensity*0.8)
-    for j=1,segments do
-        local t=clamp(p-(segments-j)*length/segments)
-        local prev=clamp(t-length/segments)
-        local x=mix(x0,x1,t)+math.sin(t*math.pi)*bend
-        local y=mix(y0,y1,t)
-        glow(g,a.color,j/segments*0.65,width*j/segments,
-            mix(x0,x1,prev)+math.sin(prev*math.pi)*bend,mix(y0,y1,prev),x,y)
+local function slash(g,a,x,y,angle,size,alpha)
+    local points=a.ribbon
+    g.push();g.translate(x,y);g.rotate(angle)
+    for layer=2,1,-1 do
+        local count=12
+        for j=0,count do
+            local t=j/count;local arc=-1.1+t*1.65
+            local radius=size*(layer==2 and 1.08 or 1)
+            points[j*2+1]=math.cos(arc)*radius-size*0.65
+            points[j*2+2]=math.sin(arc)*radius
+        end
+        for j=count,0,-1 do
+            local t=j/count;local arc=-1.1+t*1.65
+            local thickness=math.sin(t*math.pi)^1.2*size*(layer==2 and 0.18 or 0.10)
+            local radius=size*(layer==2 and 1.08 or 1)-thickness
+            local index=(count+1+count-j)*2+1
+            points[index]=math.cos(arc)*radius-size*0.65;points[index+1]=math.sin(arc)*radius
+        end
+        g.setColor(a.color[1],a.color[2],a.color[3],alpha*(layer==2 and 0.12 or 0.65))
+        g.polygon("fill",points)
     end
+    g.pop()
 end
-local paths={}
+paths={}
+projectileCount=function(a)
+    if a.profile.blades then return math.min(a.profile.blades[a.tier],C.quality[a.quality]) end
+    return a.profile.projectile=="spear" and 1 or (a.profile.projectile=="fusion" and 2 or #a.sources)
+end
 paths.spear=function(a,i,p)
     local source=a.sources[a.strongest]
-    return source and source.x or a.cx,C.arena.coreY, a.cx,C.arena.targetY-(a.tier>=4 and 40 or 0), p^0.45,0
+    return source and source.x or a.cx,365,a.cx,270-(a.tier>=4 and 40 or 0),flight(p),0
 end
 paths.twin_blades=function(a,i,p)
     local side=i%2==1 and -1 or 1
-    return a.cx+side*135,370,a.cx-side*36,245,clamp((p-(i-1)*0.30)/0.70),side*30
+    return a.cx+side*135,350,a.cx-side*18,258,flight((p-(i-1)*0.30)/0.70),side*65
 end
 paths.orbital_blades=function(a,i,p)
-    local angle=(i-1)*math.pi/2+(1-p)*1.6+(a.orbit or 0)
-    local r=100*(1-clamp((p-0.25)/0.75))
-    return a.cx+math.cos(angle)*r,270+math.sin(angle)*r,a.cx,270,clamp((p-(i-1)*0.10)/0.7),math.sin(angle)*25
+    local angle=(i-1)*math.pi/2+a.orbit
+    return a.cx+math.cos(angle)*105,295+math.sin(angle)*75,a.cx,270,
+        flight((p-(i-1)*0.10)/(1-(i-1)*0.10)),math.sin(angle)*35
 end
 paths.triangle=function(a,i,p)
-    local angle=(i-1)*math.pi*2/3-math.pi/2+(1-p)*0.25+(a.orbit or 0)
-    return a.cx+math.cos(angle)*85,300+math.sin(angle)*85,a.cx,270,p,0
+    local angle=(i-1)*math.pi*2/3-math.pi/2+a.orbit
+    return a.cx+math.cos(angle)*85,300+math.sin(angle)*70,a.cx,270,flight(p),math.cos(angle)*12
 end
 paths.chain=function(a,i,p)
-    local source=a.sources[a.rankOrder[i]]
-    local start=(i-1)*0.13
-    return source.x,source.y,a.cx+(i-3)*8,270,clamp((p-start)/(1-start))^0.65,(i%2==0 and -1 or 1)*(35+a.intensity*35)
+    local source=a.sources[a.rankOrder[i]];local start=(i-1)*0.13
+    return source.x,source.y,a.cx+(i-3)*7,270,flight((p-start)/(1-start)),(i%2==0 and -1 or 1)*(35+a.intensity*35)
 end
 paths.wave=function(a,i,p)
     local source=a.sources[i]
-    return source.x,source.y,a.cx+(i-(#a.sources+1)/2)*20,265,p,math.sin(i*1.7)*70*(1-p)
+    return source.x,source.y,a.cx+(i-(#a.sources+1)/2)*14,265,smooth(p),math.sin(i*1.7)*70
 end
 paths.fusion=function(a,i,p)
     local side=i==1 and -1 or 1
-    local orbit=side*(1-p)*math.pi
-    return a.cx+math.cos(orbit)*45*side*(1-p),350+math.sin(orbit)*25,a.cx,270,clamp((p-0.25)/0.75)^0.6,0
+    local orbit=side*a.charge*math.pi*1.3
+    local r=45*(1-0.65*smooth((a.charge-0.55)/0.45))
+    return a.cx+math.cos(orbit)*r*side,350+math.sin(orbit)*r*0.4,a.cx,270,flight(p),side*10
 end
 paths.crossfire=function(a,i,p)
     local angle=(i-1)*math.pi/2-math.pi/2
-    return a.cx+math.cos(angle)*100,270+math.sin(angle)*100,a.cx,270,p,0
+    return a.cx+math.cos(angle)*105,270+math.sin(angle)*95,a.cx,270,flight(p),0
 end
 paths.blade_storm=function(a,i,p)
-    local n=math.min(a.profile.blades[a.tier],C.quality[a.quality])
-    local angle=i*math.pi*2/n+(1-p)*0.6+(a.orbit or 0)
-    local depth=0.65+(i%3)*0.22
-    local r=(100+35*a.intensity)*depth
-    local k=clamp((p-(i-1)/n*0.24)/0.76)^0.65
-    return a.cx+math.cos(angle)*r,300+math.sin(angle)*r*0.7,a.cx,270,k,math.cos(angle)*18
+    local n=projectileCount(a);local angle=i*math.pi*2/n+a.orbit
+    local depth=0.65+(i%3)*0.22;local r=(110+35*a.intensity)*depth
+    local start=(i-1)/n*0.24
+    return a.cx+math.cos(angle)*r,300+math.sin(angle)*r*0.7,a.cx,270,
+        flight((p-start)/(1-start)),math.cos(angle)*30
+end
+sample=function(a,i,phase,p)
+    local x0,y0,x1,y1,k,bend=paths[a.profile.projectile](a,i,phase=="ATTACK" and p or 0)
+    if phase~="ATTACK" then
+        local source=a.sources[(i-1)%#a.sources+1]
+        local form=smooth(a.charge/0.55)
+        local windup=smooth((a.charge-0.55)/0.45)
+        local dx,dy=x0-x1,y0-y1;local length=math.max(1,math.sqrt(dx*dx+dy*dy))
+        local pull=C.motion.pullback*windup*(0.5+a.intensity)
+        local drift=math.sin(a.charge*math.pi)*C.motion.drift
+        return mix(source.x,x0,form)+dx/length*pull+math.sin(i*2.3+a.charge*5)*drift,
+            mix(source.y,y0,form)+dy/length*pull+math.cos(i*1.7+a.charge*4)*drift
+    end
+    local origin=a.launch[i]
+    if origin then x0,y0=origin.x,origin.y end
+    return mix(x0,x1,k)+math.sin(k*math.pi)*bend,mix(y0,y1,k)
+end
+A.position=sample -- Pure geometry also checked headlessly for phase continuity.
+local function trail(g,a,i,p,width)
+    local segments=math.min(C.trail.segments,C.quality[a.quality]+4)
+    local length=C.trail.length*(0.6+a.intensity*0.65)
+    for layer=2,1,-1 do
+        local lastX,lastY=sample(a,i,"ATTACK",clamp(p-length))
+        for j=1,segments do
+            local t=clamp(p-length+(j/segments)*length)
+            local x,y=sample(a,i,"ATTACK",t)
+            local dx,dy=x-lastX,y-lastY;local len=math.max(0.001,math.sqrt(dx*dx+dy*dy))
+            local nx,ny=-dy/len,dx/len
+            local w=width*(j/segments)^1.4*(layer==2 and 2.6 or 1)
+            local oldW=width*((j-1)/segments)^1.4*(layer==2 and 2.6 or 1)
+            g.setColor(a.color[1],a.color[2],a.color[3],(j/segments)^1.5*(layer==2 and 0.09 or 0.52))
+            g.polygon("fill",lastX+nx*oldW,lastY+ny*oldW,x+nx*w,y+ny*w,x-nx*w,y-ny*w,lastX-nx*oldW,lastY-ny*oldW)
+            lastX,lastY=x,y
+        end
+    end
 end
 local structures={}
 structures.triangle=function(g,a,p)
-    local vertices={}
-    for i=1,3 do local x,y=paths.triangle(a,i,0);vertices[#vertices+1]=x;vertices[#vertices+1]=y end
-    g.setColor(a.color[1],a.color[2],a.color[3],0.5*(1-p));g.setLineWidth(2+a.intensity*2)
+    local vertices=a.seal
+    for i=1,3 do local x,y=sample(a,i,"ANTICIPATION",0);vertices[i*2-1]=x;vertices[i*2]=y end
+    g.setColor(a.color[1],a.color[2],a.color[3],0.5*(1-p)*smooth(a.charge/0.55));g.setLineWidth(2+a.intensity*2)
     g.polygon("line",vertices)
 end
 structures.orbital_blades=function(g,a,p)
@@ -175,8 +245,8 @@ impacts.collapse=function(g,a,r,k)
     for i=1,4 do local t=i*math.pi/2;glow(g,a.color,1-k,3,a.cx+math.cos(t)*r,270+math.sin(t)*r,a.cx+math.cos(t)*r*0.3,270+math.sin(t)*r*0.3) end
 end
 impacts.triangle_seal=function(g,a,r,k)
-    local points={}
-    for i=1,3 do local t=i*math.pi*2/3-math.pi/2;points[#points+1]=a.cx+math.cos(t)*r;points[#points+1]=270+math.sin(t)*r end
+    local points=a.seal
+    for i=1,3 do local t=i*math.pi*2/3-math.pi/2;points[i*2-1]=a.cx+math.cos(t)*r;points[i*2]=270+math.sin(t)*r end
     g.polygon("line",points)
 end
 impacts.long_wave=function(g,a,r,k)
@@ -204,8 +274,20 @@ impacts.grand_convergence=function(g,a,r,k)
 end
 local heads={}
 heads.spear=function(g,a,x,y,angle,p) blade(g,a,x,y,angle,20+25*a.intensity,0.85) end
-heads.twin_blades=heads.spear;heads.orbital_blades=heads.spear
-heads.blade_storm=function(g,a,x,y,angle,p) blade(g,a,x,y,angle,12+16*a.intensity,0.65) end
+heads.twin_blades=function(g,a,x,y,angle,p)
+    slash(g,a,x,y,angle,30+20*a.intensity,0.9)
+    blade(g,a,x,y,angle,18+18*a.intensity,0.6)
+end
+heads.orbital_blades=function(g,a,x,y,angle,p)
+    slash(g,a,x,y,angle,18+12*a.intensity,0.65)
+    blade(g,a,x,y,angle,16+14*a.intensity,0.8)
+end
+heads.blade_storm=function(g,a,x,y,angle,p,i)
+    local depth=0.65+((i or 1)%3)*0.20
+    local fade=a.phase=="ATTACK" and 1-smooth((p-0.65)/0.32) or 1
+    local shimmer=0.9+0.1*math.sin(a.charge*14+(i or 1)*2)
+    blade(g,a,x,y,angle,(12+16*a.intensity)*depth,0.52*fade*shimmer)
+end
 heads.triangle=function(g,a,x,y,angle,p)
     g.setColor(a.color[1],a.color[2],a.color[3],0.25);g.circle("fill",x,y,12+8*a.intensity)
     g.setColor(1,0.9,1,0.85);g.circle("fill",x,y,3+4*a.intensity)
@@ -229,7 +311,6 @@ heads.crossfire=function(g,a,x,y,angle,p)
 end
 function A.draw(a,phase,p,impactAge)
     local g=love.graphics
-    a.orbit=phase=="ATTACK" and 0 or p*0.7
     g.push("all")
     local left,top=g.transformPoint(C.arena.left,C.arena.top)
     local right,bottom=g.transformPoint(C.arena.left+C.arena.width,C.arena.top+C.arena.height)
@@ -238,38 +319,45 @@ function A.draw(a,phase,p,impactAge)
     if active then
         local structure=structures[a.profile.projectile]
         if structure then structure(g,a,phase=="ATTACK" and p or 0) end
-        local n= a.profile.projectile=="spear" and 1 or (a.profile.projectile=="fusion" and 2 or #a.sources)
-        if a.profile.blades then n=math.min(a.profile.blades[a.tier],C.quality[a.quality]) end
+        local n=projectileCount(a)
         for i=1,n do
-            local t=phase=="ATTACK" and p or 0
-            local x0,y0,x1,y1,k,bend=paths[a.profile.projectile](a,i,t)
-            local x=mix(x0,x1,k)+math.sin(k*math.pi)*bend
-            local y=mix(y0,y1,k)
-            local width=2+a.intensity*5
-            if a.profile.projectile=="wave" then width=width*1.7 end
-            if t>0 then trail(g,a,x0,y0,x1,y1,k,bend,width) end
+            local x,y=sample(a,i,phase,p)
+            local aheadX,aheadY=sample(a,i,phase,math.min(1,p+0.003))
+            local dx,dy=aheadX-x,aheadY-y
+            if math.abs(dx)+math.abs(dy)<0.001 then dx,dy=a.cx-x,270-y end
+            local angle=math.atan2 and math.atan2(dx,-dy) or math.atan(dx/(-dy+0.001))
+            local width=2+a.intensity*4
+            if a.profile.projectile=="wave" then width=width*1.8 end
+            if phase=="ATTACK" then trail(g,a,i,p,width) end
             g.push();g.translate(x,y)
-            local build=phase=="ENERGY_CONVERSION" and (0.25+0.75*p) or 1
-            g.scale(build,build);g.translate(-x,-y)
-            heads[a.profile.projectile](g,a,x,y,math.atan2 and math.atan2(x1-x0,y0-y1) or math.atan((x1-x0)/(y0-y1+0.001)),p)
+            local build=0.15+0.85*smooth(a.charge/0.55)
+            local compression=phase=="ANTICIPATION" and 1-0.15*smooth(p) or 1
+            g.rotate(angle);g.scale(build*compression,build/compression);g.rotate(-angle);g.translate(-x,-y)
+            heads[a.profile.projectile](g,a,x,y,angle,p,i)
             g.pop()
         end
     end
     if impactAge and impactAge<C.camera.duration then
         local k=clamp(impactAge/C.camera.duration)
-        local radius=8+k*C.shockwave.radius*(0.3+a.intensity)
+        local expansion=1-(1-k)^C.motion.impactExpansion
+        local radius=8+expansion*C.shockwave.radius*(0.3+a.intensity)
         g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.7)
         g.setLineWidth(C.shockwave.thickness*(1-k)+0.5)
         g.circle("line",a.cx,C.arena.targetY,radius)
         if a.tier>=4 and a.profile.id=="high_card" and k>0.35 then
             g.circle("line",a.cx,C.arena.targetY-40,(k-0.35)*80)
         end
-        impacts[a.profile.impact](g,a,radius,k)
+        -- A narrow hot contact, then the wider hand-specific silhouette and wave.
+        -- Keeps the boss readable while making the very first frozen frame feel like a hit.
+        g.setColor(0.96,0.99,1,0.7*(1-k)^7)
+        g.ellipse("fill",a.cx,270,(13+13*a.intensity)*(1-k)^3,4+3*a.intensity)
+        g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.75)
+        impacts[a.profile.impact](g,a,radius+(1-k)^3*14*a.intensity,k)
         for i=1,math.min(math.floor(6+(C.particle.count-6)*a.intensity),C.quality[a.quality]) do
-            local angle=-math.pi/2+(i%7-3)*0.22
-            local distance=k*(C.particle.length+i*2)*(0.5+a.intensity)
+            local angle=math.pi/2+(i%7-3)*0.28
+            local distance=(1-(1-k)^2)*(C.particle.length+i*2)*(0.5+a.intensity)
             local x=a.cx+math.cos(angle)*distance;local y=270+math.sin(angle)*distance
-            glow(g,a.color,(1-k)^3,1,x,y,x+math.cos(angle)*6,y+math.sin(angle)*6)
+            glow(g,a.color,(1-k)^3,1,x,y,x-math.cos(angle)*12*(1-k),y-math.sin(angle)*12*(1-k))
         end
     end
     g.pop()
@@ -285,18 +373,27 @@ conversions.dual_clusters=function(a,i,p) return a.sources[i].cluster*50*p,-18*p
 conversions.cardinal=function(a,i,p) local angle=(i-1)*math.pi/2;return math.cos(angle)*65*p,math.sin(angle)*65*p,p*0.3 end
 conversions.blade_fragments=function(a,i,p) local angle=i*math.pi*2/5;return math.cos(angle)*85*p,math.sin(angle)*60*p,p*(i%2==0 and 1 or -1) end
 function A.cardPose(a,i,p)
-    local dx,dy,r=conversions[a.profile.cardConversion](a,i,p)
-    return dx,dy,r,math.max(0.12,1-p*0.86)
+    local eased=smooth(p)
+    local dx,dy,r=conversions[a.profile.cardConversion](a,i,eased)
+    local lift=math.sin(p*math.pi)*8
+    return dx,dy-lift,r,math.max(0.10,1-smooth((p-0.08)/0.92)*0.9)
 end
 function A.fragments(a,i,p,x,y)
+    if p<=0 or p>=1 then return end
     local g=love.graphics
+    local dest=i
+    if a.profile.projectile=="fusion" then dest=a.sources[i].cluster==-1 and 1 or 2
+    elseif a.profile.projectile=="spear" then dest=1 end
+    local tx,ty=sample(a,dest,"ANTICIPATION",1)
     local dx,dy=A.cardPose(a,i,p)
     g.push("all");g.setBlendMode("add")
-    for j=1,math.min(10,C.quality[a.quality]) do
-        local k=j/10
-        if a.profile.cardConversion=="blade_fragments" then blade(g,a,x+dx*k,y+dy*k,j*0.35,5+5*p,(1-p)*p) end
-        local bend=a.profile.cardConversion=="ribbons" and math.sin(k*math.pi+p*5)*16 or 0
-        glow(g,a.color,(1-p)*p,1,x+dx*k+bend,y+dy*k-j*p,x+dx*k+dx*0.15+bend,y+dy*k+dy*0.15-j*p)
+    for j=1,math.min(8,C.quality[a.quality]) do
+        local k=clamp((p-(j-1)*0.04)/0.65)
+        local bend=math.sin(i*2.1+j*0.8)*28*math.sin(k*math.pi)
+        local fx=mix(x+dx*0.3,tx,k)+bend;local fy=mix(y+dy*0.3,ty,k)-math.sin(k*math.pi)*16
+        local alpha=math.sin(k*math.pi)*(1-p)*1.3
+        if a.profile.cardConversion=="blade_fragments" then blade(g,a,fx,fy,j*0.35,6+6*k,alpha)
+        else glow(g,a.color,alpha,1.2,fx,fy,fx-(tx-x)*0.07,fy-(ty-y)*0.07) end
     end
     g.pop()
 end

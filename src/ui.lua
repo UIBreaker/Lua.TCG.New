@@ -147,6 +147,9 @@ function UI.initFonts()
     UI.fonts.title = loadFont(36)
     UI.fonts.huge = loadFont(48)
     UI.fonts.logo = loadFont(92)
+    -- Description prose stays lighter than the surrounding controls.
+    local okDescription, descriptionFont = pcall(love.graphics.newFont, fontRegularPath, 14)
+    UI.fonts.description = okDescription and descriptionFont or UI.fonts.small
 
     local function loadHudFont(size)
         for _, path in ipairs({"C:/Windows/Fonts/georgiab.ttf", "C:/Windows/Fonts/georgia.ttf"}) do

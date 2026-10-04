@@ -1,0 +1,4 @@
+Spectral persistence smoke passed: all 8 cards, direct/stored use, save/load and next combat
+[UX] dissolve fallback: tests/ux_polish_capture.lua:62: intentional shader failure test
+[PASS] dissolve: compile/coverage/alpha, reuse at 5/10/20 cards, GPU fallback
+[PASS] SHOP OPEN → FOCUS → BUY → SELL → REROLL → BUY; poor funds, cancel, spam, Fast, real input/render

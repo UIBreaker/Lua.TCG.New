@@ -21,7 +21,7 @@ function F.hud(game,UI,mx,my,turn)
     local Health=require("ui.components.health_bar")
     local Core=require("ui.components.core")
     g.push("all")
-    Core.text("ĐỐI THỦ "..G.alive(list).."/"..#list.."  •  BẤM LÁ BÀI ĐỂ CHỌN MỤC TIÊU",310,89,640,UI.fonts.small,{0.89,0.79,0.57},"center")
+    Core.text("ĐỐI THỦ "..G.alive(list).."/"..#list.."  •  BẤM LÁ BÀI ĐỂ CHỌN MỤC TIÊU",560,89,445,UI.fonts.tiny,{0.89,0.79,0.57},"center")
     for i,m in ipairs(list) do
         local x,y,w,h=G.rect(i,#list);local target=m==game.monster;local alive=m.hp>0
         local moving=turn and turn.attackers[turn.index]==m and turn.phase~="pause"
@@ -30,7 +30,12 @@ function F.hud(game,UI,mx,my,turn)
             c={1,0.67,0.34}
         end
         local title=m.human and (m.kingdom.." • "..require("src.expedition").rankName(m.cardRank)) or UI.truncateUtf8(m.name,21)
-        Core.textLine(title,x-24,120,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
+        local armor = m.creatureArmor or 0
+        Core.textLine(title,x-24,armor>0 and 110 or 120,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
+        if armor>0 then
+            Health.draw(x-12,130,w+24,12,armor,m.creatureArmorMax or armor,
+                {variant="cyan",font=UI.fonts.tiny,label="GIÁP "..UI.formatNumber(armor)})
+        end
         Health.draw(x-12,144,w+24,18,target and (m.damageLagHp or m.hp) or m.hp,m.maxHp,{variant="red",font=UI.fonts.tiny,label=UI.formatNumber(m.hp).."/"..UI.formatNumber(m.maxHp)})
         if not moving then
             Core.textLine(alive and ((target and "MỤC TIÊU  •  " or "").."ATK "..m.attack.." / TĐ "..m.attackSpeed) or "ĐÃ HẠ",x-24,y+h+14,w+48,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)

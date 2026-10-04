@@ -13,11 +13,7 @@ local unpack = unpack or table.unpack
 local function clamp(v, lo, hi) return math.max(lo, math.min(hi, v)) end
 local function smooth(v, target, response, dt) return target + (v - target) * math.exp(-response * dt) end
 
--- Small fixed substeps: stable under a stall; damping is per second, not per frame.
-local function spring(x, velocity, target, stiffness, damping, dt)
-    velocity = (velocity + (target - x) * stiffness * dt) * math.exp(-damping * dt)
-    return x + velocity * dt, velocity
-end
+local spring = require("src.motion").spring
 Physics.spring = spring
 
 local function inverse(a, b, c, d, tx, ty, x, y)
@@ -67,14 +63,10 @@ function Physics.update(dt, mouseX, mouseY)
                 s.targetRotation = holding and clamp(mouseVX * Config.input.velocityToTilt
                     + (s.targetX - s.x) * Config.input.lagToTilt + sway,
                     -Config.rotation.maxAngle, Config.rotation.maxAngle) or 0
-                local steps = math.max(1, math.ceil(hdt / Config.step))
-                local step = hdt / steps
-                for _ = 1, steps do
-                    s.x, s.vx = spring(s.x, s.vx, s.targetX, preset.stiffness, preset.damping, step)
-                    s.y, s.vy = spring(s.y, s.vy, s.targetY, preset.stiffness, preset.damping, step)
-                    s.rotation, s.angularVelocity = spring(s.rotation, s.angularVelocity,
-                        s.targetRotation, preset.rotationStiffness, preset.rotationDamping, step)
-                end
+                s.x, s.vx = spring(s.x, s.vx, s.targetX, preset.stiffness, preset.damping, hdt)
+                s.y, s.vy = spring(s.y, s.vy, s.targetY, preset.stiffness, preset.damping, hdt)
+                s.rotation, s.angularVelocity = spring(s.rotation, s.angularVelocity,
+                    s.targetRotation, preset.rotationStiffness, preset.rotationDamping, hdt)
                 s.rotation = clamp(s.rotation, -Config.rotation.maxAngle * 1.2, Config.rotation.maxAngle * 1.2)
                 s.lift = smooth(s.lift, holding and 1 or 0, Config.pickup.response, hdt)
                 s.tiltY = smooth(s.tiltY, holding and clamp(mouseVY * Config.rotation.verticalResponse

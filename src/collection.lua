@@ -155,7 +155,11 @@ function Collection.getItems(category)
     elseif category == "consumables" then
         -- Harvest all equipment dynamically from Equipment.POOL and canonical Equipment.ITEMS
         local seen = {}
-        for _, id in ipairs(Equipment.POOL or {}) do
+        local equipmentIds = {}
+        for _, pool in ipairs({Equipment.POOL, Equipment.SOUL_POOL}) do
+            for _, id in ipairs(pool or {}) do equipmentIds[#equipmentIds+1] = id end
+        end
+        for _, id in ipairs(equipmentIds) do
             local eq = Equipment.ITEMS[id]
             if eq and not seen[eq.id or id] then
                 seen[eq.id or id] = true
@@ -172,7 +176,8 @@ function Collection.getItems(category)
                     rarity = rarityName,
                     slotsNeeded = slotsNeeded,
                     cost = eq.cost or (slotsNeeded > 1 and 8 or 4),
-                    desc = eq.desc or "Ngọc ma thuật dùng khảm vào ô trống của lá bài",
+                    desc = (eq.desc or "Ngọc ma thuật dùng khảm vào ô trống của lá bài")
+                        ..(eq.soulOnly and ("\nChỉ đổi tại Chợ Linh Hồn: "..eq.cost.." LH.") or ""),
                     icon = eq.icon or "💎",
                     color = eq.color or (rarity == "legendary" and { 0.95, 0.82, 0.22, 1 } or { 0.95, 0.54, 0.08, 1 }),
                 })

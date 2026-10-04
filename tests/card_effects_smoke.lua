@@ -115,8 +115,8 @@ for _ = 1, 600 do
             voucherSeen = item.category == "voucher"
         end
         if item.category == "book" then bookTicketSeen = true end
-        if item.category == "heal" then
-            assert(item.section == "upper", "healing potion must only appear in the upper row")
+        if item.category == "destroy" then
+            assert(item.section == "upper", "destruction card must occupy the old potion slot")
         end
         if item.category == "deity" then
             spnItem = item
@@ -130,9 +130,9 @@ for _ = 1, 600 do
         end
         if item.packType == "edition" then editionChestCount = editionChestCount + 1 end
     end
-    assert(upperCount == 5, "upper shop must stock SPN, ITM, one card, hand expansion, and potion")
+    assert(upperCount == 5, "upper shop must stock SPN, ITM, one card, hand expansion, and destruction")
     assert(upperCategories.deity and upperCategories.equipment and upperCategories.card
-        and upperCategories.hand_expansion and upperCategories.heal,
+        and upperCategories.hand_expansion and upperCategories.destroy,
         "upper retail row is missing a requested shop category")
     assert(voucherSeen and not bookTicketSeen,
         "lower voucher slot should contain a permanent voucher, not a hand-style ticket")

@@ -52,14 +52,20 @@ function P.rect(UI,item,fallback)
 end
 function P.button(game)
     local f=P.focus;if not f or P.busy() then return end
+    if f.kind=="card" and not game.soulDestroyActive then return end
     local price=f.kind=="stock" and f.item.cost or Shop.getSacrificePrice(f.item,f.kind,game)
-    local disabled=f.kind=="stock" and (game.gold or 0)<price
+    if f.kind=="card" then price=Shop.getSoulValue(f.item) end
+    local soul=f.kind=="stock" and f.item.currency=="souls"
+    local full=f.kind=="stock" and f.item.consumable and #(game.consumables or {})>=3
+    local disabled=f.kind=="stock" and (soul and (game.souls or 0) or (game.gold or 0))<price
         or f.kind=="card" and #(game.persistentDeck or {})<=1
+        or full
     local r=f.rect
     return {id="polish_confirm",x=math.max(12,math.min(1118,r.x+r.w/2-74)),
         y=math.max(70,math.min(634,r.y+r.h+12)),w=148,h=34,
-        text=disabled and (f.kind=="stock" and "KHÔNG ĐỦ VÀNG" or "GIỮ ÍT NHẤT 1 LÁ")
-            or ((f.kind=="stock" and "MUA — $" or "BÁN — $")..price),disabled=disabled}
+        text=disabled and (full and "Ô TIÊU HAO ĐẦY" or (f.kind=="stock" and (soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ"))
+            or (f.kind=="card" and ("HỦY · +"..price.." LH")
+            or ((f.kind=="stock" and (soul and "MUA · " or "MUA — $") or "BÁN — $")..price..(soul and " LH" or ""))),disabled=disabled}
 end
 local function ownedValid(f,game)
     if f.kind=="deity" then return game.deities and game.deities[f.index]==f.item end
@@ -68,8 +74,10 @@ local function ownedValid(f,game)
 end
 function P.confirm(shop,game,done)
     local f=P.focus;if not f or P.busy() then return false end
-    local b=P.button(game);if b.disabled then Sound.play("cant_afford");return false end
-    local before=game.gold or 0
+    local b=P.button(game);if not b then P.clearFocus();return false end
+    if b.disabled then Sound.play("cant_afford");return false end
+    local soulTransaction=f.kind=="card" or f.kind=="stock" and f.item.currency=="souls"
+    local before=soulTransaction and (game.souls or 0) or (game.gold or 0)
     local occupied={};for slot,d in pairs(game.deities or {}) do occupied[slot]=d end
     local ok,action,equipment
     local items={};for i,item in ipairs(shop.items or {}) do items[i]=item end
@@ -77,7 +85,7 @@ function P.confirm(shop,game,done)
         if shop.items[f.index]~=f.item then P.clearFocus();return false end
         ok,action,equipment=Shop.buyItem(shop,f.index,game)
     elseif ownedValid(f,game) then
-        if f.kind=="card" then ok,action=Shop.sellCard(game,f.item)
+        if f.kind=="card" then ok,action=Shop.destroyCard(game,f.item)
         elseif f.kind=="deity" then ok,action=Shop.sellDeity(game,f.index)
         elseif f.kind=="consumable" then ok,action=Shop.sellConsumable(game,f.index) end
     end
@@ -90,9 +98,13 @@ function P.confirm(shop,game,done)
     elseif f.item.deity then
         for slot,d in pairs(game.deities or {}) do if d~=occupied[slot] then
             acquired=d;target={x=1074+((slot-1)%3)*78,y=156+math.floor((slot-1)/3)*107};break end end
+    elseif f.item.consumable then
+        acquired=f.item.consumable
+        target={x=1074+(#game.consumables-1)*78,y=408}
     end
     P.job={kind=kind,age=0,duration=Config[kind],item=f.item,rect=f.rect,target=target,button=b,
-        items=kind=="buy" and items or nil,delta=(game.gold or 0)-before,acquired=acquired,gold=gold,
+        items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
+        soul=soulTransaction,acquired=acquired,gold=gold,
         done=function() if done then done(action,equipment) end end}
     P.clearFocus();return true
 end
@@ -276,7 +288,7 @@ function P.renderItem(UI,item,x,y,w,h)
     if item.rank then return UI.drawCard(item,x,y,w,h) end
     if require("src.deities").CATALOG[item.id] then return UI.drawPatronCard(item,x,y,w,h) end
     if item.category~="pack" and not item.card and not item.deity and not item.equipment
-        and item.category~="voucher" and item.category~="heal" and item.category~="hand_expansion" and P.drawConsumable then
+        and item.category~="voucher" and item.category~="heal" and item.category~="destroy" and item.category~="hand_expansion" and P.drawConsumable then
         return P.drawConsumable(item,x,y,w,h,1,-1000,-1000,false,true,1)
     end
     return require("ui.shop_display").drawArt(item,x,y,w,h,false,-1000,-1000)
@@ -297,6 +309,7 @@ function P.draw(UI,game,buttons,mx,my)
     end
     local job=P.job
     if job and job.kind~="flip" then
+        local tint=job.soul and {0.73,0.48,1} or {1,0.77,0.25}
         if job.button and job.age<job.duration*0.22 then
             local b=job.button;b.color=UI.COLORS.btnConfirm;b.font=UI.fonts.tiny
             b.animationScale=1-0.06*math.sin(clamp(job.age/(job.duration*0.22))*math.pi)
@@ -310,17 +323,17 @@ function P.draw(UI,game,buttons,mx,my)
         g.push("all");g.translate(x,y);g.rotate(flight*0.12+(job.kind=="sell" and math.sin(t*25)*0.008*(1-t) or 0));g.scale(size)
         if job.kind=="sell" then
             UI.drawCardBorder(-r.w/2,-r.h/2,r.w,r.h,{1,0.77,0.25,math.max(0,1-t*4)})
-            P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.18)/0.55),{1,0.77,0.25},function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
+            P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.18)/0.55),tint,function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
         else drawItem(job.item,-r.w/2,-r.h/2,r.w,r.h) end
         g.pop()
         for i=1,Config.shards do
             local p=out((t-Config.coinStart-i*0.015)/Config.coinTravel)
             local sx,sy,tx,ty=job.gold.x,job.gold.y,r.x+r.w/2,r.y+r.h/2
             if job.kind=="sell" then sx,sy,tx,ty=tx,ty,sx,sy end
-            g.setColor(1,0.8,0.35,math.sin(p*math.pi));g.circle("fill",sx+(tx-sx)*p,sy+(ty-sy)*p-math.sin(p*math.pi)*(20+i*3),2)
+            g.setColor(tint[1],tint[2],tint[3],math.sin(p*math.pi));g.circle("fill",sx+(tx-sx)*p,sy+(ty-sy)*p-math.sin(p*math.pi)*(20+i*3),2)
         end
         g.setFont(UI.fonts.small);g.setColor(1,0.8,0.35,1-t)
-        g.print((job.delta>0 and "+$" or "-$")..math.abs(job.delta),job.gold.x,job.gold.y+24-out(t)*16)
+        g.print((job.delta>0 and "+" or "-")..(job.soul and "" or "$")..math.abs(job.delta)..(job.soul and " LH" or ""),job.gold.x,job.gold.y+24-out(t)*16)
     end
     for _,a in ipairs(P.applications) do
         local current=UI.CardPhysics.getState(a.target)

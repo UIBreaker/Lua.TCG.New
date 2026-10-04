@@ -6,6 +6,7 @@ local C = {
     rowInterval = 0.16,
     lootInterval = 0.18,
     rarePause = 0.24,
+    presentation = {maxSparks = 72, trailPoints = 5, flareDuration = 0.55, ambience = 18},
     pity = {enabled = false, after = 6, extraPackWeight = 5},
     rarities = {
         common = {color = {0.70, 0.76, 0.82}, label = "THƯỜNG", strength = 1},

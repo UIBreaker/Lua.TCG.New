@@ -45,6 +45,41 @@ for index,id in ipairs(A.config.order) do
         end
     end
 end
+-- Regression: formations used to teleport at phase boundaries, and moving launch
+-- origins bent the trail underneath the projectile. All quality/tier combinations.
+for index,id in ipairs(A.config.order) do
+    local cards={}
+    for i,rank in ipairs(presets[index]) do cards[i]=D.newCard(rank,"spades") end
+    for _,quality in ipairs({"low","medium","high"}) do
+        for tier=1,5 do
+            local a=A.new({steps={{}},finalScore=100},cards,ui,100,id)
+            a.quality,a.tier=quality,tier
+            local n=a.profile.blades and math.min(a.profile.blades[tier],A.config.quality[quality]) or (id=="high_card" and 1 or (id=="full_house" and 2 or #cards))
+            A.enter(a,"ENERGY_CONVERSION");A.update(a,"ENERGY_CONVERSION",1)
+            local before={}
+            for i=1,n do local x,y=A.position(a,i,"ENERGY_CONVERSION",1);before[i]={x,y} end
+            A.enter(a,"ANTICIPATION");A.update(a,"ANTICIPATION",0)
+            for i=1,n do
+                local x,y=A.position(a,i,"ANTICIPATION",0)
+                assert(math.abs(x-before[i][1])+math.abs(y-before[i][2])<0.001,"conversion/charge teleport: "..id)
+            end
+            A.update(a,"ANTICIPATION",1)
+            for i=1,n do local x,y=A.position(a,i,"ANTICIPATION",1);before[i]={x,y} end
+            A.enter(a,"ATTACK");A.update(a,"ATTACK",0)
+            for i=1,n do
+                local x,y=A.position(a,i,"ATTACK",0)
+                assert(math.abs(x-before[i][1])+math.abs(y-before[i][2])<0.001,"charge/release teleport: "..id)
+                local firstX,firstY=A.position(a,i,"ATTACK",0.5)
+                A.update(a,"ATTACK",1)
+                local againX,againY=A.position(a,i,"ATTACK",0.5)
+                assert(firstX==againX and firstY==againY,"trajectory changed behind the trail")
+                local endX,endY=A.position(a,i,"ATTACK",1)
+                assert(endX==endX and endY==endY)
+            end
+        end
+    end
+end
+print("Motion continuity: 135 hand/tier/quality cases passed; no phase teleport or moving launch origins")
 local wheel={D.newCard(14,"spades"),D.newCard(5,"hearts"),D.newCard(2,"clubs"),D.newCard(4,"diamonds"),D.newCard(3,"spades")}
 local a=A.new({steps={{}},finalScore=100},wheel,ui,100,"straight")
 assert(a.rankOrder[1]==1 and a.sources[1].order==1,"Ace-low visual rank order")

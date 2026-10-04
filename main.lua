@@ -35,6 +35,7 @@ local CardEffects = require("src.card_effects")
 local Shop = require("src.shop")
 local Sound = require("src.sound")
 local UI = require("src.ui")
+local Motion = require("src.motion")
 local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
 local DeathVFX = require("src.death_vfx")
@@ -59,13 +60,16 @@ local Rng = require("src.rng")
 local GameState = require("src.game_state")
 local Combat = require("src.combat")
 local EnemyAttack = require("src.enemy_attack_presentation")
+local Feedback = require("src.combat_feedback")
 
 io.stdout:setvbuf("no")
 local isCaptureMode = false
 local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-animation" then isCaptureMode = true end
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
+    if a == "--test-soul-shop" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
@@ -74,6 +78,8 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-illustrated-art" then isCaptureMode = true end
     if a == "--test-chest-vfx" then isCaptureMode = true; chestAnimationCaptureMode = true end
     if a == "--test-death-vfx" then isCaptureMode = true end
+    if a == "--test-weather" then isCaptureMode = true end
+    if a == "--test-combat-feedback" then isCaptureMode = true end
     if a == "--test-hand-vfx-combat" or a == "--test-hand-vfx" or a == "--test-hd2d" or a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
         isCaptureMode = true
     end
@@ -368,6 +374,7 @@ juice = {
     lastGold = 6,
     hpBounce = 1.0,
     lastHp = 100,
+    lastArmor = 0,
     buttonPressedId = nil,
     lastHoveredButtonId = nil,
     floatingTexts = {},
@@ -774,8 +781,10 @@ end
 
 local function startNewGame(chosenDeck)
     anim.pendingStoredEquipment=nil
-    Persistence.deleteRun()
+    if not isCaptureMode then Persistence.deleteRun() end
     GameState.resetRun(game, chosenDeck or "red_deck")
+    juice.lastGold, juice.lastHp, juice.lastArmor = game.gold or 0, game.playerHp or 100, game.playerArmor or 0
+    juice.floatingTexts = {}
     pendingCombatNode = nil
 
     inspectCardModal = nil
@@ -957,14 +966,7 @@ function anim.showMonsterDamage(actualDamage, defeated, isTrueDamage)
     anim.impactX, anim.impactY, anim.impactColor = cx, cy, color
     monsterMotion.hit = 0.35
     screenShake = math.max(screenShake, heavy and 3.8 or 2.2)
-    table.insert(anim.floatingTexts, {
-        text = "-" .. UI.formatNumber(actualDamage) .. " HP!",
-        color = color,
-        x = cx,
-        y = cy - 58,
-        alpha = 2.0,
-        scale = 1.55,
-    })
+    Feedback.add(anim.floatingTexts, "damage", actualDamage, cx, cy - 58, UI.formatNumber)
     Sound.play(heavy and "damage_heavy" or "damage_hit")
 end
 
@@ -1185,6 +1187,25 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    if c.id == "soul_reaper" then
+        if state ~= "shop" then
+            table.insert(anim.floatingTexts, {text="Dùng Lá Tiêu Hủy trong shop để chọn bài từ cả bộ.",
+                color=c.color,x=640,y=350,alpha=2.2})
+            return false
+        end
+        if not Shop.activateDestruction(game,c) then return false end
+        isDeckViewerOpen=true;deckViewerPage=1;UI.Polish.clearFocus()
+        Sound.play("card_select")
+        return true
+    elseif c.id == "healing_potion" then
+        local maxHp=game.maxPlayerHp or 100
+        if (game.playerHp or maxHp)>=maxHp then return false end
+        game.playerHp=math.min(maxHp,(game.playerHp or maxHp)+(c.healAmt or 25))
+        table.remove(game.consumables,idx)
+        Sound.play("round_win")
+        saveRunAtSafePoint()
+        return true
+    end
     if c.category == "stored_card" then
         Deck.addCardToDeck(game, c.card)
         table.remove(game.consumables, idx)
@@ -1367,6 +1388,9 @@ local function useConsumable(idx)
             local chosen = deityList[Rng.random(#deityList)]
             local cloned = {}
             for k, v in pairs(chosen.deity) do cloned[k] = v end
+            for _, entry in ipairs(deityList) do
+                if entry.deity ~= chosen.deity then require("src.souls").award(game,entry.deity) end
+            end
             game.deities = { [1] = chosen.deity, [2] = cloned }
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
@@ -1382,6 +1406,9 @@ local function useConsumable(idx)
             local chosen = deityList[Rng.random(#deityList)]
             chosen.deity.edition = "polychrome"
             local kept = chosen.deity
+            for _, entry in ipairs(deityList) do
+                if entry.deity ~= kept then require("src.souls").award(game,entry.deity) end
+            end
             game.deities = { [1] = kept }
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
@@ -1550,7 +1577,7 @@ local function activateConsumable(idx, currentState)
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
-        and card.category ~= "speed_single" and card.category ~= "edition" then
+        and card.category ~= "speed_single" and card.category ~= "edition" and card.id ~= "soul_reaper" then
         spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     end
     return true
@@ -1691,11 +1718,15 @@ local function startEnemyAttack(phase, speed, done, played)
         anim.impactX, anim.impactY, anim.impactColor = hitX, 454, UI.COLORS.hpRed
         spawnSparks(hitX, 454, heavy and 20 or 12, UI.COLORS.hpRed)
         Sound.play(heavy and "damage_heavy" or "damage_hit", 0.78)
-        table.insert(anim.floatingTexts, {
-            text = (hit.blocked and "ĐÒN BỊ CHẶN" or ("-" .. hit.damage .. " HP"))
-                .. (hit.absorbed > 0 and (" • GIÁP ĐỠ " .. hit.absorbed) or ""),
-            color = UI.COLORS.hpRed, x = hitX, y = 478, alpha = 1.6,
-        })
+        if hit.absorbed > 0 then
+            local ft = Feedback.add(anim.floatingTexts, "armor", -hit.absorbed, hitX, 458, UI.formatNumber)
+            ft.label = "GIÁP HẤP THỤ"
+        end
+        if hit.damage > 0 then
+            Feedback.add(anim.floatingTexts, "heal", -hit.damage, hitX, 500, UI.formatNumber)
+        elseif hit.absorbed == 0 then
+            table.insert(anim.floatingTexts, {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},x=hitX,y=478,alpha=1.6})
+        end
     end, function()
         if (game.playerHp or 0) <= 0 then
             beginPlayerDefeat(played)
@@ -2075,7 +2106,7 @@ local function updateCaptureMode()
     Capture.update(game, {
         startNewGame = startNewGame,
         openDeckViewer = function() isDeckViewerOpen = true end,
-        closeDeckViewer = function() isDeckViewerOpen = false end,
+        closeDeckViewer = function() isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus() end,
         startMonsterEncounter = function(fl, isB)
             startMonsterEncounter(fl, isB)
             state = "playing"
@@ -2156,6 +2187,7 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    UI.components.Button.update(dt)
     if handDrag.active and handInputBlocked() then
         UI.CardPhysics.release()
         handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -2264,9 +2296,12 @@ function love.update(dt)
     -- Smoothly update floating texts
     for i = #anim.floatingTexts, 1, -1 do
         local ft = anim.floatingTexts[i]
-        ft.y = ft.y - dt * 40
-        ft.alpha = ft.alpha - dt * 1.1
-        if ft.scale then ft.scale = ft.scale + (1 - ft.scale) * math.min(1, dt * 12) end
+        if ft.kind then Feedback.update(ft, dt)
+        else
+            ft.y = ft.y - dt * 40
+            ft.alpha = ft.alpha - dt * 1.1
+            if ft.scale then ft.scale = ft.scale + (1 - ft.scale) * Motion.response(12, dt) end
+        end
         if ft.alpha <= 0 then
             table.remove(anim.floatingTexts, i)
         end
@@ -2275,22 +2310,22 @@ function love.update(dt)
     -- Smoothly lerp number bounce scales
     if anim.bounceScale then
         for k, v in pairs(anim.bounceScale) do
-            anim.bounceScale[k] = v + (1.0 - v) * math.min(1.0, dt * 10)
+            anim.bounceScale[k] = v + (1.0 - v) * Motion.response(10, dt)
         end
     end
 
     -- Smoothly lerp deity bounce scales
     if anim.deityBounce then
         for idx, v in pairs(anim.deityBounce) do
-            anim.deityBounce[idx] = v + (1.0 - v) * math.min(1.0, dt * 10)
+            anim.deityBounce[idx] = v + (1.0 - v) * Motion.response(10, dt)
         end
     end
 
     -- Smoothly lerp card squash & stretch
     if anim.cardBounce then
         for idx, b in pairs(anim.cardBounce) do
-            b.scaleX = b.scaleX + (1.0 - b.scaleX) * math.min(1.0, dt * 12)
-            b.scaleY = b.scaleY + (1.0 - b.scaleY) * math.min(1.0, dt * 12)
+            b.scaleX = b.scaleX + (1.0 - b.scaleX) * Motion.response(12, dt)
+            b.scaleY = b.scaleY + (1.0 - b.scaleY) * Motion.response(12, dt)
         end
     end
     if anim.cardHit then
@@ -2339,17 +2374,17 @@ function love.update(dt)
                 c.rotation = tangle or 0
             else
                 if not waitingForDeal then
-                    c.visualX = c.visualX + (tx - c.visualX) * math.min(1.0, dt * 18)
-                    c.visualY = c.visualY + (ty - c.visualY) * math.min(1.0, dt * 18)
+                    c.visualX = c.visualX + (tx - c.visualX) * Motion.response(18, dt)
+                    c.visualY = c.visualY + (ty - c.visualY) * Motion.response(18, dt)
                     local curAngle = c.visualAngle or 0
-                    c.visualAngle = curAngle + ((tangle or 0) - curAngle) * math.min(1.0, dt * 18)
+                    c.visualAngle = curAngle + ((tangle or 0) - curAngle) * Motion.response(18, dt)
                     c.rotation = c.visualAngle
                 end
             end
             c.selectPulse = math.max(0, (c.selectPulse or 0) - dt * 4.5)
             local targetScale = c.selected and 1.11 or (c.hovered and 1.075 or 1.0)
             targetScale = targetScale + math.sin((c.selectPulse or 0) * math.pi) * 0.07
-            c.visualScale = (c.visualScale or 1.0) + (targetScale - (c.visualScale or 1.0)) * math.min(1.0, dt * 14)
+            c.visualScale = (c.visualScale or 1.0) + (targetScale - (c.visualScale or 1.0)) * Motion.response(14, dt)
         end
     end
 
@@ -2368,9 +2403,9 @@ function love.update(dt)
 
     -- Ambient and bounce lerp updates
     juice.ambientTimer = juice.ambientTimer + dt
-    juice.goldBounce = juice.goldBounce + (1.0 - juice.goldBounce) * math.min(1.0, dt * 10)
-    juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * math.min(1.0, dt * 10)
-    juice.handRankBounce = juice.handRankBounce + (1.0 - juice.handRankBounce) * math.min(1.0, dt * 10)
+    juice.goldBounce = juice.goldBounce + (1.0 - juice.goldBounce) * Motion.response(10, dt)
+    juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * Motion.response(10, dt)
+    juice.handRankBounce = juice.handRankBounce + (1.0 - juice.handRankBounce) * Motion.response(10, dt)
 
     if state == "shop" and shopData and not UI.Polish.busy() and not shopData.currentPackOpening then
         local opened, message = RewardSystem.openNextPack(game, shopData)
@@ -2405,9 +2440,13 @@ function love.update(dt)
 
     -- Gold change detection
     if game.gold and juice.lastGold and game.gold ~= juice.lastGold then
-        if game.gold > juice.lastGold then
-            juice.goldBounce = 1.35
-            if not UI.Polish.busy() then spawnJuiceText("+$" .. (game.gold - juice.lastGold) .. " Vàng", 485, 89, UI.COLORS.goldYellow, 0.85) end
+        local delta = game.gold - juice.lastGold
+        juice.goldBounce = delta > 0 and 1.24 or 1.12
+        if not UI.Polish.busy() then
+            local pos = state == "shop" and UI.Polish.config.gold
+                or isDeckViewerOpen and UI.Polish.config.viewerGold or {x=475,y=38}
+            local ft = Feedback.add(juice.floatingTexts, "gold", delta, pos.x, pos.y+58, UI.formatNumber)
+            ft.target = pos
         end
         juice.lastGold = game.gold
     end
@@ -2416,19 +2455,27 @@ function love.update(dt)
     if game.playerHp and juice.lastHp and game.playerHp ~= juice.lastHp then
         if game.playerHp < juice.lastHp then
             juice.hpBounce = 1.30
-            spawnJuiceText("-" .. (juice.lastHp - game.playerHp) .. " HP", 285, 89, UI.COLORS.hpRed, 1.2)
+            Feedback.add(juice.floatingTexts, "heal", game.playerHp-juice.lastHp, 300, 114, UI.formatNumber)
         elseif game.playerHp > juice.lastHp then
             juice.hpBounce = 1.30
-            spawnJuiceText("+" .. (game.playerHp - juice.lastHp) .. " HP", 285, 89, UI.COLORS.hpGreen, 1.2)
+            Feedback.add(juice.floatingTexts, "heal", game.playerHp-juice.lastHp, 300, 114, UI.formatNumber)
         end
         juice.lastHp = game.playerHp
+    end
+
+    local armor = game.playerArmor or game.playerShield or 0
+    if armor ~= juice.lastArmor then
+        if armor > juice.lastArmor then
+            Feedback.add(juice.floatingTexts, "armor", armor-juice.lastArmor, 375, 85, UI.formatNumber)
+        end
+        juice.lastArmor = armor
     end
 
     -- Update juice floating texts
     for i = #juice.floatingTexts, 1, -1 do
         local ft = juice.floatingTexts[i]
-        ft.life = ft.life - dt
-        ft.y = ft.y + ft.vy * dt
+        if ft.kind then Feedback.update(ft, dt)
+        else ft.life = ft.life - dt; ft.y = ft.y + ft.vy * dt end
         if ft.life <= 0 then
             table.remove(juice.floatingTexts, i)
         end
@@ -2452,8 +2499,8 @@ function love.update(dt)
             if c.hovered or (handDrag.active and handDrag.cardIndex == i) then
                 targetTiltX, targetTiltY = UI.calculateTilt(mx, my, cx, cy, cardW, cardH)
             end
-            c.tiltX = (c.tiltX or 0) + (targetTiltX - (c.tiltX or 0)) * math.min(1.0, dt * 16)
-            c.tiltY = (c.tiltY or 0) + (targetTiltY - (c.tiltY or 0)) * math.min(1.0, dt * 16)
+            c.tiltX = (c.tiltX or 0) + (targetTiltX - (c.tiltX or 0)) * Motion.response(16, dt)
+            c.tiltY = (c.tiltY or 0) + (targetTiltY - (c.tiltY or 0)) * Motion.response(16, dt)
         end
     end
 
@@ -2511,10 +2558,25 @@ function love.update(dt)
             if st then
                 if st.type == "final_score" then
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
-                    local actualDmg, defeated = Monster.takeDamage(game.monster, st.finalScore)
+                    local armorBeforeHit = game.monster.creatureArmor or 0
+                    local actualDmg, defeated, splashHits = Combat.resolvePlayerAttack(game, st.finalScore)
+                    for _, hit in ipairs(splashHits) do
+                        local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
+                        local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
+                        ft.label = hit.deity.name .. " · AURA LAN"
+                        hit.enemy.hitFlash = 0.24
+                        CardEffects.triggerScorePulse(hit.deity)
+                        anim.deityBounce[hit.slotIndex] = 1.15
+                        if hit.enemy.hp <= 0 then DeathVFX.startEnemy(hit.enemy, x, Renderer.quality) end
+                    end
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
                     UI.ScoringFeel.damageApplied(anim, game.monster.hp, actualDmg)
+                    if armorBeforeHit > (game.monster.creatureArmor or 0) then
+                        local ft = Feedback.add(anim.floatingTexts, "armor", -(armorBeforeHit-game.monster.creatureArmor),
+                            game.monster.screenX or UI.BATTLE_CENTER_X, 176, UI.formatNumber)
+                        ft.label = "GIÁP HẤP THỤ"
+                    end
                     monsterMotion.hit = 0.24
                     -- HandAttacks draws capped directional impact sparks; avoid duplicate radial burst.
 
@@ -3356,7 +3418,9 @@ local function drawBattleHud(m, mx, my)
         ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.currentBlindIndex) or game.round or 1,
         enemyName = m and m.name or "Đối thủ",
-        hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0,
+        hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
+        armor = game.playerArmor or game.playerShield or 0,
+        armorCap = UI.Abilities.config.armorCap, goldBounce = juice.goldBounce,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
         discards = game.discardsRemaining or 0,
     }, UI.fonts, mx, my, juice.buttonPressedId)
@@ -3460,13 +3524,7 @@ local function drawCombatFeedback()
     end
 
     for _, ft in ipairs(anim.floatingTexts) do
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], ft.alpha)
-        love.graphics.push()
-        love.graphics.translate(ft.x, ft.y)
-        love.graphics.scale(ft.scale or 1, ft.scale or 1)
-        love.graphics.printf(ft.text, -200, 0, 400, "center")
-        love.graphics.pop()
+        Feedback.draw(ft, UI)
     end
 end
 
@@ -4452,7 +4510,7 @@ local function drawDeckViewerModal()
     -- Header
     love.graphics.setFont(UI.fonts.large)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("TOÀN BỘ BỘ BÀI HIỆN TẠI & BẢNG BÍ TỊCH", modalX + 24, modalY + 18)
+    love.graphics.print(game.soulDestroyActive and "NGHI LỄ TIÊU HỦY · CHỌN MỘT LÁ BÀI" or "TOÀN BỘ BỘ BÀI HIỆN TẠI & BẢNG BÍ TỊCH", modalX + 24, modalY + 18)
 
     -- Close button
     local closeBtn = {
@@ -4472,7 +4530,7 @@ local function drawDeckViewerModal()
         love.graphics.setFont(UI.fonts.small);love.graphics.setColor(UI.COLORS.goldYellow)
         love.graphics.push()
         love.graphics.translate(970,72);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-970,-72)
-        love.graphics.printf("◉ $"..tostring(game.gold or 0),905,61,130,"center")
+        love.graphics.printf(tostring(game.souls or 0).." LH",905,61,130,"center")
         love.graphics.pop()
     end
 
@@ -4592,6 +4650,25 @@ local function drawDeckViewerModal()
 
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(UI.COLORS.goldYellow)
+    if game.soulDestroyActive then
+        love.graphics.setColor(0.78,0.62,1,1)
+        love.graphics.print("GIÁ TRỊ LINH HỒN",rightX,modalY+65)
+        love.graphics.setFont(UI.fonts.small)
+        local focus=UI.Polish.focus
+        local card=focus and focus.kind=="card" and focus.item
+        if card then
+            local total,eq,evo,edition=Shop.getSoulValue(card)
+            love.graphics.printf((card.rankName or "")..(card.suitSymbol or "").." · "..total.." LINH HỒN",rightX,modalY+115,rightW,"left")
+            love.graphics.setFont(UI.fonts.small)
+            love.graphics.printf("Bản thân lá: 1 LH\nTrang bị đang khảm: +"..eq.." LH\nTiến hóa bậc "..(card.evolutionLevel or 0)..": +"..evo.." LH\nẤn bản: +"..edition.." LH",rightX,modalY+175,rightW,"left")
+        else
+            love.graphics.printf("Chọn một lá bên trái để xem giá trị linh hồn trước khi tiêu hủy.",rightX,modalY+120,rightW,"left")
+        end
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.printf("Foil: +3 · Holographic: +6\nPolychrome: +10 · Negative: +12\n\nTrang bị trên lá bị tiêu hủy cùng lá.\nBộ bài phải giữ ít nhất một lá.\n\nĐóng để hủy nghi lễ; chưa xác nhận thì không mất bài.",rightX,modalY+345,rightW,"left")
+        return
+    end
     love.graphics.print("BẢNG BÍ TỊCH CÁC TAY BÀI", rightX, modalY + 65)
 
     love.graphics.setFont(UI.fonts.tiny)
@@ -4650,38 +4727,8 @@ local function drawDeckViewerModal()
         end
     end
 
-    -- Card Equipment Hover Tooltip inside Modal
-    if hoveredDeckCard then
-        local c = hoveredDeckCard
-        local ttW = 280
-        local ttH = 30 + (c.equipments and #c.equipments or 0) * 26 + 30
-        local ttx = math.min(V_WIDTH - ttW - 20, math.max(20, mx + 15))
-        local tty = math.max(30, my - ttH - 10)
-
-        love.graphics.setColor(0.08, 0.10, 0.12, 0.98)
-        UI.drawRoundedRect("fill", ttx, tty, ttW, ttH, 6)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        UI.drawRoundedRect("line", ttx, tty, ttW, ttH, 6)
-
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.print("Lá: " .. c.rankName .. " " .. c.suitSymbol .. " (Gốc: +" .. c.baseChips .. " Chips)", ttx + 10, tty + 8)
-
-        local eqCount = c.equipments and #c.equipments or 0
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.print("Trang bị khảm trên lá (" .. Equipment.getUsedSlots(c) .. "/" .. Equipment.MAX_SLOTS .. " ô):", ttx + 10, tty + 30)
-
-        if eqCount == 0 then
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.print("(Chưa khảm trang bị nào)", ttx + 15, tty + 48)
-        else
-            for s, eq in ipairs(c.equipments) do
-                love.graphics.setColor(eq.color or UI.COLORS.textLight)
-                love.graphics.print("• " .. eq.name .. ": " .. eq.desc, ttx + 12, tty + 32 + s * 22)
-            end
-        end
-    end
+    -- Use the same complete description as shop, hand and reward cards.
+    if hoveredDeckCard then UI.descriptionCandidate = hoveredDeckCard end
 end
 
 function UI.ChestChoices.claim(rew, keep, isBossChest)
@@ -4703,6 +4750,8 @@ function UI.ChestChoices.claim(rew, keep, isBossChest)
     if game.currentNodeId and game.map then Map.onNodeCompleted(game.map,game.currentNodeId) end
     if isBossChest and socketingReturnState=="next_act" then
         game.act=game.act+1;game.map=Map.generate(game.act);game.currentNodeId=nil
+        game.pendingSoulShop=true;Shop.enterSoulShop(game);Shop.refresh(shopData,game)
+        state="shop";saveRunAtSafePoint();return true
     end
     state="map";saveRunAtSafePoint();return true
 end
@@ -5479,6 +5528,7 @@ local function drawSettingsModal()
 end
 
 local function drawShopState()
+    if shopData.soulMode then require("ui.shop_display").drawSoulBackground(juice.ambientTimer) end
     local winW, winH = love.graphics.getDimensions()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
@@ -5587,11 +5637,12 @@ local function drawShopState()
     UI.drawGildedPanel(14, 8, 1252, 56)
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("CỬA HÀNG", 30, 24)
+    love.graphics.print(shopData.soulMode and "CHỢ LINH HỒN" or "CỬA HÀNG", 30, 24)
     love.graphics.setFont(UI.fonts.small)
     love.graphics.push()
     love.graphics.translate(325,35);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-325,-35)
-    love.graphics.print("◉ " .. tostring(game.gold or 0) .. "   •   Lãi +" .. tostring(interestBonus), 260, 28)
+    love.graphics.print(shopData.soulMode and (tostring(game.souls or 0).." LINH HỒN")
+        or ("◉ " .. tostring(game.gold or 0) .. "   •   "..tostring(game.souls or 0).." LH"), 310, 28)
     love.graphics.pop()
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
@@ -5606,7 +5657,7 @@ local function drawShopState()
     -- 1. [Ván Kế Tiếp] Button
     local btnNextRound = {
         id = "leave_shop",
-        text = "ẢI TIẾP →",
+        text = shopData.soulMode and "RỜI CHỢ →" or "ẢI TIẾP →",
         x = 45,
         y = 653,
         w = 146,
@@ -5622,7 +5673,7 @@ local function drawShopState()
     local canReroll = (game.gold or 0) >= rCost
     local btnReroll = {
         id = "reroll",
-        text = rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost),
+        text = shopData.soulMode and "DI VẬT CỐ ĐỊNH" or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
         x = 203,
         y = 653,
         w = 170,
@@ -5630,7 +5681,7 @@ local function drawShopState()
         color = canReroll and UI.COLORS.btnSpecial or UI.COLORS.btnNormal,
         font = UI.fonts.small,
         animationScale = UI.Polish.job and UI.Polish.job.kind == "flip" and (1-0.05*math.sin(math.min(1,UI.Polish.job.age/0.12)*math.pi)) or 1,
-        disabled = not canReroll or UI.Polish.busy(),
+        disabled = shopData.soulMode or not canReroll or UI.Polish.busy(),
     }
     table.insert(buttons, btnReroll)
     UI.drawButton(btnReroll, mx >= btnReroll.x and mx <= btnReroll.x + btnReroll.w and my >= btnReroll.y and my <= btnReroll.y + btnReroll.h, juice.buttonPressedId == btnReroll.id)
@@ -5660,7 +5711,7 @@ local function drawShopState()
     love.graphics.setFont(UI.fonts.small);love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf("GIAO DỊCH",1125,520,130,"center")
     love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Chọn SPN, tiêu hao\nhoặc lá trong bộ bài\nđể xem giá bán.",1125,556,130,"center")
+    love.graphics.printf("Quân bài: dùng\nLá Tiêu Hủy để\nnhận linh hồn.\nSPN / tiêu hao:\nchọn để bán.",1125,556,130,"center")
     if hoveredShopItem then UI.descriptionCandidate = hoveredShopItem end
 
     ----------------------------------------------------------------------------
@@ -6234,12 +6285,7 @@ function love.draw()
     -- Floating juice notifications
     if state ~= "CASH_OUT" and state ~= "defeating" and state ~= "gameover" and juice.floatingTexts and #juice.floatingTexts > 0 then
         for _, ft in ipairs(juice.floatingTexts) do
-            local alpha = math.max(0, math.min(1.0, ft.life / 0.35))
-            love.graphics.setColor(ft.color[1], ft.color[2], ft.color[3], (ft.color[4] or 1) * alpha)
-            love.graphics.setFont(UI.fonts.medium)
-            local cleanStr = UI.sanitizeText(ft.text)
-            local tw = UI.fonts.medium:getWidth(cleanStr)
-            love.graphics.print(cleanStr, ft.x - tw / 2, ft.y)
+            Feedback.draw(ft, UI)
         end
     end
 
@@ -6636,6 +6682,7 @@ local function handleShopMousepressed(mx, my, button)
                 Sound.play("ui_click")
                 return true
             elseif btn.id == "leave_shop" or btn.id == "next_round" then
+                game.shopMode="normal";game.soulDestroyActive=false
                 if game.run then
                     local continues, reason = RunManager.advanceBlind(game.run, game)
                     if not continues and reason == "victory" then
@@ -7151,7 +7198,7 @@ local function handleModalsMousepressed(mx, my, button)
         local closeX = modalX + modalW - 160
         local closeY = modalY + 15
         if mx >= closeX and mx <= closeX + 140 and my >= closeY and my <= closeY + 38 then
-            isDeckViewerOpen = false
+            isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus()
             Sound.play("card_deal")
             return true
         end
@@ -7185,7 +7232,7 @@ local function handleModalsMousepressed(mx, my, button)
 
         local card = getDeckViewerCardAt(mx, my, modalX, modalY)
         if card then
-            if state == "shop" and button == 1 then
+            if state == "shop" and game.soulDestroyActive and button == 1 then
                 UI.Polish.focusItem(card, "card", nil, UI.Polish.rect(UI, card, {x=mx-37,y=my-54,w=74,h=108}))
                 return true
             end
@@ -7196,7 +7243,7 @@ local function handleModalsMousepressed(mx, my, button)
 
         -- Click outside modal closes it
         if mx < modalX or mx > modalX + modalW or my < modalY or my > modalY + modalH then
-            isDeckViewerOpen = false
+            isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus()
             Sound.play("card_deal")
             return true
         end
@@ -7222,7 +7269,10 @@ function love.mousepressed(x, y, button)
         if confirm and mx >= confirm.x and mx <= confirm.x+confirm.w and my >= confirm.y and my <= confirm.y+confirm.h then
             UI.Polish.confirm(shopData, game, function(action, equipment)
                 if action == "open_socketing" and equipment then
-                    pendingEquipment=equipment;socketingReturnState="shop";state="socketing"
+                    pendingEquipment=equipment;game.pendingRewardEquipment=equipment;game.pendingShopEquipment=true
+                    socketingReturnState="shop";state="socketing";saveRunAtSafePoint()
+                elseif type(action)=="number" then
+                    isDeckViewerOpen=false;saveRunAtSafePoint()
                 end
             end)
             return
@@ -7521,6 +7571,7 @@ function love.mousepressed(x, y, button)
                         if btn.id == "cashout_continue" then
                             if not shopData then shopData = Shop.new() end
                             Shop.resetReroll(shopData)
+                            Shop.enterSoulShop(game)
                             Shop.refresh(shopData, game)
                             state = "shop"
                             cashOutAnim.state = "EXIT"
@@ -7661,7 +7712,8 @@ function love.mousepressed(x, y, button)
                     anim.pendingStoredEquipment=nil
                     if game.pendingRewardEquipment then
                         game.pendingRewardEquipment = nil
-                        table.remove(game.rewardPacks, 1)
+                        if not game.pendingShopEquipment then table.remove(game.rewardPacks, 1) end
+                        game.pendingShopEquipment=nil
                     end
                     pendingEquipment = nil
                     socketingPage = 1
@@ -7673,7 +7725,8 @@ function love.mousepressed(x, y, button)
                         game.act = game.act + 1
                         game.map = Map.generate(game.act)
                         game.currentNodeId = nil
-                        state = "map"
+                        game.pendingSoulShop=true;Shop.enterSoulShop(game);Shop.refresh(shopData,game)
+                        state = "shop"
                     elseif socketingReturnState == "shop" then
                         state = "shop"
                     elseif socketingReturnState == "playing" then
@@ -7727,7 +7780,8 @@ function love.mousepressed(x, y, button)
                     end
                     if game.pendingRewardEquipment then
                         game.pendingRewardEquipment = nil
-                        table.remove(game.rewardPacks, 1)
+                        if not game.pendingShopEquipment then table.remove(game.rewardPacks, 1) end
+                        game.pendingShopEquipment=nil
                     end
                     pendingEquipment = nil
                     socketingPage = 1
@@ -7739,7 +7793,8 @@ function love.mousepressed(x, y, button)
                         game.act = game.act + 1
                         game.map = Map.generate(game.act)
                         game.currentNodeId = nil
-                        state = "map"
+                        game.pendingSoulShop=true;Shop.enterSoulShop(game);Shop.refresh(shopData,game)
+                        state = "shop"
                     elseif socketingReturnState == "shop" then
                         state = "shop"
                     elseif socketingReturnState == "playing" then
@@ -7874,6 +7929,7 @@ function love.keypressed(key)
     -- Toggle Deck Viewer Modal
     if key == "tab" or key == "b" then
         isDeckViewerOpen = not isDeckViewerOpen
+        if not isDeckViewerOpen then game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus() end
         Sound.play("card_deal")
         return
     end
@@ -7925,7 +7981,7 @@ function love.keypressed(key)
             return
         end
         if isDeckViewerOpen then
-            isDeckViewerOpen = false
+            isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus()
             Sound.play("card_deal")
             return
         end
@@ -7977,6 +8033,7 @@ function love.keypressed(key)
             elseif cashOutAnim and cashOutAnim.finished and not game.pendingRoundRewardChoice then
                 if not shopData then shopData = Shop.new() end
                 Shop.resetReroll(shopData)
+                Shop.enterSoulShop(game)
                 Shop.refresh(shopData, game)
                 state = "shop"
                 cashOutAnim.state = "EXIT"
@@ -8084,7 +8141,7 @@ function love.mousemoved(x, y, dx, dy)
         if dist > 6 then
             shopDrag.isDragging = true
             if shopDrag.sourceKind == "card" and isDeckViewerOpen then
-                isDeckViewerOpen = false
+                isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus()
                 Sound.play("card_slide")
             end
         end

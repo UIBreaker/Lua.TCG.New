@@ -1,5 +1,31 @@
 # Prompts and concepts
 
+
+## spn / spirit_ward — Băng Vệ
+
+Ability: Vào trận: +10 Giáp.
+
+Concept: One glacial supernatural guardian creates a protective dome over an expedition camp.
+
+Prompt: Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Băng Vệ (Frost Ward). Ability: grants armor on entering battle. One towering translucent glacial guardian with a broad shield-shaped spectral torso and swept protective arms, forming a clear icy dome over a small expedition camp at its feet. The guardian is the main subject, NOT a standalone physical shield or item. Ancient Western mountain pass, glacial blue and weathered silver, distant cliffs and subdued violet eclipse; controlled blue rim light. Protective awakening at the beginning of an expedition battle.
+
+Output: `assets/cards/continental/spn/spirit_ward.png`
+
+Source: `src/deities.lua`; mode: built-in image_gen
+
+## spn / spirit_echo — Dội Lôi
+
+Ability: Mỗi lần đánh: gây 20% tổng AURA lên 1 quái còn sống ngẫu nhiên ngay bên cạnh mục tiêu.
+
+Concept: A spectral storm raven sends a lightning strike sideways into an adjacent target.
+
+Prompt: Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Dội Lôi (Thunder Echo). Ability: every attack sends a fifth of its total aura into one adjacent enemy. One spectral storm raven, a clear enormous raven silhouette made of dark cloud and restrained violet lightning, wings angled in a sweeping strike. From its talon one branching arc hits a dark rocky shape then bends sideways into a second nearby rocky shape, clearly communicating a secondary side strike. Main focus is the supernatural raven, not rocks or a weapon. Ancient Western cliff ruins beneath the void eclipse, deep violet and navy palette, subtle antique gold distant sunset, calm background and controlled lightning, no lightning clutter. A different composition and distinct phenomenon from the glacial guardian.
+
+Output: `assets/cards/continental/spn/spirit_echo.png`
+
+Source: `src/deities.lua`; mode: built-in image_gen
+
+
 ## back / card_back — Mặt sau viễn chinh
 
 Ability: Mặt sau dùng chung cho mọi nhóm thẻ.
@@ -1883,3 +1909,33 @@ Prompt: Use case: stylized-concept. Create ONE production game card illustration
 Output: `assets/cards/continental/voucher/v_welcome.png`
 
 Source: `src/shop.lua`; previous: assets/vouchers/v_welcome.png
+
+## Soul shop expansion (2026-10-04)
+
+### Lá Tiêu Hủy (`soul_reaper`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. A tangible antique bronze ritual shears on a black stone altar, severing a blank parchment card which dissolves into a single violet soul wisp entering the hollow shears. Violet void ruins, controlled glow, clear shears silhouette.
+
+### Kiếm Diệt Thế (`soul_worldblade`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One massive tangible weathered western greatsword planted into split volcanic basalt, blade contains a restrained molten orange seam, ancient expedition ruins, clear sword silhouette, dark orange palette.
+
+### Vương Miện Hư Không (`soul_crown`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible ancient gold western crown holding a single purple void core floating over a stone pedestal, distant floating continental ruins beneath a violet eclipse, clean crown silhouette, restrained violet light.
+
+### Khiên Thành Trì (`soul_bastion`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible heavy western tower shield, antique gold and blue steel with large simple facets, resting against a glacial fortress gate on continental cliffs, cold blue rim light, imposing shield silhouette.
+
+### Tim Cổ Thụ (`soul_heart`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible amber heart-shaped relic enclosed in a simple ancient bronze root cage resting at the roots of a monumental western forest tree, living green light inside the amber, peaceful misty forest.
+
+### Đồng Hồ Tận Thế (`soul_hourglass`)
+
+Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible antique golden hourglass with black sand suspended in midair, sand forms a restrained violet gravity spiral inside glass, bone ivory fossil desert and distant broken western arches, strong hourglass silhouette.
+
+## Thương Điện Linh Hồn — landscape environment
+
+Create a premium production game environment background, wide landscape 16:9, high resolution PNG. Cinematic painterly Western dark fantasy matching Continental Expedition world. A breathtaking Soul Bazaar on an ancient floating stone terrace over a vast abyss, monumental weathered western gothic arches, antique bronze astrolabe structures, a giant controlled violet eclipse portal high in the upper center, blue-violet soul rivers flowing between distant floating cliff islands with ruined castles. Two tall weathered dark pillars at extreme left and extreme right frame the vista, sparse warm antique gold lamps, cool pale teal wisps in thin atmospheric mist, sophisticated restrained cinematic lighting, reflective obsidian foreground floor. At upper third open vista and clear layered depth, at central and lower area calm dark open surfaces for overlaying game merchandise. No people, no merchant, no cards, no merchandise, no UI, no text or lettering, no border. Grand welcoming mysterious sacred market, not horror gore. Large clear forms, medium detail, no dense tiny ornament, no East Asian architecture, no white blown-out lights. Rich purple navy and antique gold palette with restrained cyan accent. Make this feel like an expensive fantasy game shop backdrop, dramatic architecture and monumental depth, readable behind interface.

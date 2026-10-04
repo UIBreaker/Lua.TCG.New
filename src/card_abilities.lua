@@ -42,7 +42,9 @@ function A.start(game)
     for _,c in ipairs(allCards(game)) do c.abilityState={}; c.temporaryAbilityLevels=0; c.abilityDisabledUntil=nil; c.destroyed=nil; c.destructionNotified=nil end
 end
 local function combat(game)
-    if not game.abilityCombat then A.start(game) end
+    if not game.abilityCombat then
+        game.abilityCombat={playIndex=0,handSizeBonus=0,pendingRepeat=0,lastDestroyed=nil,roundNumber=1,feedback={}}
+    end
     return game.abilityCombat
 end
 local function feedback(game, card, text, kind, source)
@@ -170,9 +172,10 @@ end
 function A.destroy(game,card,ctx)
     if not card or card.destructionNotified then return false end
     card.destroyed=true; card.destructionNotified=true
+    local souls = require("src.souls").award(game, card)
     A.dispatch(game,"destroyed",{card},ctx or game.abilityHand or {})
     combat(game).lastDestroyed=card
-    feedback(game,card,"TIÊU HỦY · "..(card.rankName or "")..(card.suitSymbol or ""),"destroy")
+    feedback(game,card,"TIÊU HỦY · "..(card.rankName or "")..(card.suitSymbol or "")..(souls>0 and (" · +"..souls.." LH") or ""),"destroy")
     return true
 end
 function A.resolveBossDamage(game)

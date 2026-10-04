@@ -4168,11 +4168,209 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a102a8-fdaa-7fb3-b288-0476ee6a31c5\\exec-ed1e09d2-4a71-421a-bfb3-6856b23ea425.png",
         "prompt": "Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3, high-resolution PNG. Art direction: Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. The master world is a colossal mysterious continent: deep navy ocean with leviathans and monumental coastal cliffs; glacial peaks; green plains, rivers and waterfalls; ancient forests and a glowing giant tree; fossil deserts; orange volcanic wastes; violet eclipse, floating islands and lost Western ruins. Use one biome and one controlled magic accent per image. Painterly cinematic illustration, clean large shapes, one primary focus, medium detail, atmospheric depth and restrained rim light; readable at 64px. Basic but beautiful, not anime, not a chaotic poster. No text, letters, numbers, card frame, borders, logos, watermark or UI. No Chinese/East Asian fantasy, palace roofs, cloud-scroll ornament, calligraphy, jade pendants or eastern dragons. No blown-out whites or particle noise. A clear central ability symbol or relic in the shared continental world. Identity: Lời Chào Thương Hội. Actual gameplay ability: Đổi hàng đầu tiên mỗi shop miễn phí, không tăng giá đổi hàng.. Subject/concept: One clearly readable Western continental relic or entity expressing 'Lời Chào Thương Hội' and its exact ability below; choose an appropriate discovery biome, no decorative clutter."
       }
+    },
+    {
+      "id": "spirit_ward",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Vào trận: +10 Giáp.",
+      "source": "src/deities.lua",
+      "name": "Băng Vệ",
+      "concept": "One glacial supernatural guardian creates a protective dome over an expedition camp.",
+      "file": "assets/cards/continental/spn/spirit_ward.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Băng Vệ (Frost Ward). Ability: grants armor on entering battle. One towering translucent glacial guardian with a broad shield-shaped spectral torso and swept protective arms, forming a clear icy dome over a small expedition camp at its feet. The guardian is the main subject, NOT a standalone physical shield or item. Ancient Western mountain pass, glacial blue and weathered silver, distant cliffs and subdued violet eclipse; controlled blue rim light. Protective awakening at the beginning of an expedition battle.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_ward",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106da-4688-7351-9609-2fb21d5f31a8\\exec-beb52b63-7918-4ca7-9bd5-9e0c889382f2.png",
+        "prompt": "Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Băng Vệ (Frost Ward). Ability: grants armor on entering battle. One towering translucent glacial guardian with a broad shield-shaped spectral torso and swept protective arms, forming a clear icy dome over a small expedition camp at its feet. The guardian is the main subject, NOT a standalone physical shield or item. Ancient Western mountain pass, glacial blue and weathered silver, distant cliffs and subdued violet eclipse; controlled blue rim light. Protective awakening at the beginning of an expedition battle."
+      }
+    },
+    {
+      "id": "spirit_echo",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi lần đánh: gây 20% tổng AURA lên 1 quái còn sống ngẫu nhiên ngay bên cạnh mục tiêu.",
+      "source": "src/deities.lua",
+      "name": "Dội Lôi",
+      "concept": "A spectral storm raven sends a lightning strike sideways into an adjacent target.",
+      "file": "assets/cards/continental/spn/spirit_echo.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Dội Lôi (Thunder Echo). Ability: every attack sends a fifth of its total aura into one adjacent enemy. One spectral storm raven, a clear enormous raven silhouette made of dark cloud and restrained violet lightning, wings angled in a sweeping strike. From its talon one branching arc hits a dark rocky shape then bends sideways into a second nearby rocky shape, clearly communicating a secondary side strike. Main focus is the supernatural raven, not rocks or a weapon. Ancient Western cliff ruins beneath the void eclipse, deep violet and navy palette, subtle antique gold distant sunset, calm background and controlled lightning, no lightning clutter. A different composition and distinct phenomenon from the glacial guardian.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_echo",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106da-4688-7351-9609-2fb21d5f31a8\\exec-c539490a-2dc6-4434-8ae8-f663f3887d40.png",
+        "prompt": "Use case: stylized-concept. Create ONE production game card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious continent, painterly cinematic realism, medium detail, large clean silhouette, single primary supernatural subject, quiet atmospheric background, restrained magical light, readable at 64px. No text, letters, numbers, card frame, borders, logos, watermarks, UI. No East Asian fantasy, palace roofs, calligraphy, cloud scrolls, ornate tiny detail, blown-out glow or particle noise. Match the supplied references in world and painting style, but make a distinct new subject. Identity: Dội Lôi (Thunder Echo). Ability: every attack sends a fifth of its total aura into one adjacent enemy. One spectral storm raven, a clear enormous raven silhouette made of dark cloud and restrained violet lightning, wings angled in a sweeping strike. From its talon one branching arc hits a dark rocky shape then bends sideways into a second nearby rocky shape, clearly communicating a secondary side strike. Main focus is the supernatural raven, not rocks or a weapon. Ancient Western cliff ruins beneath the void eclipse, deep violet and navy palette, subtle antique gold distant sunset, calm background and controlled lightning, no lightning clutter. A different composition and distinct phenomenon from the glacial guardian."
+      }
+    },
+    {
+      "id": "soul_reaper",
+      "group": "utility",
+      "rarity": "",
+      "ability": "Chọn và tiêu hủy một quân bài để nhận linh hồn theo trang bị, tiến hóa và ấn bản.",
+      "source": "src/shop.lua",
+      "name": "Lá Tiêu Hủy",
+      "concept": "A tangible antique bronze ritual shears on a black stone altar, severing a blank parchment card which dissolves into a single violet soul wisp entering the hollow shears. Violet void ruins, controlled glow, clear shears silhouette.",
+      "file": "assets/cards/continental/utility/soul_reaper.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. A tangible antique bronze ritual shears on a black stone altar, severing a blank parchment card which dissolves into a single violet soul wisp entering the hollow shears. Violet void ruins, controlled glow, clear shears silhouette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-cc6b5151-ec4c-43e7-ae7f-8ae3f992048f.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_worldblade",
+      "group": "itm",
+      "rarity": "mythic",
+      "ability": "+120 sát thương và +35% sát thương khi tính điểm.",
+      "source": "src/equipment.lua",
+      "name": "Kiếm Diệt Thế",
+      "concept": "One massive tangible weathered western greatsword planted into split volcanic basalt, blade contains a restrained molten orange seam, ancient expedition ruins, clear sword silhouette, dark orange palette.",
+      "file": "assets/cards/continental/itm/soul_worldblade.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One massive tangible weathered western greatsword planted into split volcanic basalt, blade contains a restrained molten orange seam, ancient expedition ruins, clear sword silhouette, dark orange palette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-ce906919-23bb-435e-b29c-0dbc8d03fc00.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_crown",
+      "group": "itm",
+      "rarity": "mythic",
+      "ability": "+30 cường hóa khi tính điểm.",
+      "source": "src/equipment.lua",
+      "name": "Vương Miện Hư Không",
+      "concept": "One tangible ancient gold western crown holding a single purple void core floating over a stone pedestal, distant floating continental ruins beneath a violet eclipse, clean crown silhouette, restrained violet light.",
+      "file": "assets/cards/continental/itm/soul_crown.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible ancient gold western crown holding a single purple void core floating over a stone pedestal, distant floating continental ruins beneath a violet eclipse, clean crown silhouette, restrained violet light.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-d32eb74d-a915-4ef4-96ce-0fff544f4b3b.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_bastion",
+      "group": "itm",
+      "rarity": "mythic",
+      "ability": "+30 giáp và +60 sát thương khi tính điểm.",
+      "source": "src/equipment.lua",
+      "name": "Khiên Thành Trì",
+      "concept": "One tangible heavy western tower shield, antique gold and blue steel with large simple facets, resting against a glacial fortress gate on continental cliffs, cold blue rim light, imposing shield silhouette.",
+      "file": "assets/cards/continental/itm/soul_bastion.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible heavy western tower shield, antique gold and blue steel with large simple facets, resting against a glacial fortress gate on continental cliffs, cold blue rim light, imposing shield silhouette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-fbcd031e-ca84-4270-a876-80d204a9b320.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_heart",
+      "group": "itm",
+      "rarity": "mythic",
+      "ability": "+18 HP khi tính điểm.",
+      "source": "src/equipment.lua",
+      "name": "Tim Cổ Thụ",
+      "concept": "One tangible amber heart-shaped relic enclosed in a simple ancient bronze root cage resting at the roots of a monumental western forest tree, living green light inside the amber, peaceful misty forest.",
+      "file": "assets/cards/continental/itm/soul_heart.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible amber heart-shaped relic enclosed in a simple ancient bronze root cage resting at the roots of a monumental western forest tree, living green light inside the amber, peaceful misty forest.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-4766dfc6-2d34-40be-a29a-c67ff8685398.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_hourglass",
+      "group": "itm",
+      "rarity": "mythic",
+      "ability": "+80 sát thương và +20 cường hóa khi tính điểm.",
+      "source": "src/equipment.lua",
+      "name": "Đồng Hồ Tận Thế",
+      "concept": "One tangible antique golden hourglass with black sand suspended in midair, sand forms a restrained violet gravity spiral inside glass, bone ivory fossil desert and distant broken western arches, strong hourglass silhouette.",
+      "file": "assets/cards/continental/itm/soul_hourglass.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one production game card illustration, PNG portrait 2:3 full bleed. Cinematic Dark-Fantasy Expedition, painterly western fantasy same world as the Continental reference: monumental cliffs, ancient ruins, restrained light, strong readable silhouette, one main subject, medium details. No text, letters, symbols of rank, frame, border, badge, watermark or UI. No East Asian fantasy or dense micro ornament. One tangible antique golden hourglass with black sand suspended in midair, sand forms a restrained violet gravity spiral inside glass, bone ivory fossil desert and distant broken western arches, strong hourglass silhouette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-7a74aa5d-8e97-4017-ae69-2181632a2c49.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "soul_bazaar_background",
+      "group": "scene",
+      "name": "Thương Điện Linh Hồn",
+      "ability": "Nền riêng cho shop linh hồn",
+      "source": "ui/shop_display.lua",
+      "concept": "A sacred soul bazaar overlooking floating western ruins and a monumental violet eclipse portal.",
+      "file": "assets/scene/soul_bazaar.png",
+      "prompt": "Create a premium production game environment background, wide landscape 16:9, high resolution PNG. Cinematic painterly Western dark fantasy matching Continental Expedition world. A breathtaking Soul Bazaar on an ancient floating stone terrace over a vast abyss, monumental weathered western gothic arches, antique bronze astrolabe structures, a giant controlled violet eclipse portal high in the upper center, blue-violet soul rivers flowing between distant floating cliff islands with ruined castles. Two tall weathered dark pillars at extreme left and extreme right frame the vista, sparse warm antique gold lamps, cool pale teal wisps in thin atmospheric mist, sophisticated restrained cinematic lighting, reflective obsidian foreground floor. At upper third open vista and clear layered depth, at central and lower area calm dark open surfaces for overlaying game merchandise. No people, no merchant, no cards, no merchandise, no UI, no text or lettering, no border. Grand welcoming mysterious sacred market, not horror gore. Large clear forms, medium detail, no dense tiny ornament, no East Asian architecture, no white blown-out lights. Rich purple navy and antique gold palette with restrained cyan accent. Make this feel like an expensive fantasy game shop backdrop, dramatic architecture and monumental depth, readable behind interface.",
+      "status": "generated",
+      "ratio": "16:9",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-0b429f42-c606-464e-9d33-fdad009d3af2.png"
+      }
     }
   ],
   "completion": {
-    "generated": 157,
-    "total": 157,
+    "generated": 159,
+    "total": 159,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

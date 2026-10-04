@@ -3,6 +3,7 @@ local Feel = { config = require("config.scoring_feel_config"), debug = false, la
 local Effects = require("src.card_effects")
 local Sound = require("src.sound")
 local Attacks = require("src.hand_attacks")
+local Feedback = require("src.combat_feedback")
 Feel.Attacks = Attacks
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
@@ -296,9 +297,12 @@ function Feel.damageApplied(anim, hp, actualDamage)
     if not s or s.damageApplied then return end
     s.damageApplied, s.hpAge, s.hpTarget, s.actualDamage = true, 0, math.max(0, hp), actualDamage
     anim.damageDealt = actualDamage
-    anim.floatingTexts[#anim.floatingTexts + 1] = {text = "−" .. s.ui.formatNumber(actualDamage) .. " HP",
-        color = C.color.enhance, x = s.ui.BATTLE_CENTER_X, y = 214, alpha = 1.5,
-        scale = 1.05 + 0.27 * s.intensity}
+    if actualDamage > 0 then
+        Feedback.add(anim.floatingTexts, "damage", actualDamage, s.attack.cx or s.ui.BATTLE_CENTER_X, 214, s.ui.formatNumber)
+    else
+        anim.floatingTexts[#anim.floatingTexts+1] = {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},
+            x=s.attack.cx or s.ui.BATTLE_CENTER_X,y=232,alpha=1.6}
+    end
 end
 
 function Feel.camera(anim)
@@ -306,9 +310,11 @@ function Feel.camera(anim)
     if not s then return 0, 0 end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local amount = 0.5 + Attacks.config.camera.maxKick * s.intensity
-    local decay = (1 - p)^3
-    -- Beam travels upwards, so the initial camera kick is directional rather than random.
-    return (s.attack.profile.camera.x + math.sin(p * 30) * 0.20) * amount * decay, (-amount + math.sin(p * 36) * amount * 0.45) * decay
+    local decay = math.exp(-7*p)*(1-p)
+    -- One directional punch and a small rebound, not many oscillations.
+    local spring=math.cos(p*7)
+    return s.attack.profile.camera.x*amount*spring*decay,
+        -amount*spring*decay
 end
 
 function Feel.enemyReaction(anim)
@@ -316,8 +322,10 @@ function Feel.enemyReaction(anim)
     if not s then return 0, 1, 0 end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2
-    return -Attacks.config.camera.maxRecoil * (s.attack.tier>1 and s.intensity or 0) * math.sin(p * math.pi),
-        1 + math.sin(p * math.pi) * 0.05 * s.intensity, hit
+    local force=s.attack.tier>1 and s.intensity or 0.12
+    local recoil=-Attacks.config.camera.maxRecoil*force*math.sin(p*8+0.22)*math.exp(-5*p)*(1-p)
+    local compression=math.cos(p*7)*math.exp(-6*p)*(1-p)
+    return recoil,1-0.07*compression*(0.3+s.intensity),hit
 end
 
 function Feel.draw(anim, ui)
@@ -432,7 +440,11 @@ function Feel.updateLab(dt)
         local a = Feel.labAnim
         if (a.hitStop or 0)>0 then a.hitStop=math.max(0,a.hitStop-dt);return end
         if Feel.update(a, dt, Feel.labFast) then Feel.damageApplied(a, a.sequence.hpBefore - a.sequence.result.finalScore, a.sequence.result.finalScore) end
-        for _,text in ipairs(a.floatingTexts) do text.alpha=math.max(0,text.alpha-dt*2);text.y=text.y-dt*30 end
+        for i=#a.floatingTexts,1,-1 do
+            local ft=a.floatingTexts[i]
+            if ft.kind then Feedback.update(ft,dt) else ft.alpha=math.max(0,ft.alpha-dt*1.1) end
+            if ft.alpha<=0 then table.remove(a.floatingTexts,i) end
+        end
     end
 end
 
@@ -473,9 +485,7 @@ function Feel.drawLab(ui)
         end
         Feel.drawWorld(a,ui); Feel.draw(a,ui)
         for _,text in ipairs(a.floatingTexts) do
-            g.push();g.translate(text.x,text.y);g.scale(text.scale,text.scale)
-            g.setFont(ui.fonts.medium);g.setColor(text.color[1],text.color[2],text.color[3],math.min(1,text.alpha))
-            g.printf(text.text,-150,0,300,"center");g.pop()
+            Feedback.draw(text,ui)
         end
         Feel.drawDebug(a,ui)
     end

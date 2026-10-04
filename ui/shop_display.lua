@@ -8,9 +8,9 @@ local Display = {}
 local C = Theme.colors
 local categories = {
     deity = "SPN", equipment = "TRANG BỊ · ITM",
-    card = "QUÂN BÀI", hand_expansion = "MỞ RỘNG TAY", heal = "DƯỢC LIỆU",
+    card = "QUÂN BÀI", hand_expansion = "MỞ RỘNG TAY", heal = "DƯỢC LIỆU", destroy="TIÊU HỦY · LINH HỒN",
 }
-local retailOrder = { deity = 1, equipment = 2, card = 3, hand_expansion = 4, heal = 5 }
+local retailOrder = { deity = 1, equipment = 2, card = 3, hand_expansion = 4, heal = 5, destroy=5 }
 local voucherGlyphs = { v_discount = "◇", v_interest = "$", v_hand_plus = "♠" }
 
 local function text(value, x, y, width, font, color, align)
@@ -37,7 +37,7 @@ end
 local function price(item, x, y, w, affordable)
     love.graphics.setColor(affordable and { 0.20, 0.16, 0.09, 1 } or C.inset)
     UI.drawRoundedRect("fill", x + (w - 54) / 2, y, 54, 21, 5)
-    text("$" .. item.cost, x, y + 2, w, UI.fonts.small, affordable and C.gold or C.red, "center")
+    text(item.currency=="souls" and (item.cost.." LH") or ("$"..item.cost), x, y + 2, w, UI.fonts.small, affordable and C.gold or C.red, "center")
 end
 
 -- Code-drawn seal/ticket: no names or stats are painted over artwork.
@@ -139,6 +139,7 @@ local function position(item,index,packIndex)
 end
 function Display.drawWorld(shop,time)
     if not shop then return end
+    if shop.soulMode then return end
     local g=love.graphics;local packIndex=0
     g.push("all")
     for index,item in ipairs(UI.Polish.items(shop) or {}) do
@@ -164,7 +165,91 @@ function Display.drawWorld(shop,time)
     end
     g.pop()
 end
+local soulBackground
+function Display.drawSoulBackground(time)
+    local g=love.graphics
+    soulBackground=soulBackground or g.newImage("assets/scene/soul_bazaar.png")
+    local w,h=soulBackground:getDimensions()
+    local fit=math.max(1280/w,720/h)*1.025
+    g.push("all");g.setColor(1,1,1)
+    g.draw(soulBackground,(1280-w*fit)/2+math.sin(time*0.08)*5,(720-h*fit)/2,0,fit,fit)
+    g.setColor(0.025,0.01,0.055,0.20);g.rectangle("fill",0,0,1280,720)
+    for i=1,22 do
+        local x=(i*173+math.sin(time*0.22+i)*12)%1280
+        local y=(i*83-time*(5+i%4))%720
+        g.setColor(0.68,0.78,1,0.16+0.12*math.sin(time+i)^2)
+        g.circle("fill",x,y,1+i%3*0.3)
+    end
+    g.pop()
+end
+
+local function soulShop(shop, game, buttons, mx, my, time)
+    local g=love.graphics
+    g.setColor(0.025,0.014,0.06,0.32);UI.drawRoundedRect("fill",22,76,992,560,16)
+    text("THƯƠNG ĐIỆN LINH HỒN",56,91,920,UI.fonts.medium,{0.88,0.75,1,1},"center")
+    text("Di vật cổ đại · Tiến hóa · Tốc đánh · Đổi bằng linh hồn thu từ mọi lần tiêu hủy",56,122,920,nil,{0.79,0.78,0.90,1},"center")
+    local hoveredItem
+    local stock=UI.Polish.items(shop)
+    local function find(id)
+        for index,item in ipairs(stock) do if item.id==id then return item,index end end
+    end
+    local function bay(x,y,w,h)
+        g.setColor(0.045,0.028,0.09,0.76);UI.drawRoundedRect("fill",x,y,w,h,10)
+        g.setColor(0.67,0.50,0.84,0.40);g.setLineWidth(1);UI.drawRoundedRect("line",x,y,w,h,10)
+    end
+    local function offer(item,index,x,y,w,h)
+        local hovered=mx>=x and mx<=x+w and my>=y and my<=y+h
+        UI.Polish.surface(item,index,hovered,x,y,w,h,function()
+            art(item,x,y+math.sin(time+index)*1.2,w,h,hovered,mx,my)
+        end)
+        buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item}
+        if hovered and UI.Polish.tooltipAllowed(item) then hoveredItem=item end
+    end
+    for slot,id in ipairs(require("src.equipment").SOUL_POOL) do
+        local x=40+(slot-1)*192
+        bay(x,153,180,256)
+        local item,index=find(id)
+        if item then
+            offer(item,index,x+39,178,102,153)
+            text(item.cost.." LH",x,157,180,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
+            text(item.name,x+6,342,168,UI.fonts.small,item.color,"center")
+            local caption=item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
+            text(caption,x+10,365,160,nil,{0.81,0.79,0.89,1},"center")
+        else text("ĐÃ ĐỔI",x,253,180,UI.fonts.medium,C.purple,"center") end
+    end
+    text("THẺ HỖ TRỢ",44,429,740,UI.fonts.small,{0.86,0.76,1,1})
+    for slot,definition in ipairs(Shop.SOUL_SUPPORT) do
+        local x=40+(slot-1)*250
+        bay(x,460,238,164)
+        local item,index=find(definition.id)
+        if item then
+            offer(item,index,x+14,479,74,111)
+            text(item.name,x+100,481,128,UI.fonts.small,item.color)
+            local card=item.consumable
+            local desc=card.category=="evolution" and "+1 cấp khả năng cho một lá hoặc nâng bậc SPN."
+                or card.category=="speed_single" and "+5 tốc đánh lâu dài cho một lá trên tay."
+                or "+2 tốc đánh lâu dài cho cả tay bài."
+            text(desc,x+100,516,128,nil,{0.81,0.79,0.89,1})
+            text(item.cost.." LH",x+14,598,74,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
+        else text("ĐÃ ĐỔI",x+10,531,218,UI.fonts.small,C.purple,"center") end
+    end
+    bay(800,460,200,164)
+    local item,index=find("soul_reaper")
+    if item then
+        offer(item,index,814,489,58,87)
+        text("THU HỒN",884,482,108,UI.fonts.small,C.purple)
+        text("Tiêu hao · "..item.cost.." LH\nMua rồi dùng\n\nMọi lần hủy bài\nđều nhận LH.",884,512,108,nil,{0.81,0.79,0.89,1})
+    else
+        text("ĐÃ ĐỔI",810,531,180,UI.fonts.small,C.purple,"center")
+    end
+    return hoveredItem
+end
+
 function Display.draw(shop, game, buttons, drag, mx, my, time)
+    if shop.soulMode then
+        UI.Polish.ensureShop(shop)
+        return soulShop(shop,game,buttons,mx,my,time)
+    end
     panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Nhấp chọn hàng → MUA · Rê chuột xem chi tiết", C.cyan)
     panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
     panel(294, 368, 699, 256, "KHO RƯƠNG", "Thế đánh · Ba rương ngẫu nhiên · Ấn bản khi xuất hiện", C.purple)

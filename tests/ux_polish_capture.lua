@@ -7,10 +7,11 @@ local Test={};local stage="start";local deadline=0
 local shop,item,index,before,size,old,swap
 local tooltipBody, tooltipCount, lastTooltipCount
 local function watchTooltip()
-    local printf,draw=love.graphics.printf,love.draw
-    love.graphics.printf=function(value,...)
-        if tooltipBody and value==tooltipBody then tooltipCount=tooltipCount+1 end
-        return printf(value,...)
+    local view=require("ui.components.card_description")
+    local render,draw=view.draw,love.draw
+    view.draw=function(...)
+        if tooltipBody then tooltipCount=tooltipCount+1 end
+        return render(...)
     end
     love.draw=function(...)
         tooltipCount=0;draw(...);lastTooltipCount=tooltipCount

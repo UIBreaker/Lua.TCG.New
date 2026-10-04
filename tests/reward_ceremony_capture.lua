@@ -40,13 +40,15 @@ function Test.update(game, callbacks)
         gold, before = game.gold, #game.persistentDeck
         originalRng = require("src.rng").getState()
         for _, name in ipairs({"reward_coin_spawn", "reward_coin_land", "reward_coin_collect", "reward_gold_total", "reward_loot_reveal", "reward_rare_reveal", "reward_chest_open"}) do assert(Sound.has(name), name) end
-        nextStage("coins", 0.55)
+        nextStage("coins", 0.95)
     elseif stage == "coins" then
         local anim = callbacks.getRewardAnimation()
         assert(#anim.coins > 0 and anim.displayTotal < anim.result.earnedGold)
         shot("shot_reward_coins.png")
         nextStage("rare", 1)
     elseif stage == "rare" then
+        local anim = callbacks.getRewardAnimation()
+        if not anim.flares[1] or anim.timer - anim.flares[1] < 0.1 then nextStage("rare", 0.025); return end
         shot("shot_reward_rare.png")
         nextStage("summary", 2.8)
     elseif stage == "summary" then

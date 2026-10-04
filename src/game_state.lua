@@ -17,6 +17,15 @@ function GameState.resetRun(game, faction)
     game.round = 1
     game.act = 1
     game.gold = 6
+    game.souls = 0
+    game.soulDestroyedIds = {}
+    game.shopMode = "normal"
+    game.pendingSoulShop = false
+    game.soulShopPurchased = {}
+    game.soulDestroyActive = false
+    game.soulDestroyConsumable = nil
+    game.pendingShopEquipment = nil
+    game.pendingRewardEquipment = nil
     game.playerHp = 100
     game.maxPlayerHp = 100
     game.maxHands = 3

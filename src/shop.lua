@@ -13,6 +13,7 @@ Shop.SOUL_SUPPORT = {
     {id="cons_evolution",factory="createEvolutionCard",cost=12},
     {id="cons_speed_single",factory="createSpeedSingleCard",cost=6},
     {id="cons_speed_team",factory="createSpeedTeamCard",cost=10},
+    {id="cons_vitality",factory="createVitalityCard",cost=10},
 }
 
 -- Public catalogs are shared with the collection screen so every listed item
@@ -117,6 +118,13 @@ Shop.CONSUMABLE_RULES={
     planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
     planet_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
 }
+for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SEAL_CARDS,"seals"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
+    for _, card in ipairs(require("src.chest_expansion")[entry[2]]) do
+        entry[1][#entry[1]+1]=card
+        if entry[2]~="seals" then Shop.CONSUMABLE_RULES[card.id]={params=card.params,description=card.desc} end
+    end
+end
+Shop.PACK_CATALOG[4].desc="Mở 3 phép từ 14 phù phép SPN; chọn 1 để dùng hoặc cất. Phù phép mới áp dụng lên SPN đầu tiên."
 function Shop.getConsumableParams(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     return rule and rule.params or {}
@@ -222,6 +230,7 @@ function Shop.resetReroll(shop)
 end
 
 function Shop.getRerollCost(shop, gameState)
+    if shop.soulMode then return 5 + 2 * (gameState.soulRerollCount or 0) end
     if (gameState.freeRerolls or 0) > 0
         or (gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed) then
         return 0
@@ -268,11 +277,23 @@ local function appendPackItem(shop, pack)
     }
 end
 
+function Shop.rollSoulStock(gameState)
+    local previous={}
+    for _,id in ipairs(gameState.soulShopStock or {}) do previous[id]=true end
+    local pool={}
+    for _,id in ipairs(Equipment.SOUL_POOL) do if not previous[id] then pool[#pool+1]=id end end
+    for i=#pool,2,-1 do local j=Rng.random(i);pool[i],pool[j]=pool[j],pool[i] end
+    gameState.soulShopStock={}
+    for i=1,5 do gameState.soulShopStock[i]=pool[i] end
+end
+
 function Shop.refresh(shop, gameState)
     shop.items = {}
     shop.soulMode = gameState.shopMode == "soul"
     if shop.soulMode then
-        for _, id in ipairs(Equipment.SOUL_POOL) do
+        if not gameState.soulShopStock then Shop.rollSoulStock(gameState) end
+        shop.soulStock=gameState.soulShopStock
+        for _, id in ipairs(shop.soulStock) do
             local eq = Equipment.ITEMS[id]
             if not (gameState.soulShopPurchased or {})[id] then
                 shop.items[#shop.items+1] = {id=id,section="soul",category="equipment",equipment=eq,
@@ -612,9 +633,9 @@ function Shop.openPack(packItem, gameState)
         end
 
     elseif packItem.packType == "arcana" then
-        for i = 1, 3 do
-            table.insert(candidates, Equipment.getRandomEquipment())
-        end
+        local pool=copyList(Equipment.POOL)
+        for i=#pool,2,-1 do local j=Rng.random(i);pool[i],pool[j]=pool[j],pool[i] end
+        for i=1,math.min(3,#pool) do candidates[i]=Equipment.ITEMS[pool[i]] end
 
     elseif packItem.packType == "joker_edition" then
         local spells = copyList(Shop.JOKER_SPELLS)
@@ -685,6 +706,12 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             return gameState.persistentDeck[1]
         end
         return nil
+    end
+
+    local expandedResult, expandedMessage = require("src.chest_expansion").apply(gameState, card, getTargetCard())
+    if expandedResult ~= nil then
+        if expandedResult then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        return expandedResult, expandedMessage
     end
 
     if pack.packType == "buffoon" then
@@ -1015,8 +1042,18 @@ function Shop.skipPack(shop)
 end
 
 function Shop.reroll(shop, gameState, refresh)
-    if shop.soulMode then return false, "Di vật linh hồn không đổi hàng." end
     local refreshShop = refresh or Shop.refresh
+    if shop.soulMode then
+        local cost=Shop.getRerollCost(shop,gameState)
+        if (gameState.souls or 0)<cost then return false,"Không đủ linh hồn để đổi hàng!" end
+        gameState.souls=gameState.souls-cost
+        gameState.soulRerollCount=(gameState.soulRerollCount or 0)+1
+        Shop.rollSoulStock(gameState)
+        gameState.soulShopPurchased={}
+        refreshShop(shop,gameState)
+        Sound.play("shop_reroll")
+        return true
+    end
     if gameState and (gameState.freeRerolls or 0) > 0 then
         gameState.freeRerolls = gameState.freeRerolls - 1
         refreshShop(shop, gameState)
@@ -1103,6 +1140,8 @@ function Shop.enterSoulShop(gameState)
         gameState.shopMode = "soul"
         gameState.pendingSoulShop = false
         gameState.soulShopPurchased = {}
+        gameState.soulRerollCount = 0
+        gameState.soulShopStock = nil
     end
 end
 

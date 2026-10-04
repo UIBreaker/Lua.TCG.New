@@ -40,23 +40,23 @@ assert(not Shop.destroyCard(g,c) and #g.persistentDeck==1 and #g.consumables==1)
 g.soulDestroyActive=false;g.soulDestroyConsumable=nil;g.consumables={}
 Reward.begin(Reward.calculate({type="boss",baseReward=5},g),g)
 assert(g.pendingSoulShop)
-Shop.enterSoulShop(g);Shop.refresh(shop,g)
-assert(shop.soulMode and #shop.items==9 and not g.pendingSoulShop)
-assert(not Shop.reroll(shop,g))
+Shop.enterSoulShop(g);g.soulShopStock={};for i=1,5 do g.soulShopStock[i]=E.SOUL_POOL[i] end;Shop.refresh(shop,g)
+assert(shop.soulMode and #shop.items==10 and not g.pendingSoulShop)
+g.souls=0;assert(not Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==5)
 g.souls=0;local gold=g.gold
-assert(not Shop.buyItem(shop,1,g) and #shop.items==9 and g.gold==gold)
+assert(not Shop.buyItem(shop,1,g) and #shop.items==10 and g.gold==gold)
 g.souls=100
 local ok,action,eq=Shop.buyItem(shop,1,g)
 assert(ok and action=="open_socketing" and eq.id=="soul_worldblade" and g.souls==68 and g.gold==gold)
 assert(E.attach(c,eq))
 assert(not E.attach(c,eq))
-Shop.refresh(shop,g);assert(#shop.items==8)
+Shop.refresh(shop,g);assert(#shop.items==9)
 -- Transaction and unassigned equipment survive a save/reload without duplicate stock.
 g.pendingRewardEquipment=E.ITEMS.soul_crown;g.pendingShopEquipment=true
 local loaded,state=P.restoreSnapshot(P.makeSnapshot(g,"socketing"))
 assert(state=="socketing" and loaded.souls==68 and loaded.shopMode=="soul")
 assert(loaded.pendingRewardEquipment.onCardScore and loaded.persistentDeck[1].equipments[1].onCardScore)
-Shop.refresh(shop,loaded);assert(#shop.items==8)
+Shop.refresh(shop,loaded);assert(#shop.items==9)
 -- Check all five relics through actual scoring, not only catalog callbacks.
 for _,id in ipairs(E.SOUL_POOL) do
     local card=Deck.newCard(9,"valoria");card.disableFactionPassives=true
@@ -101,7 +101,7 @@ for _,definition in ipairs(Shop.SOUL_SUPPORT) do
     assert(support.consumables[1].id==definition.id and support.souls==souls-definition.cost)
 end
 local saved=P.restoreSnapshot(P.makeSnapshot(support,"shop"))
-Shop.refresh(offers,saved);assert(#offers.items==6 and saved.consumables[1].category=="speed_team")
+Shop.refresh(offers,saved);assert(#offers.items==6 and saved.consumables[1].category=="vitality")
 local utilityShop=Shop.new();local utilityGame=G.new();utilityGame.shopMode="soul";utilityGame.souls=10
 Shop.refresh(utilityShop,utilityGame)
 local utilityIndex
@@ -114,6 +114,17 @@ local utilitySaved=P.restoreSnapshot(P.makeSnapshot(utilityGame,"shop"))
 Shop.refresh(utilityShop,utilitySaved)
 for _,item in ipairs(utilityShop.items) do assert(item.id~="soul_reaper") end
 assert(utilitySaved.consumables[1].id=="soul_reaper")
+local previous={};for _,id in ipairs(utilitySaved.soulShopStock) do previous[id]=true end
+local utilityGold=utilitySaved.gold
+utilitySaved.freeRerolls=2;utilitySaved.vouchers={v_welcome=true}
+assert(Shop.reroll(utilityShop,utilitySaved) and utilitySaved.souls==1 and utilitySaved.gold==utilityGold)
+assert(#utilityShop.items==10 and Shop.getRerollCost(utilityShop,utilitySaved)==7 and utilitySaved.freeRerolls==2)
+for _,id in ipairs(utilitySaved.soulShopStock) do assert(not previous[id]) end
+local rerolled=P.restoreSnapshot(P.makeSnapshot(utilitySaved,"shop"))
+assert(rerolled.soulRerollCount==1 and Shop.getRerollCost(utilityShop,rerolled)==7)
+assert(not Shop.reroll(utilityShop,rerolled) and rerolled.souls==1 and #utilityShop.items==10)
+local stock=table.concat(rerolled.soulShopStock,",");Shop.refresh(utilityShop,rerolled);assert(table.concat(utilityShop.soulStock,",")==stock)
+G.resetRun(rerolled);assert(rerolled.soulRerollCount==0 and not rerolled.soulShopStock)
 local devour=G.new();local eater=Deck.newCard(14,"aurelia");local meal=Deck.newCard(3,"valoria")
 devour.persistentDeck={eater,meal};devour.hand={meal}
 assert(Deck.devourCard(eater,meal,devour) and devour.souls==1)

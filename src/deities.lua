@@ -140,11 +140,100 @@ for _, row in ipairs(entries) do
     else entry.onRoundWin=callback end
     Deities.CATALOG[entry.id]=entry
 end
+-- These callbacks only read the evaluated hand and battle state, so previews
+-- and real scoring use the same conditions without spending resources.
+local function playedCards(hand)
+    local cards = {}
+    for _, group in ipairs({hand.scoringCards or {}, hand.unscoredCards or {}}) do
+        for _, card in ipairs(group) do cards[#cards + 1] = card end
+    end
+    return cards
+end
+
+local factionAliases = {
+    valoria="hearts", sanguine_covenant="hearts", aurelia="diamonds", gilded_conclave="diamonds",
+    elaris="clubs", feral_swarm="clubs", vharos="spades", iron_axiom="spades",
+}
+local tacticalEntries = {
+    {"spirit_lone", "Độc Hành", 0.8, "Chơi đúng 1 lá: ×{factor} Cường hóa.", function(hand, game, value)
+        if #playedCards(hand) == 1 then return {xMult=1 + value} end
+    end},
+    {"spirit_confluence", "Hội Lưu", 3, "Ít nhất 3 phe trong các lá tính điểm: +{value} Cường hóa mỗi phe.", function(hand, game, value)
+        local seen, count = {}, 0
+        for _, card in ipairs(hand.scoringCards or {}) do
+            local faction = factionAliases[card.suit] or card.suit
+            if faction and not seen[faction] then seen[faction]=true; count=count + 1 end
+        end
+        if count >= 3 then return {addMult=value * count} end
+    end},
+    {"spirit_rearguard", "Hậu Vệ", 4, "Mỗi lá đã chơi không tính điểm: +{value} Giáp.", function(hand, game, value)
+        local count = #(hand.unscoredCards or {})
+        if count > 0 then return {addArmor=value * count} end
+    end},
+    {"spirit_wound", "Huyết Khuyết", 1, "Mỗi HP đã mất: +{value} Sát thương (tính tối đa 60 HP).", function(hand, game, value)
+        local missing = math.min(60, math.max(0, (game.maxPlayerHp or 100) - (game.playerHp or 100)))
+        if missing > 0 then return {addChips=value * missing} end
+    end},
+    {"spirit_bastion", "Pháo Linh", 0.02, "Mỗi Giáp hiện có: +{value} vào hệ số Cường hóa (tính tối đa 30 Giáp).", function(hand, game, value)
+        local armor = math.min(30, math.max(0, game.playerArmor or game.playerShield or 0))
+        if armor > 0 then return {xMult=1 + value * armor} end
+    end},
+    {"spirit_stillness", "Tĩnh Triều", 8, "Chưa bỏ bài trong trận: +{value} Sát thương mỗi lượt bỏ còn lại.", function(hand, game, value)
+        local remaining = math.max(0, game.discardsRemaining or 0)
+        if (game.discardsUsedInCombat or 0) == 0 and remaining > 0 then return {addChips=value * remaining} end
+    end},
+    {"spirit_molt", "Lột Xác", 2, "Mỗi lượt bỏ đã dùng trong trận: +{value} Cường hóa (tính tối đa 3 lượt).", function(hand, game, value)
+        local used = math.min(3, math.max(0, game.discardsUsedInCombat or 0))
+        if used > 0 then return {addMult=value * used} end
+    end},
+    {"spirit_pivot", "Chuyển Ảnh", 0.4, "Từ tay thứ hai, đổi kiểu tay bài so với tay trước: ×{factor} Cường hóa.", function(hand, game, value)
+        local previous = game.abilityCombat and game.abilityCombat.previousHandType
+        if previous and hand.type and previous ~= hand.type.id then return {xMult=1 + value} end
+    end},
+    {"spirit_mender", "Khâu Hồn", 4, "Ít nhất 2 lá tính điểm có trang bị: hồi +{value} HP.", function(hand, game, value)
+        local count = 0
+        for _, card in ipairs(hand.scoringCards or {}) do
+            if #(card.equipments or {}) > 0 then count=count + 1 end
+        end
+        if count >= 2 then return {addHealHp=value} end
+    end},
+    {"spirit_gleaner", "Mót Sao", 1, "Chỉ chơi bài bậc 2–10, tổng bậc không quá 12: +{value} Vàng.", function(hand, game, value)
+        local cards, total = playedCards(hand), 0
+        if #cards == 0 then return nil end
+        for _, card in ipairs(cards) do
+            if not card.rank or card.rank < 2 or card.rank > 10 then return nil end
+            total=total + card.rank
+        end
+        if total <= 12 then return {addGold=value} end
+    end},
+}
+local tacticalStats = {
+    spirit_lone="xMult", spirit_confluence="addMult", spirit_rearguard="addArmor",
+    spirit_wound="addChips", spirit_bastion="xMult", spirit_stillness="addChips",
+    spirit_molt="addMult", spirit_pivot="xMult", spirit_mender="addHealHp", spirit_gleaner="addGold",
+}
+for _, row in ipairs(tacticalEntries) do
+    local entry = {id=row[1], name=row[2], values={value=row[3]}, descriptionTemplate=row[4],
+        stat=tacticalStats[row[1]], rarity="common", cost=4, trigger="hand", lore="Một dị linh của lục địa, đáp lại chiến thuật riêng của đoàn viễn chinh."}
+    entry.onHandScored = function(hand, context)
+        return row[5](hand or {}, context and (context.gameState or context) or {}, entry.values.value)
+    end
+    Deities.CATALOG[entry.id] = entry
+end
+
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
     if not def then return deity.desc or "" end
     local value=def.values.value*effectMultiplier(deity)
-    return def.descriptionTemplate:gsub("{value}",formatEffectNumber(value))
+    local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
+    local spell=require("src.chest_expansion").byId[deity.enchantment]
+    if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end
+    return text
+end
+for _, row in ipairs(tacticalEntries) do
+    local entry = Deities.CATALOG[row[1]]
+    entry.desc = Deities.getDescription(entry)
+    entry.baseDesc = entry.desc
 end
 
 function Deities.getCount(deities)

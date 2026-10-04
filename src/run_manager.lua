@@ -326,6 +326,12 @@ function RunManager.createSpeedTeamCard()
         icon = "»", color = { 0.30, 0.86, 0.65, 1 } }
 end
 
+function RunManager.createVitalityCard()
+    return {id="cons_vitality",category="vitality",name="Sinh Lực Vĩnh Cửu",hpBonus=20,
+        desc="Tiêu hao một lần: tăng vĩnh viễn 20 máu tối đa và hồi 20 HP trong run hiện tại.",
+        color={0.92,0.38,0.45,1}}
+end
+
 function RunManager.createRoundRewardOptions()
     return {
         RunManager.createEvolutionCard(),

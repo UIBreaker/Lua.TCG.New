@@ -9,7 +9,7 @@ local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
 local ease = function(t) return 1 - (1 - clamp(t, 0, 1)) ^ 3 end
 local categories = { card_ability = "KHẢ NĂNG", card_scored = "LÁ BÀI", deity_card = "SPN", deity_hand = "SPN",
-    deity_edition = "ẤN BẢN SPN", equipment_trigger = "TRANG BỊ KHẢM", enhancement_trigger = "CƯỜNG HÓA BÀI",
+    deity_edition = "ẤN BẢN SPN", deity_enchantment = "PHÙ PHÉP SPN", equipment_trigger = "TRANG BỊ KHẢM", enhancement_trigger = "CƯỜNG HÓA BÀI",
     seal_trigger = "CON DẤU", card_edition = "ẤN BẢN", discard_buff_trigger = "CHIẾN THUẬT BỎ BÀI" }
 
 function Feel.intensity(aura, target) return Attacks.power(aura, target) end

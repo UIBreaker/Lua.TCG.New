@@ -181,11 +181,11 @@ end
 function Monster.getAttackByEncounter(encounterCount, isBoss, isElite)
     local n = math.max(1, encounterCount or 1)
     if isBoss then
-        return math.min(50, 8 + math.floor((n - 1) * 3.0))
+        return 8 + math.floor((n - 1) * 3.0)
     elseif isElite then
-        return math.min(40, 6 + math.floor((n - 1) * 2.0))
+        return 6 + math.floor((n - 1) * 2.0)
     else
-        return math.min(30, 4 + math.floor((n - 1) * 1.5))
+        return 4 + math.floor((n - 1) * 1.5)
     end
 end
 

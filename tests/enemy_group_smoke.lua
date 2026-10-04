@@ -12,6 +12,7 @@ local function start(stage,boss,elite)
     Combat.start(g,Run.createBlindMonster(blind,g),stage)
     return g,blind
 end
+local previousAttack={small=0,big=0,boss=0}
 for stage=1,80 do
     for _,type in ipairs({"small","big","boss"}) do
         local g,b=start(stage,type=="boss",type=="big")
@@ -25,8 +26,20 @@ for stage=1,80 do
         end
         assert(math.abs(hp-b.hp)<=math.max(1e-7,b.hp*1e-14),"squad must preserve encounter HP budget")
         assert(atk==Monster.getAttackByEncounter((stage-1)*3+b.index,type=="boss",type=="big"))
+        assert(atk>previousAttack[type],"encounter damage must keep growing every stage")
+        previousAttack[type]=atk
     end
 end
+-- Late-stage damage reaches the player in full after armor, without an HP-based cap.
+local late=start(20)
+late.enemies={late.monster};late.monster.group=late.enemies
+late.monster.attack=90;late.monster.enemyAbility=nil;late.monster.creatureKind=nil
+late.playerHp=100;late.maxPlayerHp=100;late.playerArmor=10;late.playerShield=10
+late.hand={};late.deities={}
+local hit=Combat.resolveMonsterAttack(late)
+assert(hit.absorbed==10 and hit.damage==80 and late.playerHp==20)
+late.monster.attack=500;late.playerArmor=0;late.playerShield=0
+assert(Combat.resolveMonsterAttack(late).killedPlayer and late.playerHp==0)
 local g=start(3)
 assert(#g.enemies==3)
 assert(Group.select(g,2) and g.monster==g.enemies[2])

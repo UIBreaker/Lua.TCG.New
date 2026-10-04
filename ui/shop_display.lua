@@ -205,7 +205,8 @@ local function soulShop(shop, game, buttons, mx, my, time)
         buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item}
         if hovered and UI.Polish.tooltipAllowed(item) then hoveredItem=item end
     end
-    for slot,id in ipairs(require("src.equipment").SOUL_POOL) do
+    for slot=1,5 do
+        local id=(shop.soulStock or {})[slot]
         local x=40+(slot-1)*192
         bay(x,153,180,256)
         local item,index=find(id)
@@ -213,32 +214,34 @@ local function soulShop(shop, game, buttons, mx, my, time)
             offer(item,index,x+39,178,102,153)
             text(item.cost.." LH",x,157,180,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
             text(item.name,x+6,342,168,UI.fonts.small,item.color,"center")
-            local caption=item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
+            local caption=item.equipment.shopSummary or item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
             text(caption,x+10,365,160,nil,{0.81,0.79,0.89,1},"center")
         else text("ĐÃ ĐỔI",x,253,180,UI.fonts.medium,C.purple,"center") end
     end
     text("THẺ HỖ TRỢ",44,429,740,UI.fonts.small,{0.86,0.76,1,1})
     for slot,definition in ipairs(Shop.SOUL_SUPPORT) do
-        local x=40+(slot-1)*250
-        bay(x,460,238,164)
+        local x=40+(slot-1)*192
+        bay(x,460,184,164)
         local item,index=find(definition.id)
         if item then
-            offer(item,index,x+14,479,74,111)
-            text(item.name,x+100,481,128,UI.fonts.small,item.color)
+            offer(item,index,x+12,513,54,81)
+            text(item.name,x+10,476,164,UI.fonts.small,item.color,"center")
             local card=item.consumable
             local desc=card.category=="evolution" and "+1 cấp khả năng cho một lá hoặc nâng bậc SPN."
                 or card.category=="speed_single" and "+5 tốc đánh lâu dài cho một lá trên tay."
+                or card.category=="vitality" and "+20 máu tối đa vĩnh viễn. Hồi 20 HP."
                 or "+2 tốc đánh lâu dài cho cả tay bài."
-            text(desc,x+100,516,128,nil,{0.81,0.79,0.89,1})
-            text(item.cost.." LH",x+14,598,74,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
-        else text("ĐÃ ĐỔI",x+10,531,218,UI.fonts.small,C.purple,"center") end
+            text(desc,x+78,523,96,nil,{0.81,0.79,0.89,1})
+            text(item.cost.." LH",x+12,598,54,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
+        else text("ĐÃ ĐỔI",x+10,531,164,UI.fonts.small,C.purple,"center") end
     end
-    bay(800,460,200,164)
+    bay(808,460,184,164)
     local item,index=find("soul_reaper")
     if item then
-        offer(item,index,814,489,58,87)
-        text("THU HỒN",884,482,108,UI.fonts.small,C.purple)
-        text("Tiêu hao · "..item.cost.." LH\nMua rồi dùng\n\nMọi lần hủy bài\nđều nhận LH.",884,512,108,nil,{0.81,0.79,0.89,1})
+        offer(item,index,820,513,54,81)
+        text("THU HỒN",818,476,164,UI.fonts.small,C.purple,"center")
+        text("Mua rồi dùng.\nHủy một lá để nhận linh hồn.",886,523,96,nil,{0.81,0.79,0.89,1})
+        text(item.cost.." LH",820,598,54,UI.fonts.small,C.purple,"center")
     else
         text("ĐÃ ĐỔI",810,531,180,UI.fonts.small,C.purple,"center")
     end

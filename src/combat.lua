@@ -39,6 +39,7 @@ function Combat.resolvePlayerAttack(game, aura)
             end
         end
     end
+    require("src.soul_relics").reap(game)
     return damage, Group.alive(Group.members(game)) == 0, splashHits
 end
 
@@ -65,6 +66,9 @@ end
 local function resolveOneAttack(game)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
+    if not require("src.soul_relics").beforeAttack(game,monster) then
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true}
+    end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
     local baseAttack = (monster.attack or 12)
@@ -77,7 +81,7 @@ local function resolveOneAttack(game)
     local armor = execution and 0 or (game.playerArmor or game.playerShield or 0)
     local absorbed = math.min(armor, attack)
     armor = math.floor((armor - absorbed) * 0.5)
-    local damage = math.min(attack - absorbed, math.floor((game.maxPlayerHp or 100) * 0.60))
+    local damage = attack - absorbed
 
     damage = Abilities.damageGuard(game, damage)
     game.playerArmor = execution and (game.playerArmor or game.playerShield or 0) or armor

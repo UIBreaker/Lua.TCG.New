@@ -1,0 +1,402 @@
+[
+  {
+    "id": "itm_abacus",
+    "group": "itm",
+    "name": "Bàn Tính Tân Binh",
+    "ability": "Rank 2–5 tính điểm: +8 ST cho mỗi bậc thấp hơn 6.",
+    "concept": "An antique expedition abacus with four large bone beads, fossil desert.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Bàn Tính Tân Binh. Actual game ability: Rank 2–5 tính điểm: +8 ST cho mỗi bậc thấp hơn 6.. Subject: An antique expedition abacus with four large bone beads, fossil desert.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-c00d3f13-cc3f-49b0-8bda-1046d38401e5.png",
+    "file": "assets/cards/continental/itm/itm_abacus.png"
+  },
+  {
+    "id": "itm_twinfang",
+    "group": "itm",
+    "name": "Nanh Song Sinh",
+    "ability": "Có đúng một lá khác cùng rank tính điểm: +0.25 hệ số Aura (cộng vào trần ×5).",
+    "concept": "One tangible double-fanged silver dagger reflected in a glacial lake.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Nanh Song Sinh. Actual game ability: Có đúng một lá khác cùng rank tính điểm: +0.25 hệ số Aura (cộng vào trần ×5).. Subject: One tangible double-fanged silver dagger reflected in a glacial lake.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-dd7c92d3-934a-491a-babc-d355c7c54ec8.png",
+    "file": "assets/cards/continental/itm/itm_twinfang.png"
+  },
+  {
+    "id": "itm_wayfarer",
+    "group": "itm",
+    "name": "La Bàn Lữ Hành",
+    "ability": "Lá tính điểm ngay trước lệch đúng 1 rank: +7 Cường hóa.",
+    "concept": "A weathered brass trail compass pointing along ascending mountain stepping stones.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: La Bàn Lữ Hành. Actual game ability: Lá tính điểm ngay trước lệch đúng 1 rank: +7 Cường hóa.. Subject: A weathered brass trail compass pointing along ascending mountain stepping stones.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-b5f15bcd-fbf5-440a-b1dd-77b2737ce760.png",
+    "file": "assets/cards/continental/itm/itm_wayfarer.png"
+  },
+  {
+    "id": "itm_prism",
+    "group": "itm",
+    "name": "Lăng Kính Viễn Chinh",
+    "ability": "Vùng tính điểm có ít nhất 3 chất: +35 ST.",
+    "concept": "One broad triangular glass prism splitting restrained light above coastal ruins.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Lăng Kính Viễn Chinh. Actual game ability: Vùng tính điểm có ít nhất 3 chất: +35 ST.. Subject: One broad triangular glass prism splitting restrained light above coastal ruins.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-3a479a29-41a3-497d-8d88-6ef1d06e42d0.png",
+    "file": "assets/cards/continental/itm/itm_prism.png"
+  },
+  {
+    "id": "itm_hourglass",
+    "group": "itm",
+    "name": "Cát Chậm",
+    "ability": "Tốc đánh lá này thấp hơn quái mục tiêu: +9 Giáp khi tính điểm.",
+    "concept": "A heavy physical hourglass frozen inside glacial blue ice.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Cát Chậm. Actual game ability: Tốc đánh lá này thấp hơn quái mục tiêu: +9 Giáp khi tính điểm.. Subject: A heavy physical hourglass frozen inside glacial blue ice.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-94132731-e6fb-4c5b-a246-a2bb475cbd77.png",
+    "file": "assets/cards/continental/itm/itm_hourglass.png"
+  },
+  {
+    "id": "itm_miser",
+    "group": "itm",
+    "name": "Chìa Khóa Ngân Khố",
+    "ability": "Mỗi 8 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +8.",
+    "concept": "One antique gold vault key over a weathered expedition coin chest in a desert.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Chìa Khóa Ngân Khố. Actual game ability: Mỗi 8 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +8.. Subject: One antique gold vault key over a weathered expedition coin chest in a desert.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-737f5e52-a04d-4921-a5db-90956023cca7.png",
+    "file": "assets/cards/continental/itm/itm_miser.png"
+  },
+  {
+    "id": "itm_quiver",
+    "group": "itm",
+    "name": "Ống Tên Dự Trữ",
+    "ability": "Mỗi lá giữ lại trên tay: +6 ST khi tính điểm, tối đa +36.",
+    "concept": "A tangible leather quiver with six broad arrow shafts in a quiet ancient forest.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ống Tên Dự Trữ. Actual game ability: Mỗi lá giữ lại trên tay: +6 ST khi tính điểm, tối đa +36.. Subject: A tangible leather quiver with six broad arrow shafts in a quiet ancient forest.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-cbe134b2-36ae-4154-95a2-fe55fe9e1d0a.png",
+    "file": "assets/cards/continental/itm/itm_quiver.png"
+  },
+  {
+    "id": "itm_anvil",
+    "group": "itm",
+    "name": "Đe Ba Khảm",
+    "ability": "Lá đã dùng đủ 3 hốc trang bị: +12% sát thương khi tính điểm.",
+    "concept": "One volcanic iron anvil with three large socketed relic stones and restrained orange embers.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Đe Ba Khảm. Actual game ability: Lá đã dùng đủ 3 hốc trang bị: +12% sát thương khi tính điểm.. Subject: One volcanic iron anvil with three large socketed relic stones and restrained orange embers.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-7afa6c39-6460-4df3-b216-892d5f000a0a.png",
+    "file": "assets/cards/continental/itm/itm_anvil.png"
+  },
+  {
+    "id": "itm_crown",
+    "group": "itm",
+    "name": "Vương Miện Độc Hành",
+    "ability": "Nếu lá này là J/Q/K duy nhất tính điểm: +12 ST và +1 Vàng.",
+    "concept": "A single worn Western iron crown on an isolated coastal throne.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Vương Miện Độc Hành. Actual game ability: Nếu lá này là J/Q/K duy nhất tính điểm: +12 ST và +1 Vàng.. Subject: A single worn Western iron crown on an isolated coastal throne.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-6f2bff7f-f7ae-4f98-93bc-f4541622e423.png",
+    "file": "assets/cards/continental/itm/itm_crown.png"
+  },
+  {
+    "id": "itm_root",
+    "group": "itm",
+    "name": "Rễ Hóa Thạch",
+    "ability": "Mỗi cấp tiến hóa của lá này: +10 ST khi tính điểm, tối đa +50.",
+    "concept": "A tangible fossilized root relic growing through five broad stone strata in a green canyon.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Rễ Hóa Thạch. Actual game ability: Mỗi cấp tiến hóa của lá này: +10 ST khi tính điểm, tối đa +50.. Subject: A tangible fossilized root relic growing through five broad stone strata in a green canyon.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-ba81409a-53d5-4326-8177-0cc21ec24d36.png",
+    "file": "assets/cards/continental/itm/itm_root.png"
+  },
+  {
+    "id": "seal_seed",
+    "group": "seal",
+    "name": "Ấn Nảy Mầm",
+    "ability": "Mỗi lần tính điểm: tăng vĩnh viễn 2 ST cơ bản, tối đa +20 từ ấn này; có hiệu lực từ lần sau.",
+    "concept": "A large seed-shaped bronze stamp sprouting one green shoot from a stone tablet.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Nảy Mầm. Actual game ability: Mỗi lần tính điểm: tăng vĩnh viễn 2 ST cơ bản, tối đa +20 từ ấn này; có hiệu lực từ lần sau.. Subject: A large seed-shaped bronze stamp sprouting one green shoot from a stone tablet.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-e012a522-019e-483f-893e-deb26f50e231.png",
+    "file": "assets/cards/continental/seal/seal_seed.png"
+  },
+  {
+    "id": "seal_sunder",
+    "group": "seal",
+    "name": "Ấn Phá Giáp",
+    "ability": "Khi tính điểm: phá 8 Giáp của quái mục tiêu trước khi gây Aura, không xuống dưới 0.",
+    "concept": "A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Phá Giáp. Actual game ability: Khi tính điểm: phá 8 Giáp của quái mục tiêu trước khi gây Aura, không xuống dưới 0.. Subject: A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-7ebf971a-1e28-4043-84c5-4802d69ed378.png",
+    "file": "assets/cards/continental/seal/seal_sunder.png"
+  },
+  {
+    "id": "seal_mercy",
+    "group": "seal",
+    "name": "Ấn Khoan Dung",
+    "ability": "Quái mục tiêu còn tối đa 25% HP khi tính điểm: hồi 6 HP.",
+    "concept": "A bronze open-palm stamp sheltering a small wounded spectral creature on a forest tablet.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Khoan Dung. Actual game ability: Quái mục tiêu còn tối đa 25% HP khi tính điểm: hồi 6 HP.. Subject: A bronze open-palm stamp sheltering a small wounded spectral creature on a forest tablet.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-9d4fc3bb-61ac-45f6-be3a-19dce97ef77e.png",
+    "file": "assets/cards/continental/seal/seal_mercy.png"
+  },
+  {
+    "id": "seal_reserve",
+    "group": "seal",
+    "name": "Ấn Tiếp Tế",
+    "ability": "Giữ ít nhất 2 tiêu hao khi tính điểm: +1 Vàng.",
+    "concept": "A large supply-crate stamp beside two sealed expedition vials on coastal rock.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Tiếp Tế. Actual game ability: Giữ ít nhất 2 tiêu hao khi tính điểm: +1 Vàng.. Subject: A large supply-crate stamp beside two sealed expedition vials on coastal rock.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-47dcfb1f-7869-4a54-bc2d-e0df4c1fb3cd.png",
+    "file": "assets/cards/continental/seal/seal_reserve.png"
+  },
+  {
+    "id": "seal_pilgrim",
+    "group": "seal",
+    "name": "Ấn Hành Hương",
+    "ability": "Mỗi lá khác đã tiến hóa trong vùng tính điểm: +2 Cường hóa, tối đa +8.",
+    "concept": "A bronze footprint stamp crossing a trail of awakened forest monoliths.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Hành Hương. Actual game ability: Mỗi lá khác đã tiến hóa trong vùng tính điểm: +2 Cường hóa, tối đa +8.. Subject: A bronze footprint stamp crossing a trail of awakened forest monoliths.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-447cb604-9c17-4833-9846-c97ae1debb59.png",
+    "file": "assets/cards/continental/seal/seal_pilgrim.png"
+  },
+  {
+    "id": "seal_oath",
+    "group": "seal",
+    "name": "Ấn Tuyên Thệ",
+    "ability": "HP ít nhất 75% tối đa khi tính điểm: trả 2 HP để nhận 10 Giáp.",
+    "concept": "A large shield-and-droplet oath stamp on a glacial altar, controlled red accent.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Tuyên Thệ. Actual game ability: HP ít nhất 75% tối đa khi tính điểm: trả 2 HP để nhận 10 Giáp.. Subject: A large shield-and-droplet oath stamp on a glacial altar, controlled red accent.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-fb8b24f0-dbd0-4cc9-b4cb-99d0d7c89b4b.png",
+    "file": "assets/cards/continental/seal/seal_oath.png"
+  },
+  {
+    "id": "seal_equilibrium",
+    "group": "seal",
+    "name": "Ấn Cân Bằng",
+    "ability": "Vùng tính điểm có số lá rank chẵn và lẻ bằng nhau: +30 ST.",
+    "concept": "A large balance-scale stamp with two equal stone weights in bone-colored desert ruins.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Cân Bằng. Actual game ability: Vùng tính điểm có số lá rank chẵn và lẻ bằng nhau: +30 ST.. Subject: A large balance-scale stamp with two equal stone weights in bone-colored desert ruins.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-7675b7c4-c29d-4ce9-bb88-b9b094e60fbc.png",
+    "file": "assets/cards/continental/seal/seal_equilibrium.png"
+  },
+  {
+    "id": "seal_harvest",
+    "group": "seal",
+    "name": "Ấn Mùa Gặt",
+    "ability": "Đúng 5 lá tính điểm đều là rank 2–10: +2 Vàng.",
+    "concept": "A broad wheat-sheaf stamp with five clear stalks in an ancient green plain.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Mùa Gặt. Actual game ability: Đúng 5 lá tính điểm đều là rank 2–10: +2 Vàng.. Subject: A broad wheat-sheaf stamp with five clear stalks in an ancient green plain.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-fc5b7e88-2eb2-4cb7-b300-80bed5dd8eb6.png",
+    "file": "assets/cards/continental/seal/seal_harvest.png"
+  },
+  {
+    "id": "seal_dusk",
+    "group": "seal",
+    "name": "Ấn Hoàng Hôn",
+    "ability": "Khi còn tối đa 1 lượt đánh: +20% sát thương khi tính điểm.",
+    "concept": "One setting-sun bronze stamp beneath an orange twilight over continental cliffs.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Hoàng Hôn. Actual game ability: Khi còn tối đa 1 lượt đánh: +20% sát thương khi tính điểm.. Subject: One setting-sun bronze stamp beneath an orange twilight over continental cliffs.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-a5ca121b-7204-4ae1-b46e-dfa7d8b2397b.png",
+    "file": "assets/cards/continental/seal/seal_dusk.png"
+  },
+  {
+    "id": "seal_lantern",
+    "group": "seal",
+    "name": "Ấn Hải Đăng",
+    "ability": "Mỗi lá cùng rank giữ lại trên tay: +20 ST khi tính điểm, tối đa +60.",
+    "concept": "A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Ấn Hải Đăng. Actual game ability: Mỗi lá cùng rank giữ lại trên tay: +20 ST khi tính điểm, tối đa +60.. Subject: A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-f5243521-a35f-4b16-98bc-58e6d246bc48.png",
+    "file": "assets/cards/continental/seal/seal_lantern.png"
+  },
+  {
+    "id": "spec_stairway",
+    "group": "spectral",
+    "name": "Bậc Thang Hư Ảnh",
+    "ability": "Chọn một lá: đổi tối đa 4 lá khác trên tay thành rank kế tiếp của nó (không vượt A), lần lượt theo thứ tự tay. Trả 4 HP.",
+    "concept": "A supernatural staircase of five spectral stone slabs ascending into a violet eclipse.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Bậc Thang Hư Ảnh. Actual game ability: Chọn một lá: đổi tối đa 4 lá khác trên tay thành rank kế tiếp của nó (không vượt A), lần lượt theo thứ tự tay. Trả 4 HP.. Subject: A supernatural staircase of five spectral stone slabs ascending into a violet eclipse.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-01196cad-6d60-4e3f-bd91-ba5d285071c5.png",
+    "file": "assets/cards/continental/spectral/spec_stairway.png"
+  },
+  {
+    "id": "spec_twin",
+    "group": "spectral",
+    "name": "Giao Ước Song Sinh",
+    "ability": "Chọn một lá: lá khác đầu tiên trên tay nhận cùng rank, giữ chất và mọi nâng cấp. Trả 3 Vàng.",
+    "concept": "Two distinct spectral silhouettes bound by one violet thread above a cold coast.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Giao Ước Song Sinh. Actual game ability: Chọn một lá: lá khác đầu tiên trên tay nhận cùng rank, giữ chất và mọi nâng cấp. Trả 3 Vàng.. Subject: Two distinct spectral silhouettes bound by one violet thread above a cold coast.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-ba7ab4d3-7451-43a2-af67-3dcffe7d0ac1.png",
+    "file": "assets/cards/continental/spectral/spec_twin.png"
+  },
+  {
+    "id": "spec_molt",
+    "group": "spectral",
+    "name": "Lột Xác",
+    "ability": "Chọn một lá đã tiến hóa: mất 1 cấp tiến hóa, nhận vĩnh viễn +8 tốc đánh (tối đa 999).",
+    "concept": "A spectral moth shedding one stone cocoon into cyan wind over forest ruins.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Lột Xác. Actual game ability: Chọn một lá đã tiến hóa: mất 1 cấp tiến hóa, nhận vĩnh viễn +8 tốc đánh (tối đa 999).. Subject: A spectral moth shedding one stone cocoon into cyan wind over forest ruins.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-486b6a97-4eb8-4d88-ab3e-c187836a001d.png",
+    "file": "assets/cards/continental/spectral/spec_molt.png"
+  },
+  {
+    "id": "spec_prune",
+    "group": "spectral",
+    "name": "Tỉa Nhánh",
+    "ability": "Chọn một lá: tiêu hủy tối đa 2 lá khác cùng rank trong bộ bài; lá chọn nhận +10 ST cơ bản mỗi lá hủy. Luôn giữ ít nhất 1 lá.",
+    "concept": "A supernatural pruning shadow drawing strength from two fading branches into one living tree.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Tỉa Nhánh. Actual game ability: Chọn một lá: tiêu hủy tối đa 2 lá khác cùng rank trong bộ bài; lá chọn nhận +10 ST cơ bản mỗi lá hủy. Luôn giữ ít nhất 1 lá.. Subject: A supernatural pruning shadow drawing strength from two fading branches into one living tree.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-26d21a7e-a0d8-4b3d-a5bb-7d571ecab9f4.png",
+    "file": "assets/cards/continental/spectral/spec_prune.png"
+  },
+  {
+    "id": "spec_migration",
+    "group": "spectral",
+    "name": "Đại Di Cư",
+    "ability": "Chọn một lá: mọi lá cùng rank trong bộ bài đổi sang chất tiếp theo trong vòng Cơ–Rô–Chuồn–Bích. Trả 4 Vàng.",
+    "concept": "A flock of spectral birds crossing from a green continent into glacial cliffs.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Đại Di Cư. Actual game ability: Chọn một lá: mọi lá cùng rank trong bộ bài đổi sang chất tiếp theo trong vòng Cơ–Rô–Chuồn–Bích. Trả 4 Vàng.. Subject: A flock of spectral birds crossing from a green continent into glacial cliffs.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-f68e3156-b550-4464-8816-a084e11b2ade.png",
+    "file": "assets/cards/continental/spectral/spec_migration.png"
+  },
+  {
+    "id": "spec_inversion",
+    "group": "spectral",
+    "name": "Nghịch Số",
+    "ability": "Chọn một lá: đổi rank thành 16 trừ rank hiện tại (2↔A, 3↔K, 8 giữ nguyên); trả 2 HP.",
+    "concept": "A supernatural inverted mountain mirrored beneath a violet rift, two opposing peaks.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Nghịch Số. Actual game ability: Chọn một lá: đổi rank thành 16 trừ rank hiện tại (2↔A, 3↔K, 8 giữ nguyên); trả 2 HP.. Subject: A supernatural inverted mountain mirrored beneath a violet rift, two opposing peaks.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-6928e758-c031-4f71-bce2-6f2e288e4fc9.png",
+    "file": "assets/cards/continental/spectral/spec_inversion.png"
+  },
+  {
+    "id": "spec_temper",
+    "group": "spectral",
+    "name": "Tôi Luyện",
+    "ability": "Chọn một lá có trang bị: tháo trang bị cuối cùng, đổi lấy 2 cấp tiến hóa vĩnh viễn. Không dùng nếu vượt trần tiến hóa.",
+    "concept": "A spectral forge spirit consuming one iron relic to awaken a floating stone figure.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Tôi Luyện. Actual game ability: Chọn một lá có trang bị: tháo trang bị cuối cùng, đổi lấy 2 cấp tiến hóa vĩnh viễn. Không dùng nếu vượt trần tiến hóa.. Subject: A spectral forge spirit consuming one iron relic to awaken a floating stone figure.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-708b24dd-c253-42c9-87a4-2c877b359625.png",
+    "file": "assets/cards/continental/spectral/spec_temper.png"
+  },
+  {
+    "id": "spec_fission",
+    "group": "spectral",
+    "name": "Phân Hạch",
+    "ability": "Chọn một lá rank 4–A: giảm rank đi 2, thêm một lá rank 2 cùng chất vào bộ bài; lá mới không mang nâng cấp.",
+    "concept": "One supernatural crystal splitting into a large shard and one tiny shard over volcanic wastes.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phân Hạch. Actual game ability: Chọn một lá rank 4–A: giảm rank đi 2, thêm một lá rank 2 cùng chất vào bộ bài; lá mới không mang nâng cấp.. Subject: One supernatural crystal splitting into a large shard and one tiny shard over volcanic wastes.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-5cfdf0ea-ddce-401c-92ee-bb7e16caf483.png",
+    "file": "assets/cards/continental/spectral/spec_fission.png"
+  },
+  {
+    "id": "spec_redistribute",
+    "group": "spectral",
+    "name": "Hoán Mạch",
+    "ability": "Chọn một lá: hoán đổi chất với lá khác đầu tiên trên tay có chất khác, giữ nguyên rank và nâng cấp.",
+    "concept": "Two supernatural rivers exchanging their paths through a single suspended violet junction.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Hoán Mạch. Actual game ability: Chọn một lá: hoán đổi chất với lá khác đầu tiên trên tay có chất khác, giữ nguyên rank và nâng cấp.. Subject: Two supernatural rivers exchanging their paths through a single suspended violet junction.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-abe4a16a-f782-4b85-b60d-569959425878.png",
+    "file": "assets/cards/continental/spectral/spec_redistribute.png"
+  },
+  {
+    "id": "spec_distill",
+    "group": "spectral",
+    "name": "Chưng Cất",
+    "ability": "Chọn một lá có con dấu: xóa dấu, nhận vĩnh viễn +1 cấp tiến hóa và +4 tốc đánh. Không dùng ở trần tiến hóa.",
+    "concept": "A spectral seal dissolving into a single green-gold drop above an ancient forest altar.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Chưng Cất. Actual game ability: Chọn một lá có con dấu: xóa dấu, nhận vĩnh viễn +1 cấp tiến hóa và +4 tốc đánh. Không dùng ở trần tiến hóa.. Subject: A spectral seal dissolving into a single green-gold drop above an ancient forest altar.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-8421a3e7-5112-4859-9ecf-8e1bbc8f3228.png",
+    "file": "assets/cards/continental/spectral/spec_distill.png"
+  },
+  {
+    "id": "spell_bastion",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Thành Lũy",
+    "ability": "SPN đầu tiên nhận Thành Lũy: vùng tính điểm có ít nhất 4 lá thì +8 Giáp mỗi tay.",
+    "concept": "A supernatural guardian forming four broad stone walls around an expedition camp.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Thành Lũy. Actual game ability: SPN đầu tiên nhận Thành Lũy: vùng tính điểm có ít nhất 4 lá thì +8 Giáp mỗi tay.. Subject: A supernatural guardian forming four broad stone walls around an expedition camp.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-4658b1c1-ffee-46f1-8864-cf7d64208810.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_bastion.png"
+  },
+  {
+    "id": "spell_mend",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Giao Hòa",
+    "ability": "SPN đầu tiên nhận Giao Hòa: vùng tính điểm có đúng 2 chất thì hồi 4 HP mỗi tay.",
+    "concept": "A spectral forest healer joining two streams of blue and green light into one living spring.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Giao Hòa. Actual game ability: SPN đầu tiên nhận Giao Hòa: vùng tính điểm có đúng 2 chất thì hồi 4 HP mỗi tay.. Subject: A spectral forest healer joining two streams of blue and green light into one living spring.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-13dd53cc-8249-44ca-ac46-59b3b0911f12.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_mend.png"
+  },
+  {
+    "id": "spell_prosper",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Khởi Nghiệp",
+    "ability": "SPN đầu tiên nhận Khởi Nghiệp: khi giữ dưới 10 Vàng thì nhận 2 Vàng mỗi tay.",
+    "concept": "A small supernatural gold fox breathing life into an empty desert trading stall.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Khởi Nghiệp. Actual game ability: SPN đầu tiên nhận Khởi Nghiệp: khi giữ dưới 10 Vàng thì nhận 2 Vàng mỗi tay.. Subject: A small supernatural gold fox breathing life into an empty desert trading stall.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-4ba5ee18-4a6f-4541-bdf5-c5361fd7a88d.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_prosper.png"
+  },
+  {
+    "id": "spell_solitude",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Độc Tôn",
+    "ability": "SPN đầu tiên nhận Độc Tôn: nếu chỉ sở hữu 1 SPN thì +0.4 hệ số Aura mỗi tay (cộng vào trần ×5).",
+    "concept": "One enormous solitary spectral titan beneath a violet eclipse above empty cliffs.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Độc Tôn. Actual game ability: SPN đầu tiên nhận Độc Tôn: nếu chỉ sở hữu 1 SPN thì +0.4 hệ số Aura mỗi tay (cộng vào trần ×5).. Subject: One enormous solitary spectral titan beneath a violet eclipse above empty cliffs.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-4d2833d8-b62d-4ad7-a808-7343b32a3494.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_solitude.png"
+  },
+  {
+    "id": "spell_confluence",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Hội Tụ",
+    "ability": "SPN đầu tiên nhận Hội Tụ: khi đánh Thùng hoặc Thùng Phá Sảnh, +10 Cường hóa mỗi tay.",
+    "concept": "A single ocean spirit formed by five navy waves merging into one clear vortex.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Hội Tụ. Actual game ability: SPN đầu tiên nhận Hội Tụ: khi đánh Thùng hoặc Thùng Phá Sảnh, +10 Cường hóa mỗi tay.. Subject: A single ocean spirit formed by five navy waves merging into one clear vortex.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-3297a4bd-b425-40e5-926c-5c6a26bdab92.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_confluence.png"
+  },
+  {
+    "id": "spell_ladder",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Dẫn Lối",
+    "ability": "SPN đầu tiên nhận Dẫn Lối: Sảnh hoặc Thùng Phá Sảnh nhận +60 ST mỗi tay.",
+    "concept": "A spectral mountain guide illuminating a clear ascending path between five glacial peaks.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Dẫn Lối. Actual game ability: SPN đầu tiên nhận Dẫn Lối: Sảnh hoặc Thùng Phá Sảnh nhận +60 ST mỗi tay.. Subject: A spectral mountain guide illuminating a clear ascending path between five glacial peaks.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-85eaa0f4-4345-43eb-81c1-9571d96cfa37.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_ladder.png"
+  },
+  {
+    "id": "spell_requiem",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Tinh Giản",
+    "ability": "SPN đầu tiên nhận Tinh Giản: bộ bài vĩnh viễn còn tối đa 15 lá thì +10 Cường hóa mỗi tay.",
+    "concept": "A spectral archivist gathering a dwindling cloud of stone fragments into one violet orb.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Tinh Giản. Actual game ability: SPN đầu tiên nhận Tinh Giản: bộ bài vĩnh viễn còn tối đa 15 lá thì +10 Cường hóa mỗi tay.. Subject: A spectral archivist gathering a dwindling cloud of stone fragments into one violet orb.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-530fdc38-58fe-4ebd-990b-514032fcf829.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_requiem.png"
+  },
+  {
+    "id": "spell_chorus",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Hợp Xướng",
+    "ability": "SPN đầu tiên nhận Hợp Xướng: mỗi SPN khác đang sở hữu cho +12 ST mỗi tay, tối đa +48.",
+    "concept": "One spectral conductor directing four large ghostly echoes in a Western ruined amphitheater.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Hợp Xướng. Actual game ability: SPN đầu tiên nhận Hợp Xướng: mỗi SPN khác đang sở hữu cho +12 ST mỗi tay, tối đa +48.. Subject: One spectral conductor directing four large ghostly echoes in a Western ruined amphitheater.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-3c4335e3-8a18-4feb-b486-0f44f7229517.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_chorus.png"
+  },
+  {
+    "id": "spell_balance",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Trăng Non",
+    "ability": "SPN đầu tiên nhận Trăng Non: đánh đúng 1 lá rank 2–7 thì +0.35 hệ số Aura mỗi tay (cộng vào trần ×5).",
+    "concept": "A small crescent-shaped supernatural guardian sheltering a lone traveler in a navy desert night.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Trăng Non. Actual game ability: SPN đầu tiên nhận Trăng Non: đánh đúng 1 lá rank 2–7 thì +0.35 hệ số Aura mỗi tay (cộng vào trần ×5).. Subject: A small crescent-shaped supernatural guardian sheltering a lone traveler in a navy desert night.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-63e24341-793e-4166-a288-357e096c98e1.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_balance.png"
+  },
+  {
+    "id": "spell_ember",
+    "group": "spn_enchantment",
+    "name": "Phù Phép Tàn Hỏa",
+    "ability": "SPN đầu tiên nhận Tàn Hỏa: HP còn tối đa 25% thì +25% sát thương và hồi 2 HP mỗi tay.",
+    "concept": "A wounded spectral phoenix rekindling from one restrained orange ember in dark volcanic wastes.",
+    "prompt": "Use case: stylized-concept. Create ONE production game card illustration full-bleed portrait 2:3 PNG 1024x1536. Match the Continental Relic cinematic Western dark fantasy expedition art style: painterly cinematic realism, medium detail, single primary focus, large clear silhouette, quiet atmospheric depth, controlled rim light, readable at 64px. Palette according to biome: ocean navy, glacial blue, forest green, desert bone gold, volcanic orange, void violet. No text letters numbers borders frame badges logos watermark UI. No East Asian fantasy palace roofs calligraphy jade pendants ornate microdetail blown-out glow or particle noise. Identity: Phù Phép Tàn Hỏa. Actual game ability: SPN đầu tiên nhận Tàn Hỏa: HP còn tối đa 25% thì +25% sát thương và hồi 2 HP mỗi tay.. Subject: A wounded spectral phoenix rekindling from one restrained orange ember in dark volcanic wastes.",
+    "source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107eb-0605-7982-a144-ff6cfd2d6e60\\exec-fdf3ce11-2170-494e-891a-77655188f851.png",
+    "file": "assets/cards/continental/spn_enchantment/spell_ember.png"
+  }
+]

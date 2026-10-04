@@ -37,8 +37,14 @@ local function assertSame(expected, actual)
     assert((expected.bonusBaseChips or 0) == (actual.bonusBaseChips or 0))
     assert(#expected.equipments == #actual.equipments, "equipment was lost")
 end
+-- The 10 new transformations have distinct costs/targets and are covered by
+-- chest_expansion_smoke.lua; retain this regression for the original eight.
+local originalSpectrals={}
+for _,definition in ipairs(Shop.SPECTRAL_CARDS) do
+    if not require("src.chest_expansion").byId[definition.id] then originalSpectrals[#originalSpectrals+1]=definition end
+end
 for _, stored in ipairs({ false, true }) do
-    for _, definition in ipairs(Shop.SPECTRAL_CARDS) do
+    for _, definition in ipairs(originalSpectrals) do
         Rng.seed(72)
         local game = GameState.new()
         game.persistentDeck = {}

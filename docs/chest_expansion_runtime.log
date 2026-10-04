@@ -1,0 +1,3 @@
+PASS: 40 chest discoveries, activation, scoring, persistence and random reward coverage
+Spectral persistence smoke passed: all 8 cards, direct/stored use, save/load and next combat
+PASS: LuaJIT gameplay checks and all 40 cards through real loaders and shared card frame

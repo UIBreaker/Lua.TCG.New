@@ -66,6 +66,13 @@ io.stdout:setvbuf("no")
 local isCaptureMode = false
 local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-chest-expansion" then
+        function love.load() require("tests.chest_expansion_render").run() end
+        function love.errorhandler(message)
+            print(debug.traceback(message,2));return function() return 1 end
+        end
+        return
+    end
     if a == "--test-animation" then isCaptureMode = true end
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
@@ -1187,6 +1194,27 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    local expansion=require("src.chest_expansion")
+    if expansion.byId[c.id] and (c.id:match("^spec_") or c.id:match("^spell_")) then
+        local target=game.hand and game.hand[(game.selectedIndices or {})[1] or 1]
+            or (game.persistentDeck or {})[1]
+        local ok,message=expansion.apply(game,c,target)
+        table.insert(anim.floatingTexts,{text=message,color=c.color or UI.COLORS.goldYellow,x=640,y=350,alpha=3})
+        if ok then
+            table.remove(game.consumables,idx)
+            Sound.play("round_win");saveRunAtSafePoint()
+        end
+        return ok
+    end
+    if c.id == "cons_vitality" then
+        local bonus=c.hpBonus or 20
+        game.maxPlayerHp=(game.maxPlayerHp or 100)+bonus
+        game.playerHp=math.min(game.maxPlayerHp,(game.playerHp or 100)+bonus)
+        table.remove(game.consumables,idx)
+        Sound.play("round_win")
+        saveRunAtSafePoint()
+        return true
+    end
     if c.id == "soul_reaper" then
         if state ~= "shop" then
             table.insert(anim.floatingTexts, {text="Dùng Lá Tiêu Hủy trong shop để chọn bài từ cả bộ.",
@@ -2000,6 +2028,13 @@ end
 function love.load()
     Rng.seed(os.time())
     UI.initFonts()
+    for _, argument in ipairs(arg or {}) do
+        if argument == "--test-spn-art" then
+            local ok, err = pcall(function() require("tests.spn_art_smoke").verify() end)
+            if not ok then print("SPN ART ERROR: " .. tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
+    end
     UI.Polish.load()
     local nativePrint, nativePrintf = love.graphics.print, love.graphics.printf
     love.graphics.print = function(value, ...)
@@ -3541,6 +3576,8 @@ local function drawPlayingState()
     local selectedCards = getSelectedCards()
     local eval = (#selectedCards > 0) and Poker.evaluate(selectedCards, game.unlockedHands, game.handLevels) or nil
     local scPreview = eval and Scoring.calculate(eval, game.deities, {
+        preview = true,
+        gameState = game,
         handsRemaining = game.handsRemaining,
         discardsRemaining = game.discardsRemaining,
         round = game.round,
@@ -5670,10 +5707,10 @@ local function drawShopState()
 
     -- 2. [Gieo Lại] Button
     local rCost = Shop.getRerollCost(shopData, game)
-    local canReroll = (game.gold or 0) >= rCost
+    local canReroll = (shopData.soulMode and (game.souls or 0) or (game.gold or 0)) >= rCost
     local btnReroll = {
         id = "reroll",
-        text = shopData.soulMode and "DI VẬT CỐ ĐỊNH" or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
+        text = shopData.soulMode and ("ĐỔI HÀNG · "..rCost.." LH") or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
         x = 203,
         y = 653,
         w = 170,
@@ -5681,7 +5718,7 @@ local function drawShopState()
         color = canReroll and UI.COLORS.btnSpecial or UI.COLORS.btnNormal,
         font = UI.fonts.small,
         animationScale = UI.Polish.job and UI.Polish.job.kind == "flip" and (1-0.05*math.sin(math.min(1,UI.Polish.job.age/0.12)*math.pi)) or 1,
-        disabled = shopData.soulMode or not canReroll or UI.Polish.busy(),
+        disabled = not canReroll or UI.Polish.busy(),
     }
     table.insert(buttons, btnReroll)
     UI.drawButton(btnReroll, mx >= btnReroll.x and mx <= btnReroll.x + btnReroll.w and my >= btnReroll.y and my <= btnReroll.y + btnReroll.h, juice.buttonPressedId == btnReroll.id)

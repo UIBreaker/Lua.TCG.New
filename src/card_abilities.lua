@@ -37,6 +37,7 @@ local function allCards(game)
     return list
 end
 function A.start(game)
+    game.soulRelicCombat={used={},claimed={},freeze=0}
     game.abilityCombat={playIndex=0,handSizeBonus=0,pendingRepeat=0,lastDestroyed=nil,roundNumber=1,feedback={}}
     game.abilityHand=nil
     for _,c in ipairs(allCards(game)) do c.abilityState={}; c.temporaryAbilityLevels=0; c.abilityDisabledUntil=nil; c.destroyed=nil; c.destructionNotified=nil end
@@ -162,6 +163,7 @@ end
 function A.score(game,card)
     local ctx=game.abilityHand
     local before=stateCopy(card)
+    require("src.soul_relics").score(game,card,ctx)
     if Boss.key(game.monster)=="taxman" and Boss.passiveEnabled(game.monster) then
         if (game.gold or 0)>=Boss.config.taxCardCost then game.gold=game.gold-Boss.config.taxCardCost else game.playerHp=math.max(0,(game.playerHp or 100)-Boss.config.taxCardHp) end
     end
@@ -236,7 +238,7 @@ end
 function A.damageGuard(game,damage)
     local ctx={damage=damage}
     A.dispatch(game,"damage",game.abilityHand and game.abilityHand.active or game.hand or {},ctx)
-    return ctx.damage
+    return require("src.soul_relics").guard(game,ctx.damage)
 end
 function A.spnTriggered(game,slot)
     local ctx=game.abilityHand; if not ctx then return 0 end

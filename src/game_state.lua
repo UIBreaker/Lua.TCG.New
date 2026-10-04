@@ -19,6 +19,9 @@ function GameState.resetRun(game, faction)
     game.gold = 6
     game.souls = 0
     game.soulDestroyedIds = {}
+    game.soulRerollCount = 0
+    game.soulShopStock = nil
+    game.soulRelicCombat = nil
     game.shopMode = "normal"
     game.pendingSoulShop = false
     game.soulShopPurchased = {}

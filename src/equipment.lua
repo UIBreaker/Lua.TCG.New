@@ -3,7 +3,7 @@ local Equipment = {}
 
 Equipment.MAX_SLOTS = 3
 
--- Đúng 9 trang bị: mỗi món phục vụ một quyết định chiến thuật riêng.
+-- Ordinary equipment and soul relics use separate reward pools.
 Equipment.ITEMS = {
     gem_fire = {
         id = "gem_fire", name = "Đá Tiên Phong", icon = "🔥",
@@ -140,6 +140,10 @@ Equipment.POOL = {
     "gem_fire", "gem_blast", "mirror_adjacent", "storm_eye", "lucky_coin",
     "ward_stone", "vitality_gem", "blood_ring", "void_catalyst",
 }
+for _, item in ipairs(require("src.chest_expansion").equipment) do
+    Equipment.ITEMS[item.id] = item
+    Equipment.POOL[#Equipment.POOL + 1] = item.id
+end
 
 -- Soul relics never enter the ordinary random equipment pool.
 Equipment.SOUL_POOL = {"soul_worldblade", "soul_crown", "soul_bastion", "soul_heart", "soul_hourglass"}
@@ -164,6 +168,12 @@ for _, relic in ipairs(relics) do
         return result
     end
     Equipment.ITEMS[relic.id] = relic
+end
+
+for _,relic in ipairs(require("src.soul_relics").definitions) do
+    relic.rarity,relic.soulOnly="mythic",true
+    Equipment.ITEMS[relic.id]=relic
+    Equipment.SOUL_POOL[#Equipment.SOUL_POOL+1]=relic.id
 end
 
 function Equipment.getUsedSlots(card)

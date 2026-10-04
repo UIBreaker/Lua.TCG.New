@@ -1,5 +1,6 @@
 local T={}
 local stage,deadline="start",0
+local purchaseId,soulAfterPurchase,previousStock
 local UI=require("src.ui")
 local Shop=require("src.shop")
 local E=require("src.equipment")
@@ -22,6 +23,7 @@ function T.update(g,cb)
     if love.timer.getTime()<deadline then return end
     if stage=="start" then
         require("tests.soul_shop_smoke")
+        require("tests.soul_relics_smoke")
         require("tests.spectral_persistence_smoke")
         cb.startNewGame("red_deck")
         require("src.deck").addCardToDeck(g,require("src.deck").newCard(9,"valoria"))
@@ -94,12 +96,16 @@ function T.update(g,cb)
         else nextStage("soul",0.7) end
     elseif stage=="soul" then
         pointer(2,2,false);shot("soul_shop")
+        for _,b in ipairs(cb.getButtons()) do assert(b.id~="soul_prev" and b.id~="soul_next") end
         nextStage("select_relic",0.25)
     elseif stage=="select_relic" then
         pointer(127,278,true);nextStage("focus")
     elseif stage=="focus" then
         assert(UI.Polish.focus.item.currency=="souls")
-        local gold=g.gold;confirm(g);assert(g.souls==118 and g.gold==gold)
+        local gold=g.gold;purchaseId=UI.Polish.focus.item.id
+        soulAfterPurchase=150-UI.Polish.focus.item.cost
+        previousStock={};for _,id in ipairs(cb.getShopData().soulStock) do previousStock[id]=true end
+        confirm(g);assert(g.souls==soulAfterPurchase and g.gold==gold)
         nextStage("socket",1)
     elseif stage=="socket" then
         assert(select(2,cb.getRewardAnimation())=="socketing")
@@ -108,28 +114,47 @@ function T.update(g,cb)
         assert(button);pointer(button.x+button.w/2,button.y+button.h/2,true)
         nextStage("bought",0.7)
     elseif stage=="bought" then
-        assert(cb.getShopData().soulMode and g.soulShopPurchased.soul_worldblade)
+        assert(cb.getShopData().soulMode and g.soulShopPurchased[purchaseId])
         pointer(2,2,false)
         shot("soul_shop_purchased")
-        nextStage("buy_evolution",0.25)
+        nextStage("buy_vitality",0.25)
+    elseif stage=="buy_vitality" then
+        pointer(655,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-10 and g.consumables[1].id=="cons_vitality")
+        nextStage("use_vitality",1)
+    elseif stage=="use_vitality" then
+        pointer(1074,430,true,2)
+        assert(g.maxPlayerHp==120 and g.playerHp==85 and #g.consumables==0)
+        local loaded=require("src.persistence").restoreSnapshot(require("src.persistence").makeSnapshot(g,"shop"))
+        assert(loaded.maxPlayerHp==120 and loaded.playerHp==85)
+        nextStage("reroll",0.7)
+    elseif stage=="reroll" then
+        pointer(280,674,true)
+        assert(g.souls==soulAfterPurchase-15 and g.soulRerollCount==1)
+        nextStage("rerolled",1.5)
+    elseif stage=="rerolled" then
+        assert(#cb.getShopData().items==10 and not g.soulShopPurchased[purchaseId])
+        for _,id in ipairs(cb.getShopData().soulStock) do assert(not previousStock[id]) end
+        pointer(2,2,false);shot("soul_shop_rerolled")
+        nextStage("buy_evolution",0.3)
     elseif stage=="buy_evolution" then
-        pointer(91,531,true);confirm(g)
-        assert(g.souls==106 and g.consumables[1].id=="cons_evolution")
+        pointer(79,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-27 and g.consumables[1].id=="cons_evolution")
         nextStage("buy_single",1)
     elseif stage=="buy_single" then
-        pointer(341,531,true);confirm(g)
-        assert(g.souls==100 and g.consumables[2].id=="cons_speed_single")
+        pointer(271,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-33 and g.consumables[2].id=="cons_speed_single")
         nextStage("buy_team",1)
     elseif stage=="buy_team" then
-        pointer(591,531,true);confirm(g)
-        assert(g.souls==90 and g.consumables[3].id=="cons_speed_team")
+        pointer(463,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-43 and g.consumables[3].id=="cons_speed_team")
         nextStage("exit",1)
     elseif stage=="exit" then
         pointer(108,674,true);assert(g.shopMode=="normal")
         cb.startMonsterEncounter(1,false)
         nextStage("battle_hud",1)
     elseif stage=="battle_hud" then
-        assert(g.souls==90)
+        assert(g.souls==soulAfterPurchase-43)
         shot("soul_battle_hud")
         print("Soul shop live UI passed: normal slot, preview, destruction, boss transition, soul purchase, socket return, exit")
         nextStage("done",0.3)

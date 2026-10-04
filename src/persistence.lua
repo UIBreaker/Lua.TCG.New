@@ -29,6 +29,7 @@ local TRANSIENT_GAME_KEYS = {
     currentNodeId = true,
     soulDestroyActive = true,
     soulDestroyConsumable = true,
+    soulRelicCombat = true,
 }
 
 local function sanitize(value, seen)

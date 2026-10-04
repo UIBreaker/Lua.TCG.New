@@ -6,6 +6,7 @@ local CardEffects = require("src.card_effects")
 local Rng = require("src.rng")
 local Abilities = require("src.card_abilities")
 local Boss = require("src.boss_abilities")
+local Expansion = require("src.chest_expansion")
 
 local function isSpade(card)
     if not card then return false end
@@ -65,6 +66,21 @@ function Scoring.calculate(handInfo, deities, context)
     local hasBountySeal = false
 
     local steps = {}
+    local function applyDiscovery(res,event)
+        if not res then return end
+        bonusChips=bonusChips+(res.addChips or 0)
+        bonusMult=bonusMult+(res.addMult or 0)
+        xMultBonus=xMultBonus+(res.xMultBonus or 0)
+        totalExtraDamagePct=totalExtraDamagePct+(res.extraDamagePct or 0)
+        bonusGoldAwarded=bonusGoldAwarded+(res.addGold or 0)
+        totalArmorGain=math.min(30,totalArmorGain+(res.addArmor or 0))
+        totalHealHp=totalHealHp+(res.healHp or 0)
+        totalHpCost=totalHpCost+(res.hpCost or 0)
+        if event then
+            event.addedChips=event.addedChips+(res.addChips or 0)
+            event.addedMult=event.addedMult+(res.addMult or 0)
+        end
+    end
     -- Presentation metadata records already-computed deltas, never re-evaluates a modifier.
     local function recordTrigger(event, kind, source, chipsBefore, multBefore, xBefore, damageBefore)
         event.presentationTriggers = event.presentationTriggers or {}
@@ -639,7 +655,17 @@ function Scoring.calculate(handInfo, deities, context)
                         Deck.ENHANCEMENTS[enh] or Deck.ENHANCEMENTS["enh_" .. enh] or {name = "Thuật rèn " .. enh}, pc, pm, px, pd)
                 end
 
-                -- 6 Battle Seals (Ấn Chiến)
+                local discovery=Expansion.byId[card.seal]
+                if discovery and not job.retrigger then
+                    local pc,pm,px,pd=cardEvent.addedChips,cardEvent.addedMult,xMultBonus,totalExtraDamagePct
+                    local res=discovery.effect(card,handInfo.scoringCards,idx,context)
+                    applyDiscovery(res,cardEvent)
+                    if res then
+                        cardEvent.message=cardEvent.message.." | "..discovery.name
+                        recordTrigger(cardEvent,"seal_trigger",discovery,pc,pm,px,pd)
+                    end
+                end
+                -- Original Battle Seals (Ấn Chiến)
                 if card.seal == "seal_blood" or card.seal == "blood" or card.seal == "red" then
                     -- Ấn Huyết đã kích hoạt tái kích hoạt (retrigger) ở trên, không cộng dồn sát thương thừa
                 elseif card.seal == "seal_prophecy" or card.seal == "prophecy" or card.seal == "blue" then
@@ -668,7 +694,7 @@ function Scoring.calculate(handInfo, deities, context)
                 end
             end
 
-            if cTrig == 1 and card.seal and card.seal ~= "blood" and card.seal ~= "seal_blood" and card.seal ~= "red" then
+            if cTrig == 1 and card.seal and not Expansion.byId[card.seal] and card.seal ~= "blood" and card.seal ~= "seal_blood" and card.seal ~= "red" then
                 recordTrigger(cardEvent, "seal_trigger", Deck.SEALS[card.seal]
                     or Deck.SEALS["seal_" .. card.seal] or {name = tostring(card.seal)},
                     cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct)
@@ -899,9 +925,9 @@ end
                 local bribeMult = dollarsNeeded * 3
                 bonusChips = bonusChips + bribeChips
                 bonusMult = bonusMult + bribeMult
-                if context.gameState then
+                if context.gameState and not context.preview then
                     context.gameState.gold = math.max(0, (context.gameState.gold or 0) - dollarsNeeded)
-                elseif context.gold then
+                elseif context.gold and not context.preview then
                     context.gold = context.gold - dollarsNeeded
                 end
                 table.insert(steps, {
@@ -926,6 +952,18 @@ end
         })
     end
 
+    for slot,deity in pairs(deities or {}) do
+        local spell=Expansion.byId[deity.enchantment]
+        if spell and not (abilityHand and Boss.isSlotLocked(abilityGame,"spn",slot)) then
+            local res=spell.effect(handInfo,context and (context.gameState or context) or {})
+            if res then
+                applyDiscovery(res)
+                table.insert(steps,{type="deity_enchantment",slotIndex=slot,deity=deity,
+                    addedChips=res.addChips or 0,addedMult=res.addMult or 0,
+                    message=deity.name.." · "..spell.name..": "..spell.desc})
+            end
+        end
+    end
     -- Step 3: Deities hand-level triggers (+Chips, +Mult, XMult) - Sequentially evaluated Left-to-Right (Slot 1 -> maxSlots)
     local currentChips = baseChips + bonusChips
     local currentMult = baseMult + bonusMult
@@ -942,7 +980,7 @@ end
 
     for di = 1, maxDeitySlots do
         local deity = deities and deities[di]
-        if deity and not (abilityHand and Boss.isSlotLocked(abilityGame, "spn", di)) then
+        if deity and not (abilityGame and Boss.isSlotLocked(abilityGame, "spn", di)) then
             local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
             if effectiveDeity and effectiveDeity.onHandScored then
                 local res = effectiveDeity.onHandScored(handInfo, context, effectiveDeity)
@@ -955,6 +993,10 @@ end
                     local addedChips = res.addChips or 0
                     local addedMult = res.addMult or 0
                     local cardXMult = res.xMult or 1.0
+
+                    totalArmorGain = totalArmorGain + (res.addArmor or 0)
+                    totalHealHp = totalHealHp + (res.addHealHp or 0)
+                    bonusGoldAwarded = bonusGoldAwarded + (res.addGold or 0)
 
                     -- Sequential left-to-right formula: add Chips, add Mult, then multiply by XMult!
                     currentChips = currentChips + addedChips
@@ -975,6 +1017,9 @@ end
                         addedChips = addedChips,
                         addedMult = addedMult,
                         xMult = cardXMult,
+                        addArmor = res.addArmor or 0,
+                        healHp = res.addHealHp or 0,
+                        bonusGold = res.addGold or 0,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
                         message = displayName .. ": " .. (res.message or effectiveDeity.desc or deity.desc or effectiveDeity.name or deity.name or "")

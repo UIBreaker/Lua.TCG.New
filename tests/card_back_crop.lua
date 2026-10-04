@@ -5,7 +5,7 @@ function Test.update()
     local g = love.graphics
     local first = assert(Back.getImage())
     assert(first == Back.getImage(), "shared image must be reused")
-    assert(first:getWidth() == 236, "outside matte must be cropped")
+    assert(first:getWidth() == 236 or first:getWidth()==512, "legacy back is trimmed; continental back uses the shared portrait surface")
     for _, size in ipairs({{262,350},{128,176},{64,88}}) do
         local w,h = size[1],size[2]
         local canvas = g.newCanvas(w,h)

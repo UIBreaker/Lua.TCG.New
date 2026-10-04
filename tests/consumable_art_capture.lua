@@ -7,7 +7,7 @@ local Persistence = require("src.persistence")
 Persistence.deleteRun = function() return true end
 Persistence.saveRun = function() return true end
 Persistence.saveSettings = function() return true end
-local types = {"spectral", "joker_edition", "seal", "edition", "arcana"}
+local types = {"spectral", "joker_edition", "seal", "edition", "arcana", "standard"}
 local step, age, initialized, captured = 1, 0, false, false
 local options = Run.createRoundRewardOptions()
 local function shot(name)
@@ -43,6 +43,10 @@ function T.update(game, cb)
         assert(count == 24, "all requested consumables covered")
         assert(Art.id({id="ed_holo"}) == "edition_holographic")
         assert(not UI.getConsumableImage({id="unknown_card"}), "unknown art safely falls back")
+        local playing = require("src.deck").newCard(8,"hearts")
+        assert(type(playing.id)=="number", "reproduce numeric playing-card ID")
+        assert(not UI.getConsumableImage(playing), "playing cards use suit/rank art")
+        assert(not Art.id({id=playing.id,isPackContent=true,packType="standard"}), "numeric pack IDs safely fall back")
         local g = love.graphics
         local canvas, previous = g.newCanvas(1200, 1440), g.getCanvas()
         g.push("all"); g.setCanvas(canvas); g.origin(); g.clear(0.025, 0.03, 0.045, 1)
@@ -65,16 +69,16 @@ function T.update(game, cb)
         cb.closePack(); step = step + 1; age = 0; captured = false
         if types[step] then cb.openPack({packType=types[step], name="RƯƠNG • " .. types[step]}, true)
         else game.consumables = options; cb.startMonsterEncounter(1, false) end
-    elseif step == 6 and not captured and age > 0.8 then
+    elseif step == #types+1 and not captured and age > 0.8 then
         shot("battle"); captured = true; age = 0
-    elseif step == 6 and captured and age > 0.2 then
-        step = 7; age = 0; captured = false
+    elseif step == #types+1 and captured and age > 0.2 then
+        step = #types+2; age = 0; captured = false
         cb.openReward("memory")
         game.pendingRoundRewardChoice = {ante=1, options=options}
-    elseif step == 7 and age > 0.5 and cb.getRewardAnimation().finished then
-        shot("round"); step = 8; age = 0
-    elseif step == 8 and age > 0.2 then
-        print("Consumable art rendering PASS: five chests, inventory and round reward")
+    elseif step == #types+2 and age > 0.5 and cb.getRewardAnimation().finished then
+        shot("round"); step = #types+3; age = 0
+    elseif step == #types+3 and age > 0.2 then
+        print("Consumable art rendering PASS: six chests including numeric-ID playing cards, inventory and round reward")
         love.event.quit(0)
     end
 end

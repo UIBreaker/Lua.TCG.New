@@ -13,7 +13,7 @@ function F.world(game,UI,Renderer,Art,Death,art,time,motion,scoring,turn)
             Renderer.entity.draw(img,cx,cy+math.sin(time*1.1+i)*1.0,h,time,
                 turn and require("src.enemy_attack_presentation").motion(turn,m) or motion.attack/0.42,target and motion.hit/0.35 or 0,recoil,squash,Renderer.scene.preset,Renderer.eventStrength,m.human or m.creatureCard,
                 target and {0.95,0.78,0.39,1} or nil,m)
-        elseif Death.enemyActive(m) then Death.drawEnemy(img,cx,cy,h) end
+        elseif Death.enemyActive(m) then Death.drawEnemy(img,cx,cy,h,(m.human or m.creatureCard) and m or nil) end
     end
 end
 function F.hud(game,UI,mx,my,turn)

@@ -42,6 +42,11 @@ end
 
 -- Code-drawn seal/ticket: no names or stats are painted over artwork.
 local function ticket(item, x, y, w, h, hovered)
+    local image=require("src.continental_art").get(item.voucherId or item.id)
+    if image then
+        love.graphics.setColor(1,1,1,1);UI.CardFrame.image(image,x,y,w,h)
+        UI.drawCardBorder(x,y,w,h,hovered and C.gold,nil,item);return
+    end
     local accent = item.color or C.gold
     love.graphics.setColor(0.018, 0.025, 0.036, 0.5)
     UI.drawRoundedRect("fill", x + 4, y + 6, w, h, 7)

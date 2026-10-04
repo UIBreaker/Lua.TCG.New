@@ -4,3 +4,4 @@ test_results.txt
 .DS_Store
 Thumbs.db
 graphify-out/
+*.zip

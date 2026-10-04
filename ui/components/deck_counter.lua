@@ -39,6 +39,8 @@ local function trimBack(source)
 end
 
 function DeckCounter.getImage()
+    local continental=require("src.continental_art").get("card_back")
+    if continental then return continental end
     if not loaded then
         loaded = true
         local ok, result = pcall(love.graphics.newImage, "assets/cards/card_back.png")

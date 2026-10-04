@@ -12,8 +12,16 @@ Persistence.saveSettings = function() return true end
 local step, age, initialized, captured = 1, 0, false, false
 local scenes = {"shop", "buffoon", "arcana", "hand_styles", "collection", "handbook", "battle", "defeated"}
 local function save(data, name)
-    local f = assert(io.open("docs/illustrated_" .. name .. ".png", "wb"))
-    f:write(data:encode("png"):getString()); f:close()
+    local bytes = data:encode("png"):getString()
+    local path = "docs/illustrated_" .. name .. ".png"
+    local f, err
+    -- Windows thumbnail readers can briefly lock an existing capture.
+    for attempt = 1, 10 do
+        f, err = io.open(path, "wb")
+        if f then break end
+        love.timer.sleep(0.05)
+    end
+    assert(f, err); f:write(bytes); f:close()
 end
 local function sheet(items, category, name)
     local g = love.graphics
@@ -57,6 +65,9 @@ function T.update(game, cb)
     age = age + love.timer.getDelta()
     assert(age < 12, "illustrated capture timeout at " .. step)
     if not initialized then
+        for _,argument in ipairs(arg or {}) do
+            if argument=="--continental-coverage" then require("tests.continental_art_coverage").verify() end
+        end
         local spn, itm, hands = {}, {}, {}
         for _, item in pairs(Deities.CATALOG) do
             verify(UI.getDeityImage(item.id), "assets/deities/illustrated/" .. item.id .. ".png")

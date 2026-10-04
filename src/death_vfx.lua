@@ -114,8 +114,24 @@ local function fallbackMask()
         end
     end end
 end
-function D.drawEnemy(image,x,y,size)
+function D.drawEnemy(image,x,y,size,card)
     if D.kind~="enemy" and D.kind~="chest" then return false end
+    if image and card then
+        -- The dissolve shader receives the whole card, including its live frame.
+        D.framedCards=D.framedCards or setmetatable({}, {__mode="k"})
+        local level=card.evolutionLevel or 0
+        local cached=D.framedCards[image]
+        if not cached or cached.level~=level then
+            local g=love.graphics;local Frame=require("ui.components.card_frame")
+            local canvas=g.newCanvas(512,768)
+            g.push("all");g.setCanvas(canvas);g.origin();g.setShader();g.setScissor();g.clear()
+            g.setBlendMode("alpha");g.setColor(1,1,1,1);g.scale(4)
+            Frame.image(image,0,0,128,192);Frame.draw(0,0,128,192,nil,nil,card);g.pop()
+            canvas:setFilter("linear","linear")
+            cached={level=level,image=canvas};D.framedCards[image]=cached
+        end
+        image=cached.image
+    end
     local g=love.graphics;local p=math.max(0,D.age-D.stop)/(D.duration-D.stop);local dissolve=D.dissolve()
     local fit=image and math.min(size/image:getWidth(),size/image:getHeight()) or 1
     g.push("all")

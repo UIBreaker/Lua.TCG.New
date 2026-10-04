@@ -1,4 +1,5 @@
 local UI = {}
+local ContinentalArt = require("src.continental_art")
 UI.CardFrame = require("ui.components.card_frame")
 UI.drawCardBorder = UI.CardFrame.draw
 UI.drawCardBack = require("ui.components.deck_counter").drawBack
@@ -710,6 +711,8 @@ UI.deityImageIsSpnCard = UI.deityImageIsSpnCard or {}
 
 function UI.getDeityImage(deityId)
     if not deityId then return nil end
+    local continental=ContinentalArt.get(deityId)
+    if continental then UI.deityImageIsSpnCard[deityId]=true;return continental end
     if UI.deityImages[deityId] ~= nil then
         return UI.deityImages[deityId] or nil
     end
@@ -751,6 +754,8 @@ UI.equipmentImages = UI.equipmentImages or {}
 
 function UI.getEquipmentImage(equipId)
     if not equipId then return nil end
+    local continental=ContinentalArt.get(equipId)
+    if continental then return continental end
     if UI.equipmentImages[equipId] ~= nil then
         return UI.equipmentImages[equipId] or nil
     end
@@ -821,6 +826,9 @@ local PACK_TYPE_MAP = {
 function UI.getPackImage(packId)
     if not packId then return nil end
     local mapped = PACK_TYPE_MAP[packId] or packId
+    local continental=(packId=="enchantment_pack" and ContinentalArt.get("enchantment"))
+        or ContinentalArt.get(packId) or ContinentalArt.get(mapped:gsub("^pack_",""))
+    if continental then UI.illustratedImages[continental]=true;return continental end
     if UI.packImages[mapped] ~= nil then
         return UI.packImages[mapped] or nil
     end
@@ -895,6 +903,8 @@ local HAND_ALIAS_MAP = {
 function UI.getHandImage(handId)
     if not handId then return nil end
     local mapped = HAND_ALIAS_MAP[handId] or handId
+    local continental=ContinentalArt.get(mapped)
+    if continental then UI.illustratedImages[continental]=true;return continental end
     if UI.handImages[mapped] ~= nil then
         return UI.handImages[mapped] or nil
     end
@@ -938,6 +948,8 @@ local VOUCHER_ALIAS_MAP = {
 function UI.getVoucherImage(voucherId)
     if not voucherId then return nil end
     local mapped = VOUCHER_ALIAS_MAP[voucherId] or voucherId
+    local continental=ContinentalArt.get(voucherId) or ContinentalArt.get(mapped)
+    if continental then UI.illustratedImages[continental]=true;return continental end
     if UI.voucherImages[mapped] ~= nil then
         return UI.voucherImages[mapped] or nil
     end
@@ -1013,6 +1025,8 @@ function UI.getCardImage(suit, rank)
     local s = SUIT_ALIAS_MAP[suit] or suit
     local r = RANK_ALIAS_MAP[rank] or tostring(rank)
     local key = s .. "_" .. r
+    local continental=ContinentalArt.get(key)
+    if continental then return ContinentalArt.withIndices(continental,s,r) end
     if UI.cardImages[key] ~= nil then
         return UI.cardImages[key] or nil
     end

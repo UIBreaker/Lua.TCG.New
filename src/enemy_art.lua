@@ -27,7 +27,9 @@ function Art.load()
     for _, list in ipairs({ Art.normal, Art.bosses }) do
         for _, key in ipairs(list) do
             local path = Art.path(key)
-            if love.filesystem.getInfo(path) then
+            local continental=require("src.continental_art").get(key)
+            if continental then Art.images[key]=continental
+            elseif love.filesystem.getInfo(path) then
                 local ok, image = pcall(love.graphics.newImage, path)
                 if ok then image:setFilter("linear", "linear"); Art.images[key] = image end
             end
@@ -41,6 +43,9 @@ function Art.image(monster, fallback)
     local illustration=Art.images[Art.key(monster)] or
         (monster.isBoss and fallback.enemyBoss or monster.isElite and fallback.enemyElite or fallback.enemySmall)
     if monster.creatureCard then
+        if require("src.continental_art").generated[illustration] then
+            return require("src.continental_art").withIndices(illustration,monster.cardSuit,monster.cardRank)
+        end
         local key=Art.key(monster).."_"..tostring(monster.cardRank or 2)
         if not Art.cards[key] then
             local path="assets/scene/enemy_cards/"..key..".png"

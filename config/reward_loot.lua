@@ -8,6 +8,13 @@ local C = {
     rarePause = 0.24,
     presentation = {maxSparks = 72, trailPoints = 5, flareDuration = 0.55, ambience = 18},
     pity = {enabled = false, after = 6, extraPackWeight = 5},
+    -- One independent supply roll per won encounter; bosses have better odds.
+    supplies = {normalChance = 0.35, bossChance = 0.65, entries = {
+        {id = "healing_potion_small", weight = 25}, {id = "healing_potion_large", weight = 10},
+        {id = "armor_potion_small", weight = 20}, {id = "armor_potion_large", weight = 10},
+        {id = "cons_speed_small", weight = 20}, {id = "cons_speed_large", weight = 10},
+        {id = "soul_reaper", weight = 5},
+    }},
     rarities = {
         common = {color = {0.70, 0.76, 0.82}, label = "THƯỜNG", strength = 1},
         uncommon = {color = {0.38, 0.86, 0.62}, label = "KHÁC THƯỜNG", strength = 2},
@@ -46,4 +53,8 @@ local C = {
     },
     bossOverrides = {black_tax_collector = "tax", memory_eater = "memory", gatekeeper = "gate"},
 }
+for _, entry in ipairs(C.supplies.entries) do
+    C.definitions[entry.id] = {type = "CONSUMABLE", consumableId = entry.id,
+        rarity = entry.id == "soul_reaper" and "rare" or entry.id:match("large$") and "uncommon" or "common"}
+end
 return C

@@ -154,8 +154,13 @@ local function createReward(id, game, source, depth)
         reward.opening = Shop.openPack(pack, game)
         if #reward.opening.cards == 0 then return fallback(reward, "Không còn nội dung gói hợp lệ") end
     elseif reward.type == "CONSUMABLE" then
-        local options = reward.consumable == "evolution" and {Run.createEvolutionCard()} or {Run.createSpeedSingleCard(), Run.createSpeedTeamCard()}
-        reward.card = options[Rng.random(#options)]
+        if reward.consumableId then
+            local item = reward.consumableId == "soul_reaper" and Shop.destructionItem() or Shop.healingItem(nil, reward.consumableId)
+            reward.card = item.consumable
+        else
+            local options = reward.consumable == "evolution" and {Run.createEvolutionCard()} or {Run.createSpeedSingleCard(), Run.createSpeedTeamCard()}
+            reward.card = options[Rng.random(#options)]
+        end
         reward.name = reward.card.name
         if #(game.consumables or {}) >= Inventory.limit(game) then return fallback(reward, "Ô tiêu hao đã đầy") end
     elseif reward.type == "CHEST" then
@@ -185,7 +190,7 @@ end
 function RewardSystem.begin(breakdown, game, context)
     if game.pendingVictoryReward then return game.pendingVictoryReward end
     context = context or {}
-    local boss = breakdown.blind and breakdown.blind.type == "boss"
+    local boss = (breakdown.blind and breakdown.blind.type == "boss") or (game.monster and game.monster.isBoss)
     if boss and not breakdown.wasSkipped then game.pendingSoulShop = true end
     local bossData = game.monster and game.monster.bossData or {}
     local key = bossData.id or (breakdown.blind and breakdown.blind.debuff and breakdown.blind.debuff.id)
@@ -197,7 +202,22 @@ function RewardSystem.begin(breakdown, game, context)
         return entry.weight + (pity.enabled and def and def.packType and (game.rewardPackDrought or 0) >= pity.after and pity.extraPackWeight or 0)
     end
     local result = {breakdown = breakdown, tableId = tableId, loot = {}, bonusGold = 0, claimed = false}
-    if not breakdown.wasSkipped then result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier) end
+    if not breakdown.wasSkipped then
+        result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier)
+        if not context.lootTableId and Rng.random() < (boss and Config.supplies.bossChance or Config.supplies.normalChance) then
+            result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries), game, "TIẾP TẾ", 0)
+        end
+    end
+    result.earnedSouls = 0
+    if not breakdown.wasSkipped then
+        local _, total = require("src.souls").awardKills(game, true)
+        result.earnedSouls = total
+        if not game.monster then
+            result.earnedSouls = boss and 4 or 1
+            game.souls = (game.souls or 0) + result.earnedSouls
+        end
+    end
+    result.soulsBefore = (game.souls or 0) - result.earnedSouls
     local hadPack = false
     game.rewardPacks = game.rewardPacks or {}
     game.consumables = game.consumables or {}
@@ -278,7 +298,8 @@ function RewardSystem.newAnimation(breakdown, result)
         state = "ENTER", timer = 0, phaseTime = 0, revealedCount = 0, revealedLoot = 0,
         displayTotal = 0, walletTotal = breakdown.currentGold, totalRevealed = false,
         pulse = 0, finished = false, buttonActive = false, visualSeed = 17, coinsSpawned = 0,
-        sparks = {}, flares = {}, goldFlare = 0}
+        sparks = {}, flares = {}, goldFlare = 0,
+        soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0}
 end
 
 -- Local presentation RNG: effects cannot advance the saved gameplay generator.
@@ -401,6 +422,7 @@ function RewardSystem.update(anim, dt)
         anim.accumulator = anim.accumulator - step
         anim.timer, anim.phaseTime = anim.timer + step, anim.phaseTime + step
         anim.pulse = math.max(0, anim.pulse - step * 0.55)
+        anim.soulFlare = math.max(0, anim.soulFlare - step)
         updateCoins(anim, step)
         updateSparks(anim, step)
         local state = anim.state
@@ -418,7 +440,17 @@ function RewardSystem.update(anim, dt)
             burst(anim, "gold", {1, 0.80, 0.34}, 20, 1)
             Sound.play("reward_gold_total")
             setState(anim, "GOLD_SETTLE")
-        elseif state == "GOLD_SETTLE" and anim.phaseTime >= 0.15 then setState(anim, "LOOT_PREPARE")
+        elseif state == "GOLD_SETTLE" and anim.phaseTime >= 0.15 then
+            setState(anim, (anim.result.earnedSouls or 0) > 0 and "SOUL_GATHER" or "LOOT_PREPARE")
+        elseif state == "SOUL_GATHER" then
+            local earned = anim.result.earnedSouls or 0
+            local collected = math.min(earned, math.max(0, math.floor((anim.phaseTime - 0.35) / 0.12) + 1))
+            if collected > anim.soulsCollected then
+                anim.soulsCollected, anim.soulFlare = collected, 0.45
+                anim.soulTotal = (anim.result.soulsBefore or 0) + collected
+                Sound.play("reward_rare_reveal", 0.9 + collected * 0.06)
+            end
+            if anim.phaseTime >= 0.65 + earned * 0.12 then setState(anim, "LOOT_PREPARE") end
         elseif state == "LOOT_PREPARE" then
             if anim.revealedLoot == #anim.slots then setState(anim, "SUMMARY")
             else
@@ -446,6 +478,9 @@ function RewardSystem.finishImmediately(anim)
     for _, slot in ipairs(anim.slots) do slot.revealedAt = anim.timer - 1 end
     anim.totalRevealed, anim.finished, anim.buttonActive = true, true, true
     anim.displayTotal = anim.result.earnedGold
+    anim.soulsCollected = anim.result.earnedSouls or 0
+    anim.soulTotal = (anim.result.soulsBefore or 0) + anim.soulsCollected
+    anim.soulFlare = 0
     anim.walletTotal, anim.pulse = anim.breakdown.currentGold + anim.displayTotal, 0.16
     setState(anim, "SUMMARY")
     Sound.play("reward_gold_total")
@@ -564,7 +599,8 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     local leftX, leftW = x + 32, 536
     local rightX, rightW = x + 586, 422
     panel(leftX, y + 118, leftW, 205)
-    panel(rightX, y + 118, rightW, 205, true)
+    panel(rightX, y + 118, rightW, 141, true)
+    panel(rightX, y + 269, rightW, 54)
     g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("CHI TIẾT THƯỞNG", leftX + 20, y + 133)
     g.printf("XU VÀNG", leftX + leftW - 112, y + 133, 92, "right")
     local rowY = y + 160
@@ -602,14 +638,48 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     g.scale((1 + anim.pulse) * totalScale)
     g.setFont(UI.fonts.huge); g.setColor(1, 0.87, 0.52)
     g.print("+" .. anim.displayTotal, 0, 0); g.pop()
-    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("XU VÀNG", rightX + 179, y + 222)
-    g.setColor(0.71, 0.54, 0.28, 0.28); g.line(rightX + 20, y + 253, rightX + rightW - 20, y + 253)
-    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("SỐ DƯ TÚI VÀNG", rightX + 20, y + 269)
-    coin(rightX + 220, y + 286, 28)
-    g.setFont(UI.fonts.small); g.setColor(muted); g.printf(tostring(anim.breakdown.currentGold), rightX + 242, y + 278, 47, "right")
-    g.setColor(gold); g.print("→", rightX + 301, y + 278)
-    g.setFont(UI.fonts.medium); g.setColor(UI.COLORS.textLight); g.printf(tostring(anim.walletTotal), rightX + 322, y + 273, 78, "right")
-    if inside(mx, my, rightX, y + 118, rightW, 205) then
+    g.setFont(UI.fonts.tiny); g.setColor(muted)
+    g.print("TÚI  " .. anim.breakdown.currentGold .. "  →  " .. anim.walletTotal, rightX + 179, y + 233)
+    local soulColor = {0.38, 0.94, 0.88}
+    local sx, sy = rightX + 35, y + 296
+    local soulPulse = anim.soulFlare / 0.45
+    softGlow(sx, sy, 32 + soulPulse * 12, 28 + soulPulse * 10, soulColor, 0.23 + soulPulse * 0.35)
+    g.setColor(0.22, 0.68, 0.70, 0.7); g.circle("line", sx, sy, 18)
+    g.setColor(soulColor); g.polygon("fill", sx, sy - 13, sx + 9, sy + 1, sx, sy + 12, sx - 9, sy + 1)
+    g.setColor(0.87, 1, 0.97); g.ellipse("fill", sx - 2, sy - 2, 2.5, 5)
+    g.setFont(UI.fonts.tiny); g.setColor(soulColor); g.print("LINH HỒN THU THẬP", rightX + 64, y + 279)
+    g.setColor(muted); g.print("QUÁI +1  ·  BOSS +4", rightX + 64, y + 299)
+    g.setFont(UI.fonts.medium); g.setColor(soulColor)
+    g.printf("+" .. anim.soulsCollected, rightX + 244, y + 279, 60, "right")
+    g.setFont(UI.fonts.tiny); g.setColor(UI.COLORS.textLight)
+    g.printf("TỔNG " .. anim.soulTotal, rightX + 304, y + 298, 100, "right")
+    if anim.state == "SOUL_GATHER" then
+        -- Curved wisps converge on the crystal; tails fade without gameplay RNG.
+        g.setBlendMode("add")
+        for i = 1, anim.result.earnedSouls or 0 do
+            local flight = math.max(0, math.min(1, (anim.phaseTime - (i - 1) * 0.12) / 0.35))
+            if flight > 0 and flight < 1 then
+                local px, py
+                for j = 7, 0, -1 do
+                    local t = math.max(0, flight - j * 0.035)
+                    local ease = t * t * (3 - 2 * t)
+                    local wx = sx - (1 - ease) * (310 + i * 26)
+                    local wy = sy - (1 - ease) * 65 - math.sin(t * math.pi) * (45 + i * 12)
+                    if px then
+                        g.setColor(soulColor[1], soulColor[2], soulColor[3], (1 - j / 8) * 0.55)
+                        g.setLineWidth(2 + (7 - j) * 0.4); g.line(px, py, wx, wy)
+                    end
+                    px, py = wx, wy
+                end
+                softGlow(px, py, 19, 19, soulColor, 0.55)
+                g.setColor(0.8, 1, 0.95); g.circle("fill", px, py, 4)
+            end
+        end
+        g.setBlendMode("alpha")
+    end
+    if inside(mx, my, rightX, y + 269, rightW, 54) then
+        UI.descriptionCandidate = {hoverKey = anim.result, name = "LINH HỒN CHIẾN THẮNG", desc = "Mỗi quái thường: 1 linh hồn. Boss: 4 linh hồn.\nTrận này: " .. (anim.result.earnedSouls or 0) .. " linh hồn.\nDùng tại Chợ Linh Hồn; bỏ qua ải không nhận linh hồn.", color = soulColor}
+    elseif inside(mx, my, rightX, y + 118, rightW, 141) then
         UI.descriptionCandidate = {hoverKey = anim, name = "TỔNG XU NHẬN ĐƯỢC", desc = "Thưởng bảo đảm: " .. anim.breakdown.totalGold .. " xu\nVàng thưởng từ chiến lợi phẩm: " .. anim.result.bonusGold .. " xu\nTổng cộng: " .. anim.result.earnedGold .. " xu. Tiền được cộng một lần; số dư bên dưới bao gồm tiền đang có.", color = gold}
     end
     for _, c in ipairs(anim.coins) do

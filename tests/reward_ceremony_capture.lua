@@ -6,6 +6,7 @@ local C = Reward.config
 local Test = {}
 local stage, deadline, started, frames = "start", 0, 0, 0
 local gold, before, originalRng
+local supplyIndex = 1
 local function nextStage(name, delay) stage = name; deadline = love.timer.getTime() + (delay or 0.15) end
 local function shot(name)
     love.graphics.captureScreenshot(function(data)
@@ -45,7 +46,12 @@ function Test.update(game, callbacks)
         local anim = callbacks.getRewardAnimation()
         assert(#anim.coins > 0 and anim.displayTotal < anim.result.earnedGold)
         shot("shot_reward_coins.png")
-        nextStage("rare", 1)
+        nextStage("souls", 0.1)
+    elseif stage == "souls" then
+        local anim = callbacks.getRewardAnimation()
+        if anim.state ~= "SOUL_GATHER" or anim.phaseTime < 0.14 then nextStage("souls", 0.025); return end
+        shot("shot_reward_souls.png")
+        nextStage("rare", 0.5)
     elseif stage == "rare" then
         local anim = callbacks.getRewardAnimation()
         if not anim.flares[1] or anim.timer - anim.flares[1] < 0.1 then nextStage("rare", 0.025); return end
@@ -106,7 +112,22 @@ function Test.update(game, callbacks)
     elseif stage == "card_continue" then
         love.keypressed("return")
         assert(select(2, callbacks.getRewardAnimation()) == "shop" and game.gold == gold)
-        print("LÖVE reward ceremony passed: coins, six loot slots, audio hooks, saved pack handoff, ITM socket, skip, direct card, keyboard fast-forward; " .. frames .. " frames")
+        nextStage("supply_start")
+    elseif stage == "supply_start" then
+        local id=C.supplies.entries[supplyIndex].id
+        game.consumables={}
+        C.tables.capture.entries={{id=id,weight=1}}
+        callbacks.openReward("capture")
+        assert(game.consumables[1].id==id)
+        assert(require("src.consumable_art").get(game.consumables[1]), "supply must have Continental artwork: "..id)
+        love.keypressed("space")
+        nextStage("supply_shot",0.2)
+    elseif stage == "supply_shot" then
+        shot("shot_reward_"..C.supplies.entries[supplyIndex].id..".png")
+        supplyIndex=supplyIndex+1
+        nextStage(supplyIndex<=#C.supplies.entries and "supply_start" or "done",0.1)
+    elseif stage == "done" then
+        print("LÖVE reward ceremony passed: coins, soul harvest, seven supply artworks, six loot slots, audio, saved pack handoff, ITM socket, skip, direct card, keyboard fast-forward; " .. frames .. " frames")
         stage = "done"; love.event.quit(0)
     end
 end

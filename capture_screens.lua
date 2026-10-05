@@ -72,6 +72,8 @@ function Capture.update(gameRef, callbacks)
         if value == "--test-bed-speed" then return require("tests.bed_speed_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do
+        if value == "--test-action-vfx-juice" then return require("tests.action_vfx_juice_capture").update(gameRef, callbacks) end
+        if value == "--test-action-vfx" then return require("tests.action_vfx_capture").update(gameRef, callbacks) end
         if value == "--test-combat-feedback" then return require("tests.combat_feedback_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do

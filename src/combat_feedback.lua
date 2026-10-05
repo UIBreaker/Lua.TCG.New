@@ -1,5 +1,5 @@
 -- Presentation only: numbers always come from the resolved gameplay result.
-local F = {}
+local F = {config=require("config.action_vfx_config"),vfx={}}
 local colors = {{1,0.88,0.72}, {1,0.75,0.32}, {1,0.48,0.20}, {1,0.28,0.38}, {0.88,0.65,1}}
 local labels = {"SÁT THƯƠNG", "ĐÒN MẠNH", "BÙNG NỔ", "HỦY DIỆT", "SIÊU VIỆT"}
 
@@ -24,7 +24,7 @@ function F.new(kind, amount, x, y, format)
     if kind == "gold" then text = text .. " VÀNG"
     elseif kind == "armor" then text = text .. " GIÁP"
     elseif kind == "heal" then text = text .. " HP" end
-    local duration = kind == "damage" and (1.25 + tier * 0.16) or 1.35
+    local duration = kind == "damage" and (1.25 + tier * 0.16) or 1.05
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,
         age=0, life=duration, maxLife=duration, alpha=1,
         label=kind == "damage" and labels[tier] or nil}
@@ -42,6 +42,18 @@ function F.add(list, kind, amount, x, y, format)
         end
     end
     list[#list+1] = ft
+    if kind=="armor" or kind=="heal" then
+        local effect=kind=="armor" and (amount>=0 and "armor_gain" or "armor_loss") or (amount>=0 and "heal" or "hurt")
+        local vx,vy=x,y
+        if kind=="heal" and y==114 then vx,vy=320,43
+        elseif kind=="armor" and y==85 then vx,vy=320,23 end
+        local silent=y>=450
+        -- Contact and HUD describe the same hit; keep one transient.
+        if amount<0 and y<150 then
+            for _,e in ipairs(F.vfx) do if e.kind==effect and e.age<0.06 then silent=true;break end end
+        end
+        F.emit(effect,vx,vy,amount,nil,silent)
+    end
     while #list > 24 do table.remove(list, 1) end
     return ft
 end
@@ -70,7 +82,9 @@ function F.draw(ft, ui)
     g.push("all")
     local rise = ft.kind and (1-math.exp(-age*2.5))*42 or 0
     g.translate(ft.x, math.max(72,ft.y-rise))
-    local scale = ft.kind and (1+(tier-1)*0.13+(0.24+tier*0.045)*math.exp(-age*10)*math.sin(age*24)) or ft.scale or 1
+    local pulse=ft.kind=="heal" and (ft.amount>0 and 0.12 or 0.25) or ft.kind=="armor" and 0.22 or 0.16
+    local scale = ft.kind=="damage" and (1+(tier-1)*0.13+(0.24+tier*0.045)*math.exp(-age*10)*math.sin(age*24))
+        or ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
     g.scale(scale)
     if ft.kind == "damage" and tier >= 3 then
         local p = math.min(1, age/0.42)
@@ -110,4 +124,162 @@ function F.draw(ft, ui)
     g.pop()
 end
 
+local clamp=function(v) return math.max(0,math.min(1,v)) end
+local out=function(v) return 1-(1-clamp(v))^3 end
+function F.emit(kind,x,y,amount,rect,silent)
+    local profile=F.config.profiles[kind]
+    if not profile or not x or not y or amount==0 then return end
+    local e={kind=kind,x=x,y=y,amount=amount or 1,age=0,profile=profile,rect=rect,
+        silent=silent,scale=math.min(F.config.maxScale,1+math.log(1+math.abs(amount or 1))*0.045)}
+    F.vfx[#F.vfx+1]=e
+    while #F.vfx>F.config.cap do table.remove(F.vfx,1) end
+    if profile.contact==0 then F.contact(e) end
+    return e
+end
+function F.contact(e)
+    if not e or e.contacted then return false end
+    e.contacted=true
+    if not e.silent then require("src.sound").play(e.profile.sound,e.profile.pitch) end
+    return true
+end
+function F.updateVfx(dt)
+    for i=#F.vfx,1,-1 do
+        local e=F.vfx[i]
+        if not e.clocked then e.age=e.age+math.max(0,dt) end
+        if e.age>=e.profile.contact then F.contact(e) end
+        if e.age>=e.profile.duration then table.remove(F.vfx,i) end
+    end
+end
+local destroyed=setmetatable({}, {__mode="k"})
+function F.destroyCard(card,x,y,rect,silent)
+    if not card or destroyed[card] then return end
+    destroyed[card]=true
+    return F.emit("destroy",x,y,1,rect,silent)
+end
+function F.clearVfx() F.vfx={};destroyed=setmetatable({}, {__mode="k"}) end
+local function line(g,c,alpha,width,...)
+    g.setColor(c[1],c[2],c[3],alpha*0.065);g.setLineWidth(width*2.6);g.line(...)
+    g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(width);g.line(...)
+end
+local function shield(g,x,y,r,mode)
+    g.polygon(mode,x-r*0.7,y-r*0.65,x,y-r,x+r*0.7,y-r*0.65,x+r*0.62,y+r*0.2,x,y+r,x-r*0.62,y+r*0.2)
+end
+local function contact(e)
+    local age=math.max(0,e.age-e.profile.contact)
+    return age,e.age>=e.profile.contact and math.exp(-age*26) or 0
+end
+local painters={}
+painters.armor_gain=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local build=clamp(e.age/e.profile.contact)^2
+    local r=17+hit*2
+    g.setColor(c[1],c[2],c[3],alpha*(0.035+hit*0.055));shield(g,0,0,r*1.15,"fill")
+    g.setColor(c[1],c[2],c[3],alpha*build);g.setLineWidth(1.8);shield(g,0,0,r,"line")
+    for i=1,4 do local a=i*math.pi/2;local d=36*(1-build)+r
+        line(g,c,alpha*(1-build),2,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+6),math.sin(a)*(d+6)) end
+    line(g,c,alpha*build,2,-6,0,0,6,8,-7)
+end
+painters.armor_loss=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local fly=clamp(age/0.32)
+    if e.age<e.profile.contact then
+        g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(2);shield(g,0,0,18,"line")
+        line(g,c,alpha,1.8,-4,-17,3,-5,-4,3,5,17)
+    else
+        local points={{-13,-12},{0,-18},{13,-12},{11,4},{0,18},{-11,4}}
+        for i=1,6 do
+            local a,b=points[i],points[i%6+1];local dx,dy=(a[1]+b[1])*0.5,(a[2]+b[2])*0.5
+            local travel=1-math.exp(-age*12)
+            g.push();g.translate(dx*travel*1.6,dy*travel*1.3+fly*fly*30);g.rotate((i%2==0 and 1 or -1)*fly*0.85)
+            g.setBlendMode("alpha");g.setColor(0.10,0.22,0.29,alpha*0.8);g.polygon("fill",0,0,a[1],a[2],b[1],b[2])
+            g.setBlendMode("add");g.setColor(c[1],c[2],c[3],alpha*(0.65+hit*0.35));g.setLineWidth(1.3)
+            g.polygon("line",0,0,a[1],a[2],b[1],b[2]);g.pop()
+        end
+    end
+end
+painters.heal=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local gather=clamp(e.age/0.28);local ease=gather*gather*(3-2*gather)
+    for i=1,5 do local a=i*2.4+ease*1.5;local r=30*(1-ease)
+        local x,y=math.cos(a)*r,math.sin(a)*r+12*(1-ease)-age*5
+        g.setColor(c[1],c[2],c[3],alpha*0.65*math.sin(gather*math.pi));g.circle("fill",x,y,1.8)
+        line(g,c,alpha*0.25*math.sin(gather*math.pi),1,x,y,x+math.sin(a)*4,y-math.cos(a)*4)
+    end
+    g.setColor(c[1],c[2],c[3],alpha*(0.025+hit*0.035));g.circle("fill",0,-age*5,16)
+    line(g,c,alpha*ease,2.4,-7,-age*5,7,-age*5);line(g,c,alpha*ease,2.4,0,-7-age*5,0,7-age*5)
+    g.setColor(c[1],c[2],c[3],alpha*0.22*ease);g.setLineWidth(1);g.ellipse("line",0,5,10+out(p)*17,4+out(p)*5)
+end
+painters.hurt=function(g,e,p,c,alpha)
+    local cut=out(e.age/0.055);local tail=math.exp(-e.age*13);local r=10+cut*30
+    line(g,c,alpha*tail,3.2,-r*0.65,-r*0.6,r*0.65,r*0.6)
+    line(g,c,alpha*tail*0.4,1.5,-r*0.2,-r*0.65,r*0.8,r*0.25)
+    for i=1,3 do local a=0.35+i*0.25;local d=out(p)*28
+        line(g,c,alpha*tail,1,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+5),math.sin(a)*(d+5)) end
+end
+painters.equip=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local spring=math.exp(-age*22)*math.sin(age*48)
+    local r=18-2*hit+2*spring
+    g.push();g.rotate(spring*0.035);g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(2.2)
+    g.rectangle("line",-r,-r,r*2,r*2,2,2);g.pop()
+    for i=1,4 do local a=i*math.pi/2;local d=18+3*spring
+        line(g,c,alpha,2,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+6),math.sin(a)*(d+6)) end
+    g.setColor(1,0.95,0.7,alpha*hit*0.22);g.setLineWidth(1.4);g.circle("line",0,0,20+out(age/0.16)*16)
+    line(g,c,alpha*out(age/0.055),2.2,-5,0,0,5,7,-6)
+end
+painters.destroy=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local spread=out(age/0.34)
+    for i=1,6 do local a=i*2.39;local r=7+spread*(20+i*2)
+        local x,y=math.cos(a)*r,math.sin(a)*r*0.55-spread*(16+i*3)
+        line(g,c,alpha*(1-spread)*0.65,1,0,0,math.cos(a)*17,math.sin(a)*24)
+        g.setBlendMode("alpha");g.setColor(0.12,0.04,0.02,alpha*0.8);g.polygon("fill",x,y,x+4,y+6,x-2,y+8)
+        g.setBlendMode("add");g.setColor(1,0.18+hit*0.65,0.04+hit*0.35,alpha*(1-p*0.6))
+        g.setLineWidth(1);g.line(x-2,y+8,x,y,x+4,y+6)
+    end
+    g.setColor(1,0.68,0.24,alpha*hit*0.09);g.ellipse("fill",0,0,17*(1-spread),24*(1-spread))
+end
+local function priority(g,e,p,c,alpha,direction)
+    for i=1,3 do
+        local t=clamp((e.age-(i-1)*0.025)/(direction<0 and 0.11 or 0.18))
+        local k=direction<0 and out(t) or t*t*(3-2*t);local x=direction*(-30+45*k)+(i-2)*17
+        line(g,c,alpha*(0.8-p*0.3),2,x-direction*7,-8,x,0,x-direction*7,8)
+    end
+    g.setColor(c[1],c[2],c[3],alpha*0.035);g.ellipse("fill",0,0,65,12)
+end
+painters.enemy_first=function(g,e,p,c,alpha) priority(g,e,p,c,alpha,-1) end
+painters.player_first=function(g,e,p,c,alpha) priority(g,e,p,c,alpha,1) end
+painters.buy=function(g,e,p,c,alpha)
+    local age,hit=contact(e);local spring=math.exp(-age*19)*math.sin(age*32);local r=19+3*spring
+    g.setColor(c[1],c[2],c[3],alpha*(0.025+hit*0.05));g.circle("fill",0,0,r+5)
+    g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(1.8);g.circle("line",0,0,r)
+    line(g,c,alpha*out(age/0.05),2.2,-7,0,-1,6,10,-7)
+    for i=1,4 do local a=i*math.pi/2;local d=22+out(age/0.2)*13
+        line(g,c,alpha*(1-p),1,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+5),math.sin(a)*(d+5)) end
+end
+painters.sell=function(g,e,p,c,alpha)
+    local age=math.max(0,e.age-e.profile.contact)
+    for i=1,4 do
+        local t=clamp((age-(i-1)*0.02)/0.32);local k=t*t*(3-2*t)
+        local tx=e.target and (e.target.x-e.x)/e.scale or 0
+        local ty=e.target and (e.target.y-e.y)/e.scale or -38
+        local x=(i-2.5)*10*(1-k)+tx*k;local y=ty*k-math.sin(k*math.pi)*(18+i*2)
+        local a=alpha*math.sin(t*math.pi);local w=2+2*math.abs(math.cos(age*22+i))
+        g.setColor(c[1],c[2],c[3],a);g.ellipse("fill",x,y,w,5)
+        g.setColor(1,0.93,0.65,a*0.8);g.setLineWidth(1);g.ellipse("line",x,y,w,5)
+    end
+    line(g,c,alpha*math.exp(-age*18),1.5,-18,10,18,10)
+end
+function F.drawVfx(ui)
+    local g=love.graphics
+    g.push("all");g.setShader();g.setBlendMode("add")
+    for _,e in ipairs(F.vfx) do
+        local p=clamp(e.age/e.profile.duration);local alpha=math.min(1,e.age/0.012)*(1-out((p-0.38)/0.62))
+        g.push("all");g.translate(e.x,e.y);g.scale(e.scale,e.scale)
+        painters[e.kind](g,e,p,e.profile.color,alpha)
+        if e.profile.label then
+            g.setBlendMode("alpha");g.setFont(ui.fonts.tiny or ui.fonts.small)
+            g.setColor(0.01,0.02,0.035,alpha*0.8);g.rectangle("fill",-115,15,230,24,5,5)
+            g.setColor(e.profile.color[1],e.profile.color[2],e.profile.color[3],alpha)
+            g.printf(e.profile.label,-115,19,230,"center")
+        end
+        g.pop()
+    end
+    g.pop()
+end
 return F

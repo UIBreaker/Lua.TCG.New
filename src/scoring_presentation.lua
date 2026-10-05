@@ -101,6 +101,10 @@ end
 local function trigger(anim, st)
     local s = anim.sequence
     local x, y, cardIndex = sourcePoint(anim, st)
+    if st.type=="card_ability" and st.kind=="destroy" then
+        Feedback.destroyCard(st.card,x,y)
+        if st.card then st.card.destroyFxActive=true;st.card.destroyFx=0 end
+    end
     anim.activeCardIndex = cardIndex
     if st.slotIndex then
         anim.deityBounce[st.slotIndex] = C.pulse.spn

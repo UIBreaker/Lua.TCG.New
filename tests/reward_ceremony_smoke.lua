@@ -165,4 +165,45 @@ for _, fps in ipairs({30, 60, 144}) do
     assert(presented.finished and presented.displayTotal == large.earnedGold)
     assert(Rng.getState() == rngBefore, "cinematic effects cannot alter gameplay RNG")
 end
-print("Reward ceremony smoke passed: formulas, all loot, coins, skip, RNG, save/load, capacity, packs, bosses")
+-- All seven supply cards retain their existing usable effects and artwork IDs.
+for _, entry in ipairs(C.supplies.entries) do
+    local supplyGame = game()
+    local reward = forced(supplyGame, entry.id)
+    local card = supplyGame.consumables[1]
+    assert(card and card.id == entry.id and reward.loot[1].type == "CONSUMABLE")
+    if entry.id:match("healing") then assert(card.healAmt == (entry.id:match("large") and 60 or 15)) end
+    if entry.id:match("armor") then assert(card.armorAmt == (entry.id:match("large") and 20 or 8)) end
+    if entry.id:match("speed") then assert(Shop.getConsumableParams(card).speed == (entry.id:match("large") and 10 or 3)) end
+    local full = game(); for i=1,require("src.inventory").limit(full) do full.consumables[i]=Run.createSpeedSingleCard() end
+    assert(forced(full,entry.id).loot[1].type=="GOLD", "full inventory must convert supplies")
+end
+local Souls = require("src.souls")
+for _, count in ipairs({1,2,3}) do
+    local squad = game(); squad.souls=5;squad.enemies={}
+    for i=1,count do squad.enemies[i]={hp=10,group=squad.enemies} end
+    squad.monster=squad.enemies[1]
+    for i=1,count do
+        squad.enemies[i].hp=0
+        Souls.awardKills(squad); Souls.awardKills(squad)
+        assert(squad.souls==5+i, "one soul per kill, no duplicate payout")
+    end
+    local result=forced(squad,"gold_bonus")
+    assert(result.earnedSouls==count and result.soulsBefore==5 and squad.souls==5+count)
+    local resumed=Persistence.restoreSnapshot(Persistence.makeSnapshot(squad,"CASH_OUT"))
+    assert(Reward.begin(result.breakdown,resumed).earnedSouls==count and resumed.souls==5+count)
+    local cinematic=Reward.newAnimation(result.breakdown,result)
+    Reward.update(cinematic,10)
+    assert(cinematic.finished and cinematic.soulsCollected==count and cinematic.soulTotal==5+count)
+    local fast=Reward.newAnimation(result.breakdown,result);Reward.finishImmediately(fast)
+    assert(fast.soulTotal==5+count and fast.soulsCollected==count)
+end
+local bossGame=game();bossGame.monster={hp=0,isBoss=true};bossGame.souls=7
+Souls.awardKills(bossGame);assert(bossGame.souls==11)
+assert(forced(bossGame,"gold_bonus").earnedSouls==4 and bossGame.souls==11)
+assert(skipped.earnedSouls==0)
+-- Exercise the independent supply roll without changing original loot odds.
+local oldChance=C.supplies.normalChance;C.supplies.normalChance=1
+local supplies=game();local drops=Reward.begin(Reward.calculate(blind,supplies),supplies)
+assert(#drops.loot==2 and drops.loot[2].source=="TIẾP TẾ")
+C.supplies.normalChance=oldChance
+print("Reward ceremony smoke passed: loot, seven supplies, per-enemy souls, bosses, skip, RNG, save/load, capacity, packs, animation")

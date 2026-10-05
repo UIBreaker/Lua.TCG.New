@@ -1243,7 +1243,7 @@ function Shop.transferEquipment(sourceCard, eqIndex, targetCard)
     table.remove(sourceCard.equipments, eqIndex)
     targetCard.equipments = targetCard.equipments or {}
     table.insert(targetCard.equipments, eq)
-    Sound.play("equip")
+    Sound.play("card_slide",0.92)
     return true, "Đã chuyển [" .. eq.name .. "] sang Lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
 end
 

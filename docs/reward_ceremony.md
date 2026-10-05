@@ -1,5 +1,13 @@
 # Reward ceremony
 
+## Soul harvest and supplies
+
+Every defeated ordinary enemy grants 1 soul immediately, so a defeated squad of 1/2/3 grants 1/2/3. Each boss grants 4. `Souls.awardKills` marks individual enemies to prevent repeated payouts. The ceremony reports the encounter total through `earnedSouls` and `soulsBefore`, with curved teal wisps converging on a crystal and an animated balance. Skipped encounters grant none; saved CASH_OUT results and fast-forward only replay the presentation.
+
+An independent supply roll happens after the original loot roll: 35% for ordinary encounters, 65% for bosses. It adds at most one supply and preserves the original pack/chest odds. Its conditional distribution is small health 25%, large health 10%, small armor 20%, large armor 10%, small speed 20%, large speed 10%, destruction card 5%. Overall normal/boss probabilities respectively: small health 8.75/16.25%, large health 3.5/6.5%, small armor 7/13%, large armor 3.5/6.5%, small speed 7/13%, large speed 3.5/6.5%, destruction 1.75/3.25%.
+
+Supplies reuse `Shop.healingItem` and `Shop.destructionItem`: 15/60 HP, 8/20 armor, +3/+10 permanent attack speed for one chosen hand card, or the existing shop destruction ritual. They use existing Continental art and the shared card frame. A full consumable inventory converts the drop to the existing visibly labeled gold fallback. All chances live in `config/reward_loot.lua`.
+
 ## Files and transaction
 
 - `src/reward_system.lua`: keeps the existing guaranteed gold calculation; rolls, validates and grants bonus loot once; animates and renders saved results; hands free packs to Shop.

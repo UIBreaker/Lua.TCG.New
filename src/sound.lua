@@ -297,11 +297,11 @@ function Sound.init()
             return bell * math.exp(-t * 17) * 0.48
         end)
 
-        sounds.equip = generateSound(0.28, rate, function(t)
+        sounds.equip = generateSound(0.20, rate, function(t)
             local click = math.sin(2 * math.pi * 280 * t) * math.exp(-t * 65)
             local ring = (math.sin(2 * math.pi * 784 * t)
                 + 0.32 * math.sin(2 * math.pi * 1176 * t)) * math.exp(-t * 16)
-            return click * 0.45 + ring * 0.35
+            return click * 0.54 + ring * 0.28 + (love.math.random()*2-1)*math.exp(-t*170)*0.12
         end)
 
         sounds.sell = generateSound(0.22, rate, function(t)

@@ -4,6 +4,7 @@ local Shop = require("src.shop")
 local Sound = require("src.sound")
 local Effects = require("src.card_effects")
 local Config = require("config.ux_polish_config")
+local Feedback = require("src.combat_feedback")
 local P = {config=Config, focus=nil, job=nil, age=0, time=0, applications={}}
 local motion=setmetatable({}, {__mode="k"})
 local shader, canvas, loaded
@@ -16,7 +17,9 @@ function P.busy() return P.job~=nil end
 function P.goldPulse()
     local j=P.job
     if not j then return 1 end
-    return 1+0.06*math.sin(clamp((j.age/j.duration-0.06)/0.25)*math.pi)
+    local t=j.age/j.duration
+    local since=j.kind=="sell" and math.max(0,t-0.84) or t
+    return 1+0.075*math.exp(-since*18)*math.sin(since*36)
 end
 function P.clearFocus() P.focus=nil end
 function P.isFocused(card) return P.focus and identity(P.focus.item)==card end
@@ -109,6 +112,12 @@ function P.confirm(shop,game,done)
         items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
         soul=soulTransaction,acquired=acquired,gold=gold,
         done=function() if done then done(action,equipment) end end}
+    if f.kind=="card" then P.job.effect=Feedback.destroyCard(f.item,f.rect.x+f.rect.w/2,f.rect.y+f.rect.h/2,f.rect,true)
+    elseif kind=="sell" then
+        P.job.effect=Feedback.emit(kind,f.rect.x+f.rect.w/2,f.rect.y+f.rect.h/2,math.max(1,math.abs(P.job.delta)),f.rect,true)
+        P.job.effect.target=gold
+    end
+    if P.job.effect then P.job.effect.clocked=true end
     P.clearFocus();return true
 end
 function P.reroll(shop,game)
@@ -135,6 +144,13 @@ function P.update(dt,fast,state,shop)
     local job=P.job
     if job then
         job.age=job.age+step
+        if job.effect and job.effect.clocked then job.effect.age=job.age;if job.effect.age>=job.effect.profile.contact then Feedback.contact(job.effect) end end
+        if job.kind=="buy" and not job.landed and job.age>=job.duration*Config.buyFlightEnd then
+            job.landed=true
+            job.effect=Feedback.emit("buy",job.target.x,job.target.y,math.max(1,math.abs(job.delta)))
+            Effects.triggerScorePulse(job.acquired or identity(job.item))
+        end
+        if job.kind=="sell" and not job.cashed and job.age>=job.duration*0.84 then job.cashed=true;Sound.play("coin",1.08) end
         if job.kind=="buy" and not job.reacted and job.age>=job.duration*0.18 then
             job.reacted=true;Effects.triggerScorePulse(identity(job.item));Sound.play("coin")
         end
@@ -144,14 +160,21 @@ function P.update(dt,fast,state,shop)
             Sound.play("card_slide")
         end
         if job.age>=job.duration then
-            P.job=nil;Sound.play(job.kind=="sell" and "coin" or "card_deal")
+            if job.effect then job.effect.clocked=false end
+            P.job=nil
+            if job.kind~="sell" then Sound.play("card_deal",0.94) end
             if job.done then job.done() end
         end
     end
     for i=#P.applications,1,-1 do
         local a=P.applications[i];a.age=a.age+step
         if not a.hit and a.age>=Config.application*0.60 then
-            a.hit=true;Effects.triggerScorePulse(a.target);Sound.play("mult_pop")
+            a.hit=true;Effects.triggerScorePulse(a.target)
+            if a.kind=="equip" then
+                a.effect=Feedback.emit("equip",a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2)
+                local pose=require("src.card_physics").getState(a.target)
+                if pose then pose.active=true;pose.vy=48;pose.angularVelocity=0.13;pose.stretch=-0.025 end
+            else Sound.play("mult_pop") end
         end
         if a.age>=Config.application+Config.popup then table.remove(P.applications,i) end
     end
@@ -219,11 +242,11 @@ function P.dissolve(UI,x,y,w,h,amount,color,draw)
     g.setBlendMode("alpha","premultiplied");g.setColor(alpha,alpha,alpha,alpha)
     g.draw(canvas,x,y,0,w/256,h/384);g.pop();UI.CardPhysics.resume()
 end
-function P.application(UI,source,target,text,sourceRect,targetRect)
+function P.application(UI,source,target,text,sourceRect,targetRect,kind)
     if not target or not text or text=="" then return end
     local s=sourceRect or P.rect(UI,source,{x=1110,y=405,w=64,h=88})
     local r=targetRect or P.rect(UI,target)
-    P.applications[#P.applications+1]={source=s,target=target,rect=r,text=text,age=0,color=Effects.getBeamColor(target)}
+    P.applications[#P.applications+1]={source=s,target=target,rect=r,text=text,age=0,kind=kind,color=kind=="equip" and Feedback.config.profiles.equip.color or Effects.getBeamColor(target)}
 end
 function P.snapshot(game)
     local A=require("src.card_abilities");local D=require("src.deities");local Deck=require("src.deck")
@@ -279,7 +302,7 @@ function P.changed(UI,game,before,source,sourceRect)
                 if new~=nil and new~=old then lines[#lines+1]=(labels[key] or key).." "..valueText(key,old).." → "..valueText(key,new) end
             end
             table.sort(lines)
-            if #lines>0 then P.application(UI,source,target,table.concat(lines,"\n"),sourceRect) end
+            if #lines>0 then P.application(UI,source,target,table.concat(lines,"\n"),sourceRect,nil,nextValues.equipment>values.equipment and "equip" or nil) end
         end
     end
     -- Prefer visible hand instances over their persistent copies (same card ID).
@@ -325,21 +348,25 @@ function P.draw(UI,game,buttons,mx,my)
         local flight=job.kind=="buy" and smooth((t-Config.buyFlightStart)/(Config.buyFlightEnd-Config.buyFlightStart)) or 0
         local x=r.x+r.w/2+(job.target.x-r.x-r.w/2)*flight
         local y=r.y+r.h/2+(job.target.y-r.y-r.h/2)*flight-math.sin(flight*math.pi)*38
-        local size=1+math.sin(clamp(t/0.36)*math.pi)*(job.kind=="sell" and -0.04 or 0.06)-flight*0.55
-        g.push("all");g.translate(x,y);g.rotate(flight*0.12+(job.kind=="sell" and math.sin(t*25)*0.008*(1-t) or 0));g.scale(size)
+        local pickup=math.exp(-t*10)*math.sin(t*22)
+        local size=1+pickup*(job.kind=="sell" and -0.055 or 0.10)-flight*0.55
+        g.push("all");g.translate(x,y);g.rotate(flight*0.07+(job.kind=="sell" and math.sin(t*25)*0.008*(1-t) or 0));g.scale(size)
         if job.kind=="sell" then
             UI.drawCardBorder(-r.w/2,-r.h/2,r.w,r.h,{1,0.77,0.25,math.max(0,1-t*4)})
-            P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.18)/0.55),tint,function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
+            P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.12)/0.60),job.effect and job.effect.kind=="destroy" and Feedback.config.profiles.destroy.color or tint,function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
         else drawItem(job.item,-r.w/2,-r.h/2,r.w,r.h) end
         g.pop()
-        for i=1,Config.shards do
+        for i=1,(job.kind=="sell" and job.effect and 0 or 4) do
             local p=out((t-Config.coinStart-i*0.015)/Config.coinTravel)
             local sx,sy,tx,ty=job.gold.x,job.gold.y,r.x+r.w/2,r.y+r.h/2
             if job.kind=="sell" then sx,sy,tx,ty=tx,ty,sx,sy end
-            g.setColor(tint[1],tint[2],tint[3],math.sin(p*math.pi));g.circle("fill",sx+(tx-sx)*p,sy+(ty-sy)*p-math.sin(p*math.pi)*(20+i*3),2)
+            g.setColor(tint[1],tint[2],tint[3],math.sin(p*math.pi));g.ellipse("fill",sx+(tx-sx)*p,sy+(ty-sy)*p-math.sin(p*math.pi)*(20+i*3),2+math.abs(math.cos(t*18+i)),4)
         end
-        g.setFont(UI.fonts.small);g.setColor(1,0.8,0.35,1-t)
-        g.print((job.delta>0 and "+" or "-")..(job.soul and "" or "$")..math.abs(job.delta)..(job.soul and " LH" or ""),job.gold.x,job.gold.y+24-out(t)*16)
+        local since=math.max(0,t-(job.kind=="sell" and 0.84 or 0.18))
+        local pulse=1+0.12*math.exp(-since*18)*math.sin(since*36)
+        g.push("all");g.translate(job.gold.x,job.gold.y+24-out(t)*16);g.scale(pulse)
+        g.setFont(UI.fonts.small);g.setColor(1,0.8,0.35,job.kind=="sell" and clamp((1-t)/0.16) or 1-t)
+        g.print((job.delta>0 and "+" or "-")..(job.soul and "" or "$")..math.abs(job.delta)..(job.soul and " LH" or ""),0,0);g.pop()
     end
     for _,a in ipairs(P.applications) do
         local current=UI.CardPhysics.getState(a.target)
@@ -348,9 +375,13 @@ function P.draw(UI,game,buttons,mx,my)
         else
             -- A deck-only target needs a brief preview after its picker has closed.
             a.rect.x=568;a.rect.y=290;a.rect.w=80;a.rect.h=110
-            P.renderItem(UI,a.target,a.rect.x,a.rect.y,a.rect.w,a.rect.h)
+            local contact=math.max(0,a.age-Config.application*0.60)
+            local bounce=a.hit and a.kind=="equip" and 0.04*math.exp(-contact*20)*math.sin(contact*44) or 0
+            g.push();g.translate(a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2);g.scale(1+bounce,1-bounce*0.4)
+            P.renderItem(UI,a.target,-a.rect.w/2,-a.rect.h/2,a.rect.w,a.rect.h);g.pop()
         end
-        local r,s=a.rect,a.source;local p=out(a.age/(Config.application*0.6))
+        if a.effect then a.effect.x=a.rect.x+a.rect.w/2;a.effect.y=a.rect.y+a.rect.h/2 end
+        local r,s=a.rect,a.source;local p=smooth(a.age/(Config.application*0.6))
         local x=s.x+s.w/2+(r.x+r.w/2-s.x-s.w/2)*p
         local y=s.y+s.h/2+(r.y+r.h/2-s.y-s.h/2)*p-math.sin(p*math.pi)*45
         local c=a.color

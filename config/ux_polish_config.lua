@@ -6,8 +6,8 @@ return {
     focusLift = 10,
     dim = 0.24,
     buy = 0.55,
-    buyFlightStart = 0.45, -- Fractions of the configured buy duration.
-    buyFlightEnd = 0.91,
+    buyFlightStart = 0.24, -- Fractions of the configured buy duration.
+    buyFlightEnd = 0.84,
     coinStart = 0.18,
     coinTravel = 0.45,
     sell = 0.45,

@@ -102,7 +102,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-chest-vfx" then isCaptureMode = true; chestAnimationCaptureMode = true end
     if a == "--test-death-vfx" then isCaptureMode = true end
     if a == "--test-weather" then isCaptureMode = true end
-    if a == "--test-combat-feedback" then isCaptureMode = true end
+    if a == "--test-combat-feedback" or a == "--test-action-vfx" or a == "--test-action-vfx-juice" then isCaptureMode = true end
     if a == "--test-hand-vfx-combat" or a == "--test-hand-vfx" or a == "--test-hd2d" or a == "--test-card-back-crop" or a == "--test-ux-polish" or a == "--test-reward-ceremony" or a == "--capture" or a == "--capture-shop" or a == "--test-pack-skip" or a == "--test-card-physics" or a == "--test-scoring-feel" or a == "--test-shop-deck-drop" or a == "--test-gameplay-expansion" then
         isCaptureMode = true
     end
@@ -386,6 +386,7 @@ juice = {
     goldBounce = 1.0,
     lastGold = 6,
     hpBounce = 1.0,
+    armorBounce = 1.0,
     lastHp = 100,
     lastArmor = 0,
     buttonPressedId = nil,
@@ -464,6 +465,11 @@ local shopFx = {}
 UI.Polish.drawConsumable = drawBattleConsumableCard
 
 local function spawnShopFx(kind, item, x, y, w, h)
+    if kind=="destroy" then Feedback.destroyCard(item and (item.card or item),x or 640,y or 360)
+    elseif kind=="sell" or kind=="sacrifice" then
+        local accent=Feedback.emit("sell",x or 640,y or 360,1,nil,true)
+        accent.target=state=="shop" and UI.Polish.config.gold or {x=475,y=38}
+    end
     local category = item and item.category
     local targetX, targetY = state == "shop" and (shopDrag.purchaseZone.x + shopDrag.purchaseZone.w / 2) or 1110,
         state == "shop" and (shopDrag.purchaseZone.y + (shopDrag.purchaseZone.h - 24) / 2) or 630
@@ -496,7 +502,8 @@ local function spawnShopFx(kind, item, x, y, w, h)
         targetY = targetY,
         w = w,
         h = h,
-        duration = kind == "consume" and UI.Polish.config.dissolve or (kind == "destroy" and 0.72 or ((kind == "sell" or kind == "sacrifice") and 0.82 or 0.92)),
+        duration = kind == "consume" and UI.Polish.config.dissolve or (kind == "destroy" and 0.56 or ((kind == "sell" or kind == "sacrifice") and 0.48 or 0.58)),
+        accentPending = kind=="buy",
     })
 end
 
@@ -797,6 +804,7 @@ local function startNewGame(chosenDeck)
     anim.pendingStoredEquipment=nil
     if not isCaptureMode then Persistence.deleteRun() end
     GameState.resetRun(game, chosenDeck or "red_deck")
+    Feedback.clearVfx()
     juice.lastGold, juice.lastHp, juice.lastArmor = game.gold or 0, game.playerHp or 100, game.playerArmor or 0
     juice.floatingTexts = {}
     pendingCombatNode = nil
@@ -1190,7 +1198,6 @@ local function destroyHandCard(index)
         if remaining.selected then table.insert(game.selectedIndices, i) end
     end
     spawnShopFx("destroy", { category = "card", card = card }, x, y)
-    Sound.play("card_destroy")
     return card
 end
 
@@ -1771,13 +1778,13 @@ end
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
         local heavy = hit.damage >= 8
-        screenShake = math.max(screenShake or 0, heavy and 11 or 6)
-        anim.hitStop = heavy and 0.095 or 0.065
-        anim.screenFlash, anim.screenDistortion = 0.12, 0.16
-        anim.impactFlash = 0.24
+        screenShake = math.max(screenShake or 0, heavy and 4.2 or 2.8)
+        anim.hitStop = heavy and 0.060 or 0.040
+        anim.screenFlash, anim.screenDistortion = 0.045, 0.065
+        anim.impactFlash = 0.14
         local hitX = enemy.screenX or UI.BATTLE_CENTER_X
         anim.impactX, anim.impactY, anim.impactColor = hitX, 454, UI.COLORS.hpRed
-        spawnSparks(hitX, 454, heavy and 20 or 12, UI.COLORS.hpRed)
+        spawnSparks(hitX, 454, heavy and 8 or 5, UI.COLORS.hpRed)
         Sound.play(heavy and "damage_heavy" or "damage_hit", 0.78)
         if hit.absorbed > 0 then
             local ft = Feedback.add(anim.floatingTexts, "armor", -hit.absorbed, hitX, 458, UI.formatNumber)
@@ -1794,6 +1801,7 @@ local function startEnemyAttack(phase, speed, done, played)
             Persistence.deleteRun()
         else done() end
     end)
+    if anim.enemyTurn and phase=="before" then Feedback.emit("enemy_first",UI.BATTLE_CENTER_X,260) end
     return anim.enemyTurn ~= nil
 end
 
@@ -1955,7 +1963,10 @@ local function playSelectedHand()
         state = "scoring"
         Sound.play("card_play", 1.0)
     end
-    if not startEnemyAttack("before", playerSpeed, beginScoring, playedCards) then beginScoring() end
+    if not startEnemyAttack("before", playerSpeed, beginScoring, playedCards) then
+        Feedback.emit("player_first",UI.BATTLE_CENTER_X,260)
+        beginScoring()
+    end
 end
 
 local function endPlayerTurn(force)
@@ -2280,6 +2291,7 @@ function love.update(dt)
         DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality)
     end
     DeathVFX.update(dt)
+    if state=="playing" then require("src.souls").awardKills(game) end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
     local cameraX, cameraY = 0, 0
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
@@ -2295,6 +2307,7 @@ function love.update(dt)
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
     UI.CardPhysics.update(dt, physicsMx, physicsMy)
     CardEffects.update(dt)
+    Feedback.updateVfx(dt)
     UI.Polish.update(dt, settings.fastScoring, state, shopData)
     UI.Description.update(dt)
     UI.AbilityUI.update(dt)
@@ -2307,6 +2320,13 @@ function love.update(dt)
     Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     if state=="playing" and game and game.abilityCombat then
         local notices=UI.Abilities.takeFeedback(game)
+        for _,notice in ipairs(notices) do
+            if notice.kind=="destroy" then
+                local r=UI.Polish.rect(UI,notice.card,{x=590,y=410,w=100,h=140})
+                local fx=Feedback.destroyCard(notice.card,r.x+r.w/2,r.y+r.h/2)
+                if fx then spawnShopFx("destroy",{category="card",card=notice.card},fx.x,fx.y,r.w,r.h) end
+            end
+        end
         for i=math.max(1,#notices-2),#notices do
             table.insert(anim.floatingTexts,{text=notices[i].message,color=UI.COLORS.goldYellow,x=640,y=195+(i-math.max(1,#notices-2))*22,alpha=1.4})
         end
@@ -2486,7 +2506,8 @@ function love.update(dt)
     -- Ambient and bounce lerp updates
     juice.ambientTimer = juice.ambientTimer + dt
     juice.goldBounce = juice.goldBounce + (1.0 - juice.goldBounce) * Motion.response(10, dt)
-    juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * Motion.response(10, dt)
+    juice.hpBounce = juice.hpBounce + (1.0 - juice.hpBounce) * Motion.response(18, dt)
+    juice.armorBounce = juice.armorBounce + (1.0 - juice.armorBounce) * Motion.response(22, dt)
     juice.handRankBounce = juice.handRankBounce + (1.0 - juice.handRankBounce) * Motion.response(10, dt)
 
     if state == "shop" and shopData and not UI.Polish.busy() and not shopData.currentPackOpening then
@@ -2512,6 +2533,9 @@ function love.update(dt)
     for i = #shopFx, 1, -1 do
         local fx = shopFx[i]
         fx.life = fx.life + dt * (settings.fastScoring and UI.Polish.config.fastFactor or 1)
+        if fx.accentPending and fx.life>=fx.duration*0.82 then
+            fx.accentPending=false;Feedback.emit("buy",fx.targetX,fx.targetY)
+        end
         if fx.life >= fx.duration then table.remove(shopFx, i) end
     end
     for _, card in ipairs(anim.playedCards or {}) do
@@ -2536,10 +2560,10 @@ function love.update(dt)
     -- HP change detection
     if game.playerHp and juice.lastHp and game.playerHp ~= juice.lastHp then
         if game.playerHp < juice.lastHp then
-            juice.hpBounce = 1.30
+            juice.hpBounce = 1.10
             Feedback.add(juice.floatingTexts, "heal", game.playerHp-juice.lastHp, 300, 114, UI.formatNumber)
         elseif game.playerHp > juice.lastHp then
-            juice.hpBounce = 1.30
+            juice.hpBounce = 1.055
             Feedback.add(juice.floatingTexts, "heal", game.playerHp-juice.lastHp, 300, 114, UI.formatNumber)
         end
         juice.lastHp = game.playerHp
@@ -2547,9 +2571,8 @@ function love.update(dt)
 
     local armor = game.playerArmor or game.playerShield or 0
     if armor ~= juice.lastArmor then
-        if armor > juice.lastArmor then
-            Feedback.add(juice.floatingTexts, "armor", armor-juice.lastArmor, 375, 85, UI.formatNumber)
-        end
+        juice.armorBounce = armor < juice.lastArmor and 1.12 or 1.08
+        Feedback.add(juice.floatingTexts, "armor", armor-juice.lastArmor, 375, 85, UI.formatNumber)
         juice.lastArmor = armor
     end
 
@@ -3516,6 +3539,7 @@ local function drawBattleHud(m, mx, my)
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
         armor = game.playerArmor or game.playerShield or 0,
         armorCap = UI.Abilities.config.armorCap, goldBounce = juice.goldBounce,
+        hpBounce = juice.hpBounce, armorBounce = juice.armorBounce,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
         discards = game.discardsRemaining or 0,
     }, UI.fonts, mx, my, juice.buttonPressedId)
@@ -4051,6 +4075,9 @@ local function drawScoringState()
             end
 
             UI.ScoringFeel.Attacks.fragments(anim.sequence.attack, i, dissolve, cx+cardW/2, cy+cardH/2)
+        elseif c.destroyFxActive then
+            UI.Polish.dissolve(UI,cx,cy,cardW,cardH,c.destroyFx or 0,{1,0.43,0.16},
+                function(x,y,w,h) UI.drawCardFace(c,x,y,w,h) end)
         else
             UI.drawCard(c, cx, cy, cardW, cardH)
         end
@@ -6101,18 +6128,18 @@ local function drawShopFx()
         local item = fx.item or {}
         local travel = 1 - (1 - p) ^ 3
         local x = fx.x + ((fx.targetX or fx.x) - fx.x) * travel
-        local hop = fx.kind == "consume" and 18 or (fx.kind == "sell" and 55 or 92)
+        local hop = fx.kind == "destroy" and 0 or fx.kind == "consume" and 18 or (fx.kind == "sell" and 40 or 70)
         local y = fx.y + ((fx.targetY or fx.y) - fx.y) * travel - math.sin(p * math.pi) * hop
         local pop = math.sin(math.min(1, p / 0.24) * math.pi) * (fx.kind == "consume" and 0.06 or 0.12)
-        local size = (fx.kind == "destroy" or fx.kind == "consume") and math.max(0.90, 1 + pop - p * 0.08)
+        local size = fx.kind=="destroy" and (1-0.12*travel) or fx.kind == "consume" and math.max(0.90, 1 + pop - p * 0.08)
             or (fx.kind == "sell" and math.max(0.12, 1 + pop - p * 0.82) or math.max(0.42, 1 + pop - travel * 0.48))
         local w, h = fx.w or 92, fx.h or 130
 
         love.graphics.setBlendMode("add")
         love.graphics.setLineWidth(4)
         local trailColor = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
-            or ((fx.kind == "sell" or fx.kind == "sacrifice" or fx.kind == "destroy") and { 1, 0.28, 0.08 } or { 1, 0.82, 0.22 })
-        love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], (1 - p) * 0.34)
+            or (fx.kind=="destroy" and {1,0.43,0.16} or {1,0.82,0.22})
+        love.graphics.setColor(trailColor[1], trailColor[2], trailColor[3], (1 - p) * (fx.kind=="destroy" and 0.12 or 0.20))
         love.graphics.line(fx.x, fx.y, x, y)
         love.graphics.setLineWidth(1)
         love.graphics.setBlendMode("alpha")
@@ -6122,12 +6149,12 @@ local function drawShopFx()
         local spin = fx.kind == "destroy" and 0.10 or (fx.kind == "consume" and 0.05 or ((fx.kind == "sell" or fx.kind == "sacrifice") and -1.05 or 0.24))
         love.graphics.rotate(spin * p + math.sin(p * math.pi) * 0.08)
         love.graphics.scale(size, size)
-        if fx.kind == "consume" or fx.kind == "destroy" then
+        if fx.kind == "consume" or fx.kind == "destroy" or fx.kind=="sell" or fx.kind=="sacrifice" then
             love.graphics.setBlendMode("add")
             love.graphics.setColor(trailColor[1],trailColor[2],trailColor[3],math.sin(math.min(1,p/0.34)*math.pi)*0.22)
             UI.drawCardBorder(-w/2,-h/2,w,h,{trailColor[1],trailColor[2],trailColor[3],math.sin(math.min(1,p/0.34)*math.pi)*0.22})
             love.graphics.setBlendMode("alpha")
-            UI.Polish.dissolve(UI, -w/2, -h/2, w, h, math.max(0,(p-0.34)/0.66)^1.5,
+            UI.Polish.dissolve(UI, -w/2, -h/2, w, h, ((fx.kind=="destroy" or fx.kind=="sell" or fx.kind=="sacrifice") and math.max(0,(p-0.08)/0.72)^0.85 or math.max(0,(p-0.34)/0.66)^1.5),
                 trailColor, function(x,y,cw,ch) UI.Polish.renderItem(UI,item,x,y,cw,ch) end)
         elseif item.faceDown or (item.reward and item.reward.faceDown) then
             UI.drawCardBack(-w / 2, -h / 2, w, h)
@@ -6163,7 +6190,7 @@ local function drawShopFx()
         love.graphics.pop()
 
         love.graphics.setBlendMode("add")
-        for i = 1, UI.Polish.config.shards do
+        for i = 1, (fx.kind=="consume" and UI.Polish.config.shards or fx.kind=="buy" and 3 or 0) do
             local angle = i * 2.17
             local radius = p * (20 + i * 2.4)
             local color = fx.kind == "consume" and (item.color or UI.COLORS.hpGreen)
@@ -6424,9 +6451,11 @@ function love.draw()
     if state == "shop" and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not isCollectionOpen and not isShopTransferOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
         UI.Polish.draw(UI, game, buttons, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+        Feedback.drawVfx(UI)
     elseif state ~= "defeating" and state ~= "gameover" and not UI.AbilityUI.current and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not isCollectionOpen and not inspectCardModal and not isDebugOpen and not isUiGalleryOpen then
         UI.Polish.draw(UI, game, {}, -1000, -1000)
+        Feedback.drawVfx(UI)
     end
     love.graphics.pop()
 
@@ -7896,7 +7925,7 @@ function love.mousepressed(x, y, button, istouch)
                             end
                         end
                     end
-                    Sound.play("equip")
+                    Sound.play("card_slide",0.92)
                     if anim.pendingStoredEquipment then
                         for i,c in ipairs(game.consumables or {}) do
                             if c==anim.pendingStoredEquipment then table.remove(game.consumables,i);break end

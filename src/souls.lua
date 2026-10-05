@@ -25,4 +25,20 @@ function Souls.award(game, card)
     return amount
 end
 
+-- Each enemy keeps its receipt so squad kills cannot pay twice.
+function Souls.awardKills(game, victory)
+    local added, total = 0, 0
+    for _, enemy in ipairs(require("src.enemy_group").members(game)) do
+        if victory or (enemy.hp or 1) <= 0 then
+            if not enemy.soulKillAwarded then
+                enemy.soulKillAwarded = enemy.isBoss and 4 or 1
+                added = added + enemy.soulKillAwarded
+            end
+            total = total + enemy.soulKillAwarded
+        end
+    end
+    game.souls = (game.souls or 0) + added
+    return added, total
+end
+
 return Souls

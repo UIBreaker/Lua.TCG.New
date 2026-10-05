@@ -82,12 +82,16 @@ local function drawHealth(data, fonts)
     Core.color({0.45,0.83,1,0.9})
     g.setLineWidth(1)
     g.rectangle("line", x, 16, w, 14, 3, 3)
+    g.push("all");g.translate(x+w/2,23);g.scale(data.armorBounce or 1);g.translate(-x-w/2,-23)
     Core.text("GIÁP " .. tostring(math.floor(armor)), x+4, 16, w-8, fonts.hudArmor,
         {0.75,0.94,1,1}, "center")
+    g.pop()
     drawIcon("heart", x + 5, y, 23)
     local label = "MÁU " .. tostring(math.floor(hp)) .. " / " .. tostring(math.floor(maxHp))
     local font = fitText(label, w - 40, fonts.hudStat, fonts.hudSmall)
+    g.push("all");g.translate(x+120,y+h/2);g.scale(data.hpBounce or 1);g.translate(-x-120,-y-h/2)
     Core.textLine(label, x + 30, y + (h-font:getHeight())/2, w - 35, font, Theme.colors.text, "center", fonts.hudSmall)
+    g.pop()
 end
 
 local function drawActionButton(spec, mx, my, pressedId, fonts)

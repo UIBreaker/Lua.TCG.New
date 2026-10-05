@@ -166,6 +166,7 @@ function X.apply(g,item,target)
         g.deities[slots[1]].enchantment=d.id
         return true,"Đã phù phép "..g.deities[slots[1]].name..": "..d.name.." (thay phù phép cũ, giữ ấn bản)."
     end
+    if d.depth then return require("src.chest_depth").apply(g,d,target) end
     if not item.id:match("^spec_") then return nil end
     if not target or target.destroyed then return false,"Hãy chọn một lá bài hợp lệ." end
     local Deck=require("src.deck");local A=require("src.card_abilities");local id=d.id
@@ -222,4 +223,5 @@ function X.apply(g,item,target)
     end
     return true,"Đã dùng "..d.name.."."
 end
+for id,d in pairs(require("src.chest_depth").byId) do X.byId[id]=d end
 return X

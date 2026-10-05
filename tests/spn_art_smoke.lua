@@ -1,9 +1,10 @@
 local T={}
-function T.verify()
+function T.verify(requestedIds,output)
     local UI=require("src.ui")
     local Art=require("src.continental_art")
     local D=require("src.deities")
     local ids={"spirit_lone","spirit_confluence","spirit_rearguard","spirit_wound","spirit_bastion","spirit_stillness","spirit_molt","spirit_pivot","spirit_mender","spirit_gleaner"}
+    ids=requestedIds or ids
     local g=love.graphics
     local canvas=g.newCanvas(1280,850)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.04,0.05,0.08)
@@ -18,7 +19,7 @@ function T.verify()
         g.printf(D.CATALOG[id].name,x,y+352,230,"center")
     end
     g.pop()
-    local f=assert(io.open("docs/spn_tactics_runtime.png","wb"))
+    local f=assert(io.open(output or "docs/spn_tactics_runtime.png","wb"))
     f:write(canvas:newImageData():encode("png"):getString());f:close();canvas:release()
     print("SPN art runtime PASS: 10 native loader images and shared card frames rendered")
 end

@@ -86,6 +86,9 @@ function Deities.scaleEffect(deity, result)
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier
+            local def=Deities.CATALOG[deity.id]
+            if def and def.integerEffect and key==def.stat then scaled=math.floor(scaled) end
+            if key=="addTransmutePct" then scaled=math.min(90,scaled) end
             result[key] = scaled
 
             local message = result.message
@@ -222,10 +225,14 @@ for _, row in ipairs(tacticalEntries) do
     Deities.CATALOG[entry.id] = entry
 end
 
+require("src.spn_anomalies").register(Deities)
+
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
     if not def then return deity.desc or "" end
     local value=def.values.value*(def.stat=="bedExplosionPct" and 1 or effectMultiplier(deity))
+    if def.integerEffect then value=math.floor(value) end
+    if def.stat=="addTransmutePct" then value=math.min(90,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
     local spell=require("src.chest_expansion").byId[deity.enchantment]
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end

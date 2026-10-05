@@ -15,7 +15,37 @@ function A.params(card, def, level)
     local p={}
     for k,v in pairs(def.baseParams) do
         local r=def.evolutionRules[k]
-        p[k]=v+(type(r)=="number" and r*level or type(r)=="table" and math.floor(level/r.every)*r.amount or 0)
+        local gain=type(r)=="number" and r*level or type(r)=="table" and math.floor(level/r.every)*r.amount or 0
+        p[k]=v+gain*((card.edition=="ancient" or card.visualEffect=="ancient") and 1.25 or 1)
+    end
+    return p
+end
+local effectParams={armor=true,returnArmor=true,healPercent=true,gold=true,gain=true,maxStacks=true,
+    capacity=true,draw=true,levels=true,repeats=true,returns=true,duration=true,hands=true,
+    cancels=true,skip=true,block=true,copies=true,freeze=true,maxGold=true}
+function A.effectiveParams(game,card,def,ctx)
+    local p=A.params(card,def)
+    local factor=1
+    -- Use the live hand for held triggers and the pre-play snapshot for scoring.
+    local hand=ctx and ctx.resonanceHand or game.hand or {}
+    for i,c in ipairs(hand) do
+        if c==card then
+            for _,j in ipairs({i-1,i+1}) do
+                local neighbor=hand[j]
+                local held=true
+                for _,played in ipairs(ctx and ctx.played or {}) do if played==neighbor then held=false end end
+                if held and neighbor and not neighbor.destroyed and (neighbor.edition=="resonant" or neighbor.visualEffect=="resonant") then factor=factor+.2 end
+            end
+            break
+        end
+    end
+    for key,value in pairs(p) do
+        if effectParams[key] then
+            local strength=ctx and ctx.effectiveness or 1
+            -- Direct resource gains are scaled after activation, including stored gold/hearts.
+            if key=="gold" or key=="armor" or key=="healPercent" then strength=1 end
+            p[key]=value*factor*strength
+        end
     end
     return p
 end
@@ -120,7 +150,8 @@ function A.beginHand(game, handInfo, played, decisions)
     local ctx={game=game,handInfo=handInfo,scoring=handInfo.scoringCards,played=played,
         active={},full=#(game.hand or {})>=A.handSize(game),play=combat(game).playIndex+1,
         queue={},cursor=0,repeats={},triggerCount=0,feedback={},spnSeen={},spnCount=0,
-        returns={},scored={},decisions=decisions or {},copyDepth=0,visited={},once={},depth=0}
+        returns={},scored={},decisions=decisions or {},copyDepth=0,visited={},once={},depth=0,echoSeen={},resonanceHand={}}
+    for _,c in ipairs(game.hand or {}) do ctx.resonanceHand[#ctx.resonanceHand+1]=c end
     for _,c in ipairs(game.hand or {}) do ctx.active[#ctx.active+1]=c end
     game.abilityHand=ctx
     for i,c in ipairs(ctx.scoring) do ctx.queue[#ctx.queue+1]={card=c,index=i,depth=0} end
@@ -140,7 +171,7 @@ function A.beginHand(game, handInfo, played, decisions)
     if repeatCount>0 then A.repeatCard(game,ctx.scoring[1],repeatCount,ctx) end
     return ctx
 end
-function A.repeatCard(game,card,count,ctx)
+function A.repeatCard(game,card,count,ctx,effectiveness)
     ctx=ctx or game.abilityHand
     if not ctx or not card or card.destroyed and not contains(ctx.scored,card) then return end
     local depth=(ctx.depth or 0)+1
@@ -151,29 +182,65 @@ function A.repeatCard(game,card,count,ctx)
         local used=ctx.repeats[card.id] or 0
         if used>=Data.maxRetriggersPerCard or #ctx.queue>=Data.maxTriggersPerHand then break end
         ctx.repeats[card.id]=used+1
-        ctx.queue[#ctx.queue+1]={card=card,index=idx,depth=depth,retrigger=true}
+        ctx.queue[#ctx.queue+1]={card=card,index=idx,depth=depth,retrigger=true,effectiveness=effectiveness}
     end
 end
 function A.nextScore(game)
     local ctx=game.abilityHand; ctx.cursor=ctx.cursor+1
     local job=ctx.queue[ctx.cursor]
-    if job then ctx.depth=job.depth; ctx.retrigger=job.retrigger; ctx.current=job.card; ctx.index=job.index end
+    if job then ctx.depth=job.depth; ctx.retrigger=job.retrigger; ctx.current=job.card; ctx.index=job.index;ctx.effectiveness=job.effectiveness end
     return job
 end
 function A.score(game,card)
     local ctx=game.abilityHand
     local before=stateCopy(card)
+    local resources={gold=game.gold or 0,playerHp=game.playerHp or 100,playerArmor=game.playerArmor or 0}
     require("src.soul_relics").score(game,card,ctx)
     if Boss.key(game.monster)=="taxman" and Boss.passiveEnabled(game.monster) then
         if (game.gold or 0)>=Boss.config.taxCardCost then game.gold=game.gold-Boss.config.taxCardCost else game.playerHp=math.max(0,(game.playerHp or 100)-Boss.config.taxCardHp) end
     end
     if not ctx.retrigger or Boss.allowRetriggerAbility(game,card) then A.dispatch(game,"score",{card},ctx) end
+    if ctx.effectiveness and ctx.effectiveness~=1 then
+        for key,value in pairs(resources) do
+            if (game[key] or value)>value then game[key]=value+(game[key]-value)*ctx.effectiveness end
+        end
+        game.playerShield=game.playerArmor
+    end
     if not ctx.retrigger then ctx.scored[#ctx.scored+1]=card; ctx.previous=card;ctx.previousAbilityState=before end
+    if (card.edition=="echo" or card.visualEffect=="echo") and not ctx.echoSeen[card] then
+        ctx.echoSeen[card]=true
+        A.repeatCard(game,card,1,ctx,.5)
+    end
     if card.destroyed then A.destroy(game,card,ctx) end
 end
 function A.destroy(game,card,ctx)
     if not card or card.destructionNotified then return false end
     card.destroyed=true; card.destructionNotified=true
+    if card.edition=="void" or card.visualEffect=="void" then
+        local d=A.definition(card)
+        local x=ctx or game.abilityHand or {game=game,handInfo={type={id="high_card"}},
+            scoring={},scored={},played={},active={},queue={},returns={},repeats={},
+            cursor=0,depth=0,play=combat(game).playIndex,spnCount=0,damage=0,full=false}
+        if d and A.handlers[d.op] and d.trigger~="choice" then
+            local oldEvent,oldOnce,oldEffect=x.event,x.once,x.effectiveness
+            x.event=d.trigger;x.once={};x.effectiveness=1
+            A.handlers[d.op](game,card,A.effectiveParams(game,card,d,x),x)
+            x.event,x.once,x.effectiveness=oldEvent,oldOnce,oldEffect
+            feedback(game,card,"HƯ KHÔNG · KÍCH HOẠT CUỐI", "edition")
+        elseif d and d.trigger=="choice" and game.abilityHand==x then
+            -- Reuse an approved target/cost; never invent a sacrifice or spend without a decision.
+            local decisions=x.decisions
+            for _,decision in ipairs(decisions or {}) do
+                if decision.card==card and decision.applied then
+                    local final={};for key,value in pairs(decision) do final[key]=value end
+                    final.applied=false;x.decisions={final}
+                    A.applyDecisions(game,(d.op=="pair_sacrifice" or d.op=="five_sacrifice") and "after" or "before",card)
+                    x.decisions=decisions
+                    break
+                end
+            end
+        end
+    end
     local souls = require("src.souls").award(game, card)
     A.dispatch(game,"destroyed",{card},ctx or game.abilityHand or {})
     combat(game).lastDestroyed=card
@@ -228,6 +295,7 @@ function A.combatWin(game)
     A.dispatch(game,"combat_win",allCards(game),ctx)
 end
 function A.discard(game,cards)
+    require("src.chest_depth").discard(game,cards)
     A.dispatch(game,"discard",cards,{})
     local x=game.abilityHand
     if x and not x.finished then for i=#x.active,1,-1 do if contains(cards,x.active[i]) then table.remove(x.active,i) end end end
@@ -238,7 +306,7 @@ end
 function A.damageGuard(game,damage)
     local ctx={damage=damage}
     A.dispatch(game,"damage",game.abilityHand and game.abilityHand.active or game.hand or {},ctx)
-    return require("src.soul_relics").guard(game,ctx.damage)
+    return require("src.spn_anomalies").guard(game,require("src.soul_relics").guard(game,ctx.damage))
 end
 function A.spnTriggered(game,slot)
     local ctx=game.abilityHand; if not ctx then return 0 end
@@ -261,7 +329,7 @@ function A.dispatch(game,event,cards,ctx)
                 if handler then
                     ctx.event=event
                     local before=stateCopy(card)
-                    local fired=handler(game,card,A.params(card,d),ctx)
+                    local fired=handler(game,card,A.effectiveParams(game,card,d,ctx),ctx)
                     if fired then
                         feedback(game,card,d.name,"ability")
                         if d.suit=="diamond" and d.rank~=11 then combat(game).lastDiamond={card=card,definition=d,event=event,abilityState=event=="score" and before or stateCopy(card)} end
@@ -406,12 +474,12 @@ function A.choices(game,handInfo,played)
     end
     return choices
 end
-function A.applyDecisions(game,stage)
+function A.applyDecisions(game,stage,finalCard)
     local ctx=game.abilityHand
     for _,decision in ipairs(ctx and ctx.decisions or {}) do
         local d,p,c,t=decision.definition,decision.params,decision.card,decision.target
         local after=d.op=="pair_sacrifice" or d.op=="five_sacrifice"
-        if not decision.applied and (after and stage=="after" or not after and stage=="before") and not c.destroyed and (not after or t and not t.destroyed) then
+        if not decision.applied and (after and stage=="after" or not after and stage=="before") and (not c.destroyed or c==finalCard) and (not after or t and not t.destroyed) then
             decision.applied=true; local op=d.op;local success=true
             if op=="paid_invest" or op=="paid_repeat" or op=="bribe" then
                 if (game.gold or 0)<p.cost then success=false else gold(game,-p.cost)

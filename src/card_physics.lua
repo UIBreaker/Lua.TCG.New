@@ -181,7 +181,9 @@ function Physics.wrap(draw, ownerSelector, hoverArg)
         for i = 1, n do s.args[i + 5] = select(i, ...) end
         for i = n + 6, #s.args do s.args[i] = nil end
         s.argCount = n + 5
-        s.hovered = s == held or (contains and contains(s, mx, my)) or false
+        local explicitHover = hoverArg and s.args[hoverArg]
+        s.hovered = s == held or (explicitHover == true)
+            or (explicitHover == nil and contains and contains(s, mx, my)) or false
         if hoverArg then s.args[hoverArg] = s.hovered; s.argCount = math.max(s.argCount, hoverArg) end
         s.homeX, s.homeY = logicalPoint(x, y)
         s.renderX, s.renderY, s.detached = s.homeX, s.homeY, false

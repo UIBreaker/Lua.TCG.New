@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-editions-render" then require("tests.edition_preview.main"); return end
     if a == "--test-feature-parity" then
         require("tests.inventory_expansion_smoke")
         require("tests.bed_speed_smoke")
@@ -57,7 +58,7 @@ local DeathVFX = require("src.death_vfx")
 local EnemyArt = require("src.enemy_art")
 local EnemyGroup = require("src.enemy_group")
 local EnemyFormation = require("ui.enemy_formation")
-local Expedition = require("src.expedition")
+require("src.expedition")
 local ExpeditionSelect = require("ui.expedition_select")
 UI.ChestChoices = require("ui.chest_choices")
 local Layout = require("ui.layout")
@@ -74,6 +75,7 @@ local Persistence = require("src.persistence")
 local Rng = require("src.rng")
 local GameState = require("src.game_state")
 local Combat = require("src.combat")
+UI.BedExplosion = require("src.bed_explosion")
 local EnemyAttack = require("src.enemy_attack_presentation")
 local Feedback = require("src.combat_feedback")
 
@@ -92,6 +94,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
     if a == "--test-soul-shop" then isCaptureMode = true end
+    if a == "--test-bed-explosion" then isCaptureMode = true end
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
@@ -801,6 +804,7 @@ local function startBlindCombat(blind)
 end
 
 local function startNewGame(chosenDeck)
+    UI.BedExplosion.clear(); anim.pendingBedScore=nil
     anim.pendingStoredEquipment=nil
     if not isCaptureMode then Persistence.deleteRun() end
     GameState.resetRun(game, chosenDeck or "red_deck")
@@ -922,6 +926,11 @@ local function selectHandDragCard(index)
 end
 
 local function sweepHandSelection(mx, my)
+    if not handDrag.isDragging then
+        local dx, dy = mx - handDrag.startX, my - handDrag.startY
+        if dx * dx + dy * dy <= 10 * 10 then return end
+        handDrag.isDragging = true
+    end
     local fromX, fromY = handDrag.currentX, handDrag.currentY
     local steps = math.max(1, math.ceil(math.max(math.abs(mx - fromX), math.abs(my - fromY)) / 4))
     -- Sample the whole mouse path so a fast swipe cannot skip intervening cards.
@@ -950,14 +959,25 @@ local function beginHandDrag(mx, my, index, reorder)
         local x, y, w, h = getHandCardPosition(i, #game.hand)
         handDrag.hitRects[i] = {
             x = x - 4, right = x + w + 4,
-            y = math.min(y - 56, card.visualY or y),
-            bottom = math.max(y + h + 8, (card.visualY or y) + h),
+            y = y - 56,
+            bottom = y + h + 8,
         }
     end
     if not reorder then
         -- Selection never picks up a card or waits for a direction threshold.
         UI.CardPhysics.release()
         if index then selectHandDragCard(index) end
+    end
+end
+
+-- Input stays anchored to the hand slots while lift, scale and tilt animate.
+-- Rightmost slot owns overlaps, consistently for hover, press and sweep.
+handDrag.cardAt = function(mx, my)
+    for i = #game.hand, 1, -1 do
+        local x, y, w, h = getHandCardPosition(i, #game.hand)
+        if mx >= x - 4 and mx <= x + w + 4 and my >= y - 56 and my <= y + h + 8 then
+            return i
+        end
     end
 end
 
@@ -1348,7 +1368,7 @@ local function useConsumable(idx)
     if c.category == "edition" then
         pendingEditionCard = c
         table.insert(anim.floatingTexts, {
-            text = "CHỌN LÁ BÀI HOẶC SPN ĐỂ ÁP DỤNG " .. tostring(c.name or "ẤN BẢN") .. " · ESC ĐỂ HỦY",
+            text = (require("src.card_effects").getScoreBonus({edition=c.edition}) and "CHỌN LÁ BÀI HOẶC SPN" or "CHỌN LÁ BÀI") .. " ĐỂ ÁP DỤNG " .. tostring(c.name or "ẤN BẢN") .. " · ESC ĐỂ HỦY",
             color = c.color or UI.COLORS.goldYellow, x = 640, y = 310, alpha = 2.8,
         })
         Sound.play("card_select")
@@ -1698,7 +1718,10 @@ local function applyPendingEditionAt(mx, my, currentState)
         local x, y, w, h = getDeitySlotRect(i, currentState)
         local deity = game.deities and game.deities[i]
         if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
-            Shop.applyEdition(deity, pendingEditionCard.edition)
+            if not Shop.applyEdition(deity, pendingEditionCard.edition) then
+                table.insert(anim.floatingTexts,{text="ẤN BẢN NÀY CẦN LÁ BÀI CÓ BẬC VÀ CHẤT",color=UI.COLORS.goldYellow,x=640,y=310,alpha=2.2})
+                Sound.play("cant_afford");return true
+            end
             local used = table.remove(game.consumables, consumableIndex)
             UI.Abilities.consumableUsed(game)
             pendingEditionCard = nil
@@ -1777,6 +1800,7 @@ end
 
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
+        require("src.spn_anomalies").showFeedback(game,anim)
         local heavy = hit.damage >= 8
         screenShake = math.max(screenShake or 0, heavy and 4.2 or 2.8)
         anim.hitStop = heavy and 0.060 or 0.040
@@ -2075,8 +2099,15 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
-        if argument == "--test-spn-art" then
-            local ok, err = pcall(function() require("tests.spn_art_smoke").verify() end)
+        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" then
+            local ok, err = pcall(function()
+                local ids,output
+                if argument=="--test-spn-anomalies-art" then
+                    ids={};for _,row in ipairs(require("src.spn_anomalies").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_anomalies_runtime.png"
+                end
+                require("tests.spn_art_smoke").verify(ids,output)
+            end)
             if not ok then print("SPN ART ERROR: " .. tostring(err)) end
             os.exit(ok and 0 or 1)
         end
@@ -2126,6 +2157,7 @@ function love.load()
     Renderer.config.enabled = settings.cinematicEnabled
     Renderer.crtEnabled = settings.crtEnabled
     Renderer.load(battleArt, settings.graphicsQuality)
+    UI.BedExplosion.load()
     DeathVFX.load()
     for _, value in ipairs(arg or {}) do
         if value == "--test-enemy-art" then
@@ -2138,7 +2170,7 @@ function love.load()
     local allCardShadersLoaded, cardShaderCount = CardEffects.load()
     if cardEffectsSmokeMode then
         if not allCardShadersLoaded then
-            print("CARD EFFECT TEST FAILED: loaded " .. tostring(cardShaderCount) .. "/3 shaders")
+            print("CARD EFFECT TEST FAILED: loaded " .. tostring(cardShaderCount) .. "/" .. #require("config.card_effect_config").catalogOrder .. " shaders")
             love.event.quit(1)
             return
         end
@@ -2291,10 +2323,17 @@ function love.update(dt)
         DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality)
     end
     DeathVFX.update(dt)
+    if state=="playing" or state=="scoring" or UI.BedExplosion.debug then UI.BedExplosion.update(dt) end
+    if UI.BedExplosion.pending then
+        UI.BedExplosion.pending=false
+        anim.hitStop=math.max(anim.hitStop or 0,UI.BedExplosion.config.hitStop)
+    end
     if state=="playing" then require("src.souls").awardKills(game) end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
     local cameraX, cameraY = 0, 0
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
+    local bedCameraX,bedCameraY=UI.BedExplosion.camera()
+    cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
         game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory") and {stage=game.run and game.run.ante or 1} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
     if state == "defeating" then
@@ -2657,7 +2696,17 @@ function love.update(dt)
     -- The presentation queue yields only when energy has physically reached the enemy.
     if state == "scoring" and anim.active then
         local deathStop = DeathVFX.enemyActive(game.monster) and DeathVFX.age < DeathVFX.stop
-        local st = UI.ScoringFeel.update(anim, deathStop and 0 or motionDt, settings.fastScoring)
+        local st
+        if anim.pendingBedScore then
+            if UI.BedExplosion.takeImpact() then st=anim.pendingBedScore;anim.pendingBedScore=nil end
+        else
+            st=UI.ScoringFeel.update(anim, deathStop and 0 or motionDt, settings.fastScoring)
+            if st and st.type=="final_score" and #Combat.bedExplosions(game,st.finalScore)>0 then
+                anim.pendingBedScore=st
+                UI.BedExplosion.start(game.monster.screenX or UI.BATTLE_CENTER_X,410,Renderer.quality,Renderer.scene.weather)
+                st=nil
+            end
+        end
         local steps = anim.scoringData.steps
         if st or UI.ScoringFeel.isFinished(anim) then
             if st then
@@ -2665,15 +2714,11 @@ function love.update(dt)
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
                     local armorBeforeHit = game.monster.creatureArmor or 0
                     local actualDmg, defeated, splashHits = Combat.resolvePlayerAttack(game, st.finalScore)
+                    require("src.spn_anomalies").showFeedback(game,anim)
                     for _, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
                         ft.label = hit.deity.name .. (hit.explosion and " · NỔ GIƯỜNG" or " · AURA LAN")
-                        if hit.explosion then
-                            spawnSparks(x,264,18,{1,.36,.12,1})
-                            screenShake=math.max(screenShake or 0,12)
-                            anim.screenFlash=0.2
-                        end
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
                         anim.deityBounce[hit.slotIndex] = 1.15
@@ -3778,19 +3823,15 @@ local function drawPlayingState()
     local hoveredCard = nil
     local hoveredIdx = nil
 
-    -- Find hovered card from right to left (top-most in z-order)
-    for i = #game.hand, 1, -1 do
-        local c = game.hand[i]
-        local cx = c.visualX or 0
-        local cy = c.visualY or 0
-        local isHovered = UI.CardPhysics.hit(c, mx, my,
-            mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
-        c.hovered = isHovered
-        if isHovered and not hoveredCard and not (handDrag.active and handDrag.isDragging) then
-            hoveredCard = c
-            hoveredIdx = i
-            hoveredCardTooltip = c
-        end
+    if not handInputBlocked() and not (handDrag.active and handDrag.isDragging) then
+        hoveredIdx = handDrag.cardAt(mx, my)
+    end
+    for i, c in ipairs(game.hand) do
+        c.hovered = i == hoveredIdx
+    end
+    if hoveredIdx then
+        hoveredCard = game.hand[hoveredIdx]
+        hoveredCardTooltip = hoveredCard
     end
 
     -- Draw non-dragged cards in order 1 to #game.hand
@@ -3818,7 +3859,7 @@ local function drawPlayingState()
             end
             if state == "defeating" or (state == "gameover" and DeathVFX.kind == "player") then
                 DeathVFX.drawCard(UI, c, cx, cy, cardW, cardH, i)
-            else UI.drawCard(c, cx, cy, cardW, cardH) end
+            else UI.drawCard(c, cx, cy, cardW, cardH, false, c.hovered) end
         end
     end
 
@@ -6317,9 +6358,12 @@ function love.draw()
         if state == "shop" then require("ui.shop_display").drawWorld(shopData, Renderer.scene.time) end
     end, function()
         if state == "scoring" then UI.ScoringFeel.drawWorld(anim, UI) end
+        if state=="playing" or state=="scoring" then UI.BedExplosion.drawBeds(game) end
+        UI.BedExplosion.draw()
         if DeathVFX.enemyActive(game.monster) and (state == "playing" or state == "scoring") then DeathVFX.drawParticles() end
     end)
 
+    UI.BedExplosion.drawDebug(UI)
     love.graphics.push()
 
     if state == "menu" then
@@ -6592,25 +6636,10 @@ local function handlePlayingMousepressed(mx, my, button)
         end
     end
 
-    -- Prefer the surface actually drawn under the cursor, then tolerate stale physics.
-    for pass = 1, 2 do
-        for i = #game.hand, 1, -1 do
-            local c = game.hand[i]
-            local cx = c.visualX or 0
-            local cy = c.visualY or 0
-            local cardW = 100
-            local cardH = 145
-
-            local slotX, slotY, slotW, slotH = getHandCardPosition(i, #game.hand)
-            local stableHit = mx >= slotX and mx <= slotX + slotW
-                and my >= slotY - 56 and my <= slotY + slotH + 8
-            local hit = pass == 1 and UI.CardPhysics.hit(c, mx, my,
-                mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
-            if hit or (pass == 2 and stableHit) then
-                beginHandDrag(mx, my, i, Touch.enabled and Touch.reorder or love.keyboard.isDown("lshift", "rshift"))
-                return true
-            end
-        end
+    local handIndex = handDrag.cardAt(mx, my)
+    if handIndex then
+        beginHandDrag(mx, my, handIndex, Touch.enabled and Touch.reorder or love.keyboard.isDown("lshift", "rshift"))
+        return true
     end
 
     -- A sweep may start in a gap or just beside the hand.
@@ -7410,6 +7439,7 @@ end
 
 function love.mousepressed(x, y, button, istouch)
     if istouch then return end
+    Touch.mouseInput()
     if anim.enemyTurn then return end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
@@ -8033,6 +8063,8 @@ function love.mousepressed(x, y, button, istouch)
 end
 
 function love.keypressed(key)
+    if key=="f8" then UI.BedExplosion.debug=not UI.BedExplosion.debug;return end
+    if UI.BedExplosion.keypressed(key) then return end
     if handDrag.active then
         UI.CardPhysics.release()
         handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -8243,6 +8275,7 @@ end
 
 function love.mousemoved(x, y, dx, dy, istouch)
     if istouch then return end
+    Touch.mouseInput()
     if handDrag.active and handInputBlocked() then
         UI.CardPhysics.release()
         handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -8265,7 +8298,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
     if handDrag.active and state == "playing" then
         local deltaX, deltaY = mx - handDrag.startX, my - handDrag.startY
-        if deltaX * deltaX + deltaY * deltaY > 7 * 7 then
+        if deltaX * deltaX + deltaY * deltaY > 10 * 10 then
             handDrag.isDragging = true
         end
 

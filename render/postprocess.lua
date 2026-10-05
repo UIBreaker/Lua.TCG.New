@@ -37,9 +37,18 @@ function P.bind(preset,eventStrength,dim,crtEnabled,sequence)
     local age=sequence and sequence.cameraAge or cfg.camera.duration
     local wave=attack and attack.tier>=3 and sequence.impactDispatched and age<cfg.camera.duration
     local progress=math.min(1,age/cfg.camera.duration)
+    shader:send("waveAspect",1)
     shader:send("waveCenter",{(attack and attack.cx or 635)/1280,cfg.arena.targetY/720})
     shader:send("waveRadius",8+(1-(1-progress)^cfg.motion.impactExpansion)*cfg.shockwave.radius*(0.3+(attack and attack.intensity or 0)))
     shader:send("waveStrength",wave and cfg.shockwave.distortionStrength*attack.intensity*(1-progress)^2 or 0)
+    local bed=require("src.bed_explosion")
+    local radius,strength=bed.wave()
+    if strength>0 then
+        shader:send("waveAspect",1/.42)
+        shader:send("waveCenter",{bed.x/1280,bed.y/720})
+        shader:send("waveRadius",radius)
+        shader:send("waveStrength",strength)
+    end
     shader:send("grade",C.effects.grading and preset.colorGrade or {1,1,1})
     shader:send("ambient",C.effects.lighting and require("render.lighting").ambient or {1,1,1})
     shader:send("vignette",C.effects.grading and preset.vignette or 0)

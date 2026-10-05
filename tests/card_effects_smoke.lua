@@ -26,12 +26,12 @@ local polyCard, poly = scoreCard("polychrome")
 
 assert(foil.totalChips == plain.totalChips, "Foil must not change Chips")
 assert(foil.totalMult == plain.totalMult, "Foil must not change Mult")
-assert(foil.flatDamageBonus == 50 and foil.finalScore == plain.finalScore + 50,
-    "Foil should add exactly 50 flat damage after Aura multipliers")
-assert(holo.totalMult == plain.totalMult + 10, "Holographic should add 10 Mult")
-assert(poly.auraEditionMultiplier == 1.5, "Polychrome should multiply final Aura by 1.5")
-assert(poly.finalScore == math.floor(plain.rawScore * (1 + plain.totalExtraDamagePct) * 1.5),
-    "Polychrome should apply after the normal Aura calculation")
+assert(foil.flatDamageBonus == 20 and foil.finalScore == plain.finalScore + 20,
+    "Foil should add exactly 20 flat damage after Aura multipliers")
+assert(holo.totalMult == plain.totalMult + 1, "Holographic should add 1 Mult")
+assert(poly.auraEditionMultiplier == 1 and poly.localAuraBonus>0, "Polychrome must only amplify this card's contribution")
+assert(poly.finalScore == math.floor((plain.rawScore+poly.localAuraBonus)*(1+plain.totalExtraDamagePct)),
+    "Polychrome should add the local Aura bonus before damage conversion")
 assert(Deck.cloneCard(foilCard).edition == "foil", "card editions must survive combat cloning")
 assert(Deck.cloneCard(holoCard).edition == "holographic", "Holographic must survive combat cloning")
 assert(Deck.cloneCard(polyCard).edition == "polychrome", "Polychrome must survive combat cloning")
@@ -78,7 +78,7 @@ assert(rolledEffects > 190 and rolledEffects < 290,
 local deityStock = { category = "deity", deity = { id = "test_spn", name = "SPN" }, name = "SPN" }
 assert(#Shop.STANDARD_CARDS == 52, "retail and chest pools must contain all 52 playing cards")
 assert(#Shop.getPackContents("hand_styles") == 9, "the hand-style chest must contain all nine poker hands")
-assert(#Shop.getPackContents("edition") == 3, "the edition chest must offer all three edition consumables")
+assert(#Shop.getPackContents("edition") == 9, "the edition chest pool must contain nine consumables")
 
 local validSuit = { valoria = true, aurelia = true, elaris = true, vharos = true }
 local seenCards = {}
@@ -164,7 +164,7 @@ shopState.selectedIndices = { 1 }
 shopState.persistentDeck = { persistentTarget }
 shopState.deck, shopState.discardPile = {}, {}
 local applied = Shop.choosePackCard(editionPackShop, 1, shopState)
-assert(applied and target.edition == "foil" and persistentTarget.edition == "foil",
+assert(applied and target.edition == editionOpening.cards[1].edition and persistentTarget.edition == target.edition,
     "choosing an edition must update the selected card and its saved deck copy")
 editionPackShop.currentPackOpening = editionOpening
 shopState.consumables = {}

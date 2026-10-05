@@ -7,6 +7,7 @@ local Rng = require("src.rng")
 local Abilities = require("src.card_abilities")
 local Boss = require("src.boss_abilities")
 local Expansion = require("src.chest_expansion")
+local Depth = require("src.chest_depth")
 
 local function isSpade(card)
     if not card then return false end
@@ -39,6 +40,8 @@ Damage to Monster = Score * (1 + Total Extra Damage Pct)
 ]]
 
 function Scoring.calculate(handInfo, deities, context)
+    Depth.begin(context)
+    if context then context.depthHandType=handInfo.type.id end
     local abilityGame = context and context.gameState
     local abilityHand = abilityGame and abilityGame.abilityHand
     if context and context.preview or abilityHand and abilityHand.finished then abilityHand = nil end
@@ -52,6 +55,8 @@ function Scoring.calculate(handInfo, deities, context)
     local bonusChips = 0
     local bonusMult = 0
     local auraEditionMultiplier = 1.0
+    local localEditionAura = 0
+    local deityEditionAura = 0
     local flatDamageBonus = 0
     local xMultTotal = 1.0
     local xMultBonus = 0.0
@@ -198,6 +203,9 @@ function Scoring.calculate(handInfo, deities, context)
 
     local scoreCursor = 0
     local afterChoicesApplied = false
+    local previewQueue={}
+    for i,c in ipairs(handInfo.scoringCards) do previewQueue[#previewQueue+1]={card=c,index=i} end
+    local echoSeen={}
     while true do
         local job
         if abilityHand then
@@ -209,7 +217,7 @@ function Scoring.calculate(handInfo, deities, context)
             end
         else
             scoreCursor = scoreCursor + 1
-            if handInfo.scoringCards[scoreCursor] then job = {card=handInfo.scoringCards[scoreCursor],index=scoreCursor} end
+            job=previewQueue[scoreCursor]
         end
         if not job then break end
         local idx, card = job.index, job.card
@@ -262,6 +270,8 @@ function Scoring.calculate(handInfo, deities, context)
             end
 
             for cTrig = 1, cardTriggers do
+                local before={chips=bonusChips,mult=bonusMult,x=xMultBonus,damage=flatDamageBonus,
+                    extra=totalExtraDamagePct,gold=bonusGoldAwarded,armor=totalArmorGain,heal=totalHealHp,hp=totalHpCost}
                 if cTrig == 2 then
                     totalHpCost = totalHpCost + Deck.SEALS.seal_blood.params.hpCost
                     table.insert(steps, {
@@ -656,7 +666,7 @@ function Scoring.calculate(handInfo, deities, context)
                 end
 
                 local discovery=Expansion.byId[card.seal]
-                if discovery and not job.retrigger then
+                if discovery and not job.retrigger and (not discovery.depth or Depth.allowSeal(context,card,discovery.id)) then
                     local pc,pm,px,pd=cardEvent.addedChips,cardEvent.addedMult,xMultBonus,totalExtraDamagePct
                     local res=discovery.effect(card,handInfo.scoringCards,idx,context)
                     applyDiscovery(res,cardEvent)
@@ -721,6 +731,11 @@ function Scoring.calculate(handInfo, deities, context)
                                 local repeats = Abilities.spnTriggered(abilityGame, di)
                                 for k, v in pairs(res) do if type(v)=="number" and k:sub(1,3)=="add" then res[k]=v*(1+repeats) end end
                             end
+                            if CardEffects.getEffectName(deity)=="polychrome" then
+                                local c,m=baseChips+bonusChips,baseMult+bonusMult
+                                local strength=job.effectiveness or 1
+                                deityEditionAura=deityEditionAura+math.max(0,(c+(res.addChips or 0)*strength)*(m+(res.addMult or 0)*strength)-c*m)*.5
+                            end
                             if res.addChips then
                                 bonusChips = bonusChips + res.addChips
                                 cardEvent.addedChips = cardEvent.addedChips + res.addChips
@@ -771,8 +786,8 @@ function Scoring.calculate(handInfo, deities, context)
                     cardEvent.addedDamage = (cardEvent.addedDamage or 0) + editionDamage
                 end
                 if editionAura ~= 1.0 then
-                    auraEditionMultiplier = auraEditionMultiplier * editionAura
-                    cardEvent.auraMultiplier = editionAura
+                    -- Only this trigger's marginal Aura is amplified; the base hand and other cards are excluded.
+                    cardEvent.localAuraMultiplier = editionAura
                 end
                 cardEvent.message = cardEvent.message .. " | " .. string.upper(CardEffects.getEffectName(card))
                 if editionChips ~= 0 then cardEvent.message = cardEvent.message .. " +" .. editionChips .. " Chips" end
@@ -786,7 +801,7 @@ function Scoring.calculate(handInfo, deities, context)
                 table.insert(cardEvent.presentationTriggers, {
                     type = "card_edition", card = card, cardIndex = idx,
                     addedChips = editionBonus.chips or 0, addedMult = editionBonus.mult or 0,
-                    addedDamage = editionBonus.damage or 0, auraMultiplier = editionBonus.auraMultiplier or 1,
+                    addedDamage = editionBonus.damage or 0, localAuraMultiplier = editionBonus.auraMultiplier or 1,
                     message = string.upper(CardEffects.getEffectName(card)) .. ": "
                         .. (editionBonus.damage or 0) .. " ST cố định / "
                         .. (editionBonus.mult or 0) .. " Cường hóa / ×" .. (editionBonus.auraMultiplier or 1) .. " Aura",
@@ -799,6 +814,38 @@ function Scoring.calculate(handInfo, deities, context)
                     cardEvent.presentationTriggers = cardEvent.presentationTriggers or {}
                     table.insert(cardEvent.presentationTriggers, trigger)
                 end
+            end
+            local strength=job.effectiveness or 1
+            if strength~=1 then
+                bonusChips=before.chips+(bonusChips-before.chips)*strength
+                bonusMult=before.mult+(bonusMult-before.mult)*strength
+                xMultBonus=before.x+(xMultBonus-before.x)*strength
+                flatDamageBonus=before.damage+(flatDamageBonus-before.damage)*strength
+                totalExtraDamagePct=before.extra+(totalExtraDamagePct-before.extra)*strength
+                bonusGoldAwarded=before.gold+(bonusGoldAwarded-before.gold)*strength
+                totalArmorGain=before.armor+(totalArmorGain-before.armor)*strength
+                totalHealHp=before.heal+(totalHealHp-before.heal)*strength
+                totalHpCost=before.hp+(totalHpCost-before.hp)*strength
+                cardEvent.addedChips=cardEvent.addedChips*strength
+                cardEvent.addedMult=cardEvent.addedMult*strength
+                cardEvent.addedDamage=(cardEvent.addedDamage or 0)*strength
+                for _,trigger in ipairs(cardEvent.presentationTriggers or {}) do
+                    trigger.addedChips=(trigger.addedChips or 0)*strength
+                    trigger.addedMult=(trigger.addedMult or 0)*strength
+                    trigger.addedDamage=(trigger.addedDamage or 0)*strength
+                end
+                cardEvent.message="VỌNG ẢNH · 50% · "..cardEvent.message
+            end
+            if cardEvent.localAuraMultiplier then
+                local prior=(baseChips+before.chips)*(baseMult+before.mult)
+                local after=(baseChips+bonusChips)*(baseMult+bonusMult)
+                local gain=math.max(0,after-prior)*(cardEvent.localAuraMultiplier-1)
+                localEditionAura=localEditionAura+gain
+                cardEvent.localAuraBonus=gain
+            end
+            if not abilityHand and CardEffects.getEffectName(card)=="echo" and not echoSeen[card] then
+                echoSeen[card]=true
+                previewQueue[#previewQueue+1]={card=card,index=idx,retrigger=true,effectiveness=.5}
             end
             cardEvent.deityTriggers = deityTriggers
             table.insert(steps, cardEvent)
@@ -906,7 +953,7 @@ end
     if hasKingOfDiamonds and context and context.monster and availableGold > 0 then
         local currentChips = baseChips + bonusChips
         local currentMult = baseMult + bonusMult
-        local currentProjScore = math.floor(currentChips * currentMult * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
+        local currentProjScore = math.floor((currentChips * currentMult+localEditionAura) * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
         if currentProjScore < context.monster.hp then
             local maxBribe = math.min(5, availableGold)
             local dollarsNeeded = 0
@@ -914,7 +961,7 @@ end
                 dollarsNeeded = d
                 local testChips = currentChips + (d * 30)
                 local testMult = currentMult + (d * 3)
-                local testScore = math.floor(testChips * testMult * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
+                local testScore = math.floor((testChips * testMult+localEditionAura) * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
                 if testScore >= context.monster.hp then
                     break
                 end
@@ -955,7 +1002,7 @@ end
     for slot,deity in pairs(deities or {}) do
         local spell=Expansion.byId[deity.enchantment]
         if spell and not (abilityHand and Boss.isSlotLocked(abilityGame,"spn",slot)) then
-            local res=spell.effect(handInfo,context and (context.gameState or context) or {})
+            local res=spell.effect(handInfo,spell.depth and Depth.game(context) or context and (context.gameState or context) or {},context)
             if res then
                 applyDiscovery(res)
                 table.insert(steps,{type="deity_enchantment",slotIndex=slot,deity=deity,
@@ -978,12 +1025,16 @@ end
         end
     end
 
+    local spnContext={}
+    for key,value in pairs(context or {}) do spnContext[key]=value end
+    spnContext.soulsAvailable=abilityGame and abilityGame.souls or context and context.souls or 0
     for di = 1, maxDeitySlots do
         local deity = deities and deities[di]
         if deity and not (abilityGame and Boss.isSlotLocked(abilityGame, "spn", di)) then
+            local deityAuraBefore=currentChips*currentMult
             local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
             if effectiveDeity and effectiveDeity.onHandScored then
-                local res = effectiveDeity.onHandScored(handInfo, context, effectiveDeity)
+                local res = effectiveDeity.onHandScored(handInfo, spnContext, effectiveDeity, di)
                 res = Deities.scaleEffect(effectiveDeity, res)
                 if res then
                     if abilityHand then
@@ -993,6 +1044,17 @@ end
                     local addedChips = res.addChips or 0
                     local addedMult = res.addMult or 0
                     local cardXMult = res.xMult or 1.0
+
+                    spnContext.soulsAvailable=math.max(0,spnContext.soulsAvailable-(res.soulCost or 0))
+                    if abilityGame and not (context and context.preview)
+                        and (res.nextSpnState or res.soulCost or res.discardCost or res.addDiscards or res.addHands) then
+                        require("src.spn_anomalies").commitHand(abilityGame,di,res)
+                    end
+                    flatDamageBonus=flatDamageBonus+(res.addFlatDamage or 0)
+                    if res.addTransmutePct then
+                        local moved=math.floor(math.max(0,currentChips)*math.min(90,res.addTransmutePct)/100)
+                        addedChips=addedChips-moved;addedMult=addedMult+moved
+                    end
 
                     totalArmorGain = totalArmorGain + (res.addArmor or 0)
                     totalHealHp = totalHealHp + (res.addHealHp or 0)
@@ -1020,6 +1082,10 @@ end
                         addArmor = res.addArmor or 0,
                         healHp = res.addHealHp or 0,
                         bonusGold = res.addGold or 0,
+                        addFlatDamage = res.addFlatDamage or 0,
+                        soulCost = res.soulCost or 0,
+                        addDiscards = res.addDiscards or 0,
+                        addHands = res.addHands or 0,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
                         message = displayName .. ": " .. (res.message or effectiveDeity.desc or deity.desc or effectiveDeity.name or deity.name or "")
@@ -1056,13 +1122,15 @@ end
                         message = "🌈 HOLOGRAPHIC: " .. deity.name .. " (+"..eb.mult.." Mult)!"
                     })
                 elseif deity.edition == "polychrome" then
-                    auraEditionMultiplier = auraEditionMultiplier * eb.auraMultiplier
+                    local gain=math.max(0,currentChips*currentMult-deityAuraBefore)*(eb.auraMultiplier-1)
+                    deityEditionAura=deityEditionAura+gain
                     table.insert(steps, {
                         type = "deity_edition",
                         slotIndex = di,
                         deity = deity,
                         edition = "polychrome",
-                        auraMultiplier = eb.auraMultiplier,
+                        localAuraMultiplier = eb.auraMultiplier,
+                        localAuraBonus = gain,
                         resultingChips = currentChips,
                         resultingMult = currentMult,
                         message = "🌟 POLYCHROME: " .. deity.name .. " (×"..eb.auraMultiplier.." Aura)!"
@@ -1082,7 +1150,8 @@ end
     end
     local totalMult = currentMult
     local rawScore = math.floor(totalChips * totalMult * cardXMultTotal)
-    local finalScore = math.floor(rawScore * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
+    local localAuraBonus=(localEditionAura+deityEditionAura)*cardXMultTotal
+    local finalScore = math.floor((rawScore+localAuraBonus) * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
     local finalCombinedXMult = math.min(5.0, 1.0 + xMultBonus)
 
     table.insert(steps, {
@@ -1092,6 +1161,7 @@ end
         xMult = finalCombinedXMult,
         cardXMultTotal = cardXMultTotal,
         rawScore = rawScore,
+        localAuraBonus = localAuraBonus,
         extraDamagePct = totalExtraDamagePct,
         auraMultiplier = auraEditionMultiplier,
         finalScore = finalScore,
@@ -1099,6 +1169,7 @@ end
         message = totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. (auraEditionMultiplier > 1 and (" × " .. string.format("%.2f", auraEditionMultiplier) .. " Aura") or "") .. (flatDamageBonus > 0 and (" + " .. flatDamageBonus .. " sát thương cố định") or "") .. " = " .. finalScore .. " Sát thương!"
     })
 
+    Depth.finish(context,handInfo)
     return {
         baseChips = baseChips,
         baseMult = baseMult,
@@ -1111,6 +1182,7 @@ end
         rawScore = rawScore,
         finalScore = finalScore,
         flatDamageBonus = flatDamageBonus,
+        localAuraBonus = localAuraBonus,
         auraEditionMultiplier = auraEditionMultiplier,
         totalExtraDamagePct = totalExtraDamagePct,
         bonusGoldAwarded = bonusGoldAwarded,

@@ -3,21 +3,26 @@
 local Deck = require("src.deck")
 local UI = require("src.ui")
 local Test = {}
-local stage, deadline, case = "start", 0, 0
+local stage, deadline, case, edgeCase = "start", 0, 0, 0
+local edgeX, edgeY, edgeIndex
 local function point(i)
     local width, count = 100, 8
     local spacing = math.min(106, (UI.BATTLE_ARENA_W - 20 - width) / (count - 1))
     local left = UI.BATTLE_ARENA_X + (UI.BATTLE_ARENA_W - ((count - 1) * spacing + width)) / 2
     return left + (i - 1) * spacing + 8, 536
 end
-local function pointer(x, y, action)
+local function screenPoint(x, y)
     local w, h = love.graphics.getDimensions()
     local scale = math.min(w / 1280, h / 720)
-    local px, py = (w - 1280 * scale) / 2 + x * scale, (h - 720 * scale) / 2 + y * scale
+    return (w - 1280 * scale) / 2 + x * scale, (h - 720 * scale) / 2 + y * scale
+end
+local function pointer(x, y, action)
+    local px, py = screenPoint(x, y)
     love.mouse.setPosition(px, py)
     if action == "press" then love.mousepressed(px, py, 1)
     elseif action == "release" then love.mousereleased(px, py, 1)
     else love.mousemoved(px, py, 0, 0) end
+    return px, py
 end
 local function after(seconds, nextStage)
     deadline, stage = love.timer.getTime() + seconds, nextStage
@@ -74,7 +79,62 @@ function Test.update(game, callbacks)
         print("[PASS] actual animated hand drag selection " .. case)
         if case == 4 then love.window.setMode(960, 540, {resizable = true}); love.resize(960, 540) end
         if case == 8 then love.window.setMode(1920, 1080, {resizable = true}); love.resize(1920, 1080) end
-        after(0.12, case < 12 and "press" or "reorder")
+        after(0.12, case < 12 and "press" or "edge")
+    elseif stage == "edge" then
+        edgeCase = edgeCase + 1
+        for _, card in ipairs(game.hand) do card.selected = false end
+        game.selectedIndices = {}
+        edgeIndex = edgeCase == 1 and 1 or 8
+        edgeX, edgeY = point(edgeIndex)
+        edgeX = edgeCase == 2 and edgeX + 91 or edgeX - 7
+        edgeY = 615 -- Near the lower edge, where lift used to repeatedly lose hover.
+        pointer(edgeX, edgeY)
+        after(0.6, "edge_check")
+    elseif stage == "edge_check" then
+        for i, card in ipairs(game.hand) do
+            assert(card.hovered == (i == edgeIndex), "Animated edge must hover exactly one card")
+            assert(UI.CardPhysics.getState(card).hovered == card.hovered,
+                "Renderer must honor the stable hand hover")
+        end
+        pointer(edgeX, edgeY, "press")
+        pointer(edgeX + 2, edgeY + 2)
+        pointer(edgeX + 2, edgeY + 2, "release")
+        assert(#game.selectedIndices == 1 and game.hand[edgeIndex].selected,
+            "Edge click with jitter must select the hovered card only")
+        after(0.6, "edge_selected")
+    elseif stage == "edge_selected" then
+        assert(game.hand[edgeIndex].hovered, "Selected card must retain hover at its original lower edge")
+        print("[PASS] stable animated hand edge " .. edgeCase)
+        game.selectedIndices = {}; game.hand[edgeIndex].selected = false
+        after(0.1, edgeCase < 3 and "edge" or "touch")
+    elseif stage == "touch" then
+        local x, y = point(4)
+        local px, py = screenPoint(x - 13, y)
+        love.touchpressed(1, px, py)
+        love.touchmoved(1, px + 7, py)
+        love.touchreleased(1, px + 7, py)
+        assert(#game.selectedIndices == 1 and game.hand[3].selected,
+            "Touch jitter across a seam must select the initial card only")
+        after(0.4, "touch_sweep")
+    elseif stage == "touch_sweep" then
+        for _, card in ipairs(game.hand) do
+            assert(not card.hovered, "Released touch must not leave hover behind")
+            card.selected = false
+        end
+        game.selectedIndices = {}
+        local x, y = point(1)
+        local px, py = screenPoint(x, y)
+        love.touchpressed(1, px, py)
+        x, y = point(8)
+        px, py = screenPoint(x, y)
+        love.touchmoved(1, px, py)
+        love.touchreleased(1, px, py)
+        assert(#game.selectedIndices == 5, "Touch sweep must retain the selection cap")
+        for i = 1, 5 do assert(game.hand[i].selected, "Touch sweep skipped a card") end
+        for _, card in ipairs(game.hand) do card.selected = false end
+        game.selectedIndices = {}
+        print("[PASS] actual touch seam jitter, released hover and fast swipe")
+        after(0.2, "reorder")
     elseif stage == "reorder" then
         local original = game.hand[1]
         local x, y = point(1)
@@ -92,7 +152,7 @@ function Test.update(game, callbacks)
         love.focus(false)
         x, y = point(8); pointer(x, y); pointer(x, y, "release")
         assert(#game.selectedIndices == 1, "Focus loss did not cancel further selection")
-        print("DRAG SELECT PASSED: 12 animated gesture cycles at 960/1280/1920 widths; overlap, adjacent start, cap, Shift reorder and focus loss")
+        print("DRAG SELECT PASSED: 12 animated gesture cycles at 960/1280/1920 widths; 3 stable edge cases, overlap, adjacent start, cap, Shift reorder and focus loss")
         love.event.quit(0)
     end
 end

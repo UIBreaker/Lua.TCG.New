@@ -10,8 +10,9 @@ function F.world(game,UI,Renderer,Art,Death,art,time,motion,scoring,turn)
             local target=m==game.monster
             local recoil,squash,flash=0,1,0
             if target and scoring then recoil,squash,flash=UI.ScoringFeel.enemyReaction(scoring) end
-            Renderer.entity.draw(img,cx,cy+math.sin(time*1.1+i)*1.0,h,time,
-                turn and require("src.enemy_attack_presentation").motion(turn,m) or motion.attack/0.42,target and motion.hit/0.35 or 0,recoil,squash,Renderer.scene.preset,Renderer.eventStrength,m.human or m.creatureCard,
+            local bx,by,bhit=require("src.bed_explosion").reaction(cx)
+            Renderer.entity.draw(img,cx+bx,cy+by+math.sin(time*1.1+i)*1.0,h,time,
+                turn and require("src.enemy_attack_presentation").motion(turn,m) or motion.attack/0.42,math.max(target and motion.hit/0.35 or 0,bhit),recoil,squash,Renderer.scene.preset,Renderer.eventStrength,m.human or m.creatureCard,
                 target and {0.95,0.78,0.39,1} or nil,m)
         elseif Death.enemyActive(m) then Death.drawEnemy(img,cx,cy,h,(m.human or m.creatureCard) and m or nil) end
     end

@@ -26,12 +26,9 @@ D.glossary = {
     {"Kỹ Năng Chủ Động","Hành động đã báo trước, có hồi chiêu và có thể bị hủy/trì hoãn."},
 }
 function D.edition(card)
-    local b=Effects.getScoreBonus(card)
-    if not b then return "" end
-    return "\nẤN BẢN · "..string.upper(Effects.getEffectName(card))
-        ..((b.damage or 0)>0 and (" · +"..b.damage.." ST cố định") or "")
-        ..((b.mult or 0)>0 and (" · +"..b.mult.." Cường hóa") or "")
-        ..((b.auraMultiplier or 1)>1 and (" · ×"..b.auraMultiplier.." Aura") or "")
+    local definition=Effects.getDefinition(Effects.getEffectName(card))
+    if not definition then return "" end
+    return "\nẤN BẢN · "..definition.shopLabel.."\n"..definition.shopText
 end
 function D.resolve(item,game)
     if not item then return "", "" end
@@ -64,6 +61,7 @@ function D.resolve(item,game)
         for _,eq in ipairs(item.equipments or {}) do text=text.."\nITM · "..eq.name..": "..Equipment.getDescription(eq) end
         if item.seal then text=text.."\nẤN · "..Deck.getModifierDescription("seal",item.seal) end
         if item.enhancement then text=text.."\nRÈN · "..Deck.getModifierDescription("enhancement",item.enhancement) end
+        if game then local status=require("src.chest_depth").status(game,item);if status~="" then text=text.."\n"..status end end
         return (item.rankName or tostring(item.rank))..(item.suitSymbol or "").." · "..def.name,text..D.edition(item)
     end
     if Deities.CATALOG[item.id] then
@@ -76,7 +74,7 @@ function D.resolve(item,game)
         return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +1 cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
     end
     if item.sealType and Deck.SEALS[item.sealType] then return item.name,"Đóng lên lá được chọn (hoặc lá đầu tay/bộ bài nếu chưa chọn).\n"..Deck.getModifierDescription("seal",item.sealType) end
-    if item.category=="edition" then return item.name,"Chọn lá bài hoặc SPN để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition}) end
+    if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition}) end
     if item.packType then return item.name,item.desc or "" end
     local consumable=require("src.shop").getConsumableDescription(item)
     if consumable then return item.name,consumable end

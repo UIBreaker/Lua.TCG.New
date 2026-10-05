@@ -54,7 +54,7 @@ end
 
 function CardEffects.getEditionCatalog()
     local options = {}
-    for _, effectName in ipairs(Config.rollOrder) do
+    for _, effectName in ipairs(Config.catalogOrder) do
         local definition = Config.effects[effectName]
         options[#options + 1] = {
             id = "edition_" .. effectName,
@@ -74,6 +74,7 @@ function CardEffects.setEffect(card, name)
     if not card then return false end
     local effectName = normalize(name)
     if name ~= nil and not effectName then return false end
+    if effectName and not card.rank and not Config.effects[effectName].score then return false end
     card.edition = effectName
     card.visualEffect = nil
     if effectName then
@@ -168,7 +169,7 @@ function CardEffects.load()
         end
     end
 
-    return loadedCount == #Config.rollOrder, loadedCount
+    return loadedCount == #Config.catalogOrder, loadedCount
 end
 
 local function approach(current, target, dt)

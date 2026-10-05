@@ -5,27 +5,36 @@ local Abilities = require("src.card_abilities")
 local Boss = require("src.boss_abilities")
 local Group = require("src.enemy_group")
 local EnemyAbilities = require("src.enemy_abilities")
+local Anomalies = require("src.spn_anomalies")
 local Combat = { Abilities = Abilities, Boss = Boss }
+
+function Combat.bedExplosions(game,aura,locked)
+    local target=game.monster
+    local bedExplosions={}
+    if target.hasBed then
+        for slot=1,Deities.getMaxSlots(game) do
+            local deity=game.deities and game.deities[slot]
+            local isLocked=locked and locked[slot]
+            if not locked then isLocked=Boss.isSlotLocked(game,"spn",slot) end
+            local result=deity and deity.onAttack and not isLocked and deity.onAttack()
+            if result and (result.bedExplosionPct or 0)>0 then
+                bedExplosions[#bedExplosions+1]={deity=deity,slot=slot,amount=math.floor(math.max(0,aura)*result.bedExplosionPct/100)}
+            end
+        end
+    end
+    return bedExplosions
+end
 
 function Combat.resolvePlayerAttack(game, aura)
     local Monster = require("src.monster")
     local target = game.monster
     local locked = {}
     for slot = 1, Deities.getMaxSlots(game) do locked[slot] = Boss.isSlotLocked(game, "spn", slot) end
-    local bedExplosions={}
-    if target.hasBed then
-        for slot=1,Deities.getMaxSlots(game) do
-            local deity=game.deities and game.deities[slot]
-            local result=deity and deity.onAttack and not locked[slot] and deity.onAttack()
-            if result and (result.bedExplosionPct or 0)>0 then
-                bedExplosions[#bedExplosions+1]={deity=deity,slot=slot,amount=math.floor(math.max(0,aura)*result.bedExplosionPct/100)}
-            end
-        end
-        -- Consume the trap before damage, so it cannot heal or chain itself.
-        if #bedExplosions>0 then target.hasBed=nil end
-    end
+    local bedExplosions=Combat.bedExplosions(game,aura,locked)
+    if #bedExplosions>0 then target.hasBed=nil end
+    local hpBefore=target.hp
     local damage = Monster.takeDamage(target, aura)
-    local splashHits = {}
+    local splashHits = Anomalies.playerAttack(game,aura,hpBefore,damage,locked)
     for _,explosion in ipairs(bedExplosions) do
         for _,enemy in ipairs(Group.members(game)) do
             if enemy.hp>0 then
@@ -86,6 +95,9 @@ end
 local function resolveOneAttack(game)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
+    if Anomalies.sleep(game,monster) then
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true}
+    end
     if not require("src.soul_relics").beforeAttack(game,monster) then
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true}
     end
@@ -106,10 +118,13 @@ local function resolveOneAttack(game)
     damage = Abilities.damageGuard(game, damage)
     game.playerArmor = execution and (game.playerArmor or game.playerShield or 0) or armor
     game.playerShield = game.playerArmor
-    game.playerHp = math.max(0, (game.playerHp or 100) - damage)
+    local hpBeforeDamage=game.playerHp or 100
+    game.playerHp = math.max(0, hpBeforeDamage - damage)
     monster.attack = math.floor(baseAttack * 1.08 + 0.5)
     monster.armor = math.floor((monster.armor or 0) * 1.05 + 2)
     EnemyAbilities.afterAttack(game,monster,damage)
+    require("src.chest_depth").enemyAttack(game,math.min(damage,hpBeforeDamage),absorbed)
+    Anomalies.enemyAttack(game,monster,math.min(damage,hpBeforeDamage))
 
     for _, card in ipairs(game.hand or {}) do
         if card.enhancement == "enh_escort" or card.enhancement == "escort" then
@@ -190,12 +205,14 @@ function Combat.start(game, monster, round)
     game.monster = monster
     game.enemies=Group.build(monster)
     game.enemyPoison=0;game.enemyFeedback=nil
+    game.spnCombat={};game.spnFeedback={}
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
     end
     game.maxSelectableCards = nil
     game.abilityHand = nil
+    game.depthCombat = {values={}}
     Boss.start(game)
     game.handsRemaining = game.maxHands
     game.playerArmor = 0
@@ -226,6 +243,7 @@ function Combat.start(game, monster, round)
         end
     end
     game.turnHandLimit = game.handsRemaining
+    game.spnDiscardCap=game.discardsRemaining
 
     local slaughterChips = game.storedSlaughterChips or 0
     if slaughterChips > 0 then
@@ -331,6 +349,9 @@ end
 function Combat.onPlayerTurnEnd(game)
     if not game or not game.hand then return end
     for _, c in ipairs(game.hand) do
+        if not c.destroyed and require("src.card_effects").getEffectName(c)=="gilded" then
+            game.gold=(game.gold or 0)+1
+        end
         if c.exhausted then
             if c.justExhausted then
                 c.justExhausted = nil

@@ -220,6 +220,7 @@ function Feel.formula(s)
     if (r.cardXMultTotal or 1) ~= 1 then text = text .. " × " .. string.format("%.2f", r.cardXMultTotal) end
     -- Keep both floors used by Scoring.calculate (rawScore, then converted score).
     text = text .. " → " .. fmt(r.rawScore) .. " AURA gốc"
+    if (r.localAuraBonus or 0) ~= 0 then text=text.." + "..fmt(r.localAuraBonus).." AURA Đa Sắc" end
     if (r.totalExtraDamagePct or 0) ~= 0 then text = text .. " × " .. string.format("%.2f", 1 + r.totalExtraDamagePct) end
     if (r.auraEditionMultiplier or 1) ~= 1 then text = text .. " × " .. string.format("%.2f", r.auraEditionMultiplier) end
     if (r.flatDamageBonus or 0) ~= 0 then text = text .. " + " .. fmt(r.flatDamageBonus) .. " ST cố định" end

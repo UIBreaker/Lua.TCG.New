@@ -229,7 +229,8 @@ local function checkFlush(cards)
     local suitCounts = {}
     local wildCount = 0
     for _, c in ipairs(cards) do
-        local isWild = not c.disableFactionPassives and (c.isWildSuit or ((c.rank == 1 or c.rank == 14) and (c.suit == "elaris" or c.suit == "clubs")))
+        local isWild = require("src.card_effects").getEffectName(c)=="astral"
+            or not c.disableFactionPassives and (c.isWildSuit or ((c.rank == 1 or c.rank == 14) and (c.suit == "elaris" or c.suit == "clubs")))
         if isWild then
             wildCount = wildCount + 1
         else

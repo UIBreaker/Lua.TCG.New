@@ -61,7 +61,7 @@ Shop.PACK_CATALOG = {
     { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
     { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
     { packType = "hand_styles", name = "RƯƠNG THẾ ĐÁNH", subtitle = "THẾ ĐÁNH", desc = "Mở 3 Bí Tịch ngẫu nhiên trong toàn bộ 9 thế đánh, chọn 1.", cost = 7, rarity = "Bí Tịch", color = { 0.95, 0.72, 0.22, 1 }, icon = "♠" },
-    { packType = "edition", name = "RƯƠNG ẤN BẢN", subtitle = "ẤN BẢN", desc = "Chọn Foil, Holographic hoặc Polychrome để cất hoặc áp dụng lên một lá bài.", cost = 8, rarity = "Ấn Bản", color = { 0.78, 0.48, 0.96, 1 }, icon = "✦" },
+    { packType = "edition", name = "RƯƠNG ẤN BẢN", subtitle = "ẤN BẢN", desc = "Chọn một trong 9 Ấn Bản để cất hoặc khảm lên một lá bài.", cost = 8, rarity = "Ấn Bản", color = { 0.78, 0.48, 0.96, 1 }, icon = "✦" },
 }
 
 Shop.SPN_RARITY_WEIGHTS = {
@@ -124,12 +124,16 @@ Shop.CONSUMABLE_RULES={
     planet_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
 }
 for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SEAL_CARDS,"seals"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
-    for _, card in ipairs(require("src.chest_expansion")[entry[2]]) do
+    local cards={}
+    for _,module in ipairs({"src.chest_expansion","src.chest_depth"}) do
+        for _,card in ipairs(require(module)[entry[2]]) do cards[#cards+1]=card end
+    end
+    for _, card in ipairs(cards) do
         entry[1][#entry[1]+1]=card
         if entry[2]~="seals" then Shop.CONSUMABLE_RULES[card.id]={params=card.params,description=card.desc} end
     end
 end
-Shop.PACK_CATALOG[4].desc="Mở 3 phép từ 14 phù phép SPN; chọn 1 để dùng hoặc cất. Phù phép mới áp dụng lên SPN đầu tiên."
+Shop.PACK_CATALOG[4].desc="Mở 3 phép từ 24 phù phép SPN; chọn 1 để dùng hoặc cất. Phù phép mới áp dụng lên SPN đầu tiên."
 function Shop.getConsumableParams(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     return rule and rule.params or {}
@@ -139,9 +143,9 @@ function Shop.getConsumableDescription(item)
         local foil=CardEffects.getDefinition("foil").score
         local holo=CardEffects.getDefinition("holographic").score
         local poly=CardEffects.getDefinition("polychrome").score
-        return "Một SPN ngẫu nhiên nhận Foil (+"..foil.damage.." ST cố định), Holographic (+"..holo.mult.." Cường hóa) hoặc Polychrome (×"..poly.auraMultiplier.." Aura cuối)."
+        return "Một SPN ngẫu nhiên nhận Foil (+"..foil.damage.." ST cố định), Holographic (+"..holo.mult.." Cường hóa) hoặc Polychrome (×"..poly.auraMultiplier.." AURA do SPN đóng góp)."
     elseif item.id=="spell_hex" then
-        return "Một SPN ngẫu nhiên nhận Polychrome (×"..CardEffects.getDefinition("polychrome").score.auraMultiplier.." Aura cuối); xóa mọi SPN khác."
+        return "Một SPN ngẫu nhiên nhận Polychrome (×"..CardEffects.getDefinition("polychrome").score.auraMultiplier.." AURA do SPN đóng góp); xóa mọi SPN khác."
     end
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     if item.handId and item.handId~="random" and item.handId~="all" then
@@ -685,7 +689,9 @@ function Shop.openPack(packItem, gameState)
         for i = 1, math.min(3, #books) do candidates[i] = books[i] end
 
     elseif packItem.packType == "edition" then
-        candidates = CardEffects.getEditionCatalog()
+        local editions=CardEffects.getEditionCatalog()
+        for i=#editions,2,-1 do local j=Rng.random(i);editions[i],editions[j]=editions[j],editions[i] end
+        for i=1,3 do candidates[i]=editions[i] end
     end
 
     return {

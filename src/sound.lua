@@ -8,6 +8,7 @@ local menuMusic
 local menuMusicLoadAttempted = false
 local MAX_VOICES = 18
 local gain = {
+    bed_explosion_charge=.25, bed_explosion_boom=.94, bed_explosion_debris=.30, bed_explosion_rumble=.40,
     ui_hover = 0.26, ui_click = 0.48,
     card_select = 0.52, card_deselect = 0.46, card_slide = 0.42,
     card_draw = 0.60, card_deal = 0.50, card_play = 0.78,
@@ -21,6 +22,7 @@ local gain = {
     cant_afford = 0.55,
 }
 local rewardAliases = {
+    bed_explosion_charge="consume", bed_explosion_boom="damage_heavy", bed_explosion_debris="card_destroy", bed_explosion_rumble="xmult_boom",
     enemy_death_hit = "damage_heavy", enemy_ash_break = "chest_dissolve",
     defeat_hit = "damage_heavy", defeat_collapse = "card_destroy",
     defeat_ambience = "game_over", defeat_text_reveal = "score_impact",

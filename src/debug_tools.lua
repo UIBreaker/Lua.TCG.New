@@ -70,7 +70,7 @@ function DebugTools.grantCollectionItem(game, shop, category, item, targetCard)
         if not targetCard then return false, "Bộ bài chưa có lá để áp dụng." end
         if category == "enhancements" then targetCard.enhancement = id
         elseif category == "seals" then targetCard.seal = id
-        else targetCard.edition = ({ ed_base = "base", ed_foil = "foil", ed_holo = "holo", ed_poly = "polychrome" })[id] end
+        else require("src.card_effects").setEffect(targetCard, ({ ed_foil = "foil", ed_holo = "holographic", ed_poly = "polychrome" })[id] or id:match("^edition_(.+)$")) end
         return true, "Đã áp dụng " .. item.name .. " lên " .. (targetCard.rankName or "lá bài") .. (targetCard.suitSymbol or "")
     elseif category == "packs" then
         if not item.isPackContent then return true, "pack", item.packType end

@@ -102,9 +102,6 @@ Collection.CATEGORIES = {
 -- Static items for categories that don't have dedicated Lua modules
 local EDITIONS = {
     { id = "ed_base", name = "Ấn Bản Chuẩn (Standard)", rarity = "Cơ Bản", desc = "Lá bài gốc nguyên bản không mang lớp phủ quang học ma thuật.", icon = "🃏", color = { 0.70, 0.70, 0.70, 1 } },
-    { id = "ed_foil", name = "Mạ Bạc (Foil)", rarity = "Đặc Biệt", desc = "Phủ một lớp kim loại bạc lấp lánh: Tặng thêm +50 Chips cố định mỗi khi kích hoạt!", icon = "✨", color = { 0.35, 0.75, 0.95, 1 } },
-    { id = "ed_holo", name = "Quang Phổ (Holographic)", rarity = "Hiếm", desc = "Phản chiếu 7 sắc cầu vồng: Tặng thêm +10 Mult cho tổng điểm tay bài khi kích hoạt!", icon = "🌟", color = { 0.85, 0.35, 0.85, 1 } },
-    { id = "ed_poly", name = "Đa Sắc (Polychrome)", rarity = "Huyền Thoại", desc = "Hào quang ngũ sắc rực rỡ: Nhân x1.5 XMult trực tiếp vào Aura cuối cùng!", icon = "🌈", color = { 0.95, 0.80, 0.20, 1 } },
 }
 
 function Collection.getCategories()
@@ -272,7 +269,8 @@ function Collection.getItems(category)
         table.sort(items, function(a, b) return a.name < b.name end)
 
     elseif category == "editions" then
-        for _, ed in ipairs(EDITIONS) do
+        table.insert(items,EDITIONS[1])
+        for _, ed in ipairs(require("src.card_effects").getEditionCatalog()) do
             table.insert(items, ed)
         end
 

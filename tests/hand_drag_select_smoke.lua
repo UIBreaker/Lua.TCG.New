@@ -10,8 +10,9 @@ local env = setmetatable({
     love = {keyboard = {isDown = function() return shift end}}, state = "playing", game = {hand = {}, selectedIndices = {}},
     anim = {floatingTexts = {}}, juice = {}, buttons = {},
     shopDrag = {active = false}, deityDrag = {active = false},
+    Touch = {enabled = false, cancel = function() end, mouseInput = function() end},
     UI = {BATTLE_ARENA_X = 200, BATTLE_ARENA_W = 650, AbilityUI = {}, ScoringFeel = {},
-        COLORS = {}, CardPhysics = {
+        COLORS = {}, Inventory = {limit = function() return 0 end}, CardPhysics = {
             release = function() held = false end,
             isLabOpen = function() return false end,
             hit = function(_, _, _, fallback) return fallback end,
@@ -39,12 +40,13 @@ local code = section("local handDrag = {", "function anim.prepareDrawAnimation")
     .. section("getHandCardPosition = function", "local function drawBattleHud")
     .. section("local function handlePlayingMousepressed", "local function handleShopMousepressed")
     .. section("function love.focus", "local function updateCaptureMode")
-    .. source:sub((assert(source:find("function love.mousemoved", 1, true))))
-    .. "\nreturn handDrag, getHandCardPosition, handlePlayingMousepressed"
+    .. section("function love.mousemoved", "Touch.install(")
+    .. "\nreturn handDrag, getHandCardPosition, handlePlayingMousepressed, handInputBlocked"
 local chunk
 if setfenv then chunk = assert(loadstring(code)); setfenv(chunk, env)
 else chunk = assert(load(code, "hand input", "t", env)) end
-local drag, position, press = chunk()
+local drag, position, press, blocked = chunk()
+env.handDrag, env.handInputBlocked = drag, blocked
 local function reset(count, selected)
     env.state, env.isPauseMenuOpen, limit, sounds = "playing", false, 5, 0
     shift, env.anim.floatingTexts = false, {}
@@ -103,8 +105,43 @@ env.UI.CardPhysics.hit = hit
 reset(8, {1})
 env.UI.CardPhysics.hit = function(card) return card == env.game.hand[1] end
 x, y = point(4); assert(press(x, y, 1)); release(x, y)
-assert(#env.game.selectedIndices == 0, "Rendered surface must take priority over an overlapping stable slot")
+assert(env.game.hand[1].selected and env.game.hand[4].selected,
+    "Animated physics geometry must not steal a neighboring slot")
 env.UI.CardPhysics.hit = hit
+reset(8)
+local edgeX, edgeY = position(4, 8)
+edgeX, edgeY = edgeX - 5, edgeY + 100
+assert(press(edgeX, edgeY, 1))
+move(edgeX + 3, edgeY); release(edgeX + 3, edgeY)
+assert(#env.game.selectedIndices == 1 and env.game.hand[3].selected,
+    "Tiny jitter across an overlapping edge must remain a single click")
+reset(8)
+local hoverCode = section("    if not handInputBlocked() and not (handDrag.active and handDrag.isDragging) then",
+    "    -- Draw non-dragged cards in order")
+local hoverChunk
+local wrapped = "return function(mx,my) local hoveredIdx,hoveredCard,hoveredCardTooltip\n"
+    .. hoverCode .. "\nreturn hoveredIdx end"
+if setfenv then hoverChunk = assert(loadstring(wrapped)); setfenv(hoverChunk, env)
+else hoverChunk = assert(load(wrapped, "hand hover", "t", env)) end
+local hover = hoverChunk()
+local hx, hy, hw, hh = position(8, 8)
+for _, point in ipairs({{hx + hw - 1, hy + hh - 1}, {hx + 1, hy + hh - 1}, {hx + 1, hy - 40}}) do
+    for frame = 1, 120 do
+        for i, card in ipairs(env.game.hand) do
+            card.visualX = 1100 + frame
+            card.visualY = frame % 2 == 0 and 410 or 480
+            card.visualScale = frame % 2 == 0 and 1.11 or 1
+        end
+        assert(hover(point[1], point[2]) == 8, "Hover must stay fixed despite animated edges")
+        for i, card in ipairs(env.game.hand) do
+            assert(card.hovered == (i == 8), "Only one hand card may hover")
+        end
+    end
+    assert(press(point[1], point[2], 1)); release(point[1], point[2])
+    assert(env.game.hand[8].selected, "Press must select the same card as hover")
+    env.game.selectedIndices = {}; env.syncCardSelections()
+end
+assert(hover(hx + hw + 20, hy + hh + 20) == nil, "Hover must clear outside the hand")
 reset(8, {1, 2, 3, 4, 5})
 start(5); x, y = point(1); move(x, y); release(x, y)
 assert(#env.game.selectedIndices == 0, "Starting on a selected card paints deselection in reverse")

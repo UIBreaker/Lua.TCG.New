@@ -140,7 +140,11 @@ Equipment.POOL = {
     "gem_fire", "gem_blast", "mirror_adjacent", "storm_eye", "lucky_coin",
     "ward_stone", "vitality_gem", "blood_ring", "void_catalyst",
 }
-for _, item in ipairs(require("src.chest_expansion").equipment) do
+local discoveries={}
+for _,module in ipairs({"src.chest_expansion","src.chest_depth"}) do
+    for _,item in ipairs(require(module).equipment) do discoveries[#discoveries+1]=item end
+end
+for _, item in ipairs(discoveries) do
     Equipment.ITEMS[item.id] = item
     Equipment.POOL[#Equipment.POOL + 1] = item.id
 end

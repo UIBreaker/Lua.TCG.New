@@ -1,4 +1,4 @@
-return {
+local config = {
     transitionSpeed = 14,
     scoreStateDuration = 0.34,
     scorePulseDuration = 0.20,
@@ -7,6 +7,7 @@ return {
     tiltVerticalScale = 0.72,
     debugToggleKey = "f7",
     rollOrder = { "foil", "holographic", "polychrome" },
+    catalogOrder = { "foil", "holographic", "polychrome", "gilded", "echo", "ancient", "void", "astral", "resonant" },
     effects = {
         foil = {
             shader = "shaders/card_foil.glsl",
@@ -16,9 +17,9 @@ return {
             scoringStrength = 1.32,
             speed = 0.86,
             shopChance = 0.075,
-            shopLabel = "FOIL",
-            shopText = "Foil: +50 sát thương cố định khi chấm lá.",
-            score = { damage = 50, chips = 0, mult = 0, auraMultiplier = 1 },
+            shopLabel = "FOIL — KIM QUANG",
+            shopText = "Khi lá này tính điểm: +20 SÁT THƯƠNG.",
+            score = { damage = 20, chips = 0, mult = 0, auraMultiplier = 1 },
             beamColor = { 0.70, 0.86, 1.0 },
         },
         holographic = {
@@ -29,9 +30,9 @@ return {
             scoringStrength = 1.35,
             speed = 0.62,
             shopChance = 0.035,
-            shopLabel = "HOLOGRAPHIC",
-            shopText = "Holographic: +10 Cường hóa (Mult) khi chấm lá.",
-            score = { chips = 0, mult = 10, auraMultiplier = 1 },
+            shopLabel = "HOLOGRAPHIC — HUYỄN QUANG",
+            shopText = "Khi lá này tính điểm: +1 CƯỜNG HÓA trong tay bài hiện tại.",
+            score = { chips = 0, mult = 1, auraMultiplier = 1 },
             beamColor = { 0.72, 0.50, 1.0 },
         },
         polychrome = {
@@ -42,10 +43,27 @@ return {
             scoringStrength = 1.20,
             speed = 0.40,
             shopChance = 0.01,
-            shopLabel = "POLYCHROME",
-            shopText = "Polychrome: nhân x1.5 Aura cuối khi chấm lá.",
+            shopLabel = "POLYCHROME — ĐA SẮC",
+            shopText = "AURA do chính lá này đóng góp ×1.5.",
             score = { chips = 0, mult = 0, auraMultiplier = 1.5 },
             beamColor = { 1.0, 0.56, 0.86 },
         },
     },
 }
+-- Reuse the existing optical shaders; the relic artwork supplies each identity.
+for _, entry in ipairs({
+    {"gilded", "KIM ẤN", "Nếu lá vẫn còn trên tay khi kết thúc lượt: +1 Vàng.", "foil", {1,.76,.3}},
+    {"echo", "VỌNG ẢNH", "Lần đầu tính điểm mỗi tay: tái kích hoạt thêm 1 lần ở 50% hiệu lực.", "holographic", {.4,.8,1}},
+    {"ancient", "CỔ ĐẠI", "Mọi chỉ số nhận từ Tiến Hóa mạnh hơn 25%.", "foil", {.66,.68,.4}},
+    {"void", "HƯ KHÔNG", "Khi tiêu hủy: khả năng kích hoạt thêm 1 lần cuối trước khi biến mất.", "holographic", {.55,.25,.9}},
+    {"astral", "TINH TÚ", "Khi xét tổ hợp: có thể là bất kỳ Chất nào đang thiếu. Bậc không đổi.", "holographic", {.5,.8,1}},
+    {"resonant", "CỘNG HƯỞNG", "Khi nằm trên tay: hai lá sát bên nhận +20% hiệu quả khả năng.", "foil", {.3,.9,1}},
+}) do
+    local definition = {}
+    for key, value in pairs(config.effects[entry[4]]) do definition[key] = value end
+    definition.shopChance = 0
+    definition.shopLabel = string.upper(entry[1]) .. " — " .. entry[2]
+    definition.shopText, definition.beamColor, definition.score = entry[3], entry[5], nil
+    config.effects[entry[1]] = definition
+end
+return config

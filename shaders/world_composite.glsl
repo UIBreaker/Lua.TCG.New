@@ -8,9 +8,10 @@ extern float crtStrength;
 extern vec2 waveCenter;
 extern float waveRadius;
 extern float waveStrength;
+extern float waveAspect;
 vec4 effect(vec4 color, Image image, vec2 uv, vec2 screen) {
     vec2 delta=(uv-waveCenter)*vec2(1280.0,720.0);
-    float distanceToWave=length(delta);
+    float distanceToWave=length(delta*vec2(1.0,waveAspect));
     float band=exp(-pow((distanceToWave-waveRadius)/10.0,2.0));
     vec2 warp=normalize(delta+vec2(0.001))*band*waveStrength;
     vec4 base=Texel(image,clamp(uv+warp,0.0,1.0));

@@ -13,10 +13,10 @@ for _,list in ipairs({X.equipment,X.seals,X.spectral,X.spells}) do
     assert(#list==10)
     for _,d in ipairs(list) do assert(not seen[d.id]);seen[d.id]=true;assert(d.desc~="" and d.artConcept~="") end
 end
-assert(#Shop.getPackContents("arcana")==19)
-assert(#Shop.getPackContents("seal")==16)
-assert(#Shop.getPackContents("spectral")==18)
-assert(#Shop.getPackContents("joker_edition")==14)
+assert(#Shop.getPackContents("arcana")==29)
+assert(#Shop.getPackContents("seal")==26)
+assert(#Shop.getPackContents("spectral")==28)
+assert(#Shop.getPackContents("joker_edition")==24)
 local function fixture()
     local g=G.new();g.gold=24;g.playerHp=80;g.maxPlayerHp=100;g.handsRemaining=1
     local a,b,c=Deck.newCard(6,"valoria"),Deck.newCard(6,"vharos"),Deck.newCard(9,"elaris")
@@ -127,7 +127,7 @@ local last=assert(source:find("local function activateConsumable",first,true))
 local chunk=source:sub(first,last-1).."\nreturn useConsumable"
 local function useStored(g,d)
     local env=setmetatable({game=g,Shop=Shop,Sound=require("src.sound"),
-        UI={BossAbilities=require("src.boss_abilities"),COLORS={goldYellow={}}},
+        UI={BossAbilities=require("src.boss_abilities"),Inventory=require("src.inventory"),COLORS={goldYellow={}}},
         anim={floatingTexts={}},saveRunAtSafePoint=function() end},{__index=_G})
     local loader
     if setfenv then loader=assert(loadstring(chunk));setfenv(loader,env)

@@ -160,6 +160,7 @@ local enhancementText={
 }
 for id,p in pairs(enhancementParams) do Deck.ENHANCEMENTS[id].params=p;Deck.ENHANCEMENTS[id].desc=enhancementText[id] end
 for _, seal in ipairs(require("src.chest_expansion").seals) do Deck.SEALS[seal.id]=seal end
+for _, seal in ipairs(require("src.chest_depth").seals) do Deck.SEALS[seal.id]=seal end
 function Deck.getModifier(kind,id)
     local catalog=kind=="seal" and Deck.SEALS or Deck.ENHANCEMENTS
     return catalog[id] or catalog[(kind=="seal" and "seal_" or "enh_")..tostring(id)]
@@ -558,6 +559,7 @@ function Deck.cloneCard(card)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
     newC.seedChips = card.seedChips or 0
+    newC.depthInvestment = card.depthInvestment or 0
     newC.role = card.role or newC.role
     newC.roleName = card.roleName or newC.roleName
     newC.roleTitle = card.roleTitle or newC.roleTitle

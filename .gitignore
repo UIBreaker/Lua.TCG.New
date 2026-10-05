@@ -5,3 +5,5 @@ test_results.txt
 Thumbs.db
 graphify-out/
 *.zip
+dist/
+__pycache__/

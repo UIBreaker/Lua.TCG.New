@@ -117,6 +117,7 @@ function UI.toUpperUtf8(str)
 end
 
 function UI.initFonts()
+    local windowsFonts = love.system.getOS() == "Windows"
     local fontBoldPath = "fonts/arialbd.ttf"
     local fontRegularPath = "fonts/arial.ttf"
     local function loadFont(size)
@@ -129,7 +130,8 @@ function UI.initFonts()
         end
         -- Setup fallback fonts for symbols & emoji
         local okSym, symFont = pcall(love.graphics.newFont, "fonts/seguisym.ttf", size)
-        local okEmj, emjFont = pcall(love.graphics.newFont, "C:/Windows/Fonts/seguiemj.ttf", size)
+        local okEmj, emjFont = false, nil
+        if windowsFonts then okEmj, emjFont = pcall(love.graphics.newFont, "C:/Windows/Fonts/seguiemj.ttf", size) end
         local fallbacks = {}
         if okSym and symFont then table.insert(fallbacks, symFont) end
         if okEmj and emjFont then table.insert(fallbacks, emjFont) end
@@ -152,6 +154,7 @@ function UI.initFonts()
     UI.fonts.description = okDescription and descriptionFont or UI.fonts.small
 
     local function loadHudFont(size)
+        if not windowsFonts then return loadFont(size) end
         for _, path in ipairs({"C:/Windows/Fonts/georgiab.ttf", "C:/Windows/Fonts/georgia.ttf"}) do
             local ok, font = pcall(love.graphics.newFont, path, size)
             if ok and font then return font end

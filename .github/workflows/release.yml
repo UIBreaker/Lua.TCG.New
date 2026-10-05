@@ -1,0 +1,65 @@
+name: Playable game release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/release.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playable-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image packer and test runtime
+        run: |
+          python -m pip install Pillow==12.3.0
+          sudo apt-get update && sudo apt-get install -y love xvfb
+      - name: Test touch and gameplay
+        run: |
+          xvfb-run -a love . --test-touch
+          xvfb-run -a love . --test-poker
+          xvfb-run -a love . --test-features
+      - name: Download official Windows runtime
+        run: |
+          curl --fail --location --retry 3 https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip -o /tmp/love.zip
+          unzip -q /tmp/love.zip -d /tmp
+      - name: Build desktop, phone and web packages
+        run: python scripts/build_release.py --target all --love-runtime /tmp/love-11.5-win64
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/web
+      - name: Publish downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v0.75.3 >/dev/null 2>&1 || gh release create v0.75.3 --target "$GITHUB_SHA" --title 'LUA.TCG 0.75.3 — Windows & Mobile' --notes-file docs/RELEASE_NOTES_0.75.3.md
+          gh release upload v0.75.3 dist/LUA-TCG-0.75.3-Windows-x64.zip dist/LUA-TCG-0.75.3.love dist/LUA-TCG-0.75.3-Mobile.love dist/SHA256SUMS.txt --clobber
+
+  pages:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy phone/browser game
+        id: deploy
+        uses: actions/deploy-pages@v4

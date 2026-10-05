@@ -4,6 +4,14 @@
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
+## 📥 Tải về và chơi
+
+- **Windows 64-bit:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases/latest), tải `LUA-TCG-0.75.3-Windows-x64.zip`, giải nén toàn bộ rồi mở `LUA-TCG.exe`. Không cần cài Lua/LÖVE.
+- **Android và iPhone:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang được xuất bản bằng GitHub Pages; cần triển khai thành công trước khi gửi link cho bạn bè.
+- **Android có LÖVE 11.5:** tải `LUA-TCG-0.75.3-Mobile.love` trong Releases và mở bằng LÖVE. File `.love` không phải APK hay ứng dụng iPhone cài trực tiếp.
+
+Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/dùng bài; bật **ĐỔI CHỖ** để kéo sắp xếp. Thanh nút lớn trên web giúp Đánh / Bỏ / xem Bộ bài / Quay lại. Save thuộc từng trình duyệt; xóa dữ liệu trang sẽ xóa save. Xem [ghi chú bản phát hành](docs/RELEASE_NOTES_0.75.3.md).
+
 ## 📸 Hình ảnh trực quan
 
 Ảnh chụp mới từ game chạy bằng LÖVE, ngày **05/10/2026**. Một số màn dùng bộ bài và tài nguyên dựng sẵn trong chế độ capture để minh họa các tính năng về sau.
@@ -76,6 +84,7 @@ Trên Windows, có thể nhấp đúp **[run.bat](run.bat)**. Launcher tìm LÖV
 love . --test                 # Hệ thống gameplay
 love . --test-poker           # Nhận diện thế bài và tính điểm
 love . --test-features        # Cơ chế nâng cao
+love . --test-touch           # Chạm, giữ, rê và hủy thao tác cảm ứng
 love . --test-expedition      # Hành trình, giấy phép và ảnh render
 love . --test-chest-expansion # 40 lá mới, tiêu hao, save và render
 ```

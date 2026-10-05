@@ -1,7 +1,7 @@
 local Visual = require("config.visual_config")
 local Theme = {
-    virtualWidth = 1920,
-    virtualHeight = 1080,
+    virtualWidth = require("src.touch_input").lowPower and 1280 or 1920,
+    virtualHeight = require("src.touch_input").lowPower and 720 or 1080,
     colors = {
         charcoal = {0.035, 0.053, 0.067, 1},
         surface = {0.052, 0.074, 0.096, Visual.ui.surfaceAlpha},

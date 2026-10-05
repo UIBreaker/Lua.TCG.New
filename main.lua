@@ -1,5 +1,9 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-touch" then
+        require("tests.touch_input_smoke")
+        os.exit(0)
+    end
     if a == "--test-card-effects" then
         -- Defer graphics/shader testing until love.load has a live graphics context.
         cardEffectsSmokeMode = true
@@ -28,6 +32,7 @@ for _, a in ipairs(arg or {}) do
     end
 end
 local Deck = require("src.deck")
+local Touch = require("src.touch_input")
 local Poker = require("src.poker")
 local Deities = require("src.deities")
 local Scoring = require("src.scoring")
@@ -186,7 +191,7 @@ local settings = {
     fullscreen = false,
     crtEnabled = false,
     debugEnabled = false,
-    graphicsQuality = "HIGH",
+    graphicsQuality = Touch.lowPower and "LOW" or "HIGH",
     cinematicEnabled = true,
 }
 
@@ -2128,6 +2133,7 @@ end
 
 function love.focus(focused)
     if focused then return end
+    Touch.cancel()
     UI.CardPhysics.release()
     handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
     shopDrag.active, shopDrag.isDragging, shopDrag.item = false, false, nil
@@ -2222,6 +2228,7 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    Touch.update(dt)
     UI.components.Button.update(dt)
     if handDrag.active and handInputBlocked() then
         UI.CardPhysics.release()
@@ -3757,7 +3764,8 @@ local function drawPlayingState()
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(handCountText, hcX, hcY + 3, hcW, "center")
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Giữ chuột: rê chọn • Shift + kéo: đổi vị trí", UI.BATTLE_ARENA_X,
+    love.graphics.printf(Touch.enabled and "Chạm: chọn • Rê: chọn nhiều • Giữ: xem / dùng • Đổi chỗ: kéo sắp xếp"
+        or "Giữ chuột: rê chọn • Shift + kéo: đổi vị trí", UI.BATTLE_ARENA_X,
         704, UI.BATTLE_ARENA_W, "center")
 
     ----------------------------------------------------------------------------
@@ -3846,6 +3854,14 @@ local function drawPlayingState()
     table.insert(buttons, btnDiscard)
     UI.drawButton(btnDiscard, mx >= btnDiscard.x and mx <= btnDiscard.x + btnDiscard.w and my >= btnDiscard.y and my <= btnDiscard.y + btnDiscard.h,
         juice.buttonPressedId == btnDiscard.id)
+
+    if Touch.enabled then
+        local btnTouch = {id="touch_reorder",text=Touch.reorder and "ĐANG ĐỔI CHỖ" or "ĐỔI CHỖ",
+            x=900,y=636,w=110,h=58,font=UI.fonts.tiny,selected=Touch.reorder,
+            disabled=state~="playing" or anim.enemyTurn~=nil}
+        buttons[#buttons+1]=btnTouch
+        UI.drawButton(btnTouch,false,false)
+    end
 
     ----------------------------------------------------------------------------
     -- 6. BOTTOM-RIGHT FACEDOWN DRAW DECK PILE
@@ -6424,6 +6440,10 @@ local function handlePlayingMousepressed(mx, my, button)
                 syncCardSelections()
                 Sound.play("card_deal")
                 return true
+            elseif btn.id == "touch_reorder" then
+                Touch.reorder = not Touch.reorder
+                Sound.play("ui_click")
+                return true
             elseif btn.id == "open_handbook" then
                 isHandbookOpen = true
                 Sound.play("card_deal")
@@ -6490,7 +6510,7 @@ local function handlePlayingMousepressed(mx, my, button)
             local hit = pass == 1 and UI.CardPhysics.hit(c, mx, my,
                 mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
             if hit or (pass == 2 and stableHit) then
-                beginHandDrag(mx, my, i, love.keyboard.isDown("lshift", "rshift"))
+                beginHandDrag(mx, my, i, Touch.enabled and Touch.reorder or love.keyboard.isDown("lshift", "rshift"))
                 return true
             end
         end
@@ -7291,7 +7311,8 @@ local function handleModalsMousepressed(mx, my, button)
     return false
 end
 
-function love.mousepressed(x, y, button)
+function love.mousepressed(x, y, button, istouch)
+    if istouch then return end
     if anim.enemyTurn then return end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
@@ -8117,7 +8138,8 @@ function love.wheelmoved(x, y)
     end
 end
 
-function love.mousemoved(x, y, dx, dy)
+function love.mousemoved(x, y, dx, dy, istouch)
+    if istouch then return end
     if handDrag.active and handInputBlocked() then
         UI.CardPhysics.release()
         handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -8196,7 +8218,8 @@ function love.mousemoved(x, y, dx, dy)
     end
 end
 
-function love.mousereleased(x, y, button)
+function love.mousereleased(x, y, button, istouch)
+    if istouch then return end
     if button == 1 then
         UI.CardPhysics.release()
         if handDrag.active and handInputBlocked() then
@@ -8347,3 +8370,17 @@ function love.mousereleased(x, y, button)
         deityDrag.deityIndex = nil
     end
 end
+
+Touch.install({press=love.mousepressed,move=love.mousemoved,release=love.mousereleased,
+    canScroll=function() return isCollectionOpen and collectionCategory~=nil or state=="map" end,
+    scroll=function(dy) love.wheelmoved(0,dy/scale/45) end,
+    cancel=function()
+        UI.CardPhysics.release()
+        handDrag.active,handDrag.isDragging,handDrag.cardIndex=false,false,nil
+        shopDrag.active,shopDrag.isDragging=false,false
+        deityDrag.active,deityDrag.isDragging=false,false
+        juice.buttonPressedId=nil
+    end})
+love.touchpressed = Touch.press
+love.touchmoved = Touch.move
+love.touchreleased = Touch.release

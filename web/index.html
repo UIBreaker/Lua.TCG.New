@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<title>LUA.TCG 0.75.3 — Chơi ngay</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #080d12; color: #e8ddc5; font: 15px system-ui,sans-serif; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left)); }
+  header strong { color:#e1bc70; white-space:nowrap; }
+  a { color:#a8dbe6; }
+  button { min-height:44px; padding:8px 15px; border:1px solid #95743e; border-radius:7px; color:#fff0cf; background:#1a2731; font:inherit; cursor:pointer; }
+  main { min-height:calc(100dvh - 66px); display:grid; place-items:center; }
+  #stage { width:100%; display:grid; place-items:center; position:relative; }
+  canvas { display:block; width:min(100vw,calc((100dvh - 66px)*16/9)); height:auto; max-height:calc(100dvh - 66px); object-fit:contain; touch-action:none; visibility:hidden; }
+  #welcome { position:absolute; z-index:2; inset:0; display:grid; align-content:center; justify-items:center; padding:24px; text-align:center; background:#101820; }
+  #welcome p { max-width:540px; line-height:1.6; }
+  #start { background:#61451e; font-weight:700; }
+  #status { padding:10px; }
+  #rotate { display:none; }
+  @media (orientation:portrait) and (pointer:coarse) { #rotate { display:grid; position:fixed; inset:0; z-index:5; place-content:center; padding:32px; text-align:center; background:#101820; line-height:1.7; } }
+  @media (max-height:450px) { header {padding-top:2px;padding-bottom:2px;} main {min-height:calc(100dvh - 48px);} canvas {width:min(100vw,calc((100dvh - 48px)*16/9));max-height:calc(100dvh - 48px);} }
+  :fullscreen { background:#080d12; }
+  #phone-actions { display:none; justify-content:center; gap:6px; padding:4px max(8px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)); }
+  #phone-actions button { flex:1; max-width:150px; }
+  @media (pointer:coarse) { #phone-actions {display:flex;} main {min-height:calc(100dvh - 104px);} canvas {width:min(100vw,calc((100dvh - 104px)*16/9));max-height:calc(100dvh - 104px);} }
+</style>
+<header><strong>🃏 LUA.TCG <small>0.75.3</small></strong><div><button id="fullscreen">Toàn màn hình</button> <a href="https://github.com/UIBreaker/Lua.TCG.New/releases/latest">Tải game</a></div></header>
+<main id="stage">
+  <canvas id="canvas" width="1280" height="720" tabindex="0" aria-label="Game LUA.TCG"></canvas>
+  <div id="welcome"><h1>Cuộc viễn chinh của bạn</h1><p>Chạm để chọn bài, rê để chọn nhiều lá. Nhấn giữ để xem quân bài hoặc dùng tiêu hao. Bật <b>ĐỔI CHỖ</b> để kéo sắp xếp bài. Chơi trên điện thoại ở tư thế ngang.</p><p>Ảnh đã được thu gọn cho điện thoại. Lần đầu mở cần tải dữ liệu game; hãy dùng Wi-Fi.</p><button id="start">BẮT ĐẦU CHƠI</button><p id="status" role="status"></p></div>
+</main>
+<nav id="phone-actions" aria-label="Điều khiển điện thoại"><button data-key="Enter" data-code="13">Đánh / Tiếp</button><button data-key="d" data-code="68">Bỏ bài</button><button data-key="Tab" data-code="9">Bộ bài</button><button data-key="Escape" data-code="27">Quay lại</button></nav>
+<div id="rotate"><h2>↻ Xoay ngang điện thoại</h2><p>Bàn bài cần màn hình ngang để các nút và quân bài dễ chạm.</p></div>
+<script>
+  var canvas = document.getElementById('canvas');
+  var statusLine = document.getElementById('status');
+  var Module = {
+    arguments:['./game.love'], INITIAL_MEMORY:268435456, canvas:canvas,
+    print:console.log.bind(console), printErr:console.error.bind(console),
+    setStatus:function(text) { statusLine.textContent=text || ''; },
+    monitorRunDependencies:function(left) { if(left) statusLine.textContent='Đang chuẩn bị game…'; },
+    onRuntimeInitialized:function() { document.getElementById('welcome').style.display='none'; canvas.style.visibility='visible'; canvas.focus(); },
+    onAbort:function(reason) { document.getElementById('welcome').style.display='grid'; statusLine.textContent='Không khởi động được game. Hãy tải lại trang hoặc dùng bản tải về. '+reason; }
+  };
+  canvas.addEventListener('contextmenu',function(e) { e.preventDefault(); });
+  canvas.addEventListener('touchstart',function() { canvas.focus(); },{passive:true});
+  canvas.addEventListener('webglcontextlost',function(e) { e.preventDefault(); statusLine.textContent='Bộ nhớ đồ họa bị ngắt. Hãy tải lại trang.'; document.getElementById('welcome').style.display='grid'; });
+  document.getElementById('fullscreen').onclick=async function() {
+    if(document.fullscreenElement) await document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+    try { if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch(e) {}
+  };
+  document.getElementById('start').onclick=function() {
+    this.disabled=true; statusLine.textContent='Đang tải game…';
+    var data=document.createElement('script');data.src='game.js';
+    data.onload=function() { var engine=document.createElement('script');engine.src='love.js';engine.onload=function() { Love(Module); };engine.onerror=downloadError;document.body.appendChild(engine); };
+    data.onerror=downloadError;document.body.appendChild(data);
+  };
+  function downloadError() { statusLine.textContent='Tải game thất bại. Kiểm tra kết nối rồi tải lại trang.'; }
+  document.querySelectorAll('[data-key]').forEach(function(button) {
+    button.onclick=function() {
+      canvas.focus();
+      var options={key:button.dataset.key,code:button.dataset.key,keyCode:Number(button.dataset.code),which:Number(button.dataset.code),bubbles:true};
+      canvas.dispatchEvent(new KeyboardEvent('keydown',options));
+      canvas.dispatchEvent(new KeyboardEvent('keyup',options));
+    };
+  });
+</script>
+</html>

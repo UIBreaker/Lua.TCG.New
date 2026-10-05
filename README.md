@@ -1,19 +1,19 @@
 # 🃏 LUA.TCG — Poker Roguelike
 
-**Phiên bản 0.75.3** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
+**beta 0.82.3 (Android)** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
 ## 📥 Tải về và chơi
 
 - **Windows 64-bit:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases/latest), tải `LUA-TCG-0.75.3-Windows-x64.zip`, giải nén toàn bộ rồi mở `LUA-TCG.exe`. Không cần cài Lua/LÖVE.
-- **Android — cài trực tiếp:** tải [LUA-TCG-0.75.3-Android.apk](https://github.com/UIBreaker/Lua.TCG.New/releases/download/v0.75.3/LUA-TCG-0.75.3-Android.apk), mở file tải về và chọn **Cài đặt**; sau đó mở **Terra Suit** trên màn hình ứng dụng. Không cần cài LÖVE; chơi offline. Android 6 trở lên, máy ARM 32/64-bit, APK khoảng 58 MiB. Nếu Android yêu cầu, cho phép trình duyệt/trình quản lý tệp cài ứng dụng từ nguồn này; có thể tắt lại sau khi cài.
+- **Android — cài trực tiếp:** tải [LUA-TCG-0.82.3-Android.apk](https://github.com/UIBreaker/Lua.TCG.New/releases/download/v0.82.3/LUA-TCG-0.82.3-Android.apk), mở file tải về và chọn **Cài đặt**; sau đó mở **Terra Suit** trên màn hình ứng dụng. Không cần cài LÖVE; chơi offline. Android 6 trở lên, máy ARM 32/64-bit, APK khoảng 58 MiB. Nếu Android yêu cầu, cho phép trình duyệt/trình quản lý tệp cài ứng dụng từ nguồn này; có thể tắt lại sau khi cài.
 - **Android và iPhone — trình duyệt:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang đã được xuất bản bằng GitHub Pages; không cần cài Lua/LÖVE.
 - **Android có LÖVE 11.5:** tải `LUA-TCG-0.75.3-Mobile.love` trong Releases và mở bằng LÖVE. File `.love` không phải APK hay ứng dụng iPhone cài trực tiếp.
 
-Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/dùng bài; bật **ĐỔI CHỖ** để kéo sắp xếp. Thanh nút lớn trên web giúp Đánh / Bỏ / xem Bộ bài / Quay lại. Save thuộc từng trình duyệt; xóa dữ liệu trang sẽ xóa save. Xem [ghi chú bản phát hành](docs/RELEASE_NOTES_0.75.3.md).
+Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/dùng bài; bật **ĐỔI CHỖ** để kéo sắp xếp. Thanh nút lớn trên web giúp Đánh / Bỏ / xem Bộ bài / Quay lại. Save thuộc từng trình duyệt; xóa dữ liệu trang sẽ xóa save. Xem [ghi chú bản phát hành](docs/RELEASE_NOTES_0.82.3.md).
 
-**APK cập nhật tràn viền:** tự ẩn thanh trạng thái/điều hướng và phủ đầy màn hình ngang theo tỷ lệ điện thoại. Tải lại APK rồi chọn **Cập nhật** để giữ dữ liệu; không cần gỡ bản cũ. Ảnh dưới là game chạy trong cửa sổ mô phỏng tỷ lệ điện thoại 1512×690, chưa phải ảnh trên thiết bị Android thật.
+**APK beta 0.82.3:** khóa màn hình ngang, không chuyển sang dọc khi xoay điện thoại; hiện phiên bản trên menu chính. Tự ẩn thanh trạng thái/điều hướng và phủ đầy màn hình ngang. Tải APK mới rồi chọn **Cập nhật** để giữ dữ liệu; không cần gỡ bản cũ. Ảnh dưới là game chạy trong cửa sổ mô phỏng tỷ lệ điện thoại 1512×690, chưa phải ảnh trên thiết bị Android thật.
 
 ![Xem trước bố cục Android tràn viền](docs/screenshots/mobile-fullscreen-preview.png)
 

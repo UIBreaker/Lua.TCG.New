@@ -57,7 +57,7 @@ def main():
     app.set(ANDROID + "maxAspectRatio", "3.0")
     for activity in app.findall("activity"):
         activity.set(ANDROID + "label", "Terra Suit")
-        activity.set(ANDROID + "screenOrientation", "sensorLandscape")
+        activity.set(ANDROID + "screenOrientation", "landscape")
         activity.set(ANDROID + "maxAspectRatio", "3.0")
         activity.set(ANDROID + "theme", "@style/TerraSuitFullscreen")
     for provider in app.findall("provider"):
@@ -71,8 +71,8 @@ def main():
             '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
             '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 754")
-    text = text.replace("versionName: 11.5a", "versionName: 0.75.3").replace("minSdkVersion: 16", "minSdkVersion: 23")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 823")
+    text = text.replace("versionName: 11.5a", "versionName: 0.82.3-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
     metadata.write_text(text, encoding="utf-8")
     # Boot in immersive mode too, before Lua initializes or restores old settings.
     with zipfile.ZipFile(args.game) as source, zipfile.ZipFile(work / "assets/game.love", "w", zipfile.ZIP_DEFLATED) as bundled:
@@ -80,6 +80,8 @@ def main():
             data = source.read(entry.filename)
             if entry.filename == "conf.lua":
                 data = data.replace(b"t.window.fullscreen = false", b"t.window.fullscreen = true")
+                # SDL may override the manifest orientation when resizable is true.
+                data = data.replace(b"t.window.resizable = true", b"t.window.resizable = false")
             bundled.writestr(entry, data)
     from PIL import Image, ImageOps
     with Image.open(ROOT / "assets/cards/continental/back/card_back.png") as source:
@@ -102,7 +104,7 @@ def main():
             "-keyalg", "RSA", "-keysize", "3072", "-validity", "10000", "-storetype", "PKCS12",
             "-storepass:env", "TERRA_SIGNING_PASSWORD", "-dname", "CN=Terra Suit, OU=Game, O=UIBreaker, C=VN")
         del os.environ["TERRA_SIGNING_PASSWORD"]
-    output = ROOT / "downloads/LUA-TCG-0.75.3-Android.apk"
+    output = ROOT / "downloads/LUA-TCG-0.82.3-Android.apk"
     output.parent.mkdir(exist_ok=True)
     signer = sdk / "lib/apksigner.jar"
     run("java", "-jar", signer, "sign", "--ks", key, "--ks-pass", "file:" + str(password.relative_to(ROOT)),
@@ -113,6 +115,8 @@ def main():
         assert apk.testzip() is None
         with zipfile.ZipFile(io.BytesIO(apk.read("assets/game.love"))) as game, zipfile.ZipFile(args.game) as source:
             assert b"t.window.fullscreen = true" in game.read("conf.lua")
+            assert b"t.window.resizable = false" in game.read("conf.lua")
+            assert b"beta 0.82.3" in game.read("main.lua")
             assert game.read("main.lua") == source.read("main.lua")
         assert all(f"lib/{abi}/liblove.so" in apk.namelist() for abi in ("arm64-v8a", "armeabi-v7a"))
     digest = hashlib.sha256(output.read_bytes()).hexdigest()

@@ -7,7 +7,8 @@ Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài v�
 ## 📥 Tải về và chơi
 
 - **Windows 64-bit:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases/latest), tải `LUA-TCG-0.75.3-Windows-x64.zip`, giải nén toàn bộ rồi mở `LUA-TCG.exe`. Không cần cài Lua/LÖVE.
-- **Android và iPhone:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang đã được xuất bản bằng GitHub Pages; không cần cài Lua/LÖVE.
+- **Android — cài trực tiếp:** tải [LUA-TCG-0.75.3-Android.apk](https://github.com/UIBreaker/Lua.TCG.New/releases/download/v0.75.3/LUA-TCG-0.75.3-Android.apk), mở file tải về và chọn **Cài đặt**; sau đó mở **Terra Suit** trên màn hình ứng dụng. Không cần cài LÖVE; chơi offline. Android 6 trở lên, máy ARM 32/64-bit, APK khoảng 58 MiB. Nếu Android yêu cầu, cho phép trình duyệt/trình quản lý tệp cài ứng dụng từ nguồn này; có thể tắt lại sau khi cài.
+- **Android và iPhone — trình duyệt:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang đã được xuất bản bằng GitHub Pages; không cần cài Lua/LÖVE.
 - **Android có LÖVE 11.5:** tải `LUA-TCG-0.75.3-Mobile.love` trong Releases và mở bằng LÖVE. File `.love` không phải APK hay ứng dụng iPhone cài trực tiếp.
 
 Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/dùng bài; bật **ĐỔI CHỖ** để kéo sắp xếp. Thanh nút lớn trên web giúp Đánh / Bỏ / xem Bộ bài / Quay lại. Save thuộc từng trình duyệt; xóa dữ liệu trang sẽ xóa save. Xem [ghi chú bản phát hành](docs/RELEASE_NOTES_0.75.3.md).

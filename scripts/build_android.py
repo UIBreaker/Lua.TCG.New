@@ -1,0 +1,107 @@
+"""Embed the phone game in official LÖVE 11.5a, then align and privately sign it.
+
+Requires Java 17, APKTool 3.0.3 and Android build-tools 35.0.0.
+Keep .android-signing/ backed up privately: future updates must use the same key.
+"""
+import argparse
+import ctypes
+import hashlib
+import os
+from pathlib import Path
+import secrets
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+ANDROID = "{http://schemas.android.com/apk/res/android}"
+PACKAGE = "com.uibreaker.terrasuit"
+BUILD_CWD = str(ROOT)
+if os.name == "nt":
+    short = ctypes.create_unicode_buffer(32768)
+    if ctypes.windll.kernel32.GetShortPathNameW(str(ROOT), short, len(short)):
+        BUILD_CWD = short.value
+
+
+def run(*args):
+    # Java 17 on Windows can mangle non-ASCII absolute paths in CLI arguments.
+    arguments = [str(a.relative_to(ROOT)) if isinstance(a, Path) and a.is_relative_to(ROOT) else str(a) for a in args]
+    subprocess.run(arguments, check=True, cwd=BUILD_CWD)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tools", type=Path, default=ROOT / "dist/android-tools")
+    parser.add_argument("--game", type=Path, default=ROOT / "dist/LUA-TCG-0.75.3-Mobile.love")
+    args = parser.parse_args()
+    tools = args.tools.resolve()
+    work = ROOT / "dist/android-apk-build"
+    assert not work.exists(), "Use a fresh dist/android-apk-build directory for each build"
+    sdk = tools / "sdk/android-15"
+    suffix = ".exe" if os.name == "nt" else ""
+    run("java", "-jar", tools / "apktool.jar", "d", "-s", "-o", work, tools / "love-embed.apk")
+    manifest = ET.parse(work / "AndroidManifest.xml")
+    root = manifest.getroot()
+    root.set("package", PACKAGE)
+    for permission in list(root.findall("uses-permission")):
+        root.remove(permission)
+    # No network, microphone or external-storage permissions are needed offline.
+    for permission in root.findall("permission"):
+        name = permission.get(ANDROID + "name").replace("org.love2d.android", PACKAGE)
+        permission.set(ANDROID + "name", name)
+        ET.SubElement(root, "uses-permission", {ANDROID + "name": name})
+    app = root.find("application")
+    app.set(ANDROID + "label", "Terra Suit")
+    app.set(ANDROID + "usesCleartextTraffic", "false")
+    for activity in app.findall("activity"):
+        activity.set(ANDROID + "label", "Terra Suit")
+        activity.set(ANDROID + "screenOrientation", "sensorLandscape")
+    for provider in app.findall("provider"):
+        provider.set(ANDROID + "authorities", provider.get(ANDROID + "authorities").replace("org.love2d.android", PACKAGE))
+    ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+    manifest.write(work / "AndroidManifest.xml", encoding="utf-8", xml_declaration=True)
+    metadata = work / "apktool.yml"
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 753")
+    text = text.replace("versionName: 11.5a", "versionName: 0.75.3").replace("minSdkVersion: 16", "minSdkVersion: 23")
+    metadata.write_text(text, encoding="utf-8")
+    shutil.copy2(args.game, work / "assets/game.love")
+    from PIL import Image, ImageOps
+    with Image.open(ROOT / "assets/cards/continental/back/card_back.png") as source:
+        for icon in (work / "res").glob("drawable-*/love.png"):
+            with Image.open(icon) as old:
+                size = old.size
+            ImageOps.fit(source.convert("RGBA"), size).save(icon)
+    unsigned = ROOT / "dist/android-unsigned.apk"
+    aligned = ROOT / "dist/android-aligned.apk"
+    run("java", "-jar", tools / "apktool.jar", "b", work, "-o", unsigned)
+    run(sdk / ("zipalign" + suffix), "-P", "16", "-f", "4", unsigned, aligned)
+    signing = ROOT / ".android-signing"
+    signing.mkdir(exist_ok=True)
+    key, password = signing / "release.jks", signing / "password.txt"
+    assert key.exists() == password.exists(), "Signing key/password pair is incomplete"
+    if not key.exists():
+        password.write_text(secrets.token_urlsafe(32), encoding="ascii")
+        os.environ["TERRA_SIGNING_PASSWORD"] = password.read_text(encoding="ascii")
+        run("keytool", "-genkeypair", "-noprompt", "-keystore", key, "-alias", "terrasuit",
+            "-keyalg", "RSA", "-keysize", "3072", "-validity", "10000", "-storetype", "PKCS12",
+            "-storepass:env", "TERRA_SIGNING_PASSWORD", "-dname", "CN=Terra Suit, OU=Game, O=UIBreaker, C=VN")
+        del os.environ["TERRA_SIGNING_PASSWORD"]
+    output = ROOT / "downloads/LUA-TCG-0.75.3-Android.apk"
+    output.parent.mkdir(exist_ok=True)
+    signer = sdk / "lib/apksigner.jar"
+    run("java", "-jar", signer, "sign", "--ks", key, "--ks-pass", "file:" + str(password.relative_to(ROOT)),
+        "--v4-signing-enabled", "false", "--out", output, aligned)
+    run("java", "-jar", signer, "verify", "--verbose", "--print-certs", output)
+    run(sdk / ("zipalign" + suffix), "-c", "-P", "16", "4", output)
+    with zipfile.ZipFile(output) as apk:
+        assert apk.testzip() is None
+        assert apk.read("assets/game.love") == args.game.read_bytes()
+        assert all(f"lib/{abi}/liblove.so" in apk.namelist() for abi in ("arm64-v8a", "armeabi-v7a"))
+    digest = hashlib.sha256(output.read_bytes()).hexdigest()
+    output.with_suffix(".apk.sha256").write_text(f"{digest}  {output.name}\n", encoding="ascii")
+    print(f"Signed Android APK: {output.stat().st_size / 1048576:.1f} MiB")
+
+
+if __name__ == "__main__":
+    main()

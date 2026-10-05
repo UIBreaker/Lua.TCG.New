@@ -1,0 +1,37 @@
+name: Publish signed Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [downloads/*.apk, .github/workflows/android-release.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify signed APK and embedded game
+        run: |
+          cd downloads
+          sha256sum -c LUA-TCG-0.75.3-Android.apk.sha256
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$signer" verify LUA-TCG-0.75.3-Android.apk
+          python - <<'PY'
+          import io, zipfile
+          with zipfile.ZipFile('LUA-TCG-0.75.3-Android.apk') as apk:
+              assert apk.testzip() is None
+              with zipfile.ZipFile(io.BytesIO(apk.read('assets/game.love'))) as game:
+                  assert game.testzip() is None
+                  assert 'main.lua' in game.namelist()
+                  assert 'mobile_build.flag' in game.namelist()
+          PY
+      - name: Publish installable Android download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v0.75.3 downloads/LUA-TCG-0.75.3-Android.apk downloads/LUA-TCG-0.75.3-Android.apk.sha256 --clobber
+          gh release edit v0.75.3 --notes-file docs/RELEASE_NOTES_0.75.3.md

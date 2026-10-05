@@ -1,8 +1,13 @@
 -- Translate one finger into the established mouse router; ignore SDL's duplicate mouse events.
 local T = { enabled = false, reorder = false, holdSeconds = 0.5 }
 local osName = love and love.system and love.system.getOS()
-T.lowPower = osName == "Android" or osName == "iOS"
+T.nativeMobile = osName == "Android" or osName == "iOS"
+T.fillScreen = T.nativeMobile
+T.lowPower = T.nativeMobile
     or not not (love and love.filesystem and love.filesystem.getInfo("mobile_build.flag"))
+for _, value in ipairs(arg or {}) do
+    if value == "--capture-mobile-fullscreen" then T.fillScreen, T.lowPower, T.previewMobile = true, true, true end
+end
 local finger, hooks, mousePosition
 
 function T.install(callbacks)

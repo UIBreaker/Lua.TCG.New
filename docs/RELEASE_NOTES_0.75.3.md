@@ -13,3 +13,5 @@
 Đã kiểm tra khởi động, vào trận và các cử chỉ bằng kiểm thử trên máy tính. Chưa kiểm chứng trực tiếp trên thiết bị Android hoặc iPhone thật; tốc độ, âm thanh và độ tương thích còn phụ thuộc trình duyệt/máy.
 
 APK đã kiểm tra chữ ký v1/v2/v3, zip alignment, launcher, application ID và dữ liệu game nhúng. Khóa ký riêng không nằm trong repository.
+
+**Cập nhật Android tràn viền (versionCode 754):** ẩn thanh trạng thái/điều hướng từ lúc mở game, phủ đầy màn hình ngang dài, giữ ánh xạ chạm đúng theo tỷ lệ hiển thị. Tự khôi phục fullscreen khi quay lại ứng dụng. Dùng cùng khóa ký với APK đầu tiên, cài đè bằng **Cập nhật** để giữ save. Đã kiểm tra bốn tỷ lệ màn hình, cử chỉ và ảnh xem trước từ game; cần xác nhận lại trên điện thoại thật.

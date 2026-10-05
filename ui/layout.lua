@@ -2,9 +2,16 @@ local Theme = require("ui.theme")
 
 local Layout = { width = Theme.virtualWidth, height = Theme.virtualHeight, logicalWidth = 1280, logicalHeight = 720 }
 
-function Layout.scale(windowWidth, windowHeight)
+function Layout.scale(windowWidth, windowHeight, fillScreen)
+    if fillScreen then
+        return windowWidth / Layout.width, 0, 0, windowHeight / Layout.height
+    end
     local factor = math.min(windowWidth / Layout.width, windowHeight / Layout.height)
-    return factor, (windowWidth - Layout.width * factor) / 2, (windowHeight - Layout.height * factor) / 2
+    return factor, (windowWidth - Layout.width * factor) / 2, (windowHeight - Layout.height * factor) / 2, factor
+end
+
+function Layout.toLogical(x, y, sx, sy, ox, oy, renderScale)
+    return (x - ox) / (sx * renderScale), (y - oy) / (sy * renderScale)
 end
 
 function Layout.fanCardRect(panelRect, index, count, cardW, cardH)

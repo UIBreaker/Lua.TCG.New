@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-mobile-layout" then require("tests.mobile_layout_smoke"); os.exit(0) end
     if a == "--test-touch" then
         require("tests.touch_input_smoke")
         os.exit(0)
@@ -110,6 +111,7 @@ local RENDER_SCALE = Layout.width / V_WIDTH
 local RENDER_WIDTH = Layout.width
 local RENDER_HEIGHT = Layout.height
 local scale = 1
+Layout.scaleY = 1
 local offsetX = 0
 local offsetY = 0
 
@@ -662,11 +664,11 @@ local hoveredCardTooltip = nil
 
 local function updateScale()
     local winW, winH = love.graphics.getDimensions()
-    scale, offsetX, offsetY = Layout.scale(winW, winH)
+    scale, offsetX, offsetY, Layout.scaleY = Layout.scale(winW, winH, Touch.fillScreen)
 end
 
 local function toVirtual(mx, my)
-    return (mx - offsetX) / (scale * RENDER_SCALE), (my - offsetY) / (scale * RENDER_SCALE)
+    return Layout.toLogical(mx, my, scale, Layout.scaleY, offsetX, offsetY, RENDER_SCALE)
 end
 
 local function syncCardSelections()
@@ -2068,6 +2070,13 @@ function love.load()
         end
     end
     settings = Persistence.loadSettings(settings)
+    if Touch.nativeMobile then settings.fullscreen = true end
+    for _, value in ipairs(arg or {}) do
+        if value == "--capture-mobile-fullscreen" then
+            settings.fullscreen, settings.graphicsQuality = false, "LOW"
+            love.window.setMode(1512, 690, {resizable=true, fullscreen=false})
+        end
+    end
     Sound.init()
     Sound.setVolume(settings.sfxVolume)
     if settings.fullscreen then
@@ -2105,7 +2114,7 @@ function love.load()
         return
     end
     shopData = Shop.new()
-    if not isCaptureMode then
+    if not isCaptureMode and not Touch.previewMobile then
         local loadedGame, loadedState = Persistence.loadRun()
         if loadedGame then
             game = loadedGame
@@ -2132,7 +2141,10 @@ function love.resize(w, h)
 end
 
 function love.focus(focused)
-    if focused then return end
+    if focused then
+        if Touch.nativeMobile then love.window.setFullscreen(true, "desktop"); updateScale() end
+        return
+    end
     Touch.cancel()
     UI.CardPhysics.release()
     handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -3173,8 +3185,9 @@ local function drawCollectionDetailView()
             gridW * RENDER_SCALE, gridH * RENDER_SCALE)
     else
         local outputScale = scale * RENDER_SCALE
-        love.graphics.intersectScissor(offsetX + gridX * outputScale, offsetY + gridY * outputScale,
-            gridW * outputScale, gridH * outputScale)
+        local outputScaleY = Layout.scaleY * RENDER_SCALE
+        love.graphics.intersectScissor(offsetX + gridX * outputScale, offsetY + gridY * outputScaleY,
+            gridW * outputScale, gridH * outputScaleY)
     end
 
     for i, item in ipairs(items) do
@@ -4235,7 +4248,7 @@ local function drawMap()
     -- Modal: Chuẩn bị giao chiến
     if pendingCombatNode then
         love.graphics.setColor(0, 0, 0, 0.78)
-        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
         local mw = 640
         local mh = 390
@@ -4545,7 +4558,7 @@ local function drawDeckViewerModal()
     -- Overlay dimming
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.80)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 1180
@@ -5138,7 +5151,7 @@ local function drawCardInspectorModal(card)
     -- Overlay dimming
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.85)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 860
@@ -5270,7 +5283,7 @@ end
 local function drawHandbookModal()
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.85)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 960
@@ -5424,7 +5437,7 @@ end
 local function drawPauseMenuModal()
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.72)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 380
@@ -5472,7 +5485,7 @@ end
 local function drawSettingsModal()
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.75)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local modalW = 500
@@ -5540,7 +5553,7 @@ local function drawSettingsModal()
     love.graphics.print("Chế Độ Hiển Thị:", modalX + 35, row3Y + 6)
 
     local fsText = settings.fullscreen and "Toàn Màn Hình" or "Cửa Sổ"
-    local btnFs = { id = "setting_fullscreen", text = fsText, x = modalX + 300, y = row3Y, w = 150, h = 34, color = settings.fullscreen and UI.COLORS.btnPlay or UI.COLORS.btnNormal, font = UI.fonts.small }
+    local btnFs = { id = "setting_fullscreen", text = Touch.nativeMobile and "Tràn viền" or fsText, disabled = Touch.nativeMobile, x = modalX + 300, y = row3Y, w = 150, h = 34, color = settings.fullscreen and UI.COLORS.btnPlay or UI.COLORS.btnNormal, font = UI.fonts.small }
     table.insert(buttons, btnFs)
     UI.drawButton(btnFs, mx >= btnFs.x and mx <= btnFs.x + btnFs.w and my >= btnFs.y and my <= btnFs.y + btnFs.h, juice.buttonPressedId == btnFs.id)
 
@@ -5777,7 +5790,7 @@ local function drawShopState()
         local cards = pData.cards or {}
 
         love.graphics.setColor(0, 0, 0, 0.88)
-        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+        love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
         local packImg = UI.getPackImage(pack.packType or pack.id)
         local timer = pData.animationTimer or 0
@@ -5936,7 +5949,7 @@ end
 drawShopTransferView = function()
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0.06, 0.08, 0.11, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / scale, winW / scale, winH / scale)
+    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
@@ -6214,7 +6227,7 @@ function love.draw()
     else
         love.graphics.push()
         love.graphics.translate(offsetX, offsetY)
-        love.graphics.scale(scale * RENDER_SCALE, scale * RENDER_SCALE)
+        love.graphics.scale(scale * RENDER_SCALE, Layout.scaleY * RENDER_SCALE)
     end
 
     UI.CardPhysics.beginFrame(UI.CardPhysics.isLabOpen() or (state ~= "scoring" and state ~= "defeating" and state ~= "gameover"
@@ -6384,14 +6397,17 @@ function love.draw()
         love.graphics.setColor(0.02, 0.02, 0.03, 1)
         love.graphics.rectangle("fill", 0, 0, winW, winH)
 
-        -- World-only postprocessing has already run. Output UI is never distorted.
+        -- Present with the same per-axis transform used for pointer hit testing.
         love.graphics.setShader()
 
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, scale)
+        love.graphics.draw(mainCanvas, offsetX, offsetY, 0, scale, Layout.scaleY)
         love.graphics.setShader()
     else
         love.graphics.pop()
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--capture-mobile-fullscreen" then require("tests.mobile_fullscreen_capture").draw() end
     end
 end
 
@@ -6952,7 +6968,7 @@ local function handleModalsMousepressed(mx, my, button)
                         Sound.play("ui_click")
                         return true
                     elseif btn.id == "setting_fullscreen" then
-                        settings.fullscreen = not settings.fullscreen
+                        settings.fullscreen = Touch.nativeMobile or not settings.fullscreen
                         love.window.setFullscreen(settings.fullscreen, "desktop")
                         updateScale()
                         saveSettings()
@@ -7977,7 +7993,7 @@ function love.keypressed(key)
     end
     -- Global Fullscreen Toggle
     if key == "f11" then
-        settings.fullscreen = not settings.fullscreen
+        settings.fullscreen = Touch.nativeMobile or not settings.fullscreen
         love.window.setFullscreen(settings.fullscreen, "desktop")
         updateScale()
         saveSettings()
@@ -8373,7 +8389,7 @@ end
 
 Touch.install({press=love.mousepressed,move=love.mousemoved,release=love.mousereleased,
     canScroll=function() return isCollectionOpen and collectionCategory~=nil or state=="map" end,
-    scroll=function(dy) love.wheelmoved(0,dy/scale/45) end,
+    scroll=function(dy) love.wheelmoved(0,dy/Layout.scaleY/45) end,
     cancel=function()
         UI.CardPhysics.release()
         handDrag.active,handDrag.isDragging,handDrag.cardIndex=false,false,nil

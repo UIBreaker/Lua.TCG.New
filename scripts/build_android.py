@@ -6,10 +6,10 @@ Keep .android-signing/ backed up privately: future updates must use the same key
 import argparse
 import ctypes
 import hashlib
+import io
 import os
 from pathlib import Path
 import secrets
-import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
@@ -36,8 +36,8 @@ def main():
     parser.add_argument("--game", type=Path, default=ROOT / "dist/LUA-TCG-0.75.3-Mobile.love")
     args = parser.parse_args()
     tools = args.tools.resolve()
-    work = ROOT / "dist/android-apk-build"
-    assert not work.exists(), "Use a fresh dist/android-apk-build directory for each build"
+    work = ROOT / "dist" / ("android-build-" + secrets.token_hex(4))
+    assert not work.exists(), "Build directory must be fresh"
     sdk = tools / "sdk/android-15"
     suffix = ".exe" if os.name == "nt" else ""
     run("java", "-jar", tools / "apktool.jar", "d", "-s", "-o", work, tools / "love-embed.apk")
@@ -54,18 +54,33 @@ def main():
     app = root.find("application")
     app.set(ANDROID + "label", "Terra Suit")
     app.set(ANDROID + "usesCleartextTraffic", "false")
+    app.set(ANDROID + "maxAspectRatio", "3.0")
     for activity in app.findall("activity"):
         activity.set(ANDROID + "label", "Terra Suit")
         activity.set(ANDROID + "screenOrientation", "sensorLandscape")
+        activity.set(ANDROID + "maxAspectRatio", "3.0")
+        activity.set(ANDROID + "theme", "@style/TerraSuitFullscreen")
     for provider in app.findall("provider"):
         provider.set(ANDROID + "authorities", provider.get(ANDROID + "authorities").replace("org.love2d.android", PACKAGE))
     ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
     manifest.write(work / "AndroidManifest.xml", encoding="utf-8", xml_declaration=True)
+    for folder, cutout in (("values", ""), ("values-v28", '<item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>')):
+        target = work / "res" / folder
+        target.mkdir(exist_ok=True)
+        (target / "terrasuit_fullscreen.xml").write_text(
+            '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
+            '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 753")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 754")
     text = text.replace("versionName: 11.5a", "versionName: 0.75.3").replace("minSdkVersion: 16", "minSdkVersion: 23")
     metadata.write_text(text, encoding="utf-8")
-    shutil.copy2(args.game, work / "assets/game.love")
+    # Boot in immersive mode too, before Lua initializes or restores old settings.
+    with zipfile.ZipFile(args.game) as source, zipfile.ZipFile(work / "assets/game.love", "w", zipfile.ZIP_DEFLATED) as bundled:
+        for entry in source.infolist():
+            data = source.read(entry.filename)
+            if entry.filename == "conf.lua":
+                data = data.replace(b"t.window.fullscreen = false", b"t.window.fullscreen = true")
+            bundled.writestr(entry, data)
     from PIL import Image, ImageOps
     with Image.open(ROOT / "assets/cards/continental/back/card_back.png") as source:
         for icon in (work / "res").glob("drawable-*/love.png"):
@@ -96,7 +111,9 @@ def main():
     run(sdk / ("zipalign" + suffix), "-c", "-P", "16", "4", output)
     with zipfile.ZipFile(output) as apk:
         assert apk.testzip() is None
-        assert apk.read("assets/game.love") == args.game.read_bytes()
+        with zipfile.ZipFile(io.BytesIO(apk.read("assets/game.love"))) as game, zipfile.ZipFile(args.game) as source:
+            assert b"t.window.fullscreen = true" in game.read("conf.lua")
+            assert game.read("main.lua") == source.read("main.lua")
         assert all(f"lib/{abi}/liblove.so" in apk.namelist() for abi in ("arm64-v8a", "armeabi-v7a"))
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     output.with_suffix(".apk.sha256").write_text(f"{digest}  {output.name}\n", encoding="ascii")

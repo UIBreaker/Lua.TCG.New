@@ -7,10 +7,14 @@ Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài v�
 ## 📥 Tải về và chơi
 
 - **Windows 64-bit:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases/latest), tải `LUA-TCG-0.75.3-Windows-x64.zip`, giải nén toàn bộ rồi mở `LUA-TCG.exe`. Không cần cài Lua/LÖVE.
-- **Android và iPhone:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang được xuất bản bằng GitHub Pages; cần triển khai thành công trước khi gửi link cho bạn bè.
+- **Android và iPhone:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang đã được xuất bản bằng GitHub Pages; không cần cài Lua/LÖVE.
 - **Android có LÖVE 11.5:** tải `LUA-TCG-0.75.3-Mobile.love` trong Releases và mở bằng LÖVE. File `.love` không phải APK hay ứng dụng iPhone cài trực tiếp.
 
 Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/dùng bài; bật **ĐỔI CHỖ** để kéo sắp xếp. Thanh nút lớn trên web giúp Đánh / Bỏ / xem Bộ bài / Quay lại. Save thuộc từng trình duyệt; xóa dữ liệu trang sẽ xóa save. Xem [ghi chú bản phát hành](docs/RELEASE_NOTES_0.75.3.md).
+
+Đã kiểm tra file Windows tải từ Releases mở độc lập, bản web công khai vào trận và lưu tiến trình sau tải lại. Chưa kiểm chứng trên Android/iPhone thật; hiệu năng còn phụ thuộc thiết bị và trình duyệt. Bản điện thoại dùng ảnh nhỏ hơn và đồ họa LOW mặc định, tải khoảng 51 MiB dữ liệu lúc đầu.
+
+![Trận đấu thật trên bản web đã xuất bản](docs/screenshots/web-release-0.75.3.jpg)
 
 ## 📸 Hình ảnh trực quan
 

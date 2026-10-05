@@ -1,5 +1,12 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-feature-parity" then
+        require("tests.inventory_expansion_smoke")
+        require("tests.bed_speed_smoke")
+        require("tests.soul_shop_smoke")
+        require("tests.spectral_persistence_smoke")
+        os.exit(0)
+    end
     if a == "--test-mobile-layout" then require("tests.mobile_layout_smoke"); os.exit(0) end
     if a == "--test-touch" then
         require("tests.touch_input_smoke")
@@ -41,6 +48,8 @@ local CardEffects = require("src.card_effects")
 local Shop = require("src.shop")
 local Sound = require("src.sound")
 local UI = require("src.ui")
+UI.Inventory=require("src.inventory")
+UI.InventoryRail=require("ui.inventory_rail")
 local Motion = require("src.motion")
 local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
@@ -83,6 +92,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
     if a == "--test-soul-shop" then isCaptureMode = true end
+    if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
@@ -254,26 +264,15 @@ local monsterMotion = { attack = 0, hit = 0 }
 
 local function getDeitySlotRect(i, currentState)
     currentState = currentState or state
-    if currentState == "playing" or currentState == "scoring" then
-        local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-        return Layout.fanCardRect(Layout.battle.spm, i, maxSlots)
-    elseif currentState == "shop" then
-        local maxSlots = game and Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-        if maxSlots > 6 then
-            local column = (i - 1) % 4
-            local row = math.floor((i - 1) / 4)
-            return 1041 + column * 55, 110 + row * 78, 50, 72
+    if currentState=="playing" or currentState=="scoring" or currentState=="shop" then
+        local localIndex,visible=UI.InventoryRail.localIndex("spn",i,game)
+        if not localIndex then return -10000,-10000,1,1 end
+        if currentState=="shop" then
+            return 1042+((localIndex-1)%3)*72,112+math.floor((localIndex-1)/3)*106,64,88
         end
-        local column = (i - 1) % 3
-        local row = math.floor((i - 1) / 3)
-        return 1042 + column * 72, 112 + row * 106, 64, 88
+        return Layout.fanCardRect(Layout.battle.spm,localIndex,visible)
     end
-    local slotW = 82
-    local slotH = 118
-    local gap = 14
-    local startX = 295
-    local slotY = 32
-    return startX + (i - 1) * (slotW + gap), slotY, slotW, slotH
+    return 295+(i-1)*96,32,82,118
 end
 UI.getDeitySlotRect = getDeitySlotRect
 
@@ -501,15 +500,16 @@ local function spawnShopFx(kind, item, x, y, w, h)
     })
 end
 
-local function getConsumableSlotRect(i, currentState)
-    if currentState == "playing" or currentState == "scoring" then
-        local total = math.max(3, game and game.consumables and #game.consumables or 0)
-        return Layout.fanCardRect(Layout.battle.consumables, i, total)
-    elseif currentState == "shop" then
-        return 1042 + (i - 1) * 72, 358, 64, 88
+local function getConsumableSlotRect(i,currentState)
+    if currentState=="playing" or currentState=="scoring" or currentState=="shop" then
+        local localIndex,visible=UI.InventoryRail.localIndex("consumable",i,game)
+        if not localIndex then return -10000,-10000,1,1 end
+        if currentState=="shop" then return 1042+(localIndex-1)*72,358,64,88 end
+        return Layout.fanCardRect(Layout.battle.consumables,localIndex,visible)
     end
-    return 295 + (i - 1) * 96, 32, 82, 118
+    return 295+(i-1)*96,32,82,118
 end
+UI.getConsumableSlotRect=getConsumableSlotRect
 
 -- Hand Card Drag & Drop State
 local handDrag = {
@@ -1130,7 +1130,7 @@ local function discardSelected()
             }
             local chosen = spellPool[Rng.random(#spellPool)]
             game.consumables = game.consumables or {}
-            if #game.consumables < 3 then
+            if #game.consumables < UI.Inventory.limit(game) then
                 table.insert(game.consumables, chosen)
                 table.insert(anim.floatingTexts, {
                     text = "🟣 [DẤU TÍM] Tạo Thẻ Phép: " .. chosen.name .. " (" .. chosen.subtitle .. ")!",
@@ -1141,7 +1141,7 @@ local function discardSelected()
                 })
             else
                 table.insert(anim.floatingTexts, {
-                    text = "🟣 [DẤU TÍM] Ô Tiêu Hao đã đầy (3/3)!",
+                    text = "🟣 [DẤU TÍM] Ô Tiêu Hao đã đầy!",
                     color = { 0.85, 0.45, 0.95, 1 },
                     x = 640,
                     y = 390,
@@ -1201,6 +1201,40 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    if c.category=="bed" then
+        if state=="shop" then
+            local used=UI.Inventory.useBed(game,idx)
+            if used then Sound.play("round_win");saveRunAtSafePoint() end
+            return used
+        end
+        if state~="playing" or anim.enemyTurn or anim.active or UI.AbilityUI.current then return false end
+        local options={}
+        if (game.playerHp or 100)<(game.maxPlayerHp or 100) then
+            options[#options+1]={target={id="bed_self",artId="cons_bed",name="Bản thân",color=c.color},label="Bản thân"}
+        end
+        for enemyIndex,enemy in ipairs(require("src.enemy_group").members(game)) do
+            if enemy.hp>0 and not enemy.hasBed then options[#options+1]={target=enemy,label="Quái "..enemyIndex.." · "..(enemy.kingdom or enemy.name)} end
+        end
+        if #options==0 then return false end
+        UI.AbilityUI.openChoices(game,{{card=c,title="CÁI GIƯỜNG · CHỌN NGƯỜI NGỦ",
+            description="Ngủ hồi đầy HP và bỏ một lượt. Đặt lên quái để hồi máu cho chúng hoặc kích bẫy Ngủ Dưới Địa Ngục.",options=options}},function(decisions)
+            local choice=decisions[1];if not choice then return end
+            local index;for i,card in ipairs(game.consumables) do if card==c then index=i;break end end
+            if not index then return end
+            local enemy=choice.target.id~="bed_self" and choice.target or nil
+            if UI.Inventory.useBed(game,index,enemy) then
+                UI.Abilities.consumableUsed(game);Sound.play("round_win")
+                if not enemy then UI.endBedTurn() end
+                saveRunAtSafePoint()
+            end
+        end)
+        return true
+    end
+    local utilityUsed=UI.Inventory.useUtility(game,idx)
+    if utilityUsed~=nil then
+        if utilityUsed then Sound.play("round_win");saveRunAtSafePoint() end
+        return utilityUsed
+    end
     local expansion=require("src.chest_expansion")
     if expansion.byId[c.id] and (c.id:match("^spec_") or c.id:match("^spell_")) then
         local target=game.hand and game.hand[(game.selectedIndices or {})[1] or 1]
@@ -1231,14 +1265,6 @@ local function useConsumable(idx)
         if not Shop.activateDestruction(game,c) then return false end
         isDeckViewerOpen=true;deckViewerPage=1;UI.Polish.clearFocus()
         Sound.play("card_select")
-        return true
-    elseif c.id == "healing_potion" then
-        local maxHp=game.maxPlayerHp or 100
-        if (game.playerHp or maxHp)>=maxHp then return false end
-        game.playerHp=math.min(maxHp,(game.playerHp or maxHp)+(c.healAmt or 25))
-        table.remove(game.consumables,idx)
-        Sound.play("round_win")
-        saveRunAtSafePoint()
         return true
     end
     if c.category == "stored_card" then
@@ -1273,7 +1299,7 @@ local function useConsumable(idx)
         end
         pendingSpeedCard = c
         table.insert(anim.floatingTexts, {
-            text = "CHỌN LÁ BÀI TRÊN TAY ĐỂ TĂNG +5 TỐC ĐÁNH · ESC ĐỂ HỦY",
+            text = "CHỌN LÁ BÀI TRÊN TAY ĐỂ TĂNG +"..p.speed.." TỐC ĐÁNH · ESC ĐỂ HỦY",
             color = { 0.48, 0.78, 1, 1 }, x = 640, y = 310, alpha = 2.4,
         })
         Sound.play("card_select")
@@ -1612,7 +1638,7 @@ local function activateConsumable(idx, currentState)
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
-        and card.category ~= "speed_single" and card.category ~= "edition" and card.id ~= "soul_reaper" then
+        and card.category ~= "speed_single" and card.category ~= "bed" and card.category ~= "edition" and card.id ~= "soul_reaper" then
         spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     end
     return true
@@ -1932,7 +1958,7 @@ local function playSelectedHand()
     if not startEnemyAttack("before", playerSpeed, beginScoring, playedCards) then beginScoring() end
 end
 
-local function endPlayerTurn()
+local function endPlayerTurn(force)
     if anim.enemyTurn then return true end
     if not game or not game.monster then return false end
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
@@ -1940,7 +1966,7 @@ local function endPlayerTurn()
     if handLimitIsFinal and (game.handsRemaining or 0) <= 0 then return false end
     local canEndTurn = #game.hand == 0 or (game.handsRemaining or 0) <= 0
     local availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
-    if not canEndTurn or availableCards == 0 then return false end
+    if (not canEndTurn and not force) or availableCards == 0 then return false end
     Combat.cleanupDestroyedCards(game)
     availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
     if availableCards == 0 then return false end
@@ -1979,6 +2005,8 @@ local function endPlayerTurn()
     if not startEnemyAttack(nil, nil, finishTurn) then return false end
     return true
 end
+
+UI.endBedTurn=function() return endPlayerTurn(true) end
 
 local function generateBossChestRewards()
     chestRewards = {}
@@ -2617,11 +2645,22 @@ function love.update(dt)
                     for _, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
-                        ft.label = hit.deity.name .. " · AURA LAN"
+                        ft.label = hit.deity.name .. (hit.explosion and " · NỔ GIƯỜNG" or " · AURA LAN")
+                        if hit.explosion then
+                            spawnSparks(x,264,18,{1,.36,.12,1})
+                            screenShake=math.max(screenShake or 0,12)
+                            anim.screenFlash=0.2
+                        end
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
                         anim.deityBounce[hit.slotIndex] = 1.15
                         if hit.enemy.hp <= 0 then DeathVFX.startEnemy(hit.enemy, x, Renderer.quality) end
+                    end
+                    for _,enemy in ipairs(require("src.enemy_group").members(game)) do
+                        if enemy.bedHeal then
+                            local ft=Feedback.add(anim.floatingTexts,"heal",enemy.bedHeal,enemy.screenX or UI.BATTLE_CENTER_X,184,UI.formatNumber)
+                            ft.label="GIƯỜNG · HỒI ĐẦY HP";enemy.bedHeal=nil
+                        end
                     end
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
@@ -2829,7 +2868,7 @@ function love.update(dt)
                                         end
                                         if planetCard then
                                             game.consumables = game.consumables or {}
-                                            if #game.consumables < 3 then
+                                            if #game.consumables < UI.Inventory.limit(game) then
                                                 table.insert(game.consumables, {
                                                     id = planetCard.id,
                                                     category = "celestial",
@@ -2848,7 +2887,7 @@ function love.update(dt)
                                                 })
                                             else
                                                 table.insert(anim.floatingTexts, {
-                                                    text = "🔵 [DẤU LAM] Ô Tiêu Hao đã đầy (3/3)!",
+                                                    text = "🔵 [DẤU LAM] Ô Tiêu Hao đã đầy!",
                                                     color = { 0.8, 0.8, 0.8, 1 },
                                                     x = 640,
                                                     y = 360,
@@ -3615,12 +3654,19 @@ local function drawPlayingState()
     drawBattleInfoPanel(m, eval, scPreview)
     local curDeiCount = Deities.getCount(game.deities)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    local firstDei,lastDei=UI.InventoryRail.range("spn",game)
+    local firstCon,lastCon=UI.InventoryRail.range("consumable",game)
     UI.components.SPMPanel.draw(curDeiCount, maxDeiSlots, UI.fonts, UI.getPanelImage("spm_row_frame_v1"))
     game.consumables = game.consumables or {}
     local conCount = #game.consumables
-    local maxConsumableSlots = math.max(3, conCount)
-    UI.components.ConsumablePanel.draw(conCount, 3, UI.fonts, maxDeiSlots,
+    local maxConsumableSlots = UI.Inventory.limit(game)
+    UI.components.ConsumablePanel.draw(conCount, UI.Inventory.limit(game), UI.fonts, maxDeiSlots,
         UI.getPanelImage("consumable_row_frame_v1"))
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.setColor(UI.COLORS.goldYellow)
+    local spnRect,consRect=Layout.battle.spm,Layout.battle.consumables
+    love.graphics.printf(UI.InventoryRail.hint("spn",game),spnRect[1]+130,spnRect[2]+10,spnRect[3]-140,"right")
+    love.graphics.printf(UI.InventoryRail.hint("consumable",game),consRect[1]+130,consRect[2]+10,consRect[3]-140,"right")
 
     -- 2. RIGHT RAIL: SPM & CONSUMABLES
     ----------------------------------------------------------------------------
@@ -3633,7 +3679,7 @@ local function drawPlayingState()
     local hoveredDeityIndex = nil
     if not (deityDrag.active and deityDrag.isDragging) then
         -- The fan exposes right corners, where rarity pennants are anchored.
-        for i = 1, maxDeiSlots do
+        for i = firstDei, lastDei do
             local dx, dy, dw, dh = getDeitySlotRect(i, "playing")
             local d = game.deities and game.deities[i]
             if d and mx >= dx and mx <= dx + dw and my >= dy and my <= dy + dh then
@@ -3642,7 +3688,7 @@ local function drawPlayingState()
             end
         end
     end
-    for i = maxDeiSlots, 1, -1 do
+    for i = lastDei, firstDei, -1 do
         local dx, deityY, deitySlotW, deitySlotH = getDeitySlotRect(i, "playing")
         local d = game.deities and game.deities[i]
         local isDraggedSource = (deityDrag.active and deityDrag.isDragging and deityDrag.deityIndex == i)
@@ -3684,7 +3730,7 @@ local function drawPlayingState()
     -- Consumables Section (0/3)
     -- Empty capacity is intentionally invisible; occupied cards share one fan row.
     local hoveredConsumableIndex = nil
-    for j = maxConsumableSlots, 1, -1 do
+    for j = lastCon, firstCon, -1 do
         local cx, cy = getConsumableSlotRect(j, "playing")
         local c = game.consumables[j]
         if c and mx >= cx and mx <= cx + 82 and my >= cy and my <= cy + 118 then
@@ -3692,7 +3738,7 @@ local function drawPlayingState()
             break
         end
     end
-    for j = 1, maxConsumableSlots do
+    for j = firstCon, lastCon do
         local cx, cy, cardW, cardH = getConsumableSlotRect(j, "playing")
         local c = game.consumables[j]
         if c then
@@ -4801,7 +4847,7 @@ end
 function UI.ChestChoices.claim(rew, keep, isBossChest)
     if keep then
         game.consumables=game.consumables or {}
-        if #game.consumables>=3 then Sound.play("cant_afford");return false end
+        if #game.consumables>=UI.Inventory.limit(game) then Sound.play("cant_afford");return false end
         local item=rew.card or rew.item
         game.consumables[#game.consumables+1]={category=rew.type=="card" and "stored_card" or "stored_equipment",
             card=rew.card,equipmentId=rew.item and rew.item.id,name=item.name or rew.title,
@@ -4827,7 +4873,7 @@ local function drawChestState()
     Renderer.veil()
     local mx,my=toVirtual(love.mouse.getPosition())
     buttons={}
-    UI.ChestChoices.draw(chestRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG CHIẾN THẮNG",mx,my,buttons,#(game.consumables or {})>=3)
+    UI.ChestChoices.draw(chestRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG CHIẾN THẮNG",mx,my,buttons,#(game.consumables or {})>=UI.Inventory.limit(game))
 end
 
 local SOCKETING_PAGE_SIZE = 10
@@ -5005,7 +5051,7 @@ local function drawTreasureState()
     Renderer.veil()
     local mx,my=toVirtual(love.mouse.getPosition())
     buttons={}
-    UI.ChestChoices.draw(treasureRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG BÁU CỔ ĐẠI",mx,my,buttons,#(game.consumables or {})>=3)
+    UI.ChestChoices.draw(treasureRewards,anim.chestReveal.state==state and anim.chestReveal.timer or 0,"RƯƠNG BÁU CỔ ĐẠI",mx,my,buttons,#(game.consumables or {})>=UI.Inventory.limit(game))
 end
 
 local function drawRestState()
@@ -5608,6 +5654,8 @@ local function drawShopState()
     -- SPM and consumables live in a compact right-side rail.
     local deiCount = Deities.getCount(game.deities)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
+    local firstDei,lastDei=UI.InventoryRail.range("spn",game)
+    local firstCon,lastCon=UI.InventoryRail.range("consumable",game)
     local deiSlotW = 64
     local deiSlotH = 88
     local deiGap = 14
@@ -5620,7 +5668,7 @@ local function drawShopState()
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.print("SPN (" .. deiCount .. "/" .. maxDeiSlots .. ")", deiStartX + 4, 82)
 
-    for i = 1, maxDeiSlots do
+    for i = firstDei, lastDei do
         local sx, sy, deiSlotW, deiSlotH = getDeitySlotRect(i, "shop")
         local d = game.deities and game.deities[i]
         local isDeiDragged = (deityDrag.active and deityDrag.isDragging and deityDrag.deityIndex == i)
@@ -5689,9 +5737,12 @@ local function drawShopState()
     local conCount = #game.consumables
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/3)", conStartX + 4, 327)
+    love.graphics.print("TIÊU HAO (" .. conCount .. "/"..UI.Inventory.limit(game)..")", conStartX + 4, 327)
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.printf(UI.InventoryRail.hint("spn",game),1042,99,210,"right")
+    love.graphics.printf(UI.InventoryRail.hint("consumable",game),1042,344,210,"right")
 
-    for i = 1, 3 do
+    for i = firstCon, lastCon do
         local cx, cy = getConsumableSlotRect(i, "shop")
         local c = game.consumables[i]
         drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, i, mx, my)
@@ -5795,7 +5846,7 @@ local function drawShopState()
 
         local packImg = UI.getPackImage(pack.packType or pack.id)
         local timer = pData.animationTimer or 0
-        UI.ChestChoices.draw(cards,timer,pack.name or "MỞ RƯƠNG",mx,my,buttons,#game.consumables>=3,pack.packType)
+        UI.ChestChoices.draw(cards,timer,pack.name or "MỞ RƯƠNG",mx,my,buttons,#game.consumables>=UI.Inventory.limit(game),pack.packType)
         if timer < DeathVFX.config.chest.duration and DeathVFX.kind=="chest" then
             DeathVFX.drawEnemy(packImg,640,328,DeathVFX.config.chest.size)
             DeathVFX.drawParticles()
@@ -6480,7 +6531,7 @@ local function handlePlayingMousepressed(mx, my, button)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
 
     -- Left-click never activates a consumable; activation is deliberately right-click only.
-    local maxConsumableSlots = math.max(3, game.consumables and #game.consumables or 0)
+    local maxConsumableSlots = UI.Inventory.limit(game)
     for j = maxConsumableSlots, 1, -1 do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "playing")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
@@ -6715,7 +6766,7 @@ local function handleShopMousepressed(mx, my, button)
 
     -- Left click focuses; right click activation remains handled by the input router.
     if button ~= 1 then return true end
-    for j = 1, 3 do
+    for j = 1, UI.Inventory.limit(game) do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "shop")
         if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
             UI.Polish.focusItem(game.consumables and game.consumables[j], "consumable", j, {x=cx,y=cy,w=cw,h=ch})
@@ -7206,7 +7257,7 @@ local function handleModalsMousepressed(mx, my, button)
     if button == 2 then
         if (state == "playing" or state == "shop") and not isDeckViewerOpen
             and not (shopData and shopData.currentPackOpening) then
-            local count = state == "playing" and math.max(3, game.consumables and #game.consumables or 0) or 3
+            local count = UI.Inventory.limit(game)
             for i = count, 1, -1 do
                 local x, y, w, h = getConsumableSlotRect(i, state)
                 if game.consumables and game.consumables[i]
@@ -8142,6 +8193,12 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if (state=="shop" or state=="playing") and not isCollectionOpen and not isDeckViewerOpen
+        and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
+        and not (shopData and shopData.currentPackOpening) and not UI.Polish.busy() then
+        local mx,my=toVirtual(love.mouse.getPosition())
+        if UI.InventoryRail.scroll(game,state,mx,my,y) then UI.Polish.clearFocus();return end
+    end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if isCollectionOpen and collectionCategory then
         collectionScrollY = (collectionScrollY or 0) - y * 45
@@ -8389,8 +8446,19 @@ function love.mousereleased(x, y, button, istouch)
 end
 
 Touch.install({press=love.mousepressed,move=love.mousemoved,release=love.mousereleased,
-    canScroll=function() return isCollectionOpen and collectionCategory~=nil or state=="map" end,
-    scroll=function(dy) love.wheelmoved(0,dy/Layout.scaleY/45) end,
+    canScroll=function(dx,dy)
+        Touch.wheelY=0
+        if isCollectionOpen and collectionCategory~=nil or state=="map" then return true end
+        return math.abs(dy or 0)>math.abs(dx or 0) and UI.InventoryRail.canSwipe(game,state,toVirtual(Touch.x,Touch.y))
+    end,
+    scroll=function(dy)
+        if state=="shop" or state=="playing" then
+            Touch.wheelY=(Touch.wheelY or 0)+dy/(Layout.scaleY*RENDER_SCALE)
+            if math.abs(Touch.wheelY)>=45 then
+                love.wheelmoved(0,Touch.wheelY>0 and 1 or -1);Touch.wheelY=0
+            end
+        else love.wheelmoved(0,dy/Layout.scaleY/45) end
+    end,
     cancel=function()
         UI.CardPhysics.release()
         handDrag.active,handDrag.isDragging,handDrag.cardIndex=false,false,nil

@@ -30,6 +30,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y love xvfb
       - name: Test touch and gameplay
         run: |
+          xvfb-run -a love . --test-feature-parity
           xvfb-run -a love . --test-touch
           xvfb-run -a love . --test-poker
           xvfb-run -a love . --test-features
@@ -46,8 +47,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.75.3 >/dev/null 2>&1 || gh release create v0.75.3 --target "$GITHUB_SHA" --title 'LUA.TCG 0.75.3 — Windows & Mobile' --notes-file docs/RELEASE_NOTES_0.75.3.md
-          gh release upload v0.75.3 dist/LUA-TCG-0.75.3-Windows-x64.zip dist/LUA-TCG-0.75.3.love dist/LUA-TCG-0.75.3-Mobile.love dist/SHA256SUMS.txt --clobber
+          gh release view v0.83.3 >/dev/null 2>&1 || gh release create v0.83.3 --prerelease --target "$GITHUB_SHA" --title 'Terra Suit beta 0.83.3 — Windows & Android' --notes-file docs/RELEASE_NOTES_0.83.3.md
+          gh release upload v0.83.3 dist/LUA-TCG-0.83.3-Windows-x64.zip dist/LUA-TCG-0.83.3.love dist/LUA-TCG-0.83.3-Mobile.love dist/SHA256SUMS.txt --clobber
 
   pages:
     needs: build

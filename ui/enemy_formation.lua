@@ -45,6 +45,11 @@ function F.hud(game,UI,mx,my,turn)
             if (m.creatureArmor or 0)>0 then ability=ability.." / GIÁP "..UI.formatNumber(m.creatureArmor)
             elseif m.reassembled then ability=ability.." / ĐÃ TÁI SINH" end
             Core.textLine(ability,x-24,y+h+35,w+48,UI.fonts.tiny,{0.65,0.74,0.78},"center",UI.fonts.tiny)
+            if m.hasBed then
+                local image=UI.getConsumableImage({id="cons_bed"})
+                if image then g.setColor(1,1,1,1);UI.CardFrame.image(image,x+w-30,y+h-46,28,42);UI.drawCardBorder(x+w-30,y+h-46,28,42) end
+                Core.textLine("ĐANG CẦM GIƯỜNG",x-24,y+h+53,w+48,UI.fonts.tiny,{.55,.95,.68},"center",UI.fonts.tiny)
+            end
         end
     end
     if (game.enemyPoison or 0)>0 then Core.text("ĐỘC "..game.enemyPoison.." • GIẢM 1 TẦNG / TAY",310,423,640,UI.fonts.tiny,{0.54,0.89,0.45},"center") end

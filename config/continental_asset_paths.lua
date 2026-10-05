@@ -1,4 +1,8 @@
 return {
+    ["spirit_hell_sleep"] = "assets/cards/continental/spn/spirit_hell_sleep.png",
+    ["cons_bed"] = "assets/cards/continental/utility/cons_bed.png",
+    ["cons_speed_large"] = "assets/cards/continental/speed/cons_speed_large.png",
+    ["cons_speed_small"] = "assets/cards/continental/speed/cons_speed_small.png",
     ["spirit_lone"] = "assets/cards/continental/spn/spirit_lone.png",
     ["spirit_confluence"] = "assets/cards/continental/spn/spirit_confluence.png",
     ["spirit_rearguard"] = "assets/cards/continental/spn/spirit_rearguard.png",
@@ -282,4 +286,10 @@ return {
     ["spell_chorus"] = "assets/cards/continental/spn_enchantment/spell_chorus.png",
     ["spell_balance"] = "assets/cards/continental/spn_enchantment/spell_balance.png",
     ["spell_ember"] = "assets/cards/continental/spn_enchantment/spell_ember.png",
+    ["cons_spn_slot"] = "assets/cards/continental/utility/cons_spn_slot.png",
+    ["cons_consumable_slot"] = "assets/cards/continental/utility/cons_consumable_slot.png",
+    ["healing_potion_small"] = "assets/cards/continental/utility/healing_potion_small.png",
+    ["healing_potion_large"] = "assets/cards/continental/utility/healing_potion_large.png",
+    ["armor_potion_small"] = "assets/cards/continental/utility/armor_potion_small.png",
+    ["armor_potion_large"] = "assets/cards/continental/utility/armor_potion_large.png",
 }

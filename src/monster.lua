@@ -263,6 +263,7 @@ function Monster.create(round, isBossOverride, isEliteOverride, encounterCountOv
 end
 
 function Monster.takeDamage(monster, rawDamage)
+    local hpBefore=monster.hp
     local actualDamage = math.max(0,rawDamage or 0)
     if monster.isBoss and monster.bossData and monster.bossData.modifyDamage and require("src.boss_abilities").passiveEnabled(monster) then
         actualDamage = monster.bossData.modifyDamage(rawDamage)
@@ -271,6 +272,13 @@ function Monster.takeDamage(monster, rawDamage)
     actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage)
     monster.hp = math.max(0, monster.hp - actualDamage)
     require("src.enemy_abilities").revive(monster)
+
+    if monster.hasBed and monster.hp>0 and monster.hp<hpBefore then
+        monster.bedHeal=(monster.maxHp or hpBefore)-monster.hp
+        monster.hp=monster.maxHp or hpBefore
+        monster.hasBed=nil
+        monster.damageLagHp=monster.hp
+    elseif monster.hp<=0 then monster.hasBed=nil end
 
     -- Boss Phase 2 Transition at <= 50% HP
     if monster.isBoss and monster.phase == 1 and monster.hp > 0 and monster.hp <= math.floor(monster.maxHp * 0.5) then

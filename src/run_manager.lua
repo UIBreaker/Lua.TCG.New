@@ -1,3 +1,4 @@
+local Inventory = require("src.inventory")
 local Monster = require("src.monster")
 
 local RunManager = {}
@@ -332,6 +333,15 @@ function RunManager.createVitalityCard()
         color={0.92,0.38,0.45,1}}
 end
 
+function RunManager.createSpnSlotCard()
+    return {id="cons_spn_slot",category="slot_expansion",slotType="spn",name="Khế Ước Dung Linh",
+        desc="Tiêu hao một lần: thêm 1 ô SPN vĩnh viễn trong run. Dùng bao nhiêu lần cũng được.",color={.75,.5,1,1}}
+end
+function RunManager.createConsumableSlotCard()
+    return {id="cons_consumable_slot",category="slot_expansion",slotType="consumable",name="Túi Không Gian",
+        desc="Tiêu hao một lần: thêm 1 ô tiêu hao vĩnh viễn trong run. Không giới hạn số lần mở rộng.",color={.4,.8,1,1}}
+end
+
 function RunManager.createRoundRewardOptions()
     return {
         RunManager.createEvolutionCard(),
@@ -345,7 +355,7 @@ function RunManager.chooseRoundReward(gameState, index)
     local reward = offer and offer.options and offer.options[index]
     if not reward then return false end
     gameState.consumables = gameState.consumables or {}
-    if #gameState.consumables < 3 then
+    if #gameState.consumables < Inventory.limit(gameState) then
         table.insert(gameState.consumables, reward)
     else
         gameState.pendingRewardCards = gameState.pendingRewardCards or {}
@@ -368,13 +378,13 @@ function RunManager.deliverEvolutionRewards(run, gameState)
     end
 
     local delivered = 0
-    while gameState.pendingEvolutionCards > 0 and #gameState.consumables < 3 do
+    while gameState.pendingEvolutionCards > 0 and #gameState.consumables < Inventory.limit(gameState) do
         table.insert(gameState.consumables, RunManager.createEvolutionCard())
         gameState.pendingEvolutionCards = gameState.pendingEvolutionCards - 1
         delivered = delivered + 1
     end
     gameState.pendingRewardCards = gameState.pendingRewardCards or {}
-    while #gameState.pendingRewardCards > 0 and #gameState.consumables < 3 do
+    while #gameState.pendingRewardCards > 0 and #gameState.consumables < Inventory.limit(gameState) do
         table.insert(gameState.consumables, table.remove(gameState.pendingRewardCards, 1))
         delivered = delivered + 1
     end

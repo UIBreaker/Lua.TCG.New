@@ -1,3 +1,4 @@
+local Inventory = require("src.inventory")
 local UI = require("src.ui")
 local Sound = require("src.sound")
 local Deities = require("src.deities")
@@ -156,7 +157,7 @@ local function createReward(id, game, source, depth)
         local options = reward.consumable == "evolution" and {Run.createEvolutionCard()} or {Run.createSpeedSingleCard(), Run.createSpeedTeamCard()}
         reward.card = options[Rng.random(#options)]
         reward.name = reward.card.name
-        if #(game.consumables or {}) >= 3 then return fallback(reward, "Ô tiêu hao đã đầy") end
+        if #(game.consumables or {}) >= Inventory.limit(game) then return fallback(reward, "Ô tiêu hao đã đầy") end
     elseif reward.type == "CHEST" then
         if depth >= 2 then return fallback(reward, "Giới hạn rương lồng nhau") end
         reward.children = rollTable(reward.tableId, game, "RƯƠNG", depth + 1)
@@ -201,7 +202,7 @@ function RewardSystem.begin(breakdown, game, context)
     game.rewardPacks = game.rewardPacks or {}
     game.consumables = game.consumables or {}
     visit(result.loot, function(reward)
-        if reward.type == "CONSUMABLE" and #game.consumables >= 3 then fallback(reward, "Ô tiêu hao đã đầy") end
+        if reward.type == "CONSUMABLE" and #game.consumables >= Inventory.limit(game) then fallback(reward, "Ô tiêu hao đã đầy") end
         if reward.type == "GOLD" then
             result.bonusGold = result.bonusGold + reward.amount
         elseif reward.type == "PLAYING_CARD" then

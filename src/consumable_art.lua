@@ -20,7 +20,7 @@ function Art.get(item)
     if not id then return nil end
     if id:match("^spec_") or id:match("^spell_") or id:match("^seal_")
         or id:match("^edition_") or id:match("^ed_") or id:match("^planet_") or id:match("^cons_")
-        or id=="healing_potion" or id=="hand_expansion" or id=="soul_reaper" then
+        or id:match("^healing_potion") or id:match("^armor_potion") or id=="hand_expansion" or id=="soul_reaper" then
         local continental=require("src.continental_art").get(id)
         if continental then return continental end
     end

@@ -12,8 +12,28 @@ function Combat.resolvePlayerAttack(game, aura)
     local target = game.monster
     local locked = {}
     for slot = 1, Deities.getMaxSlots(game) do locked[slot] = Boss.isSlotLocked(game, "spn", slot) end
+    local bedExplosions={}
+    if target.hasBed then
+        for slot=1,Deities.getMaxSlots(game) do
+            local deity=game.deities and game.deities[slot]
+            local result=deity and deity.onAttack and not locked[slot] and deity.onAttack()
+            if result and (result.bedExplosionPct or 0)>0 then
+                bedExplosions[#bedExplosions+1]={deity=deity,slot=slot,amount=math.floor(math.max(0,aura)*result.bedExplosionPct/100)}
+            end
+        end
+        -- Consume the trap before damage, so it cannot heal or chain itself.
+        if #bedExplosions>0 then target.hasBed=nil end
+    end
     local damage = Monster.takeDamage(target, aura)
     local splashHits = {}
+    for _,explosion in ipairs(bedExplosions) do
+        for _,enemy in ipairs(Group.members(game)) do
+            if enemy.hp>0 then
+                local actual=Monster.takeDamage(enemy,explosion.amount)
+                splashHits[#splashHits+1]={enemy=enemy,damage=actual,deity=explosion.deity,slotIndex=explosion.slot,explosion=true}
+            end
+        end
+    end
     for slot = 1, Deities.getMaxSlots(game) do
         local deity = game.deities and game.deities[slot]
         if deity and deity.onAttack and not locked[slot] then

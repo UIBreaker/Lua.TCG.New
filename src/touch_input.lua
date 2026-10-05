@@ -32,7 +32,7 @@ function T.move(id, x, y)
     local distance = (x-finger.originX)^2 + (y-finger.originY)^2
     if not finger.dragging and distance > 12^2 then
         finger.dragging = true
-        finger.scrolling = hooks.canScroll and hooks.canScroll()
+        finger.scrolling = hooks.canScroll and hooks.canScroll(dx,dy)
         if not finger.scrolling then hooks.press(finger.originX, finger.originY, 1) end
     end
     if finger.dragging then

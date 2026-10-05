@@ -123,6 +123,7 @@ local entries = {
     {"spirit_coin","Kim Tệ","win","addGold",2,nil,"Thắng trận: +{value} Vàng."},
     {"spirit_ward","Băng Vệ","start","addArmor",10,nil,"Vào trận: +{value} Giáp."},
     {"spirit_echo","Dội Lôi","attack","addSplashPct",20,nil,"Mỗi lần đánh: gây {value}% tổng AURA lên 1 quái còn sống ngẫu nhiên ngay bên cạnh mục tiêu."},
+    {"spirit_hell_sleep","Ngủ Dưới Địa Ngục","attack","bedExplosionPct",200,nil,"Tấn công quái đang cầm Giường: tiêu hủy giường, gây vụ nổ bằng {value}% tổng AURA lên tất cả quái. Giường không hồi máu khi nổ."},
 }
 for _, row in ipairs(entries) do
     local entry={id=row[1],name=row[2],trigger=row[3],stat=row[4],values={value=row[5]},condition=row[6],
@@ -224,7 +225,7 @@ end
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
     if not def then return deity.desc or "" end
-    local value=def.values.value*effectMultiplier(deity)
+    local value=def.values.value*(def.stat=="bedExplosionPct" and 1 or effectMultiplier(deity))
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
     local spell=require("src.chest_expansion").byId[deity.enchantment]
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end

@@ -1,3 +1,4 @@
+local Inventory = require("src.inventory")
 local Equipment = require("src.equipment")
 local Poker = require("src.poker")
 local Sound = require("src.sound")
@@ -14,6 +15,8 @@ Shop.SOUL_SUPPORT = {
     {id="cons_speed_single",factory="createSpeedSingleCard",cost=6},
     {id="cons_speed_team",factory="createSpeedTeamCard",cost=10},
     {id="cons_vitality",factory="createVitalityCard",cost=10},
+    {id="cons_spn_slot",factory="createSpnSlotCard",cost=18},
+    {id="cons_consumable_slot",factory="createConsumableSlotCard",cost=12},
 }
 
 -- Public catalogs are shared with the collection screen so every listed item
@@ -100,6 +103,8 @@ Shop.SPECTRAL_CARDS = {
 }
 
 Shop.CONSUMABLE_RULES={
+    cons_speed_small={params={speed=3},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài trong run (tối đa 999). Hủy chọn không mất thẻ."},
+    cons_speed_large={params={speed=10},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài trong run (tối đa 999). Hủy chọn không mất thẻ."},
     speed_single={params={speed=5},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Hủy chọn không mất thẻ."},
     speed_team={params={speed=2},description="Mọi lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Chỉ dùng khi đang chiến đấu và có bài."},
     spell_aura={params={},description="Một SPN ngẫu nhiên nhận Foil (+50 ST cố định), Holographic (+10 Cường hóa) hoặc Polychrome (×1.5 Aura cuối)."},
@@ -385,7 +390,8 @@ function Shop.refresh(shop, gameState)
         color = { 0.85, 0.45, 0.95, 1 },
     })
 
-    table.insert(shop.items, Rng.random() < 0.5 and Shop.healingItem("upper") or Shop.destructionItem("upper"))
+    local utilityRoll=Rng.random(#Shop.POTIONS+1)
+    table.insert(shop.items,utilityRoll>#Shop.POTIONS and Shop.destructionItem("upper") or Shop.healingItem("upper",Shop.POTIONS[utilityRoll].id))
 
     ----------------------------------------------------------------------------
     -- 2. LOWER SECTION CARDS (Phiếu Ante / Voucher & Gói Bài Booster Packs)
@@ -475,7 +481,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
             return false, "Không đủ linh hồn!"
         end
         if item.category ~= "equipment" and not item.consumable then return false, "Không thể đổi vật phẩm này." end
-        if item.consumable and #(gameState.consumables or {}) >= 3 then return false, "Ô tiêu hao đã đầy (3/3)." end
+        if item.consumable and #(gameState.consumables or {}) >= Inventory.limit(gameState) then return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)." end
         gameState.souls = gameState.souls - item.cost
         gameState.soulShopPurchased = gameState.soulShopPurchased or {}
         gameState.soulShopPurchased[item.id] = true
@@ -497,7 +503,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     if item.consumable then
         gameState.consumables = gameState.consumables or {}
-        if #gameState.consumables >= 3 then return false, "Ô tiêu hao đã đầy (3/3)." end
+        if #gameState.consumables >= Inventory.limit(gameState) then return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)." end
         gameState.gold = gameState.gold - item.cost
         table.insert(gameState.consumables, item.consumable)
         table.remove(shop.items, itemIndex)
@@ -1021,9 +1027,9 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
     end
 
     gameState.consumables = gameState.consumables or {}
-    if #gameState.consumables >= 3 then
+    if #gameState.consumables >= Inventory.limit(gameState) then
         Sound.play("cant_afford")
-        return false, "Ô tiêu hao đã đầy (3/3)!"
+        return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)!"
     end
 
     local storedCard = {}
@@ -1113,10 +1119,24 @@ function Shop.destructionItem(section)
     return item
 end
 
-function Shop.healingItem(section)
-    local item={id="healing_potion",section=section,category="heal",cost=4,name="Bình Máu",
-        color={0.35,0.9,0.6,1},desc="Tiêu hao một lần: hồi 25 HP, không vượt sinh lực tối đa."}
-    item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color,healAmt=25}
+Shop.POTIONS={
+    {id="healing_potion",name="Bình Máu",cost=4,healAmt=25},
+    {id="healing_potion_small",name="Bình Máu Nhỏ",cost=2,healAmt=15},
+    {id="healing_potion_large",name="Bình Máu Lớn",cost=7,healAmt=60},
+    {id="armor_potion_small",name="Bình Giáp Nhỏ",cost=3,armorAmt=8},
+    {id="armor_potion_large",name="Bình Giáp Lớn",cost=6,armorAmt=20},
+    {id="cons_speed_small",name="Tốc Đánh Nhỏ",cost=3,speed=3,category="speed_single"},
+    {id="cons_speed_large",name="Tốc Đánh Lớn",cost=8,speed=10,category="speed_single"},
+    {id="cons_bed",name="Cái Giường",cost=9,category="bed",desc="Tiêu hao: hồi 100% HP tối đa. Trong trận, chọn bản thân (bỏ một lượt để ngủ) hoặc một quái để đặt giường. Quái nhận sát thương mà sống sẽ dùng giường hồi đầy HP; Ngủ Dưới Địa Ngục biến giường thành bẫy nổ."},
+}
+function Shop.healingItem(section,id)
+    local def=Shop.POTIONS[1]
+    for _,potion in ipairs(Shop.POTIONS) do if potion.id==id then def=potion;break end end
+    local item={id=def.id,section=section,category=def.category or (def.healAmt and "heal" or "armor_potion"),cost=def.cost,name=def.name,
+        color=def.healAmt and {0.35,0.9,0.6,1} or {.4,.7,1,1},
+        desc=def.desc or (def.speed and Shop.getConsumableDescription(def)) or (def.healAmt and ("Tiêu hao một lần: hồi "..def.healAmt.." HP, không vượt sinh lực tối đa.")
+            or ("Tiêu hao một lần: tăng "..def.armorAmt.." giáp hiện tại, tối đa "..require("config.card_ability_data").armorCap.." giáp. Dùng trong trận để giữ giáp."))}
+    item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color,healAmt=def.healAmt,armorAmt=def.armorAmt}
     return item
 end
 

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "cons_spn_slot",
+    "name": "Khế Ước Dung Linh",
+    "concept": "One antique bronze astrolabe with several large open crystal sockets, a new violet soul chamber unfolding from its side and a single controlled spirit wisp entering it. Void-purple floating western ruins. Permanently adds one extra spirit companion slot.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One antique bronze astrolabe with several large open crystal sockets, a new violet soul chamber unfolding from its side and a single controlled spirit wisp entering it. Void-purple floating western ruins. Permanently adds one extra spirit companion slot.",
+    "file": "assets/cards/continental/utility/cons_spn_slot.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-c26c3242-f90c-426b-96f6-8e0cf398020a.png"
+  },
+  {
+    "id": "cons_consumable_slot",
+    "name": "Túi Không Gian",
+    "concept": "One sturdy expedition leather satchel with a clearly expanded extra compartment unfolding through a small deep blue portal, a few simple empty bottle pockets visible. Coastal Western ruin terrace, deep navy and antique bronze. Permanently increases consumable storage by one slot.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One sturdy expedition leather satchel with a clearly expanded extra compartment unfolding through a small deep blue portal, a few simple empty bottle pockets visible. Coastal Western ruin terrace, deep navy and antique bronze. Permanently increases consumable storage by one slot.",
+    "file": "assets/cards/continental/utility/cons_consumable_slot.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-01d8fdf8-8787-4df0-ac2d-f5c4c32d40d3.png"
+  },
+  {
+    "id": "healing_potion_small",
+    "name": "Bình Máu Nhỏ",
+    "concept": "One small round expedition glass vial containing forest-green life sap and a single bright leaf, modest silver stopper, beside huge ancient tree roots, a quiet distant waterfall. Strong small vial silhouette, forest green silver. Heals 15 HP.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One small round expedition glass vial containing forest-green life sap and a single bright leaf, modest silver stopper, beside huge ancient tree roots, a quiet distant waterfall. Strong small vial silhouette, forest green silver. Heals 15 HP.",
+    "file": "assets/cards/continental/utility/healing_potion_small.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-32d5bb84-1e15-45df-843f-039be9274a22.png"
+  },
+  {
+    "id": "healing_potion_large",
+    "name": "Bình Máu Lớn",
+    "concept": "One large heavy glass flask containing golden-green living sap, two thick roots embrace the flask, a broad antique bronze cap. A colossal ancient tree with continental waterfalls in the background. Strong broad flask silhouette, forest green and warm gold. Heals 60 HP.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One large heavy glass flask containing golden-green living sap, two thick roots embrace the flask, a broad antique bronze cap. A colossal ancient tree with continental waterfalls in the background. Strong broad flask silhouette, forest green and warm gold. Heals 60 HP.",
+    "file": "assets/cards/continental/utility/healing_potion_large.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-613a9d69-efa7-4715-9ac6-367a123ed445.png"
+  },
+  {
+    "id": "armor_potion_small",
+    "name": "Bình Giáp Nhỏ",
+    "concept": "One slim angular reinforced glass vial containing cobalt-blue liquid and one tiny suspended silver shield-shaped metal plate, spare steel cap. Frozen continental cliffs and distant Western watchtower. Glacial blue silver. Grants 8 armor.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One slim angular reinforced glass vial containing cobalt-blue liquid and one tiny suspended silver shield-shaped metal plate, spare steel cap. Frozen continental cliffs and distant Western watchtower. Glacial blue silver. Grants 8 armor.",
+    "file": "assets/cards/continental/utility/armor_potion_small.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-813a04a9-19d5-493e-8970-13dd63205bdc.png"
+  },
+  {
+    "id": "armor_potion_large",
+    "name": "Bình Giáp Lớn",
+    "concept": "One broad hexagonal glass flask armored by bold steel ribs, luminous deep icy-blue liquid around a large suspended shield-shaped crystal, heavy bronze stopper. Western fortress on a frozen continental mountain, glacial navy antique gold. Grants 20 armor.",
+    "prompt": "Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One broad hexagonal glass flask armored by bold steel ribs, luminous deep icy-blue liquid around a large suspended shield-shaped crystal, heavy bronze stopper. Western fortress on a frozen continental mountain, glacial navy antique gold. Grants 20 armor.",
+    "file": "assets/cards/continental/utility/armor_potion_large.png",
+    "source": "C:/Users/Nhật Nam/.codex/generated_images/01a106e2-0248-7463-a69b-c4965cbd4343/exec-b9d81b96-8709-42f2-8332-eded73941f16.png"
+  }
+]

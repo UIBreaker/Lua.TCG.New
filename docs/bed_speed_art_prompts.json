@@ -1,0 +1,42 @@
+[
+  {
+    "id": "cons_speed_small",
+    "group": "speed",
+    "name": "Tốc Đánh Nhỏ",
+    "ability": "Chọn một lá trên tay: +3 tốc đánh vĩnh viễn trong run.",
+    "concept": "A single small silver winged expedition hourglass upright on a coastal rock, a modest horizontal cyan wind ribbon flowing through its two glass chambers, deep navy ocean and distant Western cliff arches. One modest compact relic, calm sea palette.",
+    "prompt": "Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Tốc Đánh Nhỏ. Actual effect: Chọn một lá trên tay: +3 tốc đánh vĩnh viễn trong run. Subject/concept: A single small silver winged expedition hourglass upright on a coastal rock, a modest horizontal cyan wind ribbon flowing through its two glass chambers, deep navy ocean and distant Western cliff arches. One modest compact relic, calm sea palette.",
+    "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-5feb0980-377e-4181-91ec-ab65d8d3febb.png",
+    "file": "assets/cards/continental/speed/cons_speed_small.png"
+  },
+  {
+    "id": "cons_speed_large",
+    "group": "speed",
+    "name": "Tốc Đánh Lớn",
+    "ability": "Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run.",
+    "concept": "One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.",
+    "prompt": "Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Tốc Đánh Lớn. Actual effect: Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run. Subject/concept: One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.",
+    "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-79c2462a-6e5c-4fa7-b364-2fdc7c0dde3e.png",
+    "file": "assets/cards/continental/speed/cons_speed_large.png"
+  },
+  {
+    "id": "cons_bed",
+    "group": "utility",
+    "name": "Cái Giường",
+    "ability": "Hồi đầy HP; dùng cho mình trong trận mất một lượt. Có thể đặt lên quái: nhận sát thương mà sống sẽ dùng giường hồi đầy HP.",
+    "concept": "One tangible sturdy Western expedition camp bed, dark weathered timber legs, thick forest-green blanket and ivory pillow, standing in a ruined forest sanctuary beside a restful golden magical hearth glow. The complete bed is the large unmistakable main silhouette, welcoming but mysterious, restrained restorative green-gold light, no person, no clutter.",
+    "prompt": "Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Cái Giường. Actual effect: Hồi đầy HP; dùng cho mình trong trận mất một lượt. Có thể đặt lên quái: nhận sát thương mà sống sẽ dùng giường hồi đầy HP. Subject/concept: One tangible sturdy Western expedition camp bed, dark weathered timber legs, thick forest-green blanket and ivory pillow, standing in a ruined forest sanctuary beside a restful golden magical hearth glow. The complete bed is the large unmistakable main silhouette, welcoming but mysterious, restrained restorative green-gold light, no person, no clutter.",
+    "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-e438e6a3-081b-46b7-8b11-db57f1c1ef56.png",
+    "file": "assets/cards/continental/utility/cons_bed.png"
+  },
+  {
+    "id": "spirit_hell_sleep",
+    "group": "spn",
+    "name": "Ngủ Dưới Địa Ngục",
+    "ability": "Tấn công quái cầm giường: kích nổ giường gây 200% tổng AURA lên mọi quái.",
+    "concept": "One enormous supernatural nightmare wraith rising from a bed-shaped shadow above a volcanic fissure, eyes closed as if asleep, long folded spectral arms and a clear hooded reclining silhouette. Its dark violet spectral body opens into a restrained circular shockwave of orange hellfire expanding outward over distant basalt ruins. Entity dominates, volcanic underworld, one readable supernatural phenomenon, no physical weapon, controlled glow.",
+    "prompt": "Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Ngủ Dưới Địa Ngục. Actual effect: Tấn công quái cầm giường: kích nổ giường gây 200% tổng AURA lên mọi quái. Subject/concept: One enormous supernatural nightmare wraith rising from a bed-shaped shadow above a volcanic fissure, eyes closed as if asleep, long folded spectral arms and a clear hooded reclining silhouette. Its dark violet spectral body opens into a restrained circular shockwave of orange hellfire expanding outward over distant basalt ruins. Entity dominates, volcanic underworld, one readable supernatural phenomenon, no physical weapon, controlled glow.",
+    "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-bcc36ff7-8b91-4227-999a-809e4a7c1c3a.png",
+    "file": "assets/cards/continental/spn/spirit_hell_sleep.png"
+  }
+]

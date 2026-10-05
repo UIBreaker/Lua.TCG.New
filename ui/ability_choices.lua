@@ -116,8 +116,13 @@ function Modal.draw(UI,mx,my)
         if A.definition(target) then UI.drawCard(target,x,y,76,110)
         elseif Deities.CATALOG[target.id] then UI.drawPatronCard(target,x,y,76,110)
         else
-            love.graphics.setColor(0.25,0.18,0.35,1);love.graphics.rectangle("fill",x,y,76,110,5,5)
-            UI.drawItemEmblem(target,x+38,y+45,30,target.color)
+            local image=target.hp and target.maxHp and require("src.enemy_art").image(target,{}) or UI.getConsumableImage(target)
+            if image then
+                love.graphics.setColor(1,1,1,1);UI.CardFrame.image(image,x,y,76,110);UI.drawCardBorder(x,y,76,110)
+            else
+                love.graphics.setColor(0.25,0.18,0.35,1);love.graphics.rectangle("fill",x,y,76,110,5,5)
+                UI.drawItemEmblem(target,x+38,y+45,30,target.color)
+            end
         end
         button("target",choice and choice.options[i].label or target.name or (target.rankName..target.suitSymbol),x+84,y+22,116,64,i)
         m.buttons[#m.buttons+1]={id="target",index=i,x=x,y=y,w=76,h=110}

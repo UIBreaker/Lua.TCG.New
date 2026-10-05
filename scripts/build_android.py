@@ -33,8 +33,16 @@ def run(*args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tools", type=Path, default=ROOT / "dist/android-tools")
-    parser.add_argument("--game", type=Path, default=ROOT / "dist/LUA-TCG-0.75.3-Mobile.love")
+    parser.add_argument("--game", type=Path, help="Optional freshly built game; every Lua file must match current source")
     args = parser.parse_args()
+    from build_release import package, runtime_files
+    if args.game is None:
+        args.game = ROOT / "dist/LUA-TCG-0.83.3-Mobile.love"
+        package(args.game, mobile=True)
+    with zipfile.ZipFile(args.game) as game:
+        for path in runtime_files(ROOT):
+            if path.suffix == ".lua":
+                assert game.read(path.relative_to(ROOT).as_posix()) == path.read_bytes(), f"Stale packaged source: {path.name}"
     tools = args.tools.resolve()
     work = ROOT / "dist" / ("android-build-" + secrets.token_hex(4))
     assert not work.exists(), "Build directory must be fresh"
@@ -71,7 +79,7 @@ def main():
             '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
             '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 833")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 834")
     text = text.replace("versionName: 11.5a", "versionName: 0.83.3-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
     metadata.write_text(text, encoding="utf-8")
     # Boot in immersive mode too, before Lua initializes or restores old settings.

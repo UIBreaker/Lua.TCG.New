@@ -23,6 +23,7 @@ function T.update(g,cb)
     if love.timer.getTime()<deadline then return end
     if stage=="start" then
         require("tests.soul_shop_smoke")
+        require("tests.inventory_expansion_smoke")
         require("tests.soul_relics_smoke")
         require("tests.spectral_persistence_smoke")
         cb.startNewGame("red_deck")
@@ -33,7 +34,7 @@ function T.update(g,cb)
         g.souls=0;g.gold=50;g.playerHp=40;cb.openShop()
         local stock=cb.getShopData()
         for i,item in ipairs(stock.items) do
-            if item.category=="destroy" or item.category=="heal" then stock.items[i]=Shop.healingItem("upper");break end
+            if item.consumable then stock.items[i]=Shop.healingItem("upper");break end
         end
         nextStage("normal",1)
     elseif stage=="normal" then
@@ -119,7 +120,7 @@ function T.update(g,cb)
         shot("soul_shop_purchased")
         nextStage("buy_vitality",0.25)
     elseif stage=="buy_vitality" then
-        pointer(655,550,true);confirm(g)
+        pointer(512,550,true);confirm(g)
         assert(g.souls==soulAfterPurchase-10 and g.consumables[1].id=="cons_vitality")
         nextStage("use_vitality",1)
     elseif stage=="use_vitality" then
@@ -127,34 +128,61 @@ function T.update(g,cb)
         assert(g.maxPlayerHp==120 and g.playerHp==85 and #g.consumables==0)
         local loaded=require("src.persistence").restoreSnapshot(require("src.persistence").makeSnapshot(g,"shop"))
         assert(loaded.maxPlayerHp==120 and loaded.playerHp==85)
+        nextStage("buy_spn_slot",0.7)
+    elseif stage=="buy_spn_slot" then
+        pointer(648,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-28 and g.consumables[1].id=="cons_spn_slot")
+        nextStage("use_spn_slot",1)
+    elseif stage=="use_spn_slot" then
+        pointer(1074,430,true,2)
+        assert(require("src.deities").getMaxSlots(g)==6 and #g.consumables==0)
+        nextStage("buy_consumable_slot",0.7)
+    elseif stage=="buy_consumable_slot" then
+        pointer(784,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-40 and g.consumables[1].id=="cons_consumable_slot")
+        nextStage("use_consumable_slot",1)
+    elseif stage=="use_consumable_slot" then
+        pointer(1074,430,true,2)
+        assert(g.maxConsumables==4 and #g.consumables==0)
         nextStage("reroll",0.7)
     elseif stage=="reroll" then
         pointer(280,674,true)
-        assert(g.souls==soulAfterPurchase-15 and g.soulRerollCount==1)
+        assert(g.souls==soulAfterPurchase-45 and g.soulRerollCount==1)
         nextStage("rerolled",1.5)
     elseif stage=="rerolled" then
-        assert(#cb.getShopData().items==10 and not g.soulShopPurchased[purchaseId])
+        assert(#cb.getShopData().items==12 and not g.soulShopPurchased[purchaseId])
         for _,id in ipairs(cb.getShopData().soulStock) do assert(not previousStock[id]) end
         pointer(2,2,false);shot("soul_shop_rerolled")
         nextStage("buy_evolution",0.3)
     elseif stage=="buy_evolution" then
-        pointer(79,550,true);confirm(g)
-        assert(g.souls==soulAfterPurchase-27 and g.consumables[1].id=="cons_evolution")
+        pointer(104,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-57 and g.consumables[1].id=="cons_evolution")
         nextStage("buy_single",1)
     elseif stage=="buy_single" then
-        pointer(271,550,true);confirm(g)
-        assert(g.souls==soulAfterPurchase-33 and g.consumables[2].id=="cons_speed_single")
+        pointer(240,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-63 and g.consumables[2].id=="cons_speed_single")
         nextStage("buy_team",1)
     elseif stage=="buy_team" then
-        pointer(463,550,true);confirm(g)
-        assert(g.souls==soulAfterPurchase-43 and g.consumables[3].id=="cons_speed_team")
-        nextStage("exit",1)
+        pointer(376,550,true);confirm(g)
+        assert(g.souls==soulAfterPurchase-73 and g.consumables[3].id=="cons_speed_team")
+        nextStage("scroll_inventory",1)
+    elseif stage=="scroll_inventory" then
+        g.consumables[4]=Shop.healingItem(nil,"armor_potion_large").consumable
+        pointer(1100,420,false);love.wheelmoved(0,-1)
+        assert(require("ui.inventory_rail").localIndex("consumable",4,g)==3)
+        nextStage("use_fourth",0.6)
+    elseif stage=="use_fourth" then
+        local x,y,w,h=UI.getConsumableSlotRect(4,"shop")
+        g.playerArmor=0;pointer(x+w/2,y+h/2,true,2)
+        assert(g.playerArmor==20 and #g.consumables==3)
+        pointer(1100,420,false);love.wheelmoved(0,1)
+        nextStage("exit",0.7)
     elseif stage=="exit" then
         pointer(108,674,true);assert(g.shopMode=="normal")
         cb.startMonsterEncounter(1,false)
         nextStage("battle_hud",1)
     elseif stage=="battle_hud" then
-        assert(g.souls==soulAfterPurchase-43)
+        assert(g.souls==soulAfterPurchase-73)
         shot("soul_battle_hud")
         print("Soul shop live UI passed: normal slot, preview, destruction, boss transition, soul purchase, socket return, exit")
         nextStage("done",0.3)

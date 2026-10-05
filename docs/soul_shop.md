@@ -1,6 +1,6 @@
 # Chợ Linh Hồn
 
-Quân bài không bán lấy vàng. Ô tiêu hao cuối của shop thường ngẫu nhiên 50/50 giữa **Bình Máu** và **Lá Tiêu Hủy**, đều giá 4 vàng. Mua cất vào ô tiêu hao (tối đa 3), chuột phải để dùng. Bình Máu hồi 25 HP; khi đầy HP thì giữ thẻ. Lá Tiêu Hủy dùng một lần trong shop: chọn quân bài, xem giá trị và xác nhận **HỦY** để nhận linh hồn. Đóng màn chọn không mất thẻ; luôn giữ ít nhất một quân bài. Shop linh hồn bán Lá Tiêu Hủy giá 4 LH, cũng phải mua rồi dùng.
+Quân bài không bán lấy vàng. Ô tiêu hao cuối của shop thường ngẫu nhiên đều giữa Lá Tiêu Hủy (4 vàng), Bình Máu (4 vàng, hồi 25 HP), Bình Máu Nhỏ (2 vàng, hồi 15 HP), Bình Máu Lớn (7 vàng, hồi 60 HP), Bình Giáp Nhỏ (3 vàng, +8 giáp), Bình Giáp Lớn (6 vàng, +20 giáp), Tốc Đánh Nhỏ (3 vàng, +3 tốc đánh), Tốc Đánh Lớn (8 vàng, +10 tốc đánh) và Cái Giường (9 vàng). Mua cất vào ô tiêu hao; chuột phải để dùng một lần. Hồi máu không vượt HP tối đa; đầy HP thì giữ thẻ. Thuốc giáp theo trần giáp hiện tại của game, đạt trần thì giữ thẻ; nên dùng trong trận vì giáp reset khi bắt đầu trận mới. Lá Tiêu Hủy dùng trong shop: chọn và xác nhận hủy một quân bài; giữ ít nhất một lá. Đóng màn chọn không mất thẻ. Shop linh hồn bán Lá Tiêu Hủy giá 4 LH.
 
 Mọi lần tiêu hủy quân bài (chiến đấu, tự hủy, phép biến đổi, nuốt bài, nghi lễ) đều thưởng linh hồn một lần, kể cả khi cùng lá tồn tại ở nhiều cọc. Hộ Linh bị Ankh/Hex tiêu hủy cũng trả linh hồn. Dùng tiêu hao bình thường và bán SPN/tiêu hao không phải tiêu hủy.
 
@@ -16,9 +16,9 @@ Sau thưởng mỗi boss, game vào Chợ Linh Hồn với giao diện tím riê
 | Tim Cổ Thụ | 24 | 1 | Hồi 18 HP |
 | Đồng Hồ Tận Thế | 30 | 2 | +80 Sát thương, +20 Cường hóa |
 
-Giáp vẫn chịu trần 30 của game; các hệ số theo chất hiện có vẫn áp dụng. Tất cả 15 di vật chỉ xuất hiện trong Chợ Linh Hồn, không vào pool shop vàng/rương ngẫu nhiên.
+Giáp vẫn theo trần giáp hiện tại của game; các hệ số theo chất hiện có vẫn áp dụng. Tất cả 15 di vật chỉ xuất hiện trong Chợ Linh Hồn, không vào pool shop vàng/rương ngẫu nhiên.
 
-Thẻ hỗ trợ: **Tiến Hóa 12 LH**, **Tăng Tốc Đơn 6 LH**, **Tăng Tốc Đội 10 LH**, **Sinh Lực Vĩnh Cửu 10 LH (+20 máu tối đa và hồi 20 HP)**. Mua cất vào ô tiêu hao (tối đa 3); Tiến Hóa có thể dùng trong shop, các lá tăng tốc dùng trong trận. Mỗi thẻ bán một lần mỗi lần bày hàng; có thể mua lại sau đổi hàng.
+Thẻ hỗ trợ: **Tiến Hóa 12 LH**, **Tăng Tốc Đơn 6 LH**, **Tăng Tốc Đội 10 LH**, **Sinh Lực Vĩnh Cửu 10 LH (+20 máu tối đa và hồi 20 HP)**. Mua cất vào ô tiêu hao (ban đầu 3); Tiến Hóa có thể dùng trong shop, các lá tăng tốc dùng trong trận. Mỗi thẻ bán một lần mỗi lần bày hàng; có thể mua lại sau đổi hàng.
 
 Nền riêng `assets/scene/soul_bazaar.png` tạo bằng built-in image_gen; có chuyển động nhẹ và đốm linh hồn. Prompt trong `soul_background_prompt.md`.
 
@@ -54,3 +54,16 @@ Shop bày 5 trang bị ngẫu nhiên từ bộ 15 di vật. Không có nút chuy
 | Lăng Kính Hoàng Hôn | 42 | 2 | Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly. Một lần mỗi trận. |
 
 Tiến hóa và ấn bản được đồng bộ về lá gốc, lưu cùng run. Hồi sinh cần giữ lá trên tay. Tái kích hoạt tuân theo giới hạn chống vòng lặp của game. Độc đi qua hệ thống sát thương/giáp của quái; kẻ địch tái sinh chỉ trả linh hồn khi chết hẳn. Mỗi món có tranh riêng tại `assets/cards/continental/itm/`; prompt chính xác trong `soul_relic_art_prompts.json` và `CONTINENTAL_ASSET_PROMPTS.md`.
+
+## Mở rộng ô không giới hạn
+
+**Khế Ước Dung Linh 18 LH** thêm một ô SPN. **Túi Không Gian 12 LH** thêm một ô tiêu hao. Hai lá đều mua vào kho tiêu hao rồi chuột phải dùng một lần. Mở rộng cộng dồn không giới hạn, tồn tại và được lưu suốt run; run mới trở về 5 ô SPN và 3 ô tiêu hao. Reroll bổ sung lại hai lá để có thể tiếp tục mua và mở rộng. Ấn bản Negative của SPN vẫn cộng ô riêng.
+
+Rê chuột vào khu SPN hoặc tiêu hao rồi cuộn để xem các ô tiếp theo. Sức chứa đã mở áp dụng cả shop, rương, phần thưởng tự động và các lá phép tạo tiêu hao. Shop bày bảy thẻ hỗ trợ/nghi lễ trên một hàng; tranh mới giữ phong cách Continental. Prompt và nguồn ảnh tại `slot_potion_art_prompts.json`.
+# Giường và tốc đánh trong shop thường
+
+Ô tiêu hao của shop thường ngẫu nhiên một trong 9 lá: bình máu thường/nhỏ/lớn, bình giáp nhỏ/lớn, lá tiêu hủy, Tốc Đánh Nhỏ ($3, +3 tốc đánh), Tốc Đánh Lớn ($8, +10 tốc đánh), Cái Giường ($9). Hai lá tốc đánh chọn một quân bài trên tay và tăng tốc lâu dài trong run; hủy chọn giữ lá.
+
+Giường hồi đầy HP theo máu tối đa hiện tại khi dùng trong shop. Trong chiến đấu, chuột phải mở bảng chọn: ngủ cho bản thân hồi đầy HP rồi bỏ toàn bộ lượt hiện tại (mọi quái còn sống được hành động), hoặc đặt giường lên một quái còn sống. Mỗi quái giữ một giường; nếu mất HP mà vẫn sống, quái dùng giường hồi đầy HP. Đòn sát thương bị chặn hoàn toàn không tiêu hao giường; quái chết không được cứu.
+
+SPN **Ngủ Dưới Địa Ngục** có trong nguồn SPN thường và rương SPN. Tấn công quái đang cầm giường: giường bị tiêu hao trước sát thương, không hồi HP; ngoài đòn đánh chính, nổ thêm **200% tổng AURA** lên mọi quái còn sống, kể cả mục tiêu. Đòn đầu giết mục tiêu vẫn kích nổ. Vụ nổ dùng quy tắc sát thương/giáp hiện tại; SPN bị khóa ô không kích hoạt. Một giường chỉ nổ một lần. Hệ số 200% giữ nguyên qua bậc/tiến hóa của SPN.

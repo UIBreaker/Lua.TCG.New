@@ -44,6 +44,8 @@ function GameState.resetRun(game, faction)
     game.handLevels = {}
     for _, handId in ipairs(HAND_IDS) do game.handLevels[handId] = 1 end
     game.consumables = {}
+    game.maxConsumables = 3
+    game.extraDeitySlots = 0
     game.pendingEvolutionCards = 0
     game.deities = {}
     game.persistentDeck = {}

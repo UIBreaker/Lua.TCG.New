@@ -10,7 +10,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "c4f04e185033a7c9fbefa9be3bec88c41a90421b"
-VERSION = "0.75.3"
+VERSION = "0.83.3"
 
 
 def runtime_files(root):
@@ -64,7 +64,7 @@ def windows(love_file, runtime, out):
             archive.write(dll, f"LUA-TCG/{dll.name}")
         archive.write(runtime / "license.txt", "LUA-TCG/LICENSE-LOVE.txt")
         archive.write(ROOT / "LICENSE", "LUA-TCG/LICENSE-game.txt")
-        archive.writestr("LUA-TCG/README.txt", "LUA.TCG 0.75.3\nExtract this entire ZIP, then open LUA-TCG.exe.\nKeep the DLL files next to the EXE. No LÖVE installation is required.\n")
+        archive.writestr("LUA-TCG/README.txt", f"LUA.TCG {VERSION}\nExtract this entire ZIP, then open LUA-TCG.exe.\nKeep the DLL files next to the EXE. No LÖVE installation is required.\n")
     print(f"{target.name}: {target.stat().st_size / 1048576:.1f} MiB", flush=True)
 
 

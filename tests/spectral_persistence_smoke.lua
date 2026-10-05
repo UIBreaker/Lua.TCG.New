@@ -16,7 +16,7 @@ local handler = assert(loadstring(source:sub(first, last - 1) .. "\nreturn useCo
 local function applyStored(game, card)
     local env = setmetatable({ game = game, Shop = Shop, Deck = Deck, Rng = Rng,
         Equipment = require("src.equipment"), Poker = require("src.poker"),
-        Sound = require("src.sound"), UI = { COLORS = { goldYellow = {} }, BossAbilities = require("src.boss_abilities") },
+        Sound = require("src.sound"), UI = {Inventory=require("src.inventory"), COLORS = { goldYellow = {} }, BossAbilities = require("src.boss_abilities") },
         anim = { floatingTexts = {} }, destroyHandCard = function(index)
             A.destroy(game, game.hand[index]); Combat.cleanupDestroyedCards(game)
         end }, { __index = _G })

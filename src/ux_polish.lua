@@ -1,3 +1,4 @@
+local Inventory = require("src.inventory")
 -- Transient presentation only. Shop remains the authority for prices and mutations.
 local Shop = require("src.shop")
 local Sound = require("src.sound")
@@ -56,7 +57,7 @@ function P.button(game)
     local price=f.kind=="stock" and f.item.cost or Shop.getSacrificePrice(f.item,f.kind,game)
     if f.kind=="card" then price=Shop.getSoulValue(f.item) end
     local soul=f.kind=="stock" and f.item.currency=="souls"
-    local full=f.kind=="stock" and f.item.consumable and #(game.consumables or {})>=3
+    local full=f.kind=="stock" and f.item.consumable and #(game.consumables or {})>=Inventory.limit(game)
     local disabled=f.kind=="stock" and (soul and (game.souls or 0) or (game.gold or 0))<price
         or f.kind=="card" and #(game.persistentDeck or {})<=1
         or full
@@ -97,10 +98,12 @@ function P.confirm(shop,game,done)
     if kind=="sell" then target=gold
     elseif f.item.deity then
         for slot,d in pairs(game.deities or {}) do if d~=occupied[slot] then
-            acquired=d;target={x=1074+((slot-1)%3)*78,y=156+math.floor((slot-1)/3)*107};break end end
+            acquired=d;require("ui.inventory_rail").reveal("spn",slot,game)
+            local x,y,w,h=require("src.ui").getDeitySlotRect(slot,"shop");target={x=x+w/2,y=y+h/2};break end end
     elseif f.item.consumable then
         acquired=f.item.consumable
-        target={x=1074+(#game.consumables-1)*78,y=408}
+        require("ui.inventory_rail").reveal("consumable",#game.consumables,game)
+        local x,y,w,h=require("src.ui").getConsumableSlotRect(#game.consumables,"shop");target={x=x+w/2,y=y+h/2}
     end
     P.job={kind=kind,age=0,duration=Config[kind],item=f.item,rect=f.rect,target=target,button=b,
         items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,

@@ -69,6 +69,7 @@ function Capture.update(gameRef, callbacks)
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-soul-shop" then return require("tests.soul_shop_capture").update(gameRef, callbacks) end
+        if value == "--test-bed-speed" then return require("tests.bed_speed_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-combat-feedback" then return require("tests.combat_feedback_capture").update(gameRef, callbacks) end

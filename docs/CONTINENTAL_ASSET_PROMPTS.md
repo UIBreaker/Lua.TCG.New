@@ -2635,3 +2635,77 @@ Prompt: Use case: stylized-concept. Create ONE production game card illustration
 Output: `assets/cards/continental/spn_enchantment/spell_ember.png`
 
 Source: `src/chest_expansion.lua`; mode: built-in image_gen
+
+## Unlimited slots and restorative potions
+
+### Khế Ước Dung Linh
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One antique bronze astrolabe with several large open crystal sockets, a new violet soul chamber unfolding from its side and a single controlled spirit wisp entering it. Void-purple floating western ruins. Permanently adds one extra spirit companion slot.
+
+### Túi Không Gian
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One sturdy expedition leather satchel with a clearly expanded extra compartment unfolding through a small deep blue portal, a few simple empty bottle pockets visible. Coastal Western ruin terrace, deep navy and antique bronze. Permanently increases consumable storage by one slot.
+
+### Bình Máu Nhỏ
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One small round expedition glass vial containing forest-green life sap and a single bright leaf, modest silver stopper, beside huge ancient tree roots, a quiet distant waterfall. Strong small vial silhouette, forest green silver. Heals 15 HP.
+
+### Bình Máu Lớn
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One large heavy glass flask containing golden-green living sap, two thick roots embrace the flask, a broad antique bronze cap. A colossal ancient tree with continental waterfalls in the background. Strong broad flask silhouette, forest green and warm gold. Heals 60 HP.
+
+### Bình Giáp Nhỏ
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One slim angular reinforced glass vial containing cobalt-blue liquid and one tiny suspended silver shield-shaped metal plate, spare steel cap. Frozen continental cliffs and distant Western watchtower. Glacial blue silver. Grants 8 armor.
+
+### Bình Giáp Lớn
+
+Create one production game card illustration PNG portrait 2:3 1024x1536 full bleed. Cinematic painterly Western dark fantasy Continental Expedition matching the existing canonical card art. One main tangible relic, clear readable silhouette, medium details, restrained glow, quiet atmospheric background. No letters, text, numbers, badges, rank or suit icons, outer border or frame, watermark. No East Asian fantasy motifs, no dense tiny ornaments. One broad hexagonal glass flask armored by bold steel ribs, luminous deep icy-blue liquid around a large suspended shield-shaped crystal, heavy bronze stopper. Western fortress on a frozen continental mountain, glacial navy antique gold. Grants 20 armor.
+
+## speed / cons_speed_small — Tốc Đánh Nhỏ
+
+Ability: Chọn một lá trên tay: +3 tốc đánh vĩnh viễn trong run.
+
+Concept: A single small silver winged expedition hourglass upright on a coastal rock, a modest horizontal cyan wind ribbon flowing through its two glass chambers, deep navy ocean and distant Western cliff arches. One modest compact relic, calm sea palette.
+
+Prompt: Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Tốc Đánh Nhỏ. Actual effect: Chọn một lá trên tay: +3 tốc đánh vĩnh viễn trong run. Subject/concept: A single small silver winged expedition hourglass upright on a coastal rock, a modest horizontal cyan wind ribbon flowing through its two glass chambers, deep navy ocean and distant Western cliff arches. One modest compact relic, calm sea palette.
+
+Output: `assets/cards/continental/speed/cons_speed_small.png`
+
+Mode: built-in image_gen
+
+## speed / cons_speed_large — Tốc Đánh Lớn
+
+Ability: Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run.
+
+Concept: One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.
+
+Prompt: Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Tốc Đánh Lớn. Actual effect: Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run. Subject/concept: One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.
+
+Output: `assets/cards/continental/speed/cons_speed_large.png`
+
+Mode: built-in image_gen
+
+## utility / cons_bed — Cái Giường
+
+Ability: Hồi đầy HP; dùng cho mình trong trận mất một lượt. Có thể đặt lên quái: nhận sát thương mà sống sẽ dùng giường hồi đầy HP.
+
+Concept: One tangible sturdy Western expedition camp bed, dark weathered timber legs, thick forest-green blanket and ivory pillow, standing in a ruined forest sanctuary beside a restful golden magical hearth glow. The complete bed is the large unmistakable main silhouette, welcoming but mysterious, restrained restorative green-gold light, no person, no clutter.
+
+Prompt: Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Cái Giường. Actual effect: Hồi đầy HP; dùng cho mình trong trận mất một lượt. Có thể đặt lên quái: nhận sát thương mà sống sẽ dùng giường hồi đầy HP. Subject/concept: One tangible sturdy Western expedition camp bed, dark weathered timber legs, thick forest-green blanket and ivory pillow, standing in a ruined forest sanctuary beside a restful golden magical hearth glow. The complete bed is the large unmistakable main silhouette, welcoming but mysterious, restrained restorative green-gold light, no person, no clutter.
+
+Output: `assets/cards/continental/utility/cons_bed.png`
+
+Mode: built-in image_gen
+
+## spn / spirit_hell_sleep — Ngủ Dưới Địa Ngục
+
+Ability: Tấn công quái cầm giường: kích nổ giường gây 200% tổng AURA lên mọi quái.
+
+Concept: One enormous supernatural nightmare wraith rising from a bed-shaped shadow above a volcanic fissure, eyes closed as if asleep, long folded spectral arms and a clear hooded reclining silhouette. Its dark violet spectral body opens into a restrained circular shockwave of orange hellfire expanding outward over distant basalt ruins. Entity dominates, volcanic underworld, one readable supernatural phenomenon, no physical weapon, controlled glow.
+
+Prompt: Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Ngủ Dưới Địa Ngục. Actual effect: Tấn công quái cầm giường: kích nổ giường gây 200% tổng AURA lên mọi quái. Subject/concept: One enormous supernatural nightmare wraith rising from a bed-shaped shadow above a volcanic fissure, eyes closed as if asleep, long folded spectral arms and a clear hooded reclining silhouette. Its dark violet spectral body opens into a restrained circular shockwave of orange hellfire expanding outward over distant basalt ruins. Entity dominates, volcanic underworld, one readable supernatural phenomenon, no physical weapon, controlled glow.
+
+Output: `assets/cards/continental/spn/spirit_hell_sleep.png`
+
+Mode: built-in image_gen

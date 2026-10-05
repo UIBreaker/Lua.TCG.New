@@ -80,7 +80,7 @@ function D.resolve(item,game)
     if item.packType then return item.name,item.desc or "" end
     local consumable=require("src.shop").getConsumableDescription(item)
     if consumable then return item.name,consumable end
-    if item.category=="heal" then return item.name,"Mua và uống ngay: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
+    if item.category=="heal" then return item.name,"Mua vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
     local voucher=require("src.shop").voucherDescription(item.voucherId or item.id)
     if voucher then return item.name,voucher end
     return item.name or item.title or "Thẻ bài",item.desc or item.description or ""

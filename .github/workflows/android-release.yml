@@ -17,24 +17,24 @@ jobs:
       - name: Verify signed APK and embedded game
         run: |
           cd downloads
-          sha256sum -c LUA-TCG-0.82.3-Android.apk.sha256
+          sha256sum -c LUA-TCG-0.83.3-Android.apk.sha256
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
-          "$signer" verify LUA-TCG-0.82.3-Android.apk
+          "$signer" verify LUA-TCG-0.83.3-Android.apk
           python - <<'PY'
           import io, zipfile
-          with zipfile.ZipFile('LUA-TCG-0.82.3-Android.apk') as apk:
+          with zipfile.ZipFile('LUA-TCG-0.83.3-Android.apk') as apk:
               assert apk.testzip() is None
               with zipfile.ZipFile(io.BytesIO(apk.read('assets/game.love'))) as game:
                   assert game.testzip() is None
                   assert 'main.lua' in game.namelist()
                   assert 'mobile_build.flag' in game.namelist()
                   assert b't.window.resizable = false' in game.read('conf.lua')
-                  assert b'beta 0.82.3' in game.read('main.lua')
+                  assert b'beta 0.83.3' in game.read('main.lua')
           PY
       - name: Publish installable Android download
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.82.3 >/dev/null 2>&1 || gh release create v0.82.3 --prerelease --target "$GITHUB_SHA" --title 'Terra Suit beta 0.82.3 — Android' --notes-file docs/RELEASE_NOTES_0.82.3.md
-          gh release upload v0.82.3 downloads/LUA-TCG-0.82.3-Android.apk downloads/LUA-TCG-0.82.3-Android.apk.sha256 --clobber
-          gh release edit v0.82.3 --notes-file docs/RELEASE_NOTES_0.82.3.md
+          gh release view v0.83.3 >/dev/null 2>&1 || gh release create v0.83.3 --prerelease --target "$GITHUB_SHA" --title 'Terra Suit beta 0.83.3 — Android' --notes-file docs/RELEASE_NOTES_0.83.3.md
+          gh release upload v0.83.3 downloads/LUA-TCG-0.83.3-Android.apk downloads/LUA-TCG-0.83.3-Android.apk.sha256 --clobber
+          gh release edit v0.83.3 --notes-file docs/RELEASE_NOTES_0.83.3.md

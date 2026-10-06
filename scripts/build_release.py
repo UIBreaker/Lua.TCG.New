@@ -34,6 +34,10 @@ def packed_image(path, mobile):
         else:
             bounds = (256, 384) if mobile else (512, 768)
         image.thumbnail(bounds, Image.Resampling.LANCZOS)
+        if path.suffix.lower() in (".jpg", ".jpeg"):
+            output = io.BytesIO()
+            image.convert("RGB").save(output, "JPEG", quality=94, subsampling=0, optimize=True)
+            return output.getvalue()
         image = image.quantize(colors=192 if mobile else 256, method=Image.Quantize.FASTOCTREE)
         output = io.BytesIO()
         image.save(output, "PNG", optimize=True)
@@ -41,11 +45,13 @@ def packed_image(path, mobile):
 
 
 def package(target, mobile=False):
+    from build_runtime_card_art import build
+    build()
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for path in runtime_files(ROOT):
             if mobile and path.suffix == ".ogv":
                 continue
-            data = packed_image(path, mobile) if path.suffix.lower() == ".png" else path.read_bytes()
+            data = packed_image(path, mobile) if path.suffix.lower() in (".png", ".jpg", ".jpeg") else path.read_bytes()
             archive.writestr(path.relative_to(ROOT).as_posix(), data)
         if mobile:
             archive.writestr("mobile_build.flag", "phone/web build\n")

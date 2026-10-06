@@ -56,10 +56,17 @@ function DebugTools.grantCollectionItem(game, shop, category, item, targetCard)
         local deity = Deities.CATALOG[id]
         if not deity or not Deities.addDeity(game, deity) then return false, "Không còn ô Hộ Linh trống." end
         return true, "Đã nhận Hộ Linh: " .. item.name
-    elseif category == "consumables" then
+    elseif category == "equipment" then
         local equipment = Equipment.ITEMS[id]
         if not equipment then return false, "Không tìm thấy trang bị." end
         return true, "socketing", equipment
+    elseif category == "consumables" then
+        game.consumables = game.consumables or {}
+        if #game.consumables >= require("src.inventory").limit(game) then return false, "Không còn ô tiêu hao trống." end
+        local card = {}
+        for key, value in pairs(item.consumable or item) do card[key] = value end
+        game.consumables[#game.consumables+1] = card
+        return true, "Đã nhận " .. item.name
     elseif category == "vouchers" then
         shop.items = shop.items or {}
         shop.items[#shop.items + 1] = { category = "voucher", voucherId = id, cost = 0, name = item.name }

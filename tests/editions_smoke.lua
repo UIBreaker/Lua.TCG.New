@@ -71,21 +71,21 @@ local plain=score({card,other},false)
 E.setEffect(card,"foil");local foil=score({card,other},false)
 assert(foil.finalScore==plain.finalScore+20)
 E.setEffect(card,"holographic");local holo=score({card,other},false)
-assert(holo.totalMult==plain.totalMult+1)
+assert(holo.totalMult==plain.totalMult+10)
 E.setEffect(card,"polychrome");local poly=score({card,other},false)
 assert(poly.auraEditionMultiplier==1 and poly.localAuraBonus>0)
 assert(poly.finalScore<math.floor(plain.finalScore*1.5),"base hand and other card must not be amplified")
 
 E.setEffect(card,"echo")
 local echo,g=score({card,other},true)
-assert(math.abs(g.gold-1.5)<1e-8,"Echo ability must award 1 + 0.5 gold")
+assert(math.abs(g.gold-2)<1e-8,"Echo ability must award gold twice at full strength")
 local triggers=0;for _,st in ipairs(echo.steps) do if st.type=="card_scored" and st.card==card then triggers=triggers+1 end end
 assert(triggers==2,"Echo must retrigger exactly once")
 local ownChips=0;for _,st in ipairs(plain.steps) do if st.type=="card_scored" and st.card==card then ownChips=st.addedChips end end
-assert(math.abs(echo.bonusChips-plain.bonusChips-ownChips*.5)<1e-8)
+assert(math.abs(echo.bonusChips-plain.bonusChips-ownChips)<1e-8)
 
 E.setEffect(card,"ancient");card.evolutionLevel=2
-assert(A.params(card).gold==3.5 and A.params(card).count==2)
+assert(A.params(card).gold==7 and A.params(card).count==2)
 card.evolutionLevel=0;assert(A.params(card).gold==1)
 local left=D.newCard(2,"diamonds");local right=D.newCard(2,"diamonds");local relay=D.newCard(8,"spades")
 E.setEffect(relay,"resonant");g=fixture({left,relay,right})
@@ -97,8 +97,8 @@ g=fixture({left,relay,right});A.beginHand(g,h,{left,relay,right});g.hand={}
 S.calculate(h,{}, {gameState=g,monster=g.monster});assert(g.gold==2,"Played relay is no longer held")
 
 local goldCard=D.newCard(9,"spades");E.setEffect(goldCard,"gilded");g=fixture({goldCard})
-Combat.onPlayerTurnEnd(g);assert(g.gold==1)
-goldCard.destroyed=true;Combat.onPlayerTurnEnd(g);assert(g.gold==1)
+Combat.onPlayerTurnEnd(g);assert(g.gold==3)
+goldCard.destroyed=true;Combat.onPlayerTurnEnd(g);assert(g.gold==3)
 local stars={}
 for i=1,5 do stars[i]=D.newCard(i+5,i==5 and "diamonds" or "spades") end
 E.setEffect(stars[5],"astral")
@@ -108,11 +108,11 @@ assert(stars[5].suit==originalSuit and stars[5].rank==10)
 stars[4].suit="hearts";assert(P.evaluate(stars).type.id=="straight","one Astral cannot cover two incompatible suits")
 
 local dying=D.newCard(13,"diamonds");E.setEffect(dying,"void");g=fixture({dying})
-assert(A.destroy(g,dying));assert(g.gold==16,"Void death ability fires one additional time")
-assert(not A.destroy(g,dying) and g.gold==16,"Destruction is idempotent")
+assert(A.destroy(g,dying));assert(g.gold==88,"Void death ability fires ten additional times")
+assert(not A.destroy(g,dying) and g.gold==88,"Destruction is idempotent")
 local dyingScore=D.newCard(2,"diamonds");E.setEffect(dyingScore,"void")
 g=fixture({dyingScore,other});A.beginHand(g,P.evaluate({dyingScore,other}),{dyingScore,other})
-A.destroy(g,dyingScore);assert(g.gold==1,"Void activates a scoring ability before removal")
+A.destroy(g,dyingScore);assert(g.gold==10,"Void activates a scoring ability ten times before removal")
 for _,suit in ipairs({"valoria","aurelia","elaris","vharos"}) do
     for rank=2,14 do
         local c=D.newCard(rank,suit);E.setEffect(c,"void");g=fixture({c});g.gold=100
@@ -120,14 +120,14 @@ for _,suit in ipairs({"valoria","aurelia","elaris","vharos"}) do
     end
 end
 local paid=D.newCard(10,"diamonds");E.setEffect(paid,"void")
-local target=D.newCard(2,"diamonds");g=fixture({paid,target});g.gold=20
+local target=D.newCard(2,"diamonds");g=fixture({paid,target});g.gold=100
 local decision={card=paid,definition=A.definition(paid),params=A.params(paid),target=target}
 A.beginHand(g,P.evaluate({paid,target}),{paid,target},{decision})
 local goldBefore=g.gold;local levelBefore=target.temporaryAbilityLevels
 A.destroy(g,paid)
-assert(g.gold==goldBefore-decision.params.cost and target.temporaryAbilityLevels==levelBefore+decision.params.levels)
+assert(g.gold==goldBefore-10*decision.params.cost and target.temporaryAbilityLevels==levelBefore+10*decision.params.levels)
 local spn={name="Test",edition="polychrome",onCardScored=function() return {addChips=8} end}
 local h=P.evaluate({D.newCard(9,"diamonds")})
 local spnScore=S.calculate(h,{spn},{})
 assert(spnScore.auraEditionMultiplier==1 and spnScore.localAuraBonus>0,"SPN Polychrome also amplifies only its own contribution")
-print("Nine editions passed: pool, imprint/persistence, 20 ST, +1 Mult, local Aura, half Echo, evolution, held gold, wild suit, both neighbors and final activation")
+print("Nine editions passed: pool, imprint/persistence, 20 ST, +10 Mult, local Aura, full Echo, evolution, held gold, wild suit, both neighbors and ten final activations")

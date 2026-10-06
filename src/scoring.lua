@@ -845,7 +845,7 @@ function Scoring.calculate(handInfo, deities, context)
             end
             if not abilityHand and CardEffects.getEffectName(card)=="echo" and not echoSeen[card] then
                 echoSeen[card]=true
-                previewQueue[#previewQueue+1]={card=card,index=idx,retrigger=true,effectiveness=.5}
+                previewQueue[#previewQueue+1]={card=card,index=idx,retrigger=true,effectiveness=1}
             end
             cardEvent.deityTriggers = deityTriggers
             table.insert(steps, cardEvent)

@@ -1,7 +1,59 @@
 local UI = require("src.ui")
 local Physics = UI.CardPhysics
+local Effects = require("src.card_effects")
 local Surfaces = {}
 local catalogHandles = {}
+local warmPageKey, warmQueue, warmIndex, pendingWarmItems = nil, {}, 1, {}
+local warmedCatalogItems = {}
+
+local function catalogItemKey(item, category)
+    return table.concat({ tostring(category), tostring(item.packType or ""), tostring(item.id or item.name) }, ":")
+end
+
+function Surfaces.beginCatalogWarm(items, category, pageKey)
+    if warmPageKey == pageKey then return end
+    warmPageKey, warmQueue, warmIndex, pendingWarmItems = pageKey, {}, 1, {}
+    for _, item in ipairs(items) do
+        local key = catalogItemKey(item, category)
+        if not warmedCatalogItems[key] and not pendingWarmItems[key] then
+            pendingWarmItems[key] = item
+            warmQueue[#warmQueue + 1] = { item = item, key = key, category = category }
+        end
+    end
+end
+
+local function loadCatalogArt(item, category)
+    local deityId = (category == "jokers" and item.id)
+        or (category == "packs" and item.isPackContent and item.deityId)
+    local deityArt = deityId and UI.getDeityImage(deityId)
+    local consumableArt = UI.getConsumableImage(item)
+    local art = consumableArt or deityArt
+        or ((category == "playing_cards") and UI.getCardImage(item.suit, item.rank))
+        or ((category == "equipment") and UI.getEquipmentImage(item.id))
+        or ((category == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
+        or ((category == "other") and UI.getHandImage(item.handId or item.id))
+        or ((category == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
+    return art, deityArt, consumableArt
+end
+
+function Surfaces.warmCatalogStep()
+    local entry = warmQueue[warmIndex]
+    if not entry then return false end
+    -- Loading at most one card per frame spreads file decoding and generated
+    -- card canvas work over the natural page-turn animation.
+    loadCatalogArt(entry.item, entry.category)
+    pendingWarmItems[entry.key] = nil
+    warmedCatalogItems[entry.key] = true
+    warmIndex = warmIndex + 1
+    return true
+end
+
+function Surfaces.isCatalogWarm(items, category)
+    for _, item in ipairs(items) do
+        if not warmedCatalogItems[catalogItemKey(item, category)] then return false end
+    end
+    return true
+end
 
 -- Collection cards, including equipment, vouchers, styles and all pack contents.
 function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
@@ -14,25 +66,19 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
     end
 
     love.graphics.push()
-    love.graphics.translate(cx + cardW / 2, cy + cardH / 2)
+    love.graphics.translate(cx + cardW / 2, cy + cardH / 2 - (isH and 3 or 0))
     if isH then
         love.graphics.shear(tX * 0.08, tY * 0.08)
-        love.graphics.scale(1.05, 1.05)
+        love.graphics.scale(1.035, 1.035)
     end
     love.graphics.translate(-cardW / 2, -cardH / 2)
     Physics.capture(item, 0, 0, cardW, cardH)
 
     -- Card Body
-    local deityId = (collectionCategory == "jokers" and item.id)
-        or (collectionCategory == "packs" and item.isPackContent and item.deityId)
-    local deityArt = deityId and UI.getDeityImage(deityId)
-    local consumableArt = UI.getConsumableImage(item)
-    local dImg = consumableArt or deityArt
-              or ((collectionCategory == "consumables") and UI.getEquipmentImage(item.id))
-              or ((collectionCategory == "packs") and (item.isPackContent and UI.getPackCardImage(item.packType, item) or UI.getPackImage(item.packType or item.id)))
-              or ((collectionCategory == "other") and UI.getHandImage(item.handId or item.id))
-              or ((collectionCategory == "vouchers") and (UI.getVoucherImage(item.id) or UI.getHandImage(item.handId or item.id) or UI.getHandImage(item.id)))
-    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityArt and not consumableArt and not UI.illustratedImages[dImg] then dImg = nil end
+    local isPending = pendingWarmItems[catalogItemKey(item, collectionCategory)] ~= nil
+    local dImg, deityArt, consumableArt
+    if not isPending then dImg, deityArt, consumableArt = loadCatalogArt(item, collectionCategory) end
+    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "equipment" and collectionCategory ~= "playing_cards" and not deityArt and not consumableArt and not UI.illustratedImages[dImg] then dImg = nil end
     if deityArt then
         UI.drawPatronCard(item, 0, 0, cardW, cardH, isH)
     elseif dImg then
@@ -41,7 +87,10 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
 
         love.graphics.setColor(1, 1, 1, 1)
         local iw, ih = dImg:getDimensions()
+        Effects.setInteraction(item, isH, false)
+        local active = item.category == "edition" and Effects.beginCard(item)
         UI.CardFrame.image(dImg, 0, 0, cardW, cardH)
+        Effects.endCard(active)
     else
         local itemCol = item.color or { 0.3, 0.4, 0.5, 1 }
         love.graphics.setColor(0, 0, 0, 0.35)
@@ -98,7 +147,11 @@ function Surfaces.fullReward(item,x,y,w,h,packType,hovered,opacity)
     local backdrop=not art and UI.getPackImage(packType)
     art=art or backdrop
     if art then
-        g.setColor(1,1,1,opacity);UI.CardFrame.image(art,x,y,w,h)
+        g.setColor(1,1,1,opacity)
+        Effects.setInteraction(item, hovered, false)
+        local active = item.category == "edition" and Effects.beginCard(item)
+        UI.CardFrame.image(art,x,y,w,h)
+        Effects.endCard(active)
         if backdrop then
             local col=item.color or UI.COLORS.goldYellow
             g.setColor(col[1],col[2],col[3],0.28);g.rectangle("fill",x,y,w,h)
@@ -214,11 +267,12 @@ function Surfaces.preview(inspItem, lcx, lcy, lcw, lch, collectionCategory)
     local deityPreview = deityPreviewId and UI.getDeityImage(deityPreviewId)
     local consumableArt = UI.getConsumableImage(inspItem)
     local inspImg = consumableArt or deityPreview
-                 or ((collectionCategory == "consumables") and UI.getEquipmentImage(inspItem.id))
+                 or ((collectionCategory == "playing_cards") and UI.getCardImage(inspItem.suit, inspItem.rank))
+                 or ((collectionCategory == "equipment") and UI.getEquipmentImage(inspItem.id))
                  or ((collectionCategory == "packs") and (inspItem.isPackContent and UI.getPackCardImage(inspItem.packType, inspItem) or UI.getPackImage(inspItem.packType or inspItem.id)))
                  or ((collectionCategory == "other") and UI.getHandImage(inspItem.handId or inspItem.id))
                  or ((collectionCategory == "vouchers") and (UI.getVoucherImage(inspItem.id) or UI.getHandImage(inspItem.handId or inspItem.id) or UI.getHandImage(inspItem.id)))
-    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "consumables" and not deityPreview and not consumableArt and not UI.illustratedImages[inspImg] then inspImg = nil end
+    if not UI.useLegacyPixelArt and collectionCategory ~= "packs" and collectionCategory ~= "equipment" and collectionCategory ~= "playing_cards" and not deityPreview and not consumableArt and not UI.illustratedImages[inspImg] then inspImg = nil end
     if deityPreview then
         UI.drawPatronCard(inspItem, lcx, lcy, lcw, lch)
     elseif inspImg then

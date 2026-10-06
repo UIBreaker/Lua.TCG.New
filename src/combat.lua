@@ -350,7 +350,7 @@ function Combat.onPlayerTurnEnd(game)
     if not game or not game.hand then return end
     for _, c in ipairs(game.hand) do
         if not c.destroyed and require("src.card_effects").getEffectName(c)=="gilded" then
-            game.gold=(game.gold or 0)+1
+            game.gold=(game.gold or 0)+3
         end
         if c.exhausted then
             if c.justExhausted then

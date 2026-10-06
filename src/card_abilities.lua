@@ -16,7 +16,7 @@ function A.params(card, def, level)
     for k,v in pairs(def.baseParams) do
         local r=def.evolutionRules[k]
         local gain=type(r)=="number" and r*level or type(r)=="table" and math.floor(level/r.every)*r.amount or 0
-        p[k]=v+gain*((card.edition=="ancient" or card.visualEffect=="ancient") and 1.25 or 1)
+        p[k]=v+gain*((card.edition=="ancient" or card.visualEffect=="ancient") and 3 or 1)
     end
     return p
 end
@@ -209,7 +209,7 @@ function A.score(game,card)
     if not ctx.retrigger then ctx.scored[#ctx.scored+1]=card; ctx.previous=card;ctx.previousAbilityState=before end
     if (card.edition=="echo" or card.visualEffect=="echo") and not ctx.echoSeen[card] then
         ctx.echoSeen[card]=true
-        A.repeatCard(game,card,1,ctx,.5)
+        A.repeatCard(game,card,1,ctx,1)
     end
     if card.destroyed then A.destroy(game,card,ctx) end
 end
@@ -223,10 +223,13 @@ function A.destroy(game,card,ctx)
             cursor=0,depth=0,play=combat(game).playIndex,spnCount=0,damage=0,full=false}
         if d and A.handlers[d.op] and d.trigger~="choice" then
             local oldEvent,oldOnce,oldEffect=x.event,x.once,x.effectiveness
-            x.event=d.trigger;x.once={};x.effectiveness=1
-            A.handlers[d.op](game,card,A.effectiveParams(game,card,d,x),x)
+            x.event=d.trigger;x.effectiveness=1
+            for _=1,10 do
+                x.once={}
+                A.handlers[d.op](game,card,A.effectiveParams(game,card,d,x),x)
+            end
             x.event,x.once,x.effectiveness=oldEvent,oldOnce,oldEffect
-            feedback(game,card,"HƯ KHÔNG · KÍCH HOẠT CUỐI", "edition")
+            feedback(game,card,"HƯ KHÔNG · KÍCH HOẠT 10 LẦN", "edition")
         elseif d and d.trigger=="choice" and game.abilityHand==x then
             -- Reuse an approved target/cost; never invent a sacrifice or spend without a decision.
             local decisions=x.decisions
@@ -234,7 +237,10 @@ function A.destroy(game,card,ctx)
                 if decision.card==card and decision.applied then
                     local final={};for key,value in pairs(decision) do final[key]=value end
                     final.applied=false;x.decisions={final}
-                    A.applyDecisions(game,(d.op=="pair_sacrifice" or d.op=="five_sacrifice") and "after" or "before",card)
+                    for _=1,10 do
+                        final.applied=false
+                        A.applyDecisions(game,(d.op=="pair_sacrifice" or d.op=="five_sacrifice") and "after" or "before",card)
+                    end
                     x.decisions=decisions
                     break
                 end

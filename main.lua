@@ -196,6 +196,7 @@ local hasRunStarted = false
 -- Collection Compendium Modal State
 local isCollectionOpen = false
 local collectionCategory = nil -- nil: Category Hub, string: Category id for Detail view
+local collectionPackType = nil
 local selectedCollectionItem = nil
 local collectionScrollY = 0
 
@@ -1775,13 +1776,15 @@ local function applyPendingSpeedAt(mx, my)
             end
             if not rewardIndex then pendingSpeedCard = nil; return true end
 
-            local seenCards, selectedSpeed = {}, nil
-            for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
-                for _, copy in ipairs(pile or {}) do
-                    if copy and not seenCards[copy] and (copy == card or (card.id and copy.id == card.id)) then
-                        seenCards[copy] = true
-                        local result = Deck.applyAttackSpeedBonus(copy, Shop.getConsumableParams(pendingSpeedCard).speed)
-                        if copy == card then selectedSpeed = result end
+            local speed = Shop.getConsumableParams(pendingSpeedCard).speed
+            if pendingSpeedCard.id == "cons_speed_small" or pendingSpeedCard.id == "cons_speed_large" then
+                Deck.applyTemporaryAttackSpeedBonus(card, speed)
+            else
+                for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
+                    for _, copy in ipairs(pile or {}) do
+                        if copy and (copy == card or (card.id and copy.id == card.id)) then
+                            Deck.applyAttackSpeedBonus(copy, speed)
+                        end
                     end
                 end
             end
@@ -2154,6 +2157,7 @@ function love.load()
     end
     updateScale()
     initShadersAndCanvas()
+    require("ui.collection_book").prepare(mainCanvas)
     Renderer.config.enabled = settings.cinematicEnabled
     Renderer.crtEnabled = settings.crtEnabled
     Renderer.load(battleArt, settings.graphicsQuality)
@@ -2278,10 +2282,12 @@ local function updateCaptureMode()
         openCollection = function(cat)
             isCollectionOpen = true
             collectionCategory = cat
+            collectionPackType = nil
+            anim.collectionGridPage = 1
+            require("ui.collection_book").open()
         end,
         closeCollection = function()
-            isCollectionOpen = false
-            collectionCategory = nil
+            require("ui.collection_book").close()
         end,
         openPack = function(packItem, animated)
             shopData.currentPackOpening = Shop.openPack(packItem, game)
@@ -2311,6 +2317,35 @@ local function updateCaptureMode()
 end
 
 function love.update(dt)
+    if not isCollectionOpen then Collection.prepareCacheStep() end
+    if isCollectionOpen and require("ui.collection_book").update(dt) then
+        isCollectionOpen = false
+        collectionCategory, collectionPackType, selectedCollectionItem = nil, nil, nil
+        anim.collectionPendingChapter = nil
+    end
+    if isCollectionOpen then
+        local Surfaces = require("ui.card_surfaces")
+        if not collectionCategory then
+            -- Prepare the requested/hovered chapter before its leaf starts
+            -- moving. Fast clicks after skipping the cover wait for readiness.
+            local targetId = anim.collectionPendingChapter or anim.collectionHoveredChapter or "jokers"
+            local chapterItems = Collection.getItems(targetId)
+            local firstPage = {}
+            for i = 1, math.min(12, #chapterItems) do firstPage[#firstPage + 1] = chapterItems[i] end
+            Surfaces.beginCatalogWarm(firstPage, targetId, "prewarm:" .. targetId .. ":1")
+            Surfaces.warmCatalogStep()
+            local Book = require("ui.collection_book")
+            if anim.collectionPendingChapter and not Book.isBusy() and Surfaces.isCatalogWarm(firstPage, targetId) then
+                anim.collectionPendingChapter = nil
+                Book.turn("forward", 1, function()
+                    collectionCategory, selectedCollectionItem, collectionScrollY = targetId, nil, 0
+                    anim.collectionGridPage = 1
+                end, mainCanvas, RENDER_SCALE)
+            end
+        else
+            Surfaces.warmCatalogStep()
+        end
+    end
     Touch.update(dt)
     UI.components.Button.update(dt)
     if handDrag.active and handInputBlocked() then
@@ -3172,121 +3207,181 @@ local function drawCollectionModal()
     local g = love.graphics
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
-    -- World backdrop is supplied by Renderer.
-    Renderer.veil()
-    UI.drawGildedPanel(60, 34, 1160, 640)
+    local Book = require("ui.collection_book")
+    Book.drawBackdrop(V_WIDTH, V_HEIGHT, love.timer.getTime())
+    Book.pushBookTransform(V_WIDTH, V_HEIGHT)
 
-    g.setFont(UI.fonts.title)
-    g.setColor(UI.COLORS.goldYellow)
-    g.printf("BỘ SƯU TẬP", 90, 56, 1100, "center")
-    g.setFont(UI.fonts.small)
-    g.setColor(UI.COLORS.textMuted)
-    g.printf("Khám phá toàn bộ bài, SPN, trang bị và thử thách", 90, 98, 1100, "center")
-
-    local categories = {
-        { id = "jokers", title = "SPN", icon = "✦", accent = { 0.62, 0.80, 1, 1 } },
-        { id = "decks", title = "BỘ BÀI", icon = "▣", accent = UI.COLORS.goldYellow },
-        { id = "vouchers", title = "PHIẾU", icon = "◈", accent = { 0.55, 0.86, 0.70, 1 } },
-        { id = "consumables", title = "TRANG BỊ KHẢM", icon = "◇", accent = { 0.64, 0.86, 0.95, 1 } },
-        { id = "enhancements", title = "LÁ CƯỜNG HÓA", icon = "✧", accent = { 0.95, 0.68, 0.50, 1 } },
-        { id = "seals", title = "CON DẤU", icon = "✦", accent = { 0.75, 0.62, 0.94, 1 } },
-        { id = "editions", title = "ẤN BẢN", icon = "◇", accent = UI.COLORS.goldYellow },
-        { id = "packs", title = "RƯƠNG BÀI", icon = "▣", accent = { 0.55, 0.80, 0.98, 1 } },
-        { id = "tags", title = "KHẾ ƯỚC BỎ ẢI", icon = "✧", accent = { 0.95, 0.55, 0.55, 1 } },
-        { id = "blinds", title = "QUÁI VẬT", icon = "⚔", accent = { 0.95, 0.55, 0.55, 1 } },
-        { id = "other", title = "THẾ ĐÁNH", icon = "✦", accent = { 0.70, 0.88, 0.70, 1 } },
-    }
-    for i, cat in ipairs(categories) do
-        local count = #Collection.getItems(cat.id)
-        local col = (i - 1) % 3
-        local row = math.floor((i - 1) / 3)
-        local btn = {
-            id = "coll_cat_" .. cat.id, catId = cat.id, text = cat.title,
-            sub = tostring(count) .. " mục", icon = cat.icon,
-            x = 94 + col * 367, y = 132 + row * 113, w = 350, h = 98,
-            color = { 0.10, 0.15, 0.21, 1 }, menuAccent = cat.accent,
-            menuStyle = true, font = UI.fonts.medium,
-        }
-        table.insert(buttons, btn)
-        UI.drawButton(btn, mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h,
-            juice.buttonPressedId == btn.id)
+    local categories = Collection.getCategories()
+    Book.setPagePosition(1 + (#categories - 1) * 0.5, #categories)
+    Book.drawShell(V_WIDTH, V_HEIGHT)
+    local total = 0
+    local hoveredChapter
+    for _, cat in ipairs(categories) do
+        total = total + (tonumber(cat.badge) or 0)
     end
-    local close = {
-        id = "coll_close", text = "TRỞ LẠI", x = 515, y = 596, w = 250, h = 50,
-        color = UI.COLORS.btnNormal, font = UI.fonts.medium,
-    }
-    table.insert(buttons, close)
-    UI.drawButton(close, mx >= close.x and mx <= close.x + close.w and my >= close.y and my <= close.y + close.h,
-        juice.buttonPressedId == close.id)
+    -- Both leaves share a typographic grid, like a printed expedition atlas.
+    local function pageHeading(x, eyebrow, title, subtitle)
+        g.setFont(UI.fonts.tiny)
+        g.setColor(0.47,0.35,0.20,1)
+        g.printf(eyebrow,x,130,476,"center")
+        g.setFont(UI.fonts.bookTitle or UI.fonts.title)
+        g.setColor(0.23,0.18,0.12,1)
+        g.printf(title,x,151,476,"center")
+        g.setFont(UI.fonts.small)
+        g.setColor(0.45,0.34,0.22,1)
+        g.printf(subtitle,x,197,476,"center")
+        g.setColor(0.59,0.43,0.23,0.56)
+        g.line(x+55,224,x+214,224); g.line(x+262,224,x+421,224)
+        g.polygon("line",x+238,219,x+243,224,x+238,229,x+233,224)
+    end
+    pageHeading(112,"TERRA SUIT · HỒ SƠ VIỄN CHINH","BÁCH KHOA","LỤC ĐỊA · DI VẬT · MA PHÁP")
+    pageHeading(690,"TRA CỨU CÁC CHƯƠNG","MỤC LỤC",#categories .. " CHƯƠNG  ·  " .. total .. " MỤC GHI CHÉP")
+
+    local leftCount = math.ceil(#categories/2)
+    local chapterFont = UI.fonts.bookChapter or UI.fonts.medium
+    for i,cat in ipairs(categories) do
+        local rightPage = i>leftCount
+        local row = rightPage and i-leftCount or i
+        local x, width = rightPage and 690 or 112, 476
+        local y = 255+(row-1)*54
+        local accent = cat.accent or cat.btnColor or UI.COLORS.goldYellow
+        local hovered = mx>=x-6 and mx<=x+width+6 and my>=y-6 and my<=y+41
+        local pending = anim.collectionPendingChapter == cat.id
+        if hovered then hoveredChapter=cat.id end
+        buttons[#buttons+1] = {id="coll_cat_"..cat.id,catId=cat.id,text=cat.title,
+            x=x-6,y=y-6,w=width+12,h=47}
+        if hovered or pending then
+            g.setColor(accent[1],accent[2],accent[3],0.085)
+            g.rectangle("fill",x-7,y-7,width+14,47,3,3)
+            g.setColor(accent[1]*0.65,accent[2]*0.65,accent[3]*0.65,0.65)
+            g.rectangle("fill",x-7,y-7,2,47)
+        end
+        g.setColor(0.58,0.43,0.24,0.40)
+        g.rectangle("line",x,y+1,27,27,2,2)
+        g.setFont(UI.fonts.tiny)
+        g.setColor(0.45,0.32,0.18,1)
+        g.printf(string.format("%02d",i),x,y+8,27,"center")
+        g.setFont(chapterFont)
+        local title = UI.toUpperUtf8(cat.title)
+        local countText = tostring(cat.badge or 0)
+        local titleX = x+43
+        local titleW = math.min(347,chapterFont:getWidth(title))
+        g.setColor(0.24,0.19,0.13,1)
+        g.print(title,titleX,y-2,0,math.min(1,347/math.max(1,chapterFont:getWidth(title))),1)
+        g.setFont(UI.fonts.small)
+        g.setColor(0.44,0.32,0.19,1)
+        g.printf(countText,x+412,y+1,64,"right")
+        g.setColor(0.52,0.38,0.20,0.30)
+        if titleX+titleW+12 < x+400 then
+            g.line(titleX+titleW+12,y+16,x+400,y+16)
+        end
+        g.setFont(UI.fonts.tiny)
+        g.setColor(0.48,0.38,0.27,0.94)
+        g.print(UI.truncateUtf8(cat.sub or "",49),titleX,y+24)
+    end
+    g.setFont(UI.fonts.tiny)
+    g.setColor(0.49,0.37,0.23,0.90)
+    g.printf(anim.collectionPendingChapter and "ĐANG MỞ CHƯƠNG..." or "I  ·  BIÊN NIÊN SỬ",112,599,476,"center")
+    g.printf("II  ·  TRA CỨU",690,599,476,"center")
+    local bookmark = Book.drawBookmark(V_WIDTH, V_HEIGHT, "QUAY LẠI MENU", mx >= 548 and mx <= 732 and my >= 655 and my <= 695)
+    bookmark.id = "coll_close"
+    table.insert(buttons, bookmark)
+    if anim.collectionHoveredChapter ~= hoveredChapter then
+        if hoveredChapter then Sound.play("ui_hover") end
+        anim.collectionHoveredChapter = hoveredChapter
+    end
+    Book.drawPageTurn(V_WIDTH, V_HEIGHT)
+    Book.drawCover(V_WIDTH, V_HEIGHT)
+    Book.popBookTransform()
 end
 
 local function drawCollectionDetailView()
     local mx, my = toVirtual(love.mouse.getPosition())
     buttons = {}
 
-    -- World backdrop is supplied by Renderer.
-    love.graphics.setColor(0.01, 0.02, 0.04, Renderer.config.ui.veil)
-    love.graphics.rectangle("fill", 0, 0, V_WIDTH, V_HEIGHT)
+    local Book = require("ui.collection_book")
+    Book.drawBackdrop(V_WIDTH, V_HEIGHT, love.timer.getTime())
+    Book.pushBookTransform(V_WIDTH, V_HEIGHT)
 
     local cat = Collection.getCategoryById(collectionCategory) or { title = "Danh Mục", sub = "" }
-    local items = Collection.getItems(collectionCategory)
+    local items = Collection.getItems(collectionCategory, collectionPackType)
+    local categories = Collection.getCategories()
+    local chapterIndex = 1
+    for i, entry in ipairs(categories) do if entry.id == collectionCategory then chapterIndex = i break end end
+    Book.setPagePosition(chapterIndex, #categories)
+    Book.drawShell(V_WIDTH, V_HEIGHT)
 
     local modalW = 1180
     local modalH = 640
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
-    UI.drawGildedPanel(modalX, modalY, modalW, modalH)
-
     -- Header Navigation
     local btnBack = {
         id = "coll_back_to_hub",
-        text = "< QUAY LẠI BỘ SƯU TẬP",
+        text = collectionPackType and "‹ DANH SÁCH RƯƠNG" or "‹ MỤC LỤC",
         x = modalX + 24,
-        y = modalY + 16,
+        y = modalY + 55,
         w = 230,
         h = 38,
-        color = UI.COLORS.btnNormal,
-        font = UI.fonts.small,
     }
     table.insert(buttons, btnBack)
     local isBackH = (mx >= btnBack.x and mx <= btnBack.x + btnBack.w and my >= btnBack.y and my <= btnBack.y + btnBack.h)
-    UI.drawButton(btnBack, isBackH, juice.buttonPressedId == btnBack.id)
+    love.graphics.setFont(UI.fonts.small)
+    love.graphics.setColor(isBackH and { 0.78, 0.61, 0.32, 1 } or { 0.43, 0.31, 0.18, 1 })
+    love.graphics.print(btnBack.text, btnBack.x, btnBack.y + 8)
+    love.graphics.setColor(0.62, 0.46, 0.26, 0.65)
+    love.graphics.line(btnBack.x, btnBack.y + 34, btnBack.x + btnBack.w, btnBack.y + 34)
 
-    local collectionHeaderX = modalX + 270
-    local collectionHeaderW = modalW - 294
-    local collectionTitle = string.upper(cat.title) .. " • " .. cat.sub
-    local collectionTitleFont = UI.fonts.large
+    local collectionHeaderX = modalX + 598
+    local collectionHeaderW = modalW - 622
+    local packName
+    if collectionPackType then
+        for _, pack in ipairs(Collection.getItems("packs")) do
+            if pack.packType == collectionPackType then packName = pack.name break end
+        end
+    end
+    local collectionTitle = collectionPackType and ("RƯƠNG • " .. (packName or "NỘI DUNG")) or UI.toUpperUtf8(cat.title)
+    local collectionTitleFont = UI.fonts.bookHeading or UI.fonts.large
     local collectionTitleScale = math.min(1, collectionHeaderW / math.max(1, collectionTitleFont:getWidth(collectionTitle)))
     love.graphics.setFont(collectionTitleFont)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print(collectionTitle, collectionHeaderX, modalY + 20, 0, collectionTitleScale, collectionTitleScale)
+    love.graphics.setColor(0.25, 0.18, 0.10, 1)
+    local collectionTitleX = collectionHeaderX + (collectionHeaderW - collectionTitleFont:getWidth(collectionTitle) * collectionTitleScale) / 2
+    love.graphics.print(collectionTitle, collectionTitleX, modalY + 56, 0, collectionTitleScale, collectionTitleScale)
 
-    local collectionSubtitle = #items .. " Mục đã mở khóa • Nhấp hoặc rê chuột vào thẻ để xem chi tiết"
+    local collectionSubtitle = (collectionPackType and "NỘI DUNG TRONG RƯƠNG" or UI.toUpperUtf8(cat.sub or "")) .. " • " .. #items .. " MỤC"
     local collectionSubtitleFont = UI.fonts.small
     local collectionSubtitleScale = math.min(1, collectionHeaderW / math.max(1, collectionSubtitleFont:getWidth(collectionSubtitle)))
     love.graphics.setFont(collectionSubtitleFont)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print(collectionSubtitle, collectionHeaderX + 2, modalY + 50, 0, collectionSubtitleScale, collectionSubtitleScale)
+    love.graphics.setColor(0.43, 0.31, 0.18, 1)
+    local collectionSubtitleX = collectionHeaderX + (collectionHeaderW - collectionSubtitleFont:getWidth(collectionSubtitle) * collectionSubtitleScale) / 2
+    love.graphics.print(collectionSubtitle, collectionSubtitleX, modalY + 84, 0, collectionSubtitleScale, collectionSubtitleScale)
 
     -- Layout: Left Area is Grid (width ~ 750), Right Area is Inspector (width ~ 360)
-    local gridX = modalX + 24
-    local gridY = modalY + 75
-    local gridW = 750
-    local gridH = modalH - 95
+    local gridX = modalX + 90
+    local gridY = modalY + 120
+    local gridW = 436
+    local gridH = modalH - 210
 
     local hoveredItem = nil
 
     -- Render Cards in Grid
-    local cardW = 112
-    local cardH = 158
-    local cols = 6
+    local cardW = 96
+    local cardH = 136
+    local cols = 4
     local padX = 14
-    local padY = 16
-    local rows = math.ceil(#items / cols)
-    local totalContentH = rows * (cardH + padY)
-    local maxScroll = math.max(0, totalContentH - (gridH - 10))
-    collectionScrollY = math.max(0, math.min(maxScroll, collectionScrollY or 0))
+    local padY = 10
+    local pageSize = 12
+    local pageCount = math.max(1, math.ceil(#items / pageSize))
+    local gridPage = math.max(1, math.min(pageCount, anim.collectionGridPage or 1))
+    anim.collectionGridPage = gridPage
+    collectionScrollY = 0
+    local firstGridItem = (gridPage - 1) * pageSize + 1
+    local lastGridItem = math.min(#items, firstGridItem + pageSize - 1)
+    local visibleItems = {}
+    for i = firstGridItem, lastGridItem do visibleItems[#visibleItems + 1] = items[i] end
+    require("ui.card_surfaces").beginCatalogWarm(visibleItems, collectionCategory,
+        table.concat({ collectionCategory, collectionPackType or "", gridPage }, ":"))
 
     if mainCanvas then
         love.graphics.intersectScissor(gridX * RENDER_SCALE, gridY * RENDER_SCALE,
@@ -3298,86 +3393,158 @@ local function drawCollectionDetailView()
             gridW * outputScale, gridH * outputScaleY)
     end
 
-    for i, item in ipairs(items) do
+    for i = firstGridItem, lastGridItem do
+        local item = items[i]
         local col = (i - 1) % cols
-        local row = math.floor((i - 1) / cols)
+        local row = math.floor((i - firstGridItem) / cols)
         local cx = gridX + col * (cardW + padX)
-        local cy = gridY + row * (cardH + padY) - collectionScrollY
+        local cy = gridY + row * (cardH + padY)
 
-        if cy + cardH >= gridY - 20 and cy <= gridY + gridH + 20 then
-            local isH = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH and my >= gridY and my <= gridY + gridH)
-            if isH then hoveredItem = item end
+        local isH = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH and my >= gridY and my <= gridY + gridH)
+        if isH then hoveredItem = item end
 
-            require("ui.card_surfaces").catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
-        end
+        require("ui.card_surfaces").catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, mx, my)
     end
 
-    -- Scrollbar track & thumb if scrollable
-    if maxScroll > 0 then
-        local trackX = gridX + gridW - 6
-        local trackY = gridY + 4
-        local trackH = gridH - 8
-        love.graphics.setColor(0.12, 0.15, 0.18, 0.6)
-        UI.drawRoundedRect("fill", trackX, trackY, 4, trackH, 2)
-        local thumbH = math.max(24, trackH * (gridH / totalContentH))
-        local thumbY = trackY + (collectionScrollY / maxScroll) * (trackH - thumbH)
-        love.graphics.setColor(0.45, 0.55, 0.65, 0.8)
-        UI.drawRoundedRect("fill", trackX, thumbY, 4, thumbH, 2)
+    if #items == 0 then
+        love.graphics.setFont(UI.fonts.large)
+        love.graphics.setColor(0.57, 0.43, 0.27, 0.72)
+        love.graphics.printf("✦", gridX, gridY + 150, gridW, "center")
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(0.42, 0.32, 0.21, 0.82)
+        love.graphics.printf("CHƯA CÓ MỤC NÀO ĐƯỢC GHI CHÉP", gridX + 14, gridY + 192, gridW - 28, "center")
     end
 
     love.graphics.setScissor()
 
+    -- Chapter subpages keep large catalogs readable without a desktop-style scrollbar.
+    if pageCount > 1 then
+        local navY = gridY + gridH + 5
+        local previous = { id = "coll_grid_prev", x = gridX + 190, y = navY, w = 32, h = 26, page = gridPage - 1 }
+        local following = { id = "coll_grid_next", x = gridX + 308, y = navY, w = 32, h = 26, page = gridPage + 1 }
+        table.insert(buttons, previous)
+        table.insert(buttons, following)
+        love.graphics.setFont(UI.fonts.small)
+        love.graphics.setColor(gridPage > 1 and { 0.38, 0.26, 0.14, 0.95 } or { 0.38, 0.26, 0.14, 0.32 })
+        love.graphics.printf("‹", previous.x, previous.y - 1, previous.w, "center")
+        love.graphics.setColor(gridPage < pageCount and { 0.38, 0.26, 0.14, 0.95 } or { 0.38, 0.26, 0.14, 0.32 })
+        love.graphics.printf("›", following.x, following.y - 1, following.w, "center")
+        local firstShown, lastShown = firstGridItem, lastGridItem
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(0.48, 0.36, 0.23, 0.86)
+        love.graphics.printf(string.format("%02d–%02d · %d/%d", firstShown, lastShown, gridPage, pageCount), gridX + 222, navY + 5, 86, "center")
+    end
+
     -- Right Area: Item Inspector / Detail Preview
     local inspItem = hoveredItem or selectedCollectionItem or items[1]
     if inspItem then
-        local inspX = modalX + gridW + 40
+        local inspX = modalX + 598
         local inspY = gridY
-        local inspW = modalW - gridW - 64
+        local inspW = modalW - 622
         local inspH = gridH
 
-        -- Inspector Box
-        love.graphics.setColor(0.10, 0.13, 0.16, 0.95)
-        UI.drawRoundedRect("fill", inspX, inspY, inspW, inspH, 10)
-        love.graphics.setColor(0.25, 0.35, 0.42, 1)
-        UI.drawRoundedRect("line", inspX, inspY, inspW, inspH, 10)
+        -- The artifact sits directly on the paper, with a light ink rule instead
+        -- of a second framed panel inside the book page.
+        local detailAccent = cat.accent or cat.btnColor or UI.COLORS.goldYellow
+        love.graphics.setColor(detailAccent[1], detailAccent[2], detailAccent[3], 0.62)
+        love.graphics.setLineWidth(1.2)
+        love.graphics.line(inspX + 20, inspY + 9, inspX + inspW - 20, inspY + 9)
 
-        -- Large Preview Card (Center of top half)
-        local lcw = 140
-        local lch = 195
+        local lcw = 136
+        local lch = 190
         local lcx = inspX + (inspW - lcw) / 2
-        local lcy = inspY + 20
-        local lcol = inspItem.color or { 0.3, 0.4, 0.5, 1 }
-
+        local lcy = inspY + 16
         require("ui.card_surfaces").preview(inspItem, lcx, lcy, lcw, lch, collectionCategory)
 
         -- Item Header Info below card
-        local infoY = lcy + lch + 18
-        love.graphics.setFont(UI.fonts.medium)
-        love.graphics.setColor(lcol)
+        local infoY = lcy + lch + 15
+        love.graphics.setFont(UI.fonts.bookChapter or UI.fonts.medium)
+        love.graphics.setColor(0.22, 0.16, 0.10, 1)
         love.graphics.printf(inspItem.name, inspX + 16, infoY, inspW - 32, "center")
 
         love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.setColor(0.38, 0.29, 0.19, 1)
         love.graphics.printf(inspItem.subtitle or inspItem.rarity or "", inspX + 16, infoY + 28, inspW - 32, "center")
 
-        -- Stats banner
+        -- Small provenance line, kept in the same printed hierarchy as the title.
         if inspItem.cost then
             love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            love.graphics.printf("GIÁ MUA: $" .. inspItem.cost, inspX + 16, infoY + 52, inspW - 32, "center")
+            love.graphics.setColor(0.48, 0.29, 0.08, 1)
+            love.graphics.printf("GIÁ GHI NHẬN  ·  $" .. inspItem.cost, inspX + 16, infoY + 52, inspW - 32, "center")
         end
 
         -- Detailed Description
         local descY = infoY + (inspItem.cost and 78 or 58)
-        love.graphics.setColor(0.14, 0.18, 0.22, 1)
-        UI.drawRoundedRect("fill", inspX + 14, descY, inspW - 28, inspH - (descY - inspY) - 16, 8)
-        love.graphics.setColor(0.24, 0.32, 0.38, 1)
-        UI.drawRoundedRect("line", inspX + 14, descY, inspW - 28, inspH - (descY - inspY) - 16, 8)
+        local descH = math.max(24, inspH - (descY - inspY) - 15)
+        love.graphics.setColor(0.62, 0.45, 0.25, 0.56)
+        love.graphics.setLineWidth(1)
+        love.graphics.line(inspX + 36, descY, inspX + inspW - 36, descY)
+        love.graphics.setFont(UI.fonts.tiny)
+        love.graphics.setColor(0.45, 0.32, 0.19, 0.88)
+        love.graphics.printf("HỒ SƠ KHÁM PHÁ", inspX + 18, descY + 7, inspW - 36, "center")
 
-        love.graphics.setFont(UI.fonts.regular)
-        love.graphics.setColor(UI.COLORS.textLight)
-        love.graphics.printf(inspItem.desc, inspX + 24, descY + 14, inspW - 48, "left")
+        love.graphics.setFont(UI.fonts.description or UI.fonts.regular)
+        love.graphics.setColor(0.18, 0.14, 0.10, 1)
+        if mainCanvas then
+            love.graphics.intersectScissor((inspX + 20) * RENDER_SCALE, (descY + 26) * RENDER_SCALE,
+                (inspW - 40) * RENDER_SCALE, (descH - 30) * RENDER_SCALE)
+        else
+            love.graphics.intersectScissor(offsetX + (inspX + 20) * scale * RENDER_SCALE,
+                offsetY + (descY + 26) * Layout.scaleY * RENDER_SCALE,
+                (inspW - 40) * scale * RENDER_SCALE, (descH - 30) * Layout.scaleY * RENDER_SCALE)
+        end
+        love.graphics.printf(inspItem.desc or "Chưa có ghi chép cho mục này.", inspX + 22, descY + 31, inspW - 44, "left")
+        love.graphics.setScissor()
+        love.graphics.setLineWidth(1)
     end
+
+    -- Fast chapter tabs and page-corner navigation.
+    for i, chapter in ipairs(categories) do
+        local tx, ty = modalX + 1155, modalY + 88 + (i - 1) * 39
+        local selected = i == chapterIndex
+        local accent = chapter.accent or chapter.btnColor or UI.COLORS.goldYellow
+        local hovered = mx >= tx - 5 and mx <= tx + 30 and my >= ty and my <= ty + 26
+        local tabW = selected and 27 or (hovered and 23 or 15)
+        love.graphics.setColor(0.17, 0.12, 0.07, selected and 0.42 or 0.22)
+        love.graphics.polygon("fill", tx + 28 - tabW, ty + 2, tx + 29, ty + 5, tx + 29, ty + 25, tx + 28 - tabW, ty + 28)
+        love.graphics.setColor(math.min(1, accent[1] + (selected and 0.06 or 0)),
+            math.min(1, accent[2] + (selected and 0.06 or 0)), math.min(1, accent[3] + (selected and 0.06 or 0)), selected and 0.94 or 0.66)
+        love.graphics.polygon("fill", tx + 27 - tabW, ty, tx + 27, ty + 3, tx + 27, ty + 23, tx + 27 - tabW, ty + 26)
+        if selected or hovered then
+            love.graphics.setColor(1, 0.93, 0.76, selected and 0.60 or 0.28)
+            love.graphics.line(tx + 26 - tabW, ty + 2, tx + 26, ty + 4, tx + 26, ty + 20)
+        end
+        buttons[#buttons + 1] = { id = "coll_quick_" .. chapter.id, catId = chapter.id, chapterIndex = i,
+            x = tx - 5, y = ty, w = 35, h = 26 }
+    end
+    local prev = { id = "coll_prev", x = modalX + 24, y = modalY + 578, w = 54, h = 34 }
+    local nextPage = { id = "coll_next", x = modalX + 1102, y = modalY + 578, w = 54, h = 34 }
+    buttons[#buttons + 1] = prev
+    buttons[#buttons + 1] = nextPage
+    love.graphics.setFont(UI.fonts.medium)
+    love.graphics.setColor(chapterIndex > 1 and { 0.42, 0.28, 0.14, 1 } or { 0.55, 0.48, 0.37, 0.4 })
+    love.graphics.print("‹", prev.x + 16, prev.y)
+    love.graphics.setColor(chapterIndex < #categories and { 0.42, 0.28, 0.14, 1 } or { 0.55, 0.48, 0.37, 0.4 })
+    love.graphics.print("›", nextPage.x + 16, nextPage.y)
+    local leftCornerHover = mx >= prev.x and mx <= prev.x + prev.w and my >= prev.y and my <= prev.y + prev.h
+    local rightCornerHover = mx >= nextPage.x and mx <= nextPage.x + nextPage.w and my >= nextPage.y and my <= nextPage.y + nextPage.h
+    if leftCornerHover then
+        love.graphics.setColor(0.95, 0.87, 0.69, 0.95)
+        love.graphics.polygon("fill", modalX + 12, modalY + 610, modalX + 36, modalY + 610, modalX + 12, modalY + 586)
+    elseif rightCornerHover then
+        love.graphics.setColor(0.95, 0.87, 0.69, 0.95)
+        love.graphics.polygon("fill", modalX + 1168, modalY + 610, modalX + 1144, modalY + 610, modalX + 1168, modalY + 586)
+    end
+    love.graphics.setFont(UI.fonts.tiny)
+    love.graphics.setColor(0.51, 0.39, 0.25, 0.8)
+    love.graphics.printf(string.format("%02d / %02d", chapterIndex, #categories), modalX + 495, modalY + 586, 190, "center")
+    local bookmark = Book.drawBookmark(V_WIDTH, V_HEIGHT, "MỤC LỤC", mx >= 548 and mx <= 732 and my >= 655 and my <= 695)
+    bookmark.id = "coll_back_to_hub"
+    table.insert(buttons, bookmark)
+    Book.drawPageTurn(V_WIDTH, V_HEIGHT)
+    Book.drawCornerHover(V_WIDTH, V_HEIGHT, mx, my)
+    Book.drawCover(V_WIDTH, V_HEIGHT)
+    Book.popBookTransform()
 end
 
 local function drawFactionSelect()
@@ -6531,6 +6698,9 @@ function love.draw()
     else
         love.graphics.pop()
     end
+    if isCollectionOpen and mainCanvas then
+        require("ui.collection_book").captureIdlePage(mainCanvas)
+    end
     for _, value in ipairs(arg or {}) do
         if value == "--capture-mobile-fullscreen" then require("tests.mobile_fullscreen_capture").draw() end
     end
@@ -7207,39 +7377,99 @@ local function handleModalsMousepressed(mx, my, button)
 
     -- 0d. Collection Compendium Modal Dismissal & Interaction
     if isCollectionOpen then
+        local Book = require("ui.collection_book")
+        if Book.isBusy() then
+            if Book.stateName() == "OPENING" then Book.skip() end
+            return true
+        end
+        if anim.collectionPendingChapter then return true end
         if button == 1 then
             if collectionCategory then
                 -- Detail View
                 for _, btn in ipairs(buttons) do
                     if btn.id == "coll_back_to_hub" and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-                        collectionCategory = nil
-                        selectedCollectionItem = nil
-                        collectionScrollY = 0
+                        local backToIndex = collectionPackType == nil
+                        Book.turn("back", 1, function()
+                            if backToIndex then collectionCategory = nil else collectionPackType = nil end
+                            selectedCollectionItem, collectionScrollY = nil, 0
+                            anim.collectionGridPage = 1
+                        end, mainCanvas, RENDER_SCALE)
+                        Sound.play("card_deal")
+                        return true
+                    end
+                end
+                local gridItems = Collection.getItems(collectionCategory, collectionPackType)
+                local gridPageCount = math.max(1, math.ceil(#gridItems / 12))
+                local currentGridPage = anim.collectionGridPage or 1
+                for _, btn in ipairs(buttons) do
+                    if (btn.id == "coll_grid_prev" or btn.id == "coll_grid_next")
+                        and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                        local targetPage = math.max(1, math.min(gridPageCount, btn.page))
+                        if targetPage ~= currentGridPage then
+                            Book.turn(targetPage < currentGridPage and "back" or "forward", 1, function()
+                                anim.collectionGridPage = targetPage
+                                selectedCollectionItem, collectionScrollY = nil, 0
+                            end, mainCanvas, RENDER_SCALE)
+                            Sound.play("card_deal")
+                        end
+                        return true
+                    end
+                end
+                local categories = Collection.getCategories()
+                local currentIndex = 1
+                for i, cat in ipairs(categories) do if cat.id == collectionCategory then currentIndex = i break end end
+                for _, btn in ipairs(buttons) do
+                    local targetIndex
+                    if btn.id == "coll_prev" then targetIndex = math.max(1, currentIndex - 1)
+                    elseif btn.id == "coll_next" then targetIndex = math.min(#categories, currentIndex + 1)
+                    elseif btn.id and btn.id:sub(1, 11) == "coll_quick_" then targetIndex = btn.chapterIndex end
+                    if targetIndex and targetIndex ~= currentIndex and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                        if btn.id == "coll_prev" or btn.id == "coll_next" then
+                            anim.collectionPageDrag = { x = mx, targetIndex = targetIndex }
+                            return true
+                        end
+                        local targetId = categories[targetIndex].id
+                        Book.turn(targetIndex < currentIndex and "back" or "forward", math.abs(targetIndex - currentIndex), function()
+                            collectionCategory, collectionPackType = targetId, nil
+                            selectedCollectionItem, collectionScrollY = nil, 0
+                            anim.collectionGridPage = 1
+                        end, mainCanvas, RENDER_SCALE)
                         Sound.play("card_deal")
                         return true
                     end
                 end
                 -- Check card clicks to select inspector item
-                local items = Collection.getItems(collectionCategory)
+                local items = Collection.getItems(collectionCategory, collectionPackType)
                 local modalW = 1180
                 local modalH = 640
                 local modalX = (V_WIDTH - modalW) / 2
                 local modalY = (V_HEIGHT - modalH) / 2
-                local gridX = modalX + 24
-                local gridY = modalY + 75
-                local gridH = modalH - 95
-                local cardW = 112
-                local cardH = 158
-                local cols = 6
+                local gridX = modalX + 90
+                local gridY = modalY + 120
+                local gridH = modalH - 210
+                local cardW = 96
+                local cardH = 136
+                local cols = 4
                 local padX = 14
-                local padY = 16
-                for i, it in ipairs(items) do
+                local padY = 10
+                local firstGridItem = ((anim.collectionGridPage or 1) - 1) * 12 + 1
+                local lastGridItem = math.min(#items, firstGridItem + 11)
+                for i = firstGridItem, lastGridItem do
+                    local it = items[i]
                     local col = (i - 1) % cols
-                    local row = math.floor((i - 1) / cols)
+                    local row = math.floor((i - firstGridItem) / cols)
                     local cx = gridX + col * (cardW + padX)
-                    local cy = gridY + row * (cardH + padY) - (collectionScrollY or 0)
+                    local cy = gridY + row * (cardH + padY)
                     if mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH and my >= gridY and my <= gridY + gridH then
+                        if collectionCategory == "packs" and not collectionPackType and it.packType and not it.isPackContent then
+                            local packType = it.packType
+                            Book.turn("forward", 1, function()
+                                collectionPackType, collectionScrollY, selectedCollectionItem = packType, 0, nil
+                                anim.collectionGridPage = 1
+                            end, mainCanvas, RENDER_SCALE)
+                        else
                         selectedCollectionItem = it
+                        end
                         Sound.play("ui_click")
                         return true
                     end
@@ -7249,25 +7479,22 @@ local function handleModalsMousepressed(mx, my, button)
                 for _, btn in ipairs(buttons) do
                     if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                         if btn.id == "coll_close" then
-                            isCollectionOpen = false
-                            collectionScrollY = 0
+                            Book.close()
                             Sound.play("card_deal")
                             return true
                         elseif btn.catId then
-                            collectionCategory = btn.catId
-                            selectedCollectionItem = nil
-                            collectionScrollY = 0
+                            anim.collectionPendingChapter = btn.catId
                             Sound.play("ui_click")
                             return true
                         end
                     end
                 end
-                local modalW = 760
-                local modalH = 590
+                local modalW = 1200
+                local modalH = 600
                 local modalX = (V_WIDTH - modalW) / 2
                 local modalY = (V_HEIGHT - modalH) / 2
                 if mx < modalX or mx > modalX + modalW or my < modalY or my > modalY + modalH then
-                    isCollectionOpen = false
+                    Book.close()
                     Sound.play("card_deal")
                     return true
                 end
@@ -7526,6 +7753,10 @@ function love.mousepressed(x, y, button, istouch)
                     elseif btn.id == "menu_collection" then
                         isCollectionOpen = true
                         collectionCategory = nil
+                        collectionPackType = nil
+                        anim.collectionGridPage = 1
+                        require("ui.collection_book").open()
+                        Sound.play("card_deal")
                         Sound.play("ui_click")
                         return
                     elseif btn.id == "menu_handbook" then
@@ -8064,6 +8295,41 @@ end
 
 function love.keypressed(key)
     if key=="f8" then UI.BedExplosion.debug=not UI.BedExplosion.debug;return end
+    if isCollectionOpen and anim.collectionPendingChapter then
+        if key == "escape" then anim.collectionPendingChapter = nil end
+        return
+    end
+    if isCollectionOpen then
+        local Book = require("ui.collection_book")
+        if Book.isBusy() then
+            if Book.stateName() == "OPENING" and (key == "escape" or key == "return" or key == "space") then Book.skip() end
+            return
+        end
+    end
+    if isCollectionOpen and (key == "left" or key == "right" or key == "a" or key == "d") then
+        local Book = require("ui.collection_book")
+        local categories = Collection.getCategories()
+        local currentIndex = 0
+        for i, cat in ipairs(categories) do if cat.id == collectionCategory then currentIndex = i break end end
+        local delta = (key == "left" or key == "a") and -1 or 1
+        local targetIndex = currentIndex == 0 and (delta < 0 and #categories or 1)
+            or math.min(#categories, math.max(1, currentIndex + delta))
+        if targetIndex and targetIndex > 0 and targetIndex <= #categories then
+            local targetId = categories[targetIndex].id
+            if currentIndex == 0 then
+                anim.collectionPendingChapter = targetId
+                Sound.play("ui_click")
+                return
+            end
+            Book.turn(targetIndex < currentIndex and "back" or "forward", math.max(1, math.abs(targetIndex - currentIndex)), function()
+                collectionCategory, collectionPackType = targetId, nil
+                selectedCollectionItem, collectionScrollY = nil, 0
+                anim.collectionGridPage = 1
+            end, mainCanvas, RENDER_SCALE)
+            Sound.play("card_deal")
+        end
+        return
+    end
     if UI.BedExplosion.keypressed(key) then return end
     if handDrag.active then
         UI.CardPhysics.release()
@@ -8138,11 +8404,20 @@ function love.keypressed(key)
             return
         end
         if isCollectionOpen then
+            local Book = require("ui.collection_book")
+            if Book.isBusy() then
+                if Book.stateName() == "OPENING" then Book.skip() end
+                return
+            end
             if collectionCategory then
-                collectionCategory = nil
-                selectedCollectionItem = nil
+                local backToIndex = collectionPackType == nil
+                Book.turn("back", 1, function()
+                    if backToIndex then collectionCategory = nil else collectionPackType = nil end
+                    selectedCollectionItem, collectionScrollY = nil, 0
+                    anim.collectionGridPage = 1
+                end, mainCanvas, RENDER_SCALE)
             else
-                isCollectionOpen = false
+                Book.close()
             end
             Sound.play("ui_click")
             return
@@ -8262,12 +8537,19 @@ function love.wheelmoved(x, y)
     end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if isCollectionOpen and collectionCategory then
-        collectionScrollY = (collectionScrollY or 0) - y * 45
-        local items = Collection.getItems(collectionCategory)
-        local cols = 6
-        local rows = math.ceil(#items / cols)
-        local maxScroll = math.max(0, rows * (158 + 16) - (640 - 95 - 20))
-        collectionScrollY = math.max(0, math.min(maxScroll, collectionScrollY))
+        if require("ui.collection_book").isBusy() then return end
+        local items = Collection.getItems(collectionCategory, collectionPackType)
+        local pageCount = math.max(1, math.ceil(#items / 12))
+        local currentPage = anim.collectionGridPage or 1
+        local targetPage = math.max(1, math.min(pageCount, currentPage - (y > 0 and 1 or -1)))
+        if targetPage ~= currentPage then
+            local Book = require("ui.collection_book")
+            Book.turn(targetPage < currentPage and "back" or "forward", 1, function()
+                anim.collectionGridPage = targetPage
+                selectedCollectionItem, collectionScrollY = nil, 0
+            end, mainCanvas, RENDER_SCALE)
+            Sound.play("card_deal")
+        end
     elseif state == "map" and game.map then
         Map.scroll(game.map, -y * 120)
     end
@@ -8365,6 +8647,30 @@ function love.mousereleased(x, y, button, istouch)
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
     juice.buttonPressedId = nil
+
+    if button == 1 and anim.collectionPageDrag and isCollectionOpen and collectionCategory then
+        local Book = require("ui.collection_book")
+        local drag = anim.collectionPageDrag
+        anim.collectionPageDrag = nil
+        local categories = Collection.getCategories()
+        local currentIndex = 1
+        for i, cat in ipairs(categories) do if cat.id == collectionCategory then currentIndex = i break end end
+        local delta = mx - drag.x
+        local targetIndex = math.abs(delta) > 36
+            and math.max(1, math.min(#categories, currentIndex + (delta < 0 and 1 or -1)))
+            or drag.targetIndex
+        if targetIndex ~= currentIndex then
+            local targetId = categories[targetIndex].id
+            local movedBy = math.abs(targetIndex - currentIndex)
+            Book.turn(targetIndex < currentIndex and "back" or "forward", movedBy, function()
+                collectionCategory, collectionPackType = targetId, nil
+                selectedCollectionItem, collectionScrollY = nil, 0
+                anim.collectionGridPage = 1
+            end, mainCanvas, RENDER_SCALE)
+            Sound.play(math.abs(delta) > 36 and "card_slide" or "card_deal")
+        end
+        return
+    end
 
     if button == 1 and handDrag.active then
         if handDrag.mode == "select" then

@@ -342,7 +342,7 @@ function Deck.getCardAttackSpeed(card)
     if not card then return 1 end
     local base = Deck.getAttackSpeed(card.rank)
     card.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
-    card.attackSpeed = math.max(1, math.min(999, base + card.speedBonus))
+    card.attackSpeed = math.max(1, math.min(999, base + card.speedBonus + (card.temporarySpeedBonus or 0)))
     return card.attackSpeed
 end
 
@@ -351,6 +351,12 @@ function Deck.applyAttackSpeedBonus(card, amount)
     local base = Deck.getAttackSpeed(card.rank)
     local currentBonus = math.max(0, tonumber(card.speedBonus) or 0)
     card.speedBonus = math.min(999 - base, currentBonus + math.max(0, tonumber(amount) or 0))
+    return Deck.getCardAttackSpeed(card)
+end
+
+function Deck.applyTemporaryAttackSpeedBonus(card, amount)
+    if not card then return 1 end
+    card.temporarySpeedBonus = (card.temporarySpeedBonus or 0) + math.max(0, tonumber(amount) or 0)
     return Deck.getCardAttackSpeed(card)
 end
 

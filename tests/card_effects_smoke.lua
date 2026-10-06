@@ -28,7 +28,7 @@ assert(foil.totalChips == plain.totalChips, "Foil must not change Chips")
 assert(foil.totalMult == plain.totalMult, "Foil must not change Mult")
 assert(foil.flatDamageBonus == 20 and foil.finalScore == plain.finalScore + 20,
     "Foil should add exactly 20 flat damage after Aura multipliers")
-assert(holo.totalMult == plain.totalMult + 1, "Holographic should add 1 Mult")
+assert(holo.totalMult == plain.totalMult + 10, "Holographic should add 10 Mult")
 assert(poly.auraEditionMultiplier == 1 and poly.localAuraBonus>0, "Polychrome must only amplify this card's contribution")
 assert(poly.finalScore == math.floor((plain.rawScore+poly.localAuraBonus)*(1+plain.totalExtraDamagePct)),
     "Polychrome should add the local Aura bonus before damage conversion")

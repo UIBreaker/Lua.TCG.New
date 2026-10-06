@@ -57,8 +57,28 @@ for _,id in ipairs({"cons_speed_small","cons_speed_large"}) do
     g.hand={Deck.newCard(7,"spades")};env.Deck=Deck
     assert(use(1) and env.pendingSpeedCard.id==id)
     local c=g.hand[1];local old=Deck.getCardAttackSpeed(c)
-    Deck.applyAttackSpeedBonus(c,Shop.getConsumableParams(item.consumable).speed)
+    Deck.applyTemporaryAttackSpeedBonus(c,Shop.getConsumableParams(item.consumable).speed)
     assert(Deck.getCardAttackSpeed(c)==old+(id=="cons_speed_small" and 3 or 10))
+    assert((c.speedBonus or 0)==0 and Deck.getCardAttackSpeed(Deck.cloneCard(c))==old,"speed consumable must not persist")
+end
+local speedFirst=assert(source:find("local function applyPendingSpeedAt",1,true))
+local speedLast=assert(source:find("local function startEnemyAttack",speedFirst,true))
+local speedChunk=source:sub(speedFirst,speedLast-1).."\nreturn applyPendingSpeedAt"
+for _,id in ipairs({"cons_speed_small","cons_speed_large"}) do
+    local item=Shop.healingItem("upper",id).consumable
+    local card=Deck.newCard(7,"spades")
+    card.visualX,card.visualY=0,0
+    g.hand={card};g.persistentDeck={Deck.cloneCard(card)};g.deck={};g.discardPile={};g.consumables={item}
+    local speedEnv=setmetatable({game=g,pendingSpeedCard=item,Deck=Deck,Shop=Shop,Sound={play=function() end},
+        UI={Polish={snapshot=function() return {} end,changed=function() end},Abilities={consumableUsed=function() end}},
+        getConsumableSlotRect=function() return 0,0 end,spawnShopFx=function() end}, {__index=_G})
+    local speedLoader
+    if setfenv then speedLoader=assert(loadstring(speedChunk));setfenv(speedLoader,speedEnv)
+    else speedLoader=assert(load(speedChunk,"speed handler","t",speedEnv)) end
+    local old=Deck.getCardAttackSpeed(card)
+    assert(speedLoader()(10,10) and #g.consumables==0)
+    assert(Deck.getCardAttackSpeed(card)==old+Shop.getConsumableParams(item).speed)
+    assert(Deck.getCardAttackSpeed(g.persistentDeck[1])==old)
 end
 local restored=require("src.persistence").restoreSnapshot(require("src.persistence").makeSnapshot({
     deities={D.CATALOG.spirit_hell_sleep},consumables={bed()},persistentDeck={}},"shop"))

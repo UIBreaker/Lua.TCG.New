@@ -24,7 +24,10 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     number flowB = cos(uv.y * 3.7 - uv.x * 2.3 - u_time * u_speed * 0.78
         + sin(uv.x * 2.8 + u_mouseUV.y * 3.0) * 0.65 + u_tilt.y * 2.0);
     number field = 0.5 + flowA * 0.19 + flowB * 0.17 + (uv.x - uv.y) * 0.08;
-    vec3 palette = flowingPalette(field + u_mouseUV.x * 0.08 + u_time * u_speed * 0.045);
+    // Broad, moving jewel facets distinguish this material from thin-film holo.
+    number facet = floor((uv.x + uv.y * .62 + flowA * .12) * 6.0) / 6.0;
+    vec3 palette = flowingPalette(facet + u_mouseUV.x * 0.08 + u_time * u_speed * 0.045);
+    number seam = pow(1.0 - abs(sin((uv.x + uv.y * .62 + flowA * .12) * 18.84954)), 18.0);
 
     number edgeDistance = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
     number edgeGlow = 1.0 - smoothstep(0.018, 0.18, edgeDistance);
@@ -34,8 +37,9 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     vec2 blueUV = clamp(uv + warp - vec2(split, 0.0), vec2(0.0), vec2(1.0));
     vec3 slightSplit = vec3(Texel(texture, redUV).r, base.g, Texel(texture, blueUV).b);
     vec3 rgb = mix(base.rgb, slightSplit, clamp(interaction * 0.34 * u_intensity, 0.0, 0.16));
-    number colorMix = (0.075 + interaction * 0.25) * u_intensity;
+    number colorMix = (0.22 + interaction * 0.35) * u_intensity;
     rgb = mix(rgb, palette, clamp(colorMix, 0.0, 0.36));
     rgb += palette * edgeGlow * (0.035 + interaction * 0.09) * u_intensity;
+    rgb += palette * seam * (.10 + interaction * .12) * u_intensity;
     return vec4(clamp(rgb, 0.0, 1.0), base.a);
 }

@@ -165,6 +165,18 @@ function UI.initFonts()
     UI.fonts.hudStat = loadHudFont(18)
     UI.fonts.hudButton = loadHudFont(18)
     UI.fonts.hudSmall = loadHudFont(16)
+    local function loadBookFont(size)
+        if windowsFonts then
+            for _, path in ipairs({"C:/Windows/Fonts/timesbd.ttf", "C:/Windows/Fonts/georgiab.ttf"}) do
+                local ok, font = pcall(love.graphics.newFont, path, size)
+                if ok and font:hasGlyphs("BỘ SƯU TẬP LÁ TIÊU THỤ TRANG BỊ ẤN BẢN CƯỜNG HOÁ ĐƯỜNG") then return font end
+            end
+        end
+        return loadFont(size)
+    end
+    UI.fonts.bookTitle = loadBookFont(34)
+    UI.fonts.bookHeading = loadBookFont(28)
+    UI.fonts.bookChapter = loadBookFont(20)
 
     local function loadInfoFont(size)
         local ok, font = pcall(love.graphics.newFont, "fonts/font.ttf", size)

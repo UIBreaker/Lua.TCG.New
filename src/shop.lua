@@ -103,8 +103,8 @@ Shop.SPECTRAL_CARDS = {
 }
 
 Shop.CONSUMABLE_RULES={
-    cons_speed_small={params={speed=3},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài trong run (tối đa 999). Hủy chọn không mất thẻ."},
-    cons_speed_large={params={speed=10},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài trong run (tối đa 999). Hủy chọn không mất thẻ."},
+    cons_speed_small={params={speed=3},description="Chọn một lá đang trên tay: +{speed} tốc đánh trong trận hiện tại (tối đa 999). Hủy chọn không mất thẻ."},
+    cons_speed_large={params={speed=10},description="Chọn một lá đang trên tay: +{speed} tốc đánh trong trận hiện tại (tối đa 999). Hủy chọn không mất thẻ."},
     speed_single={params={speed=5},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Hủy chọn không mất thẻ."},
     speed_team={params={speed=2},description="Mọi lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Chỉ dùng khi đang chiến đấu và có bài."},
     spell_aura={params={},description="Một SPN ngẫu nhiên nhận Foil (+50 ST cố định), Holographic (+10 Cường hóa) hoặc Polychrome (×1.5 Aura cuối)."},

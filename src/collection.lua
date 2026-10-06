@@ -19,6 +19,13 @@ Collection.CATEGORIES = {
         badge = "25",
     },
     {
+        id = "playing_cards",
+        title = "Lá Bài",
+        sub = "Bộ Chuẩn 52 Lá",
+        col = "left",
+        btnColor = { 0.92, 0.28, 0.22, 1 },
+    },
+    {
         id = "decks",
         title = "Bộ Bài",
         sub = "Bộ Bài Khởi Đầu",
@@ -36,8 +43,8 @@ Collection.CATEGORIES = {
         alert = true,
     },
     {
-        id = "consumables",
-        title = "Lá Tiêu Thụ",
+        id = "equipment",
+        title = "Trang Bị",
         sub = "Trang Bị Khảm Ngọc",
         col = "left",
         isBigOrange = true,
@@ -73,8 +80,8 @@ Collection.CATEGORIES = {
     },
     {
         id = "packs",
-        title = "Gói Bài",
-        sub = "Gói & Toàn Bộ Nội Dung",
+        title = "Rương",
+        sub = "Toàn Bộ Rương Trong Game",
         col = "right",
         btnColor = { 0.92, 0.28, 0.22, 1 },
         badge = "5",
@@ -97,12 +104,36 @@ Collection.CATEGORIES = {
         btnColor = { 0.92, 0.28, 0.22, 1 },
         badge = "9",
     },
+    {
+        id = "consumables",
+        title = "Lá Tiêu Thụ",
+        sub = "Dược Liệu & Vật Phẩm Tiêu Hao",
+        col = "right",
+        btnColor = { 0.95, 0.55, 0.55, 1 },
+        icon = "✧",
+    },
 }
+
+local categoryAccents = {
+    jokers = { "✦", { 0.40, 0.72, 0.92, 1 } }, playing_cards = { "♡", { 0.72, 0.24, 0.22, 1 } },
+    decks = { "▣", { 0.78, 0.61, 0.32, 1 } }, vouchers = { "◈", { 0.30, 0.68, 0.48, 1 } },
+    equipment = { "◇", { 0.48, 0.70, 0.82, 1 } }, enhancements = { "✧", { 0.82, 0.53, 0.30, 1 } },
+    seals = { "✦", { 0.62, 0.42, 0.82, 1 } }, editions = { "◇", { 0.82, 0.67, 0.34, 1 } },
+    packs = { "▣", { 0.32, 0.68, 0.84, 1 } }, consumables = { "✧", { 0.72, 0.40, 0.40, 1 } },
+    blinds = { "⚔", { 0.68, 0.34, 0.34, 1 } }, other = { "✦", { 0.40, 0.68, 0.44, 1 } },
+}
+for _, cat in ipairs(Collection.CATEGORIES) do
+    local style = categoryAccents[cat.id]
+    if style then cat.icon, cat.accent = style[1], style[2] end
+end
 
 -- Static items for categories that don't have dedicated Lua modules
 local EDITIONS = {
     { id = "ed_base", name = "Ấn Bản Chuẩn (Standard)", rarity = "Cơ Bản", desc = "Lá bài gốc nguyên bản không mang lớp phủ quang học ma thuật.", icon = "🃏", color = { 0.70, 0.70, 0.70, 1 } },
 }
+local itemCache = {}
+local cacheWarmKeys = {}
+local cacheWarmIndex = 1
 
 function Collection.getCategories()
     for _, cat in ipairs(Collection.CATEGORIES) do
@@ -122,10 +153,29 @@ function Collection.getCategoryById(catId)
     return nil
 end
 
-function Collection.getItems(category)
+local function buildItems(category, packFilter)
     local items = {}
 
-    if category == "jokers" then
+    if category == "playing_cards" then
+        for _, suit in ipairs(Deck.FACTION_ORDER) do
+            local info = Deck.FACTIONS[suit]
+            for rank = 2, 14 do
+                local rankName = Deck.RANK_NAMES[rank]
+                table.insert(items, {
+                    id = "standard_" .. suit .. "_" .. rank,
+                    name = rankName .. " " .. Deck.STANDARD_SUIT_NAMES[suit],
+                    rank = rank,
+                    rankName = rankName,
+                    suit = suit,
+                    suitSymbol = info.symbol,
+                    subtitle = "BỘ CHUẨN • " .. Deck.STANDARD_SUIT_NAMES[suit],
+                    rarity = "Lá Bài",
+                    desc = "Lá " .. rankName .. " chất " .. Deck.STANDARD_SUIT_NAMES[suit] .. " trong bộ bài chuẩn.",
+                    color = info.color,
+                })
+            end
+        end
+    elseif category == "jokers" then
         -- Harvest all deities dynamically from Deities.CATALOG
         for id, d in pairs(Deities.CATALOG) do
             local rarityName = (d.rarity == "legendary" and "Huyền Thoại") or
@@ -149,7 +199,7 @@ function Collection.getItems(category)
         end
         table.sort(items, function(a, b) return a.name < b.name end)
 
-    elseif category == "consumables" then
+    elseif category == "equipment" then
         -- Harvest all equipment dynamically from Equipment.POOL and canonical Equipment.ITEMS
         local seen = {}
         local equipmentIds = {}
@@ -204,6 +254,36 @@ function Collection.getItems(category)
             end
         end
         table.sort(items, function(a, b) return a.name < b.name end)
+
+    elseif category == "consumables" then
+        local groups = {heal={1,"BÌNH MÁU"}, armor_potion={2,"BÌNH GIÁP"},
+            speed_single={3,"TỐC ĐÁNH"}, speed_team={3,"TỐC ĐÁNH"}, destroy={4,"TIÊU HỦY"}, bed={5,"GIƯỜNG"}}
+        local seen = {}
+        local function add(item)
+            if seen[item.id] then return end
+            seen[item.id] = true
+            local group = groups[item.category] or {6,"TIÊU HAO"}
+            item.subtitle = group[2] .. " • VẬT PHẨM TIÊU HAO"
+            item.rarity = "Tiêu Hao"
+            item.groupOrder, item.catalogOrder = group[1], #items + 1
+            items[#items+1] = item
+        end
+        -- Share the actual shop definitions, so future potion/utility entries
+        -- automatically appear with their real values and descriptions.
+        for _, def in ipairs(Shop.POTIONS or {}) do add(Shop.healingItem("upper", def.id)) end
+        for _, offer in ipairs(Shop.SOUL_SUPPORT or {}) do
+            local card = RunManager[offer.factory]()
+            if card.category == "speed_single" or card.category == "speed_team" then
+                card.desc = (Shop.getConsumableDescription(card) or card.desc)
+                    .. "\nNguồn: Chợ Linh Hồn, " .. offer.cost .. " LH."
+                add(card)
+            end
+        end
+        add(Shop.destructionItem("upper"))
+        table.sort(items, function(a,b)
+            if a.groupOrder ~= b.groupOrder then return a.groupOrder < b.groupOrder end
+            return a.catalogOrder < b.catalogOrder
+        end)
 
     elseif category == "decks" then
         local red = Deck.STARTER_DECKS.red_deck
@@ -276,33 +356,37 @@ function Collection.getItems(category)
 
     elseif category == "packs" then
         for _, pack in ipairs(Shop.PACK_CATALOG or {}) do
-            table.insert(items, {
-                id = "pack_" .. pack.packType,
-                packType = pack.packType,
-                name = pack.name,
-                subtitle = pack.subtitle,
-                rarity = pack.rarity or "Gói Bài",
-                cost = pack.cost,
-                desc = pack.desc,
-                icon = pack.icon,
-                color = pack.color,
-            })
-            for index, reward in ipairs(Shop.getPackContents(pack.packType)) do
-                local item = {}
-                for key, value in pairs(reward) do item[key] = value end
-                if pack.packType == "buffoon" then item.deityId = reward.id end
-                item.id = "pack_content_" .. pack.packType .. "_" .. tostring(reward.id or (reward.suit or "item") .. "_" .. (reward.rank or index))
-                item.packType = pack.packType
-                item.sourcePackType = pack.packType
-                item.isPackContent = true
-                item.name = reward.name or ((reward.rankName or tostring(reward.rank or "?")) .. (reward.suitSymbol or ""))
-                item.subtitle = pack.name .. " • NỘI DUNG CÓ THỂ NHẬN"
-                item.rarity = reward.rarity or pack.rarity or "Nội Dung Gói"
-                item.desc = (reward.desc or "Quân bài có thể xuất hiện khi mở gói.") .. "\n\nNguồn: " .. pack.name
-                item.icon = reward.icon or pack.icon
-                item.color = reward.color or pack.color
-                item.cost = nil
-                table.insert(items, item)
+            if not packFilter then
+                table.insert(items, {
+                    id = "pack_" .. pack.packType,
+                    packType = pack.packType,
+                    name = pack.name,
+                    subtitle = pack.subtitle,
+                    rarity = pack.rarity or "Gói Bài",
+                    cost = pack.cost,
+                    desc = pack.desc,
+                    icon = pack.icon,
+                    color = pack.color,
+                })
+            end
+            if packFilter and pack.packType == packFilter then
+                for index, reward in ipairs(Shop.getPackContents(pack.packType)) do
+                    local item = {}
+                    for key, value in pairs(reward) do item[key] = value end
+                    if pack.packType == "buffoon" then item.deityId = reward.id end
+                    item.id = "pack_content_" .. pack.packType .. "_" .. tostring(reward.id or (reward.suit or "item") .. "_" .. (reward.rank or index))
+                    item.packType = pack.packType
+                    item.sourcePackType = pack.packType
+                    item.isPackContent = true
+                    item.name = reward.name or ((reward.rankName or tostring(reward.rank or "?")) .. (reward.suitSymbol or ""))
+                    item.subtitle = pack.name .. " • NỘI DUNG CÓ THỂ NHẬN"
+                    item.rarity = reward.rarity or pack.rarity or "Nội Dung Gói"
+                    item.desc = (reward.desc or "Quân bài có thể xuất hiện khi mở gói.") .. "\n\nNguồn: " .. pack.name
+                    item.icon = reward.icon or pack.icon
+                    item.color = reward.color or pack.color
+                    item.cost = nil
+                    table.insert(items, item)
+                end
             end
         end
 
@@ -360,6 +444,44 @@ function Collection.getItems(category)
     end
 
     return items
+end
+
+local function cacheKey(category, packFilter)
+    return tostring(category) .. "\31" .. tostring(packFilter or "")
+end
+
+function Collection.getItems(category, packFilter)
+    local key = cacheKey(category, packFilter)
+    local items = itemCache[key]
+    if not items then
+        items = buildItems(category, packFilter)
+        itemCache[key] = items
+    end
+    return items
+end
+
+-- Build one catalog per idle frame so opening the collection never has to
+-- construct all category tables in a single draw call.
+function Collection.prepareCacheStep()
+    if #cacheWarmKeys == 0 then
+        for _, category in ipairs(Collection.CATEGORIES) do
+            cacheWarmKeys[#cacheWarmKeys + 1] = { category.id }
+        end
+        for _, pack in ipairs(Shop.PACK_CATALOG or {}) do
+            cacheWarmKeys[#cacheWarmKeys + 1] = { "packs", pack.packType }
+        end
+    end
+    local entry = cacheWarmKeys[cacheWarmIndex]
+    if not entry then return true end
+    Collection.getItems(entry[1], entry[2])
+    cacheWarmIndex = cacheWarmIndex + 1
+    return cacheWarmIndex > #cacheWarmKeys
+end
+
+function Collection.invalidateCache()
+    itemCache = {}
+    cacheWarmKeys = {}
+    cacheWarmIndex = 1
 end
 
 return Collection

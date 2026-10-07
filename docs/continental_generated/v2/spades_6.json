@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_6",
+  "key": "spades_6",
+  "suit": "spade",
+  "rank": 6,
+  "name": "Borek · Thợ Rèn Băng",
+  "abilityName": "Tái Rèn",
+  "ability": "+{armor} Giáp; đã bỏ bài từ tay trước: thêm {bonus} Giáp.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 4,
+  "rule": "discarded",
+  "ambition": "Rèn từ phế tích một tấm khiên không bao giờ bỏ chủ.",
+  "concept": "stocky black-bearded northern man, ice-blue forge apron and silver gloves, hammering salvaged armor on a frozen anvil",
+  "file": "assets/cards/continental/playing/spades_6_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Borek · Thợ Rèn Băng. Character visual: stocky black-bearded northern man, ice-blue forge apron and silver gloves, hammering salvaged armor on a frozen anvil. Personal ambition: Rèn từ phế tích một tấm khiên không bao giờ bỏ chủ.. Gameplay visual metaphor: Tái Rèn / +{armor} Giáp; đã bỏ bài từ tay trước: thêm {bonus} Giáp.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-1f72fba4-da98-465a-9d0d-4c9934dcd702.png"
+}

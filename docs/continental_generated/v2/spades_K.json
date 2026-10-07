@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_13",
+  "key": "spades_K",
+  "suit": "spade",
+  "rank": 13,
+  "name": "Ulric · Vua Của Người Ở Lại",
+  "abilityName": "Thành Lũy Đơn Độc",
+  "ability": "+{armor} Giáp; chỉ 1 lá tính điểm: thêm {bonus} Giáp và hồi 2 Máu.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 6,
+  "rule": "solo",
+  "ambition": "Bảo vệ một vương quốc nhỏ còn đúng một ngôi làng.",
+  "concept": "old one-eyed man with long white beard, plain blackened king armor and blue cloak, huge shield planted beside one distant winter village",
+  "file": "assets/cards/continental/playing/spades_K_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Ulric · Vua Của Người Ở Lại. Character visual: old one-eyed man with long white beard, plain blackened king armor and blue cloak, huge shield planted beside one distant winter village. Personal ambition: Bảo vệ một vương quốc nhỏ còn đúng một ngôi làng.. Gameplay visual metaphor: Thành Lũy Đơn Độc / +{armor} Giáp; chỉ 1 lá tính điểm: thêm {bonus} Giáp và hồi 2 Máu.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-c9418c69-8050-4985-b6f7-9b9b19386f4e.png"
+}

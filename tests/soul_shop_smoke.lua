@@ -127,7 +127,8 @@ local stock=table.concat(rerolled.soulShopStock,",");Shop.refresh(utilityShop,re
 G.resetRun(rerolled);assert(rerolled.soulRerollCount==0 and not rerolled.soulShopStock)
 local devour=G.new();local eater=Deck.newCard(14,"aurelia");local meal=Deck.newCard(3,"valoria")
 devour.persistentDeck={eater,meal};devour.hand={meal}
-assert(Deck.devourCard(eater,meal,devour) and devour.souls==1)
+assert(not Deck.devourCard(eater,meal,devour),"Continental characters replace legacy devouring")
+assert(require("src.card_abilities").destroy(devour,meal) and devour.souls==1)
 Combat.cleanupDestroyedCards(devour);assert(devour.souls==1)
 for _,spell in ipairs({"spell_ankh","spell_hex"}) do
     local spirit=G.new()

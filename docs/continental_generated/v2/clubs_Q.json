@@ -1,0 +1,19 @@
+{
+  "id": "standard_clubs_12",
+  "key": "clubs_Q",
+  "suit": "club",
+  "rank": 12,
+  "name": "Elowen · Người Ủ Gió",
+  "abilityName": "Gió Tích Lũy",
+  "ability": "+{speed} Tốc đánh tay; mỗi tay giữ không chơi tích 1 Gió (tối đa 3), khi chơi mỗi tầng thêm 0.5.",
+  "resource": "speed",
+  "base": 0.5,
+  "bonus": 1.5,
+  "rule": "charge",
+  "ambition": "Tìm lại giọng hát của khu rừng đã im lặng.",
+  "concept": "older elegant woman with long black hair streaked white, flowing deep-green travel robe, holding a spiral wind flute inside ancient canopy",
+  "file": "assets/cards/continental/playing/clubs_Q_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Elowen · Người Ủ Gió. Character visual: older elegant woman with long black hair streaked white, flowing deep-green travel robe, holding a spiral wind flute inside ancient canopy. Personal ambition: Tìm lại giọng hát của khu rừng đã im lặng.. Gameplay visual metaphor: Gió Tích Lũy / +{speed} Tốc đánh tay; mỗi tay giữ không chơi tích 1 Gió (tối đa 3), khi chơi mỗi tầng thêm 0.5.. Palette forest green, silver wind, muted gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-3b31fdf3-b376-47bc-b8eb-9c52657e1e0f.png"
+}

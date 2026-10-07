@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_14",
+  "key": "spades_A",
+  "suit": "spade",
+  "rank": 14,
+  "name": "Vaela · Người Dựng Trại Đầu",
+  "abilityName": "Khai Trận Kiên Cố",
+  "ability": "+{armor} Giáp; tay đầu trận: thêm {bonus} Giáp và +0.5 Tốc đánh tay.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 4,
+  "rule": "opening",
+  "ambition": "Dựng trại đầu tiên ở bên kia dãy núi không ai vượt qua.",
+  "concept": "young tan woman with short silver hair, blue expedition commander armor, planting a plain campsite standard into glacier beside silver shield",
+  "file": "assets/cards/continental/playing/spades_A_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Vaela · Người Dựng Trại Đầu. Character visual: young tan woman with short silver hair, blue expedition commander armor, planting a plain campsite standard into glacier beside silver shield. Personal ambition: Dựng trại đầu tiên ở bên kia dãy núi không ai vượt qua.. Gameplay visual metaphor: Khai Trận Kiên Cố / +{armor} Giáp; tay đầu trận: thêm {bonus} Giáp và +0.5 Tốc đánh tay.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-270bf870-98cc-463c-99da-3a083984edc6.png"
+}

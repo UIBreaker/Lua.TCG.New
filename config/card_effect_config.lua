@@ -55,7 +55,7 @@ for _, entry in ipairs({
     {"gilded", "KIM ẤN", "Nếu lá vẫn còn trên tay khi kết thúc lượt: +3 Vàng.", "foil", {1,.76,.3}},
     {"echo", "VỌNG ẢNH", "Lần đầu tính điểm mỗi tay: kích hoạt 2 lần, mỗi lần 100% hiệu lực.", "holographic", {.4,.8,1}},
     {"ancient", "CỔ ĐẠI", "Mọi chỉ số nhận từ Tiến Hóa mạnh hơn 200%.", "foil", {.66,.68,.4}},
-    {"void", "HƯ KHÔNG", "Khi tiêu hủy: khả năng kích hoạt thêm 10 lần trước khi biến mất.", "holographic", {.55,.25,.9}},
+    {"void", "HƯ KHÔNG", "Khi tiêu hủy: khả năng kích hoạt thêm 10 lần trước khi biến mất. Bộ 52 vẫn nhận tài nguyên tối đa một lần/lá/tay và chịu giới hạn chung.", "holographic", {.55,.25,.9}},
     {"astral", "TINH TÚ", "Khi xét tổ hợp: có thể là bất kỳ Chất nào đang thiếu. Bậc không đổi.", "holographic", {.5,.8,1}},
     {"resonant", "CỘNG HƯỞNG", "Khi nằm trên tay: hai lá sát bên nhận +20% hiệu quả khả năng.", "foil", {.3,.9,1}},
 }) do

@@ -1,0 +1,19 @@
+{
+  "id": "standard_diamonds_14",
+  "key": "diamonds_A",
+  "suit": "diamond",
+  "rank": 14,
+  "name": "Zara · Người Bắt Đầu Từ Không",
+  "abilityName": "Vốn Khởi Nghiệp",
+  "ability": "Nhận {gold} Vàng; đầu tay dưới 5 Vàng: thêm {bonus} Vàng và 3 Giáp; từ 5 Vàng: +0.5 Tốc đánh tay.",
+  "resource": "gold",
+  "base": 1,
+  "bonus": 1,
+  "rule": "poor",
+  "ambition": "Chứng minh một đứa trẻ đường phố cũng có thể dựng thương hội.",
+  "concept": "young tan woman with messy black cropped hair, patched bone-white coat, small empty purse and bright antique coin, immense desert market ruins",
+  "file": "assets/cards/continental/playing/diamonds_A_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Zara · Người Bắt Đầu Từ Không. Character visual: young tan woman with messy black cropped hair, patched bone-white coat, small empty purse and bright antique coin, immense desert market ruins. Personal ambition: Chứng minh một đứa trẻ đường phố cũng có thể dựng thương hội.. Gameplay visual metaphor: Vốn Khởi Nghiệp / Nhận {gold} Vàng; đầu tay dưới 5 Vàng: thêm {bonus} Vàng và 3 Giáp; từ 5 Vàng: +0.5 Tốc đánh tay.. Palette sand and bone ivory, antique gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-18b32a8b-7c8c-4b71-a6c1-5460f5b7c0c1.png"
+}

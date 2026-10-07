@@ -3440,3 +3440,8 @@ Prompt: Use case: stylized-concept. Create ONE production game card illustration
 Output: `assets/cards/continental/spn_enchantment/spell_codex.png`
 
 Source: `src/chest_depth.lua`; mode: built-in image_gen
+
+
+## Playing cards — v2
+
+[Bộ 52 chân dung v2 và prompt riêng](CONTINENTAL_52_PROMPTS.md)

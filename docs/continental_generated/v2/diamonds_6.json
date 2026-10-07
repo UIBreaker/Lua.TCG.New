@@ -1,0 +1,19 @@
+{
+  "id": "standard_diamonds_6",
+  "key": "diamonds_6",
+  "suit": "diamond",
+  "rank": 6,
+  "name": "Mirel · Người Nhặt Cơ Hội",
+  "abilityName": "Tái Chế",
+  "ability": "Nhận {gold} Vàng; đã bỏ bài từ tay trước: thêm {bonus} Vàng.",
+  "resource": "gold",
+  "base": 1,
+  "bonus": 1,
+  "rule": "discarded",
+  "ambition": "Biến những thứ bị bỏ đi thành cơ nghiệp của riêng mình.",
+  "concept": "young woman with tight black curls, patched mustard scavenger jacket, sorting one discarded broken relic into a valuable gold core, desert scrapyard",
+  "file": "assets/cards/continental/playing/diamonds_6_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Mirel · Người Nhặt Cơ Hội. Character visual: young woman with tight black curls, patched mustard scavenger jacket, sorting one discarded broken relic into a valuable gold core, desert scrapyard. Personal ambition: Biến những thứ bị bỏ đi thành cơ nghiệp của riêng mình.. Gameplay visual metaphor: Tái Chế / Nhận {gold} Vàng; đã bỏ bài từ tay trước: thêm {bonus} Vàng.. Palette sand and bone ivory, antique gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-f56c99c7-cba5-457c-b9d4-b2d2eaea2c2f.png"
+}

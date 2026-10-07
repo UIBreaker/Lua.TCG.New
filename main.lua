@@ -1,5 +1,22 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--capture-continental52" then require("tests.continental52_capture");return end
+    if a == "--test-continental52-regressions" then
+        io.stdout:setvbuf("no");local failed=false
+        for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
+            "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
+            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke"}) do
+            local ok,err=pcall(require,name)
+            if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
+        end
+        os.exit(failed and 1 or 0)
+    end
+    if a == "--test-continental52" then
+        io.stdout:setvbuf("no")
+        local ok,err=pcall(require,"tests.continental52_smoke")
+        if not ok then print("Continental 52 FAIL: "..tostring(err)) end
+        os.exit(ok and 0 or 1)
+    end
     if a == "--test-card-motion" then require("tests.card_motion_capture"); return end
     if a == "--test-editions-render" then require("tests.edition_preview.main"); return end
     if a == "--test-feature-parity" then
@@ -1859,13 +1876,13 @@ local function playSelectedHand()
             rotation = card.rotation or card.visualAngle or 0,
         }
     end
-    local playerSpeed = Combat.getAverageAttackSpeed(playedCards)
-    local monsterSpeed = game.monster and (game.monster.attackSpeed or 1) or 1
-    game.lastPlayerAttackSpeed = playerSpeed
-    game.monsterAttackedBeforePlayer = playerSpeed < monsterSpeed
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
     UI.Abilities.beginHand(game, evalResult, playedCards, game.abilityApproved)
+    local playerSpeed = Combat.getAverageAttackSpeed(playedCards,game)
+    local monsterSpeed = game.monster and (game.monster.attackSpeed or 1) or 1
+    game.lastPlayerAttackSpeed = playerSpeed
+    game.monsterAttackedBeforePlayer = playerSpeed < monsterSpeed
     game.abilityApproved = nil
     game.lastPlayedHandId = evalResult.type and evalResult.type.id
     anim.playButtonPulse = UI.ScoringFeel.config.timing.button
@@ -3797,7 +3814,8 @@ local function drawBattleInfoPanel(m, eval, preview)
             and UI.ScoringFeel.formula(anim.sequence) or nil,
         intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
         playerSpeed = scoring and anim.playerAttackSpeed
-            or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards()) or nil),
+            or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards(),game,
+                Poker.evaluate(getSelectedCards(),game.unlockedHands,game.handLevels)) or nil),
         enemySpeed = m and (m.attackSpeed or 1),
         humanEnemy = m and m.human,
         chipsBounce = scoring and anim.bounceScale.chips or 1,

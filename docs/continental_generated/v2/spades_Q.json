@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_12",
+  "key": "spades_Q",
+  "suit": "spade",
+  "rank": 12,
+  "name": "Morrigan · Người Ủ Pha Lê",
+  "abilityName": "Giáp Tích Lũy",
+  "ability": "+{armor} Giáp; mỗi tay giữ không chơi tích 1 Băng (tối đa 3), khi chơi mỗi tầng thêm 2 Giáp.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 6,
+  "rule": "charge",
+  "ambition": "Tái tạo hồ băng giữ ký ức của mẹ.",
+  "concept": "mature dark-skinned woman with silver coils, midnight-blue crystal-weaver mantle, holding three growing ice facets beside frozen lake",
+  "file": "assets/cards/continental/playing/spades_Q_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Morrigan · Người Ủ Pha Lê. Character visual: mature dark-skinned woman with silver coils, midnight-blue crystal-weaver mantle, holding three growing ice facets beside frozen lake. Personal ambition: Tái tạo hồ băng giữ ký ức của mẹ.. Gameplay visual metaphor: Giáp Tích Lũy / +{armor} Giáp; mỗi tay giữ không chơi tích 1 Băng (tối đa 3), khi chơi mỗi tầng thêm 2 Giáp.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-913b3395-3165-4d2b-ac5e-e4e31e8db371.png"
+}

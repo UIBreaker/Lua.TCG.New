@@ -1,0 +1,19 @@
+{
+  "id": "standard_clubs_9",
+  "key": "clubs_9",
+  "suit": "club",
+  "rank": 9,
+  "name": "Moss · Người Canh Nhịp",
+  "abilityName": "Giữ Đà",
+  "ability": "+{speed} Tốc đánh tay; còn lá không chơi: thêm {bonus}.",
+  "resource": "speed",
+  "base": 0.5,
+  "bonus": 1,
+  "rule": "reserve",
+  "ambition": "Nghe được nhịp sống của cây cổ nhất lục địa.",
+  "concept": "androgynous freckled adult with pale-green hood and long brown braid, wooden pendulum staff, balancing on root above waterfall",
+  "file": "assets/cards/continental/playing/clubs_9_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Moss · Người Canh Nhịp. Character visual: androgynous freckled adult with pale-green hood and long brown braid, wooden pendulum staff, balancing on root above waterfall. Personal ambition: Nghe được nhịp sống của cây cổ nhất lục địa.. Gameplay visual metaphor: Giữ Đà / +{speed} Tốc đánh tay; còn lá không chơi: thêm {bonus}.. Palette forest green, silver wind, muted gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-eaf93ec1-e3a8-4984-9beb-39611ec11390.png"
+}

@@ -100,13 +100,13 @@ local testDeities = {
 }
 local calc = Scoring.calculate(testHand, testDeities, { handsRemaining = 3 })
 printLog("Scoring calculation result: " .. calc.totalChips .. " Chips x " .. calc.totalMult .. " Mult x " .. calc.xMultTotal .. " XMult = " .. calc.finalScore)
--- Base Pair: 10 Chips, 2 Mult. Cards: 9 + 9 = 18 Chips. Vharos Spades faction: +40 Chips.
--- Total Chips: 10 + 18 + 40 + 20 + 16 = 104 Chips.
+-- Base Pair: 10 Chips, 2 Mult. Cards: 9 + 9 = 18 Chips. Continental suits use resource tactics.
+-- Total Chips: 10 + 18 + 20 + 16 = 64 Chips.
 -- Total Mult: 2 + 4 + 6 = 12 Mult.
--- Final Score: 104 * 12 = 1248.
-assert(calc.totalChips == 104, "Expected 104 chips, got " .. calc.totalChips)
+-- Final Score: 64 * 12 = 768.
+assert(calc.totalChips == 64, "Expected 64 chips, got " .. calc.totalChips)
 assert(calc.totalMult == 12, "Expected 12 mult, got " .. calc.totalMult)
-assert(calc.finalScore == 1248, "Expected 1248 final score, got " .. calc.finalScore)
+assert(calc.finalScore == 768, "Expected 768 final score, got " .. calc.finalScore)
 printLog(" Test 11 Passed: Scoring Formula & Deities Integration")
 
 printLog("=== ALL 11 TESTS PASSED SUCCESSFULLY! ===")

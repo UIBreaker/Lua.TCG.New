@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_4",
+  "key": "spades_4",
+  "suit": "spade",
+  "rank": 4,
+  "name": "Soren · Người Xây Bốn Trụ",
+  "abilityName": "Liên Kết Thành Lũy",
+  "ability": "+{armor} Giáp; ít nhất 3 chất tính điểm: thêm {bonus} Giáp.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 5,
+  "rule": "diverse",
+  "ambition": "Xây pháo đài nơi bốn dân tộc cùng được bảo vệ.",
+  "concept": "lean older man with grey moustache, steel-blue engineer coat, four anchor spikes linked by one chain, glacial cliff fortress",
+  "file": "assets/cards/continental/playing/spades_4_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Soren · Người Xây Bốn Trụ. Character visual: lean older man with grey moustache, steel-blue engineer coat, four anchor spikes linked by one chain, glacial cliff fortress. Personal ambition: Xây pháo đài nơi bốn dân tộc cùng được bảo vệ.. Gameplay visual metaphor: Liên Kết Thành Lũy / +{armor} Giáp; ít nhất 3 chất tính điểm: thêm {bonus} Giáp.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-afc5e062-4657-4bc2-83ee-970ee5293ba5.png"
+}

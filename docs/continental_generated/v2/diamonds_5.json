@@ -1,0 +1,19 @@
+{
+  "id": "standard_diamonds_5",
+  "key": "diamonds_5",
+  "suit": "diamond",
+  "rank": 5,
+  "name": "Perrin · Chủ Đoàn Lữ Hành",
+  "abilityName": "Chuyến Hàng Trọn Vẹn",
+  "ability": "Nhận {gold} Vàng; 5 lá tính điểm: thêm {bonus} Vàng và +1 Tốc đánh tay.",
+  "resource": "gold",
+  "base": 1,
+  "bonus": 1,
+  "rule": "five",
+  "ambition": "Dẫn đoàn hàng đầu tiên đến tận rìa lục địa.",
+  "concept": "lanky man with windswept sandy hair, ochre caravan captain coat, hauling a sealed brass cargo case along colossal fossil road",
+  "file": "assets/cards/continental/playing/diamonds_5_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Perrin · Chủ Đoàn Lữ Hành. Character visual: lanky man with windswept sandy hair, ochre caravan captain coat, hauling a sealed brass cargo case along colossal fossil road. Personal ambition: Dẫn đoàn hàng đầu tiên đến tận rìa lục địa.. Gameplay visual metaphor: Chuyến Hàng Trọn Vẹn / Nhận {gold} Vàng; 5 lá tính điểm: thêm {bonus} Vàng và +1 Tốc đánh tay.. Palette sand and bone ivory, antique gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-948a4389-55cc-4e76-8952-bccbeddb6254.png"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "standard_hearts_14",
+  "key": "hearts_A",
+  "suit": "heart",
+  "rank": 14,
+  "name": "Althea · Người Mở Bình Minh",
+  "abilityName": "Khởi Hành",
+  "ability": "Hồi {heal} Máu; tay đầu trận: hồi thêm {bonus} Máu và +1 Tốc đánh tay.",
+  "resource": "heal",
+  "base": 2,
+  "bonus": 3,
+  "rule": "opening",
+  "ambition": "Chứng minh ánh sáng vẫn tồn tại phía sau nhật thực.",
+  "concept": "young blonde woman with radiant determined eyes, white and crimson expedition cloak, lifting a restrained dawn lantern above lava coast",
+  "file": "assets/cards/continental/playing/hearts_A_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Althea · Người Mở Bình Minh. Character visual: young blonde woman with radiant determined eyes, white and crimson expedition cloak, lifting a restrained dawn lantern above lava coast. Personal ambition: Chứng minh ánh sáng vẫn tồn tại phía sau nhật thực.. Gameplay visual metaphor: Khởi Hành / Hồi {heal} Máu; tay đầu trận: hồi thêm {bonus} Máu và +1 Tốc đánh tay.. Palette restrained lava orange, oxblood, bone ivory. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-816d5386-78a9-4346-a9fa-e94f68f51561.png"
+}

@@ -42,13 +42,19 @@ function D.resolve(item,game)
         local level=item.evolutionLevel or 0
         local text=A.description(item).."\nTIẾN HÓA "..level.." / "..A.config.maxEvolutionLevel
         if (item.temporaryAbilityLevels or 0)>0 then text=text.." · TẠM +"..item.temporaryAbilityLevels end
-        if level<A.config.maxEvolutionLevel then text=text.."\nKẾ TIẾP: "..A.description(item,A.level(item)+1) else text=text.." · MAX EVOLUTION" end
+        if level>=A.config.maxEvolutionLevel then text=text.." · MAX EVOLUTION" end
+        text=text.."\n"..def.ambition.."\nKích hoạt trước so tốc đánh, một lần/lá/tay; lặp điểm không lặp tài nguyên."
+        text=text.."\nToàn tay: tối đa 12 hồi Máu, 24 Giáp, +3 Tốc; 3 Vàng/tay và 12 Vàng/trận từ bộ 52."
+        if def.suit=="heart" then text=text.."\nCơ: hồi Máu dư chuyển thành Giáp." end
+        text=text.."\nVàng hoặc Tốc vượt giới hạn tạo 2 Giáp mỗi đơn vị, vẫn chịu giới hạn Giáp."
+        if level<A.config.maxEvolutionLevel then text=text.."\nKẾ TIẾP: "..A.description(item,A.level(item)+1) end
         text=text.."\nCơ bản: "..(item.baseChips or Deck.getChipValue(item.rank)).." ST · Tốc đánh "..Deck.getCardAttackSpeed(item)
         if item.rank==11 then text=text.."\nVai trò J: +15 ST và +2 Cường hóa mỗi lá 2–10 được chơi."
         elseif item.rank==12 then text=text.."\nVai trò Q: +0.1 hệ số và +15 ST / +2 Cường hóa mỗi ITM trên lá."
         elseif item.rank==13 then text=text.."\nVai trò K: +25 ST và +5 Cường hóa."
         elseif item.rank==14 then text=text.."\nVai trò A: +15 ST." end
         local state=item.abilityState or {}
+        if state.tacticCharge then text=text.."\nTích hiện tại: "..state.tacticCharge end
         if state.hearts then text=text.."\nTâm hiện tại: "..state.hearts.." / "..(A.params(item).maxStacks or 0) end
         if state.savings then text=text.."\nVàng tích: "..state.savings.." / "..(A.params(item).maxStacks or 0) end
         if state.bribeUsed then text=text.."\nHối lộ: đã dùng trong trận." end
@@ -62,7 +68,7 @@ function D.resolve(item,game)
         if item.seal then text=text.."\nẤN · "..Deck.getModifierDescription("seal",item.seal) end
         if item.enhancement then text=text.."\nRÈN · "..Deck.getModifierDescription("enhancement",item.enhancement) end
         if game then local status=require("src.chest_depth").status(game,item);if status~="" then text=text.."\n"..status end end
-        return (item.rankName or tostring(item.rank))..(item.suitSymbol or "").." · "..def.name,text..D.edition(item)
+        return (item.rankName or tostring(item.rank))..(item.suitSymbol or "").." · "..def.characterName.." · "..def.name,text..D.edition(item)
     end
     if Deities.CATALOG[item.id] then
         local text="SPN · "..Deities.getRarityLabel(item).."\n"..Deities.getDescription(item)..D.edition(item)

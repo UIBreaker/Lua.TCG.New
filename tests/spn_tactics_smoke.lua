@@ -62,7 +62,7 @@ local cases = {
     {"spirit_gleaner",solo,"bonusGold",1},
 }
 for _, case in ipairs(cases) do
-    local id,h,key,value = table.unpack(case)
+    local id,h,key,value = (table.unpack or unpack)(case)
     game.discardsUsedInCombat = id == "spirit_stillness" and 0 or 1
     local owned = {deities={}}
     assert(D.addDeity(owned,D.CATALOG[id],5))
@@ -101,9 +101,11 @@ game.gold=20
 local king=hand({Deck.newCard(13,"diamonds")})
 local bribeMonster={hp=100000,maxHp=100000}
 local preview=Scoring.calculate(king,{}, {preview=true,gameState=game,monster=bribeMonster})
-assert(game.gold==20 and preview.bribeDollarsSpent>0)
+assert(game.gold==20 and preview.bribeDollarsSpent==0,"legacy king bribe is retired; score preview stays pure")
+require("src.card_abilities").start(game)
+require("src.card_abilities").beginHand(game,king,king.scoringCards)
 local actual=Scoring.calculate(king,{}, {gameState=game,monster=bribeMonster})
-assert(actual.finalScore==preview.finalScore and game.gold==20-actual.bribeDollarsSpent)
+assert(actual.finalScore==preview.finalScore and game.gold==17,"king buys exactly 12 armor for 3 gold before scoring")
 Combat.start(game,Monster.create(1,false,false,1),1)
 assert(not effect("spirit_molt",solo,game) and not effect("spirit_pivot",solo,game))
 assert(#D.getRandomShopPool({},50)==32)

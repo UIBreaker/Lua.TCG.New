@@ -1,0 +1,19 @@
+{
+  "id": "standard_clubs_2",
+  "key": "clubs_2",
+  "suit": "club",
+  "rank": 2,
+  "name": "Finn · Người Chạy Song Song",
+  "abilityName": "Bước Đôi",
+  "ability": "+{speed} Tốc đánh tay; đúng 2 lá tính điểm: thêm {bonus}.",
+  "resource": "speed",
+  "base": 0.5,
+  "bonus": 1.5,
+  "rule": "pair",
+  "ambition": "Chạy nhanh đủ để không mất người bạn đồng hành lần nữa.",
+  "concept": "lean fair young man with red curly hair, moss-green ranger tunic, twin short batons, sprinting beside a river through ancient forest",
+  "file": "assets/cards/continental/playing/clubs_2_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Finn · Người Chạy Song Song. Character visual: lean fair young man with red curly hair, moss-green ranger tunic, twin short batons, sprinting beside a river through ancient forest. Personal ambition: Chạy nhanh đủ để không mất người bạn đồng hành lần nữa.. Gameplay visual metaphor: Bước Đôi / +{speed} Tốc đánh tay; đúng 2 lá tính điểm: thêm {bonus}.. Palette forest green, silver wind, muted gold. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-8932f80a-ab4e-4818-a84b-d5a0e2575d90.png"
+}

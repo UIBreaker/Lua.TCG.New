@@ -333,9 +333,9 @@ end
 function Deck.getAttackSpeed(rank)
     rank = tonumber(rank)
     if not rank then return 1 end
-    if rank == 1 or rank == 14 then return 11 end
-    if rank >= 11 and rank <= 13 then return 10 end -- J / Q / K
-    return math.max(1, math.min(999, tonumber(rank) or 1))
+    if rank == 1 or rank == 14 then return 7 end
+    if rank >= 11 and rank <= 13 then return 3 end -- Court damage trades initiative.
+    return math.max(1,14-rank) -- Low ranks win initiative; high ranks hit harder.
 end
 
 function Deck.getCardAttackSpeed(card)
@@ -404,11 +404,11 @@ function Deck.newCard(rank, suit)
         equipments = {}, -- Up to 3 equipment slots
         maxSockets = 3,
         unlockedSockets = 3,
-        isWildSuit = requestedSuit ~= "red_deck" and isAceOfClubs,
-        isDualRankAce = requestedSuit ~= "red_deck" and isAceOfSpades,
+        isWildSuit = false,
+        isDualRankAce = false,
         isPrimalDrone = false,
         seal = nil, -- "gold" | "red" | "blue" | "purple"
-        disableFactionPassives = requestedSuit == "red_deck",
+        disableFactionPassives = true, -- Continental 52 replaces the legacy faction powers.
         starterDeckId = requestedSuit == "red_deck" and "red_deck" or nil,
         -- Visual properties
         x = 0,
@@ -516,6 +516,7 @@ function Deck.restoreDeck(deck)
         card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
         card.temporaryAbilityLevels = nil
         card.abilityState = nil
+        card.disableFactionPassives = true
         card.abilityDisabledUntil = nil
     end
     return deck

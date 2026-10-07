@@ -1,0 +1,19 @@
+{
+  "id": "standard_spades_8",
+  "key": "spades_8",
+  "suit": "spade",
+  "rank": 8,
+  "name": "Osric · Người Rút Đinh",
+  "abilityName": "Nhẹ Giáp Đón Đòn",
+  "ability": "Đầu tay từ 8 Giáp và đủ 4 Giáp: đổi 4 Giáp lấy +{bonus} Tốc đánh tay, rồi +{armor} Giáp; chưa đủ: +8 Giáp.",
+  "resource": "armor",
+  "base": 4,
+  "bonus": 1.5,
+  "rule": "armor_speed",
+  "ambition": "Chứng minh phòng thủ cũng có thể chủ động ra đòn.",
+  "concept": "lean brown-skinned man with silver dreadlocks, segmented ice-blue armor, unfastening one heavy shield plate while advancing through snow",
+  "file": "assets/cards/continental/playing/spades_8_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Osric · Người Rút Đinh. Character visual: lean brown-skinned man with silver dreadlocks, segmented ice-blue armor, unfastening one heavy shield plate while advancing through snow. Personal ambition: Chứng minh phòng thủ cũng có thể chủ động ra đòn.. Gameplay visual metaphor: Nhẹ Giáp Đón Đòn / Đầu tay từ 8 Giáp và đủ 4 Giáp: đổi 4 Giáp lấy +{bonus} Tốc đánh tay, rồi +{armor} Giáp; chưa đủ: +8 Giáp.. Palette glacial blue, deep navy, weathered steel. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-b64ab99c-a827-48c3-a26a-41f0a9c9ecf5.png"
+}

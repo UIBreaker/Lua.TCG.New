@@ -161,16 +161,19 @@ local function buildItems(category, packFilter)
             local info = Deck.FACTIONS[suit]
             for rank = 2, 14 do
                 local rankName = Deck.RANK_NAMES[rank]
+                local A=require("src.card_abilities")
+                local card={rank=rank,suit=suit}
+                local def=A.definition(card)
                 table.insert(items, {
                     id = "standard_" .. suit .. "_" .. rank,
-                    name = rankName .. " " .. Deck.STANDARD_SUIT_NAMES[suit],
+                    name = rankName .. " " .. Deck.STANDARD_SUIT_NAMES[suit].." · "..def.characterName,
                     rank = rank,
                     rankName = rankName,
                     suit = suit,
                     suitSymbol = info.symbol,
                     subtitle = "BỘ CHUẨN • " .. Deck.STANDARD_SUIT_NAMES[suit],
                     rarity = "Lá Bài",
-                    desc = "Lá " .. rankName .. " chất " .. Deck.STANDARD_SUIT_NAMES[suit] .. " trong bộ bài chuẩn.",
+                    desc = def.name..": "..A.description(card).."\n"..def.ambition,
                     color = info.color,
                 })
             end

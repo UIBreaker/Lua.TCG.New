@@ -1,0 +1,19 @@
+{
+  "id": "standard_hearts_4",
+  "key": "hearts_4",
+  "suit": "heart",
+  "rank": 4,
+  "name": "Yselle · Sứ Giả Bốn Bờ",
+  "abilityName": "Lời Thề Đoàn Kết",
+  "ability": "Hồi {heal} Máu; có ít nhất 3 chất tính điểm: hồi thêm {bonus} Máu.",
+  "resource": "heal",
+  "base": 2,
+  "bonus": 5,
+  "rule": "diverse",
+  "ambition": "Hợp nhất những đoàn viễn chinh từng là kẻ thù.",
+  "concept": "dark-skinned woman diplomat with shaved side hair, crimson traveling mantle, four simple woven cords knotted around healing lantern, basalt crossroads",
+  "file": "assets/cards/continental/playing/hearts_4_v2.png",
+  "prompt": "Use case: stylized-concept. ONE production character game card art, PNG full-bleed portrait 2:3 1024x1536. Continental cinematic dark fantasy expedition, Western mysterious continent. Painterly cinematic realism, medium detail, large readable silhouette, single main protagonist with expressive distinctive face, restrained magic and dramatic rim light, atmospheric quiet environment, powerful personal purpose expressed through pose. Face and signature tool safely central away from outer 12 percent. No text, letters, numbers, playing cards, suit symbols, frame, border, logo, watermark or UI. No East Asian motifs, no micro-ornament, no particle noise. Identity: Yselle · Sứ Giả Bốn Bờ. Character visual: dark-skinned woman diplomat with shaved side hair, crimson traveling mantle, four simple woven cords knotted around healing lantern, basalt crossroads. Personal ambition: Hợp nhất những đoàn viễn chinh từng là kẻ thù.. Gameplay visual metaphor: Lời Thề Đoàn Kết / Hồi {heal} Máu; có ít nhất 3 chất tính điểm: hồi thêm {bonus} Máu.. Palette restrained lava orange, oxblood, bone ivory. Each portrait distinct in anatomy, age, face, costume, pose and equipment.",
+  "status": "generated",
+  "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-37be3f97-f0c2-43b0-b612-e8c107f97510.png"
+}

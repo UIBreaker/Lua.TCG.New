@@ -129,23 +129,22 @@ for index,rows in ipairs(combos) do
     if index==9 then info={type=Poker.HAND_TYPES.HIGH_CARD,scoringCards={card(14,"diamonds")},unscoredCards=cards,chips=8,mult=1} end
     local decisions={}
     for _,choice in ipairs(A.choices(g,info,cards)) do decisions[#decisions+1]={card=choice.card,definition=choice.definition,params=choice.params,target=choice.options[1].target} end
-    if index==4 then A.discard(g,cards);A.roundEnd(g);assert(g.playerArmor>=6 and Boss.state(g.monster).delayNextAction==1) end
-    if index==7 then A.consumableUsed(g);assert(g.abilityCombat.pendingRepeat>=1) end
+    if index==4 then A.discard(g,cards);assert(g.abilityCombat.tacticDiscarded) end
+    if index==7 then A.consumableUsed(g);assert(g.abilityCombat.pendingRepeat==0) end
     if index==10 then A.destroy(g,cards[1]);A.destroy(g,cards[2]) end
     local result=play(g,cards,info,decisions)
     assert(result.finalScore>=0 and result.finalScore==result.finalScore,"combo "..index)
-    if index==1 then assert(#g.hand==1 and g.hand[1]==cards[2],"return hand count "..#g.hand);assert(g.abilityHand.repeats[cards[1].id]==1,"pair repeats "..tostring(g.abilityHand.repeats[cards[1].id])) end
-    if index==2 then assert(g.playerArmor>=8);assert(g.abilityHand.repeats[cards[1].id]==1) end
-    if index==3 then assert(#g.hand>=1 and A.level(cards[1])>0) end
-    if index==9 then assert(g.abilityHand.repeats[info.scoringCards[1].id]==2) end
+    assert(#g.hand==0,"resource tactics do not return played cards")
+    local ledger=g.abilityHand.tacticLedger
+    if ledger then assert(ledger.heal<=12 and ledger.armor<=24 and ledger.gold<=3 and ledger.speed<=3) end
     print("Combo "..index..": deterministic bounded resolution passed")
 end
 -- Copy cycles and destruction may never recurse indefinitely.
 local j1,j2=card(11,"clubs",5),card(11,"spades",5)
 local g=game({j1,j2});g.abilityCombat.lastDestroyed=j1
 play(g,{j1,j2})
-local q=card(12,"hearts",2);assert(A.params(q).healPercent==3 and A.params(q).maxStacks==4)
-local k=card(13,"hearts",2);assert(A.params(k).healPercent==35 and A.params(k).armor==14)
+local q=card(12,"hearts",2);assert(A.params(q).heal==2 and A.params(q).charge==3)
+local k=card(13,"hearts",2);assert(A.params(k).heal==2 and A.params(k).bonus==7)
 -- Every shipped boss is attached to an actual active, with usable counter lifecycle.
 local catalog={}
 for _,d in pairs(Monster.BOSSES) do catalog[d.debuffId]=d end
@@ -198,7 +197,7 @@ for key,def in pairs(catalog) do
         assert(Combat.resolveMonsterAttack(b).damage==10 and b.playerArmor==20)
     elseif key=="the_hook" then
         b.hand={card(6,"clubs"),card(6,"spades")};assert(Boss.onPlay(b)==2 and #b.hand==0 and #b.discardPile==2)
-        assert(b.abilityCombat.pendingRepeat==1 and Boss.state(b.monster).delayNextAction==1)
+        assert(b.abilityCombat.tacticDiscarded and b.abilityCombat.pendingRepeat==0,"forced discard primes new resource tactics")
     elseif key=="the_arm" then
         Boss.afterScore(b,{c});assert(c.rank==12 and b.persistentDeck[1].baseRank==12)
         Boss.disable(b,1);Boss.afterScore(b,{c});assert(c.rank==12)
@@ -223,29 +222,22 @@ for key,def in pairs(catalog) do
 end
 print("All 22 boss passives exercised through live scoring/combat/resource hooks")
 local a,b=card(12,"hearts"),card(12,"hearts");b.id=a.id;Deck.restoreDeck({a,b});assert(a.id~=b.id,"old duplicate ID migration")
-local held=card(12,"hearts",2);local g2=game({held});A.runtime(held).hearts=2
+local held=card(12,"hearts",2);local g2=game({held});A.runtime(held).tacticCharge=2
 local info={type=Poker.HAND_TYPES.HIGH_CARD,scoringCards={card(14,"diamonds")},unscoredCards={held},chips=5,mult=1}
-A.beginHand(g2,info,{held,info.scoringCards[1]});assert(g2.playerHp==56 and A.runtime(held).hearts==0,"played non-scoring queen releases stacks")
-local c1,c2=card(2,"hearts",2),card(2,"diamonds");local g3=game({c1,c2});play(g3,{c1,c2});assert(#g3.hand==1 and g3.playerArmor==4,"return evolution must increase real strength")
+A.beginHand(g2,info,{held,info.scoringCards[1]});assert(g2.playerHp==50 and A.runtime(held).tacticCharge==2,"unscored queen does not spend stored charge")
+local c1,c2=card(2,"hearts",2),card(2,"diamonds");local g3=game({c1,c2});play(g3,{c1,c2});assert(#g3.hand==0 and g3.playerHp==57,"pair evolution increases real healing")
 g3.monster.hp=0;local cycle=Boss.state(g3.monster).cycle;Boss.handEnd(g3);assert(Boss.state(g3.monster).cycle==cycle,"dead boss must not act")
 for id,d in pairs(Deck.ENHANCEMENTS) do assert(not Deck.getModifierDescription("enhancement",id):find("{[%w_]+}"),id) end
 for _,catalog in ipairs({require("src.shop").SPECTRAL_CARDS,require("src.shop").JOKER_SPELLS,Poker.PLANET_CARDS}) do
     for _,item in ipairs(catalog) do local _,body=Description.resolve(item);assert(#body>10 and not body:find("{[%w_]+}"),item.id) end
 end
--- Returning all five cards still improves at the last evolution level.
-local returnArmor={}
+-- Last-place healing improves at every level without inventing card instances.
+local recovery={}
 for level=4,5 do
-    local c=card(5,"hearts",level)
-    local cards={c,card(5,"diamonds"),card(5,"clubs"),card(5,"spades"),card(5,"hearts")}
-    local g=game(cards)
-    local info={type=Poker.HAND_TYPES.FLUSH,scoringCards=cards,unscoredCards={},chips=5,mult=1}
-    A.beginHand(g,info,cards);g.hand={};g.discardPile={}
-    for _,played in ipairs(cards) do g.discardPile[#g.discardPile+1]=played end
-    A.dispatch(g,"score",{c},g.abilityHand);A.finishHand(g)
-    assert(#g.hand==5,"return cannot duplicate or invent cards")
-    returnArmor[level]=g.playerArmor
+    local c=card(5,"hearts",level);local g=game({c})
+    A.beginHand(g,Poker.evaluate({c}),{c});recovery[level]=g.playerHp
 end
-assert(returnArmor[5]>returnArmor[4],"last return evolution must improve actual strength")
+assert(recovery[5]>recovery[4],"evolution must improve actual recovery")
 local g=game({card(2,"diamonds")},"executioner");g.playerArmor=1
 Boss.handEnd(g);local hp=g.playerHp
 A.resolveBossDamage(g)

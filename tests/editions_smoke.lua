@@ -85,16 +85,16 @@ local ownChips=0;for _,st in ipairs(plain.steps) do if st.type=="card_scored" an
 assert(math.abs(echo.bonusChips-plain.bonusChips-ownChips)<1e-8)
 
 E.setEffect(card,"ancient");card.evolutionLevel=2
-assert(A.params(card).gold==7 and A.params(card).count==2)
+assert(A.params(card).gold==1 and A.params(card).bonus==4,"Ancient triples evolution gains, not costs or conditions")
 card.evolutionLevel=0;assert(A.params(card).gold==1)
 local left=D.newCard(2,"diamonds");local right=D.newCard(2,"diamonds");local relay=D.newCard(8,"spades")
 E.setEffect(relay,"resonant");g=fixture({left,relay,right})
 local h={type=P.HAND_TYPES.PAIR,scoringCards={left,right},unscoredCards={},chips=10,mult=2}
 A.beginHand(g,h,{left,right});g.hand={relay}
 S.calculate(h,{}, {gameState=g,monster=g.monster})
-assert(math.abs(g.gold-2.4)<1e-8,"Both neighbors get 20%")
+assert(g.gold==3 and g.playerArmor>=2,"Both neighbors get resonance within the resource budget")
 g=fixture({left,relay,right});A.beginHand(g,h,{left,relay,right});g.hand={}
-S.calculate(h,{}, {gameState=g,monster=g.monster});assert(g.gold==2,"Played relay is no longer held")
+S.calculate(h,{}, {gameState=g,monster=g.monster});assert(g.gold==3,"Played relay no longer grants resonance; global gold cap remains")
 
 local goldCard=D.newCard(9,"spades");E.setEffect(goldCard,"gilded");g=fixture({goldCard})
 Combat.onPlayerTurnEnd(g);assert(g.gold==3)
@@ -108,11 +108,11 @@ assert(stars[5].suit==originalSuit and stars[5].rank==10)
 stars[4].suit="hearts";assert(P.evaluate(stars).type.id=="straight","one Astral cannot cover two incompatible suits")
 
 local dying=D.newCard(13,"diamonds");E.setEffect(dying,"void");g=fixture({dying})
-assert(A.destroy(g,dying));assert(g.gold==88,"Void death ability fires ten additional times")
-assert(not A.destroy(g,dying) and g.gold==88,"Destruction is idempotent")
+assert(A.destroy(g,dying));assert(g.gold==2,"Void final activations obey the Continental resource ledger")
+assert(not A.destroy(g,dying) and g.gold==2,"Destruction is idempotent")
 local dyingScore=D.newCard(2,"diamonds");E.setEffect(dyingScore,"void")
 g=fixture({dyingScore,other});A.beginHand(g,P.evaluate({dyingScore,other}),{dyingScore,other})
-A.destroy(g,dyingScore);assert(g.gold==10,"Void activates a scoring ability ten times before removal")
+A.destroy(g,dyingScore);assert(g.gold==2,"Void cannot farm the same resource ability after it already fired")
 for _,suit in ipairs({"valoria","aurelia","elaris","vharos"}) do
     for rank=2,14 do
         local c=D.newCard(rank,suit);E.setEffect(c,"void");g=fixture({c});g.gold=100
@@ -122,10 +122,10 @@ end
 local paid=D.newCard(10,"diamonds");E.setEffect(paid,"void")
 local target=D.newCard(2,"diamonds");g=fixture({paid,target});g.gold=100
 local decision={card=paid,definition=A.definition(paid),params=A.params(paid),target=target}
-A.beginHand(g,P.evaluate({paid,target}),{paid,target},{decision})
+A.beginHand(g,P.evaluate({paid,target}),{paid,target})
 local goldBefore=g.gold;local levelBefore=target.temporaryAbilityLevels
 A.destroy(g,paid)
-assert(g.gold==goldBefore-10*decision.params.cost and target.temporaryAbilityLevels==levelBefore+10*decision.params.levels)
+assert(g.gold==goldBefore and target.temporaryAbilityLevels==levelBefore,"Void never repeats purchases or invents upgrades")
 local spn={name="Test",edition="polychrome",onCardScored=function() return {addChips=8} end}
 local h=P.evaluate({D.newCard(9,"diamonds")})
 local spnScore=S.calculate(h,{spn},{})

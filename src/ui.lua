@@ -2,10 +2,15 @@ local UI = {}
 local ContinentalArt = require("src.continental_art")
 UI.CardFrame = require("ui.components.card_frame")
 function UI.drawCardBorder(x,y,w,h,highlight,alpha,card)
-    if card and UI.CardPhysics and UI.CardPhysics.drawAttached(card,function(a,b,c,d)
+    local function draw(a,b,c,d)
         UI.CardFrame.draw(a,b,c,d,highlight,alpha,card)
-    end) then return end
-    UI.CardFrame.draw(x,y,w,h,highlight,alpha,card)
+        if card and card.rank and not card.faceDown and UI.drawPlayingMetadata then
+            love.graphics.push("all");love.graphics.translate(a,b)
+            UI.drawPlayingMetadata(card,c,d,true);love.graphics.pop()
+        end
+    end
+    if card and UI.CardPhysics and UI.CardPhysics.drawAttached(card,draw) then return end
+    draw(x,y,w,h)
 end
 UI.drawCardBack = require("ui.components.deck_counter").drawBack
 UI.getCardBackImage = require("ui.components.deck_counter").getImage
@@ -359,7 +364,7 @@ end
 local function drawCardSpeedBadge(card, w, h)
     local g = love.graphics
     local badgeW, badgeH = math.min(34, w * 0.40), math.min(19, h * 0.16)
-    local bx, by = w - badgeW - 4, 4
+    local bx, by = w - badgeW - 8, 8
     g.setColor(0.035, 0.055, 0.07, 0.92)
     UI.drawRoundedRect("fill", bx, by, badgeW, badgeH, 4)
     g.setColor(UI.COLORS.goldYellow)
@@ -369,6 +374,41 @@ local function drawCardSpeedBadge(card, w, h)
     g.setFont(UI.fonts.tiny)
     g.printf(tostring(Deck.getCardAttackSpeed(card)), bx + 13, by + 1, badgeW - 14, "center")
 end
+
+-- Metadata is painted AFTER the rim and shares the card's transform/material.
+local function drawPlayingMetadata(card,w,h,showDamage)
+    local g=love.graphics
+    g.push("all");g.scale(w/128,h/192)
+    local alpha=card.alpha or 1
+    g.setColor(.96,.94,.85,alpha)
+    g.polygon("fill",8,8,32,8,32,43,8,49)
+    local red=card.suit=="hearts" or card.suit=="diamonds" or card.suit=="valoria" or card.suit=="aurelia"
+    g.setColor(red and {.69,.10,.13,alpha} or {.06,.13,.22,alpha})
+    g.setFont(UI.fonts.regular)
+    g.printf(tostring(card.rankName or Deck.RANK_NAMES[card.rank] or card.rank),8,8,24,"center")
+    local d=UI.Abilities.definition(card)
+    local glyph=({heart="♥",diamond="♦",club="♣",spade="♠"})[d and d.suit] or card.suitSymbol or "?"
+    g.setFont(UI.fonts.small);g.printf(glyph,8,29,24,"center")
+    -- Swallowtail flag: speed replaces the old badge hidden under corner ornament.
+    g.setColor(.035,.055,.07,alpha)
+    g.polygon("fill",83,8,120,8,120,38,102,32,83,38)
+    g.setColor(UI.COLORS.goldYellow);g.setFont(UI.fonts.tiny)
+    g.printf("TỐC",83,9,37,"center")
+    g.setColor(1,1,1,alpha);g.setFont(UI.fonts.small)
+    g.printf(string.format("%g",Deck.getCardAttackSpeed(card)),83,20,37,"center")
+    if d then
+        g.setColor(.025,.035,.045,alpha*.9);g.rectangle("fill",8,145,112,17,3)
+        local name=d.characterName:match("^(.-) ·") or d.characterName
+        g.setColor(.96,.94,.85,alpha);g.setFont(UI.fonts.tiny);g.printf(name,10,147,108,"center")
+    end
+    if showDamage then
+        g.setColor(.035,.055,.07,alpha*.95);g.rectangle("fill",8,166,48,18,3)
+        g.setColor(1,.88,.64,alpha);g.setFont(UI.fonts.tiny)
+        g.printf("ST "..tostring(card.baseChips or Deck.getChipValue(card.rank)),8,167,48,"center")
+    end
+    g.pop()
+end
+UI.drawPlayingMetadata=drawPlayingMetadata
 
 local function drawCardEditionRim(card, w, h, highlight)
     local color = highlight or (CardEffects.getEffectName(card) and CardEffects.getBeamColor(card))
@@ -438,14 +478,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
             g.setFont(UI.fonts.tiny)
             g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 27, 14, "center")
         end
-        if card.baseChips then
-            g.setColor(accent)
-            UI.drawRoundedRect("fill", 6, h - 26, 32, 19, 4)
-            g.setColor(UI.COLORS.textLight)
-            g.setFont(UI.fonts.tiny)
-            g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
-        end
-        drawCardSpeedBadge(card, w, h)
         drawCardEditionRim(card, w, h, selected and UI.COLORS.cardSelectedBorder or hovered and UI.COLORS.chipsBlue)
         g.pop()
         return
@@ -1049,7 +1081,7 @@ function UI.getCardImage(suit, rank)
     local r = RANK_ALIAS_MAP[rank] or tostring(rank)
     local key = s .. "_" .. r
     local continental=ContinentalArt.get(key)
-    if continental then return ContinentalArt.withIndices(continental,s,r) end
+    if continental then return continental end -- Rank/suit stay readable above evolved frames.
     if UI.cardImages[key] ~= nil then
         return UI.cardImages[key] or nil
     end

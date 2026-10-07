@@ -318,14 +318,14 @@ local Scoring = require("src.scoring")
 local aureliaCard = Deck.newCard(7, "aurelia")
 local evalAurelia = Poker.evaluate({ aureliaCard }, { high_card = true })
 local scoreAurelia = Scoring.calculate(evalAurelia, {}, { selectedFaction = "aurelia" })
-assert(scoreAurelia.xMultTotal >= 1.15, "Aurelia card must grant x1.15 XMult")
+assert(scoreAurelia.xMultTotal == 1, "Continental Rô must not stack the retired faction multiplier")
 log("[PASS] 23. Aurelia Hào Quang Thánh Thiện grants x1.15 XMult in scoring")
 
 -- Vharos single card (+40 Chips)
 local vharosCard = Deck.newCard(5, "vharos")
 local evalVharos = Poker.evaluate({ vharosCard }, { high_card = true })
 local scoreVharos = Scoring.calculate(evalVharos, {}, { selectedFaction = "vharos" })
-assert(scoreVharos.bonusChips >= 40, "Vharos card must grant +40 Chips")
+assert(scoreVharos.bonusChips == 5, "Continental Bích uses armor rather than the retired +40 Chips")
 log("[PASS] 23b. Vharos Hơi Thở Ma Quỷ grants +40 Chips in scoring")
 
 -- Knight J (rank 11) + Soldier (rank 5) synergy: +15 chips & +2 mult
@@ -952,257 +952,9 @@ do
     log("[PASS] 51. Full 20-Ante Progression (3 Blinds & 3 Shops per Ante) and Ante 20 VICTORY verified")
 end
 
--- 52. Test ♠️ THIẾT QUÂN THỨ (The Iron Axiom / Spades Archetype)
-do
-    -- Phalanx Progression: 3, 5, 8, 11 (J), 13 (K)
-    local c3 = Deck.newCard(3, "spades")
-    local c5 = Deck.newCard(5, "spades")
-    local c8 = Deck.newCard(8, "spades")
-    local cJ = Deck.newCard(11, "spades")
-    local cK = Deck.newCard(13, "spades")
-
-    local evalPhalanx = Poker.evaluate({ c3, c5, c8, cJ, cK }, { high_card = true, flush = true })
-    local unplayedSpadesInHand = { Deck.newCard(4, "spades"), Deck.newCard(6, "spades") }
-    local scorePhalanx = Scoring.calculate(evalPhalanx, {}, {
-        selectedFaction = "spades",
-        isAxiom = true,
-        unplayedCards = unplayedSpadesInHand,
-    })
-
-    -- Check Phalanx Progression step
-    local foundPhalanx = false
-    for _, step in ipairs(scorePhalanx.steps) do
-        if step.type == "phalanx_progression" then
-            foundPhalanx = true
-            assert(step.addedChips == 100, "Phalanx Progression on 3->5->8->11->13 must yield (2+3+3+2)*10 = 100 chips, got: " .. step.addedChips)
-        end
-    end
-    assert(foundPhalanx == true, "Phalanx Progression must trigger on strictly ascending cards")
-
-    -- K♠ Đại Tướng Quân Pháo Đài: +15 Chips per unplayed Spade (2 unplayed = +30 Chips)
-    -- Chỉ Số Thép: +20 Chips per scored Spade (5 cards = +100 Chips)
-    -- Boss Debuff Immunity
-    local debuffMonster = Monster.create(1, true, false, 1)
-    debuffMonster.lockedFaction = "spades"
-    debuffMonster.lockedRoyals = true
-    local debuffScore = Scoring.calculate(evalPhalanx, {}, {
-        monster = debuffMonster,
-        selectedFaction = "spades",
-        isAxiom = true,
-    })
-    assert(debuffScore.finalScore > 0, "Spades must be 100% immune to Boss Debuffs (lockedFaction & lockedRoyals)")
-
-    -- Q♠ Mệnh Lệnh Thiết Kỷ (x1.4 XMult with 5 Spades)
-    local cQ = Deck.newCard(12, "spades")
-    local eval5Spades = Poker.evaluate({ c3, c5, c8, cQ, cK }, { flush = true })
-    local score5Spades = Scoring.calculate(eval5Spades, {}, { selectedFaction = "spades", isAxiom = true })
-    assert(score5Spades.xMultTotal >= 1.4, "Q♠ with 5 Spades in hand must grant x1.4 XMult")
-
-    -- J♠ Tổng Trấn Tiền Phương: when J is first/lowest, +40 Chips per soldier behind it
-    local evalJFirst = Poker.evaluate({ cJ, c3, c5 }, { high_card = true })
-    evalJFirst.scoringCards = { cJ, c3, c5 } -- J first with 2 soldiers behind
-    local scoreJFirst = Scoring.calculate(evalJFirst, {}, { selectedFaction = "spades", isAxiom = true })
-    local foundJBonus = false
-    for _, step in ipairs(scoreJFirst.steps) do
-        if step.message and step.message:find("Tổng Trấn Tiền Phương") then
-            foundJBonus = true
-        end
-    end
-    assert(foundJBonus == true, "J♠ when first must grant +40 Chips per Soldier behind it")
-
-    -- A♠ Overkill Sát Khí carryover
-    local cA = Deck.newCard(14, "spades")
-    local evalAce = Poker.evaluate({ cA }, { high_card = true })
-    local scoreAce = Scoring.calculate(evalAce, {}, {
-        selectedFaction = "spades",
-        isAxiom = true,
-        storedSlaughterChips = 80,
-    })
-    assert(scoreAce.hasAceOfSpades == true, "Ace of Spades must flag hasAceOfSpades")
-    local foundSlaughter = false
-    for _, step in ipairs(scoreAce.steps) do
-        if step.type == "slaughter_chips" then
-            foundSlaughter = true
-            assert(step.addedChips == 80, "Sát Khí must add 80 starting chips")
-        end
-    end
-    assert(foundSlaughter == true, "Stored Sát Khí must apply as starting chips in combat")
-
-    log("[PASS] 52. ♠️ Thiết Quân Thứ (The Iron Axiom): Chỉ Số Thép, Boss Debuff Immunity, Phalanx Progression (+100c), J♠ (+40c/soldier), Q♠ (x1.4), K♠ (+15c/unplayed), A♠ Sát Khí verified")
-end
-
--- 53. Test ♥️ GIÁO HỘI HUYẾT ƯỚC (The Sanguine Covenant / Hearts Archetype)
-do
-    -- Cộng Hưởng: +5 Mult per scored Heart
-    local h5 = Deck.newCard(5, "hearts")
-    local h7 = Deck.newCard(7, "hearts")
-    local evalHearts = Poker.evaluate({ h5, h7 }, { pair = false, high_card = true })
-    evalHearts.scoringCards = { h5, h7 }
-    local scoreHearts = Scoring.calculate(evalHearts, {}, { selectedFaction = "hearts", isSanguine = true })
-    assert(scoreHearts.bonusMult >= 10, "2 scored Hearts must grant +10 bonus Mult (+5 per card)")
-
-    -- Dấu Ấn Tử Đạo: 3 stacks = +24 Mult, x1.45 XMult
-    local scoreMartyr = Scoring.calculate(evalHearts, {}, {
-        selectedFaction = "hearts",
-        isSanguine = true,
-        martyrStacks = 3,
-    })
-    assert(scoreMartyr.bonusMult >= 34, "3 Martyr stacks must add +24 Mult (10 + 24 = 34)")
-    assert(math.abs(scoreMartyr.xMultTotal - 1.45) < 0.01, "3 Martyr stacks must grant x1.45 XMult")
-
-    -- K♥ Huyết Vương Bất Tử: <= 1 hand left -> +100 Chips & +25 Mult
-    local hK = Deck.newCard(13, "hearts")
-    local evalHK = Poker.evaluate({ hK }, { high_card = true })
-    local scoreHK = Scoring.calculate(evalHK, {}, {
-        selectedFaction = "hearts",
-        isSanguine = true,
-        handsRemaining = 1,
-    })
-    assert(scoreHK.bonusChips >= 125, "K♥ with 1 hand left must grant at least +125 Chips (25 base + 100 bonus)")
-    assert(scoreHK.bonusMult >= 35, "K♥ with 1 hand left must grant at least +35 Mult (5 base + 5 heart + 25 bonus)")
-
-    -- Q♥ Mẫu Nghi Tế Đàn: -1 Rank on other Hearts, x1.35 XMult
-    local hQ = Deck.newCard(12, "hearts")
-    local hOther = Deck.newCard(6, "hearts")
-    local evalHQ = Poker.evaluate({ hQ, hOther }, { high_card = true })
-    evalHQ.scoringCards = { hQ, hOther }
-    local scoreHQ = Scoring.calculate(evalHQ, {}, { selectedFaction = "hearts", isSanguine = true })
-    assert(scoreHQ.xMultTotal >= 1.35, "Q♥ must grant x1.35 XMult")
-    assert(hOther.rank == 5, "Q♥ must temporarily sacrifice 1 rank of other Hearts (6 -> 5)")
-
-    -- A♥ Chén Thánh Khát Máu flag
-    local hA = Deck.newCard(14, "hearts")
-    local evalHA = Poker.evaluate({ hA }, { high_card = true })
-    local scoreHA = Scoring.calculate(evalHA, {}, { selectedFaction = "hearts", isSanguine = true })
-    assert(scoreHA.hasAceOfHearts == true, "A♥ must flag hasAceOfHearts for blood gold conversion")
-
-    log("[PASS] 53. ♥️ Giáo Hội Huyết ƯỚc (The Sanguine Covenant): +5 Mult/card, Dấu Ấn Tử Đạo (+24m, x1.45), K♥ (+100c/+25m on last hand), Q♥ (-1 rank, x1.35), A♥ Blood Gold verified")
-end
-
--- 54. Test ♦️ TRẬT TỰ HOÀNG KIM (The Gilded Conclave / Diamonds Archetype)
-do
-    -- Every card starts with all three sockets available.
-    local dCard = Deck.newCard(8, "diamonds")
-    assert(dCard.unlockedSockets == 3, "Every card must start with 3/3 sockets available")
-
-    -- Gemstone stat efficacy +50%
-    local testGem = { id = "ruby", name = "Hồng Ngọc", onCardScore = function() return { addChips = 20, addMult = 4 } end }
-    Equipment.attach(dCard, testGem)
-    local evalD = Poker.evaluate({ dCard }, { high_card = true })
-    local scoreGem = Scoring.calculate(evalD, {}, { selectedFaction = "diamonds", isGildedConclave = true })
-    -- Expected: 20 * 1.5 = 30 chips, 4 * 1.5 = 6 mult
-    assert(scoreGem.bonusGoldAwarded == 1, "Scored Diamond must award +$1 Gold (Kim Ngân)")
-
-    -- Trần Lãi Siêu Việt: +$1 per $4 stored with NO CAP!
-    local gildedState = { selectedFaction = "diamonds", isGildedConclave = true, gold = 100, handsRemaining = 2 }
-    local dummyBlind = { baseReward = 3, type = "small" }
-    local cashOutGilded = RewardSystem.calculate(dummyBlind, gildedState, false)
-    assert(cashOutGilded.interestBonus == 25, "Gilded Conclave must earn 100 / 4 = $25 uncapped interest, got: " .. cashOutGilded.interestBonus)
-    assert(cashOutGilded.isGilded == true, "Must flag isGilded")
-
-    -- J♦ Thương Nhân Vong Mạng: Steals $2 into purse (+1 from diamond +2 from J = 3 gold)
-    local dJ = Deck.newCard(11, "diamonds")
-    local evalDJ = Poker.evaluate({ dJ }, { high_card = true })
-    local scoreDJ = Scoring.calculate(evalDJ, {}, { selectedFaction = "diamonds", isGildedConclave = true })
-    assert(scoreDJ.bonusGoldAwarded == 3, "J♦ must award +$1 Kim Ngân + $2 Steal = +$3 Gold total")
-
-    -- Q♦ Nữ Hoàng Tài Phiệt: x(1.0 + Gold * 0.02) capped at x2.0 (Additive model: 1.0 + 0.10 (Q) + 0.80 (Wealth) + 0.15 (Aurelia) = 2.05)
-    local dQ = Deck.newCard(12, "diamonds")
-    local evalDQ = Poker.evaluate({ dQ }, { high_card = true })
-    local scoreDQ = Scoring.calculate(evalDQ, {}, { selectedFaction = "diamonds", isGildedConclave = true, gold = 40 })
-    assert(math.abs(scoreDQ.xMultTotal - 2.05) < 0.02, "Q♦ with $40 gold must scale XMult additively to 2.05, got: " .. scoreDQ.xMultTotal)
-
-    -- K♦ Đế Vương Mua Chuộc: Bribe $1-$5 to defeat monster
-    local dK = Deck.newCard(13, "diamonds")
-    local evalDK = Poker.evaluate({ dK }, { high_card = true })
-    local bribeMonster = { hp = 300, maxHp = 300 }
-    local mockGameState = { gold = 10 }
-    local scoreDK = Scoring.calculate(evalDK, {}, {
-        selectedFaction = "diamonds",
-        isGildedConclave = true,
-        monster = bribeMonster,
-        gold = 10,
-        gameState = mockGameState,
-    })
-    assert(scoreDK.bribeDollarsSpent > 0, "K♦ must bribe dollars to overcome monster HP")
-    assert(mockGameState.gold < 10, "Gold must be deducted for K♦ bribe")
-
-    -- A♦ Thần Tài Thu Nạp: Devour soldier card for permanent +15 Base Chips
-    local dA = Deck.newCard(14, "diamonds")
-    local soldierToEat = Deck.newCard(4, "diamonds")
-    local devourOk = Deck.devourCard(dA, soldierToEat, mockGameState)
-    assert(devourOk == true, "A♦ must successfully devour soldier card")
-    assert(dA.bonusBaseChips == 15, "Devouring must give A♦ +15 Base Chips permanently")
-    assert(dA.baseChips == Deck.getChipValue(14) + 15, "A♦ baseChips must reflect +15 permanent bonus")
-
-    log("[PASS] 54. ♦️ Trật Tự Hoàng Kim (The Gilded Conclave): Kim Ngân (+$1/card), Trần Lãi Siêu Việt ($100->$25 interest), Khảm Nén Quặng (+50% stats), J♦ (+$2 steal), Q♦ (wealth xmult), K♦ (bribe rescue), A♦ (devour +15c) verified")
-end
-
--- 55. Test ♣️ BẦY NGUYÊN SINH (The Feral Swarm / Clubs Archetype)
-do
-    -- Bầy Đàn: Hand size 9
-    local swarmRun = RunManager.newRun("elaris")
-    assert(swarmRun.faction == "elaris", "Faction must be elaris")
-
-    -- Tuần Hoàn Thể: Discarded Clubs cycle to bottom of draw deck table.insert(deck, 1, card)
-    local clubCard = Deck.newCard(6, "clubs")
-    local mockDeck = { Deck.newCard(8, "clubs"), Deck.newCard(9, "clubs") }
-    table.insert(mockDeck, 1, clubCard)
-    assert(mockDeck[1] == clubCard, "Club card must cycle to bottom (index 1) of deck")
-
-    -- Q♣ Ong Chúa Sinh Sản: 4-card Straight and 4-card Flush!
-    local cQClub = Deck.newCard(12, "clubs")
-    local c9 = Deck.newCard(9, "hearts")
-    local c10 = Deck.newCard(10, "spades")
-    local cJ = Deck.newCard(11, "diamonds")
-    local eval4Straight = Poker.evaluate({ cQClub, cJ, c10, c9 }, { straight = true })
-    assert(eval4Straight.type.id == "straight", "Q♣ must allow 4-card Straight, got: " .. eval4Straight.type.id)
-
-    local f1 = Deck.newCard(2, "clubs")
-    local f2 = Deck.newCard(4, "clubs")
-    local f3 = Deck.newCard(7, "clubs")
-    local eval4Flush = Poker.evaluate({ cQClub, f1, f2, f3 }, { flush = true })
-    assert(eval4Flush.type.id == "flush", "Q♣ must allow 4-card Flush, got: " .. eval4Flush.type.id)
-
-    -- K♣ Chúa Tể Bầy Đàn: x(1.0 + clubs * 0.3) XMult (3 clubs = x1.9 XMult)
-    local cKClub = Deck.newCard(13, "clubs")
-    local evalKClub = Poker.evaluate({ cKClub, f1, f2 }, { high_card = true })
-    evalKClub.scoringCards = { cKClub, f1, f2 }
-    local scoreKClub = Scoring.calculate(evalKClub, {}, { selectedFaction = "clubs", isSwarm = true })
-    assert(math.abs(scoreKClub.xMultTotal - 1.9) < 0.05, "K♣ with 3 Clubs scored must grant x1.9 XMult, got: " .. scoreKClub.xMultTotal)
-
-    -- K♣ Devour in shop: heals 20 HP
-    local mockKState = { playerHp = 60, maxPlayerHp = 100, discardsRemaining = 2 }
-    local offFactionCard = Deck.newCard(5, "hearts")
-    local devourKResult = Deck.devourCard(cKClub, offFactionCard, mockKState)
-    assert(devourKResult == true, "K♣ must devour off-faction card")
-    assert(mockKState.playerHp == 80, "Devouring off-faction card must heal 20 HP (60 -> 80)")
-
-    -- A♣ Tác Nhân Dị Chủng (Wild Suit): matches any suit for Flush
-    local wAce = Deck.newCard(14, "clubs")
-    assert(wAce.isWildSuit == true, "A♣ must have isWildSuit = true")
-    local flushWithWild = {
-        wAce,
-        Deck.newCard(2, "hearts"),
-        Deck.newCard(5, "hearts"),
-        Deck.newCard(8, "hearts"),
-        Deck.newCard(10, "hearts"),
-    }
-    local evalWildFlush = Poker.evaluate(flushWithWild, { flush = true })
-    assert(evalWildFlush.type.id == "flush", "A♣ Wild Suit must match hearts to form Flush")
-
-    -- Tiến Hóa Nuốt Chửng: Killing blow evolves Rank +1, Rank 10 evolves to Primal Drone
-    local droneCard = Deck.newCard(10, "clubs")
-    droneCard.isPrimalDrone = true
-    droneCard.bonusBaseChips = 50
-    droneCard.bonusMult = 5
-    local evalDrone = Poker.evaluate({ droneCard }, { high_card = true })
-    local scoreDrone = Scoring.calculate(evalDrone, {}, { selectedFaction = "clubs", isSwarm = true })
-    assert(scoreDrone.bonusChips >= 50, "Primal Drone must grant +50 Chips")
-    assert(scoreDrone.bonusMult >= 5, "Primal Drone must grant +5 Mult")
-
-    log("[PASS] 55. ♣️ Bầy Nguyên Sinh (The Feral Swarm): Bầy Đàn (9-card hand), Tuần Hoàn Thể, Q♣ (4-card Straight & Flush), K♣ (x1.9 XMult & Heal 20 HP), A♣ Wild Suit, Chân Rết Nguyên Thủy (+50c/+5m) verified")
-end
+-- 52-55. Continental resource identities replace the retired faction abilities.
+require("tests.continental52_smoke")
+log("[PASS] 52-55. 52 resource tactics: survival, initiative, costs, caps, identities and pure previews")
 
 -- 56. Test TỰ DO SẮP XẾP THẦN BÀI (Deities Free Placement & Left-to-Right Scoring Order)
 do
@@ -1423,9 +1175,9 @@ do
     -- 58. Test Toàn Vẹn Dữ Liệu Bộ Sưu Tập Toàn Thư (Collection Compendium)
     local Collection = require("src.collection")
     local categories = Collection.getCategories()
-    assert(#categories == 10, "Collection has 10 categories after retiring skip pacts")
+    assert(#categories == 12, "Collection includes playing cards and equipment alongside the ten original categories")
 
-    local expectedCats = { "jokers", "decks", "vouchers", "consumables", "enhancements", "seals", "editions", "packs", "blinds", "other" }
+    local expectedCats = { "jokers", "playing_cards", "equipment", "decks", "vouchers", "consumables", "enhancements", "seals", "editions", "packs", "blinds", "other" }
     for _, catId in ipairs(expectedCats) do
         local cat = Collection.getCategoryById(catId)
         assert(cat ~= nil, "Category " .. catId .. " must exist in Collection")
@@ -1588,6 +1340,8 @@ do
     -- Player plays Pair 8♠ (+12 Armor from Đá Thủ Thế / ward_stone, 28 DMG)
     local card8_1 = { rank = 8, rankName = "8", suit = "vharos", suitSymbol = "♠", equipments = { Equipment.ITEMS.ward_stone } }
     local card8_2 = { rank = 8, rankName = "8", suit = "vharos", suitSymbol = "♠" }
+    card8_1.id=Deck.newCard(8,"vharos").id;card8_2.id=Deck.newCard(8,"vharos").id
+    card8_1.disableFactionPassives=true;card8_2.disableFactionPassives=true
     local evalT1 = { type = Poker.HAND_TYPES.PAIR, scoringCards = { card8_1, card8_2 }, unscoredCards = {} }
     local scoreT1 = Scoring.calculate(evalT1, {}, testGame)
     assert(scoreT1.addArmor == 12, "Ward stone must grant +12 Armor for small hand, got: " .. tostring(scoreT1.addArmor))
@@ -1626,6 +1380,7 @@ do
         equipments = { Equipment.ITEMS.ward_stone, Equipment.ITEMS.vitality_gem }
     }
     local evalT2 = { type = Poker.HAND_TYPES.HIGH_CARD, scoringCards = { cardK }, unscoredCards = {} }
+    cardK.id=Deck.newCard(13,"vharos").id;cardK.disableFactionPassives=true
     local scoreT2 = Scoring.calculate(evalT2, {}, testGame)
     assert(scoreT2.addArmor == 12, "Ward stone must grant +12 Armor, got: " .. tostring(scoreT2.addArmor))
     assert(scoreT2.healHp == 4, "Vitality gem must heal +4 HP when < 50% HP, got: " .. tostring(scoreT2.healHp))

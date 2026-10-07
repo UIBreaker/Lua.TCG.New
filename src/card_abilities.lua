@@ -20,7 +20,7 @@ function A.params(card, def, level)
     end
     return p
 end
-local effectParams={armor=true,returnArmor=true,healPercent=true,gold=true,gain=true,maxStacks=true,
+local effectParams={armor=true,heal=true,speed=true,bonus=true,charge=true,returnArmor=true,healPercent=true,gold=true,gain=true,maxStacks=true,
     capacity=true,draw=true,levels=true,repeats=true,returns=true,duration=true,hands=true,
     cancels=true,skip=true,block=true,copies=true,freeze=true,maxGold=true}
 function A.effectiveParams(game,card,def,ctx)
@@ -67,10 +67,14 @@ local function allCards(game)
     return list
 end
 function A.start(game)
+    game.martyrStacks=0;game.storedSlaughterChips=0
     game.soulRelicCombat={used={},claimed={},freeze=0}
     game.abilityCombat={playIndex=0,handSizeBonus=0,pendingRepeat=0,lastDestroyed=nil,roundNumber=1,feedback={}}
     game.abilityHand=nil
-    for _,c in ipairs(allCards(game)) do c.abilityState={}; c.temporaryAbilityLevels=0; c.abilityDisabledUntil=nil; c.destroyed=nil; c.destructionNotified=nil end
+    for _,c in ipairs(allCards(game)) do
+        c.abilityState={};c.temporaryAbilityLevels=0;c.abilityDisabledUntil=nil;c.destroyed=nil;c.destructionNotified=nil
+        c.disableFactionPassives=true;c.isWildSuit=false;c.isDualRankAce=false
+    end
 end
 local function combat(game)
     if not game.abilityCombat then
@@ -280,6 +284,8 @@ function A.finishHand(game)
     local held={}
     for _,c in ipairs(game.hand or {}) do if not contains(ctx.played,c) then held[#held+1]=c end end
     A.dispatch(game,"hand_end",held,ctx)
+    require("src.playing_card_tactics").hold(game,held)
+    combat(game).tacticDiscarded=nil
     combat(game).previousHandType=ctx.handInfo.type.id
     Boss.handEnd(game)
     A.resolveBossDamage(game)
@@ -301,6 +307,7 @@ function A.combatWin(game)
     A.dispatch(game,"combat_win",allCards(game),ctx)
 end
 function A.discard(game,cards)
+    if #(cards or {})>0 then combat(game).tacticDiscarded=true end
     require("src.chest_depth").discard(game,cards)
     A.dispatch(game,"discard",cards,{})
     local x=game.abilityHand
@@ -346,6 +353,7 @@ function A.dispatch(game,event,cards,ctx)
     end
 end
 local H=A.handlers
+H.tactic=require("src.playing_card_tactics").apply
 local function suits(ctx) local seen,n={},0; for _,c in ipairs(ctx.scoring or {}) do local d=A.definition(c); local s=d and d.suit or c.suit; if not seen[s] then seen[s]=true;n=n+1 end end return n end
 local function once(ctx,c,key) ctx.once=ctx.once or {}; key=(c.id or tostring(c))..":"..key..((ctx.copyDepth or 0)>0 and (":copy"..(ctx.copyIteration or 1)) or ""); if ctx.once[key] then return false end; ctx.once[key]=true; return true end
 H.capacity=function() return true end

@@ -83,13 +83,18 @@ function Combat.getOutcome(game)
     return "continue"
 end
 
-function Combat.getAverageAttackSpeed(cards)
+function Combat.getAverageAttackSpeed(cards,game,handInfo)
     local total, count = 0, 0
     for _, card in ipairs(cards or {}) do
         total = total + Deck.getCardAttackSpeed(card)
         count = count + 1
     end
-    return count > 0 and (total / count) or 0
+    local bonus=0
+    if game and count>0 then
+        if handInfo then bonus=require("src.playing_card_tactics").preview(game,cards,handInfo)
+        elseif game.abilityHand and not game.abilityHand.finished then bonus=game.abilityHand.tacticSpeed or 0 end
+    end
+    return count > 0 and math.min(999,total/count+bonus) or 0
 end
 
 local function resolveOneAttack(game)

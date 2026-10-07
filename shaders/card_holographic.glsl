@@ -29,16 +29,17 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
 
     number interference = 0.5 + 0.5 * sin((uv.x * 0.82 + uv.y * 0.58 + u_mouseUV.y * 0.14
         + u_tilt.x * 0.5) * 58.0 + u_time * u_speed * 3.6);
-    number band = exp(-pow((uv.x * 0.72 + uv.y * 0.44 + u_time * u_speed * 0.16
-        + u_mouseUV.x * 0.15 - 0.44), 2.0) * 32.0);
+    number sweep = mod(u_time*u_speed*.22,1.7)-.30;
+    number band = exp(-pow(uv.x*.72+uv.y*.44-sweep+u_mouseUV.x*.15,2.0)*85.0);
 
     vec2 cell = floor(uv * 23.0);
     number sparkleSeed = hashCell(cell);
     number sparkleWave = max(0.0, sin(u_time * u_speed * 4.0 + sparkleSeed * 31.0));
-    number sparkle = step(0.996, sparkleSeed) * pow(sparkleWave, 14.0) * interaction;
+    number sparkle = step(0.987, sparkleSeed) * pow(sparkleWave, 10.0) * (.4+interaction*.6);
     number blendAmount = (0.045 + 0.22 * interaction + 0.10 * band + 0.055 * interference)
         * u_intensity;
     vec3 rgb = mix(base.rgb, spectrum, clamp(blendAmount, 0.0, 0.40));
-    rgb += spectrum * (band * (0.05 + interaction * 0.18) + sparkle * 0.34) * u_intensity;
+    rgb += spectrum * (band * (0.16 + interaction * 0.18) + interference*.055) * u_intensity;
+    rgb += vec3(.86,.94,1.0)*sparkle*.55*u_intensity;
     return vec4(clamp(rgb, 0.0, 1.0), base.a);
 }

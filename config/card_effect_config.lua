@@ -11,10 +11,10 @@ local config = {
     effects = {
         foil = {
             shader = "shaders/card_foil.glsl",
-            idleStrength = 0.36,
-            hoverStrength = 0.88,
-            selectedStrength = 1.08,
-            scoringStrength = 1.32,
+            idleStrength = 0.70,
+            hoverStrength = 1.10,
+            selectedStrength = 1.28,
+            scoringStrength = 1.48,
             speed = 0.86,
             shopChance = 0.075,
             shopLabel = "FOIL — KIM QUANG",
@@ -24,10 +24,10 @@ local config = {
         },
         holographic = {
             shader = "shaders/card_holographic.glsl",
-            idleStrength = 0.32,
-            hoverStrength = 0.92,
-            selectedStrength = 1.10,
-            scoringStrength = 1.35,
+            idleStrength = 0.62,
+            hoverStrength = 1.04,
+            selectedStrength = 1.22,
+            scoringStrength = 1.42,
             speed = 0.62,
             shopChance = 0.035,
             shopLabel = "HOLOGRAPHIC — HUYỄN QUANG",
@@ -37,10 +37,10 @@ local config = {
         },
         polychrome = {
             shader = "shaders/card_polychrome.glsl",
-            idleStrength = 0.38,
-            hoverStrength = 0.78,
-            selectedStrength = 0.98,
-            scoringStrength = 1.20,
+            idleStrength = 0.64,
+            hoverStrength = 0.96,
+            selectedStrength = 1.12,
+            scoringStrength = 1.34,
             speed = 0.40,
             shopChance = 0.01,
             shopLabel = "POLYCHROME — ĐA SẮC",
@@ -62,8 +62,9 @@ for _, entry in ipairs({
     local definition = {}
     for key, value in pairs(config.effects[entry[4]]) do definition[key] = value end
     definition.shader = "shaders/card_" .. entry[1] .. ".glsl"
-    definition.idleStrength = 0.42
-    definition.speed = ({gilded=.35,echo=.65,ancient=.28,void=.48,astral=.32,resonant=.72})[entry[1]]
+    definition.idleStrength = 0.76
+    definition.hoverStrength, definition.selectedStrength, definition.scoringStrength = 1.12, 1.30, 1.50
+    definition.speed = ({gilded=.52,echo=.72,ancient=.52,void=.62,astral=.60,resonant=.72})[entry[1]]
     definition.shopChance = 0
     definition.shopLabel = string.upper(entry[1]) .. " — " .. entry[2]
     definition.shopText, definition.beamColor, definition.score = entry[3], entry[5], nil

@@ -38,8 +38,10 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     vec3 slightSplit = vec3(Texel(texture, redUV).r, base.g, Texel(texture, blueUV).b);
     vec3 rgb = mix(base.rgb, slightSplit, clamp(interaction * 0.34 * u_intensity, 0.0, 0.16));
     number colorMix = (0.22 + interaction * 0.35) * u_intensity;
-    rgb = mix(rgb, palette, clamp(colorMix, 0.0, 0.36));
+    // Light passes through the facets: retain the illustration's tonal contrast.
+    vec3 crystal = base.rgb * (.75 + palette*.80) + palette*.055;
+    rgb = mix(rgb, crystal, clamp(colorMix*1.9, 0.0, 0.75));
     rgb += palette * edgeGlow * (0.035 + interaction * 0.09) * u_intensity;
-    rgb += palette * seam * (.10 + interaction * .12) * u_intensity;
+    rgb += mix(palette,vec3(1.0),.35) * seam * (.16 + interaction * .14) * u_intensity;
     return vec4(clamp(rgb, 0.0, 1.0), base.a);
 }

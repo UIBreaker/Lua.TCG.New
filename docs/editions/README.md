@@ -24,6 +24,10 @@ Each of the nine editions now owns its own GLSL shader. Playing cards, SPN, edit
 
 `shader_comparison.png` and `edition_effects.gif` demonstrate all nine materials on **identical artwork**, making their visual differences reviewable independently of the nine separate illustrations. The GIF uses 48 GPU-rendered frames at 12 fps. The six new materials no longer borrow the Foil or Holographic shader.
 
+The enhanced pass (2026-10-07) is shown in `edition_effects_enhanced.gif`. Idle strength is raised so the edition remains visible without hovering. Bright cores are paired with softer halos: embossed gold double rings, cyan/violet echo trails, waking stone channels, purple plasma filaments, orbiting star heads and white-cored resonance waves. Polychrome uses transmitted jewel tint to retain the artwork's tonal contrast; Holographic's sweep repeats instead of drifting permanently off the card. All effects preserve source transparency and remain beneath the frame and text. Gameplay values are unchanged by this visual pass.
+
+The GPU preview also checks all nine effects through the production reward renderer and verifies partially transparent and empty pixels for every shader.
+
 ## Gameplay
 
 - Foil: +20 flat damage on scoring; Holographic: +10 Mult on scoring.

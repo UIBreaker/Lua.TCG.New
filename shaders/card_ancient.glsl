@@ -17,11 +17,17 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen_coords) {
         line=min(line,segment(uv,vec2(.5,y+.08),vec2(.31,y)));
         line=min(line,segment(uv,vec2(.5,y+.08),vec2(.69,y)));
     }
-    number carved=exp(-line*260.0);
-    number wake=exp(-pow(uv.y-(.78-fract(u_time*u_speed*.28)*.58),2.0)*110.0);
+    // Angular stone channels: a white-hot core with a soft amber wake.
+    line=min(line,segment(uv,vec2(.31,.38),vec2(.31,.65)));
+    line=min(line,segment(uv,vec2(.69,.38),vec2(.69,.65)));
+    number carved=exp(-line*180.0);
+    number halo=exp(-line*38.0);
+    number wake=exp(-pow(uv.y-(.80-fract(u_time*u_speed*.60)*.60),2.0)*65.0);
     number etching=sin(uv.x*340.0+sin(uv.y*19.0)*8.0)*.018;
     vec3 rgb=mix(base.rgb,base.rgb*vec3(.90,1.03,.90),min(.26,u_intensity*.18));
     rgb+=base.rgb*etching*u_intensity;
-    rgb+=vec3(1.0,.71,.29)*carved*(.16+wake*.52+u_scorePulse*.35+u_hoverAmount*.12)*u_intensity;
+    number power=.36+wake*.65+u_scorePulse*.35+u_hoverAmount*.12;
+    rgb+=vec3(1.0,.57,.15)*(carved*.65+halo*.20)*power*u_intensity;
+    rgb+=vec3(1.0,.94,.69)*carved*wake*.55*u_intensity;
     return vec4(clamp(rgb,0.0,1.0),base.a);
 }

@@ -18,7 +18,10 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen_coords) {
     number ring=exp(-pow(r-.24-sin(a*3.0+u_time*u_speed)*.018,2.0)*1300.0);
     number spiral=pow(max(0.0,cos(a*2.0+r*19.0-u_time*u_speed*2.0)),16.0)*exp(-pow(r-.26,2.0)*45.0);
     number core=1.0-smoothstep(.04,.20,r);
+    number halo=exp(-pow(r-.24,2.0)*130.0);
+    number filaments=pow(max(0.0,sin(a*5.0-r*32.0+u_time*u_speed*2.0)),22.0)*exp(-pow(r-.29,2.0)*90.0);
     rgb*=1.0-core*min(.65,u_intensity*.38);
-    rgb+=vec3(.54,.16,.92)*(ring*.21+spiral*.10)*u_intensity;
+    rgb+=vec3(.54,.10,.92)*(ring*.40+spiral*.25+halo*.12+filaments*.22)*u_intensity;
+    rgb+=vec3(.92,.64,1.0)*ring*.28*u_intensity;
     return vec4(clamp(rgb,0.0,1.0),original.a);
 }

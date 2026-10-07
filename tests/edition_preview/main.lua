@@ -43,7 +43,41 @@ function love.load()
         end end
         assert(difference>.01,"Two Edition shaders rendered identically")
     end end
-    print("GPU PASS: nine compiled shaders, all 36 output pairs distinct on identical artwork")
+    -- Check the actual reward renderer, not only isolated shader output.
+    for _,item in ipairs(catalog) do
+        local art=UI.getConsumableImage(item)
+        local canvas=love.graphics.newCanvas(120,180)
+        love.graphics.push("all");love.graphics.setCanvas(canvas)
+        love.graphics.clear(0,0,0,0)
+        require("ui.card_surfaces").fullReward(item,0,0,120,180,"edition",false)
+        love.graphics.pop()
+        local face=canvas:newImageData()
+        love.graphics.push("all");love.graphics.setCanvas(canvas)
+        love.graphics.clear(0,0,0,0);love.graphics.setColor(1,1,1,1)
+        UI.CardFrame.image(art,0,0,120,180)
+        love.graphics.pop()
+        local plain=canvas:newImageData();local difference=0
+        for y=15,165,10 do for x=15,105,10 do
+            local r,g,b=face:getPixel(x,y);local a,c,d=plain:getPixel(x,y)
+            difference=difference+math.abs(r-a)+math.abs(g-c)+math.abs(b-d)
+        end end
+        assert(difference>.03,"Reward shader missing: "..item.edition)
+    end
+    local translucent=love.image.newImageData(8,8)
+    translucent:mapPixel(function(x,y) return .3,.4,.5,x==0 and 0 or .4 end)
+    local image=love.graphics.newImage(translucent)
+    for _,item in ipairs(catalog) do
+        local canvas=love.graphics.newCanvas(8,8)
+        love.graphics.push("all");love.graphics.setCanvas(canvas)
+        love.graphics.clear(0,0,0,0);love.graphics.setColor(1,1,1,1)
+        love.graphics.setBlendMode("replace")
+        local active=E.beginCard(item);love.graphics.draw(image);E.endCard(active)
+        love.graphics.pop()
+        local data=canvas:newImageData()
+        local _,_,_,alpha=data:getPixel(4,4);assert(math.abs(alpha-.4)<.01)
+        local _,_,_,empty=data:getPixel(0,4);assert(empty==0)
+    end
+    print("GPU PASS: nine shaders, 36 distinct output pairs, nine reward effects and preserved transparency")
 end
 function love.update(dt)
     frames=frames+1;E.update(stage==3 and 1/12 or dt)

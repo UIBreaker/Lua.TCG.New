@@ -46,7 +46,7 @@ function F.add(list, kind, amount, x, y, format)
         local effect=kind=="armor" and (amount>=0 and "armor_gain" or "armor_loss") or (amount>=0 and "heal" or "hurt")
         local vx,vy=x,y
         if kind=="heal" and y==114 then vx,vy=320,43
-        elseif kind=="armor" and y==85 then vx,vy=320,23 end
+        elseif kind=="armor" and y==85 then vx,vy=245,23 end
         local silent=y>=450
         -- Contact and HUD describe the same hit; keep one transient.
         if amount<0 and y<150 then
@@ -67,11 +67,30 @@ end
 
 local function outlined(g, text, x, y, width, color, alpha)
     g.setColor(0.015,0.02,0.035,alpha*0.95)
-    for _,offset in ipairs({{-2,0},{2,0},{0,-2},{0,2}}) do
+    g.printf(text,x+1,y+4,width,"center")
+    for _,offset in ipairs({{-2,0},{2,0},{0,-2},{0,2},{-1,-1},{1,-1},{-1,1},{1,1}}) do
         g.printf(text,x+offset[1],y+offset[2],width,"center")
     end
     g.setColor(color[1],color[2],color[3],alpha)
     g.printf(text,x,y,width,"center")
+end
+
+local function sparkle(g,x,y,r,color,alpha)
+    g.setColor(color[1],color[2],color[3],alpha)
+    g.polygon("fill",x,y-r,x+r*0.22,y-r*0.22,x+r,y,x+r*0.22,y+r*0.22,
+        x,y+r,x-r*0.22,y+r*0.22,x-r,y,x-r*0.22,y-r*0.22)
+end
+
+local function luminousText(g,text,color,alpha,strength)
+    g.setBlendMode("add")
+    for radius=8,4,-4 do
+        g.setColor(color[1],color[2],color[3],alpha*strength*(radius==4 and 0.14 or 0.055))
+        for i=1,8 do
+            local angle=i*math.pi/4
+            g.printf(text,-230+math.cos(angle)*radius,math.sin(angle)*radius,460,"center")
+        end
+    end
+    g.setBlendMode("alpha")
 end
 
 function F.draw(ft, ui)
@@ -81,34 +100,57 @@ function F.draw(ft, ui)
     local color = ft.color or {1,1,1}
     g.push("all")
     local rise = ft.kind and (1-math.exp(-age*2.5))*42 or 0
+    if ft.kind == "gold" then
+        -- Coin flight stays in HUD coordinates, independent of the number's spring.
+        local target = ft.target or {x=ft.x,y=ft.y-58}
+        local count = math.min(12,4+math.floor(math.sqrt(math.abs(ft.amount))))
+        for i=1,count do
+            local p=math.max(0,math.min(1,(age-i*0.026)/0.62))
+            local k=p*p*(3-2*p)
+            local sx,sy,tx,ty=ft.x+math.sin(i*2.4)*38,ft.y+22,target.x,target.y
+            if ft.amount<0 then sx,sy,tx,ty=target.x,target.y,ft.x+math.sin(i*2.4)*38,ft.y+26 end
+            local x,y=sx+(tx-sx)*k,sy+(ty-sy)*k-math.sin(p*math.pi)*(30+i*2)
+            local a=alpha*math.sin(p*math.pi)
+            local w=1.2+4.4*math.abs(math.cos(age*17+i))
+            g.setBlendMode("add")
+            g.setColor(1,0.62,0.12,a*0.12);g.ellipse("fill",x,y,w+5,10)
+            g.setColor(1,0.78,0.26,a*0.25);g.setLineWidth(2)
+            g.line(x,y,x-(tx-sx)*0.045,y+9)
+            g.setBlendMode("alpha")
+            g.setColor(0.28,0.12,0.025,a);g.ellipse("fill",x+1,y+2,w,6)
+            g.setColor(1,0.70,0.12,a);g.ellipse("fill",x,y,w,6)
+            g.setColor(1,0.96,0.55,a);g.setLineWidth(1);g.ellipse("line",x,y,w,6)
+            g.line(x-w*0.5,y-3,x+w*0.3,y-4)
+            sparkle(g,x+8,y-7,3+math.sin(i+age*14),{1,0.94,0.62},a*0.65)
+        end
+        local arrival=math.max(0,1-math.abs(age-0.66)/0.22)
+        sparkle(g,target.x,target.y,10,{1,0.93,0.5},arrival*0.8)
+    end
     g.translate(ft.x, math.max(72,ft.y-rise))
     local pulse=ft.kind=="heal" and (ft.amount>0 and 0.12 or 0.25) or ft.kind=="armor" and 0.22 or 0.16
-    local scale = ft.kind=="damage" and (1+(tier-1)*0.13+(0.24+tier*0.045)*math.exp(-age*10)*math.sin(age*24))
+    local scale = ft.kind=="damage" and (1+(tier-1)*0.16+(0.32+tier*0.065)*math.exp(-age*9)*math.sin(age*25)-0.15*math.exp(-age*35))
         or ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
     g.scale(scale)
-    if ft.kind == "damage" and tier >= 3 then
-        local p = math.min(1, age/0.42)
-        g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.65)
-        g.setLineWidth(2)
-        g.ellipse("line",0,17,35+p*(35+tier*8),12+p*17)
+    if ft.kind == "damage" and tier >= 2 then
+        local p = math.min(1, age/0.56)
+        g.setBlendMode("add")
+        g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.045)
+        g.ellipse("fill",0,17,75+p*30,24)
+        for ring=1,(tier>=4 and 2 or 1) do
+            g.setColor(color[1],color[2],color[3],alpha*(1-p)*(0.5/ring))
+            g.setLineWidth(ring==1 and 1.8 or 0.8)
+            g.ellipse("line",0,17,(40+p*(38+tier*7))*ring,12+p*15)
+        end
         for i=1,4+tier*2 do
-            local angle = i*math.pi*2/(4+tier*2)
-            local radius = 24+p*(30+tier*9)
-            g.line(math.cos(angle)*radius,17+math.sin(angle)*radius*0.5,
-                math.cos(angle)*(radius+7),17+math.sin(angle)*(radius+7)*0.5)
+            local angle=i*2.399
+            local radius=35+p*(40+tier*7)
+            local x,y=math.cos(angle)*radius,17+math.sin(angle)*radius*0.42
+            sparkle(g,x,y,(2+tier*0.45)*(1-p),color,alpha*(1-p)*0.8)
+            g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.5)
+            g.setLineWidth(1)
+            g.line(x,y,x-math.cos(angle)*(6+tier),y-math.sin(angle)*(6+tier)*0.42)
         end
-    elseif ft.kind == "gold" and ft.amount > 0 then
-        local count = math.min(12, 4+math.floor(math.sqrt(ft.amount)))
-        for i=1,count do
-            local p = math.max(0,math.min(1,(age-i*0.025)/0.75))
-            local target = ft.target or {x=ft.x,y=ft.y-58}
-            local x = (target.x-ft.x)*p + math.sin(i*2.4)*(1-p)*48
-            local y = (target.y-ft.y)*p+rise+36*(1-p)-math.sin(p*math.pi)*(28+i*2)
-            g.setColor(1,0.70,0.12,alpha*math.sin(p*math.pi))
-            g.ellipse("fill",x,y,3+math.abs(math.cos(age*12+i))*2,5)
-            g.setColor(1,0.94,0.55,alpha*math.sin(p*math.pi))
-            g.ellipse("line",x,y,3+math.abs(math.cos(age*12+i))*2,5)
-        end
+        g.setBlendMode("alpha")
     end
     local text = ui.sanitizeText and ui.sanitizeText(ft.text) or ft.text
     local font = (ft.kind == "damage" or not ft.life) and ui.fonts.large
@@ -116,10 +158,38 @@ function F.draw(ft, ui)
     g.setFont(font)
     -- Long legacy notifications wrap; damage values stay on a single fitted line.
     if ft.kind and font:getWidth(text)>420 then g.scale(420/font:getWidth(text)) end
+    local tw=math.min(420,font:getWidth(text))
+    if ft.kind=="damage" and tier>=4 then
+        for i=2,1,-1 do
+            g.push();g.scale(1+i*0.035)
+            g.setColor(color[1],color[2],color[3],alpha*math.exp(-age*8)*0.14/i)
+            g.printf(text,-230-i*4,i*3,460,"center");g.pop()
+        end
+    end
+    if ft.kind=="damage" or ft.kind=="gold" then
+        luminousText(g,text,color,alpha,ft.kind=="gold" and 1.25 or 0.5+tier*0.16)
+    end
     outlined(g,text,-230,0,460,color,alpha)
+    if ft.kind=="gold" then
+        sparkle(g,-tw/2-9,8,4,{1,0.94,0.57},alpha*(0.55+0.25*math.sin(age*14)))
+        sparkle(g,tw/2+9,14,3,{1,0.94,0.57},alpha*(0.55+0.25*math.cos(age*14)))
+    end
+    if ft.kind then
+        -- A brief ivory highlight sells impact without washing out the value.
+        g.setColor(1,0.97,0.85,alpha*math.exp(-age*12)*0.75)
+        g.printf(text,-230,-0.7,460,"center")
+    end
     if ft.label then
         g.setFont(ui.fonts.tiny or ui.fonts.small)
-        outlined(g,ft.label,-230,font:getHeight()+3,460,color,alpha*0.85)
+        local labelY=font:getHeight()+5
+        local labelW=g.getFont():getWidth(ft.label)+24
+        g.setColor(0.02,0.025,0.05,alpha*0.82)
+        g.rectangle("fill",-labelW/2,labelY-1,labelW,17,4,4)
+        g.setColor(color[1],color[2],color[3],alpha*0.55)
+        g.setLineWidth(0.8);g.line(-labelW/2+6,labelY+16,labelW/2-6,labelY+16)
+        outlined(g,ft.label,-230,labelY,460,color,alpha*0.92)
+        sparkle(g,-tw/2-11,14,3.5,color,alpha*math.exp(-age*3)*0.8)
+        sparkle(g,tw/2+11,14,3.5,color,alpha*math.exp(-age*3)*0.8)
     end
     g.pop()
 end
@@ -177,6 +247,9 @@ painters.armor_gain=function(g,e,p,c,alpha)
     for i=1,4 do local a=i*math.pi/2;local d=36*(1-build)+r
         line(g,c,alpha*(1-build),2,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+6),math.sin(a)*(d+6)) end
     line(g,c,alpha*build,2,-6,0,0,6,8,-7)
+    g.setColor(c[1],c[2],c[3],alpha*hit*0.6);g.setLineWidth(1)
+    shield(g,0,0,r+out(age/0.24)*15,"line")
+    sparkle(g,13,-13,2+hit*4,{0.85,0.98,1},alpha*hit)
 end
 painters.armor_loss=function(g,e,p,c,alpha)
     local age,hit=contact(e);local fly=clamp(age/0.32)
@@ -271,6 +344,7 @@ function F.drawVfx(ui)
     for _,e in ipairs(F.vfx) do
         local p=clamp(e.age/e.profile.duration);local alpha=math.min(1,e.age/0.012)*(1-out((p-0.38)/0.62))
         g.push("all");g.translate(e.x,e.y);g.scale(e.scale,e.scale)
+        if e.y<70 and (e.kind=="armor_gain" or e.kind=="armor_loss") then g.scale(0.5) end
         painters[e.kind](g,e,p,e.profile.color,alpha)
         if e.profile.label then
             g.setBlendMode("alpha");g.setFont(ui.fonts.tiny or ui.fonts.small)

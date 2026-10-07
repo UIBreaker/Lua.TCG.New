@@ -64,13 +64,13 @@ local function ticket(item, x, y, w, h, hovered)
     love.graphics.setColor(C.surface)
     love.graphics.circle("fill", x, y + h * 0.72, 5)
     love.graphics.circle("fill", x + w, y + h * 0.72, 5)
-    UI.drawCardBorder(x, y, w, h, hovered and C.gold)
+    UI.drawCardBorder(x, y, w, h, hovered and C.gold, nil, item)
 end
 
 local function art(item, x, y, w, h, hovered, mx, my)
     if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     local tx, ty = 0, 0
-    if hovered then tx, ty = UI.calculateTilt(mx, my, x, y, w, h) end
+    -- Shared card physics eases pointer tilt for all shop faces.
     love.graphics.setColor(0.005,0.008,0.015,Visual.shop.shadow)
     love.graphics.ellipse("fill",x+w/2,y+h+3,w*0.49,hovered and 12 or 8)
     if Visual.enabled and hovered then
@@ -94,7 +94,7 @@ local function art(item, x, y, w, h, hovered, mx, my)
         if image then
             love.graphics.setColor(1, 1, 1, 1)
             UI.CardFrame.image(image, 0, 0, w, h)
-            UI.drawCardBorder(0, 0, w, h, hovered and C.gold)
+            UI.drawCardBorder(0, 0, w, h, hovered and C.gold, nil, item.equipment or item)
         elseif item.category == "heal" then
             -- A potion silhouette replaces the old generic text/gem card.
             local a = item.color or C.green
@@ -111,7 +111,7 @@ local function art(item, x, y, w, h, hovered, mx, my)
             UI.drawRoundedRect("fill", w * 0.35, h * 0.18, w * 0.30, h * 0.06, 3)
             love.graphics.setColor(1, 1, 1, 0.55)
             UI.drawRoundedRect("fill", w * 0.30, h * 0.40, 4, h * 0.20, 2)
-            UI.drawCardBorder(0, 0, w, h, hovered and C.gold)
+            UI.drawCardBorder(0, 0, w, h, hovered and C.gold, nil, item.equipment or item)
         else
             ticket(item, 0, 0, w, h, hovered)
         end
@@ -200,7 +200,7 @@ local function soulShop(shop, game, buttons, mx, my, time)
     local function offer(item,index,x,y,w,h)
         local hovered=mx>=x and mx<=x+w and my>=y and my<=y+h
         UI.Polish.surface(item,index,hovered,x,y,w,h,function()
-            art(item,x,y+math.sin(time+index)*1.2,w,h,hovered,mx,my)
+            art(item,x,y,w,h,hovered,mx,my)
         end)
         buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item}
         if hovered and UI.Polish.tooltipAllowed(item) then hoveredItem=item end
@@ -267,7 +267,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
             if voucher then
                 privilege(item, x, y, w, h, hovered, affordable)
             else
-                local dy = y + math.sin(time * 1.2 + index) * 1.2
+                local dy = y
                 price(item, x, y - 25, w, affordable)
                 if not dragged then art(item, x, dy, w, h, hovered, mx, my) end
                 text(retail and categories[item.category] or (item.subtitle or item.name), x - 20, y + h + 8, w + 40, nil, hovered and C.text or (item.color or C.muted), "center")

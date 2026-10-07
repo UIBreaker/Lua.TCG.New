@@ -70,7 +70,8 @@ function D.emit()
     local enemy=D.kind~="player"
     for i=1,D.count do
         local p=D.pool[i];local r,s=random(i),random(i+233)
-        p.kind=i%10<6 and "ash" or i%10<9 and "ember" or "smoke"
+        p.kind=D.kind=="chest" and (i%4==0 and "ember" or "shard")
+            or (i%10<6 and "ash" or i%10<9 and "ember" or "smoke")
         local point=enemy and D.points and D.points[1+math.floor(r*#D.points)]
         local size=enemy and D.preset.size or 330
         p.x=D.x+(point and point[1] or (r-0.5)*0.75)*size
@@ -141,11 +142,12 @@ function D.drawEnemy(image,x,y,size,card)
     g.setBlendMode("add");Light.glow(x,C.enemy.floorY,140,C.enemy.ember,0.14*remains*ramp(p,0.05,0.30));g.setBlendMode("alpha")
     if image and dissolve<1 then
         g.translate(x+C.enemy.recoil*math.sin(clamp(p/0.35)*math.pi),y+9*p)
-        g.rotate(-C.enemy.rotation*math.sin(clamp(p/0.65)*math.pi))
+        g.rotate(D.kind=="chest" and math.sin(p*26)*0.045*(1-dissolve)
+            or -C.enemy.rotation*math.sin(clamp(p/0.65)*math.pi))
         if D.shader then
             D.shader:send("dissolveAmount",dissolve);D.shader:send("crackAmount",ramp(p,C.enemy.crackAt,C.enemy.breakAt)*(1-dissolve))
             D.shader:send("flashAmount",(1-ramp(p,0.04,0.14))*0.8)
-            D.shader:send("emberColor",C.enemy.ember);D.shader:send("crackGlowColor",C.enemy.crack);g.setShader(D.shader)
+            D.shader:send("emberColor",D.kind=="chest" and {1,0.82,0.43} or C.enemy.ember);D.shader:send("crackGlowColor",C.enemy.crack);g.setShader(D.shader)
         end
         if not D.shader then
             D.maskW,D.maskH,D.maskAmount=image:getWidth()*fit,image:getHeight()*fit,dissolve
@@ -162,12 +164,19 @@ function D.drawParticles()
         local p=D.pool[i]
         if p.age>0 and p.age<p.life then
             local a=math.sin(math.pi*clamp(p.age/p.life))
-            local col=D.kind=="player" and C.player.soul or p.kind=="ash" and C.enemy.ash or p.kind=="ember" and C.enemy.ember or C.enemy.smoke
+            local col=D.kind=="chest" and {1,0.82,0.43} or D.kind=="player" and C.player.soul or p.kind=="ash" and C.enemy.ash or p.kind=="ember" and C.enemy.ember or C.enemy.smoke
             if p.kind=="smoke" then
                 g.setBlendMode("alpha");Light.glow(p.x,p.y,p.size*(1+p.age),col,a*0.16)
             elseif p.kind=="ember" then
                 g.setBlendMode("add");Light.glow(p.x,p.y,p.size*4,col,a*0.3)
                 g.setColor(col[1],col[2],col[3],a);g.circle("fill",p.x,p.y,p.size*0.55)
+            elseif p.kind=="shard" then
+                g.push();g.translate(p.x,p.y);g.rotate(p.spin+p.age*3)
+                g.setBlendMode("add");g.setColor(col[1],col[2],col[3],a*0.16)
+                g.circle("fill",0,0,p.size*3)
+                g.setBlendMode("alpha");g.setColor(1,0.93,0.72,a)
+                g.polygon("fill",-p.size,-p.size/2,p.size/2,-p.size,p.size,p.size/2,-p.size/2,p.size)
+                g.pop()
             else
                 g.setBlendMode("alpha");g.setColor(col[1],col[2],col[3],a*0.8)
                 g.push();g.translate(p.x,p.y);g.rotate(p.spin+p.age*2);g.rectangle("fill",-p.size/2,-1,p.size,2);g.pop()

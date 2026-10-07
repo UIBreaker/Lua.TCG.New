@@ -31,59 +31,115 @@ function Frame.image(image, x, y, w, h)
     love.graphics.draw(mesh, x, y)
 end
 
+-- Ancient metal mounts with sparse, readable ornament; every tier has its own profile.
+Frame.styles = {
+    {metal=Frame.color, gem={0.82,0.84,0.88}},                       -- C: plain bronze
+    {metal={0.60,0.72,0.57}, gem={0.28,0.82,0.48}},                 -- UC: etched patina
+    {metal={0.63,0.76,0.88}, gem={0.30,0.62,1.00}},                 -- R: silver, sapphire
+    {metal={0.80,0.66,0.88}, gem={0.72,0.38,0.94}},                 -- E: amethyst filigree
+    {metal={0.98,0.78,0.40}, gem={1.00,0.62,0.22}},                 -- L: gilded crest
+    {metal={0.98,0.65,0.48}, gem={0.94,0.28,0.30}},                 -- M: ruby sunburst
+    {metal={0.65,0.92,0.94}, gem={0.48,0.90,0.96}},                 -- T: astral silver
+    {metal={0.91,0.83,1.00}, gem={0.82,0.70,1.00}},                 -- UQ: crowned constellation
+}
+local rarityTier = require("src.deities").getRarityTier
+function Frame.tier(card)
+    local tier, overflow = rarityTier(card)
+    -- Playing cards can gain ability levels temporarily during combat as well.
+    local temporary = card and card.suit and math.max(0, math.floor(tonumber(card.temporaryAbilityLevels) or 0)) or 0
+    local absolute = tier + overflow + temporary
+    return math.min(#Frame.styles, absolute), math.max(0, absolute - #Frame.styles)
+end
+
 function Frame.draw(x, y, w, h, highlight, alpha, card)
     local g = love.graphics
-    alpha = alpha or 1
-    local level = math.max(0, math.floor(tonumber(card and card.evolutionLevel) or 0))
-    local outer = outline(x, y, w, h)
-    -- A narrow rim overlays the artwork edge; there is no inset matte.
-    local inner = outline(x, y, w, h, Frame.rimWidth)
+    alpha = (alpha or 1) * (highlight and highlight[4] or 1)
+    local tier, overflow = Frame.tier(card)
+    local style = Frame.styles[tier]
+    local size = math.min(w,h)
+    local unit = math.max(0.6, math.min(1.6, size/128))
+    local outer, inner = outline(x,y,w,h), outline(x,y,w,h,Frame.rimWidth)
     g.push("all"); g.setShader()
-    g.setColor(Frame.metal[1], Frame.metal[2], Frame.metal[3], alpha)
+    g.setColor(Frame.metal[1],Frame.metal[2],Frame.metal[3],alpha)
     for i=1,16,2 do
         local j = i == 15 and 1 or i+2
-        g.polygon("fill", outer[i],outer[i+1],outer[j],outer[j+1],
-            inner[j],inner[j+1],inner[i],inner[i+1])
+        g.polygon("fill",outer[i],outer[i+1],outer[j],outer[j+1],inner[j],inner[j+1],inner[i],inner[i+1])
     end
-    local polish = 1 - 1 / (1 + level * 0.22)
-    local color = highlight or {Frame.color[1]+0.30*polish,Frame.color[2]+0.34*polish,Frame.color[3]+0.40*polish,1}
-    g.setColor(color[1],color[2],color[3],(color[4] or 1)*alpha)
-    g.setLineWidth((highlight and 2 or math.max(0.8,math.min(1.6,w*0.012))) + polish * 0.8)
-    g.polygon("line", outline(x,y,w,h,0.75))
-    if level > 0 then
-        -- Engravings share the face's local transform, so they never stay behind.
-        local size = math.min(w,h)
-        local bevel, reach = size*0.06, size*(0.06+0.008*math.min(level,8))
-        g.setColor(0.95,0.80+0.12*polish,0.48+0.35*polish,alpha)
-        g.setLineWidth(math.max(0.8,math.min(1.3,w*0.01)))
-        for _, corner in ipairs({{x,y,1,1},{x+w,y,-1,1},{x,y+h,1,-1},{x+w,y+h,-1,-1}}) do
-            g.push(); g.translate(corner[1],corner[2]); g.scale(corner[3],corner[4])
-            g.line(2.5,bevel+reach,2.5,bevel+2,bevel+2,2.5,bevel+reach,2.5)
-            if level >= 4 then
-                g.line(4.5,bevel+reach*0.7,4.5,bevel+4,bevel+4,4.5,bevel+reach*0.7,4.5)
-            end
-            g.pop()
+    local color = style.metal
+    -- Hover brightens the tier's metal without erasing its identity.
+    local mix = highlight and 0.22 or 0
+    local r,b,c = color[1]*(1-mix)+(highlight and highlight[1] or 0)*mix,
+        color[2]*(1-mix)+(highlight and highlight[2] or 0)*mix,
+        color[3]*(1-mix)+(highlight and highlight[3] or 0)*mix
+    local stroke = (highlight and 2 or math.max(0.8,math.min(1.6,w*0.012))) + (tier-1)*0.10
+    if tier >= 5 then
+        -- Soft edge bloom stays INSIDE the face, including during dissolve.
+        g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha*0.12)
+        g.setLineWidth(4*unit); g.polygon("line",outline(x,y,w,h,3*unit))
+    end
+    g.setColor(r,b,c,alpha); g.setLineWidth(stroke)
+    g.polygon("line",outline(x,y,w,h,0.75))
+    if tier == 1 then g.pop(); return end
+    local bevel, reach = size*0.06,size*(0.055+0.012*tier)
+    g.setLineWidth(math.max(0.75,unit))
+    for _, corner in ipairs({{x,y,1,1},{x+w,y,-1,1},{x,y+h,1,-1},{x+w,y+h,-1,-1}}) do
+        g.push(); g.translate(corner[1],corner[2]); g.scale(corner[3],corner[4])
+        g.setColor(r,b,c,alpha)
+        g.line(3*unit,bevel+reach,3*unit,bevel+2*unit,bevel+2*unit,3*unit,bevel+reach,3*unit)
+        if tier >= 3 then
+            g.polygon("fill",3*unit,bevel+3*unit,bevel+3*unit,3*unit,
+                bevel+8*unit,3*unit,3*unit,bevel+8*unit)
         end
-        local function gem(cx,cy,r)
-            g.setColor(0.085,0.075,0.060,alpha)
-            g.polygon("fill",cx,cy-r-1,cx+r+1,cy,cx,cy+r+1,cx-r-1,cy)
-            g.setColor(0.96,0.79+0.14*polish,0.42+0.45*polish,alpha)
-            g.polygon("fill",cx,cy-r,cx+r,cy,cx,cy+r,cx-r,cy)
-            g.setColor(1,0.98,0.83,alpha); g.line(cx-r*0.5,cy,cx,cy-r*0.5)
+        if tier >= 4 then
+            g.line(6*unit,bevel+reach*0.85,6*unit,bevel+6*unit,bevel+6*unit,6*unit,bevel+reach*0.85,6*unit)
         end
-        local radius = math.max(1.2, math.min(3,w*0.025))
-        if level >= 2 then gem(x+w/2,y+h-4,radius) end
-        if level >= 3 then gem(x+w/2,y+4,radius) end
-        if level >= 5 then gem(x+4,y+h/2,radius);gem(x+w-4,y+h/2,radius) end
-        -- One additional engraved mark per evolution; overflow remains explicit.
-        g.setColor(color[1],color[2],color[3],alpha)
-        for i=1,math.min(level,12) do
-            local dx=(i-(math.min(level,12)+1)/2)*math.min(5,w*0.035)
-            g.line(x+w/2+dx,y+h-9,x+w/2+dx,y+h-7)
+        if tier >= 6 then
+            g.line(3*unit,bevel+reach,8*unit,bevel+reach-5*unit,6*unit,bevel+reach-10*unit)
+            g.line(bevel+reach,3*unit,bevel+reach-5*unit,8*unit,bevel+reach-10*unit,6*unit)
         end
-        if level>12 then
-            g.push();g.translate(x+w/2,y+h-16);g.scale(0.55)
-            g.printf("+"..level,-w/2,0,w,"center");g.pop()
+        if tier >= 7 then
+            g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha*0.85)
+            g.circle("fill",bevel+7*unit,bevel+7*unit,1.3*unit)
+        end
+        g.pop()
+    end
+    local function gem(cx,cy,radius)
+        g.setColor(0.035,0.045,0.060,alpha)
+        g.polygon("fill",cx,cy-radius-unit,cx+radius+unit,cy,cx,cy+radius+unit,cx-radius-unit,cy)
+        g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha)
+        g.polygon("fill",cx,cy-radius,cx+radius,cy,cx,cy+radius,cx-radius,cy)
+        g.setColor(1,0.97,0.89,alpha*0.9);g.line(cx-radius*0.5,cy,cx,cy-radius*0.5)
+    end
+    local radius = (tier >= 5 and 3 or 2)*unit
+    if tier >= 3 then gem(x+w/2,y+h-5*unit,radius) end
+    if tier >= 4 then gem(x+w/2,y+5*unit,radius) end
+    if tier >= 5 then
+        g.setColor(r,b,c,alpha)
+        for _, cy in ipairs({y+5*unit,y+h-5*unit}) do
+            g.line(x+w/2-15*unit,cy,x+w/2-8*unit,cy+3*unit,x+w/2,cy)
+            g.line(x+w/2+15*unit,cy,x+w/2+8*unit,cy+3*unit,x+w/2,cy)
+        end
+    end
+    if tier >= 6 then gem(x+5*unit,y+h/2,radius); gem(x+w-5*unit,y+h/2,radius) end
+    if tier >= 7 then
+        g.setColor(r,b,c,alpha*0.55);g.setLineWidth(unit*0.7)
+        for _, cx in ipairs({x+4*unit,x+w-4*unit}) do
+            g.line(cx,y+h*0.32,cx,y+h*0.44);g.line(cx,y+h*0.56,cx,y+h*0.68)
+        end
+    end
+    if tier == 8 then
+        g.setColor(r,b,c,alpha);g.setLineWidth(unit)
+        for _, cy in ipairs({y+6*unit,y+h-6*unit}) do
+            g.line(x+w/2-22*unit,cy,x+w/2-13*unit,cy+5*unit,x+w/2-7*unit,cy,
+                x+w/2,cy+7*unit,x+w/2+7*unit,cy,x+w/2+13*unit,cy+5*unit,x+w/2+22*unit,cy)
+        end
+    end
+    -- Overflow is still visible after UQ; the badge retains the exact level.
+    if overflow > 0 then
+        g.setColor(1,0.94,0.76,alpha)
+        for i=1,math.min(overflow,8) do
+            local dx=(i-(math.min(overflow,8)+1)/2)*4*unit
+            g.line(x+w/2+dx,y+h-16*unit,x+w/2+dx,y+h-14*unit)
         end
     end
     g.pop()

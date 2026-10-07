@@ -26,6 +26,11 @@ local function rarityState(deity)
     return Deities.RARITIES[tier], math.max(0, absoluteTier - #Deities.RARITIES), baseTier, evolutionLevel
 end
 
+function Deities.getRarityTier(card)
+    local _, overflow, base, level = rarityState(card)
+    return math.min(#Deities.RARITIES, base + level), overflow
+end
+
 function Deities.getRarityBadge(deity)
     local rarity, overflow = rarityState(deity)
     return rarity.code .. (overflow > 0 and ("+" .. overflow) or ""), rarity.color

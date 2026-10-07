@@ -76,8 +76,18 @@ local function drawHealth(data, fonts)
     g.rectangle("fill", x, 16, w, 14, 3, 3)
     local armorRatio = math.min(1, armor / math.max(1, data.armorCap or 30))
     if armorRatio > 0 then
-        Core.color({0.10,0.42,0.67,1})
-        g.rectangle("fill", x+1, 17, (w-2)*armorRatio, 12, 2, 2)
+        local fillW=(w-2)*armorRatio
+        Core.gradient(x+1,17,fillW,12,{0.18,0.65,0.84,1},{0.07,0.25,0.47,1},2)
+        Core.color({0.7,0.94,1,0.5});g.rectangle("fill",x+3,18,math.max(0,fillW-4),1)
+        local flash=math.min(1,math.max(0,((data.armorBounce or 1)-1)*10))
+        Core.color({0.7,0.95,1,flash*0.42})
+        g.rectangle("fill",x+1,17,fillW,12,2,2)
+        Core.color({0.8,0.97,1,flash*0.7})
+        g.rectangle("fill",x+2+(fillW-4)*(1-flash),18,2,10)
+        for i=1,5 do
+            local sx=x+w*i/6
+            if sx<x+fillW then Core.color({0.03,0.13,0.22,0.28});g.line(sx,19,sx,27) end
+        end
     end
     Core.color({0.45,0.83,1,0.9})
     g.setLineWidth(1)
@@ -150,10 +160,16 @@ function TopHUD.draw(data, fonts, mx, my, pressedId)
     g.translate(470,37)
     g.scale(data.goldBounce or 1)
     g.translate(-470,-37)
+    local goldFlash=math.min(1,math.max(0,((data.goldBounce or 1)-1)*5))
+    g.setBlendMode("add")
+    g.setColor(1,0.72,0.18,goldFlash*0.16);g.ellipse("fill",448,27,22,15)
+    g.setColor(1,0.91,0.5,goldFlash*0.8);g.setLineWidth(1.3)
+    g.line(454,12,454,21);g.line(450,16,458,16)
+    g.setBlendMode("alpha")
     drawIcon("coin", 430, 14, 25)
     Core.textLine(tostring(data.gold or 0), 460, 17, 48, hudStat, Theme.colors.gold, "left", hudSmall)
-    Core.textLine(tostring(data.souls or 0).." LH", 430, 43, 78, hudFonts.hudArmor, Theme.colors.purple, "center")
     g.pop()
+    Core.textLine(tostring(data.souls or 0).." LH", 430, 43, 78, hudFonts.hudArmor, Theme.colors.purple, "center")
 
     drawIcon("cards", 519, 22, 30)
     Core.textLine("LƯỢT " .. tostring(data.hands or 0) .. "/" .. tostring(data.maxHands or 0),

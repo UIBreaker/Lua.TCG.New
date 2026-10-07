@@ -118,7 +118,7 @@ function Modal.draw(UI,mx,my)
         else
             local image=target.hp and target.maxHp and require("src.enemy_art").image(target,{}) or UI.getConsumableImage(target)
             if image then
-                love.graphics.setColor(1,1,1,1);UI.CardFrame.image(image,x,y,76,110);UI.drawCardBorder(x,y,76,110)
+                love.graphics.setColor(1,1,1,1);require("ui.card_surfaces").image(target,x,y,76,110,image)
             else
                 love.graphics.setColor(0.25,0.18,0.35,1);love.graphics.rectangle("fill",x,y,76,110,5,5)
                 UI.drawItemEmblem(target,x+38,y+45,30,target.color)

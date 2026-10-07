@@ -7,6 +7,7 @@ local held, lastCard, root, canvas, enabled
 local mx, my, previousX, previousY = 0, 0, 0, 0
 local mouseVX, mouseVY = 0, 0
 local current, overlay = nil, false
+local elapsed, serial = 0, 0
 local contains
 local debugEnabled, lab = false, false
 local unpack = unpack or table.unpack
@@ -36,6 +37,7 @@ end
 function Physics.update(dt, mouseX, mouseY)
     if not dt or dt <= 0 then return end
     local hdt = math.min(dt, Config.maxDt)
+    elapsed = elapsed + hdt
     mx, my = mouseX or mx, mouseY or my
     local vx = clamp((mx - previousX) / dt, -Config.input.maxVelocity, Config.input.maxVelocity)
     local vy = clamp((my - previousY) / dt, -Config.input.maxVelocity, Config.input.maxVelocity)
@@ -47,14 +49,26 @@ function Physics.update(dt, mouseX, mouseY)
         for key, s in pairs(surfaces) do
             if s.frame < frame - 120 and s ~= held and not (s.detached and s.active) then
                 surfaces[key] = nil -- Release cached render args for disappeared cards.
-            elseif s.active then
+            elseif s.active or s.frame >= frame - 1 then
+                s.active = true
                 local holding = s == held
                 if holding then
                     s.holdTime = s.holdTime + hdt
                     s.dragging = (mx - s.pressX)^2 + (my - s.pressY)^2 > Config.dragThreshold^2
                 end
+                local visible = not s.detached and s.frame >= frame - 1
+                local hover = enabled and visible and s.hovered and not holding
+                local pointerX, pointerY = 0, 0
+                if hover and s.a then
+                    local lx, ly = inverse(s.a,s.b,s.c,s.d,s.ox,s.oy,mx,my)
+                    pointerX = clamp(lx / s.w - 0.5, -0.5, 0.5) * 2
+                    pointerY = clamp(ly / s.h - 0.5, -0.5, 0.5) * 2
+                end
+                local idleAngle = visible and math.sin(elapsed * Config.idle.speed + s.phase) * Config.idle.angle or 0
+                local bob = visible and math.sin(elapsed * Config.idle.speed * 0.8 + s.phase) * Config.idle.bob or 0
+                s.hoverLift = smooth(s.hoverLift or 0, hover and 1 or 0, Config.hover.response, hdt)
                 s.targetX = holding and (mx - s.grabX) or s.homeX
-                s.targetY = holding and (my - s.grabY - Config.pickup.lift) or s.homeY
+                s.targetY = holding and (my - s.grabY - Config.pickup.lift) or (s.homeY + bob - Config.hover.lift * s.hoverLift)
                 local sway = 0
                 if holding and Config.sway.enabled then
                     sway = math.sin(s.holdTime * Config.sway.speed1) * Config.sway.amplitude1
@@ -62,7 +76,7 @@ function Physics.update(dt, mouseX, mouseY)
                 end
                 s.targetRotation = holding and clamp(mouseVX * Config.input.velocityToTilt
                     + (s.targetX - s.x) * Config.input.lagToTilt + sway,
-                    -Config.rotation.maxAngle, Config.rotation.maxAngle) or 0
+                    -Config.rotation.maxAngle, Config.rotation.maxAngle) or (idleAngle + pointerX * Config.hover.angle)
                 s.x, s.vx = spring(s.x, s.vx, s.targetX, preset.stiffness, preset.damping, hdt)
                 s.y, s.vy = spring(s.y, s.vy, s.targetY, preset.stiffness, preset.damping, hdt)
                 s.rotation, s.angularVelocity = spring(s.rotation, s.angularVelocity,
@@ -70,12 +84,12 @@ function Physics.update(dt, mouseX, mouseY)
                 s.rotation = clamp(s.rotation, -Config.rotation.maxAngle * 1.2, Config.rotation.maxAngle * 1.2)
                 s.lift = smooth(s.lift, holding and 1 or 0, Config.pickup.response, hdt)
                 s.tiltY = smooth(s.tiltY, holding and clamp(mouseVY * Config.rotation.verticalResponse
-                    + (s.targetY - s.y) * 0.002, -1, 1) or 0, Config.input.smoothing, hdt)
+                    + (s.targetY - s.y) * 0.002, -1, 1) or pointerY * 0.7, Config.hover.response, hdt)
                 local stretch = Config.stretch.enabled and holding
                     and math.min(Config.stretch.maxAmount, math.sqrt(s.vx^2 + s.vy^2)
                         / Config.stretch.speedScale * Config.stretch.maxAmount) or 0
                 s.stretch = smooth(s.stretch, stretch, Config.stretch.response, hdt)
-                if not holding and math.abs(s.x - s.homeX) + math.abs(s.y - s.homeY) < 0.5
+                if not holding and not visible and math.abs(s.x - s.homeX) + math.abs(s.y - s.homeY) < 0.5
                     and math.abs(s.vx) + math.abs(s.vy) < 6
                     and math.abs(s.rotation) + math.abs(s.angularVelocity) < 0.002 and s.lift < 0.001 then
                     s.active = false
@@ -130,7 +144,7 @@ local function apply(s)
     local x, y = s.args[2] + s.w * Config.pivot.x, s.args[3] + s.h * Config.pivot.y
     g.translate(x, y)
     g.rotate(s.rotation)
-    local scale = 1 + (Config.pickup.scale - 1) * s.lift
+    local scale = 1 + (Config.pickup.scale - 1) * s.lift + (Config.hover.scale - 1) * (s.hoverLift or 0)
     g.scale(scale * (1 + s.stretch), scale * (1 - s.stretch * 0.5))
     g.shear(0, s.tiltY * Config.rotation.verticalShear)
     g.translate(-x, -y)
@@ -158,7 +172,7 @@ function Physics.wrap(draw, ownerSelector, hoverArg)
     local wrapper
     wrapper = function(owner, x, y, w, h, ...)
         local g = love.graphics
-        if not root or not enabled or depth > 0 or g.getCanvas() ~= canvas or type(owner) ~= "table"
+        if not root or depth > 0 or g.getCanvas() ~= canvas or type(owner) ~= "table"
             or type(w) ~= "number" or type(h) ~= "number" then
             return draw(owner, x, y, w, h, ...)
         end
@@ -171,21 +185,27 @@ function Physics.wrap(draw, ownerSelector, hoverArg)
             key, s = s.nextKey, surfaces[s.nextKey]
         end
         if not s then
+            serial = serial + 1
             s = { args = {}, draw = draw, x = 0, y = 0, vx = 0, vy = 0, rotation = 0,
-                angularVelocity = 0, lift = 0, stretch = 0, tiltY = 0, holdTime = 0, frame = 0 }
+                angularVelocity = 0, lift = 0, stretch = 0, tiltY = 0, holdTime = 0, frame = 0, phase = serial * 2.399 }
             surfaces[key] = s
         end
         s.frame, s.w, s.h = frame, w, h
         s.args[1], s.args[2], s.args[3], s.args[4], s.args[5] = owner, x, y, w, h
         local n = select("#", ...)
         for i = 1, n do s.args[i + 5] = select(i, ...) end
-        for i = n + 6, #s.args do s.args[i] = nil end
+        for i = n + 6, (s.argCount or #s.args) do s.args[i] = nil end
         s.argCount = n + 5
         local explicitHover = hoverArg and s.args[hoverArg]
-        s.hovered = s == held or (explicitHover == true)
-            or (explicitHover == nil and contains and contains(s, mx, my)) or false
+        s.hovered = enabled and (s == held or explicitHover == true
+            or (explicitHover == nil and contains and contains(s, mx, my))) or false
         if hoverArg then s.args[hoverArg] = s.hovered; s.argCount = math.max(s.argCount, hoverArg) end
-        s.homeX, s.homeY = logicalPoint(x, y)
+        local homeX,homeY=logicalPoint(x,y)
+        if s.homeX and s~=held and ((homeX-s.homeX)^2+(homeY-s.homeY)^2 > math.max(w,h)^2*4) then
+            -- A new scene/slot must not drag an old idle pose across the screen.
+            s.x,s.y=s.x+homeX-s.homeX,s.y+homeY-s.homeY
+        end
+        s.homeX,s.homeY=homeX,homeY
         s.renderX, s.renderY, s.detached = s.homeX, s.homeY, false
         local px, py = logicalPoint(0, 0)
         local x1, y1 = logicalPoint(1, 0)
@@ -294,6 +314,20 @@ function Physics.getState(card)
     end
     local surfaces = states[card]
     if surfaces then for _, s in pairs(surfaces) do if s.frame >= frame - 1 then return s end end end
+end
+
+-- Late selection/evolution rims reuse the final face matrix, including renderer tilt.
+function Physics.drawAttached(card, draw)
+    if current or not root or love.graphics.getCanvas()~=canvas then return false end
+    local s=Physics.getState(card)
+    if not s or s.frame~=frame or not s.a then return false end
+    local g=love.graphics
+    s.rimTransform=s.rimTransform or love.math.newTransform()
+    s.rimTransform:setMatrix("row",root.a*s.a+root.c*s.b,root.a*s.c+root.c*s.d,0,root.a*s.ox+root.c*s.oy+root.x,
+        root.b*s.a+root.d*s.b,root.b*s.c+root.d*s.d,0,root.b*s.ox+root.d*s.oy+root.y,
+        0,0,1,0,0,0,0,1)
+    g.push("all");g.replaceTransform(s.rimTransform);draw(0,0,s.w,s.h);g.pop()
+    return true
 end
 
 function Physics.drawDebug()

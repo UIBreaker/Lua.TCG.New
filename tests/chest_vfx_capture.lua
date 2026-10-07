@@ -1,7 +1,7 @@
 local T={};local UI=require("src.ui");local D=require("src.death_vfx")
 local P=require("src.persistence");P.deleteRun=function() return true end;P.saveRun=function() return true end;P.saveSettings=function() return true end
 local stage=0;local age=0;local shotIndex=1;local case=1
-local shots={{0.34,"ash"},{0.94,"backs"},{1.35,"flip"},{2.75,"choices"}}
+local shots={{0.34,"shards"},{0.94,"gather"},{1.35,"materialize"},{2.10,"choices"}}
 local rewards;local initialCards;local stored
 local function click(btn)
     local w,h=love.graphics.getDimensions();local s=math.min(w/1280,h/720)
@@ -19,6 +19,7 @@ end
 function T.update(game,cb)
     age=age+love.timer.getDelta();assert(age<10,"chest test timeout at "..stage)
     if stage==0 then
+        if case==1 then require("tests.chest_reveal_smoke") end
         cb.startNewGame("red_deck")
         love.mouse.setPosition(4,4)
         local E=require("src.equipment");local card=require("src.deck").newCard(11,"hearts")

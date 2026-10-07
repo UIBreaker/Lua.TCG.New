@@ -2,6 +2,8 @@ local C=require("config.visual_config")
 local L=require("render.lighting")
 local Frame=require("ui.components.card_frame")
 local Entity={}
+local poses=setmetatable({}, {__mode="k"})
+local Feel=require("config.card_hold_config")
 function Entity.load()
     local ok,shader=pcall(love.graphics.newShader,"shaders/world_entity.glsl")
     if ok then Entity.shader=shader else Entity.error=tostring(shader);print("[HD2D] Entity shader fallback: "..Entity.error) end
@@ -25,6 +27,24 @@ function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventSt
     g.translate(x,y+attack*76+recoil)
     local breath=not cardSurface and C.enabled and 1+math.sin(time*1.35)*C.boss.breath or 1
     local advance=1+math.max(0,attack)*0.08
+    if cardSurface then
+        local phase = x * 0.017 + size * 0.031
+        local angle = math.sin(time * Feel.idle.speed + phase) * Feel.idle.angle
+        local pose = card and poses[card]
+        if card and not pose then pose={angle=angle,lift=0,tilt=0};poses[card]=pose end
+        if pose then
+            local mx,my = g.inverseTransformPoint(love.mouse.getPosition())
+            local cw,ch = iw*fit,ih*fit
+            local hover = mx>=-cw/2 and mx<=cw/2 and my>=-ch/2 and my<=ch/2 and math.abs(attack)<0.01
+            local response = 1-math.exp(-Feel.hover.response*math.min(love.timer.getDelta(),Feel.maxDt))
+            pose.angle=pose.angle+((angle+(hover and mx/cw*2*Feel.hover.angle or 0))-pose.angle)*response
+            pose.lift=pose.lift+((hover and 1 or 0)-pose.lift)*response
+            pose.tilt=pose.tilt+((hover and my/ch*1.4 or 0)-pose.tilt)*response
+            g.translate(0,-Feel.hover.lift*pose.lift);g.rotate(pose.angle)
+            g.shear(0,pose.tilt*Feel.rotation.verticalShear)
+            local scale=1+(Feel.hover.scale-1)*pose.lift;g.scale(scale)
+        else g.rotate(angle) end
+    end
     g.scale(squash/breath*advance,breath/squash*advance)
     if not cardSurface then g.rotate(math.sin(time*0.7)*0.008+hit*0.07) end
     if Entity.shader and C.enabled and C.effects.lighting and not cardSurface then

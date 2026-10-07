@@ -19,6 +19,14 @@ local function run(result,cards,deities,fps,fast)
         local st = Feel.update(a,1/fps,fast)
         time = time+1/fps
         local ev = a.sequence.events[a.sequence.index]
+        assert(#a.sequence.links<=18,"contribution effects remain bounded")
+        if ev and (ev.kind=="TRIGGER" or ev.kind=="BASE_DAMAGE" or ev.kind=="BASE_ENHANCE" or ev.kind=="FORMULA") and a.sequence.entered then
+            for _,metric in ipairs({{"displayChips","fromChips","toChips"},{"displayMult","fromMult","toMult"}}) do
+                local value,from,to=a[metric[1]],a.sequence[metric[2]],a.sequence[metric[3]]
+                local tolerance=math.max(1,math.abs(to))*1e-9
+                assert(value>=math.min(from,to)-tolerance and value<=math.max(from,to)+tolerance,"smooth count must not overshoot")
+            end
+        end
         if ev and ev.kind=="FORMULA" then
             assert(math.abs(a.displayChips-result.totalChips)<0.001, "damage must match before reconciliation")
             assert(math.abs(a.displayMult-result.totalMult)<0.001, "enhance must match before reconciliation")

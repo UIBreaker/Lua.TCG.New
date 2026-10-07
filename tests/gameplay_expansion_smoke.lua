@@ -80,6 +80,20 @@ for _,id in ipairs(A.config.order) do
 end
 assert(registered==52)
 print("52 abilities: registration, real trigger, tooltip, stronger evolution, identity and old/new saves passed")
+do
+    assert(A.config.maxEvolutionLevel==8)
+    local c=card(2,"hearts",7)
+    local g=game({c})
+    assert(A.evolve(g,c) and c.evolutionLevel==8 and g.persistentDeck[1].evolutionLevel==8)
+    assert(not A.evolve(g,c),"level 8 must reject further evolution")
+    assert(not A.upgrade(g,c,100,false) and c.evolutionLevel==8,"bulk upgrade must respect level 8 cap")
+    g.run=Run.newRun("red_deck")
+    local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
+    assert(restored.persistentDeck[1].evolutionLevel==8,"save/load must retain level 8")
+    local _,body=Description.resolve(c,g)
+    assert(body:find("8 / 8",1,true),"card tooltip must display new cap")
+    print("Evolution cap PASS: 7 to 8, copies on hand/deck, reject overflow, save/load and tooltip")
+end
 local function play(g,cards,info,decisions)
     info=info or Poker.evaluate(cards)
     A.beginHand(g,info,cards,decisions)

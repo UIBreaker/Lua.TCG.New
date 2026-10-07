@@ -8,6 +8,7 @@ Feel.Attacks = Attacks
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
 local ease = function(t) return 1 - (1 - clamp(t, 0, 1)) ^ 3 end
+local smooth = function(t) t=clamp(t,0,1);return t*t*(3-2*t) end
 local categories = { card_ability = "KHẢ NĂNG", card_scored = "LÁ BÀI", deity_card = "SPN", deity_hand = "SPN",
     deity_edition = "ẤN BẢN SPN", deity_enchantment = "PHÙ PHÉP SPN", equipment_trigger = "TRANG BỊ KHẢM", enhancement_trigger = "CƯỜNG HÓA BÀI",
     seal_trigger = "CON DẤU", card_edition = "ẤN BẢN", discard_buff_trigger = "CHIẾN THUẬT BỎ BÀI" }
@@ -94,8 +95,12 @@ end
 
 local function link(s, value, label, x, y, tx, ty, color)
     if value == 0 then return end
+    for _,l in ipairs(s.links) do
+        if math.abs(l.x-x)<8 and math.abs(l.y-y)<8 then l.duration=math.min(l.duration,l.age+0.06) end
+    end
     s.links[#s.links + 1] = {text = (value > 0 and "+" or "") .. s.ui.formatNumber(value) .. " " .. label,
-        x = x, y = y, tx = tx, ty = ty, age = 0, duration = 0.55, color = color}
+        x = x, y = y, tx = tx, ty = ty, age = 0, duration = 0.42, color = color}
+    while #s.links>18 do table.remove(s.links,1) end
 end
 
 local function trigger(anim, st)
@@ -131,15 +136,16 @@ local function trigger(anim, st)
     s.multiply = (st.xMult or 1) > 1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
     anim.bounceScale.chips = s.toChips ~= beforeChips and C.pulse.damage or 1
     anim.bounceScale.mult = s.toMult ~= beforeMult and (s.multiply and C.pulse.multiply or C.pulse.enhance) or 1
-    link(s, st.addedChips or 0, "ST", x, y - 28, 70, 197, C.color.damage)
-    link(s, st.addedMult or 0, "C.H", x, y - 8, 176, 197, C.color.enhance)
-    link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, y - 28, 126, 292, C.color.aura)
+    local popupY=y-(cardIndex and 94 or 52)
+    link(s, st.addedChips or 0, "ST", x, popupY, 70, 197, C.color.damage)
+    link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 197, C.color.enhance)
+    link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 126, 292, C.color.aura)
     if s.multiply then
         local factor = st.auraMultiplier or st.xMult or anim.displayXMult
         s.links[#s.links + 1] = {text = "×" .. string.format("%.2f",factor)
-            .. ((st.auraMultiplier or st.cardXMultTotal) and " AURA" or " CƯỜNG HÓA"), x = x, y = y - 28,
+            .. ((st.auraMultiplier or st.cardXMultTotal) and " AURA" or " C.H"), x = x, y = popupY-21,
             tx = st.auraMultiplier and 126 or 176, ty = st.auraMultiplier and 292 or 197,
-            age = 0, duration = 0.60, color = C.color.aura, multiply = true}
+            age = 0, duration = 0.48, color = C.color.aura, multiply = true}
     end
     anim.stepCategory = categories[st.type] or "HIỆU ỨNG"
     anim.stepLog = s.ui.localizeText(st.message or st.deityName or anim.stepCategory)
@@ -149,6 +155,7 @@ local function trigger(anim, st)
             .. s.ui.formatNumber(st.addedMult or 0) .. " Cường hóa"
     end
     play(s, s.multiply and "multiply" or (s.toMult ~= beforeMult and "enhance" or "damage"))
+    while #s.links>18 do table.remove(s.links,1) end
 end
 
 local function enter(anim, ev)
@@ -268,11 +275,14 @@ function Feel.update(anim, dt, fast)
         if ev.kind == "ENTRY" then anim.entranceTimer = s.age
         elseif ev.kind == "BASE_DAMAGE" or ev.kind == "BASE_ENHANCE" or ev.kind == "TRIGGER" or ev.kind == "FORMULA" then
             local wait = s.multiply and C.timing.multiplyAnticipation or 0
-            local k = ease((s.age - wait) / math.max(0.01, ev.duration - C.timing.gap - wait))
+            local k = smooth((s.age - wait) / math.max(0.01, ev.duration - C.timing.gap - wait))
             anim.displayChips = s.fromChips + (s.toChips - s.fromChips) * k
             anim.displayMult = s.fromMult + (s.toMult - s.fromMult) * k
+            local spring=math.sin(k*math.pi)*math.exp(-k*1.8)
+            anim.bounceScale.chips=1+(s.toChips~=s.fromChips and 0.15*spring or 0)
+            anim.bounceScale.mult=1+(s.toMult~=s.fromMult and (s.multiply and 0.24 or 0.17)*spring or 0)
         elseif ev.kind == "AURA_COUNT" then
-            anim.displayAura = s.result.finalScore * ease(p)
+            anim.displayAura = s.result.finalScore * smooth(p)
             anim.bounceScale.score = 1 + s.intensity * 0.12 * math.sin(p * math.pi)
             s.tickAge = s.tickAge + consumed
             if s.tickAge >= 0.065 then s.tickAge = s.tickAge % 0.065; play(s, "count", p * 0.05) end
@@ -350,12 +360,33 @@ function Feel.draw(anim, ui)
     g.pop()
     g.push("all")
     for _, l in ipairs(s.links) do
-        local k = ease(l.age / l.duration)
-        local x, y = l.x + (l.tx - l.x) * k, l.y + (l.ty - l.y) * k - math.sin(k * math.pi) * 24
-        g.setColor(l.color[1], l.color[2], l.color[3], 1 - k * k)
-        if l.echo then g.setLineWidth(2);g.line(l.x,l.y,x,y);g.circle("line",x,y,7+4*k) end
-        g.setFont(l.multiply and ui.fonts.medium or ui.fonts.small)
-        g.printf(l.text, x - 125, y - 12, 250, "center")
+        local k=clamp(l.age/l.duration,0,1)
+        local flight=smooth((k-0.20)/0.80)
+        local x,y=l.x+(l.tx-l.x)*flight,l.y+(l.ty-l.y)*flight-math.sin(flight*math.pi)*22
+        local fade=1-smooth((k-0.55)/0.45)
+        g.push("all");g.setBlendMode("add")
+        g.setColor(l.color[1],l.color[2],l.color[3],(1-k)*0.12)
+        g.setLineWidth(3);g.line(x,y,x+(l.x-x)*0.045,y+(l.y-y)*0.045)
+        g.setColor(l.color[1],l.color[2],l.color[3],math.sin(flight*math.pi)*0.85)
+        g.circle("fill",x,y,l.multiply and 3.5 or 2.5)
+        if l.echo then g.setLineWidth(1);g.line(l.x,l.y,x,y);g.circle("line",x,y,7+4*k) end
+        g.pop()
+        -- The value stays beside its source; only a small energy mote travels.
+        if l.x>=240 then
+        g.push("all");g.translate(l.x,l.y-10*smooth(k))
+        local pop=1+0.23*math.exp(-l.age*11)*math.sin(l.age*26)-0.12*math.exp(-l.age*35)
+        g.scale(pop);g.rotate(l.multiply and math.sin(l.age*19)*math.exp(-l.age*12)*0.035 or 0)
+        g.setFont(l.multiply and ui.fonts.medium or (ui.fonts.regular or ui.fonts.small))
+        local width=g.getFont():getWidth(l.text)
+        if width>118 then g.scale(118/width) end
+        g.setColor(0.015,0.025,0.045,fade*0.90)
+        g.rectangle("fill",-width/2-7,-14,width+14,g.getFont():getHeight()+4,4,4)
+        g.setColor(l.color[1],l.color[2],l.color[3],fade*0.20)
+        g.printf(l.text,-125,-14,250,"center")
+        g.setColor(0.01,0.015,0.025,fade);g.printf(l.text,-125,-10,250,"center")
+        g.setColor(l.color[1],l.color[2],l.color[3],fade);g.printf(l.text,-125,-12,250,"center")
+        g.pop()
+        end
     end
     g.pop()
 end

@@ -150,7 +150,8 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
         x + 12, y + 151, w - 24, drawFonts.label, Theme.colors.muted, "center")
 
     if data.scoring then
-    local auraLabel = "AURA ĐANG CỘNG"
+    local auraLabel = data.phase=="AURA_COUNT" and "AURA • TÍCH NĂNG"
+        or (data.aura or 0)>0 and "AURA • SẴN SÀNG" or "AURA • HÌNH THÀNH"
     Core.text(auraLabel, x + 20, y + 181, w - 40, drawFonts.label, Theme.colors.gold, "center")
     drawIcon("aura", x + 27, y + 207, 24)
     local auraText = tostring(fmt(data.aura or 0))
@@ -162,6 +163,15 @@ function HandInfoPanel.draw(data, fonts, formatNumber)
     love.graphics.translate(-auraCenterX, -(y + 216))
     Core.text(auraText, x + 56, y + 202, w - 80, auraFont, Theme.colors.gold, "center")
     love.graphics.pop()
+    local progress=math.max(0,math.min(1,data.scoreProgress or 0))
+    g.push("all")
+    g.setColor(0.14,0.11,0.07,0.95);g.rectangle("fill",x+23,y+240,w-46,2)
+    g.setColor(0.93,0.69,0.28,0.75);g.rectangle("fill",x+23,y+240,(w-46)*progress,2)
+    if progress>0 and progress<1 then
+        g.setBlendMode("add");g.setColor(1,0.87,0.55,0.8)
+        g.circle("fill",x+23+(w-46)*progress,y+241,2)
+    end
+    g.pop()
 
     end
 

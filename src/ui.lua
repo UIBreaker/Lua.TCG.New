@@ -1,7 +1,12 @@
 local UI = {}
 local ContinentalArt = require("src.continental_art")
 UI.CardFrame = require("ui.components.card_frame")
-UI.drawCardBorder = UI.CardFrame.draw
+function UI.drawCardBorder(x,y,w,h,highlight,alpha,card)
+    if card and UI.CardPhysics and UI.CardPhysics.drawAttached(card,function(a,b,c,d)
+        UI.CardFrame.draw(a,b,c,d,highlight,alpha,card)
+    end) then return end
+    UI.CardFrame.draw(x,y,w,h,highlight,alpha,card)
+end
 UI.drawCardBack = require("ui.components.deck_counter").drawBack
 UI.getCardBackImage = require("ui.components.deck_counter").getImage
 local Theme = require("ui.theme")
@@ -1279,7 +1284,7 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
     local deityImage = UI.getDeityImage(deityId)
     local isSpnCard = deityImage and UI.deityImageIsSpnCard[deityId]
     local _, rim = Deities.getRarityBadge(d)
-    local s = isPressed and 0.98 or (isHovered and 1.04 or 1)
+    local s = isPressed and 0.98 or 1
     CardEffects.setInteraction(d, isHovered == true, d.selected == true or UI.Polish.isFocused(d))
     CardEffects.prepareDraw(d, effectX or x, effectY or y, w, h,
         effectShearX or 0, effectShearY or 0,

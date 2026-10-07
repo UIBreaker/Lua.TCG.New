@@ -42,14 +42,11 @@ function T.verify()
         UI.drawPatronCard(patron,x,y,200,300)
         -- The top-centre border changes at every level, independently of rarity text.
         g.setCanvas()
-        local data=canvas:newImageData()
+        local data=canvas:newImageData(1,1,x,y,200,300)
         g.setCanvas(canvas)
-        local r,b,c=data:getPixel(x+70,y+1)
-        if previous then
-            assert(math.abs(r-previous[1])+math.abs(b-previous[2])+math.abs(c-previous[3])>.005,
-                "each evolution must improve the frame")
-        end
-        previous={r,b,c};data:release()
+        local pixels=data:getString()
+        assert(not previous or pixels~=previous,"each evolution must improve the frame, including UQ overflow")
+        previous=pixels;data:release()
         g.setColor(1,1,1,1);g.setFont(UI.fonts.small)
         g.printf(level==0 and "Khung cơ bản" or ("Tiến hóa "..level),x-25,y+311,250,"center")
         assert(Deities.evolve(patron))

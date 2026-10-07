@@ -1,6 +1,6 @@
 -- Ability levels never modify a card's poker rank or suit.
 local Data = {
-    maxEvolutionLevel = 5, maxRetriggerDepth = 4, maxCopyDepth = 3,
+    maxEvolutionLevel = 8, maxRetriggerDepth = 4, maxCopyDepth = 3,
     maxTriggersPerHand = 128, maxRetriggersPerCard = 8, armorCap = 999,
     definitions = {}, order = {},
 }

@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a == "--test-card-motion" then require("tests.card_motion_capture"); return end
     if a == "--test-editions-render" then require("tests.edition_preview.main"); return end
     if a == "--test-feature-parity" then
         require("tests.inventory_expansion_smoke")
@@ -303,7 +304,7 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
             UI.drawRoundedRect("fill", cx, cy, conSlotW, conSlotH, 6)
             love.graphics.setLineWidth(isHover and 2 or 1.5)
             love.graphics.setColor(c.color or UI.COLORS.goldYellow)
-            UI.drawCardBorder(cx, cy, conSlotW, conSlotH, isHover and UI.COLORS.goldYellow)
+            UI.drawCardBorder(cx, cy, conSlotW, conSlotH, isHover and UI.COLORS.goldYellow, nil, c)
         end
 
         -- Icon
@@ -339,9 +340,9 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     local hovered = isTopHovered == true
     opacity = opacity or 1
     local drawY = cy + math.sin(((juice and juice.ambientTimer) or 0) * 1.35 + index * 0.9) * 1.5
-    if hovered then drawY = drawY - 2 end
+
     local accent = c.color or UI.COLORS.hpGreen
-    local scale = hovered and 1.04 or 1
+    local scale = 1
 
     g.push("all")
     g.translate(cx + cardW / 2, drawY + cardH / 2)
@@ -365,7 +366,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     UI.drawRoundedRect("fill", 3, 3, cardW - 6, 30, 4)
     g.setColor(accent[1], accent[2], accent[3], (accent[4] or 1) * opacity)
     g.setLineWidth(hovered and 2 or 1.25)
-    UI.drawCardBorder(0, 0, cardW, cardH, hovered and UI.COLORS.goldYellow, opacity)
+    UI.drawCardBorder(0, 0, cardW, cardH, hovered and UI.COLORS.goldYellow, opacity, c)
     g.setFont(UI.fonts.medium)
     g.setColor(1, 1, 1, opacity)
     g.printf(c.icon or "✦", 3, 6, cardW - 6, "center")
@@ -3788,6 +3789,9 @@ local function drawBattleInfoPanel(m, eval, preview)
         enemyBarHp = scoring and anim.sequence.hp or (m and (m.damageLagHp or m.hp) or 0),
         enemyTrailHp = scoring and anim.sequence.hpTrail,
         auraIntensity = scoring and anim.sequence.intensity or 0,
+        phase = scoring and anim.sequence.events[anim.sequence.index] and anim.sequence.events[anim.sequence.index].kind,
+        scoreProgress = scoring and math.min(1,(anim.sequence.index-1+(anim.sequence.age/
+            math.max(0.001,anim.sequence.events[anim.sequence.index] and anim.sequence.events[anim.sequence.index].duration or 1)))/#anim.sequence.events) or 0,
         formula = scoring and anim.sequence.events[anim.sequence.index]
             and anim.sequence.events[anim.sequence.index].kind == "FORMULA"
             and UI.ScoringFeel.formula(anim.sequence) or nil,
@@ -3955,7 +3959,7 @@ local function drawPlayingState()
             if pendingEvolutionCard then
                 love.graphics.setLineWidth(2.5)
                 love.graphics.setColor(0.84, 0.68, 1, 0.95)
-                UI.drawCardBorder(dx, deityY, deitySlotW, deitySlotH, UI.COLORS.goldYellow)
+                UI.drawCardBorder(dx, deityY, deitySlotW, deitySlotH, UI.COLORS.goldYellow, nil, d)
             end
             love.graphics.pop()
         elseif isDropTarget then
@@ -4245,11 +4249,10 @@ local function drawScoringState()
 
         local hitAge = anim.cardHit and anim.cardHit[i]
         if hitAge then
-            local force = math.max(0, 1 - hitAge / 0.18)
-            cx = cx + math.sin(hitAge * 118) * 1.8 * force
-            cy = cy - math.sin(hitAge * 62) * 1.5 * force
-            c.rotation = c.rotation + math.sin(hitAge * 95) * 0.015 * force
-            c.visualScale = c.visualScale * (1 + 0.055 * force)
+            local spring=math.sin(hitAge*19)*math.exp(-hitAge*9)
+            cy=cy-10*spring
+            c.rotation=c.rotation+spring*0.025*(i%2==0 and 1 or -1)
+            c.visualScale=c.visualScale*(1+0.035*spring)
         end
 
         if anim.cardBounce and anim.cardBounce[i] then
@@ -4293,33 +4296,12 @@ local function drawScoringState()
         -- If actively scoring: Draw golden highlight ring and floating pill above
         if isActive and transformProgress < 0.45 then
             love.graphics.setBlendMode("add")
-            love.graphics.setColor(1, 0.72, 0.18, 0.16 + math.sin(juice.ambientTimer * 18) * 0.05)
+            love.graphics.setColor(1, 0.72, 0.18, 0.06+0.12*math.exp(-(anim.sequence.age or 0)*12))
             UI.drawRoundedRect("fill", cx - 9, cy - 9, cardW + 18, cardH + 18, 12)
             love.graphics.setBlendMode("alpha")
-            love.graphics.setLineWidth(3)
+            love.graphics.setLineWidth(1.5)
             love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.goldYellow)
-
-            -- Floating pill above card
-            local pillW = 120
-            local pillH = 26
-            local pillX = cx + (cardW - pillW) / 2
-            local pillY = cy - 32
-
-            UI.components.Panel.draw(pillX, pillY, pillW, pillH)
-
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            local bonusText = "+" .. (c.baseChips or 0) .. " ST"
-            if anim.scoredCards and anim.scoredCards[i] then
-                local sc = anim.scoredCards[i]
-                if sc.addedMult and sc.addedMult > 0 then
-                    bonusText = "+" .. sc.addedChips .. " ST / +" .. sc.addedMult .. " C.H"
-                else
-                    bonusText = "+" .. sc.addedChips .. " ST"
-                end
-            end
-            love.graphics.printf(bonusText, pillX, pillY + 4, pillW, "center")
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.goldYellow, nil, c)
 
         elseif isScored and transformProgress < 0.45 then
             -- Small green check badge below scored card
@@ -4979,7 +4961,7 @@ local function drawDeckViewerModal()
             local driftY = math.sin(((juice and juice.ambientTimer) or 0) * 1.1 + i * 0.57) * 1.8
             local driftR = math.sin(((juice and juice.ambientTimer) or 0) * 0.72 + i * 0.41) * 0.006
             love.graphics.push()
-            love.graphics.translate(cx + cw / 2, cy + ch / 2 + driftY - (isHov and 4 or 0))
+            love.graphics.translate(cx + cw / 2, cy + ch / 2 + driftY)
             love.graphics.rotate(driftR)
             love.graphics.translate(-cw / 2, -ch / 2)
             if not (state == "shop" and UI.Polish.hiddenOwned(c)) then UI.drawCard(c, 0, 0, cw, ch) end
@@ -5194,13 +5176,13 @@ local function drawSocketingView()
             UI.drawRoundedRect("fill", cx, cy, cardW, cardH, 8)
             love.graphics.setLineWidth(2)
             love.graphics.setColor(UI.COLORS.multRed)
-            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.multRed)
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.multRed, nil, c)
             love.graphics.setFont(UI.fonts.medium)
             love.graphics.printf(reason and reason:find("cùng loại") and "ĐÃ CÓ" or "THIẾU Ô", cx, cy + cardH / 2 - 12, cardW, "center")
         elseif isHovered then
             love.graphics.setLineWidth(3)
             love.graphics.setColor(UI.COLORS.hpGreen)
-            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.hpGreen)
+            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.hpGreen, nil, c)
         end
 
         local usedSlots = Equipment.getUsedSlots(c)
@@ -5927,7 +5909,7 @@ local function drawShopState()
             if pendingEvolutionCard then
                 love.graphics.setLineWidth(2.5)
                 love.graphics.setColor(0.84, 0.68, 1, 0.95)
-                UI.drawCardBorder(sx, sy, deiSlotW, deiSlotH, UI.COLORS.goldYellow)
+                UI.drawCardBorder(sx, sy, deiSlotW, deiSlotH, UI.COLORS.goldYellow, nil, d)
             end
             love.graphics.pop()
 
@@ -6266,7 +6248,7 @@ drawShopTransferView = function()
         if chosenEq and not isSource then canReceive = Equipment.canAttach(card, chosenEq) end
         local float = math.sin((juice and juice.ambientTimer or 0) * 1.2 + i * 0.55) * 1.5
         love.graphics.push()
-        love.graphics.translate(0, float - (hovered and 5 or 0))
+        love.graphics.translate(0, float)
         card.hovered = hovered
         UI.drawCard(card, x, y, w, h)
         love.graphics.pop()
@@ -6274,10 +6256,10 @@ drawShopTransferView = function()
         love.graphics.setLineWidth(isSource and 3 or 2)
         if isSource then
             love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawCardBorder(x, y + float - (hovered and 5 or 0), w, h, UI.COLORS.goldYellow)
+            UI.drawCardBorder(x, y + float, w, h, UI.COLORS.goldYellow, nil, card)
         elseif chosenEq then
             love.graphics.setColor(canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
-            UI.drawCardBorder(x, y + float - (hovered and 5 or 0), w, h, canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
+            UI.drawCardBorder(x, y + float, w, h, canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 }, nil, card)
         end
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(Equipment.getUsedSlots(card) > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)

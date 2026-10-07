@@ -10,6 +10,8 @@ return {
     rotation = { maxAngle = 0.18, verticalResponse = 0.00018, verticalShear = 0.018 },
     sway = { enabled = true, amplitude1 = 0.006, amplitude2 = 0.003, speed1 = 2.3, speed2 = 3.7 },
     stretch = { enabled = true, maxAmount = 0.025, speedScale = 3200, response = 18 },
+    idle = { angle = 0.010, bob = 0.65, speed = 1.15 },
+    hover = { angle = 0.075, lift = 3, scale = 1.025, response = 14 },
     pickup = { scale = 1.05, lift = 9, response = 24 },
     pivot = { x = 0.5, y = 0.75 },
     shadow = { alpha = 0.25, offset = 12 },

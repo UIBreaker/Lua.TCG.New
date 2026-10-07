@@ -1,7 +1,7 @@
 -- Logical 1280x720 coordinates. All sequence tuning lives here.
 return {
     chest = {duration=1.02, stop=0.05, count=0.65, kick=2, size=310,
-        cardsAt=0.72, cardsTravel=0.32, flipAt=1.12, flipDuration=0.42, stagger=0.50,
+        cardsAt=0.80, cardsTravel=0.55, flipAt=1.08, flipDuration=0.64, stagger=0.11,
         cardW=218, cardH=316, gap=82, cardY=176, buttonH=34},
     enemy = {
         mini = {duration=1.08, stop=0.045, count=0.65, kick=3, size=290},

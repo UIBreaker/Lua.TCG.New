@@ -60,18 +60,8 @@ function Surfaces.catalog(item, cx, cy, cardW, cardH, collectionCategory, isH, m
     if item.faceDown then return UI.drawCardBack(cx, cy, cardW, cardH, item.alpha) end
     -- 3D Tilt calculation
     if isH and not item.faceDown then UI.descriptionCandidate = item end
-    local tX, tY = 0, 0
-    if isH then
-        tX, tY = UI.calculateTilt(mx, my, cx, cy, cardW, cardH)
-    end
-
     love.graphics.push()
-    love.graphics.translate(cx + cardW / 2, cy + cardH / 2 - (isH and 3 or 0))
-    if isH then
-        love.graphics.shear(tX * 0.08, tY * 0.08)
-        love.graphics.scale(1.035, 1.035)
-    end
-    love.graphics.translate(-cardW / 2, -cardH / 2)
+    love.graphics.translate(cx, cy)
     Physics.capture(item, 0, 0, cardW, cardH)
 
     -- Card Body
@@ -299,6 +289,7 @@ Surfaces.preview = Physics.wrap(Surfaces.preview, function(item, x, y, w, h, cat
     catalogHandles[key] = catalogHandles[key] or {}
     return catalogHandles[key]
 end)
+Surfaces.fullReward = Physics.wrap(Surfaces.fullReward, nil, 7)
 Surfaces.round = Physics.wrap(Surfaces.round, nil, 6)
 Surfaces.image = Physics.wrap(Surfaces.image)
 

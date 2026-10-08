@@ -5,7 +5,9 @@ local Souls = {}
 function Souls.value(card)
     local equipment = 0
     for _, eq in ipairs(card.equipments or {}) do
-        equipment = equipment + (tonumber((Equipment.ITEMS[eq.id] or eq).cost) or 0)
+        local definition=Equipment.ITEMS[eq.id] or eq
+        -- Gold commissioning prices must not inflate the separate soul economy.
+        equipment = equipment + (tonumber(definition.legacyCost or definition.cost) or 0)
     end
     local evolution = math.max(0, math.floor(tonumber(card.evolutionLevel) or 0)) * 4
     local edition = ({foil=3,holographic=6,polychrome=10,negative=12})[CardEffects.getEffectName(card) or card.edition] or 0

@@ -5904,7 +5904,7 @@ local function drawShopState()
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
 
-    local shopX, shopY, shopW, shopH = 20, 76, 985, 560
+    local shopX, shopY, shopW, shopH = 20, 76, 1240, 560
     UI.components.Panel.draw(shopX, shopY, shopW, shopH, {worldBackdrop=true})
 
     ----------------------------------------------------------------------------
@@ -5915,9 +5915,9 @@ local function drawShopState()
     local btnNextRound = {
         id = "leave_shop",
         text = shopData.soulMode and "RỜI CHỢ →" or "ẢI TIẾP →",
-        x = 45,
+        x = 32,
         y = 653,
-        w = 146,
+        w = 136,
         h = 42,
         color = UI.COLORS.btnDestruct,
         font = UI.fonts.small,
@@ -5931,9 +5931,9 @@ local function drawShopState()
     local btnReroll = {
         id = "reroll",
         text = shopData.soulMode and ("ĐỔI HÀNG · "..rCost.." LH") or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
-        x = 203,
+        x = 180,
         y = 653,
-        w = 170,
+        w = 164,
         h = 42,
         color = canReroll and UI.COLORS.btnSpecial or UI.COLORS.btnNormal,
         font = UI.fonts.small,
@@ -5944,9 +5944,9 @@ local function drawShopState()
     UI.drawButton(btnReroll, mx >= btnReroll.x and mx <= btnReroll.x + btnReroll.w and my >= btnReroll.y and my <= btnReroll.y + btnReroll.h, juice.buttonPressedId == btnReroll.id)
 
     for _, action in ipairs({
-        { id = "open_shop_transfer", text = "HOÁN ĐỔI TRANG BỊ", x = 385, w = 208 },
-        { id = "shop_round_info", text = "THÔNG TIN", x = 605, w = 130 },
-        { id = "shop_options", text = "TÙY CHỌN", x = 747, w = 130 },
+        { id = "open_shop_transfer", text = "HOÁN ĐỔI TRANG BỊ", x = 356, w = 198 },
+        { id = "shop_round_info", text = "THÔNG TIN", x = 566, w = 126 },
+        { id = "shop_options", text = "TÙY CHỌN", x = 1000, w = 246 },
     }) do
         local btn = { id = action.id, text = action.text, x = action.x, y = 653, w = action.w, h = 42, color = UI.COLORS.btnNormal, font = UI.fonts.small }
         table.insert(buttons, btn)
@@ -5958,12 +5958,10 @@ local function drawShopState()
         shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
-    local bagButton={id="open_backpack",text="BALO VIỄN CHINH",x=1028,y=600,w=238,h=95,color=UI.COLORS.btnSpecial,font=UI.fonts.small}
+    local bagButton={id="open_backpack",text="BALO VIỄN CHINH",x=704,y=653,w=284,h=42,color=UI.COLORS.btnSpecial,font=UI.fonts.small}
     buttons[#buttons+1]=bagButton
-    UI.drawButton(bagButton,mx>=1028 and mx<=1266 and my>=600 and my<=695)
-    UI.Backpack.icon(1045,620,32,45)
-    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf(tostring(game.gold or 0).." Vàng · "..#(game.persistentDeck or {}).." lá bài",1036,671,222,"center")
+    UI.drawButton(bagButton,mx>=704 and mx<=988 and my>=653 and my<=695)
+    UI.Backpack.icon(716,660,25,30)
     if hoveredShopItem then UI.descriptionCandidate = hoveredShopItem end
 
     ----------------------------------------------------------------------------

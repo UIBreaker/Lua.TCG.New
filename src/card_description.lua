@@ -77,14 +77,17 @@ function D.resolve(item,game)
     end
     if Equipment.ITEMS[item.id] then
         local text="ITM · "..Equipment.getDescription(item)
-        if item.basic then
-            for _,recipe in ipairs(require("src.basic_equipment").recipes) do
-                for i,id in ipairs(recipe.ingredients) do if id==item.id then
-                    text=text.."\nGhép với "..Equipment.ITEMS[recipe.ingredients[i==1 and 2 or 1]].name.." → "..Equipment.ITEMS[recipe.id].name.."; công ghép "..recipe.fee.." Vàng."
-                end end
-            end
+        local B=require("src.basic_equipment")
+        local recipe=B.byResult and B.byResult[item.id]
+        if recipe then
+            local needs={};for _,id in ipairs(recipe.ingredients) do needs[#needs+1]=Equipment.ITEMS[id].name end
+            text=text.."\nGhép tầng "..recipe.tier..": "..table.concat(needs," + ")..". Công ghép "..recipe.fee.." Vàng."
+        elseif item.basic then
+            local names={};for _,r in ipairs(B.recipes) do for _,id in ipairs(r.ingredients) do if id==item.id then names[#names+1]=Equipment.ITEMS[r.id].name;break end end end
+            for i=1,math.min(3,#names) do text=text.."\nNguyên liệu cho "..names[i].."." end
+            if #names>3 then text=text.."\nVà "..(#names-3).." công thức khác — xem Bàn Ghép." end
         end
-        if item.basic or item.crafted then text=text.."\nChiếm 1 hốc. Gắn/tháo miễn phí trong balo; tháo trước khi dùng làm nguyên liệu." end
+        if not item.soulOnly then text=text.."\nGắn/tháo miễn phí trong balo; tháo trước khi dùng làm nguyên liệu." end
         return item.name,text
     end
     if item.category=="evolution" or item.id=="cons_evolution" then

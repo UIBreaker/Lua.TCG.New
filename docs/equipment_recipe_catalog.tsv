@@ -1,0 +1,36 @@
+id	name	tier	ingredients	fee	craft_cost	shop_cost	reason
+crafted_guard	Áo Hộ Mệnh	1	Băng Vải + Tấm Sắt	4	8	12	Lót vải hồi phục bên trong tấm giáp.
+crafted_runner	Ủng Hồi Sức	1	Rễ Sinh Lực + Dây Giày	4	10	15	Ủng buộc chắc và túi dược rễ cho người chạy đường dài.
+crafted_bulwark	Giáp Hành Quân	2	Áo Hộ Mệnh + Da Thuộc + Đinh Thúc	7	23	35	Gia cố áo hộ mệnh để hành quân nhanh trong giáp.
+crafted_medic	Túi Quân Y	2	Áo Hộ Mệnh + Hộp Cao Lành + Túi Đồng	7	24	36	Nâng bộ bảo hộ thành túi quân y có ngăn tiền tiếp tế.
+crafted_caravan	Khiên Thương Đội	3	Giáp Hành Quân + Khoanh Xích + Quả Cân	10	47	71	Giáp hành quân kết hợp khóa xích và đối trọng thương đội.
+crafted_courier	La Bàn Giao Thương	3	Ủng Hồi Sức + Lông Gió + Con Dấu Buôn	10	42	63	Đồ người chạy tin được chuẩn hóa cho đường giao thương.
+gem_fire	Đá Tiên Phong	1	Tấm Sắt + Đinh Thúc	4	11	17	Mũi thép thúc lực cho đòn tiên phong.
+gem_blast	Đá Tam Kích	1	Tấm Sắt + Đinh Thúc + Đinh Thúc	5	17	26	Ba bộ phận chịu lực tạo nhịp tam kích.
+ward_stone	Đá Thủ Thế	1	Tấm Sắt + Da Thuộc	4	9	14	Thép và lớp da giảm chấn cho thế thủ ít quân.
+mirror_adjacent	Gương Dị Chất	2	Tấm Sắt + Quả Cân + Dây Giày	6	21	32	Bề mặt thép cân chỉnh để nối hiệu ứng giữa hai lá kề.
+storm_eye	Mắt Đồng Chất	2	Dây Giày + Đinh Thúc + Lông Gió	6	21	32	Ba linh kiện tốc phối hợp một luồng đồng chất.
+lucky_coin	Đồng Tiền Át	2	Túi Đồng + Quả Cân + Con Dấu Buôn	6	36	54	Đồng tiền được cân, đóng dấu và cất giữ.
+vitality_gem	Ngọc Cấp Cứu	2	Rễ Sinh Lực + Hộp Cao Lành + Băng Vải	6	15	23	Cô đặc bộ dược cứu thương cho lúc máu thấp.
+blood_ring	Nhẫn Liều Mạng	3	Ngọc Cấp Cứu + Khoanh Xích + Đinh Thúc	9	33	50	Khóa sức sống trong vòng kim loại để đổi máu lấy sát thương.
+itm_abacus	Bàn Tính Tân Binh	2	Quả Cân + Tấm Sắt + Túi Đồng	5	22	33	Cân và hạt tiền tạo dụng cụ tính sức mạnh quân thấp.
+itm_twinfang	Nanh Song Sinh	3	Đá Tam Kích + Đinh Thúc + Khoanh Xích	9	35	53	Từ nhịp tam kích rèn thành cặp nanh liên kết cùng rank.
+itm_wayfarer	La Bàn Lữ Hành	2	Dây Giày + Lông Gió + Túi Đồng	6	21	32	Dụng cụ lữ hành nối bước quân theo rank liền nhau.
+itm_prism	Lăng Kính Viễn Chinh	3	Gương Dị Chất + Lông Gió + Quả Cân	9	47	71	Gương đã cân chỉnh được mài thành lăng kính đa chất.
+itm_hourglass	Cát Chậm	2	Đá Thủ Thế + Tấm Sắt + Dây Giày	6	20	30	Bộ thủ thế được căn theo nhịp tốc của đối thủ.
+itm_miser	Chìa Khóa Ngân Khố	3	Đồng Tiền Át + Quả Cân + Con Dấu Buôn	9	70	105	Đồng tiền Át trở thành chìa khóa kho vàng tích trữ.
+itm_quiver	Ống Tên Dự Trữ	2	Da Thuộc + Lông Gió + Tấm Sắt	6	18	27	Ống da và tên thép dự trữ cho quân còn giữ trên tay.
+itm_anvil	Đe Ba Khảm	3	Đá Tiên Phong + Đá Thủ Thế + Khoanh Xích	10	34	51	Đe kết hợp rèn công, thủ và khóa hốc trang bị.
+itm_crown	Vương Miện Độc Hành	2	Khoanh Xích + Quả Cân + Rễ Sinh Lực	6	23	35	Vương miện cân sức người chỉ huy độc hành.
+itm_root	Rễ Hóa Thạch	3	Áo Hộ Mệnh + Rễ Sinh Lực + Rễ Sinh Lực + Quả Cân	9	33	50	Bảo hộ sống được nuôi bằng hai rễ, lớn theo tiến hóa.
+itm_capacitor	Bình Tích Sét	3	Mắt Đồng Chất + Khoanh Xích + Quả Cân	10	45	68	Luồng sét được nhốt trong ba khoang tích điện.
+itm_counterweight	Rìu Phản Lực	4	Nhẫn Liều Mạng + Giáp Hành Quân + Khoanh Xích	14	74	111	Phản đòn từ máu mất đòi hỏi cả huyết khí lẫn giáp chịu lực.
+itm_ledger	Sổ Giao Kèo	3	Chìa Khóa Ngân Khố + Quả Cân + Túi Đồng	10	95	143	Ngân khố và sổ đầu tư lưu các nấc phát triển vĩnh viễn.
+itm_oar	Mái Chèo Chuyển Dòng	2	Da Thuộc + Tấm Sắt + Dây Giày	6	14	21	Mái chèo chuyển thế kết hợp sức công và giáp.
+itm_hourhand	Kim Đồng Hồ Canh Gác	3	Cát Chậm + Đinh Thúc + Đinh Thúc	10	40	60	Cơ cấu hai nhịp canh gác chịu được hai đòn quái.
+itm_bloodvial	Lọ Huyết Tế	4	Nhẫn Liều Mạng + Hộp Cao Lành + Hộp Cao Lành + Quả Cân	14	65	98	Bình huyết tế cần vòng khóa, hai phần cao và khoang đo giọt.
+itm_relay	Dây Xích Tiếp Sức	3	Ống Tên Dự Trữ + Khoanh Xích + Khoanh Xích + Dây Giày	10	39	59	Hai mắt xích chuyển lực từ vũ khí dự trữ sang quân tiếp theo.
+itm_lockbox	Khóa Giáp Ngân	3	Đá Thủ Thế + Quả Cân + Khoanh Xích	10	33	50	Giáp được cân và khóa để đổi thành lực công.
+itm_bell	Chuông Tĩnh Lặng	4	Ngọc Cấp Cứu + Tấm Sắt + Quả Cân + Lông Gió	12	46	69	Chuông dưỡng nhịp tĩnh lặng cần sức sống và cơ cấu cân nhịp.
+itm_pendulum	Quả Lắc Viễn Chinh	2	Đá Tiên Phong + Tấm Sắt + Dây Giày	7	23	35	Quả lắc đổi công hoặc thủ theo số quân giữa hai tay.
+void_catalyst	Xúc Tác Hư Không	5	Bình Tích Sét + Chuông Tĩnh Lặng + Lăng Kính Viễn Chinh + Con Dấu Buôn	22	175	263	Xúc tác hư không hội tụ năng lượng tích, nhịp ổn định và lăng kính đa chất.

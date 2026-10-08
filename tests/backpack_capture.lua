@@ -20,18 +20,20 @@ function T.update(g,cb)
   g.backpackEquipment={"basic_lace"};for _,id in ipairs(B.basic) do if id~="basic_lace" then g.backpackEquipment[#g.backpackEquipment+1]=id end end
   g.consumables={Shop.healingItem("upper","healing_potion").consumable}
   local Deities=require("src.deities");g.deities={Deities.CATALOG.spirit_ward,Deities.CATALOG.spirit_blade}
-  cb.openShop();advance("shop",1)
+  cb.openShop()
+  local stock=cb.getShopData();for i,item in ipairs(stock.items) do if item.section=="discount" then stock.items[i]=Shop.discountedEquipment(item.equipment,item.bay,item.bay==1 and 0 or .5) end end
+  advance("shop",1)
  elseif stage=="shop" then
   shot("backpack_shop");advance("buy_basic")
  elseif stage=="buy_basic" then
   local stock=cb.getShopData();local count=#g.backpackEquipment
-  for i,item in ipairs(stock.items) do if item.section=="basic" and item.bay==1 then click(1072,190);confirm(g);assert(#g.backpackEquipment==count+1);break end end
+  for i,item in ipairs(stock.items) do if item.section=="basic" and item.bay==1 then click(793,240);confirm(g);assert(#g.backpackEquipment==count+1);break end end
   advance("sale",1)
  elseif stage=="sale" then
   local count=#g.backpackEquipment;local gold=g.gold
-  for i,item in ipairs(cb.getShopData().items) do if item.section=="discount" and item.bay==1 then local cost=item.cost;click(1072,503);confirm(g);assert(g.gold==gold-cost and #g.backpackEquipment==count+1);break end end
+  for i,item in ipairs(cb.getShopData().items) do if item.section=="discount" and item.bay==1 then local cost=item.cost;click(1005,530);confirm(g);assert(g.gold==gold-cost and #g.backpackEquipment==count+1);break end end
   advance("open",1)
- elseif stage=="open" then click(1147,640);assert(UI.Backpack.open);advance("spn")
+ elseif stage=="open" then click(846,674);assert(UI.Backpack.open);advance("spn")
  elseif stage=="spn" then shot("backpack_spn");advance("equipment_tab")
  elseif stage=="equipment_tab" then click(230,391);advance("equipment")
  elseif stage=="equipment" then
@@ -45,9 +47,12 @@ function T.update(g,cb)
  elseif stage=="cards" then shot("backpack_cards");advance("detach")
  elseif stage=="detach" then click(489,579);assert(#g.persistentDeck[1].equipments==0);click(230,486);advance("craft")
  elseif stage=="craft" then
-  assert(UI.Backpack.tab=="craft");local coins=g.gold;click(1060,217)
-  assert(g.gold==coins-2 and B.count(g,"crafted_guard")==1);advance("crafted")
- elseif stage=="crafted" then shot("backpack_crafting");advance("consumable_tab")
+  assert(UI.Backpack.tab=="craft");local coins=g.gold;click(873,227)
+  assert(g.gold==coins-4 and B.count(g,"crafted_guard")==1);advance("crafted",1.5)
+ elseif stage=="crafted" then shot("backpack_crafting");advance("recipe_page")
+ elseif stage=="recipe_page" then click(1130,163);assert(UI.Backpack.page==2);advance("recipe_tier")
+ elseif stage=="recipe_tier" then click(893,165);assert(UI.Backpack.craftTier==5);advance("legendary")
+ elseif stage=="legendary" then shot("backpack_legendary_recipe");advance("consumable_tab")
  elseif stage=="consumable_tab" then click(230,345);advance("consumable")
  elseif stage=="consumable" then
   assert(UI.Backpack.tab=="consumable");shot("backpack_consumables");advance("use_consumable")
@@ -55,7 +60,7 @@ function T.update(g,cb)
   click(428,260,2)
   assert(g.playerHp==65 and #g.consumables==0 and not UI.Backpack.open)
   advance("reopen")
- elseif stage=="reopen" then click(1147,640);advance("spn_tab")
+ elseif stage=="reopen" then click(846,674);advance("spn_tab")
  elseif stage=="spn_tab" then click(230,298);advance("sell_spn")
  elseif stage=="sell_spn" then
   local count=require("src.deities").getCount(g.deities);click(428,260);confirm(g)
@@ -84,7 +89,7 @@ function T.update(g,cb)
  elseif stage=="edition_cancel_use" then click(428,260,2);advance("edition_cancel")
  elseif stage=="edition_cancel" then
   love.keypressed("escape");assert(not UI.Backpack.open and #g.consumables==1)
-  print("Backpack UI PASS: regular and discounted purchases, bag navigation, attach/detach, crafting, potion use, SPN sale, pagination, card/SPN editions, safe cancellation and seven screenshots")
+  print("Backpack UI PASS: regular and discounted purchases, bag navigation, attach/detach, crafting, potion use, SPN sale, pagination, card/SPN editions, safe cancellation and eight screenshots")
   love.event.quit(0)
  end
 end

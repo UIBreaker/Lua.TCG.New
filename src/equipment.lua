@@ -215,4 +215,5 @@ function Equipment.attach(card, equipItem)
 end
 
 for _,item in ipairs(require("src.basic_equipment").definitions) do Equipment.ITEMS[item.id]=item end
+require("src.basic_equipment").install(Equipment)
 return Equipment

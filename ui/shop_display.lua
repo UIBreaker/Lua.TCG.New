@@ -36,9 +36,12 @@ end
 
 local function price(item, x, y, w, affordable)
     if item.sale then
-        love.graphics.setColor(0.20,0.15,0.065,1)
-        UI.drawRoundedRect("fill",x-15,y,w+30,21,5)
-        text("$"..item.originalCost.." → $"..item.cost,x-15,y+3,w+30,UI.fonts.tiny,affordable and C.gold or C.red,"center")
+        love.graphics.setColor(0.10,0.075,0.035,.98)
+        UI.drawRoundedRect("fill",x-10,y,w+20,23,5)
+        text("$"..item.originalCost,x-5,y+5,48,UI.fonts.tiny,C.muted,"center")
+        love.graphics.setColor(.85,.46,.27,1);love.graphics.setLineWidth(1.5)
+        love.graphics.line(x-1,y+17,x+40,y+5)
+        text(item.cost==0 and "MIỄN PHÍ" or ("$"..item.cost),x+44,y+4,w-42,UI.fonts.tiny,item.cost==0 and C.green or affordable and C.gold or C.red,"center")
         return
     end
     love.graphics.setColor(affordable and { 0.20, 0.16, 0.09, 1 } or C.inset)
@@ -140,12 +143,11 @@ local function privilege(item, x, y, w, h, hovered, affordable)
 end
 privilege = UI.CardPhysics.wrap(privilege, nil, 6)
 local function position(item,index,packIndex)
-    if item.section=="basic" or item.section=="discount" then
-        return 1044+((item.bay-1)%2)*110,(item.section=="basic" and 148 or 462)+math.floor((item.bay-1)/2)*130,56,84
-    end
-    if item.section=="upper" then return 67+((retailOrder[item.category] or index)-1)*186,151,118,176 end
-    if item.category=="voucher" or item.category=="book" then return 48,422,218,186 end
-    if item.category=="pack" then return 318+(packIndex-1)*134,435,112,158 end
+    if item.section=="basic" then return 734+(item.bay-1)*132,153,118,176 end
+    if item.section=="discount" then return 946+(item.bay-1)*164,443,118,176 end
+    if item.section=="upper" then return 46+((retailOrder[item.category] or index)-1)*132,153,118,176 end
+    if item.category=="voucher" or item.category=="book" then return 36,443,210,186 end
+    if item.category=="pack" then return 280+(packIndex-1)*124,443,96,144 end
 end
 function Display.drawWorld(shop,time)
     if not shop then return end
@@ -254,11 +256,11 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         UI.Polish.ensureShop(shop)
         return soulShop(shop,game,buttons,mx,my,time)
     end
-    panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Nhấp chọn hàng → MUA · Rê chuột xem chi tiết", C.cyan)
-    panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
-    panel(294, 368, 699, 256, "KHO RƯƠNG", "Thế đánh · Ba rương ngẫu nhiên · Ấn bản khi xuất hiện", C.purple)
-    panel(1024,76,242,313,"TRANG BỊ CƠ BẢN","Mua vào balo · Ghép hoặc gắn",C.green)
-    panel(1024,394,242,190,"HÀNG GIẢM GIÁ","Giá cũ → giá hôm nay",C.gold)
+    panel(20,80,690,280,"HÀNG TUYỂN CHỌN","Nhấp chọn → mua · Rê chuột xem chi tiết",C.cyan)
+    panel(722,80,540,280,"NGUYÊN LIỆU CƠ BẢN","Máu · Giáp · Tốc đánh · Kinh tế — cất vào balo để ghép",C.green)
+    panel(20,376,232,264,"ĐẶC QUYỀN","Mua một lần · Hiệu lực suốt run",C.gold)
+    panel(264,376,650,264,"KHO RƯƠNG","Thế đánh · Rương ngẫu nhiên · Ấn bản",C.purple)
+    panel(926,376,336,264,"QUẦY GIẢM GIÁ","Giảm 35% · Mỗi món có 8% miễn phí",C.gold)
     UI.Polish.ensureShop(shop)
     local hoveredItem
     local packIndex = 0
@@ -304,15 +306,16 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
     end
     if packIndex < 5 then
         love.graphics.setColor(0.16, 0.12, 0.22, 0.35)
-        UI.drawRoundedRect("fill", 854, 435, 112, 158, 6)
+        UI.drawRoundedRect("fill", 776, 443, 96, 144, 6)
         love.graphics.setColor(0.40, 0.31, 0.50, 0.40)
-        UI.drawRoundedRect("line", 854, 435, 112, 158, 6)
-        text("◇", 854, 471, 112, UI.fonts.large, C.purple, "center")
-        text("ẤN BẢN\n25% xuất hiện\nkhi đổi hàng", 864, 517, 92, nil, C.muted, "center")
+        UI.drawRoundedRect("line", 776, 443, 96, 144, 6)
+        text("◇", 776, 475, 96, UI.fonts.large, C.purple, "center")
+        text("ẤN BẢN\n25% xuất hiện\nkhi đổi hàng", 782, 517, 84, nil, C.muted, "center")
     end
     love.graphics.setLineWidth(1)
     return hoveredItem
 end
 
+Display.position = position
 Display.drawArt = art
 return Display

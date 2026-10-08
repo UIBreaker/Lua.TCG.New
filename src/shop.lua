@@ -9,6 +9,15 @@ local CardEffects = require("src.card_effects")
 local Souls = require("src.souls")
 
 local Shop = {}
+Shop.FREE_OFFER_CHANCE = 0.08
+Shop.SALE_MULTIPLIER = 0.65
+function Shop.discountedEquipment(eq,bay,roll)
+    local free=(roll or Rng.random())<Shop.FREE_OFFER_CHANCE
+    return {section="discount",bay=bay,category="equipment",equipment=eq,name=eq.name,
+        desc=Equipment.getDescription(eq),color=eq.color,originalCost=eq.cost,
+        cost=free and 0 or math.max(1,math.floor(eq.cost*Shop.SALE_MULTIPLIER)),
+        backpack=true,sale=true,free=free,subtitle=eq.name}
+end
 
 Shop.SOUL_SUPPORT = {
     {id="cons_evolution",factory="createEvolutionCard",cost=12},
@@ -356,6 +365,7 @@ function Shop.refresh(shop, gameState)
         section = "upper",
         category = "equipment",
         equipment = eq1,
+        backpack = true,
         name = eq1.name,
         subtitle = "TRANG BỊ KHẢM",
         desc = eq1.desc,
@@ -463,15 +473,20 @@ function Shop.refresh(shop, gameState)
         end
     end
 
-    -- Four distinct basic offers plus two finite discounted offers per stock refresh.
+    -- One offer from each basic resource. Clearance can offer any non-soul equipment.
     local basics=require("src.basic_equipment").basic
-    local candidates={};for _,id in ipairs(basics) do candidates[#candidates+1]=id end
-    for slot=1,6 do
-        local pick=Rng.random(#candidates);local eq=Equipment.ITEMS[table.remove(candidates,pick)]
-        local sale=slot>4;local cost=sale and math.max(1,math.floor(eq.cost*.65)) or eq.cost
-        shop.items[#shop.items+1]={section=sale and "discount" or "basic",bay= sale and slot-4 or slot,
-            category="equipment",equipment=eq,name=eq.name,desc=eq.desc,color=eq.color,cost=cost,
-            originalCost=eq.cost,backpack=true,sale=sale,subtitle=eq.name}
+    local chosen={[eq1.id]=true}
+    for slot=1,4 do
+        local eq=Equipment.ITEMS[basics[(slot-1)*3+Rng.random(3)]];chosen[eq.id]=true
+        shop.items[#shop.items+1]={section="basic",bay=slot,category="equipment",equipment=eq,
+            name=eq.name,desc=eq.desc,color=eq.color,cost=eq.cost,originalCost=eq.cost,backpack=true,subtitle=eq.name}
+    end
+    local candidates={}
+    for id,eq in pairs(Equipment.ITEMS) do if not eq.soulOnly and not chosen[id] then candidates[#candidates+1]=id end end
+    table.sort(candidates) -- Stable pool order preserves seeded runs across processes.
+    for bay=1,2 do
+        local eq=Equipment.ITEMS[table.remove(candidates,Rng.random(#candidates))]
+        shop.items[#shop.items+1]=Shop.discountedEquipment(eq,bay)
     end
     -- Each freshly generated shop reroll gets its edition chance once.
     for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
@@ -586,8 +601,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         if item.backpack then
-            gameState.backpackEquipment=gameState.backpackEquipment or {}
-            table.insert(gameState.backpackEquipment,eq.id)
+            require("src.basic_equipment").store(gameState,eq,item.cost)
             return true,"Đã cất "..eq.name.." vào balo."
         end
         return true, "open_socketing", eq

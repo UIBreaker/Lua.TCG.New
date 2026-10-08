@@ -15,12 +15,12 @@ function Souls.value(card)
 end
 
 -- Combat copies share the persistent card's ID: only one payout per lost card.
-function Souls.award(game, card)
+function Souls.award(game, card, multiplier)
     if not game or not card then return 0 end
     game.soulDestroyedIds = game.soulDestroyedIds or {}
     local key = card.rank and card.id and tostring(card.id)
     if card.soulAwarded or key and game.soulDestroyedIds[key] then return 0 end
-    local amount = Souls.value(card)
+    local amount = Souls.value(card)*(multiplier or 1)
     if key then game.soulDestroyedIds[key] = true end
     card.soulAwarded = true
     game.souls = (game.souls or 0) + amount

@@ -26,6 +26,8 @@ Shop.SOUL_SUPPORT = {
     {id="cons_vitality",factory="createVitalityCard",cost=10},
     {id="cons_spn_slot",factory="createSpnSlotCard",cost=18},
     {id="cons_consumable_slot",factory="createConsumableSlotCard",cost=12},
+    {id="cons_socket",factory="createSocketCard",cost=32},
+    {id="cons_rulebreak",factory="createRulebreakCard",cost=48},
 }
 
 -- Public catalogs are shared with the collection screen so every listed item
@@ -1149,7 +1151,7 @@ end
 function Shop.destructionItem(section)
     local item = {id="soul_reaper",section=section,category="destroy",cost=4,name="Lá Tiêu Hủy",
         subtitle="NGHI LỄ LINH HỒN",color={0.69,0.42,0.96,1},
-        desc="Tiêu hao một lần trong shop: chọn một quân bài rồi xác nhận tiêu hủy để nhận linh hồn. Giữ ít nhất 1 lá; hủy chọn không mất thẻ."}
+        desc="Tiêu hao một lần trong shop: chọn quân bài rồi xác nhận tiêu hủy để nhận linh hồn. Tại chợ linh hồn: thưởng x2 linh hồn, hồi 10 HP và +5 Vàng. Giữ ít nhất 1 lá; hủy chọn không mất thẻ."}
     item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color}
     return item
 end
@@ -1190,6 +1192,14 @@ function Shop.getSoulValue(card)
     return Souls.value(card)
 end
 
+function Shop.getDestructionRewards(gameState, card)
+    local soulMarket=gameState.shopMode=="soul"
+    local heal=soulMarket and 10 or 0
+    if gameState.vouchers and gameState.vouchers.v_apothecary then heal=heal+Shop.voucherParams("v_apothecary").heal end
+    return {souls=Souls.value(card)*(soulMarket and 2 or 1), multiplier=soulMarket and 2 or 1,
+        heal=heal, gold=soulMarket and 5 or 0}
+end
+
 function Shop.enterSoulShop(gameState)
     if gameState.pendingSoulShop then
         gameState.shopMode = "soul"
@@ -1221,7 +1231,11 @@ function Shop.destroyCard(gameState, targetCard)
         return false, "Bộ bài phải còn ít nhất 1 lá."
     end
 
-    local price = Shop.getSoulValue(targetCard)
+    if targetCard.soulAwarded or (gameState.soulDestroyedIds or {})[tostring(targetCard.id)] then
+        return false, "Lá này đã nhận thưởng tiêu hủy."
+    end
+    local rewards = Shop.getDestructionRewards(gameState,targetCard)
+    local price = rewards.souls
     local cardId = targetCard.id
     table.remove(deck, deckIndex)
     for _, pileName in ipairs({ "hand", "deck", "discardPile" }) do
@@ -1235,10 +1249,9 @@ function Shop.destroyCard(gameState, targetCard)
             end
         end
     end
-    Souls.award(gameState, targetCard)
-    if gameState.vouchers and gameState.vouchers.v_apothecary then
-        gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100)+Shop.voucherParams("v_apothecary").heal)
-    end
+    Souls.award(gameState, targetCard, rewards.multiplier)
+    gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100)+rewards.heal)
+    gameState.gold = (gameState.gold or 0)+rewards.gold
     gameState.soulDestroyActive = false
     table.remove(gameState.consumables, consumableIndex)
     gameState.soulDestroyConsumable = nil
@@ -1250,7 +1263,7 @@ function Shop.destroyCard(gameState, targetCard)
         if card.selected then table.insert(gameState.selectedIndices, i) end
     end
     Sound.play("card_destroy")
-    return true, price
+    return true, price, rewards
 end
 
 function Shop.sellDeity(gameState, deityIndex)

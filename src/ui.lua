@@ -20,6 +20,7 @@ local Button = require("ui.components.button")
 local Slot = require("ui.components.slot")
 local HealthBar = require("ui.components.health_bar")
 local Deck = require("src.deck")
+local Equipment = require("src.equipment")
 local Deities = require("src.deities")
 local CardEffects = require("src.card_effects")
 UI.CardPhysics = require("src.card_physics")
@@ -396,6 +397,18 @@ local function drawPlayingMetadata(card,w,h,showDamage)
     g.printf("TỐC",83,9,37,"center")
     g.setColor(1,1,1,alpha);g.setFont(UI.fonts.small)
     g.printf(string.format("%g",Deck.getCardAttackSpeed(card)),83,20,37,"center")
+    local slots=Equipment.getMaxSlots(card)
+    local occupied={}
+    for _,eq in ipairs(card.equipments or {}) do for _=1,eq.slotsNeeded or 1 do occupied[#occupied+1]=eq.color or UI.COLORS.goldYellow end end
+    for index=1,slots do
+        local x=38+(index-1)*7
+        g.setColor(.025,.03,.045,alpha*.85);g.circle("fill",x,24,3.2)
+        g.setColor(occupied[index] or {.42,.43,.5,alpha})
+        g.circle(occupied[index] and "fill" or "line",x,24,2)
+    end
+    if card.allowDuplicateEquipment then
+        g.setColor(.83,.59,1,alpha);g.setFont(UI.fonts.tiny);g.printf("PL",35,31,44,"center")
+    end
     if d then
         g.setColor(.025,.035,.045,alpha*.9);g.rectangle("fill",8,145,112,17,3)
         local name=d.characterName:match("^(.-) ·") or d.characterName
@@ -462,15 +475,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         g.setColor(1, 1, 1, 1)
         UI.CardFrame.image(cardImage, 0, 0, w, h)
         CardEffects.endCard(cardFxActive)
-        local slots = (Equipment and Equipment.MAX_SLOTS) or 3
-        for i = 1, slots do
-            local eq = card.equipments and card.equipments[i]
-            if eq then
-                local sx = w / 2 + (i - (slots + 1) / 2) * 15
-                g.setColor(eq.color or UI.COLORS.goldYellow)
-                g.polygon("fill", sx, 6, sx + 4, 10, sx, 14, sx - 4, 10)
-            end
-        end
         if card.seal then
             g.setColor(UI.COLORS.goldYellow)
             g.circle("fill", w - 14, 34, 7)
@@ -505,14 +509,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         g.setColor(accent)
         g.setFont(UI.fonts.regular)
         g.print(rank, w - UI.fonts.regular:getWidth(rank) - 8, h - 24)
-        local slots = (Equipment and Equipment.MAX_SLOTS) or 3
-        for i = 1, slots do
-            local eq = card.equipments and card.equipments[i]
-            local sx = w / 2 + (i - (slots + 1) / 2) * 15
-            local col = eq and (eq.color or UI.COLORS.goldYellow) or UI.COLORS.cardBorder
-            g.setColor(col)
-            g.polygon(eq and "fill" or "line", sx, 6, sx + 4, 10, sx, 14, sx - 4, 10)
-        end
         if card.seal then
             g.setColor(UI.COLORS.goldYellow)
             g.circle("fill", w - 14, 34, 7)

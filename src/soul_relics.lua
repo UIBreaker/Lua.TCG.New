@@ -18,9 +18,9 @@ R.definitions = {
     {id="soul_return_chain",name="Xích Vòng Luân Hồi",cost=30,slotsNeeded=1,color={.8,.5,1,1},desc="Sau khi tính điểm: lá mang xích trở lại tay thay vì nằm trong cọc bỏ."},
     {id="soul_echo_mirror",name="Gương Song Vọng",cost=36,slotsNeeded=2,color={.55,.85,.95,1},desc="Mỗi tay tính điểm: tái kích hoạt 2 lần cho mỗi lá kề trái/phải trong vùng tính điểm."},
     {id="soul_evolution_quill",name="Bút Ký Khởi Nguyên",cost=40,slotsNeeded=2,color={.6,.95,.4,1},desc="Khi tính điểm: tiến hóa vĩnh viễn +1 cấp cho đồng đội ít tiến hóa nhất đang tính điểm. Một lần mỗi trận."},
-    {id="soul_silence_anchor",name="Neo Câm Lặng",cost=32,slotsNeeded=2,color={.65,.45,.95,1},desc="Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss đến hết 2 tay bài kế tiếp. Một lần mỗi trận."},
-    {id="soul_plague_chalice",name="Chén Độc Vĩnh Dạ",cost=28,slotsNeeded=1,color={.4,.85,.3,1},desc="Khi tính điểm: đầu 3 đòn đánh của mục tiêu, độc gây sát thương bằng 8% máu tối đa địch. Không cộng dồn; làm mới thời hạn."},
-    {id="soul_reaper_contract",name="Khế Ước Người Gặt",cost=30,slotsNeeded=1,color={.85,.65,.95,1},desc="Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận. Không cộng dồn nhiều khế ước."},
+    {id="soul_silence_anchor",name="Neo Câm Lặng",cost=32,slotsNeeded=2,color={.65,.45,.95,1},desc="Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss thêm 2 tay bài kế tiếp. Từng món dùng một lần mỗi trận; nhiều món nối tiếp thời hạn."},
+    {id="soul_plague_chalice",name="Chén Độc Vĩnh Dạ",cost=28,slotsNeeded=1,color={.4,.85,.3,1},desc="Khi tính điểm: đặt độc riêng của món này lên mục tiêu trong 3 đòn, mỗi đòn gây 8% máu tối đa địch. Nhiều món cộng dồn; chính món đó làm mới thời hạn."},
+    {id="soul_reaper_contract",name="Khế Ước Người Gặt",cost=30,slotsNeeded=1,color={.85,.65,.95,1},desc="Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận từ từng khế ước đã kích hoạt. Mỗi cái chết chỉ trả một lần."},
     {id="soul_edition_prism",name="Lăng Kính Hoàng Hôn",cost=42,slotsNeeded=2,color={1,.7,.55,1},desc="Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly. Một lần mỗi trận."},
 }
 for _,def in ipairs(R.definitions) do def.shopSummary=summaries[def.id] end
@@ -39,8 +39,8 @@ function R.score(g,card,ctx)
     if ctx.retrigger then return end
     ctx.soulRelics=ctx.soulRelics or {}
     local s=state(g)
-    for _,eq in ipairs(card.equipments or {}) do
-        local key=tostring(card.id or card)..":"..eq.id
+    for equipmentIndex,eq in ipairs(card.equipments or {}) do
+        local key=tostring(card.id or card)..":"..eq.id..":"..equipmentIndex
         if not ctx.soulRelics[key] then
             ctx.soulRelics[key]=true
             local id,message=eq.id,nil
@@ -72,11 +72,15 @@ function R.score(g,card,ctx)
                 end
                 if target and require("src.card_abilities").upgrade(g,target,1,false) then s.used[key]=true;message="TIẾN HÓA ĐỒNG ĐỘI" end
             elseif id=="soul_silence_anchor" and not s.used[key] and require("src.boss_abilities").state(g.monster) then
-                require("src.boss_abilities").disable(g,2,true,true);s.used[key]=true;message="KHÓA KỸ NĂNG BOSS"
+                local Boss=require("src.boss_abilities");local bs=Boss.state(g.monster)
+                local remaining=math.max(0,math.max(bs.passiveUntil or 0,bs.activeUntil or 0)-bs.handIndex)
+                Boss.disable(g,remaining+2,true,true);s.used[key]=true;message="KHÓA KỸ NĂNG BOSS · +2 TAY"
             elseif id=="soul_plague_chalice" and g.monster and g.monster.hp>0 then
-                g.monster.soulPoisonTurns=3;message="ĐỘC 3 ĐÒN · 8% HP"
-            elseif id=="soul_reaper_contract" and not s.reaper then
-                s.reaper=true;message="MỖI KẺ ĐỊCH CHẾT +3 LH"
+                g.monster.soulPoisonSources=g.monster.soulPoisonSources or {}
+                g.monster.soulPoisonSources[key]=3;g.monster.soulPoisonTurns=3;message="ĐỘC RIÊNG · 3 ĐÒN · 8% HP"
+            elseif id=="soul_reaper_contract" then
+                s.reaperSources=s.reaperSources or {}
+                if not s.reaperSources[key] then s.reaperSources[key]=true;message="MỖI KẺ ĐỊCH CHẾT +3 LH" end
             elseif id=="soul_edition_prism" and not s.used[key] then
                 local suits,count={},0
                 for _,other in ipairs(ctx.scoring) do
@@ -103,8 +107,8 @@ function R.guard(g,damage)
     local s=state(g)
     for _,card in ipairs(g.hand or {}) do
         if not card.destroyed then
-            for _,eq in ipairs(card.equipments or {}) do
-                local key=tostring(card.id or card)..":"..eq.id
+            for equipmentIndex,eq in ipairs(card.equipments or {}) do
+                local key=tostring(card.id or card)..":"..eq.id..":"..equipmentIndex
                 if eq.id=="soul_phoenix_lantern" and not s.used[key] then
                     s.used[key]=true;g.playerHp=math.max(1,math.floor((g.maxPlayerHp or 100)*.5))
                     report(g,card,eq,"CHẶN CHÍ TỬ · HỒI SINH");return 0
@@ -115,18 +119,27 @@ function R.guard(g,damage)
     return damage
 end
 function R.reap(g)
-    local s=state(g);if not s.reaper then return end
+    local s=state(g);local reward=0
+    for _ in pairs(s.reaperSources or {}) do reward=reward+3 end
+    if reward==0 then return end
     for i,enemy in ipairs(g.enemies or {g.monster}) do
         if enemy and enemy.hp<=0 and not s.claimed[i] then
-            s.claimed[i]=true;g.souls=(g.souls or 0)+3
-            report(g,nil,{name="Khế Ước Người Gặt",id="soul_reaper_contract"},"+3 LH")
+            s.claimed[i]=true;g.souls=(g.souls or 0)+reward
+            report(g,nil,{name="Khế Ước Người Gặt",id="soul_reaper_contract"},"+"..reward.." LH")
         end
     end
 end
 function R.beforeAttack(g,enemy)
     if (enemy.soulPoisonTurns or 0)>0 then
-        enemy.soulPoisonTurns=enemy.soulPoisonTurns-1
-        require("src.monster").takeDamage(enemy,math.max(1,math.floor((enemy.maxHp or enemy.hp)*.08)))
+        local sources,remaining=0,0
+        for key,turns in pairs(enemy.soulPoisonSources or {}) do if turns>0 then
+            sources=sources+1;enemy.soulPoisonSources[key]=turns-1;remaining=math.max(remaining,turns-1)
+        end end
+        if not enemy.soulPoisonSources then sources=1;remaining=enemy.soulPoisonTurns-1 end
+        enemy.soulPoisonTurns=remaining
+        for _=1,sources do
+            if enemy.hp>0 then require("src.monster").takeDamage(enemy,math.max(1,math.floor((enemy.maxHp or enemy.hp)*.08))) end
+        end
         R.reap(g)
         if enemy.hp<=0 then return false end
     end

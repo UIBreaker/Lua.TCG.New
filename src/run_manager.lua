@@ -342,6 +342,17 @@ function RunManager.createConsumableSlotCard()
         desc="Tiêu hao một lần: thêm 1 ô tiêu hao vĩnh viễn trong run. Không giới hạn số lần mở rộng.",color={.4,.8,1,1}}
 end
 
+function RunManager.createSocketCard()
+    return {id="cons_socket",category="socket_expansion",name="Khảm Hốc Linh Hồn",
+        desc="Chọn một quân bài: thêm vĩnh viễn 1 hốc trang bị, tối đa 6 hốc. Hủy lựa chọn hoặc đã đủ hốc thì không mất thẻ.",
+        color={.95,.76,.4,1}}
+end
+function RunManager.createRulebreakCard()
+    return {id="cons_rulebreak",category="rule_break",name="Phá Luật",
+        desc="Chọn một quân bài: vĩnh viễn cho phép gắn trang bị trùng loại. Từng món đều kích hoạt riêng khi tính điểm; vẫn cần đủ hốc và chịu trần tài nguyên chung. Không mất thẻ khi hủy hoặc lá đã có Phá Luật.",
+        color={.86,.57,1,1}}
+end
+
 function RunManager.createRoundRewardOptions()
     return {
         RunManager.createEvolutionCard(),

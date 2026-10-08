@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-soul-market" then local ok,err=pcall(require,"tests.soul_market_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-equipment-tiers" then local ok,err=pcall(require,"tests.equipment_tiers_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-equipment-feedback" then local ok,err=pcall(require,"tests.equipment_feedback_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-run-resume" then local ok,err=pcall(require,"tests.run_resume_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
@@ -1251,6 +1252,16 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    if c.category=="socket_expansion" or c.category=="rule_break" then
+        if state~="shop" and (state~="playing" or anim.enemyTurn or anim.active or UI.AbilityUI.current) then return false end
+        local x,y,w,h=getConsumableSlotRect(idx,state)
+        local opened=UI.AbilityUI.openCardUpgrade(game,c,function()
+            spawnShopFx("consume",c,x+w/2,y+h/2,w,h)
+            saveRunAtSafePoint()
+        end,{x=x,y=y,w=w,h=h})
+        if not opened then table.insert(anim.floatingTexts,{text="Không còn lá phù hợp với "..c.name,color=c.color,x=640,y=350,alpha=2.4}) end
+        return opened
+    end
     if c.category=="bed" then
         if state=="shop" then
             local used=UI.Inventory.useBed(game,idx)
@@ -1688,6 +1699,7 @@ local function activateConsumable(idx, currentState)
     anim.consumableUseCooldown = 0.20
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
+        and card.category ~= "socket_expansion" and card.category ~= "rule_break"
         and card.category ~= "speed_single" and card.category ~= "bed" and card.category ~= "edition" and card.id ~= "soul_reaper" then
         spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     end
@@ -5020,10 +5032,13 @@ local function drawDeckViewerModal()
         local focus=UI.Polish.focus
         local card=focus and focus.kind=="card" and focus.item
         if card then
-            local total,eq,evo,edition=Shop.getSoulValue(card)
-            love.graphics.printf((card.rankName or "")..(card.suitSymbol or "").." · "..total.." LINH HỒN",rightX,modalY+115,rightW,"left")
+            local _,eq,evo,edition=Shop.getSoulValue(card)
+            local rewards=Shop.getDestructionRewards(game,card)
+            love.graphics.printf((card.rankName or "")..(card.suitSymbol or "").." · "..rewards.souls.." LINH HỒN",rightX,modalY+115,rightW,"left")
             love.graphics.setFont(UI.fonts.small)
             love.graphics.printf("Bản thân lá: 1 LH\nTrang bị đang khảm: +"..eq.." LH\nTiến hóa bậc "..(card.evolutionLevel or 0)..": +"..evo.." LH\nẤn bản: +"..edition.." LH",rightX,modalY+175,rightW,"left")
+            love.graphics.setColor(UI.COLORS.goldYellow)
+            love.graphics.printf("Thưởng nghi lễ: ×"..rewards.multiplier.." LH\n+"..rewards.heal.." HP (không vượt máu tối đa)\n+"..rewards.gold.." Vàng",rightX,modalY+267,rightW,"left")
         else
             love.graphics.printf("Chọn một lá bên trái để xem giá trị linh hồn trước khi tiêu hủy.",rightX,modalY+120,rightW,"left")
         end
@@ -5185,7 +5200,7 @@ local function drawSocketingView()
     local rarityText = equipment.rarity == "legendary" and "HUYỀN THOẠI" or "TRANG BỊ"
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print(rarityText .. "  •  Cần " .. slotsNeeded .. " ô  •  Không thể gắn trùng loại", panelX + 112, panelY + 78)
+    love.graphics.print(rarityText .. "  •  Cần " .. slotsNeeded .. " hốc  •  Lá có Phá Luật được gắn trùng loại", panelX + 112, panelY + 78)
 
     local allCards = getAllDeckCards()
     local totalPages = math.max(1, math.ceil(#allCards / SOCKETING_PAGE_SIZE))
@@ -5219,13 +5234,13 @@ local function drawSocketingView()
         end
 
         local usedSlots = Equipment.getUsedSlots(c)
-        local freeSlots = Equipment.MAX_SLOTS - usedSlots
+        local freeSlots = Equipment.getMaxSlots(c) - usedSlots
         love.graphics.setColor(canAttach and 0.10 or 0.20, canAttach and 0.20 or 0.08, canAttach and 0.16 or 0.10, 0.95)
         UI.drawRoundedRect("fill", cx, cy + cardH + 5, cardW, 24, 5)
         love.graphics.setColor(canAttach and UI.COLORS.hpGreen or UI.COLORS.multRed)
         UI.drawRoundedRect("line", cx, cy + cardH + 5, cardW, 24, 5)
         love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.printf(usedSlots .. "/" .. Equipment.MAX_SLOTS .. " ô  •  còn " .. freeSlots, cx, cy + cardH + 10, cardW, "center")
+        love.graphics.printf(usedSlots .. "/" .. Equipment.getMaxSlots(c) .. " ô  •  còn " .. freeSlots, cx, cy + cardH + 10, cardW, "center")
     end
 
     buttons = {}
@@ -5467,9 +5482,9 @@ local function drawCardInspectorModal(card)
     UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
 
     -- Title (Shortened to not overlap close button)
-    love.graphics.setFont(UI.fonts.large)
+    love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print(card.rank and "CHI TIẾT LÁ BÀI & TRANG BỊ KHẢM" or "CHI TIẾT VẬT PHẨM", modalX + 28, modalY + 20)
+    love.graphics.printf(card.rank and "CHI TIẾT LÁ BÀI & TRANG BỊ KHẢM" or "CHI TIẾT VẬT PHẨM", modalX + 28, modalY + 20,modalW-280,"left")
 
     -- Close button
     local btnClose = {
@@ -5538,22 +5553,32 @@ local function drawCardInspectorModal(card)
 
     love.graphics.setColor(UI.COLORS.hpGreen)
     love.graphics.printf("Aura: +" .. card.baseChips .. " Chips", cardArtX + 8, durY + durH - 24, cardArtW - 16, "center")
+    if card.allowDuplicateEquipment then
+        love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(.83,.59,1,1)
+        love.graphics.printf("PHÁ LUẬT · ITM TRÙNG",cardArtX+8,durY+durH-44,cardArtW-16,"center")
+    end
 
     -- Right side: Equipment Sockets
     local rightX = modalX + 230
     local rightW = modalW - 260
     love.graphics.setFont(UI.fonts.medium)
     love.graphics.setColor(UI.COLORS.textLight)
-    local currentEqCount = card.equipments and #card.equipments or 0
-    local maxSockets = card.maxSockets or (Equipment and Equipment.MAX_SLOTS) or 3
+    local currentEqCount = Equipment.getUsedSlots(card)
+    local maxSockets = Equipment.getMaxSlots(card)
     love.graphics.print("CÁC Ô KHẢM TRANG BỊ (" .. currentEqCount .. "/" .. maxSockets .. " Ô):", rightX, modalY + 80)
 
-    local slotH = 68
+    local slotH = maxSockets>3 and 57 or 68
     local slotStartY = modalY + 115
+    local socketItems={}
+    for _,eq in ipairs(card.equipments or {}) do
+        socketItems[#socketItems+1]={equipment=eq}
+        for _=2,eq.slotsNeeded or 1 do socketItems[#socketItems+1]={equipment=eq,linked=true} end
+    end
     for s = 1, maxSockets do
-        local sy = slotStartY + (s - 1) * (slotH + 12)
+        local sy = slotStartY + (s - 1) * (slotH + (maxSockets>3 and 5 or 12))
         local isUnlocked = s <= (card.unlockedSockets or 1)
-        local eq = card.equipments and card.equipments[s]
+        local entry=socketItems[s]
+        local eq=entry and entry.equipment
 
         if eq then
             love.graphics.setColor(0.16, 0.20, 0.26, 0.95)
@@ -5563,13 +5588,13 @@ local function drawCardInspectorModal(card)
             UI.drawRoundedRect("line", rightX, sy, rightW, slotH, 8)
 
             -- Slot badge & name
-            love.graphics.setFont(UI.fonts.regular)
+            love.graphics.setFont(maxSockets>3 and UI.fonts.small or UI.fonts.regular)
             love.graphics.setColor(eq.color or UI.COLORS.goldYellow)
-            love.graphics.print("[Ô " .. s .. "/" .. maxSockets .. "] " .. eq.name, rightX + 16, sy + 10)
+            love.graphics.print("[Ô " .. s .. "/" .. maxSockets .. "] " .. (entry.linked and "↳ " or "") .. eq.name, rightX + 16, sy + 10)
 
-            love.graphics.setFont(UI.fonts.small)
+            love.graphics.setFont(maxSockets>3 and UI.fonts.tiny or UI.fonts.small)
             love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf(eq.desc, rightX + 20, sy + 38, rightW - 40, "left")
+            love.graphics.printf(entry.linked and ("Hốc phụ của di vật chiếm "..eq.slotsNeeded.." hốc.") or eq.desc, rightX + 20, sy + (maxSockets>3 and 30 or 38), rightW - 40, "left")
         elseif not isUnlocked then
             love.graphics.setColor(0.10, 0.10, 0.12, 0.5)
             UI.drawRoundedRect("fill", rightX, sy, rightW, slotH, 8)
@@ -6217,7 +6242,7 @@ drawShopTransferView = function()
         end
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(Equipment.getUsedSlots(card) > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)
-        love.graphics.printf(Equipment.getUsedSlots(card) .. "/" .. Equipment.MAX_SLOTS .. " hốc", x, y + h + 5, w, "center")
+        love.graphics.printf(Equipment.getUsedSlots(card) .. "/" .. Equipment.getMaxSlots(card) .. " hốc", x, y + h + 5, w, "center")
     end
 
     local prev = { id = "transfer_prev", text = "‹", x = 450, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage <= 1 }
@@ -6946,7 +6971,7 @@ local function handleShopMousepressed(mx, my, button)
             if btn.id:sub(1, 4) == "buy_" then
                 local item = shopData.items and shopData.items[btn.itemIndex]
                 if item ~= btn.stockItem then return true end -- Reject a hitbox from the previous stock frame.
-                UI.Polish.focusItem(item, "stock", btn.itemIndex, {x=btn.x,y=btn.y,w=btn.w,h=btn.h})
+                UI.Polish.focusItem(item, "stock", btn.itemIndex, btn.focusRect or {x=btn.x,y=btn.y,w=btn.w,h=btn.h})
                 return true
             elseif btn.id:sub(1, 6) == "deity_" then
                 UI.Polish.focusItem(game.deities and game.deities[btn.deityIndex], "deity", btn.deityIndex,

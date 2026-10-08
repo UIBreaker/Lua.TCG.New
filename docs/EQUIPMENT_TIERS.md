@@ -4,7 +4,7 @@
 
 ## Thang sức mạnh
 
-Trần của từng dòng hiệu ứng được kiểm tra trước hiệu chỉnh từ chất bài/SPN. Mỗi món phân bổ sức mạnh giữa độ ổn định, điều kiện kích hoạt, số hốc và tài nguyên phải trả. Giáp toàn tay vẫn có trần 30; vàng kiếm từ trang bị thường có trần 6 mỗi tay. Trang bị thường kích hoạt một lần trên mỗi lá tính điểm trong một tay. Tốc được cộng khi gắn.
+Trần của từng dòng hiệu ứng được kiểm tra trước hiệu chỉnh từ chất bài/SPN. Mỗi món phân bổ sức mạnh giữa độ ổn định, điều kiện kích hoạt, số hốc và tài nguyên phải trả. Giáp toàn tay vẫn có trần 30; vàng kiếm từ trang bị thường có trần 6 mỗi tay. Mỗi món trang bị thường kích hoạt một lần trên lá tính điểm trong một tay; Phá Luật cho phép gắn và kích hoạt riêng các món trùng loại. Tốc được cộng khi gắn.
 
 | Tầng | ST tối đa | Cường hóa tối đa | Giáp tối đa | Hồi HP tối đa | Tốc tối đa | Vai trò |
 |---|---:|---:|---:|---:|---:|---|

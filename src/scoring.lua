@@ -526,9 +526,11 @@ function Scoring.calculate(handInfo, deities, context)
             -- Check Card Equipments ONLY on primary trigger (cTrig == 1):
             -- "Ấn không được kích hoạt lại hiệu ứng trang bị, vàng, hồi máu hoặc tạo giáp"
             if cTrig == 1 then
-                for _, eq in ipairs(card.equipments or {}) do
+                for equipmentIndex, eq in ipairs(card.equipments or {}) do
                     if eq.onCardScore then
+                        context.equipmentIndex = equipmentIndex
                         local res = eq.onCardScore(card, handInfo.scoringCards, idx, context)
+                        context.equipmentIndex = nil
                         if res then
                             local pc, pm, px, pd = cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct
                             local eqMult = (not eq.basic and not eq.crafted and isDiamond(card)) and 1.5 or 1.0

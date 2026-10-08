@@ -587,8 +587,9 @@ function Deck.cloneCard(card)
     newC.edition = card.edition or card.visualEffect
     newC.overchargeStacks = card.overchargeStacks or 0
     newC.isAnchor = card.isAnchor or (card.seal == "seal_anchor" or card.seal == "anchor")
-    newC.unlockedSockets = 3
-    newC.maxSockets = 3
+    newC.maxSockets = require("src.equipment").getMaxSlots(card)
+    newC.unlockedSockets = newC.maxSockets
+    newC.allowDuplicateEquipment = card.allowDuplicateEquipment == true
     newC.exhausted = card.exhausted or false
     newC.equipments = {}
     if card.equipments then
@@ -667,7 +668,7 @@ function Deck.addCardToDeck(gameState, card)
         card.isWildSuit = false
         card.isDualRankAce = false
         card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-        card.unlockedSockets = 3
+        card.unlockedSockets = require("src.equipment").getMaxSlots(card)
     end
     card.baseRank = card.baseRank or card.rank
     card.rank = card.baseRank

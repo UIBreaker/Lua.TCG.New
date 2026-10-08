@@ -58,7 +58,7 @@ function P.button(game)
     local f=P.focus;if not f or P.busy() then return end
     if f.kind=="card" and not game.soulDestroyActive then return end
     local price=f.kind=="stock" and f.item.cost or Shop.getSacrificePrice(f.item,f.kind,game)
-    if f.kind=="card" then price=Shop.getSoulValue(f.item) end
+    if f.kind=="card" then price=Shop.getDestructionRewards(game,f.item).souls end
     local soul=f.kind=="stock" and f.item.currency=="souls"
     local full=f.kind=="stock" and f.item.consumable and #(game.consumables or {})>=Inventory.limit(game)
     local disabled=f.kind=="stock" and (soul and (game.souls or 0) or (game.gold or 0))<price
@@ -89,7 +89,11 @@ function P.confirm(shop,game,done)
         if shop.items[f.index]~=f.item then P.clearFocus();return false end
         ok,action,equipment=Shop.buyItem(shop,f.index,game)
     elseif ownedValid(f,game) then
-        if f.kind=="card" then ok,action=Shop.destroyCard(game,f.item)
+        if f.kind=="card" then
+            local rewards;ok,action,rewards=Shop.destroyCard(game,f.item)
+            if ok and rewards.multiplier==2 then
+                P.message="HIẾN TẾ ×2 · +"..rewards.souls.." LH · +"..rewards.heal.." HP · +"..rewards.gold.." VÀNG";P.messageAge=0
+            end
         elseif f.kind=="deity" then ok,action=Shop.sellDeity(game,f.index)
         elseif f.kind=="consumable" then ok,action=Shop.sellConsumable(game,f.index) end
     end
@@ -266,7 +270,8 @@ function P.snapshot(game)
         if snap[card] then return end
         local values={level=card.evolutionLevel or 0,speed=card.rank and Deck.getCardAttackSpeed(card) or nil,
             edition=Effects.getEffectName(card) or "",seal=card.seal or "",enhancement=card.enhancement or "",
-            equipment=#(card.equipments or {}),frozen=card.frozen or card.freezeTurns or 0,cursed=card.cursed or false}
+            equipment=#(card.equipments or {}),sockets=require("src.equipment").getMaxSlots(card),rulebreak=card.allowDuplicateEquipment==true,
+            frozen=card.frozen or card.freezeTurns or 0,cursed=card.cursed or false}
         local params=A.definition(card) and A.params(card)
         local def=D.CATALOG[card.id]
         if def then
@@ -281,7 +286,7 @@ function P.snapshot(game)
     for _,pile in ipairs({game.hand or {},game.persistentDeck or {},game.deities or {}}) do for _,c in pairs(pile) do remember(c) end end
     return snap
 end
-local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",
+local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
     rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",
     xMult="HỆ SỐ CƯỜNG HÓA",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",

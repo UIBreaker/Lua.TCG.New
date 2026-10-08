@@ -2,6 +2,12 @@ local Rng = require("src.rng")
 local Equipment = {}
 
 Equipment.MAX_SLOTS = 3
+Equipment.SOCKET_CAP = 6
+
+function Equipment.getMaxSlots(card)
+    return math.max(Equipment.MAX_SLOTS, math.min(Equipment.SOCKET_CAP,
+        math.floor(tonumber(card and card.maxSockets) or Equipment.MAX_SLOTS)))
+end
 
 -- Ordinary equipment and soul relics use separate reward pools.
 Equipment.ITEMS = {
@@ -200,13 +206,13 @@ function Equipment.canAttach(card, equipItem)
     if not card or not equipItem then return false, "Dữ liệu không hợp lệ" end
     card.equipments = card.equipments or {}
     for _, existing in ipairs(card.equipments) do
-        if existing.id == equipItem.id then
+        if existing.id == equipItem.id and not card.allowDuplicateEquipment then
             return false, "Không thể gắn hai trang bị cùng loại lên một lá bài!"
         end
     end
-    local available = math.min(card.maxSockets or Equipment.MAX_SLOTS, Equipment.MAX_SLOTS)
+    local available = Equipment.getMaxSlots(card)
     if Equipment.getUsedSlots(card) + (equipItem.slotsNeeded or 1) > available then
-        return false, "Lá bài này không còn đủ hốc khảm (tối đa " .. Equipment.MAX_SLOTS .. ")!"
+        return false, "Lá bài này không còn đủ hốc khảm (" .. Equipment.getUsedSlots(card) .. "/" .. available .. ")!"
     end
     return true
 end
@@ -223,7 +229,7 @@ for _,item in ipairs(require("src.tier_equipment").definitions) do
     Equipment.ITEMS[item.id]=item;Equipment.POOL[#Equipment.POOL+1]=item.id
 end
 require("src.basic_equipment").install(Equipment)
--- All ordinary scoring effects share one activation per card/hand and six earned gold.
+-- Each ordinary equipment instance activates once per hand; earned gold shares a cap of six.
 -- Preview budgets stay in the calculation context, never in the saved run.
 for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
     if item.craftTier then item.rarity=({"common","uncommon","rare","epic","legendary"})[item.craftTier] end
@@ -232,7 +238,7 @@ for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
     if effect then item.onCardScore=function(c,cs,index,ctx)
         if index==0 then return nil end
         if ctx then
-            ctx.equipmentSeen=ctx.equipmentSeen or {};local key=tostring(c.id)..":"..id
+            ctx.equipmentSeen=ctx.equipmentSeen or {};local key=tostring(c.id)..":"..id..":"..tostring(ctx.equipmentIndex or 1)
             if ctx.equipmentSeen[key] then return nil end;ctx.equipmentSeen[key]=true
         end
         local r=effect(c,cs,index,ctx)

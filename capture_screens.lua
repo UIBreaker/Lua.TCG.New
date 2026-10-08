@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-soul-market" then
+            local ok,err=pcall(require("tests.soul_market_capture").update,gameRef,callbacks)
+            if not ok then print("SOUL MARKET UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-equipment-tiers" then
             local ok,err=pcall(require("tests.equipment_tiers_capture").update,gameRef,callbacks)
             if not ok then print("EQUIPMENT TIERS UI FAIL: "..tostring(err));love.event.quit(1) end

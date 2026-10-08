@@ -15,6 +15,15 @@ function Modal.openEvolution(game,consumable,callback,sourceRect)
     Modal.current={mode="evolution",game=game,consumable=consumable,cards=cards,page=1,callback=callback,sourceRect=sourceRect}
     return true
 end
+function Modal.openCardUpgrade(game,consumable,callback,sourceRect)
+    local cards={}
+    for _,card in ipairs(game.persistentDeck or {}) do
+        if require("src.inventory").canUpgradeCard(consumable,card) then cards[#cards+1]=card end
+    end
+    if #cards==0 then return false end
+    Modal.current={mode="card_upgrade",game=game,consumable=consumable,cards=cards,page=1,callback=callback,sourceRect=sourceRect}
+    return true
+end
 local function close() Modal.current=nil;Sound.play("card_deselect") end
 function Modal.choose(index)
     local m=Modal.current;if not m then return end
@@ -34,9 +43,11 @@ function Modal.confirm()
     local index;for i,item in ipairs(m.game.consumables or {}) do if item==m.consumable then index=i;break end end
     if not index then close();return false end
     local UI=require("src.ui");local before=UI.Polish.snapshot(m.game)
-    local success=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c)
+    local success
+    if m.mode=="card_upgrade" then success=require("src.inventory").useCardUpgrade(m.game,index,c)
+    else success=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c) end
     if not success then return false end
-    table.remove(m.game.consumables,index);A.consumableUsed(m.game)
+    if m.mode~="card_upgrade" then table.remove(m.game.consumables,index);A.consumableUsed(m.game) end
     UI.Polish.changed(UI,m.game,before,m.consumable,m.sourceRect)
     Effects.triggerScorePulse(c)
     Modal.toast=nil -- Changed-value feedback is anchored to the target instead.
@@ -66,7 +77,7 @@ function Modal.key(key)
     if key=="f4" and not Modal.current then Modal.current={mode="glossary"};Sound.play("ui_click");return true end
     if not Modal.current then return false end
     if key=="escape" then close() end
-    if key=="return" and Modal.current and Modal.current.mode=="evolution" then Modal.confirm() end
+    if key=="return" and Modal.current and (Modal.current.mode=="evolution" or Modal.current.mode=="card_upgrade") then Modal.confirm() end
     return true
 end
 function Modal.update(dt)
@@ -81,7 +92,7 @@ function Modal.draw(UI,mx,my)
     end
     if not m then return end
     UI.CardPhysics.blockBehind()
-    if m.mode=="evolution" then return require("ui.evolution_picker").draw(UI,m,mx,my) end
+    if m.mode=="evolution" or m.mode=="card_upgrade" then return require("ui.evolution_picker").draw(UI,m,mx,my) end
     love.graphics.setColor(0,0,0,0.84);love.graphics.rectangle("fill",0,0,1280,720)
     love.graphics.setColor(0.075,0.1,0.13,1);love.graphics.rectangle("fill",65,45,1150,630,12,12)
     love.graphics.setColor(0.85,0.7,0.36,1);love.graphics.rectangle("line",65,45,1150,630,12,12)

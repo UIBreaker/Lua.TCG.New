@@ -20,12 +20,15 @@ local function description(UI,value,x,y,w,h,color)
 end
 function Picker.draw(UI,m,mx,my)
     local g=love.graphics
+    local upgrade=m.mode=="card_upgrade"
+    local sockets=upgrade and m.consumable.category=="socket_expansion"
+    local title=upgrade and m.consumable.name or "Chọn lá tiến hóa"
     g.push("all");g.setColor(0.015,0.02,0.04,0.94);g.rectangle("fill",0,0,1280,720)
     panel(54,32,1172,656,{0.055,0.068,0.095,1})
     g.setColor(0.27,0.24,0.39,1);g.setLineWidth(1);g.rectangle("line",54,32,1172,656,10,10)
     text(UI,"NÂNG CẤP VĨNH VIỄN",84,55,700,"tiny",violet)
-    text(UI,"Chọn lá tiến hóa",84,80,700,"large")
-    text(UI,"Nâng khả năng của một lá. Giữ nguyên bậc và chất.",84,120,700,"small",muted)
+    text(UI,title,84,80,700,"large")
+    text(UI,upgrade and "Chọn quân bài, xem thay đổi rồi xác nhận. Hiệu ứng giữ suốt run." or "Nâng khả năng của một lá. Giữ nguyên bậc và chất.",84,120,1050,"small",muted)
     m.buttons={}
     local function button(id,label,x,y,w,h,index,disabled,active)
         local b={id=id,text=label,x=x,y=y,w=w,h=h,index=index,disabled=disabled,
@@ -37,7 +40,7 @@ function Picker.draw(UI,m,mx,my)
     m.filter=m.filter or (counts.cards>0 and "cards" or "deities")
     for i,c in ipairs(m.cards) do if (A.definition(c) and "cards" or "deities")==m.filter then filtered[#filtered+1]=i end end
     button("tab_cards","QUÂN BÀI  ·  "..counts.cards,84,158,176,36,nil,false,m.filter=="cards")
-    button("tab_deities","HỘ LINH  ·  "..counts.deities,272,158,176,36,nil,false,m.filter=="deities")
+    if not upgrade then button("tab_deities","HỘ LINH  ·  "..counts.deities,272,158,176,36,nil,false,m.filter=="deities") end
     g.setColor(violet);g.rectangle("fill",m.filter=="cards" and 84 or 272,195,176,2,1,1)
     local pages=math.max(1,math.ceil(#filtered/8));m.page=math.max(1,math.min(m.page,pages))
     UI.CardPhysics.suspend()
@@ -60,30 +63,34 @@ function Picker.draw(UI,m,mx,my)
     UI.CardPhysics.resume()
     if #filtered==0 then text(UI,"Không có lá thuộc nhóm này.",100,350,660,"small",muted,"center") end
     panel(824,158,372,448,{0.075,0.087,0.12,1})
-    text(UI,"XEM TRƯỚC TIẾN HÓA",848,179,324,"tiny",violet)
+    text(UI,upgrade and "NGHI LỄ · XEM TRƯỚC" or "XEM TRƯỚC TIẾN HÓA",848,179,324,"tiny",violet)
     local c=m.selected
     if c then
         local d=A.definition(c);local name=c.name or ((c.rankName or tostring(c.rank))..(c.suitSymbol or ""))
         text(UI,name,848,210,324,"medium")
-        text(UI,d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..((c.evolutionLevel or 0)+1)) or "Nâng bậc Hộ Linh",848,245,324,"small",violet)
+        local maximum=require("src.equipment").getMaxSlots(c)
+        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..(maximum+1).." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..((c.evolutionLevel or 0)+1)) or "Nâng bậc Hộ Linh",848,245,324,"small",violet)
         local before=d and A.description(c) or Deities.getDescription(c)
         local after
-        if d then after=A.description(c,A.level(c)+1)
+        if upgrade then
+            before="Trang bị: "..require("src.equipment").getUsedSlots(c).." / "..maximum.." hốc đang dùng.\n"..(c.allowDuplicateEquipment and "Có thể gắn trang bị trùng loại." or "Mỗi loại trang bị chỉ được gắn một món.")
+            after=sockets and ("Thêm 1 hốc trang bị vĩnh viễn: "..(maximum+1).." hốc. Tối đa 6 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
+        elseif d then after=A.description(c,A.level(c)+1)
         else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+1;after=Deities.getDescription(copy) end
         text(UI,"HIỆN TẠI",848,291,324,"tiny",muted)
         description(UI,before,848,315,324,95,muted)
         g.setColor(0.24,0.26,0.34,1);g.line(848,422,1172,422)
-        text(UI,"SAU TIẾN HÓA",848,443,324,"tiny",violet)
+        text(UI,upgrade and "SAU NGHI LỄ" or "SAU TIẾN HÓA",848,443,324,"tiny",violet)
         description(UI,after,848,469,324,110)
     else
         text(UI,"Chọn một lá bên trái",848,308,324,"medium")
-        description(UI,"Xem thay đổi khả năng trước khi xác nhận. Thẻ tiến hóa chỉ được dùng khi bạn xác nhận.",848,356,324,120,muted)
+        description(UI,upgrade and m.consumable.desc or "Xem thay đổi khả năng trước khi xác nhận. Thẻ tiến hóa chỉ được dùng khi bạn xác nhận.",848,356,324,155,muted)
     end
     button("cancel","HỦY  /  ESC",84,628,160,38)
     text(UI,"Trang "..m.page.." / "..pages,330,638,180,"tiny",muted,"center")
     if m.page>1 then button("prev","←",270,628,46,38) end
     if m.page<pages then button("next","→",524,628,46,38) end
-    button("confirm","XÁC NHẬN TIẾN HÓA",824,624,372,46,nil,not c,true)
+    button("confirm",upgrade and "XÁC NHẬN NGHI LỄ" or "XÁC NHẬN TIẾN HÓA",824,624,372,46,nil,not c,true)
     g.pop()
 end
 return Picker

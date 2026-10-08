@@ -391,4 +391,6 @@ return {
     ["spell_magnet"] = "assets/cards/continental/spn_enchantment/spell_magnet.png",
     ["spell_reprisal"] = "assets/cards/continental/spn_enchantment/spell_reprisal.png",
     ["spell_codex"] = "assets/cards/continental/spn_enchantment/spell_codex.png",
+    ["cons_socket"] = "assets/cards/continental/utility/cons_socket.png",
+    ["cons_rulebreak"] = "assets/cards/continental/utility/cons_rulebreak.png",
 }

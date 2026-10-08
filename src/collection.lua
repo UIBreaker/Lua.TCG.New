@@ -277,7 +277,7 @@ local function buildItems(category, packFilter)
         for _, def in ipairs(Shop.POTIONS or {}) do add(Shop.healingItem("upper", def.id)) end
         for _, offer in ipairs(Shop.SOUL_SUPPORT or {}) do
             local card = RunManager[offer.factory]()
-            if card.category == "speed_single" or card.category == "speed_team" then
+            if card.category == "speed_single" or card.category == "speed_team" or card.category=="socket_expansion" or card.category=="rule_break" then
                 card.desc = (Shop.getConsumableDescription(card) or card.desc)
                     .. "\nNguồn: Chợ Linh Hồn, " .. offer.cost .. " LH."
                 add(card)

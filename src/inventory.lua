@@ -2,6 +2,34 @@ local Inventory = {}
 function Inventory.limit(game)
     return math.max(3,math.floor(tonumber(game and game.maxConsumables) or 3))
 end
+function Inventory.canUpgradeCard(consumable,target)
+    local E=require("src.equipment")
+    if not target or not target.rank or target.destroyed then return false,"Chọn một quân bài còn trong bộ." end
+    if consumable.category=="socket_expansion" then
+        if E.getMaxSlots(target)>=E.SOCKET_CAP then return false,"Lá đã đủ 6 hốc trang bị." end
+    elseif consumable.category=="rule_break" then
+        if target.allowDuplicateEquipment then return false,"Lá đã có Phá Luật." end
+    else return false,"Thẻ không nâng cấp trang bị." end
+    return true
+end
+function Inventory.useCardUpgrade(game,index,target)
+    local consumable=game.consumables and game.consumables[index]
+    if not consumable then return false,"Thẻ không còn trong balo." end
+    local canonical
+    for _,card in ipairs(game.persistentDeck or {}) do
+        if card==target or target and target.id and card.id==target.id then canonical=card;break end
+    end
+    local allowed,reason=Inventory.canUpgradeCard(consumable,canonical)
+    if not allowed then return false,reason end
+    local sockets=require("src.equipment").getMaxSlots(canonical)+1
+    require("src.chest_expansion").sync(game,canonical,function(card)
+        if consumable.category=="socket_expansion" then card.maxSockets=sockets;card.unlockedSockets=sockets
+        else card.allowDuplicateEquipment=true end
+    end)
+    table.remove(game.consumables,index)
+    require("src.card_abilities").consumableUsed(game)
+    return true,consumable.category=="socket_expansion" and ("ĐÃ MỞ HỐC · "..sockets.." HỐC") or "PHÁ LUẬT · CHO PHÉP TRANG BỊ TRÙNG"
+end
 function Inventory.useBed(game,index,target)
     local card=game.consumables and game.consumables[index]
     if not card or card.category~="bed" then return false end

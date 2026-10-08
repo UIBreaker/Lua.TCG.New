@@ -185,7 +185,8 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
    label(UI,Bag.tab=="cards" and ((item.rankName or "")..(item.suitSymbol or "")) or item.name,x-6,y+147,108,"tiny",item.color,"center")
    if Bag.tab=="cards" then
     local used=E.getUsedSlots(item)
-    label(UI,(used>0 and "◆ " or "◇ ")..used.."/"..math.min(item.maxSockets or E.MAX_SLOTS,E.MAX_SLOTS).." HỐC",x-6,y+162,108,"tiny",used>0 and UI.COLORS.goldYellow or UI.COLORS.textMuted,"center")
+    label(UI,(used>0 and "◆ " or "◇ ")..used.."/"..E.getMaxSlots(item).." HỐC",x-6,y+162,108,"tiny",used>0 and UI.COLORS.goldYellow or UI.COLORS.textMuted,"center")
+    if item.allowDuplicateEquipment then label(UI,"PHÁ LUẬT",x-6,y+176,108,"tiny",{.83,.59,1,1},"center") end
    end
    if Bag.selected==v.index then g.setColor(UI.COLORS.goldYellow);g.setLineWidth(2);UI.drawRoundedRect("line",x-8,y-7,112,181,8) end
    local b={x=x,y=y,w=96,h=144,item=item,index=v.index};Bag.cells[#Bag.cells+1]=b
@@ -206,7 +207,11 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
    button(UI,buttons,"bag_spn_right","ĐỔI VỊ TRÍ →",612,561,218,36,mx,my,Bag.selected>=require("src.deities").getMaxSlots(game))
   elseif Bag.tab=="cards" and Bag.selected then
    local c=game.persistentDeck[Bag.selected]
-   for i,eq in ipairs(c and c.equipments or {}) do button(UI,buttons,"bag_detach_"..i,"THÁO "..eq.name,380+(i-1)*188,561,178,36,mx,my) end
+   local compact=#(c and c.equipments or {})>3
+   for i,eq in ipairs(c and c.equipments or {}) do
+    local column=compact and (i-1)%3 or i-1;local row=compact and math.floor((i-1)/3) or 0
+    button(UI,buttons,"bag_detach_"..i,"THÁO "..i.." · "..eq.name,380+column*188,(compact and 541 or 561)+row*32,178,compact and 29 or 36,mx,my)
+   end
   end
  end
  label(UI,Bag.message or (Bag.tab=="consumable" and "Nhấp chọn để bán · Chuột phải để dùng" or Bag.tab=="spn" and "Nhấp chọn để bán · Hiệu ứng vẫn hoạt động khi cất trong balo" or "Mua nguyên liệu → cất vào balo → ghép hoặc gắn lên lá bài"),380,611,760,"tiny",UI.COLORS.textMuted)
@@ -233,7 +238,7 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
    for _,cell in ipairs(Bag.cells or {}) do if cell.item==card then rect={x=cell.x,y=cell.y,w=cell.w,h=cell.h} end end
    if eq and B.detach(game,card,index) then
     local speed=require("src.deck").getCardAttackSpeed(card)
-    UI.Polish.application(UI,eq,card,"Về balo · "..E.getUsedSlots(card).."/3 hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},rect,"unequip")
+    UI.Polish.application(UI,eq,card,"Về balo · "..E.getUsedSlots(card).."/"..E.getMaxSlots(card).." hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},rect,"unequip")
     UI.Polish.applications[#UI.Polish.applications].fixedRect=rect
     Bag.message="Đã tháo "..eq.name.." và cất vào balo.";if callbacks.save then callbacks.save() end
    end
@@ -254,7 +259,7 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
     local ok,msg=B.attach(game,Bag.pending,c.item);Bag.message=msg
     if ok then
      local speed=require("src.deck").getCardAttackSpeed(c.item)
-     UI.Polish.application(UI,eq,c.item,E.getUsedSlots(c.item).."/3 hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},c,"equip")
+     UI.Polish.application(UI,eq,c.item,E.getUsedSlots(c.item).."/"..E.getMaxSlots(c.item).." hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},c,"equip")
      UI.Polish.applications[#UI.Polish.applications].fixedRect={x=c.x,y=c.y,w=c.w,h=c.h}
      Bag.pending=nil;Bag.pendingItem=nil;if callbacks.save then callbacks.save() end
     end

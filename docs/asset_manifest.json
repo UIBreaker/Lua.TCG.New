@@ -4466,7 +4466,7 @@
       "id": "soul_reaper",
       "group": "utility",
       "rarity": "",
-      "ability": "Chọn và tiêu hủy một quân bài để nhận linh hồn theo trang bị, tiến hóa và ấn bản.",
+      "ability": "Tiêu hủy quân bài trong shop để nhận linh hồn; tại chợ linh hồn thưởng x2 LH, hồi 10 HP và thêm 5 Vàng. Giữ ít nhất một lá.",
       "source": "src/shop.lua",
       "name": "Lá Tiêu Hủy",
       "concept": "A tangible antique bronze ritual shears on a black stone altar, severing a blank parchment card which dissolves into a single violet soul wisp entering the hollow shears. Violet void ruins, controlled glow, clear shears silhouette.",
@@ -4773,7 +4773,7 @@
       "group": "itm",
       "name": "Neo Câm Lặng",
       "rarity": "mythic",
-      "ability": "Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss đến hết 2 tay bài kế tiếp. Một lần mỗi trận.",
+      "ability": "Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss thêm 2 tay bài kế tiếp. Từng món dùng một lần mỗi trận; nhiều món nối tiếp thời hạn.",
       "source": "src/soul_relics.lua",
       "concept": "One massive black iron anchor with a dull purple crystal core, planted into an eroded altar, its chains bind one cracked bronze megaphone-shaped ritual horn in the background. Violet eclipse floating Western ruins, dark iron violet. Silences boss active and passive abilities.",
       "file": "assets/cards/continental/itm/soul_silence_anchor.png",
@@ -4795,7 +4795,7 @@
       "group": "itm",
       "name": "Chén Độc Vĩnh Dạ",
       "rarity": "mythic",
-      "ability": "Khi tính điểm: đầu 3 đòn đánh của mục tiêu, độc gây sát thương bằng 8% máu tối đa địch. Không cộng dồn; làm mới thời hạn.",
+      "ability": "Khi tính điểm: đặt độc riêng của món này lên mục tiêu trong 3 đòn, mỗi đòn gây 8% máu tối đa địch. Nhiều món cộng dồn; chính món đó làm mới thời hạn.",
       "source": "src/soul_relics.lua",
       "concept": "One tangible sinister ancient bronze chalice filled with emerald-black liquid, three restrained green vapor curls spiral out of its cup like a slow toxic tide. Ruined Western marsh chapel amid mist and roots, forest dark green antique gold. Poisons a foe over three attacks.",
       "file": "assets/cards/continental/itm/soul_plague_chalice.png",
@@ -4817,7 +4817,7 @@
       "group": "itm",
       "name": "Khế Ước Người Gặt",
       "rarity": "mythic",
-      "ability": "Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận. Không cộng dồn nhiều khế ước.",
+      "ability": "Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận từ từng khế ước đã kích hoạt. Mỗi cái chết chỉ trả một lần.",
       "source": "src/soul_relics.lua",
       "concept": "One tangible rolled antique parchment contract sealed by a bronze skeletal-hand clasp, a pale violet soul wisp is drawn into its simple round wax seal. Bone ivory desert necropolis and Western arches, muted violet antique gold. Harvests souls from slain enemies.",
       "file": "assets/cards/continental/itm/soul_reaper_contract.png",
@@ -8437,6 +8437,52 @@
       "cost": 300,
       "craftCost": 200,
       "craftTier": 5
+    },
+    {
+      "id": "cons_socket",
+      "name": "Khảm Hốc Linh Hồn",
+      "group": "utility",
+      "rarity": "",
+      "ability": "+1 hốc trang bị vĩnh viễn cho quân bài được chọn, tối đa 6 hốc. Giá 32 linh hồn.",
+      "source": "src/inventory.lua",
+      "file": "assets/cards/continental/utility/cons_socket.png",
+      "prompt": "Create ONE production game card illustration, PNG portrait 2:3 1024x1536 full bleed. Match the Continental Relic cinematic painterly Western dark fantasy expedition style: monumental continental cliffs, eroded Western arches, medium detail, one primary subject with a strong silhouette readable at 64px, controlled glow and rim light, quiet atmospheric depth, antique gold. No text, letters, numbers, badge, symbols of rank or suit, card frame or outer border, logo, watermark, UI. No East Asian fantasy, roofs, calligraphy, dense micro-ornament, blown-out glow or particle noise. Identity: Soul Socket Inlay. Ability: permanently unlock one extra equipment socket on a character. One tangible antique bronze hinged equipment harness on a dark altar, three large round crystal sockets visible, a NEW fourth empty circular socket opening outward from the right side with a single silver soul-forging chisel suspended above it. Clearly readable heavy bronze harness and newly unfolded ring silhouette. Violet eclipse above distant floating Western ruins, restrained violet inlay light and warm bronze edges, close foreground view, discovery scene.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-88fe0292-ac15-41c7-bf7e-967667353aef.png",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-88fe0292-ac15-41c7-bf7e-967667353aef.png"
+      },
+      "concept": "Soul Socket Inlay. Ability: permanently unlock one extra equipment socket on a character. One tangible antique bronze hinged equipment harness on a dark altar, three large round crystal sockets visible, a NEW fourth empty circular socket opening outward from the right side with a single silver soul-forging chisel suspended above it. Clearly readable heavy bronze harness and newly unfolded ring silhouette. Violet eclipse above distant floating Western ruins, restrained violet inlay light and warm bronze edges, close foreground view, discovery scene."
+    },
+    {
+      "id": "cons_rulebreak",
+      "name": "Phá Luật",
+      "group": "utility",
+      "rarity": "",
+      "ability": "Cho phép vĩnh viễn gắn trang bị trùng loại trên một quân bài; từng món kích hoạt riêng, giữ trần tài nguyên chung. Giá 48 linh hồn.",
+      "source": "src/inventory.lua",
+      "file": "assets/cards/continental/utility/cons_rulebreak.png",
+      "prompt": "Create ONE production game card illustration, PNG portrait 2:3 1024x1536 full bleed. Match the Continental Relic cinematic painterly Western dark fantasy expedition style: monumental continental cliffs, eroded Western arches, medium detail, one primary subject with a strong silhouette readable at 64px, controlled glow and rim light, quiet atmospheric depth, antique gold. No text, letters, numbers, badge, symbols of rank or suit, card frame or outer border, logo, watermark, UI. No East Asian fantasy, roofs, calligraphy, dense micro-ornament, blown-out glow or particle noise. Identity: Rule Breaker. Ability: permanently break the prohibition on duplicate equipment for a chosen character, opening future possibilities. One imposing broken iron law tablet lying upright on a void altar, split down its center by a single antique golden wedge, a snapped heavy chain draped across its base. Two IDENTICAL clearly readable bronze gem amulets, each with the same violet crystal shape, float together freely inside the split gap: the broken restriction permits them to coexist. Tablet has NO writing, only simple blank stone surfaces. Violet abyss and distant Western floating arches, controlled amulet glow, bold triangular composition, strong broken tablet silhouette.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-bd4e75af-4f42-40a2-b6ea-0322cf9e5ff5.png",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-bd4e75af-4f42-40a2-b6ea-0322cf9e5ff5.png"
+      },
+      "concept": "Rule Breaker. Ability: permanently break the prohibition on duplicate equipment for a chosen character, opening future possibilities. One imposing broken iron law tablet lying upright on a void altar, split down its center by a single antique golden wedge, a snapped heavy chain draped across its base. Two IDENTICAL clearly readable bronze gem amulets, each with the same violet crystal shape, float together freely inside the split gap: the broken restriction permits them to coexist. Tablet has NO writing, only simple blank stone surfaces. Violet abyss and distant Western floating arches, controlled amulet glow, bold triangular composition, strong broken tablet silhouette."
     }
   ],
   "completion": {

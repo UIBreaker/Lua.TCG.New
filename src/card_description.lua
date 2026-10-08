@@ -70,7 +70,9 @@ function D.resolve(item,game)
         if monster and Boss.passiveEnabled(monster) and (monster.lockedFaction==item.suit or monster.lockedRoyals and item.rank>=11 and item.rank<=13) then text=text.."\nBOSS KHÓA TÍNH ĐIỂM: 0 ST / 0 Cường hóa từ lá này." end
         local bs=game and Boss.state(game.monster)
         if bs and bs.forgottenCard==item.id then text=text.."\nQUÊN LÃNG: lần lặp kế tiếp chỉ còn điểm, không chạy khả năng." end
-        for _,eq in ipairs(item.equipments or {}) do text=text.."\nITM · "..eq.name..": "..Equipment.getDescription(eq) end
+        text=text.."\nHỐC TRANG BỊ · "..Equipment.getUsedSlots(item).." / "..Equipment.getMaxSlots(item)
+        if item.allowDuplicateEquipment then text=text.."\nPHÁ LUẬT · Cho phép trang bị trùng; từng món kích hoạt riêng." end
+        for index,eq in ipairs(item.equipments or {}) do text=text.."\nITM · "..index..". "..eq.name..": "..Equipment.getDescription(eq) end
         if item.seal then text=text.."\nẤN · "..Deck.getModifierDescription("seal",item.seal) end
         if item.enhancement then text=text.."\nRÈN · "..Deck.getModifierDescription("enhancement",item.enhancement) end
         if game then local status=require("src.chest_depth").status(game,item);if status~="" then text=text.."\n"..status end end

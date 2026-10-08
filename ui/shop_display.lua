@@ -197,56 +197,75 @@ end
 
 local function soulShop(shop, game, buttons, mx, my, time)
     local g=love.graphics
-    g.setColor(0.025,0.014,0.06,0.32);UI.drawRoundedRect("fill",22,76,992,560,16)
-    text("THƯƠNG ĐIỆN LINH HỒN",56,91,920,UI.fonts.medium,{0.88,0.75,1,1},"center")
-    text("Di vật cổ đại · Tiến hóa · Tốc đánh · Đổi bằng linh hồn thu từ mọi lần tiêu hủy",56,122,920,nil,{0.79,0.78,0.90,1},"center")
+    g.setColor(0.018,0.014,0.035,0.58);UI.drawRoundedRect("fill",22,77,1236,566,14)
+    g.setColor(.56,.43,.73,.45);g.setLineWidth(1);UI.drawRoundedRect("line",22,77,1236,566,14)
+    text("DI VẬT DỊ GIỚI",40,89,370,UI.fonts.medium,{0.88,0.75,1,1})
+    text("5 di vật tuyển chọn · Nhấp xem, xác nhận để đổi",405,95,570,nil,C.muted,"right")
+    text("LINH HỒN · "..(game.souls or 0),1002,91,235,UI.fonts.small,C.gold,"right")
+    g.setColor(.56,.43,.73,.32);g.line(40,117,1240,117)
     local hoveredItem
     local stock=UI.Polish.items(shop)
     local function find(id)
         for index,item in ipairs(stock) do if item.id==id then return item,index end end
     end
-    local function bay(x,y,w,h)
-        g.setColor(0.045,0.028,0.09,0.76);UI.drawRoundedRect("fill",x,y,w,h,10)
-        g.setColor(0.67,0.50,0.84,0.40);g.setLineWidth(1);UI.drawRoundedRect("line",x,y,w,h,10)
+    local function bay(x,y,w,h,accent,hovered)
+        accent=accent or C.purple
+        g.setColor(0.006,0.004,0.018,.5);UI.drawRoundedRect("fill",x+2,y+4,w,h,9)
+        g.setColor(hovered and {0.095,0.062,0.145,.96} or {0.031,0.022,0.057,.9});UI.drawRoundedRect("fill",x,y,w,h,9)
+        g.setColor(accent[1],accent[2],accent[3],hovered and .8 or .32);g.setLineWidth(1);UI.drawRoundedRect("line",x,y,w,h,9)
+        g.setColor(accent[1],accent[2],accent[3],.65);g.line(x+14,y,x+w-14,y)
     end
-    local function offer(item,index,x,y,w,h)
+    local function offer(item,index,x,y,w,h,face)
         local hovered=mx>=x and mx<=x+w and my>=y and my<=y+h
-        UI.Polish.surface(item,index,hovered,x,y,w,h,function()
-            art(item,x,y,w,h,hovered,mx,my)
+        UI.Polish.surface(item,index,hovered,face.x,face.y,face.w,face.h,function()
+            art(item,face.x,face.y,face.w,face.h,hovered,mx,my)
         end)
-        buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item}
+        buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item,focusRect=face}
         if hovered and UI.Polish.tooltipAllowed(item) then hoveredItem=item end
     end
     for slot=1,5 do
         local id=(shop.soulStock or {})[slot]
-        local x=40+(slot-1)*192
-        bay(x,153,180,256)
+        local x=40+(slot-1)*244
         local item,index=find(id)
+        local hovered=mx>=x and mx<x+224 and my>=127 and my<=396
+        bay(x,127,224,269,item and item.color,hovered)
         if item then
-            offer(item,index,x+39,178,102,153)
-            text(item.cost.." LH",x,157,180,UI.fonts.small,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
-            text(item.name,x+6,342,168,UI.fonts.small,item.color,"center")
+            offer(item,index,x,127,224,269,{x=x+56,y=157,w=112,h=168})
+            g.setColor(.15,.1,.23,1);UI.drawRoundedRect("fill",x+71,133,82,20,5)
+            text(item.cost.." LH",x+71,134,82,UI.fonts.small,(game.souls or 0)>=item.cost and C.gold or C.red,"center")
+            text(item.name,x+7,332,210,UI.fonts.small,item.color,"center")
             local caption=item.equipment.shopSummary or item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
-            text(caption,x+10,365,160,nil,{0.81,0.79,0.89,1},"center")
-        else text("ĐÃ ĐỔI",x,253,180,UI.fonts.medium,C.purple,"center") end
+            text(caption,x+12,358,200,nil,{0.81,0.79,0.89,1},"center")
+        else
+            local eq=require("src.equipment").ITEMS[id]
+            text("◇",x,205,224,UI.fonts.large,C.muted,"center")
+            text("ĐÃ ĐỔI",x,255,224,UI.fonts.small,C.muted,"center")
+            if eq then text(eq.name,x+10,332,204,UI.fonts.small,C.muted,"center") end
+        end
     end
-    text("THẺ HỖ TRỢ · MUA VÀO Ô TIÊU HAO",44,429,920,UI.fonts.small,{0.86,0.76,1,1})
-    local summaries={evolution="Tiến hóa +1",speed_single="Tốc đơn +5",speed_team="Tốc đội +2",vitality="Máu tối đa +20"}
+    text("NGHI LỄ & THẺ HỖ TRỢ",40,409,440,UI.fonts.small,{0.86,0.76,1,1})
+    text("HIẾN TẾ TẠI CHỢ: ×2 LH · +10 HP · +5 VÀNG",580,411,660,nil,C.gold,"right")
+    local summaries={evolution="Tiến hóa +1",speed_single="Tốc đơn +5",speed_team="Tốc đội +2",vitality="Máu tối đa +20",socket_expansion="Hốc +1 / 6",rule_break="ITM trùng loại"}
     for slot=1,#Shop.SOUL_SUPPORT+1 do
         local definition=Shop.SOUL_SUPPORT[slot]
         local id=definition and definition.id or "soul_reaper"
         local item,index=find(id)
         local x=40+(slot-1)*136
-        bay(x,460,128,164)
+        local rare=id=="cons_socket" or id=="cons_rulebreak"
+        local hovered=mx>=x and mx<=x+112 and my>=439 and my<=634
+        bay(x,439,112,195,item and item.color,hovered)
         if item then
-            text(item.name,x+8,476,112,UI.fonts.tiny,item.color,"center")
-            offer(item,index,x+39,511,50,75)
+            text(item.name,x+4,447,104,UI.fonts.tiny,item.color,"center")
+            offer(item,index,x,439,112,195,{x=x+16,y=478,w=80,h=120})
             local c=item.consumable
             local summary=c.slotType=="spn" and "Ô SPN +1" or c.slotType=="consumable" and "Ô tiêu hao +1"
-                or summaries[c.category] or "Hủy bài → LH"
-            text(summary,x+4,590,120,UI.fonts.tiny,{.81,.79,.89,1},"center")
-            text(item.cost.." LH",x+4,607,120,UI.fonts.tiny,(game.souls or 0)>=item.cost and C.purple or C.red,"center")
-        else text("ĐÃ ĐỔI",x+4,531,120,UI.fonts.small,C.purple,"center") end
+                or summaries[c.category] or "Hủy bài · ×2 LH"
+            text(summary,x+2,602,108,UI.fonts.tiny,{.81,.79,.89,1},"center")
+            text(item.cost.." LH",x+4,618,104,UI.fonts.tiny,(game.souls or 0)>=item.cost and (rare and C.gold or C.purple) or C.red,"center")
+        else
+            text("ĐÃ ĐỔI",x+4,520,104,UI.fonts.small,C.muted,"center")
+            if definition then text(require("src.run_manager")[definition.factory]().name,x+4,447,104,UI.fonts.tiny,C.muted,"center") end
+        end
     end
     return hoveredItem
 end

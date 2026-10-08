@@ -169,8 +169,9 @@ local function restoreCard(savedCard)
     card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
     card.temporaryAbilityLevels, card.abilityState, card.abilityDisabledUntil = nil, nil, nil
     card.disableFactionPassives=true;card.isWildSuit=false;card.isDualRankAce=false
-    card.maxSockets = Equipment.MAX_SLOTS
-    card.unlockedSockets = Equipment.MAX_SLOTS
+    card.maxSockets = Equipment.getMaxSlots(card)
+    card.unlockedSockets = card.maxSockets
+    card.allowDuplicateEquipment = card.allowDuplicateEquipment == true
     card.selected = false
     card.hovered = false
     card.faceDown = false

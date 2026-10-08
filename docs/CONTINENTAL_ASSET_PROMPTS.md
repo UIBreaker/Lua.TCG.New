@@ -3917,3 +3917,21 @@ Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PN
 Output: `assets/cards/continental/itm/itm_concordharp.png`
 
 Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+## Soul market rituals (2026-10-08)
+
+### Khảm Hốc Linh Hồn (`cons_socket`)
+
+Ability: +1 hốc trang bị vĩnh viễn cho quân bài được chọn, tối đa 6 hốc. Giá 32 linh hồn.
+
+Prompt: Create ONE production game card illustration, PNG portrait 2:3 1024x1536 full bleed. Match the Continental Relic cinematic painterly Western dark fantasy expedition style: monumental continental cliffs, eroded Western arches, medium detail, one primary subject with a strong silhouette readable at 64px, controlled glow and rim light, quiet atmospheric depth, antique gold. No text, letters, numbers, badge, symbols of rank or suit, card frame or outer border, logo, watermark, UI. No East Asian fantasy, roofs, calligraphy, dense micro-ornament, blown-out glow or particle noise. Identity: Soul Socket Inlay. Ability: permanently unlock one extra equipment socket on a character. One tangible antique bronze hinged equipment harness on a dark altar, three large round crystal sockets visible, a NEW fourth empty circular socket opening outward from the right side with a single silver soul-forging chisel suspended above it. Clearly readable heavy bronze harness and newly unfolded ring silhouette. Violet eclipse above distant floating Western ruins, restrained violet inlay light and warm bronze edges, close foreground view, discovery scene.
+
+Output: `assets/cards/continental/utility/cons_socket.png`
+
+### Phá Luật (`cons_rulebreak`)
+
+Ability: Cho phép vĩnh viễn gắn trang bị trùng loại trên một quân bài; từng món kích hoạt riêng, giữ trần tài nguyên chung. Giá 48 linh hồn.
+
+Prompt: Create ONE production game card illustration, PNG portrait 2:3 1024x1536 full bleed. Match the Continental Relic cinematic painterly Western dark fantasy expedition style: monumental continental cliffs, eroded Western arches, medium detail, one primary subject with a strong silhouette readable at 64px, controlled glow and rim light, quiet atmospheric depth, antique gold. No text, letters, numbers, badge, symbols of rank or suit, card frame or outer border, logo, watermark, UI. No East Asian fantasy, roofs, calligraphy, dense micro-ornament, blown-out glow or particle noise. Identity: Rule Breaker. Ability: permanently break the prohibition on duplicate equipment for a chosen character, opening future possibilities. One imposing broken iron law tablet lying upright on a void altar, split down its center by a single antique golden wedge, a snapped heavy chain draped across its base. Two IDENTICAL clearly readable bronze gem amulets, each with the same violet crystal shape, float together freely inside the split gap: the broken restriction permits them to coexist. Tablet has NO writing, only simple blank stone surfaces. Violet abyss and distant Western floating arches, controlled amulet glow, bold triangular composition, strong broken tablet silhouette.
+
+Output: `assets/cards/continental/utility/cons_rulebreak.png`

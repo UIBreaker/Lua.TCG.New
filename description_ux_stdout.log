@@ -1,4 +1,12 @@
 Spectral persistence smoke passed: all 8 cards, direct/stored use, save/load and next combat
 [UX] dissolve fallback: tests/ux_polish_capture.lua:62: intentional shader failure test
 [PASS] dissolve: compile/coverage/alpha, reuse at 5/10/20 cards, GPU fallback
-[PASS] SHOP OPEN → FOCUS → BUY → SELL → REROLL → BUY; poor funds, cancel, spam, Fast, real input/render
+Error: tests/ux_polish_capture.lua:96: assertion failed!
+stack traceback:
+	[love "boot.lua"]:352: in function <[love "boot.lua"]:348>
+	[C]: in function 'assert'
+	tests/ux_polish_capture.lua:96: in function 'update'
+	main.lua:2253: in function 'updateCaptureMode'
+	main.lua:2474: in function 'update'
+	[love "callbacks.lua"]:162: in function <[love "callbacks.lua"]:144>
+	[C]: in function 'xpcall'

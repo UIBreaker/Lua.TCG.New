@@ -1,22 +1,22 @@
 # Mô tả lá bài
 
-Mọi tooltip quân bài, SPN, ITM, tiêu hao, rương và đặc quyền dùng chung
-`src/card_description.lua` và `ui/components/card_description.lua`, kể cả màn xem bộ bài.
-Thông số vẫn lấy từ resolver và khả năng hiện tại của game.
+Tooltip dùng chung `src/card_description.lua` và `ui/components/card_description.lua`.
+Mặc định chỉ hiện tên, hiệu ứng thực tế, trạng thái đang có và hiệu ứng bổ sung.
+Không hiện tiểu sử, luật chung, chỉ số nền, vai trò hay cấp kế tiếp trong bản gọn.
+Giữ Shift để đọc các thông tin tham khảo này; thả Shift để thu gọn.
+Cảnh báo khóa/vô hiệu luôn đứng đầu. Trang bị, dấu ấn, cường hóa và ấn bản
+được gom vào một mục; tên ấn bản đi cùng hiệu ứng thực tế của nó.
 
-Chữ nội dung Arial thường 14px; tiêu đề và nhãn dùng font UI có sẵn.
-Các phần hiệu ứng, tiến hóa, cấp kế tiếp, chỉ số, vai trò, trang bị và cảnh báo
-được tách riêng. Con số dùng màu của mục tương ứng. Tooltip có nền kín,
-viền kim loại và màu nhận diện theo loại lá.
+Chữ nội dung Arial thường 14px, khung rộng 340px. Chiều cao tối đa
+440px ở bản gọn và 600px ở bản chi tiết trên hệ tọa độ game 1280×720.
+Nội dung dài cuộn bằng con lăn khi rê trên lá bài, có thanh cuộn chỉ vị trí.
+Không thu nhỏ chữ hay cắt mất nội dung. Tiêu đề và chân khung luôn cố định.
+Cấp 0 được ẩn; chỉ hiện cấp đã nâng hoặc cấp tạm thời.
 
-Khung mặc định rộng 360px. Với nhiều hiệu ứng, khung mở rộng tới 430px và
-giảm khoảng cách giữa các mục. Mô tả vượt chiều cao 680px được thu vừa màn hình,
-giữ đầy đủ nội dung. Đây là kích thước trên hệ tọa độ game 1280×720.
-
-Kiểm tra dữ liệu: `lua tests/gameplay_expansion_smoke.lua`.
-Kiểm tra hover thật: `../love-11.5-win64/love.exe . --test-ux-polish`.
-Render các mẫu và kiểm tra toàn bộ danh mục:
+Kiểm tra mô tả và render mẫu:
 `../love-11.5-win64/love.exe tests/card_description_preview`.
-Chạy từ thư mục gốc dự án; trên Windows có đường dẫn Unicode, đặt biến môi trường
+Chạy từ gốc dự án. Với đường dẫn Unicode trên Windows, đặt
 `POKER_DESCRIPTION_ROOT` thành đường dẫn ngắn ASCII của dự án.
-Ảnh kết quả: `docs/card_description_preview.png`.
+Ảnh: `docs/card_description_preview.png`.
+Harness kiểm tra danh mục, khung nội dung, ưu tiên cảnh báo, thông tin phụ,
+nhóm bổ sung, cuộn quá dài, giữ Shift và việc trả con lăn lại cho game.

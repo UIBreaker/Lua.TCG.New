@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-run-resume" then local ok,err=pcall(require,"tests.run_resume_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-backpack" then local ok,err=pcall(require,"tests.backpack_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a == "--capture-continental52" then require("tests.continental52_capture");return end
     if a == "--test-continental52-regressions" then
@@ -2252,6 +2253,16 @@ local function updateCaptureMode()
     if not isCaptureMode or not Capture then return end
     Capture.update(game, {
         startNewGame = startNewGame,
+        resumeSavedRun = function()
+            local loaded,loadedState=Persistence.loadRun()
+            assert(loaded,"No saved run for resume capture")
+            game,state=loaded,loadedState
+            lastActiveState=state;hasRunStarted=true
+            shopData=Shop.new()
+            if state=="shop" then Shop.refresh(shopData,game);RewardSystem.openNextPack(game,shopData) end
+            return game,state
+        end,
+        getRunState = function() return game,state end,
         openDeckViewer = function() isDeckViewerOpen = true end,
         closeDeckViewer = function() isDeckViewerOpen = false;game.soulDestroyActive=false;game.soulDestroyConsumable=nil;UI.Polish.clearFocus() end,
         startMonsterEncounter = function(fl, isB)
@@ -2268,6 +2279,7 @@ local function updateCaptureMode()
             state = "boss_deity"
         end,
         openInspector = function(card) inspectCardModal = card end,
+        getInspector = function() return inspectCardModal end,
         closeInspector = function() inspectCardModal = nil end,
         openShopTransfer = function() isShopTransferOpen = true end,
         closeShopTransfer = function() isShopTransferOpen = false end,
@@ -5431,6 +5443,9 @@ end
 
 local function drawCardInspectorModal(card)
     if not card then return end
+    while card.card or card.deity or card.equipment or card.item do
+        card = card.card or card.deity or card.equipment or card.item
+    end
     -- Overlay dimming
     local winW, winH = love.graphics.getDimensions()
     love.graphics.setColor(0, 0, 0, 0.85)
@@ -5452,7 +5467,7 @@ local function drawCardInspectorModal(card)
     -- Title (Shortened to not overlap close button)
     love.graphics.setFont(UI.fonts.large)
     love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("CHI TIẾT LÁ BÀI & TRANG BỊ KHẢM", modalX + 28, modalY + 20)
+    love.graphics.print(card.rank and "CHI TIẾT LÁ BÀI & TRANG BỊ KHẢM" or "CHI TIẾT VẬT PHẨM", modalX + 28, modalY + 20)
 
     -- Close button
     local btnClose = {
@@ -5467,6 +5482,28 @@ local function drawCardInspectorModal(card)
     }
     table.insert(buttons, btnClose)
     UI.drawButton(btnClose, mx >= btnClose.x and mx <= btnClose.x + btnClose.w and my >= btnClose.y and my <= btnClose.y + btnClose.h)
+
+    -- Equipment and SPN have no playing rank, role or card sockets.
+    if not card.rank then
+        local image = UI.getEquipmentImage(card.id) or UI.getDeityImage(card.id) or UI.getConsumableImage(card)
+        if image then
+            love.graphics.setColor(1,1,1,1)
+            UI.CardFrame.image(image,modalX+40,modalY+90,180,270)
+            UI.drawCardBorder(modalX+40,modalY+90,180,270,nil,nil,card)
+        end
+        local title,body = require("src.card_description").resolve(card,game)
+        local view = require("ui.components.card_description")
+        local model = view.model(card,title,body,true)
+        model.hasDetails = false -- Inspector details are always expanded.
+        local layout = view.layout(model,UI.fonts)
+        local fit = math.min(1,440/layout.h)
+        love.graphics.push()
+        love.graphics.translate(modalX+280,modalY+80)
+        love.graphics.scale(fit)
+        view.draw(model,layout,0,0,0)
+        love.graphics.pop()
+        return
+    end
 
     -- Left side: Card Art & Durability
     local cardArtW = 150
@@ -8472,6 +8509,7 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if UI.Description.wheelmoved(y) then return end
     if (state=="shop" or state=="playing") and not isCollectionOpen and not isDeckViewerOpen
         and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not (shopData and shopData.currentPackOpening) and not UI.Polish.busy() then

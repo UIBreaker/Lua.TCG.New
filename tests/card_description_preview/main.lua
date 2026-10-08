@@ -27,7 +27,7 @@ function love.load()
     local samples, total = {}, 0
     for _, suit in ipairs({"hearts","diamonds","clubs","spades"}) do
         for rank=2,14 do
-            for level=0,5 do
+            for level=0,require("src.card_abilities").config.maxEvolutionLevel do
                 local card=Deck.newCard(rank,suit); card.evolutionLevel=level
                 samples[#samples+1]=card
             end
@@ -42,8 +42,8 @@ function love.load()
         local layout=View.layout(model,UI.fonts)
         assert(layout.h*layout.scale<=680.001,"description must fit viewport")
         for i,row in ipairs(model.rows) do
-            local _, lines=layout.font:getWrap(row.text,layout.w-56)
-            assert(layout.rows[i].h>=layout.textY+#lines*(layout.font:getHeight()+2)+layout.bottom,"no clipped prose")
+            local _, lines=layout.font:getWrap(row.text,layout.w-40)
+            assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(layout.font:getHeight()+2)+8,"no clipped prose")
         end
         total=total+1
     end
@@ -53,13 +53,37 @@ function love.load()
     modified.edition="foil"; modified.seal="gold"; modified.enhancement=next(Deck.ENHANCEMENTS)
     local longModel=View.model(modified,Description.resolve(modified))
     local longLayout=View.layout(longModel,UI.fonts)
-    assert(longLayout.h*longLayout.scale<=680.001 and #longModel.rows>=9,"all modifications fit")
+    assert(longLayout.h<=440 and longLayout.scale==1,"compact viewport never shrinks text")
+    local additions
+    for _,row in ipairs(longModel.rows) do if row.kind=="additions" then additions=row.text end end
+    assert(additions and additions:find("Đá Tiên Phong",1,true) and additions:find("Dấu ấn",1,true),"modifications grouped, never discarded")
+    local title,body=Description.resolve(modified)
+    local expanded=View.model(modified,title,body,true)
+    assert(#expanded.rows>#longModel.rows,"secondary information available on Shift")
+    for _,row in ipairs(longModel.rows) do assert(row.kind~="detail" and row.kind~="stats" and row.kind~="next","hide reference information by default") end
+    local huge=View.model(jack,"Long",("Effect\n"):rep(100),true)
+    local hugeLayout=View.layout(huge,UI.fonts)
+    assert(hugeLayout.maxScroll>0 and hugeLayout.h<=600 and hugeLayout.scale==1,"long cards scroll with original font")
+    local render,isDown=View.draw,love.keyboard.isDown
+    local capturedModel,capturedLayout,capturedScroll
+    View.draw=function(m,l,x,y,scroll) capturedModel,capturedLayout,capturedScroll=m,l,scroll end
+    love.keyboard.isDown=function() return false end
+    Description.reset();Description.draw(UI,modified,640,360);Description.update(1);Description.draw(UI,modified,640,360)
+    local canScroll=capturedLayout.maxScroll>0
+    assert(Description.wheelmoved(-999)==canScroll,"wheel handled only when content overflows")
+    Description.draw(UI,modified,640,360)
+    assert(capturedScroll==capturedLayout.maxScroll,"scroll clamps at final content")
+    love.keyboard.isDown=function() return true end
+    Description.draw(UI,modified,640,360)
+    assert(capturedModel.expanded and capturedScroll==0,"Shift expands and resets scroll")
+    Description.reset();assert(not Description.wheelmoved(-1),"inactive tooltip does not steal scrolling")
+    View.draw,love.keyboard.isDown=render,isDown
     local spn=assert(next(Deities.CATALOG)); spn=Deities.CATALOG[spn]
     cases={jack,spn,Equipment.ITEMS.gem_fire,modified}
     assert(View.model(jack,Description.resolve(jack)).level=="0","evolution extracted")
     local warning=View.model(jack,"Test","Effect\nKHẢ NĂNG VÔ HIỆU trong tay này.")
-    assert(warning.rows[2].kind=="warning","disabled ability highlighted")
-    print("PASS: "..total.." descriptions; 52 playing cards across 6 evolution levels, catalogs, wrapping, warnings")
+    assert(warning.rows[1].kind=="warning","disabled ability has priority")
+    print("PASS: "..total.." descriptions; all evolution levels, catalogs, compact/expanded content, warnings, scrolling and Shift")
 end
 local frames=0
 function love.draw()
@@ -68,9 +92,6 @@ function love.draw()
         local title,body=Description.resolve(item)
         local model=View.model(item,title,body)
         local layout=View.layout(model,UI.fonts)
-        -- Constrain preview columns while retaining the same runtime layout.
-        local scale=math.min(layout.scale,360/layout.w)
-        layout.scale=scale
         View.draw(model,layout,20+(i-1)*385,40)
     end
     frames=frames+1

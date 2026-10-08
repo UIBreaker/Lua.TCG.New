@@ -1,4 +1,5 @@
 local T={};local stage="start";local deadline=0
+local inspectorOnly=false;for _,a in ipairs(arg or {}) do if a=="--capture-backpack-inspector" then inspectorOnly=true end end
 local UI=require("src.ui");local E=require("src.equipment");local B=require("src.basic_equipment")
 local D=require("src.deck");local Shop=require("src.shop")
 local function click(x,y,button)
@@ -20,9 +21,22 @@ function T.update(g,cb)
   g.backpackEquipment={"basic_lace"};for _,id in ipairs(B.basic) do if id~="basic_lace" then g.backpackEquipment[#g.backpackEquipment+1]=id end end
   g.consumables={Shop.healingItem("upper","healing_potion").consumable}
   local Deities=require("src.deities");g.deities={Deities.CATALOG.spirit_ward,Deities.CATALOG.spirit_blade}
+  if inspectorOnly then g.backpackEquipment[1]={id="basic_lace",investment=3} end
   cb.openShop()
   local stock=cb.getShopData();for i,item in ipairs(stock.items) do if item.section=="discount" then stock.items[i]=Shop.discountedEquipment(item.equipment,item.bay,item.bay==1 and 0 or .5) end end
-  advance("shop",1)
+  advance(inspectorOnly and "inspect_open" or "shop",1)
+ elseif stage=="inspect_open" then click(846,674);advance("inspect_equipment_tab")
+ elseif stage=="inspect_equipment_tab" then click(230,391);advance("inspect_equipment_click")
+ elseif stage=="inspect_equipment_click" then click(428,260,2);assert(cb.getInspector().id=="basic_lace");advance("inspect_equipment_draw")
+ elseif stage=="inspect_equipment_draw" then shot("backpack_equipment_inspector");advance("inspect_equipment_close")
+ elseif stage=="inspect_equipment_close" then click(2,2,2);assert(not cb.getInspector() and UI.Backpack.open);click(230,298);advance("inspect_spn_click")
+ elseif stage=="inspect_spn_click" then click(428,260,2);assert(cb.getInspector().id=="spirit_ward");advance("inspect_spn_draw")
+ elseif stage=="inspect_spn_draw" then click(2,2,2);assert(not cb.getInspector());click(230,486);advance("inspect_recipe_click")
+ elseif stage=="inspect_recipe_click" then click(500,215,2);assert(cb.getInspector().id=="crafted_guard");advance("inspect_recipe_draw")
+ elseif stage=="inspect_recipe_draw" then shot("backpack_recipe_inspector");advance("inspect_recipe_close")
+ elseif stage=="inspect_recipe_close" then love.keypressed("escape");assert(not cb.getInspector() and UI.Backpack.open);click(230,439);advance("inspect_card_click")
+ elseif stage=="inspect_card_click" then click(428,260,2);assert(cb.getInspector().rank);advance("inspect_card_draw")
+ elseif stage=="inspect_card_draw" then click(925,126);assert(not cb.getInspector() and UI.Backpack.open);print("Backpack inspector PASS: right-click equipment, SPN, recipe and playing card; rendered frames; right-click/Escape/close dismissal; bag preserved");love.event.quit(0)
  elseif stage=="shop" then
   shot("backpack_shop");advance("buy_basic")
  elseif stage=="buy_basic" then

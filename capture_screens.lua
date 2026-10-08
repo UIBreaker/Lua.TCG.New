@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-run-resume" then
+            local ok,err=pcall(require("tests.run_resume_capture").update,gameRef,callbacks)
+            if not ok then print("RUN RESUME UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-backpack" then
             local ok,err=pcall(require("tests.backpack_capture").update,gameRef,callbacks)
             if not ok then print("BACKPACK UI FAIL: "..tostring(err));love.event.quit(1) end

@@ -139,7 +139,7 @@ local function restoreRun(saved, faction)
     for i, blind in ipairs(run.blinds) do
         local savedBlind = saved.blinds and saved.blinds[i]
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
-        if blind.status == "skipped" then blind.status = i == run.currentBlindIndex and "current" or "upcoming" end
+        if blind.status ~= "completed" then blind.status = i == run.currentBlindIndex and "current" or "upcoming" end
     end
     if saved.victory and run.ante < 20 and run.blinds[run.currentBlindIndex].status == "completed" then
         RunManager.advanceBlind(run)
@@ -204,7 +204,7 @@ function Persistence.makeSnapshot(game, activeState)
         activeState = activeState == "victory" and "victory"
             or (activeState == "CASH_OUT" and game.pendingVictoryReward and "CASH_OUT")
             or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
-            or (activeState == "shop" and #(game.rewardPacks or {}) > 0 and "shop")
+            or (activeState == "shop" and "shop")
             or "BLIND_SELECT",
         game = savedGame,
     }
@@ -252,6 +252,18 @@ function Persistence.restoreSnapshot(snapshot)
     game.soulDestroyActive = false
     if game.pendingRewardEquipment then game.pendingRewardEquipment = restoreEquipment(game.pendingRewardEquipment) end
     if restoredState == "victory" and not game.run.victory then restoredState = "BLIND_SELECT" end
+    -- Older saves collapsed ordinary shops to BLIND_SELECT while leaving the
+    -- just-won fight completed. Resume its post-fight step, without replaying
+    -- combat, paying rewards again, or advancing before the shop is left.
+    if restoredState == "BLIND_SELECT" then
+        local current = RunManager.getCurrentBlind(game.run)
+        if game.run.victory then restoredState = "victory"
+        elseif current and current.status == "completed" then
+            restoredState = game.pendingVictoryReward and "CASH_OUT"
+                or game.pendingRewardEquipment and "socketing" or "shop"
+        end
+    end
+    game.currentBlind = RunManager.getCurrentBlind(game.run)
     return game, restoredState
 end
 

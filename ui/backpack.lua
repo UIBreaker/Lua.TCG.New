@@ -4,7 +4,7 @@ local B=require("src.basic_equipment")
 local tabs={{"spn","SPN ĐỒNG HÀNH"},{"consumable","TIÊU HAO"},{"equipment","TRANG BỊ"},{"cards","BỘ BÀI"},{"craft","BÀN GHÉP"}}
 local function inside(x,y,r) return x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
 function Bag.show() Bag.open=true;Bag.page=1;Bag.selected=nil;Bag.message=nil;require("src.ui").Polish.clearFocus() end
-function Bag.close() Bag.open=false;Bag.pending=nil;require("src.ui").Polish.clearFocus() end
+function Bag.close() Bag.open=false;Bag.pending=nil;Bag.pendingItem=nil;require("src.ui").Polish.clearFocus() end
 function Bag.list(game)
  local list={}
  if Bag.tab=="spn" then
@@ -72,12 +72,13 @@ local function details(UI,game,item,recipe,entry)
  label(UI,recipe and "BẢN THIẾT KẾ" or "NHẬT KÝ HÀNH TRANG",965,204,176,"tiny",UI.COLORS.goldYellow,"center")
  if not item then wrapped(UI,"Chọn một món để xem khả năng, nguyên liệu và giá trị của nó.",969,258,169,8,UI.COLORS.textMuted);return end
  local image=item.rank and UI.getCardImage(item.suit,item.rank) or UI.getEquipmentImage(item.id) or UI.getDeityImage(item.id) or UI.getConsumableImage(item)
- if image then g.setColor(1,1,1);UI.CardFrame.image(image,1020,235,68,102);UI.drawCardBorder(1020,235,68,102,nil,nil,item) end
+ local artX,artY=recipe and 969 or 1020,recipe and 225 or 235
+ if image then g.setColor(1,1,1);UI.CardFrame.image(image,artX,artY,68,102);UI.drawCardBorder(artX,artY,68,102,nil,nil,item) end
  local title,description=require("src.card_description").resolve(item,game)
- wrapped(UI,title or item.name or ((item.rankName or "")..(item.suitSymbol or "")),969,345,169,2,item.color or UI.COLORS.goldYellow)
+ wrapped(UI,title or item.name or ((item.rankName or "")..(item.suitSymbol or "")),recipe and 1043 or 969,recipe and 239 or 345,recipe and 102 or 169,recipe and 4 or 2,item.color or UI.COLORS.goldYellow)
  if recipe then
-  label(UI,"TẦNG "..recipe.tier.." · "..tierNames[recipe.tier],969,382,169,"tiny",UI.COLORS.goldYellow)
-  wrapped(UI,item.statSummary or item.desc,969,405,169,3,UI.COLORS.textLight)
+  label(UI,"TẦNG "..recipe.tier.." · "..tierNames[recipe.tier],969,334,169,"tiny",UI.COLORS.goldYellow)
+  wrapped(UI,item.desc,969,355,169,6,UI.COLORS.textLight)
   local order,need={},{};for _,id in ipairs(recipe.ingredients) do if not need[id] then order[#order+1]=id;need[id]=0 end;need[id]=need[id]+1 end
   for i,id in ipairs(order) do
    local line=E.ITEMS[id].name.." "..B.count(game,id).."/"..need[id]
@@ -122,7 +123,16 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
  label(UI,tostring(game.gold or 0).." VÀNG",134,218,194,"medium",UI.COLORS.goldYellow,"center")
  label(UI,tostring(game.souls or 0).." linh hồn · "..#(game.persistentDeck or {}).." lá bài",133,252,196,"tiny",UI.COLORS.textMuted,"center")
  for i,t in ipairs(tabs) do button(UI,buttons,"bag_tab_"..t[1],(Bag.tab==t[1] and "› " or "")..t[2],135,280+(i-1)*47,192,37,mx,my) end
- label(UI,"Gắn: 1 hốc / nguyên liệu\nTháo và ghép tại cửa hàng\n35 bản thiết kế · 5 tầng ghép",137,534,192,"tiny",UI.COLORS.textMuted)
+ local returning
+ for _,a in ipairs(UI.Polish.applications) do if a.kind=="unequip" and a.fixedRect and a.sourceItem then returning=a end end
+ local pocketItem=Bag.pendingItem or returning and returning.sourceItem
+ if pocketItem then
+  local image=(not returning or returning.age>returning.duration*.6+.32) and UI.getEquipmentImage(pocketItem.id)
+  g.setColor(1,1,1);if image then UI.CardFrame.image(image,184,518,44,66);UI.drawCardBorder(184,518,44,66,nil,nil,pocketItem) end
+  label(UI,(returning and "VỀ BALO · " or "")..pocketItem.name,137,590,192,"tiny",pocketItem.color,"center")
+ else
+ label(UI,"Gắn: 1–2 hốc / trang bị\nTháo và ghép tại cửa hàng\n"..#B.recipes.." bản thiết kế · 5 tầng ghép",137,534,192,"tiny",UI.COLORS.textMuted)
+ end
  label(UI,Bag.pending and "CHỌN LÁ BÀI ĐỂ GẮN TRANG BỊ" or ({spn="Hộ linh đồng hành",consumable="Dược liệu và thẻ hỗ trợ",equipment="Nguyên liệu và di vật",cards="Đoàn viễn chinh",craft=""})[Bag.tab],380,155,620,"small",UI.COLORS.goldYellow)
  if Bag.tab=="craft" then
   Bag.cells={}
@@ -156,7 +166,7 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
   local detailItem,detailEntry
   for slot=(Bag.page-1)*8+1,math.min(#list,Bag.page*8) do
    local v=list[slot];local n=(slot-1)%8;local x,y=380+n%4*140,191+math.floor(n/4)*182
-   g.setColor(.14,.105,.07,.65);UI.drawRoundedRect("fill",x-8,y-7,112,173,8)
+   g.setColor(.14,.105,.07,.65);UI.drawRoundedRect("fill",x-8,y-7,112,181,8)
    local hovered=mx>=x and mx<=x+96 and my>=y and my<=y+144
    local item=v.item
    if Bag.tab=="spn" then
@@ -173,7 +183,11 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
     Bag.stats(UI,item,x,y,96,144)
    end
    label(UI,Bag.tab=="cards" and ((item.rankName or "")..(item.suitSymbol or "")) or item.name,x-6,y+147,108,"tiny",item.color,"center")
-   if Bag.selected==v.index then g.setColor(UI.COLORS.goldYellow);g.setLineWidth(2);UI.drawRoundedRect("line",x-8,y-7,112,173,8) end
+   if Bag.tab=="cards" then
+    local used=E.getUsedSlots(item)
+    label(UI,(used>0 and "◆ " or "◇ ")..used.."/"..math.min(item.maxSockets or E.MAX_SLOTS,E.MAX_SLOTS).." HỐC",x-6,y+162,108,"tiny",used>0 and UI.COLORS.goldYellow or UI.COLORS.textMuted,"center")
+   end
+   if Bag.selected==v.index then g.setColor(UI.COLORS.goldYellow);g.setLineWidth(2);UI.drawRoundedRect("line",x-8,y-7,112,181,8) end
    local b={x=x,y=y,w=96,h=144,item=item,index=v.index};Bag.cells[#Bag.cells+1]=b
    if hovered or Bag.selected==v.index then detailItem=item;detailEntry=v.entry end
    if not detailItem then detailItem=item;detailEntry=v.entry end
@@ -202,19 +216,28 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
  if UI.Polish.busy() then return true end
  for _,b in ipairs(buttons) do if mouse==1 and b.id and b.id:sub(1,4)=="bag_" and inside(mx,my,b) and not b.disabled then
   if b.id=="bag_close" then if callbacks.cancel then callbacks.cancel() end;Bag.close()
-  elseif b.id:sub(1,8)=="bag_tab_" then Bag.tab=b.id:sub(9);Bag.page=1;Bag.selected=nil;Bag.pending=nil;UI.Polish.clearFocus()
+  elseif b.id:sub(1,8)=="bag_tab_" then Bag.tab=b.id:sub(9);Bag.page=1;Bag.selected=nil;Bag.pending=nil;Bag.pendingItem=nil;UI.Polish.clearFocus()
   elseif b.id=="bag_prev" then Bag.page=math.max(1,Bag.page-1);Bag.selected=nil;UI.Polish.clearFocus()
   elseif b.id=="bag_next" then Bag.page=math.min(Bag.pages,Bag.page+1);Bag.selected=nil;UI.Polish.clearFocus()
   elseif b.id:sub(1,9)=="bag_tier_" then Bag.craftTier=tonumber(b.id:sub(10));Bag.page=1;Bag.recipeSelection=nil
   elseif b.id:sub(1,11)=="bag_recipe_" then Bag.recipeSelection=tonumber(b.id:sub(12))
   elseif b.id:sub(1,10)=="bag_craft_" then Bag.recipeSelection=tonumber(b.id:sub(11));local ok,msg=B.craft(game,B.recipes[tonumber(b.id:sub(11))]);Bag.message=msg;if ok and callbacks.save then callbacks.save() end
-  elseif b.id=="bag_equip" then Bag.pending=Bag.selected;Bag.selected=nil;Bag.tab="cards";Bag.page=1
+  elseif b.id=="bag_equip" then Bag.pending=Bag.selected;Bag.pendingItem=B.item(game.backpackEquipment[Bag.selected]);Bag.selected=nil;Bag.tab="cards";Bag.page=1
   elseif b.id=="bag_spn_left" or b.id=="bag_spn_right" then
    local target=Bag.selected+(b.id=="bag_spn_left" and -1 or 1)
    game.deities[Bag.selected],game.deities[target]=game.deities[target],game.deities[Bag.selected]
    Bag.selected=target;UI.Polish.clearFocus();if callbacks.save then callbacks.save() end
   elseif b.id=="bag_sell" and Bag.selected then local entry=game.backpackEquipment[Bag.selected];game.gold=(game.gold or 0)+B.resale(entry);table.remove(game.backpackEquipment,Bag.selected);Bag.selected=nil;if callbacks.save then callbacks.save() end
-  elseif b.id:sub(1,11)=="bag_detach_" then B.detach(game,game.persistentDeck[Bag.selected],tonumber(b.id:sub(12)));if callbacks.save then callbacks.save() end end
+  elseif b.id:sub(1,11)=="bag_detach_" then
+   local card=game.persistentDeck[Bag.selected];local index=tonumber(b.id:sub(12));local eq=card and (card.equipments or {})[index];local rect;local oldSpeed=card and require("src.deck").getCardAttackSpeed(card)
+   for _,cell in ipairs(Bag.cells or {}) do if cell.item==card then rect={x=cell.x,y=cell.y,w=cell.w,h=cell.h} end end
+   if eq and B.detach(game,card,index) then
+    local speed=require("src.deck").getCardAttackSpeed(card)
+    UI.Polish.application(UI,eq,card,"Về balo · "..E.getUsedSlots(card).."/3 hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},rect,"unequip")
+    UI.Polish.applications[#UI.Polish.applications].fixedRect=rect
+    Bag.message="Đã tháo "..eq.name.." và cất vào balo.";if callbacks.save then callbacks.save() end
+   end
+  end
   return true
  end end
  if mouse==2 and Bag.tab=="craft" then
@@ -226,7 +249,15 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
   if mouse==1 and (Bag.tab=="cards" or Bag.tab=="spn") and callbacks.target and callbacks.target(c.item) then return true end
   Bag.selected=c.index
   if Bag.tab=="cards" then
-   if Bag.pending then local ok,msg=B.attach(game,Bag.pending,c.item);Bag.message=msg;if ok then Bag.pending=nil;if callbacks.save then callbacks.save() end end
+   if Bag.pending then
+    local eq=B.item(game.backpackEquipment[Bag.pending]);local oldSpeed=require("src.deck").getCardAttackSpeed(c.item)
+    local ok,msg=B.attach(game,Bag.pending,c.item);Bag.message=msg
+    if ok then
+     local speed=require("src.deck").getCardAttackSpeed(c.item)
+     UI.Polish.application(UI,eq,c.item,E.getUsedSlots(c.item).."/3 hốc"..(speed~=oldSpeed and (" · Tốc "..oldSpeed.." → "..speed) or ""),{x=184,y=518,w=44,h=66},c,"equip")
+     UI.Polish.applications[#UI.Polish.applications].fixedRect={x=c.x,y=c.y,w=c.w,h=c.h}
+     Bag.pending=nil;Bag.pendingItem=nil;if callbacks.save then callbacks.save() end
+    end
    elseif mouse==2 and callbacks.inspect then callbacks.inspect(c.item) end
   elseif Bag.tab=="consumable" and mouse==2 then callbacks.activate(c.index)
   elseif mouse==2 and callbacks.inspect then callbacks.inspect(c.item)

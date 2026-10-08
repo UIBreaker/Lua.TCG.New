@@ -13,7 +13,7 @@ for _,list in ipairs({X.equipment,X.seals,X.spectral,X.spells}) do
     assert(#list==10)
     for _,d in ipairs(list) do assert(not seen[d.id]);seen[d.id]=true;assert(d.desc~="" and d.artConcept~="") end
 end
-assert(#Shop.getPackContents("arcana")==29)
+assert(#Shop.getPackContents("arcana")==#E.POOL)
 assert(#Shop.getPackContents("seal")==26)
 assert(#Shop.getPackContents("spectral")==28)
 assert(#Shop.getPackContents("joker_edition")==24)
@@ -59,14 +59,14 @@ end
 local g,t=fixture();local u=g.hand[2];t.rank=3;u.rank=3
 local ctx={gameState=g,monster=g.monster,hand={u,g.hand[3]}}
 assert(E.ITEMS.itm_abacus.onCardScore(t,{t},1,ctx).addChips==24)
-assert(E.ITEMS.itm_twinfang.onCardScore(t,{t,u},1,ctx).xMultBonus==0.25)
+assert(E.ITEMS.itm_twinfang.onCardScore(t,{t,u},1,ctx).xMultBonus==0.30)
 u.rank=2;assert(E.ITEMS.itm_wayfarer.onCardScore(t,{u,t},2,ctx).addMult==7)
-assert(E.ITEMS.itm_prism.onCardScore(t,g.hand,1,ctx).addChips==35)
-assert(E.ITEMS.itm_hourglass.onCardScore(t,{t},1,ctx).addArmor==9)
-assert(E.ITEMS.itm_miser.onCardScore(t,{t},1,ctx).addMult==3)
-assert(E.ITEMS.itm_quiver.onCardScore(t,{t},1,ctx).addChips==12)
+assert(E.ITEMS.itm_prism.onCardScore(t,g.hand,1,ctx).addChips==48)
+assert(E.ITEMS.itm_hourglass.onCardScore(t,{t},1,ctx).addArmor==11)
+assert(E.ITEMS.itm_miser.onCardScore(t,{t},1,ctx).addMult==4)
+assert(E.ITEMS.itm_quiver.onCardScore(t,{t},1,ctx).addChips==14)
 t.equipments={E.ITEMS.itm_anvil,E.ITEMS.gem_fire,E.ITEMS.gem_blast}
-assert(E.ITEMS.itm_anvil.onCardScore(t,{t},1,ctx).extraDamagePct==0.12)
+assert(E.ITEMS.itm_anvil.onCardScore(t,{t},1,ctx).extraDamagePct==0.18)
 t.rank=12;assert(E.ITEMS.itm_crown.onCardScore(t,{t,u},1,ctx).addGold==1)
 assert(E.ITEMS.itm_root.onCardScore(t,{t},1,ctx).addChips==20)
 for _,d in ipairs(X.equipment) do assert(not d.onCardScore(t,{t},0,ctx)) end

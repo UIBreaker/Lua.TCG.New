@@ -4,14 +4,14 @@ local D=require("src.deck")
 local Shop=require("src.shop")
 local c=D.newCard(2,"clubs")
 local g={gold=100,backpackEquipment={"basic_bandage","basic_plate","basic_lace"},persistentDeck={c}}
-assert(#B.basic==12 and #B.recipes==35)
+assert(#B.basic==12 and #B.recipes==60)
 assert(B.craft(g,B.recipes[1]));assert(g.gold==96 and B.count(g,"crafted_guard")==1 and B.count(g,"basic_bandage")==0)
 local before=#g.backpackEquipment;assert(not B.craft(g,B.recipes[1]));assert(#g.backpackEquipment==before and g.gold==96)
 local base=D.getCardAttackSpeed(c);assert(B.attach(g,1,c));assert(D.getCardAttackSpeed(c)==base+1)
 assert(not B.attach(g,1,D.newCard(3,"clubs")));assert(B.detach(g,c,1));assert(D.getCardAttackSpeed(c)==base)
 local context={};local total=0
-for i=1,10 do total=total+E.ITEMS.basic_stamp.onCardScore(c,{c},1,context).addGold end
-assert(total==6);assert(not E.ITEMS.basic_stamp.onCardScore(c,{c},0,{}))
+for i=1,10 do total=total+((E.ITEMS.basic_stamp.onCardScore(c,{c},1,context) or {}).addGold or 0) end
+assert(total==3,"same equipment cannot mint gold twice on the same card/hand");assert(not E.ITEMS.basic_stamp.onCardScore(c,{c},0,{}))
 local Poker=require("src.poker");local Score=require("src.scoring")
 local resourceCard=D.newCard(2,"clubs");resourceCard.equipments={E.ITEMS.crafted_guard}
 local info=Poker.evaluate({resourceCard},{high_card=true})
@@ -31,7 +31,7 @@ local savedGame=G.new();savedGame.backpackEquipment={"basic_lace","crafted_guard
 c.equipments={E.ITEMS.crafted_runner}
 local restored=assert(P.restoreSnapshot(P.makeSnapshot(savedGame,"shop")))
 assert(restored.backpackEquipment[2]=="crafted_guard" and restored.persistentDeck[1].equipments[1].onCardScore)
-assert(D.getCardAttackSpeed(restored.persistentDeck[1])==D.getAttackSpeed(c.rank)+2)
+assert(D.getCardAttackSpeed(restored.persistentDeck[1])==D.getAttackSpeed(c.rank)+1)
 G.resetRun(restored);assert(#restored.backpackEquipment==0)
 local normal=Shop.new();local fresh=G.new();fresh.gold=100
 for _=1,25 do
@@ -59,7 +59,7 @@ for id,item in pairs(E.ITEMS) do
   assert(B.investment(build.backpackEquipment[1])==item.craftCost);covered=covered+1
  end
 end
-assert(covered==35)
+assert(covered==60)
 -- Repeated ingredients require actual quantities; failures spend nothing.
 local repeated={gold=100,backpackEquipment={"basic_plate","basic_spur"}}
 assert(not B.craft(repeated,B.byResult.gem_blast));assert(repeated.gold==100 and #repeated.backpackEquipment==2)
@@ -88,5 +88,5 @@ local recipeDoc=assert(io.open("docs/equipment_recipe_catalog.tsv","wb"))
 recipeDoc:write("id\tname\ttier\tingredients\tfee\tcraft_cost\tshop_cost\treason\n")
 for _,r in ipairs(B.recipes) do local names={};for _,id in ipairs(r.ingredients) do names[#names+1]=E.ITEMS[id].name end;recipeDoc:write(table.concat({r.id,E.ITEMS[r.id].name,r.tier,table.concat(names," + "),r.fee,r.craftCost,E.ITEMS[r.id].cost,r.reason},"\t"),"\n") end
 recipeDoc:close()
-print("Backpack PASS: 12 basics, all 35 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
+print("Backpack PASS: 12 basics, all 60 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
 return true

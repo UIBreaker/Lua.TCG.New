@@ -58,7 +58,7 @@ end
 local g,c=fixture();c.equipments={E.ITEMS.itm_capacitor,E.ITEMS.itm_bloodvial}
 A.discard(g,{c});A.discard(g,{c});assert(g.playerHp==76)
 local memory=P.encode(g.depthCombat);local gold=g.gold;local hp=g.playerHp
-local preview=score(g,{c},nil,true);assert(preview.bonusMult>=10 and preview.bonusChips>=40)
+local preview=score(g,{c},nil,true);assert(preview.bonusMult>=10 and preview.bonusChips>=36)
 assert(P.encode(g.depthCombat)==memory and g.gold==gold and g.playerHp==hp)
 local live=score(g,{c});assert(live.bonusChips==preview.bonusChips and live.bonusMult==preview.bonusMult)
 assert(score(g,{c}).bonusMult<live.bonusMult)
@@ -73,7 +73,7 @@ assert(score(g,{c}).bonusMult>=12);assert(score(g,{c}).bonusMult<12)
 g,c=fixture();c.equipments={E.ITEMS.itm_counterweight};D.enemyAttack(g,12,0)
 assert(score(g,{c}).totalExtraDamagePct>=0.12);assert(score(g,{c}).totalExtraDamagePct==0)
 g,c=fixture();c.equipments={E.ITEMS.itm_bell};assert(score(g,{c}).bonusMult>=3);assert(score(g,{c}).bonusMult>=6)
-A.discard(g,{g.hand[2]});assert(score(g,{c}).bonusMult<3)
+A.discard(g,{g.hand[2]});assert(score(g,{c}).bonusMult<5)
 g,c=fixture();c.equipments={E.ITEMS.itm_oar};score(g,{c},"PAIR");assert(score(g,{c},"STRAIGHT").addArmor>=4)
 g,c=fixture();c.equipments={E.ITEMS.itm_pendulum};score(g,{c,g.hand[2]},"PAIR");assert(score(g,{c}).addArmor>=6)
 g,c=fixture();c.equipments={E.ITEMS.itm_relay};g.hand[2].equipments={E.ITEMS.gem_fire}

@@ -3,9 +3,9 @@ local T={}
 function T.run()
     local root=love.filesystem.getSource():gsub("\\","/")
     package.path=root.."/?.lua;"..package.path
-    dofile(root.."/tests/chest_expansion_smoke.lua")
-    dofile(root.."/tests/spectral_persistence_smoke.lua")
-    dofile(root.."/tests/chest_depth_smoke.lua")
+    assert(love.filesystem.load("tests/chest_expansion_smoke.lua"))()
+    assert(love.filesystem.load("tests/spectral_persistence_smoke.lua"))()
+    assert(love.filesystem.load("tests/chest_depth_smoke.lua"))()
     local UI=require("src.ui");UI.initFonts()
     for pass,X in ipairs({require("src.chest_expansion"),require("src.chest_depth")}) do
     local Surfaces=require("ui.card_surfaces")
@@ -26,7 +26,7 @@ function T.run()
     UI.CardPhysics.resume();g.setCanvas();g.pop()
     local bytes=canvas:newImageData():encode("png"):getString()
     local name=pass==1 and "chest_expansion_runtime.png" or "chest_depth_runtime.png"
-    local f=assert(io.open(root.."/docs/"..name,"wb"));f:write(bytes);f:close()
+    local f=assert(io.open("docs/"..name,"wb"));f:write(bytes);f:close()
     end
     print("PASS: LuaJIT gameplay checks and all 80 expansion cards through real loaders and shared card frame")
     love.event.quit(0)

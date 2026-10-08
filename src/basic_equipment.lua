@@ -6,8 +6,8 @@ local rows={
  {"basic_herb","Rễ Sinh Lực",3,"heal",2,"One thick medicinal root with two green leaves in a wooden bowl on a forest camp stone"},
  {"basic_salve","Hộp Cao Lành",4,"heal",3,"An open bronze tin of emerald healing salve with a wooden applicator at a ruined forest infirmary"},
  {"basic_plate","Tấm Sắt",2,"armor",2,"One simple curved iron armor plate with two rivets resting on stone in a snowy western mountain forge"},
- {"basic_leather","Da Thuộc",3,"armor",4,"A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp"},
- {"basic_chain","Khoanh Xích",4,"armor",6,"A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette"},
+ {"basic_leather","Da Thuộc",3,"armor",3,"A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp"},
+ {"basic_chain","Khoanh Xích",4,"armor",4,"A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette"},
  {"basic_lace","Dây Giày",3,"speed",1,"One pair of braided silver blue boot laces laid in a clear loop on a coastal expedition stone"},
  {"basic_spur","Đinh Thúc",5,"speed",2,"A single steel riding spur with a small star wheel and leather strap on a glacial pass camp rock"},
  {"basic_feather","Lông Gió",7,"speed",3,"One long silver feather pinned in a simple bronze clasp on a high forest cliff, subtle horizontal breeze"},
@@ -17,11 +17,11 @@ local rows={
 }
 local big={
  {"crafted_guard","Áo Hộ Mệnh",2,{"basic_bandage","basic_plate"},{heal=2,armor=4},"A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone"},
- {"crafted_runner","Ủng Hồi Sức",2,{"basic_herb","basic_lace"},{heal=3,speed=2},"One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail"},
- {"crafted_bulwark","Giáp Hành Quân",3,{"basic_leather","basic_spur"},{armor=6,speed=3},"One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass"},
+ {"crafted_runner","Ủng Hồi Sức",2,{"basic_herb","basic_lace"},{heal=2,speed=1},"One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail"},
+ {"crafted_bulwark","Giáp Hành Quân",3,{"basic_leather","basic_spur"},{armor=8,speed=2},"One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass"},
  {"crafted_medic","Túi Quân Y",3,{"basic_salve","basic_pouch"},{heal=4,gold=1},"One large open leather field medic satchel showing a bronze salve tin, linen rolls and a tiny coin pocket in a forest infirmary"},
- {"crafted_caravan","Khiên Thương Đội",3,{"basic_chain","basic_weight"},{armor=8,gold=2},"One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones"},
- {"crafted_courier","La Bàn Giao Thương",4,{"basic_feather","basic_stamp"},{speed=4,gold=3},"One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters"},
+ {"crafted_caravan","Khiên Thương Đội",3,{"basic_chain","basic_weight"},{armor=14,gold=2},"One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones"},
+ {"crafted_courier","La Bàn Giao Thương",4,{"basic_feather","basic_stamp"},{speed=4,gold=2},"One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters"},
 }
 local function description(p)
  local parts={}
@@ -46,7 +46,6 @@ local function add(id,name,cost,p,concept,basic)
   end
   return {healHp=p.heal,addArmor=p.armor,addGold=gold,message=name}
  end
- if p.gold then d.desc=d.desc.." Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay." end
  B.definitions[#B.definitions+1]=d
  if basic then B.basic[#B.basic+1]=id end
  return d

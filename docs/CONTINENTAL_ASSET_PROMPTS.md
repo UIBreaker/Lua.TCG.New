@@ -532,7 +532,7 @@ Source: `src/poker.lua`; previous: assets/hands/illustrated/two_pair.png
 
 ## itm / blood_ring — Nhẫn Liều Mạng
 
-Ability: +10% sát thương; mất 2 HP khi tính điểm.
+Ability: +18% sát thương; mất 3 HP khi tính điểm.
 
 Concept: One angular iron ring with a red garnet and a sharp thorn, a single drop of blood feeding controlled crimson light, fossil desert altar.
 
@@ -544,7 +544,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/blood_ring.p
 
 ## itm / gem_blast — Đá Tam Kích
 
-Ability: +4 Cường hóa; +8 khi đúng 3 lá tính điểm.
+Ability: +3 Cường hóa; +5 khi đúng 3 lá tính điểm.
 
 Concept: One three-pronged bronze relic holding three amber stones, on a fossil altar, a controlled triangular pulse.
 
@@ -556,7 +556,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/gem_blast.pn
 
 ## itm / gem_fire — Đá Tiên Phong
 
-Ability: +18 Sát thương; +30 ở vị trí đầu/cuối của vùng tính điểm.
+Ability: +12 Sát thương; +22 ở vị trí đầu/cuối của vùng tính điểm.
 
 Concept: One faceted ember stone mounted on the spearhead of an expedition standard, volcanic ridge behind, a strong pointed silhouette.
 
@@ -568,7 +568,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/gem_fire.png
 
 ## itm / lucky_coin — Đồng Tiền Át
 
-Ability: Lá A tính điểm: +2 Vàng.
+Ability: Lá A tính điểm: +2 Vàng và +7 Cường hóa. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One antique gold coin with a simple triangular ace-like emblem, resting on a desert explorer map and an ancient stone ledge.
 
@@ -580,7 +580,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/lucky_coin.p
 
 ## itm / mirror_adjacent — Gương Dị Chất
 
-Ability: Mỗi lá kề bên khác chất trong vùng tính điểm: +12 Sát thương.
+Ability: Mỗi lá kề bên khác chất trong vùng tính điểm: +15 Sát thương.
 
 Concept: One weathered western hand mirror reflecting two differently coloured card silhouettes on either side, coastal stone altar.
 
@@ -592,7 +592,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/mirror_adjac
 
 ## itm / storm_eye — Mắt Đồng Chất
 
-Ability: +2 Cường hóa mỗi lá cùng chất trong vùng tính điểm, tối đa 8.
+Ability: +2 Cường hóa mỗi lá cùng chất trong vùng tính điểm, tối đa 9.
 
 Concept: One circular storm-eye relic in a bronze setting, matching green fragments linked around it, wind-worn forest ruins.
 
@@ -604,7 +604,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/storm_eye.pn
 
 ## itm / vitality_gem — Ngọc Cấp Cứu
 
-Ability: +4 HP nếu HP dưới 50% tối đa.
+Ability: +5 HP nếu HP dưới 50% tối đa.
 
 Concept: One living-green crystalline heart relic in a simple silver cradle, returning a light thread to a wounded expedition glove, great-tree roots.
 
@@ -616,7 +616,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/vitality_gem
 
 ## itm / void_catalyst — Xúc Tác Hư Không
 
-Ability: Chiếm 2 hốc: +30 Sát thương và +10 Cường hóa.
+Ability: Chiếm 2 hốc: +80 Sát thương và +18 Cường hóa.
 
 Concept: One tangible black-violet crystalline catalyst in a bronze socket, a small focused eclipse within the crystal, lost floating-island ruins.
 
@@ -628,7 +628,7 @@ Source: `src/equipment.lua`; previous: assets/equipment/illustrated/void_catalys
 
 ## itm / ward_stone — Đá Thủ Thế
 
-Ability: +6 Giáp; +12 khi có tối đa 2 lá tính điểm.
+Ability: +4 Giáp; +7 khi có tối đa 2 lá tính điểm.
 
 Concept: One shield-shaped blue rune stone, a small sheltering arc protecting two blank cards, icy mountain sanctuary.
 
@@ -2096,7 +2096,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_twinfang — Nanh Song Sinh
 
-Ability: Có đúng một lá khác cùng rank tính điểm: +0.25 hệ số Aura (cộng vào trần ×5).
+Ability: Có đúng một lá khác cùng rank tính điểm: +0.30 hệ số Aura (cộng vào trần ×5).
 
 Concept: One tangible double-fanged silver dagger reflected in a glacial lake.
 
@@ -2122,7 +2122,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_prism — Lăng Kính Viễn Chinh
 
-Ability: Vùng tính điểm có ít nhất 3 chất: +35 ST.
+Ability: Vùng tính điểm có ít nhất 3 chất: +48 ST.
 
 Concept: One broad triangular glass prism splitting restrained light above coastal ruins.
 
@@ -2135,7 +2135,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_hourglass — Cát Chậm
 
-Ability: Tốc đánh lá này thấp hơn quái mục tiêu: +9 Giáp khi tính điểm.
+Ability: Tốc đánh lá này thấp hơn quái mục tiêu: +11 Giáp khi tính điểm.
 
 Concept: A heavy physical hourglass frozen inside glacial blue ice.
 
@@ -2148,7 +2148,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_miser — Chìa Khóa Ngân Khố
 
-Ability: Mỗi 8 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +8.
+Ability: Mỗi 6 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +12.
 
 Concept: One antique gold vault key over a weathered expedition coin chest in a desert.
 
@@ -2161,7 +2161,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_quiver — Ống Tên Dự Trữ
 
-Ability: Mỗi lá giữ lại trên tay: +6 ST khi tính điểm, tối đa +36.
+Ability: Mỗi lá giữ lại trên tay: +7 ST khi tính điểm, tối đa +35.
 
 Concept: A tangible leather quiver with six broad arrow shafts in a quiet ancient forest.
 
@@ -2174,7 +2174,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_anvil — Đe Ba Khảm
 
-Ability: Lá đã dùng đủ 3 hốc trang bị: +12% sát thương khi tính điểm.
+Ability: Lá đã dùng đủ 3 hốc trang bị: +18% sát thương khi tính điểm.
 
 Concept: One volcanic iron anvil with three large socketed relic stones and restrained orange embers.
 
@@ -2187,7 +2187,7 @@ Source: `src/chest_expansion.lua`; mode: built-in image_gen
 
 ## itm / itm_crown — Vương Miện Độc Hành
 
-Ability: Nếu lá này là J/Q/K duy nhất tính điểm: +12 ST và +1 Vàng.
+Ability: Nếu lá này là J/Q/K duy nhất tính điểm: +24 ST và +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: A single worn Western iron crown on an isolated coastal throne.
 
@@ -2924,7 +2924,7 @@ Source: `src/spn_anomalies.lua`; mode: built-in image_gen
 
 ## itm / itm_capacitor — Bình Tích Sét
 
-Ability: Bỏ lá này: tích 1 điện, tối đa 3. Khi tính điểm: xả toàn bộ, mỗi điện +20 ST và +2 Cường hóa. Điện mất khi hết trận.
+Ability: Bỏ lá này: tích 1 điện, tối đa 3. Khi tính điểm: xả toàn bộ, mỗi điện +18 ST và +3 Cường hóa. Điện mất khi hết trận.
 
 Concept: A physical copper lightning jar with three large charge chambers on a navy cliff.
 
@@ -2937,7 +2937,7 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 
 ## itm / itm_counterweight — Rìu Phản Lực
 
-Ability: Tính điểm sau khi bị quái gây mất HP từ lần đánh trước: +1% sát thương mỗi HP mất, tối đa 30%; không tính HP tự trả.
+Ability: Tính điểm sau khi bị quái gây mất HP từ lần đánh trước: +1.5% sát thương mỗi HP mất, tối đa 30%; không tính HP tự trả.
 
 Concept: A physical iron counterweight axe swinging back from an impact in volcanic ruins.
 
@@ -2950,7 +2950,7 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 
 ## itm / itm_ledger — Sổ Giao Kèo
 
-Ability: Khi tính điểm: tự trả 1 Vàng để đầu tư 1 nấc, tối đa 5 nấc vĩnh viễn trên lá. Mỗi nấc cho +2 Cường hóa, kể cả khi không đủ Vàng.
+Ability: Khi tính điểm: tự trả 1 Vàng để đầu tư 1 nấc, tối đa 5 nấc vĩnh viễn trên lá. Mỗi nấc cho +3 Cường hóa, kể cả khi không đủ Vàng.
 
 Concept: A tangible five-clasp leather ledger with a gold coin pressed into its cover in desert ruins.
 
@@ -2976,7 +2976,7 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 
 ## itm / itm_hourhand — Kim Đồng Hồ Canh Gác
 
-Ability: Giữ lá này qua 2 đòn quái: lần tính điểm sau nhận +12 Cường hóa và xóa số đòn đã giữ; chỉ tính đòn quái thực sự ra tay.
+Ability: Giữ lá này qua 2 đòn quái: lần tính điểm sau nhận +14 Cường hóa và xóa số đòn đã giữ; chỉ tính đòn quái thực sự ra tay.
 
 Concept: One tangible silver clock hand braced against two frozen impact rings on a glacial monolith.
 
@@ -2989,7 +2989,7 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 
 ## itm / itm_bloodvial — Lọ Huyết Tế
 
-Ability: Bỏ lá này khi còn hơn 2 HP: trả 2 HP, tích 1 giọt (tối đa 3). Khi tính điểm: xả giọt, mỗi giọt +5 Cường hóa. Mất giọt khi hết trận.
+Ability: Bỏ lá này khi còn hơn 2 HP: trả 2 HP, tích 1 giọt (tối đa 3). Khi tính điểm: xả giọt, mỗi giọt +7 Cường hóa. Mất giọt khi hết trận.
 
 Concept: A physical red glass vial with three large blood drops over a volcanic expedition altar.
 
@@ -3028,7 +3028,7 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 
 ## itm / itm_bell — Chuông Tĩnh Lặng
 
-Ability: Mỗi lần lá tính điểm mà chưa bỏ bài từ lần đánh trước: tích 1 nhịp (tối đa 4), +3 Cường hóa mỗi nhịp. Bất kỳ lần bỏ bài nào xóa nhịp của mọi lá mang chuông.
+Ability: Mỗi lần lá tính điểm mà chưa bỏ bài từ lần đánh trước: tích 1 nhịp (tối đa 4), +5 Cường hóa mỗi nhịp. Bất kỳ lần bỏ bài nào xóa nhịp của mọi lá mang chuông.
 
 Concept: A tangible silent bronze bell wrapped in cloth above a quiet forest sanctuary.
 
@@ -3483,7 +3483,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / basic_leather — Da Thuộc
 
-Ability: +4 Giáp khi lá tính điểm.
+Ability: +3 Giáp khi lá tính điểm.
 
 Concept: A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp
 
@@ -3491,7 +3491,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / basic_chain — Khoanh Xích
 
-Ability: +6 Giáp khi lá tính điểm.
+Ability: +4 Giáp khi lá tính điểm.
 
 Concept: A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette
 
@@ -3523,7 +3523,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / basic_pouch — Túi Đồng
 
-Ability: +1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +1 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One small worn brown leather coin purse with a few antique copper coins on a desert caravan table
 
@@ -3531,7 +3531,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / basic_weight — Quả Cân
 
-Ability: +2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +2 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One large brass merchant scale weight beside two antique coins on a bone gold desert market slab
 
@@ -3539,7 +3539,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / basic_stamp — Con Dấu Buôn
 
-Ability: +3 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +3 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post
 
@@ -3555,7 +3555,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / crafted_runner — Ủng Hồi Sức
 
-Ability: +3 HP · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+Ability: +2 HP · +1 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
 
 Concept: One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail
 
@@ -3563,7 +3563,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / crafted_bulwark — Giáp Hành Quân
 
-Ability: +6 Giáp · +3 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+Ability: +8 Giáp · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
 
 Concept: One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass
 
@@ -3571,7 +3571,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / crafted_medic — Túi Quân Y
 
-Ability: +4 HP · +1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +4 HP · +1 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One large open leather field medic satchel showing a bronze salve tin, linen rolls and a tiny coin pocket in a forest infirmary
 
@@ -3579,7 +3579,7 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / crafted_caravan — Khiên Thương Đội
 
-Ability: +8 Giáp · +2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +14 Giáp · +2 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones
 
@@ -3587,8 +3587,333 @@ Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:
 
 ## itm / crafted_courier — La Bàn Giao Thương
 
-Ability: +4 Tốc đánh · +3 Vàng. Tốc khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+Ability: +4 Tốc đánh · +2 Vàng. Tốc khi gắn; chỉ số khác khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 
 Concept: One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters
 
 Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: La Bàn Giao Thương. Actual ability: +4 Tốc đánh · +3 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Unique composition: One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters.
+
+
+## itm / itm_fieldneedle — Kim Khâu Dã Chiến
+
+Ability: +2 Giáp; thêm 3 HP nếu HP dưới 75%.
+
+Concept: One thick curved silver field needle threading green linen through a torn iron-lined bandage, on mossy forest infirmary stone.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Kim Khâu Dã Chiến. Actual gameplay role: +2 Giáp; thêm 2 HP nếu HP dưới 75%.. Concept: One thick curved silver field needle threading green linen through a torn iron-lined bandage, on mossy forest infirmary stone. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.
+
+Output: `assets/cards/continental/itm/itm_fieldneedle.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_heelhook — Móc Gót Tiên Phong
+
+Ability: +2 Tốc khi gắn. Đứng đầu vùng tính điểm: +16 ST.
+
+Concept: One hooked iron heel cleat strapped to a single weathered expedition boot, biting into a blue glacial trail, clear hook silhouette.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Móc Gót Tiên Phong. Actual gameplay role: +1 Tốc khi gắn. Đứng đầu vùng tính điểm: +12 ST.. Concept: One hooked iron heel cleat strapped to a single weathered expedition boot, biting into a blue glacial trail, clear hook silhouette. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.
+
+Output: `assets/cards/continental/itm/itm_heelhook.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_surveyhammer — Búa Thăm Dò
+
+Ability: +14 ST; rank 2–6 nhận thêm 3 Giáp.
+
+Concept: One short rugged survey hammer with a broad steel head and leather grip beside freshly split ore on bone gold desert rock.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Búa Thăm Dò. Actual gameplay role: +14 ST; rank 2–6 nhận thêm 3 Giáp.. Concept: One short rugged survey hammer with a broad steel head and leather grip beside freshly split ore on bone gold desert rock. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.
+
+Output: `assets/cards/continental/itm/itm_surveyhammer.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_rationseal — Niêm Tiếp Tế
+
+Ability: +3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+
+Concept: One iron supply clasp sealing a compact leather ration roll, a single antique coin tucked under the clasp, coastal expedition camp.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Niêm Tiếp Tế. Actual gameplay role: +3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng.. Concept: One iron supply clasp sealing a compact leather ration roll, a single antique coin tucked under the clasp, coastal expedition camp. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.
+
+Output: `assets/cards/continental/itm/itm_rationseal.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_balancebrace — Nẹp Cân Bằng
+
+Ability: Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.
+
+Concept: One symmetrical hinged steel wrist brace with two equal broad bronze counterplates on a frost dusted expedition table.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Nẹp Cân Bằng. Actual gameplay role: Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.. Concept: One symmetrical hinged steel wrist brace with two equal broad bronze counterplates on a frost dusted expedition table. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.
+
+Output: `assets/cards/continental/itm/itm_balancebrace.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_triageclasp — Khóa Cứu Thương
+
+Ability: HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.
+
+Concept: One emerald glass emergency clasp on a folded white field dressing, its protective steel jaws opening in a ruined green infirmary.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Khóa Cứu Thương. Actual ability: HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.. Concept: One emerald glass emergency clasp on a folded white field dressing, its protective steel jaws opening in a ruined green infirmary. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.
+
+Output: `assets/cards/continental/itm/itm_triageclasp.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_windspindle — Trục Cuốn Gió
+
+Ability: +2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.
+
+Concept: One silver wind spindle with a tall tapering central axle and a tightly wound pale blue cord on a coastal cliff workbench.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Trục Cuốn Gió. Actual ability: +2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.. Concept: One silver wind spindle with a tall tapering central axle and a tightly wound pale blue cord on a coastal cliff workbench. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.
+
+Output: `assets/cards/continental/itm/itm_windspindle.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_shieldsuture — Kim Đan Giáp
+
+Ability: Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.
+
+Concept: One heavy steel weaving shuttle joining three large chainmail links over green padding on a glacial ruined forge.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Kim Đan Giáp. Actual ability: Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.. Concept: One heavy steel weaving shuttle joining three large chainmail links over green padding on a glacial ruined forge. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.
+
+Output: `assets/cards/continental/itm/itm_shieldsuture.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_tollscale — Cân Trạm Thu
+
+Ability: +20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+
+Concept: One compact antique brass toll scale with a closed iron weighing pan and one copper coin, sunlit ruined desert caravan checkpoint.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Cân Trạm Thu. Actual ability: +20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng.. Concept: One compact antique brass toll scale with a closed iron weighing pan and one copper coin, sunlit ruined desert caravan checkpoint. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.
+
+Output: `assets/cards/continental/itm/itm_tollscale.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_scoutlens — Kính Trinh Sát
+
+Ability: Mỗi rank khác nhau trong vùng tính điểm: +10 ST, tối đa 40.
+
+Concept: One rugged brass monocular scouting lens with four broad glass facets, overlooking layered deep blue continental coast cliffs.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Kính Trinh Sát. Actual ability: Mỗi rank khác nhau trong vùng tính điểm: +10 ST, tối đa 40.. Concept: One rugged brass monocular scouting lens with four broad glass facets, overlooking layered deep blue continental coast cliffs. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.
+
+Output: `assets/cards/continental/itm/itm_scoutlens.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_redoubtstandard — Cờ Pháo Đài
+
+Ability: Chậm hơn quái mục tiêu: +14 Giáp; nếu không: +40 ST.
+
+Concept: One physical iron fortress standard with a broad worn navy swallowtail cloth mounted on a compact stone parapet in a glacial pass.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Cờ Pháo Đài. Gameplay: Chậm hơn quái mục tiêu: +14 Giáp; nếu không: +40 ST.. Subject: One physical iron fortress standard with a broad worn navy swallowtail cloth mounted on a compact stone parapet in a glacial pass. Emphasize the tangible object's materials, structure and tactical concept. No human.
+
+Output: `assets/cards/continental/itm/itm_redoubtstandard.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_lifebasin — Bát Dưỡng Sinh
+
+Ability: +20 ST; giữ ít nhất 2 lá trên tay: hồi thêm 7 HP.
+
+Concept: One broad jade green medicinal bowl containing luminous sap and two intact leaves, on a root-wrapped ruined forest altar.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Bát Dưỡng Sinh. Gameplay: +20 ST; giữ ít nhất 2 lá trên tay: hồi thêm 7 HP.. Subject: One broad jade green medicinal bowl containing luminous sap and two intact leaves, on a root-wrapped ruined forest altar. Emphasize the tangible object's materials, structure and tactical concept. No human.
+
+Output: `assets/cards/continental/itm/itm_lifebasin.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_dualgear — Bánh Răng Song Nhịp
+
+Ability: +3 Tốc khi gắn. Số rank chẵn/lẻ bằng nhau: +9 Cường hóa.
+
+Concept: One tangible pair of interlocking large silver and antique brass gears, clearly one assembled mechanism on blue mountain forge stone.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Bánh Răng Song Nhịp. Gameplay: +3 Tốc khi gắn. Số rank chẵn/lẻ bằng nhau: +9 Cường hóa.. Subject: One tangible pair of interlocking large silver and antique brass gears, clearly one assembled mechanism on blue mountain forge stone. Emphasize the tangible object's materials, structure and tactical concept. No human.
+
+Output: `assets/cards/continental/itm/itm_dualgear.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_exchangehorn — Tù Và Đổi Chợ
+
+Ability: Tự trả 2 Vàng khi tính điểm: +42 ST và +10 Giáp. Thiếu Vàng không kích hoạt.
+
+Concept: One broad bronze caravan trading horn with a rugged leather coin collar, lying on a desert market slab beside two copper coins.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Tù Và Đổi Chợ. Gameplay: Tự trả 2 Vàng khi tính điểm: +42 ST và +10 Giáp. Thiếu Vàng không kích hoạt.. Subject: One broad bronze caravan trading horn with a rugged leather coin collar, lying on a desert market slab beside two copper coins. Emphasize the tangible object's materials, structure and tactical concept. No human.
+
+Output: `assets/cards/continental/itm/itm_exchangehorn.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_formationpin — Trâm Liên Đội
+
+Ability: Có hai lá tính điểm kề hai bên, cả hai khác chất với lá này: +11 Cường hóa.
+
+Concept: One large three-pronged expedition cloak pin linking a green central gemstone to two blue and red stone clasps, quiet coastal ruins.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Trâm Liên Đội. Gameplay: Có hai lá tính điểm kề hai bên, cả hai khác chất với lá này: +11 Cường hóa.. Subject: One large three-pronged expedition cloak pin linking a green central gemstone to two blue and red stone clasps, quiet coastal ruins. Emphasize the tangible object's materials, structure and tactical concept. No human.
+
+Output: `assets/cards/continental/itm/itm_formationpin.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_oathmantle — Áo Choàng Lời Thề
+
+Ability: HP ít nhất 75%: +22 Giáp; nếu không: hồi 9 HP.
+
+Concept: One tangible heavy ivory and silver oath mantle hanging from an abandoned Western knight armor stand in a cold ruined chapel, green inner lining.
+
+Prompt: Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Áo Choàng Lời Thề. Real gameplay ability: HP ít nhất 75%: +22 Giáp; nếu không: hồi 9 HP.. Concrete unique subject: One tangible heavy ivory and silver oath mantle hanging from an abandoned Western knight armor stand in a cold ruined chapel, green inner lining. Masterwork tier: refined powerful construction with broad material forms, readable when very small.
+
+Output: `assets/cards/continental/itm/itm_oathmantle.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_tempestwinch — Tời Bão
+
+Ability: +4 Tốc khi gắn. Nhanh hơn quái mục tiêu: +14 Cường hóa.
+
+Concept: One powerful iron storm winch with a large navy cable drum hauling a taut silver rope through coastal wind, broad readable mechanism on a sea cliff.
+
+Prompt: Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Tời Bão. Real gameplay ability: +4 Tốc khi gắn. Nhanh hơn quái mục tiêu: +14 Cường hóa.. Concrete unique subject: One powerful iron storm winch with a large navy cable drum hauling a taut silver rope through coastal wind, broad readable mechanism on a sea cliff. Masterwork tier: refined powerful construction with broad material forms, readable when very small.
+
+Output: `assets/cards/continental/itm/itm_tempestwinch.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_reprisallance — Thương Phản Chấn
+
+Ability: +8 Giáp. Mỗi đòn quái bị chặn hoàn toàn từ tay trước: +7% sát thương, tối đa 28%.
+
+Concept: One long heavy silver recoil lance with a broad spring-loaded guard, planted in a cracked ice shield slab showing restrained rebound arcs.
+
+Prompt: Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Thương Phản Chấn. Real gameplay ability: +8 Giáp. Mỗi đòn quái bị chặn hoàn toàn từ tay trước: +7% sát thương, tối đa 28%.. Concrete unique subject: One long heavy silver recoil lance with a broad spring-loaded guard, planted in a cracked ice shield slab showing restrained rebound arcs. Masterwork tier: refined powerful construction with broad material forms, readable when very small.
+
+Output: `assets/cards/continental/itm/itm_reprisallance.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_escrowseal — Ấn Tín Ký Quỹ
+
+Ability: Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.
+
+Concept: One large tangible gold escrow signet in a stout iron housing, securing three antique coins under protective green glass on a desert merchant altar.
+
+Prompt: Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Ấn Tín Ký Quỹ. Real gameplay ability: Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.. Concrete unique subject: One large tangible gold escrow signet in a stout iron housing, securing three antique coins under protective green glass on a desert merchant altar. Masterwork tier: refined powerful construction with broad material forms, readable when very small.
+
+Output: `assets/cards/continental/itm/itm_escrowseal.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_crescentvise — Ê-tô Trăng Khuyết
+
+Ability: Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.
+
+Concept: One broad crescent-shaped silver smithing vise with two opposing massive jaws framing a quiet violet eclipse, on Western void forge stone.
+
+Prompt: Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Ê-tô Trăng Khuyết. Real gameplay ability: Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.. Concrete unique subject: One broad crescent-shaped silver smithing vise with two opposing massive jaws framing a quiet violet eclipse, on Western void forge stone. Masterwork tier: refined powerful construction with broad material forms, readable when very small.
+
+Output: `assets/cards/continental/itm/itm_crescentvise.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_worldanchor — Mỏ Neo Đại Lục
+
+Ability: Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.
+
+Concept: One colossal tangible ancient iron continent anchor with broad broken-stone flukes holding two opposing sea currents at a ruined deep navy coastal gateway.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Mỏ Neo Đại Lục. Actual ability: Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.. Exact physical subject and environment: One colossal tangible ancient iron continent anchor with broad broken-stone flukes holding two opposing sea currents at a ruined deep navy coastal gateway. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.
+
+Output: `assets/cards/continental/itm/itm_worldanchor.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_phoenixcradle — Nôi Phượng Hỏa
+
+Ability: Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.
+
+Concept: One tangible phoenix-shaped bronze cradle cupping a single red medicinal ember, dominant broad wings carved from metal, dark volcanic expedition sanctuary.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Nôi Phượng Hỏa. Actual ability: Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.. Exact physical subject and environment: One tangible phoenix-shaped bronze cradle cupping a single red medicinal ember, dominant broad wings carved from metal, dark volcanic expedition sanctuary. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.
+
+Output: `assets/cards/continental/itm/itm_phoenixcradle.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_horizonengine — Động Cơ Chân Trời
+
+Ability: Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.
+
+Concept: One tangible ancient expedition propulsion engine with a single broad silver turbine and restrained blue core, set on a high glacial cliff facing a vast horizon.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Động Cơ Chân Trời. Actual ability: Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.. Exact physical subject and environment: One tangible ancient expedition propulsion engine with a single broad silver turbine and restrained blue core, set on a high glacial cliff facing a vast horizon. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.
+
+Output: `assets/cards/continental/itm/itm_horizonengine.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_sovereignscale — Cân Vương Quyền
+
+Ability: Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.
+
+Concept: One monumental tangible antique golden sovereign balance with a solid armored pan opposite a large coin ingot, clear balanced silhouette in Western bone gold desert royal ruins.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Cân Vương Quyền. Actual ability: Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.. Exact physical subject and environment: One monumental tangible antique golden sovereign balance with a solid armored pan opposite a large coin ingot, clear balanced silhouette in Western bone gold desert royal ruins. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.
+
+Output: `assets/cards/continental/itm/itm_sovereignscale.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen
+
+
+## itm / itm_concordharp — Hạc Cầm Bốn Xứ
+
+Ability: Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.
+
+Concept: One large tangible Western golden harp with four broad distinct gemstone-tipped strings in red, green, ice blue and antique gold, standing in ancient forest continental alliance ruins, restrained light.
+
+Prompt: Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Hạc Cầm Bốn Xứ. Actual ability: Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.. Exact physical subject and environment: One large tangible Western golden harp with four broad distinct gemstone-tipped strings in red, green, ice blue and antique gold, standing in ancient forest continental alliance ruins, restrained light. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.
+
+Output: `assets/cards/continental/itm/itm_concordharp.png`
+
+Source: `src/tier_equipment.lua`; mode: built-in image_gen

@@ -1,0 +1,61 @@
+id	name	tier	craft_gold	shop_gold	chips	mult	armor	heal	speed	gold	damage_pct	aura_bonus	ability
+crafted_guard	Áo Hộ Mệnh	1	8	12	0	0	4	2	0	0	0	0	+2 HP · +4 Giáp khi lá tính điểm.
+crafted_runner	Ủng Hồi Sức	1	10	15	0	0	0	2	1	0	0	0	+2 HP · +1 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+crafted_bulwark	Giáp Hành Quân	2	23	35	0	0	8	0	2	0	0	0	+8 Giáp · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+crafted_medic	Túi Quân Y	2	24	36	0	0	0	4	0	1	0	0	+4 HP · +1 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+crafted_caravan	Khiên Thương Đội	3	47	71	0	0	14	0	0	2	0	0	+14 Giáp · +2 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+crafted_courier	La Bàn Giao Thương	3	42	63	0	0	0	0	4	2	0	0	+4 Tốc đánh · +2 Vàng. Tốc khi gắn; chỉ số khác khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+gem_fire	Đá Tiên Phong	1	11	17	22	0	0	0	0	0	0	0	+12 Sát thương; +22 ở vị trí đầu/cuối của vùng tính điểm.
+gem_blast	Đá Tam Kích	1	17	26	0	5	0	0	0	0	0	0	+3 Cường hóa; +5 khi đúng 3 lá tính điểm.
+ward_stone	Đá Thủ Thế	1	9	14	0	0	7	0	0	0	0	0	+4 Giáp; +7 khi có tối đa 2 lá tính điểm.
+mirror_adjacent	Gương Dị Chất	2	21	32	30	0	0	0	0	0	0	0	Mỗi lá kề bên khác chất trong vùng tính điểm: +15 Sát thương.
+storm_eye	Mắt Đồng Chất	2	21	32	0	9	0	0	0	0	0	0	+2 Cường hóa mỗi lá cùng chất trong vùng tính điểm, tối đa 9.
+lucky_coin	Đồng Tiền Át	2	23	35	0	7	0	0	0	2	0	0	Lá A tính điểm: +2 Vàng và +7 Cường hóa. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+vitality_gem	Ngọc Cấp Cứu	2	15	23	0	0	0	5	0	0	0	0	+5 HP nếu HP dưới 50% tối đa.
+blood_ring	Nhẫn Liều Mạng	3	33	50	0	0	0	0	0	0	0.18	0	+18% sát thương; mất 3 HP khi tính điểm.
+itm_abacus	Bàn Tính Tân Binh	2	22	33	32	0	0	0	0	0	0	0	Rank 2–5 tính điểm: +8 ST cho mỗi bậc thấp hơn 6.
+itm_twinfang	Nanh Song Sinh	3	35	53	0	0	0	0	0	0	0	0.3	Có đúng một lá khác cùng rank tính điểm: +0.30 hệ số Aura (cộng vào trần ×5).
+itm_wayfarer	La Bàn Lữ Hành	2	21	32	0	7	0	0	0	0	0	0	Lá tính điểm ngay trước lệch đúng 1 rank: +7 Cường hóa.
+itm_prism	Lăng Kính Viễn Chinh	3	47	71	48	0	0	0	0	0	0	0	Vùng tính điểm có ít nhất 3 chất: +48 ST.
+itm_hourglass	Cát Chậm	2	20	30	0	0	11	0	0	0	0	0	Tốc đánh lá này thấp hơn quái mục tiêu: +11 Giáp khi tính điểm.
+itm_miser	Chìa Khóa Ngân Khố	3	57	86	0	12	0	0	0	0	0	0	Mỗi 6 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +12.
+itm_quiver	Ống Tên Dự Trữ	2	18	27	35	0	0	0	0	0	0	0	Mỗi lá giữ lại trên tay: +7 ST khi tính điểm, tối đa +35.
+itm_anvil	Đe Ba Khảm	3	34	51	0	0	0	0	0	0	0.18	0	Lá đã dùng đủ 3 hốc trang bị: +18% sát thương khi tính điểm.
+itm_crown	Vương Miện Độc Hành	2	23	35	24	0	0	0	0	1	0	0	Nếu lá này là J/Q/K duy nhất tính điểm: +24 ST và +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+itm_root	Rễ Hóa Thạch	3	33	50	50	0	0	0	0	0	0	0	Mỗi cấp tiến hóa của lá này: +10 ST khi tính điểm, tối đa +50.
+itm_capacitor	Bình Tích Sét	3	45	68	54	9	0	0	0	0	0	0	Bỏ lá này: tích 1 điện, tối đa 3. Khi tính điểm: xả toàn bộ, mỗi điện +18 ST và +3 Cường hóa. Điện mất khi hết trận.
+itm_counterweight	Rìu Phản Lực	4	74	111	0	0	0	0	0	0	0.3	0	Tính điểm sau khi bị quái gây mất HP từ lần đánh trước: +1.5% sát thương mỗi HP mất, tối đa 30%; không tính HP tự trả.
+itm_ledger	Sổ Giao Kèo	3	82	123	0	15	0	0	0	0	0	0	Khi tính điểm: tự trả 1 Vàng để đầu tư 1 nấc, tối đa 5 nấc vĩnh viễn trên lá. Mỗi nấc cho +3 Cường hóa, kể cả khi không đủ Vàng.
+itm_oar	Mái Chèo Chuyển Dòng	2	14	21	20	0	4	0	0	0	0	0	Khi tính điểm trong thế đánh khác lần đánh trước của trận: +20 ST và +4 Giáp. Không kích hoạt ở tay đầu.
+itm_hourhand	Kim Đồng Hồ Canh Gác	3	40	60	0	14	0	0	0	0	0	0	Giữ lá này qua 2 đòn quái: lần tính điểm sau nhận +14 Cường hóa và xóa số đòn đã giữ; chỉ tính đòn quái thực sự ra tay.
+itm_bloodvial	Lọ Huyết Tế	4	65	98	0	21	0	0	0	0	0	0	Bỏ lá này khi còn hơn 2 HP: trả 2 HP, tích 1 giọt (tối đa 3). Khi tính điểm: xả giọt, mỗi giọt +7 Cường hóa. Mất giọt khi hết trận.
+itm_relay	Dây Xích Tiếp Sức	3	39	59	1	0	0	0	0	0	0	0	Nếu lá tính điểm ngay trước có trang bị: nhận thêm ST bằng một nửa ST cơ bản của lá trước (làm tròn xuống), tối đa 60.
+itm_lockbox	Khóa Giáp Ngân	3	33	50	0	0	0	0	0	0	0.2	0	Khi tính điểm và đang có ít nhất 8 Giáp: tiêu 8 Giáp để +20% sát thương. Giáp đã tiêu không chặn đòn quái sau đó.
+itm_bell	Chuông Tĩnh Lặng	4	46	69	0	20	0	0	0	0	0	0	Mỗi lần lá tính điểm mà chưa bỏ bài từ lần đánh trước: tích 1 nhịp (tối đa 4), +5 Cường hóa mỗi nhịp. Bất kỳ lần bỏ bài nào xóa nhịp của mọi lá mang chuông.
+itm_pendulum	Quả Lắc Viễn Chinh	2	23	35	24	0	6	0	0	0	0	0	So với số lá tính điểm ở tay trước: đánh nhiều hơn thì +24 ST; đánh ít hơn thì +6 Giáp. Bằng nhau hoặc tay đầu không có thưởng.
+void_catalyst	Xúc Tác Hư Không	5	175	263	80	18	0	0	0	0	0	0	Chiếm 2 hốc: +80 Sát thương và +18 Cường hóa.
+itm_fieldneedle	Kim Khâu Dã Chiến	1	8	12	0	0	2	3	0	0	0	0	+2 Giáp; thêm 3 HP nếu HP dưới 75%.
+itm_heelhook	Móc Gót Tiên Phong	1	9	14	16	0	0	0	2	0	0	0	+2 Tốc khi gắn. Đứng đầu vùng tính điểm: +16 ST.
+itm_surveyhammer	Búa Thăm Dò	1	11	17	14	0	3	0	0	0	0	0	+14 ST; rank 2–6 nhận thêm 3 Giáp.
+itm_rationseal	Niêm Tiếp Tế	1	12	18	0	0	3	0	0	1	0	0	+3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+itm_balancebrace	Nẹp Cân Bằng	1	9	14	20	0	3	0	0	0	0	0	Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.
+itm_triageclasp	Khóa Cứu Thương	2	22	33	0	0	7	5	0	0	0	0	HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.
+itm_windspindle	Trục Cuốn Gió	2	28	42	0	5	0	0	2	0	0	0	+2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.
+itm_shieldsuture	Kim Đan Giáp	2	22	33	0	0	10	3	0	0	0	0	Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.
+itm_tollscale	Cân Trạm Thu	2	31	47	20	0	0	0	0	1	0	0	+20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
+itm_scoutlens	Kính Trinh Sát	2	25	38	40	0	0	0	0	0	0	0	Mỗi rank khác nhau trong vùng tính điểm: +10 ST, tối đa 40.
+itm_redoubtstandard	Cờ Pháo Đài	3	44	66	40	0	14	0	0	0	0	0	Chậm hơn quái mục tiêu: +14 Giáp; nếu không: +40 ST.
+itm_lifebasin	Bát Dưỡng Sinh	3	39	59	20	0	0	7	0	0	0	0	+20 ST; giữ ít nhất 2 lá trên tay: hồi thêm 7 HP.
+itm_dualgear	Bánh Răng Song Nhịp	3	52	78	0	9	0	0	3	0	0	0	+3 Tốc khi gắn. Số rank chẵn/lẻ bằng nhau: +9 Cường hóa.
+itm_exchangehorn	Tù Và Đổi Chợ	3	57	86	42	0	10	0	0	0	0	0	Tự trả 2 Vàng khi tính điểm: +42 ST và +10 Giáp. Thiếu Vàng không kích hoạt.
+itm_formationpin	Trâm Liên Đội	3	59	89	0	11	0	0	0	0	0	0	Có hai lá tính điểm kề hai bên, cả hai khác chất với lá này: +11 Cường hóa.
+itm_oathmantle	Áo Choàng Lời Thề	4	80	120	0	0	22	9	0	0	0	0	HP ít nhất 75%: +22 Giáp; nếu không: hồi 9 HP.
+itm_tempestwinch	Tời Bão	4	95	143	0	14	0	0	4	0	0	0	+4 Tốc khi gắn. Nhanh hơn quái mục tiêu: +14 Cường hóa.
+itm_reprisallance	Thương Phản Chấn	4	96	144	0	0	8	0	0	0	0.28	0	+8 Giáp. Mỗi đòn quái bị chặn hoàn toàn từ tay trước: +7% sát thương, tối đa 28%.
+itm_escrowseal	Ấn Tín Ký Quỹ	4	111	167	0	0	16	10	0	0	0	0	Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.
+itm_crescentvise	Ê-tô Trăng Khuyết	4	111	167	72	9	0	0	0	0	0	0	Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.
+itm_worldanchor	Mỏ Neo Đại Lục	5	185	278	80	0	28	0	0	0	0	0	Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.
+itm_phoenixcradle	Nôi Phượng Hỏa	5	173	260	90	0	0	16	0	0	0.25	0	Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.
+itm_horizonengine	Động Cơ Chân Trời	5	166	249	100	0	24	0	6	0	0	0	Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.
+itm_sovereignscale	Cân Vương Quyền	5	227	341	60	24	24	0	0	0	0	0	Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.
+itm_concordharp	Hạc Cầm Bốn Xứ	5	200	300	110	18	0	0	0	0	0	0	Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.

@@ -10,7 +10,7 @@ gem_blast	Đá Tam Kích	1	Tấm Sắt + Đinh Thúc + Đinh Thúc	5	17	26	Ba b�
 ward_stone	Đá Thủ Thế	1	Tấm Sắt + Da Thuộc	4	9	14	Thép và lớp da giảm chấn cho thế thủ ít quân.
 mirror_adjacent	Gương Dị Chất	2	Tấm Sắt + Quả Cân + Dây Giày	6	21	32	Bề mặt thép cân chỉnh để nối hiệu ứng giữa hai lá kề.
 storm_eye	Mắt Đồng Chất	2	Dây Giày + Đinh Thúc + Lông Gió	6	21	32	Ba linh kiện tốc phối hợp một luồng đồng chất.
-lucky_coin	Đồng Tiền Át	2	Túi Đồng + Quả Cân + Con Dấu Buôn	6	36	54	Đồng tiền được cân, đóng dấu và cất giữ.
+lucky_coin	Đồng Tiền Át	2	Túi Đồng + Quả Cân + Tấm Sắt	6	23	35	Đồng tiền được cân, rèn khuôn thép và cất giữ.
 vitality_gem	Ngọc Cấp Cứu	2	Rễ Sinh Lực + Hộp Cao Lành + Băng Vải	6	15	23	Cô đặc bộ dược cứu thương cho lúc máu thấp.
 blood_ring	Nhẫn Liều Mạng	3	Ngọc Cấp Cứu + Khoanh Xích + Đinh Thúc	9	33	50	Khóa sức sống trong vòng kim loại để đổi máu lấy sát thương.
 itm_abacus	Bàn Tính Tân Binh	2	Quả Cân + Tấm Sắt + Túi Đồng	5	22	33	Cân và hạt tiền tạo dụng cụ tính sức mạnh quân thấp.
@@ -18,14 +18,14 @@ itm_twinfang	Nanh Song Sinh	3	Đá Tam Kích + Đinh Thúc + Khoanh Xích	9	35	5
 itm_wayfarer	La Bàn Lữ Hành	2	Dây Giày + Lông Gió + Túi Đồng	6	21	32	Dụng cụ lữ hành nối bước quân theo rank liền nhau.
 itm_prism	Lăng Kính Viễn Chinh	3	Gương Dị Chất + Lông Gió + Quả Cân	9	47	71	Gương đã cân chỉnh được mài thành lăng kính đa chất.
 itm_hourglass	Cát Chậm	2	Đá Thủ Thế + Tấm Sắt + Dây Giày	6	20	30	Bộ thủ thế được căn theo nhịp tốc của đối thủ.
-itm_miser	Chìa Khóa Ngân Khố	3	Đồng Tiền Át + Quả Cân + Con Dấu Buôn	9	70	105	Đồng tiền Át trở thành chìa khóa kho vàng tích trữ.
+itm_miser	Chìa Khóa Ngân Khố	3	Đồng Tiền Át + Quả Cân + Con Dấu Buôn	9	57	86	Đồng tiền Át trở thành chìa khóa kho vàng tích trữ.
 itm_quiver	Ống Tên Dự Trữ	2	Da Thuộc + Lông Gió + Tấm Sắt	6	18	27	Ống da và tên thép dự trữ cho quân còn giữ trên tay.
 itm_anvil	Đe Ba Khảm	3	Đá Tiên Phong + Đá Thủ Thế + Khoanh Xích	10	34	51	Đe kết hợp rèn công, thủ và khóa hốc trang bị.
 itm_crown	Vương Miện Độc Hành	2	Khoanh Xích + Quả Cân + Rễ Sinh Lực	6	23	35	Vương miện cân sức người chỉ huy độc hành.
 itm_root	Rễ Hóa Thạch	3	Áo Hộ Mệnh + Rễ Sinh Lực + Rễ Sinh Lực + Quả Cân	9	33	50	Bảo hộ sống được nuôi bằng hai rễ, lớn theo tiến hóa.
 itm_capacitor	Bình Tích Sét	3	Mắt Đồng Chất + Khoanh Xích + Quả Cân	10	45	68	Luồng sét được nhốt trong ba khoang tích điện.
 itm_counterweight	Rìu Phản Lực	4	Nhẫn Liều Mạng + Giáp Hành Quân + Khoanh Xích	14	74	111	Phản đòn từ máu mất đòi hỏi cả huyết khí lẫn giáp chịu lực.
-itm_ledger	Sổ Giao Kèo	3	Chìa Khóa Ngân Khố + Quả Cân + Túi Đồng	10	95	143	Ngân khố và sổ đầu tư lưu các nấc phát triển vĩnh viễn.
+itm_ledger	Sổ Giao Kèo	3	Chìa Khóa Ngân Khố + Quả Cân + Túi Đồng	10	82	123	Ngân khố và sổ đầu tư lưu các nấc phát triển vĩnh viễn.
 itm_oar	Mái Chèo Chuyển Dòng	2	Da Thuộc + Tấm Sắt + Dây Giày	6	14	21	Mái chèo chuyển thế kết hợp sức công và giáp.
 itm_hourhand	Kim Đồng Hồ Canh Gác	3	Cát Chậm + Đinh Thúc + Đinh Thúc	10	40	60	Cơ cấu hai nhịp canh gác chịu được hai đòn quái.
 itm_bloodvial	Lọ Huyết Tế	4	Nhẫn Liều Mạng + Hộp Cao Lành + Hộp Cao Lành + Quả Cân	14	65	98	Bình huyết tế cần vòng khóa, hai phần cao và khoang đo giọt.
@@ -34,3 +34,28 @@ itm_lockbox	Khóa Giáp Ngân	3	Đá Thủ Thế + Quả Cân + Khoanh Xích	10	
 itm_bell	Chuông Tĩnh Lặng	4	Ngọc Cấp Cứu + Tấm Sắt + Quả Cân + Lông Gió	12	46	69	Chuông dưỡng nhịp tĩnh lặng cần sức sống và cơ cấu cân nhịp.
 itm_pendulum	Quả Lắc Viễn Chinh	2	Đá Tiên Phong + Tấm Sắt + Dây Giày	7	23	35	Quả lắc đổi công hoặc thủ theo số quân giữa hai tay.
 void_catalyst	Xúc Tác Hư Không	5	Bình Tích Sét + Chuông Tĩnh Lặng + Lăng Kính Viễn Chinh + Con Dấu Buôn	22	175	263	Xúc tác hư không hội tụ năng lượng tích, nhịp ổn định và lăng kính đa chất.
+itm_fieldneedle	Kim Khâu Dã Chiến	1	Băng Vải + Tấm Sắt	4	8	12	Kim thép khâu vải thành bộ cứu thương có bảo hộ.
+itm_heelhook	Móc Gót Tiên Phong	1	Dây Giày + Tấm Sắt	4	9	14	Dây buộc giữ móc thép để người đi đầu bám đường.
+itm_surveyhammer	Búa Thăm Dò	1	Tấm Sắt + Đinh Thúc	4	11	17	Thép và mũi thúc tạo búa thăm dò dùng cho quân thấp.
+itm_rationseal	Niêm Tiếp Tế	1	Túi Đồng + Da Thuộc	4	12	18	Ngăn tiền và da bọc tạo khóa tiếp tế cho đội ba người.
+itm_balancebrace	Nẹp Cân Bằng	1	Tấm Sắt + Dây Giày	4	9	14	Hai bản thép buộc cân đối thành nẹp cổ tay.
+itm_triageclasp	Khóa Cứu Thương	2	Kim Khâu Dã Chiến + Hộp Cao Lành + Rễ Sinh Lực	7	22	33	Nâng bộ khâu thành khóa phân loại cấp cứu.
+itm_windspindle	Trục Cuốn Gió	2	Móc Gót Tiên Phong + Lông Gió + Đinh Thúc	7	28	42	Móc bám và cơ cấu gió cuốn lực theo rank tăng.
+itm_shieldsuture	Kim Đan Giáp	2	Kim Khâu Dã Chiến + Khoanh Xích + Da Thuộc	7	22	33	Kim khâu gia cố thành thoi đan giáp cho đội đông.
+itm_tollscale	Cân Trạm Thu	2	Niêm Tiếp Tế + Quả Cân + Tấm Sắt	7	31	47	Khóa tiếp tế kết hợp quả cân để thu phí khi thiếu tiền.
+itm_scoutlens	Kính Trinh Sát	2	Nẹp Cân Bằng + Tấm Sắt + Lông Gió	7	25	38	Nẹp cân giữ các mặt kính nhận diện nhiều rank.
+itm_redoubtstandard	Cờ Pháo Đài	3	Kim Đan Giáp + Áo Hộ Mệnh + Khoanh Xích	10	44	66	Giáp đội đông và áo bảo hộ dựng cờ đổi công thủ theo tốc.
+itm_lifebasin	Bát Dưỡng Sinh	3	Khóa Cứu Thương + Rễ Sinh Lực + Hộp Cao Lành	10	39	59	Bộ cấp cứu tinh luyện thành bát dưỡng sinh cho quân dự bị.
+itm_dualgear	Bánh Răng Song Nhịp	3	Trục Cuốn Gió + Nẹp Cân Bằng + Đinh Thúc	10	52	78	Trục gió và nẹp cân tạo hai nhịp rank chẵn lẻ.
+itm_exchangehorn	Tù Và Đổi Chợ	3	Cân Trạm Thu + Đá Tiên Phong + Túi Đồng	10	57	86	Cân trạm và lực tiên phong chuyển tiền thành công thủ.
+itm_formationpin	Trâm Liên Đội	3	Kính Trinh Sát + Gương Dị Chất + Dây Giày	10	59	89	Kính và gương nối ba quân khác chất bằng một trâm.
+itm_oathmantle	Áo Choàng Lời Thề	4	Bát Dưỡng Sinh + Giáp Hành Quân + Da Thuộc	15	80	120	Dưỡng sinh và giáp hành quân dệt áo tự đổi hồi phục bảo hộ.
+itm_tempestwinch	Tời Bão	4	Bánh Răng Song Nhịp + La Bàn Lữ Hành + Lông Gió	15	95	143	Hai bánh răng và la bàn điều hướng tời vượt tốc đối thủ.
+itm_reprisallance	Thương Phản Chấn	4	Cờ Pháo Đài + Nhẫn Liều Mạng + Khoanh Xích	15	96	144	Cờ phòng tuyến và huyết khí rèn cơ cấu phản chấn.
+itm_escrowseal	Ấn Tín Ký Quỹ	4	Tù Và Đổi Chợ + Túi Quân Y + Con Dấu Buôn	15	111	167	Giao thương và quân y được bảo chứng bằng dấu ký quỹ.
+itm_crescentvise	Ê-tô Trăng Khuyết	4	Trâm Liên Đội + Nanh Song Sinh + Tấm Sắt	15	111	167	Liên đội và song nanh tạo ê-tô có hai chế độ chẵn lẻ.
+itm_worldanchor	Mỏ Neo Đại Lục	5	Thương Phản Chấn + Mái Chèo Chuyển Dòng + Khiên Thương Đội + Khoanh Xích	24	185	278	Phản chấn, chuyển dòng và khiên thương đội neo hai thế đánh.
+itm_phoenixcradle	Nôi Phượng Hỏa	5	Áo Choàng Lời Thề + Lọ Huyết Tế + Hộp Cao Lành	24	173	260	Áo lời thề và huyết tế hợp thành di vật cứu nguy phượng hỏa.
+itm_horizonengine	Động Cơ Chân Trời	5	Tời Bão + La Bàn Giao Thương + Đinh Thúc	24	166	249	Tời bão và la bàn giao thương ráp động cơ vượt chân trời.
+itm_sovereignscale	Cân Vương Quyền	5	Ấn Tín Ký Quỹ + Sổ Giao Kèo + Quả Cân	24	227	341	Ký quỹ và sổ giao kèo cân quyền lực bằng đầu tư thực.
+itm_concordharp	Hạc Cầm Bốn Xứ	5	Ê-tô Trăng Khuyết + Lăng Kính Viễn Chinh + Dây Giày + Con Dấu Buôn	24	200	300	Ê-tô định hình, lăng kính chia chất và dấu liên minh hòa bốn dây.

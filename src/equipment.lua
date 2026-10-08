@@ -9,7 +9,7 @@ Equipment.ITEMS = {
         id = "gem_fire", name = "Đá Tiên Phong", icon = "🔥",
         rarity = "common", cost = 4, slotsNeeded = 1,
         color = { 0.95, 0.35, 0.20, 1 },
-        desc = "+18 Chips; thành +30 Chips nếu lá nằm ngoài cùng",
+        desc = "+12 Chips; thành +22 Chips nếu lá nằm ngoài cùng",
         onCardScore = function(card, playedCards, cardIndex)
             local chips = (cardIndex == 1 or cardIndex == #playedCards) and Equipment.ITEMS.gem_fire.params.edge or Equipment.ITEMS.gem_fire.params.chips
             return { addChips = chips, message = "+" .. chips .. " Chips (Đá Tiên Phong)" }
@@ -19,7 +19,7 @@ Equipment.ITEMS = {
         id = "gem_blast", name = "Đá Tam Kích", icon = "💥",
         rarity = "common", cost = 4, slotsNeeded = 1,
         color = { 1.00, 0.50, 0.10, 1 },
-        desc = "+4 Mult; thành +8 Mult nếu đánh đúng 3 lá",
+        desc = "+3 Mult; thành +5 Mult nếu đánh đúng 3 lá",
         onCardScore = function(card, playedCards)
             local mult = #playedCards == Equipment.ITEMS.gem_blast.params.count and Equipment.ITEMS.gem_blast.params.combo or Equipment.ITEMS.gem_blast.params.mult
             return { addMult = mult, message = "+" .. mult .. " Mult (Đá Tam Kích)" }
@@ -29,13 +29,13 @@ Equipment.ITEMS = {
         id = "mirror_adjacent", name = "Gương Dị Chất", icon = "💠",
         rarity = "common", cost = 4, slotsNeeded = 1,
         color = { 0.30, 0.80, 0.90, 1 },
-        desc = "Mỗi lá kề bên khác chất nhận +12 Chips",
+        desc = "Mỗi lá kề bên khác chất nhận +15 Chips",
         onHandEvaluate = function(card, playedCards, cardIndex)
             local buffs = {}
             for _, index in ipairs({ cardIndex - 1, cardIndex + 1 }) do
                 local adjacent = playedCards[index]
                 if adjacent and adjacent.suit ~= card.suit then
-                    buffs[index] = { addChips = Equipment.ITEMS.mirror_adjacent.params.chips, message = "+12 Chips (Gương Dị Chất)" }
+                    buffs[index] = { addChips = Equipment.ITEMS.mirror_adjacent.params.chips, message = "+"..Equipment.ITEMS.mirror_adjacent.params.chips.." ST (Gương Dị Chất)" }
                 end
             end
             return buffs
@@ -45,7 +45,7 @@ Equipment.ITEMS = {
         id = "storm_eye", name = "Mắt Đồng Chất", icon = "⚡",
         rarity = "common", cost = 4, slotsNeeded = 1,
         color = { 0.20, 0.90, 0.60, 1 },
-        desc = "+2 Mult mỗi lá cùng chất trong tay, tối đa +8 Mult",
+        desc = "+2 Mult mỗi lá cùng chất trong tay, tối đa +9 Mult",
         onHandEvaluate = function(card, playedCards, cardIndex)
             local count = 0
             for _, other in ipairs(playedCards) do
@@ -62,7 +62,7 @@ Equipment.ITEMS = {
         desc = "Nhận +$2 Vàng khi lá A này tạo Aura",
         onCardScore = function(card)
             if card and card.rank == 14 then
-                return { addGold = Equipment.ITEMS.lucky_coin.params.gold, message = "+$2 Vàng (Đồng Tiền Át)" }
+                return { addGold = Equipment.ITEMS.lucky_coin.params.gold, addMult=Equipment.ITEMS.lucky_coin.params.mult, message = "+$2 Vàng (Đồng Tiền Át)" }
             end
         end,
     },
@@ -70,7 +70,7 @@ Equipment.ITEMS = {
         id = "ward_stone", name = "Đá Thủ Thế", icon = "🛡️",
         rarity = "common", cost = 4, slotsNeeded = 1,
         color = { 0.35, 0.65, 0.95, 1 },
-        desc = "+6 Giáp; thành +12 Giáp nếu chỉ đánh 1–2 lá",
+        desc = "+4 Giáp; thành +7 Giáp nếu chỉ đánh 1–2 lá",
         onCardScore = function(card, playedCards)
             local armor = #playedCards <= Equipment.ITEMS.ward_stone.params.count and Equipment.ITEMS.ward_stone.params.small or Equipment.ITEMS.ward_stone.params.armor
             return { addArmor = armor, message = "+" .. armor .. " Giáp (Đá Thủ Thế)" }
@@ -80,7 +80,7 @@ Equipment.ITEMS = {
         id = "vitality_gem", name = "Ngọc Cấp Cứu", icon = "💚",
         rarity = "uncommon", cost = 6, slotsNeeded = 1,
         color = { 0.25, 0.90, 0.45, 1 },
-        desc = "+4 HP khi Máu hiện tại dưới 50%",
+        desc = "+5 HP khi Máu hiện tại dưới 50%",
         onCardScore = function(card, playedCards, cardIndex, context)
             local hp = context and (context.playerHp or (context.gameState and context.gameState.playerHp))
             local maxHp = context and (context.maxPlayerHp or (context.gameState and context.gameState.maxPlayerHp))
@@ -93,7 +93,7 @@ Equipment.ITEMS = {
         id = "blood_ring", name = "Nhẫn Liều Mạng", icon = "⚔️",
         rarity = "rare", cost = 6, slotsNeeded = 1,
         color = { 0.85, 0.10, 0.25, 1 },
-        desc = "+10% sát thương, nhưng mất 2 HP khi kích hoạt",
+        desc = "+18% sát thương, nhưng mất 3 HP khi kích hoạt",
         onCardScore = function()
             return { extraDamagePct = Equipment.ITEMS.blood_ring.params.damagePercent / 100, hpCost = Equipment.ITEMS.blood_ring.params.hpCost, message = "+10% Sát thương, -2 HP (Nhẫn Liều Mạng)" }
         end,
@@ -102,7 +102,7 @@ Equipment.ITEMS = {
         id = "void_catalyst", name = "Xúc Tác Hư Không", icon = "🌌",
         rarity = "legendary", cost = 8, slotsNeeded = 2,
         color = { 0.85, 0.35, 0.95, 1 },
-        desc = "Tốn 2 hốc: +30 Chips và +10 Mult khi lá tạo Aura",
+        desc = "Tốn 2 hốc: +80 Chips và +18 Mult khi lá tạo Aura",
         onCardScore = function()
             return { addChips = Equipment.ITEMS.void_catalyst.params.chips, addMult = Equipment.ITEMS.void_catalyst.params.mult, message = "+30 Chips, +10 Mult (Xúc Tác Hư Không)" }
         end,
@@ -110,16 +110,16 @@ Equipment.ITEMS = {
 }
 
 local values = {
-    gem_fire={chips=18,edge=30}, gem_blast={mult=4,combo=8,count=3}, mirror_adjacent={chips=12},
-    storm_eye={mult=2,cap=8},lucky_coin={gold=2},ward_stone={armor=6,small=12,count=2},
-    vitality_gem={heal=4,threshold=0.5},blood_ring={damagePercent=10,hpCost=2},void_catalyst={chips=30,mult=10},
+    gem_fire={chips=12,edge=22}, gem_blast={mult=3,combo=5,count=3}, mirror_adjacent={chips=15},
+    storm_eye={mult=2,cap=9},lucky_coin={gold=2,mult=7},ward_stone={armor=4,small=7,count=2},
+    vitality_gem={heal=5,threshold=0.5},blood_ring={damagePercent=18,hpCost=3},void_catalyst={chips=80,mult=18},
 }
 local templates = {
     gem_fire="+{chips} Sát thương; +{edge} ở vị trí đầu/cuối của vùng tính điểm.",
     gem_blast="+{mult} Cường hóa; +{combo} khi đúng {count} lá tính điểm.",
     mirror_adjacent="Mỗi lá kề bên khác chất trong vùng tính điểm: +{chips} Sát thương.",
     storm_eye="+{mult} Cường hóa mỗi lá cùng chất trong vùng tính điểm, tối đa {cap}.",
-    lucky_coin="Lá A tính điểm: +{gold} Vàng.",
+    lucky_coin="Lá A tính điểm: +{gold} Vàng và +{mult} Cường hóa.",
     ward_stone="+{armor} Giáp; +{small} khi có tối đa {count} lá tính điểm.",
     vitality_gem="+{heal} HP nếu HP dưới {thresholdPercent}% tối đa.",
     blood_ring="+{damagePercent}% sát thương; mất {hpCost} HP khi tính điểm.",
@@ -128,11 +128,15 @@ local templates = {
 for id,p in pairs(values) do Equipment.ITEMS[id].params=p;Equipment.ITEMS[id].descriptionTemplate=templates[id] end
 function Equipment.getDescription(item)
     local def=Equipment.ITEMS[item.id];if not def then return item.desc or "" end
-    if not def.descriptionTemplate then return def.desc or "" end
-    return def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
+    local description=def.desc or ""
+    if def.descriptionTemplate then description=def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
         local n=k=="thresholdPercent" and def.params.threshold*100 or def.params[k]
         return string.format("%g",n or 0)
-    end)
+    end) end
+    if ((def.params or {}).gold or def.id=="itm_crown") and not description:find("Vàng từ trang bị thường",1,true) then
+        description=description.." Vàng từ trang bị thường: tối đa 6 mỗi tay."
+    end
+    return description
 end
 for _,item in pairs(Equipment.ITEMS) do item.desc=Equipment.getDescription(item) end
 
@@ -215,5 +219,35 @@ function Equipment.attach(card, equipItem)
 end
 
 for _,item in ipairs(require("src.basic_equipment").definitions) do Equipment.ITEMS[item.id]=item end
+for _,item in ipairs(require("src.tier_equipment").definitions) do
+    Equipment.ITEMS[item.id]=item;Equipment.POOL[#Equipment.POOL+1]=item.id
+end
 require("src.basic_equipment").install(Equipment)
+-- All ordinary scoring effects share one activation per card/hand and six earned gold.
+-- Preview budgets stay in the calculation context, never in the saved run.
+for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
+    if item.craftTier then item.rarity=({"common","uncommon","rare","epic","legendary"})[item.craftTier] end
+    item.desc=Equipment.getDescription(item)
+    local effect=item.onCardScore
+    if effect then item.onCardScore=function(c,cs,index,ctx)
+        if index==0 then return nil end
+        if ctx then
+            ctx.equipmentSeen=ctx.equipmentSeen or {};local key=tostring(c.id)..":"..id
+            if ctx.equipmentSeen[key] then return nil end;ctx.equipmentSeen[key]=true
+        end
+        local r=effect(c,cs,index,ctx)
+        if r then
+            r.message=item.name
+            if r.addGold and ctx then
+                -- Basics already reserve the shared allowance inside their effect.
+                if not item.basic and not item.crafted then
+                    r.addGold=math.min(r.addGold,math.max(0,6-(ctx.basicEquipmentGold or 0)))
+                    ctx.basicEquipmentGold=(ctx.basicEquipmentGold or 0)+r.addGold
+                end
+            end
+            for key,value in pairs(r) do if type(value)=="number" and value==0 then r[key]=nil end end
+        end
+        return r
+    end end
+end end
 return Equipment

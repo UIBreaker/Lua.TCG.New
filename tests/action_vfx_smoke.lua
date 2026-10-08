@@ -25,8 +25,9 @@ local g=Game.new();g.hand={c};g.persistentDeck={c};g.gold=100
 local ui={CardPhysics={getState=function() return nil end}}
 local before=P.snapshot(g);assert(Equipment.attach(c,Equipment.ITEMS.gem_fire))
 P.changed(ui,g,before,Equipment.ITEMS.gem_fire);assert(#P.applications==1 and P.applications[1].kind=="equip")
-F.clearVfx();P.update(P.config.application*0.59,false,"playing");assert(#F.vfx==0)
-P.update(P.config.application*0.02,false,"playing");assert(#F.vfx==1 and F.vfx[1].kind=="equip")
+local applicationDuration=P.applications[1].duration or P.config.application
+F.clearVfx();P.update(applicationDuration*0.59,false,"playing");assert(#F.vfx==0)
+P.update(applicationDuration*0.02,false,"playing");assert(#F.vfx==1 and F.vfx[1].kind=="equip")
 P.applications={};P.job=nil
 local stock={card=Deck.newCard(5,"clubs"),category="card",cost=4}
 local shop=Shop.new();shop.items={stock};local r={x=400,y=150,w=80,h=110}

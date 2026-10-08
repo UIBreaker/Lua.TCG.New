@@ -61,6 +61,20 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-equipment-tiers" then
+            local ok,err=pcall(require("tests.equipment_tiers_capture").update,gameRef,callbacks)
+            if not ok then print("EQUIPMENT TIERS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-equipment-feedback" then
+            local ok,err=pcall(require("tests.equipment_feedback_capture").update,gameRef,callbacks)
+            if not ok then print("EQUIPMENT FEEDBACK UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-run-resume" then
             local ok,err=pcall(require("tests.run_resume_capture").update,gameRef,callbacks)
             if not ok then print("RUN RESUME UI FAIL: "..tostring(err));love.event.quit(1) end

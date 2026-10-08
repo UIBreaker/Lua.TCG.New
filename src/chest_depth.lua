@@ -56,25 +56,25 @@ function D.enemyAttack(g,damage,absorbed)
     if damage==0 and absorbed>0 then s.blocked=(s.blocked or 0)+1 end
     for _,c in ipairs(g.hand or {}) do set(g,c,"heldHits",value(g,c,"heldHits")+1) end
 end
-add(D.equipment,"itm_capacitor","Bình Tích Sét","Bỏ lá này: tích 1 điện, tối đa 3. Khi tính điểm: xả toàn bộ, mỗi điện +20 ST và +2 Cường hóa. Điện mất khi hết trận.","A physical copper lightning jar with three large charge chambers on a navy cliff.",function(c,cs,i,ctx)
-    local g=game(ctx);local n=value(g,c,"charge");set(g,c,"charge",0,ctx);return {addChips=20*n,addMult=2*n}
+add(D.equipment,"itm_capacitor","Bình Tích Sét","Bỏ lá này: tích 1 điện, tối đa 3. Khi tính điểm: xả toàn bộ, mỗi điện +18 ST và +3 Cường hóa. Điện mất khi hết trận.","A physical copper lightning jar with three large charge chambers on a navy cliff.",function(c,cs,i,ctx)
+    local g=game(ctx);local n=value(g,c,"charge");set(g,c,"charge",0,ctx);return {addChips=18*n,addMult=3*n}
 end)
-add(D.equipment,"itm_counterweight","Rìu Phản Lực","Tính điểm sau khi bị quái gây mất HP từ lần đánh trước: +1% sát thương mỗi HP mất, tối đa 30%; không tính HP tự trả.","A physical iron counterweight axe swinging back from an impact in volcanic ruins.",function(c,cs,i,ctx)
-    return {extraDamagePct=math.min(0.3,(state(game(ctx)).damage or 0)*0.01)}
+add(D.equipment,"itm_counterweight","Rìu Phản Lực","Tính điểm sau khi bị quái gây mất HP từ lần đánh trước: +1.5% sát thương mỗi HP mất, tối đa 30%; không tính HP tự trả.","A physical iron counterweight axe swinging back from an impact in volcanic ruins.",function(c,cs,i,ctx)
+    return {extraDamagePct=math.min(0.3,(state(game(ctx)).damage or 0)*0.015)}
 end)
-add(D.equipment,"itm_ledger","Sổ Giao Kèo","Khi tính điểm: tự trả 1 Vàng để đầu tư 1 nấc, tối đa 5 nấc vĩnh viễn trên lá. Mỗi nấc cho +2 Cường hóa, kể cả khi không đủ Vàng.","A tangible five-clasp leather ledger with a gold coin pressed into its cover in desert ruins.",function(c,cs,i,ctx)
+add(D.equipment,"itm_ledger","Sổ Giao Kèo","Khi tính điểm: tự trả 1 Vàng để đầu tư 1 nấc, tối đa 5 nấc vĩnh viễn trên lá. Mỗi nấc cho +3 Cường hóa, kể cả khi không đủ Vàng.","A tangible five-clasp leather ledger with a gold coin pressed into its cover in desert ruins.",function(c,cs,i,ctx)
     local g=game(ctx);local n=c.depthInvestment or 0
     if n<5 and spend(g,"gold",1,ctx) then n=n+1;if not ctx.preview then sync(g,c,function(o) o.depthInvestment=n end) end end
-    return {addMult=n*2}
+    return {addMult=n*3}
 end)
 add(D.equipment,"itm_oar","Mái Chèo Chuyển Dòng","Khi tính điểm trong thế đánh khác lần đánh trước của trận: +20 ST và +4 Giáp. Không kích hoạt ở tay đầu.","A tangible expedition oar cutting across two opposing blue currents below coastal cliffs.",function(c,cs,i,ctx)
     local s=state(game(ctx));if s.lastType and s.lastType~=ctx.depthHandType then return {addChips=20,addArmor=4} end
 end)
-add(D.equipment,"itm_hourhand","Kim Đồng Hồ Canh Gác","Giữ lá này qua 2 đòn quái: lần tính điểm sau nhận +12 Cường hóa và xóa số đòn đã giữ; chỉ tính đòn quái thực sự ra tay.","One tangible silver clock hand braced against two frozen impact rings on a glacial monolith.",function(c,cs,i,ctx)
-    local g=game(ctx);if value(g,c,"heldHits")>=2 then set(g,c,"heldHits",0,ctx);return {addMult=12} end
+add(D.equipment,"itm_hourhand","Kim Đồng Hồ Canh Gác","Giữ lá này qua 2 đòn quái: lần tính điểm sau nhận +14 Cường hóa và xóa số đòn đã giữ; chỉ tính đòn quái thực sự ra tay.","One tangible silver clock hand braced against two frozen impact rings on a glacial monolith.",function(c,cs,i,ctx)
+    local g=game(ctx);if value(g,c,"heldHits")>=2 then set(g,c,"heldHits",0,ctx);return {addMult=14} end
 end)
-add(D.equipment,"itm_bloodvial","Lọ Huyết Tế","Bỏ lá này khi còn hơn 2 HP: trả 2 HP, tích 1 giọt (tối đa 3). Khi tính điểm: xả giọt, mỗi giọt +5 Cường hóa. Mất giọt khi hết trận.","A physical red glass vial with three large blood drops over a volcanic expedition altar.",function(c,cs,i,ctx)
-    local g=game(ctx);local n=value(g,c,"drops");set(g,c,"drops",0,ctx);return {addMult=n*5}
+add(D.equipment,"itm_bloodvial","Lọ Huyết Tế","Bỏ lá này khi còn hơn 2 HP: trả 2 HP, tích 1 giọt (tối đa 3). Khi tính điểm: xả giọt, mỗi giọt +7 Cường hóa. Mất giọt khi hết trận.","A physical red glass vial with three large blood drops over a volcanic expedition altar.",function(c,cs,i,ctx)
+    local g=game(ctx);local n=value(g,c,"drops");set(g,c,"drops",0,ctx);return {addMult=n*7}
 end)
 add(D.equipment,"itm_relay","Dây Xích Tiếp Sức","Nếu lá tính điểm ngay trước có trang bị: nhận thêm ST bằng một nửa ST cơ bản của lá trước (làm tròn xuống), tối đa 60.","A physical broad iron chain connecting two expedition weapon hilts in a forest workshop.",function(c,cs,i)
     local p=cs[i-1];if p and #(p.equipments or {})>0 then return {addChips=math.min(60,math.floor((p.baseChips or 0)/2))} end
@@ -82,10 +82,10 @@ end)
 add(D.equipment,"itm_lockbox","Khóa Giáp Ngân","Khi tính điểm và đang có ít nhất 8 Giáp: tiêu 8 Giáp để +20% sát thương. Giáp đã tiêu không chặn đòn quái sau đó.","One physical silver shield-lock opening and releasing a controlled gold beam from glacial armor.",function(c,cs,i,ctx)
     local g=game(ctx);if spend(g,"playerArmor",8,ctx) then if not ctx.preview then g.playerShield=g.playerArmor end;return {extraDamagePct=0.2} end
 end)
-add(D.equipment,"itm_bell","Chuông Tĩnh Lặng","Mỗi lần lá tính điểm mà chưa bỏ bài từ lần đánh trước: tích 1 nhịp (tối đa 4), +3 Cường hóa mỗi nhịp. Bất kỳ lần bỏ bài nào xóa nhịp của mọi lá mang chuông.","A tangible silent bronze bell wrapped in cloth above a quiet forest sanctuary.",function(c,cs,i,ctx)
+add(D.equipment,"itm_bell","Chuông Tĩnh Lặng","Mỗi lần lá tính điểm mà chưa bỏ bài từ lần đánh trước: tích 1 nhịp (tối đa 4), +5 Cường hóa mỗi nhịp. Bất kỳ lần bỏ bài nào xóa nhịp của mọi lá mang chuông.","A tangible silent bronze bell wrapped in cloth above a quiet forest sanctuary.",function(c,cs,i,ctx)
     local g=game(ctx);local n=value(g,c,"quiet")
     if (state(g).discarded or 0)==0 then n=math.min(4,n+1) end
-    set(g,c,"quiet",n,ctx);return {addMult=3*n}
+    set(g,c,"quiet",n,ctx);return {addMult=5*n}
 end)
 add(D.equipment,"itm_pendulum","Quả Lắc Viễn Chinh","So với số lá tính điểm ở tay trước: đánh nhiều hơn thì +24 ST; đánh ít hơn thì +6 Giáp. Bằng nhau hoặc tay đầu không có thưởng.","One physical pendulum swinging between a tall and a short stone expedition column in a desert.",function(c,cs,i,ctx)
     local n=state(game(ctx)).lastSize

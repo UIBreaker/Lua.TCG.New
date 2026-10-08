@@ -42,6 +42,8 @@ Damage to Monster = Score * (1 + Total Extra Damage Pct)
 function Scoring.calculate(handInfo, deities, context)
     context=context or {}
     context.basicEquipmentGold=0
+    context.equipmentSeen={}
+    context.equipmentGoldAwarded=0
     Depth.begin(context)
     if context then context.depthHandType=handInfo.type.id end
     local abilityGame = context and context.gameState
@@ -556,6 +558,10 @@ function Scoring.calculate(handInfo, deities, context)
                             end
                             if res.addGold then
                                 local g = math.floor(res.addGold * eqMult)
+                                if not eq.soulOnly then
+                                    g=math.min(g,math.max(0,6-context.equipmentGoldAwarded))
+                                    context.equipmentGoldAwarded=context.equipmentGoldAwarded+g
+                                end
                                 bonusGoldAwarded = bonusGoldAwarded + g
                             end
                             if res.addArmor then

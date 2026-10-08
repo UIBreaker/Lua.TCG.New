@@ -22,31 +22,31 @@ end
 add(X.equipment,"itm_abacus","Bàn Tính Tân Binh","Rank 2–5 tính điểm: +8 ST cho mỗi bậc thấp hơn 6.","An antique expedition abacus with four large bone beads, fossil desert.",function(c)
     if c.rank<=5 then return {addChips=8*(6-c.rank)} end
 end)
-add(X.equipment,"itm_twinfang","Nanh Song Sinh","Có đúng một lá khác cùng rank tính điểm: +0.25 hệ số Aura (cộng vào trần ×5).","One tangible double-fanged silver dagger reflected in a glacial lake.",function(c,cs)
+add(X.equipment,"itm_twinfang","Nanh Song Sinh","Có đúng một lá khác cùng rank tính điểm: +0.30 hệ số Aura (cộng vào trần ×5).","One tangible double-fanged silver dagger reflected in a glacial lake.",function(c,cs)
     local n=0;for _,o in ipairs(cs) do if o.rank==c.rank then n=n+1 end end
-    if n==2 then return {xMultBonus=0.25} end
+    if n==2 then return {xMultBonus=0.30} end
 end)
 add(X.equipment,"itm_wayfarer","La Bàn Lữ Hành","Lá tính điểm ngay trước lệch đúng 1 rank: +7 Cường hóa.","A weathered brass trail compass pointing along ascending mountain stepping stones.",function(c,cs,i)
     if cs[i-1] and math.abs(cs[i-1].rank-c.rank)==1 then return {addMult=7} end
 end)
-add(X.equipment,"itm_prism","Lăng Kính Viễn Chinh","Vùng tính điểm có ít nhất 3 chất: +35 ST.","One broad triangular glass prism splitting restrained light above coastal ruins.",function(c,cs)
-    if suits(cs)>=3 then return {addChips=35} end
+add(X.equipment,"itm_prism","Lăng Kính Viễn Chinh","Vùng tính điểm có ít nhất 3 chất: +48 ST.","One broad triangular glass prism splitting restrained light above coastal ruins.",function(c,cs)
+    if suits(cs)>=3 then return {addChips=48} end
 end)
-add(X.equipment,"itm_hourglass","Cát Chậm","Tốc đánh lá này thấp hơn quái mục tiêu: +9 Giáp khi tính điểm.","A heavy physical hourglass frozen inside glacial blue ice.",function(c,cs,i,ctx)
+add(X.equipment,"itm_hourglass","Cát Chậm","Tốc đánh lá này thấp hơn quái mục tiêu: +11 Giáp khi tính điểm.","A heavy physical hourglass frozen inside glacial blue ice.",function(c,cs,i,ctx)
     local m=ctx and ctx.monster
-    if m and require("src.deck").getCardAttackSpeed(c)<(m.attackSpeed or 1) then return {addArmor=9} end
+    if m and require("src.deck").getCardAttackSpeed(c)<(m.attackSpeed or 1) then return {addArmor=11} end
 end)
-add(X.equipment,"itm_miser","Chìa Khóa Ngân Khố","Mỗi 8 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +8.","One antique gold vault key over a weathered expedition coin chest in a desert.",function(c,cs,i,ctx)
-    return {addMult=math.min(8,math.floor((game(ctx).gold or 0)/8))}
+add(X.equipment,"itm_miser","Chìa Khóa Ngân Khố","Mỗi 6 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +12.","One antique gold vault key over a weathered expedition coin chest in a desert.",function(c,cs,i,ctx)
+    return {addMult=math.min(12,math.floor((game(ctx).gold or 0)/6))}
 end)
-add(X.equipment,"itm_quiver","Ống Tên Dự Trữ","Mỗi lá giữ lại trên tay: +6 ST khi tính điểm, tối đa +36.","A tangible leather quiver with six broad arrow shafts in a quiet ancient forest.",function(c,cs,i,ctx)
-    return {addChips=math.min(36,#((ctx and ctx.hand) or {})*6)}
+add(X.equipment,"itm_quiver","Ống Tên Dự Trữ","Mỗi lá giữ lại trên tay: +7 ST khi tính điểm, tối đa +35.","A tangible leather quiver with six broad arrow shafts in a quiet ancient forest.",function(c,cs,i,ctx)
+    return {addChips=math.min(35,#((ctx and ctx.hand) or {})*7)}
 end)
-add(X.equipment,"itm_anvil","Đe Ba Khảm","Lá đã dùng đủ 3 hốc trang bị: +12% sát thương khi tính điểm.","One volcanic iron anvil with three large socketed relic stones and restrained orange embers.",function(c)
-    if require("src.equipment").getUsedSlots(c)==3 then return {extraDamagePct=0.12} end
+add(X.equipment,"itm_anvil","Đe Ba Khảm","Lá đã dùng đủ 3 hốc trang bị: +18% sát thương khi tính điểm.","One volcanic iron anvil with three large socketed relic stones and restrained orange embers.",function(c)
+    if require("src.equipment").getUsedSlots(c)==3 then return {extraDamagePct=0.18} end
 end)
-add(X.equipment,"itm_crown","Vương Miện Độc Hành","Nếu lá này là J/Q/K duy nhất tính điểm: +12 ST và +1 Vàng.","A single worn Western iron crown on an isolated coastal throne.",function(c,cs)
-    if c.rank>=11 and c.rank<=13 and faces(cs)==1 then return {addChips=12,addGold=1} end
+add(X.equipment,"itm_crown","Vương Miện Độc Hành","Nếu lá này là J/Q/K duy nhất tính điểm: +24 ST và +1 Vàng.","A single worn Western iron crown on an isolated coastal throne.",function(c,cs)
+    if c.rank>=11 and c.rank<=13 and faces(cs)==1 then return {addChips=24,addGold=1} end
 end)
 add(X.equipment,"itm_root","Rễ Hóa Thạch","Mỗi cấp tiến hóa của lá này: +10 ST khi tính điểm, tối đa +50.","A tangible fossilized root relic growing through five broad stone strata in a green canyon.",function(c)
     return {addChips=math.min(50,(c.evolutionLevel or 0)*10)}

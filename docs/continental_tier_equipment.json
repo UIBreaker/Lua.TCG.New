@@ -1,0 +1,387 @@
+[
+  {
+    "id": "itm_fieldneedle",
+    "name": "Kim Khâu Dã Chiến",
+    "tier": 1,
+    "params": {
+      "heal": 3,
+      "armor": 2
+    },
+    "ability": "+2 Giáp; thêm 3 HP nếu HP dưới 75%.",
+    "concept": "One thick curved silver field needle threading green linen through a torn iron-lined bandage, on mossy forest infirmary stone.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Kim Khâu Dã Chiến. Actual gameplay role: +2 Giáp; thêm 2 HP nếu HP dưới 75%.. Concept: One thick curved silver field needle threading green linen through a torn iron-lined bandage, on mossy forest infirmary stone. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-9d58d403-c881-4661-99c4-e6011c97545a.png",
+    "cost": 12,
+    "craftTier": 1
+  },
+  {
+    "id": "itm_heelhook",
+    "name": "Móc Gót Tiên Phong",
+    "tier": 1,
+    "params": {
+      "speed": 2,
+      "chips": 16
+    },
+    "ability": "+2 Tốc khi gắn. Đứng đầu vùng tính điểm: +16 ST.",
+    "concept": "One hooked iron heel cleat strapped to a single weathered expedition boot, biting into a blue glacial trail, clear hook silhouette.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Móc Gót Tiên Phong. Actual gameplay role: +1 Tốc khi gắn. Đứng đầu vùng tính điểm: +12 ST.. Concept: One hooked iron heel cleat strapped to a single weathered expedition boot, biting into a blue glacial trail, clear hook silhouette. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-780f57d3-bf12-4535-b252-9510224d7233.png",
+    "cost": 14,
+    "craftTier": 1
+  },
+  {
+    "id": "itm_surveyhammer",
+    "name": "Búa Thăm Dò",
+    "tier": 1,
+    "params": {
+      "chips": 14,
+      "armor": 3
+    },
+    "ability": "+14 ST; rank 2–6 nhận thêm 3 Giáp.",
+    "concept": "One short rugged survey hammer with a broad steel head and leather grip beside freshly split ore on bone gold desert rock.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Búa Thăm Dò. Actual gameplay role: +14 ST; rank 2–6 nhận thêm 3 Giáp.. Concept: One short rugged survey hammer with a broad steel head and leather grip beside freshly split ore on bone gold desert rock. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-c6b6529e-260c-4198-b005-43f763512f20.png",
+    "cost": 17,
+    "craftTier": 1
+  },
+  {
+    "id": "itm_rationseal",
+    "name": "Niêm Tiếp Tế",
+    "tier": 1,
+    "params": {
+      "armor": 3,
+      "gold": 1
+    },
+    "ability": "+3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.",
+    "concept": "One iron supply clasp sealing a compact leather ration roll, a single antique coin tucked under the clasp, coastal expedition camp.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Niêm Tiếp Tế. Actual gameplay role: +3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng.. Concept: One iron supply clasp sealing a compact leather ration roll, a single antique coin tucked under the clasp, coastal expedition camp. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-80824406-c108-4344-81da-062077b3e0db.png",
+    "cost": 18,
+    "craftTier": 1
+  },
+  {
+    "id": "itm_balancebrace",
+    "name": "Nẹp Cân Bằng",
+    "tier": 1,
+    "params": {
+      "chips": 20,
+      "armor": 3
+    },
+    "ability": "Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.",
+    "concept": "One symmetrical hinged steel wrist brace with two equal broad bronze counterplates on a frost dusted expedition table.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent. Painterly cinematic realism matching the supplied Continental art references. One dominant tangible equipment object with clear silhouette filling the foreground, medium detail, quiet atmospheric ruins, believable worn materials, restrained controlled light. No lettering, text, symbols, badges, frame, borders, UI, watermarks. No East Asian fantasy or excessive tiny ornament. Distinct actual equipment identity: Nẹp Cân Bằng. Actual gameplay role: Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.. Concept: One symmetrical hinged steel wrist brace with two equal broad bronze counterplates on a frost dusted expedition table. The object itself is the protagonist; no human figure. Reference world palettes: glacial ice blue, forest green, deep navy coast, bone gold desert, lava orange, void violet, antique brass.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-ca58e04c-58a8-4d16-951d-34e50fe2905d.png",
+    "cost": 14,
+    "craftTier": 1
+  },
+  {
+    "id": "itm_triageclasp",
+    "name": "Khóa Cứu Thương",
+    "tier": 2,
+    "params": {
+      "heal": 5,
+      "armor": 7
+    },
+    "ability": "HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.",
+    "concept": "One emerald glass emergency clasp on a folded white field dressing, its protective steel jaws opening in a ruined green infirmary.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Khóa Cứu Thương. Actual ability: HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.. Concept: One emerald glass emergency clasp on a folded white field dressing, its protective steel jaws opening in a ruined green infirmary. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-edecdb08-d3a5-43fd-987b-f077b82f2ecb.png",
+    "cost": 33,
+    "craftTier": 2
+  },
+  {
+    "id": "itm_windspindle",
+    "name": "Trục Cuốn Gió",
+    "tier": 2,
+    "params": {
+      "speed": 2,
+      "mult": 5
+    },
+    "ability": "+2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.",
+    "concept": "One silver wind spindle with a tall tapering central axle and a tightly wound pale blue cord on a coastal cliff workbench.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Trục Cuốn Gió. Actual ability: +2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.. Concept: One silver wind spindle with a tall tapering central axle and a tightly wound pale blue cord on a coastal cliff workbench. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-f2332358-b893-448f-a66a-045d7c2d8b61.png",
+    "cost": 42,
+    "craftTier": 2
+  },
+  {
+    "id": "itm_shieldsuture",
+    "name": "Kim Đan Giáp",
+    "tier": 2,
+    "params": {
+      "armor": 10,
+      "heal": 3
+    },
+    "ability": "Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.",
+    "concept": "One heavy steel weaving shuttle joining three large chainmail links over green padding on a glacial ruined forge.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Kim Đan Giáp. Actual ability: Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.. Concept: One heavy steel weaving shuttle joining three large chainmail links over green padding on a glacial ruined forge. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-455184e4-1a7b-49ad-bdd0-59beec6c3e3b.png",
+    "cost": 33,
+    "craftTier": 2
+  },
+  {
+    "id": "itm_tollscale",
+    "name": "Cân Trạm Thu",
+    "tier": 2,
+    "params": {
+      "chips": 20,
+      "gold": 1
+    },
+    "ability": "+20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.",
+    "concept": "One compact antique brass toll scale with a closed iron weighing pan and one copper coin, sunlit ruined desert caravan checkpoint.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Cân Trạm Thu. Actual ability: +20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng.. Concept: One compact antique brass toll scale with a closed iron weighing pan and one copper coin, sunlit ruined desert caravan checkpoint. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-bbea41ba-7eaa-45a6-8091-457d7d7b506b.png",
+    "cost": 47,
+    "craftTier": 2
+  },
+  {
+    "id": "itm_scoutlens",
+    "name": "Kính Trinh Sát",
+    "tier": 2,
+    "params": {
+      "chips": 10,
+      "cap": 40
+    },
+    "ability": "Mỗi rank khác nhau trong vùng tính điểm: +10 ST, tối đa 40.",
+    "concept": "One rugged brass monocular scouting lens with four broad glass facets, overlooking layered deep blue continental coast cliffs.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG, 1024x1536. Cinematic Western dark fantasy expedition on a mysterious continent, painterly cinematic realism consistent with supplied Continental references. One dominant tangible equipment object with large clean silhouette filling foreground, medium detail, atmospheric quiet ruins, worn metal/leather, controlled light. No text, letters, numbers, symbols, badge, frame, border, UI, watermark. No East Asian fantasy, tiny busy decoration, blown out glow. Identity: Kính Trinh Sát. Actual ability: Mỗi rank khác nhau trong vùng tính điểm: +10 ST, tối đa 40.. Concept: One rugged brass monocular scouting lens with four broad glass facets, overlooking layered deep blue continental coast cliffs. The object itself is the protagonist, no human. Highly distinct silhouette and material from every other object.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-17d1c65b-a054-4d9d-9ff2-17ce094adfe4.png",
+    "cost": 38,
+    "craftTier": 2
+  },
+  {
+    "id": "itm_redoubtstandard",
+    "name": "Cờ Pháo Đài",
+    "tier": 3,
+    "params": {
+      "armor": 14,
+      "chips": 40
+    },
+    "ability": "Chậm hơn quái mục tiêu: +14 Giáp; nếu không: +40 ST.",
+    "concept": "One physical iron fortress standard with a broad worn navy swallowtail cloth mounted on a compact stone parapet in a glacial pass.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Cờ Pháo Đài. Gameplay: Chậm hơn quái mục tiêu: +14 Giáp; nếu không: +40 ST.. Subject: One physical iron fortress standard with a broad worn navy swallowtail cloth mounted on a compact stone parapet in a glacial pass. Emphasize the tangible object's materials, structure and tactical concept. No human.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-0a0421de-7fcd-436a-aca8-c09d0fb39007.png",
+    "cost": 66,
+    "craftTier": 3
+  },
+  {
+    "id": "itm_lifebasin",
+    "name": "Bát Dưỡng Sinh",
+    "tier": 3,
+    "params": {
+      "heal": 7,
+      "chips": 20
+    },
+    "ability": "+20 ST; giữ ít nhất 2 lá trên tay: hồi thêm 7 HP.",
+    "concept": "One broad jade green medicinal bowl containing luminous sap and two intact leaves, on a root-wrapped ruined forest altar.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Bát Dưỡng Sinh. Gameplay: +20 ST; giữ ít nhất 2 lá trên tay: hồi thêm 7 HP.. Subject: One broad jade green medicinal bowl containing luminous sap and two intact leaves, on a root-wrapped ruined forest altar. Emphasize the tangible object's materials, structure and tactical concept. No human.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-beede94e-f2f4-4383-950a-456a527f69ec.png",
+    "cost": 59,
+    "craftTier": 3
+  },
+  {
+    "id": "itm_dualgear",
+    "name": "Bánh Răng Song Nhịp",
+    "tier": 3,
+    "params": {
+      "speed": 3,
+      "mult": 9
+    },
+    "ability": "+3 Tốc khi gắn. Số rank chẵn/lẻ bằng nhau: +9 Cường hóa.",
+    "concept": "One tangible pair of interlocking large silver and antique brass gears, clearly one assembled mechanism on blue mountain forge stone.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Bánh Răng Song Nhịp. Gameplay: +3 Tốc khi gắn. Số rank chẵn/lẻ bằng nhau: +9 Cường hóa.. Subject: One tangible pair of interlocking large silver and antique brass gears, clearly one assembled mechanism on blue mountain forge stone. Emphasize the tangible object's materials, structure and tactical concept. No human.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-1e52537e-19db-449f-b281-5fcf28f55d88.png",
+    "cost": 78,
+    "craftTier": 3
+  },
+  {
+    "id": "itm_exchangehorn",
+    "name": "Tù Và Đổi Chợ",
+    "tier": 3,
+    "params": {
+      "goldCost": 2,
+      "chips": 42,
+      "armor": 10
+    },
+    "ability": "Tự trả 2 Vàng khi tính điểm: +42 ST và +10 Giáp. Thiếu Vàng không kích hoạt.",
+    "concept": "One broad bronze caravan trading horn with a rugged leather coin collar, lying on a desert market slab beside two copper coins.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Tù Và Đổi Chợ. Gameplay: Tự trả 2 Vàng khi tính điểm: +42 ST và +10 Giáp. Thiếu Vàng không kích hoạt.. Subject: One broad bronze caravan trading horn with a rugged leather coin collar, lying on a desert market slab beside two copper coins. Emphasize the tangible object's materials, structure and tactical concept. No human.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-5e9f39a3-e2c7-4816-b73c-7dacf9b312a1.png",
+    "cost": 86,
+    "craftTier": 3
+  },
+  {
+    "id": "itm_formationpin",
+    "name": "Trâm Liên Đội",
+    "tier": 3,
+    "params": {
+      "mult": 11
+    },
+    "ability": "Có hai lá tính điểm kề hai bên, cả hai khác chất với lá này: +11 Cường hóa.",
+    "concept": "One large three-pronged expedition cloak pin linking a green central gemstone to two blue and red stone clasps, quiet coastal ruins.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy expedition, mysterious immense continent. Painterly cinematic realism matching supplied Continental references, medium detail, one dominant tangible relic filling foreground, large readable silhouette, atmospheric quiet ancient Western ruins, restrained magical accent. No text, letters, numbers, badges, card frame, borders, watermark, UI; no East Asian fantasy; avoid particle clutter or tiny decorative noise. Unique equipment identity: Trâm Liên Đội. Gameplay: Có hai lá tính điểm kề hai bên, cả hai khác chất với lá này: +11 Cường hóa.. Subject: One large three-pronged expedition cloak pin linking a green central gemstone to two blue and red stone clasps, quiet coastal ruins. Emphasize the tangible object's materials, structure and tactical concept. No human.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-fcfa29f8-8009-44a6-83bd-b12a32073a00.png",
+    "cost": 89,
+    "craftTier": 3
+  },
+  {
+    "id": "itm_oathmantle",
+    "name": "Áo Choàng Lời Thề",
+    "tier": 4,
+    "params": {
+      "armor": 22,
+      "heal": 9
+    },
+    "ability": "HP ít nhất 75%: +22 Giáp; nếu không: hồi 9 HP.",
+    "concept": "One tangible heavy ivory and silver oath mantle hanging from an abandoned Western knight armor stand in a cold ruined chapel, green inner lining.",
+    "prompt": "Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Áo Choàng Lời Thề. Real gameplay ability: HP ít nhất 75%: +22 Giáp; nếu không: hồi 9 HP.. Concrete unique subject: One tangible heavy ivory and silver oath mantle hanging from an abandoned Western knight armor stand in a cold ruined chapel, green inner lining. Masterwork tier: refined powerful construction with broad material forms, readable when very small.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-43eef664-02b0-4155-8b04-04e146f78982.png",
+    "cost": 120,
+    "craftTier": 4
+  },
+  {
+    "id": "itm_tempestwinch",
+    "name": "Tời Bão",
+    "tier": 4,
+    "params": {
+      "speed": 4,
+      "mult": 14
+    },
+    "ability": "+4 Tốc khi gắn. Nhanh hơn quái mục tiêu: +14 Cường hóa.",
+    "concept": "One powerful iron storm winch with a large navy cable drum hauling a taut silver rope through coastal wind, broad readable mechanism on a sea cliff.",
+    "prompt": "Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Tời Bão. Real gameplay ability: +4 Tốc khi gắn. Nhanh hơn quái mục tiêu: +14 Cường hóa.. Concrete unique subject: One powerful iron storm winch with a large navy cable drum hauling a taut silver rope through coastal wind, broad readable mechanism on a sea cliff. Masterwork tier: refined powerful construction with broad material forms, readable when very small.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-95d46a9b-f5a1-4617-862e-5df5b5ab8cf6.png",
+    "cost": 143,
+    "craftTier": 4
+  },
+  {
+    "id": "itm_reprisallance",
+    "name": "Thương Phản Chấn",
+    "tier": 4,
+    "params": {
+      "armor": 8,
+      "damagePercent": 7,
+      "cap": 28
+    },
+    "ability": "+8 Giáp. Mỗi đòn quái bị chặn hoàn toàn từ tay trước: +7% sát thương, tối đa 28%.",
+    "concept": "One long heavy silver recoil lance with a broad spring-loaded guard, planted in a cracked ice shield slab showing restrained rebound arcs.",
+    "prompt": "Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Thương Phản Chấn. Real gameplay ability: +8 Giáp. Mỗi đòn quái bị chặn hoàn toàn từ tay trước: +7% sát thương, tối đa 28%.. Concrete unique subject: One long heavy silver recoil lance with a broad spring-loaded guard, planted in a cracked ice shield slab showing restrained rebound arcs. Masterwork tier: refined powerful construction with broad material forms, readable when very small.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-a7097f77-030b-4953-8a1e-4b784bf99573.png",
+    "cost": 144,
+    "craftTier": 4
+  },
+  {
+    "id": "itm_escrowseal",
+    "name": "Ấn Tín Ký Quỹ",
+    "tier": 4,
+    "params": {
+      "goldCost": 3,
+      "heal": 10,
+      "armor": 16
+    },
+    "ability": "Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.",
+    "concept": "One large tangible gold escrow signet in a stout iron housing, securing three antique coins under protective green glass on a desert merchant altar.",
+    "prompt": "Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Ấn Tín Ký Quỹ. Real gameplay ability: Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.. Concrete unique subject: One large tangible gold escrow signet in a stout iron housing, securing three antique coins under protective green glass on a desert merchant altar. Masterwork tier: refined powerful construction with broad material forms, readable when very small.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-60a2b0b8-2fc8-4de4-b8e6-0383d4bb14f0.png",
+    "cost": 167,
+    "craftTier": 4
+  },
+  {
+    "id": "itm_crescentvise",
+    "name": "Ê-tô Trăng Khuyết",
+    "tier": 4,
+    "params": {
+      "chips": 72,
+      "mult": 9
+    },
+    "ability": "Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.",
+    "concept": "One broad crescent-shaped silver smithing vise with two opposing massive jaws framing a quiet violet eclipse, on Western void forge stone.",
+    "prompt": "Create ONE unique production game card illustration, PORTRAIT 2:3 full bleed PNG 1024x1536. Cinematic Western dark fantasy expedition through a mysterious continent. Match supplied Continental reference painting style: painterly cinematic realism, clear broad object silhouette, medium detail, controlled restrained magical light, quiet atmospheric Western ruins. Main tangible equipment is the hero, no person. No text, lettering, numbers, badge, frame, border, watermark, UI. No East Asian fantasy; no dense tiny ornament, particles or blown-out glow. Identity: Ê-tô Trăng Khuyết. Real gameplay ability: Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.. Concrete unique subject: One broad crescent-shaped silver smithing vise with two opposing massive jaws framing a quiet violet eclipse, on Western void forge stone. Masterwork tier: refined powerful construction with broad material forms, readable when very small.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-bc8fcdc6-fc10-425f-bd34-05d2e0b517d1.png",
+    "cost": 167,
+    "craftTier": 4
+  },
+  {
+    "id": "itm_worldanchor",
+    "name": "Mỏ Neo Đại Lục",
+    "tier": 5,
+    "params": {
+      "armor": 28,
+      "chips": 80,
+      "fallbackArmor": 14,
+      "fallbackChips": 35
+    },
+    "ability": "Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.",
+    "concept": "One colossal tangible ancient iron continent anchor with broad broken-stone flukes holding two opposing sea currents at a ruined deep navy coastal gateway.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Mỏ Neo Đại Lục. Actual ability: Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.. Exact physical subject and environment: One colossal tangible ancient iron continent anchor with broad broken-stone flukes holding two opposing sea currents at a ruined deep navy coastal gateway. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-9041b23a-0ea9-4d0b-b8af-483fe9155876.png",
+    "cost": 278,
+    "craftTier": 5
+  },
+  {
+    "id": "itm_phoenixcradle",
+    "name": "Nôi Phượng Hỏa",
+    "tier": 5,
+    "params": {
+      "heal": 16,
+      "damagePercent": 25,
+      "chips": 90
+    },
+    "ability": "Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.",
+    "concept": "One tangible phoenix-shaped bronze cradle cupping a single red medicinal ember, dominant broad wings carved from metal, dark volcanic expedition sanctuary.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Nôi Phượng Hỏa. Actual ability: Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.. Exact physical subject and environment: One tangible phoenix-shaped bronze cradle cupping a single red medicinal ember, dominant broad wings carved from metal, dark volcanic expedition sanctuary. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-57e125e8-e63a-40d2-926f-111c3d5c55fb.png",
+    "cost": 260,
+    "craftTier": 5
+  },
+  {
+    "id": "itm_horizonengine",
+    "name": "Động Cơ Chân Trời",
+    "tier": 5,
+    "params": {
+      "speed": 6,
+      "chips": 100,
+      "armor": 24
+    },
+    "ability": "Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.",
+    "concept": "One tangible ancient expedition propulsion engine with a single broad silver turbine and restrained blue core, set on a high glacial cliff facing a vast horizon.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Động Cơ Chân Trời. Actual ability: Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.. Exact physical subject and environment: One tangible ancient expedition propulsion engine with a single broad silver turbine and restrained blue core, set on a high glacial cliff facing a vast horizon. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-f1cddc80-56eb-4177-aa04-ed277da85a5c.png",
+    "cost": 249,
+    "craftTier": 5
+  },
+  {
+    "id": "itm_sovereignscale",
+    "name": "Cân Vương Quyền",
+    "tier": 5,
+    "params": {
+      "goldCost": 4,
+      "mult": 24,
+      "armor": 24,
+      "chips": 60
+    },
+    "ability": "Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.",
+    "concept": "One monumental tangible antique golden sovereign balance with a solid armored pan opposite a large coin ingot, clear balanced silhouette in Western bone gold desert royal ruins.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Cân Vương Quyền. Actual ability: Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.. Exact physical subject and environment: One monumental tangible antique golden sovereign balance with a solid armored pan opposite a large coin ingot, clear balanced silhouette in Western bone gold desert royal ruins. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-3d73d120-0184-4954-8b84-d40a7f9a62d3.png",
+    "cost": 341,
+    "craftTier": 5
+  },
+  {
+    "id": "itm_concordharp",
+    "name": "Hạc Cầm Bốn Xứ",
+    "tier": 5,
+    "params": {
+      "chips": 110,
+      "mult": 18,
+      "perChips": 18,
+      "perMult": 3
+    },
+    "ability": "Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.",
+    "concept": "One large tangible Western golden harp with four broad distinct gemstone-tipped strings in red, green, ice blue and antique gold, standing in ancient forest continental alliance ruins, restrained light.",
+    "prompt": "Create ONE production game card illustration, full-bleed PORTRAIT 2:3 PNG 1024x1536. Cinematic Western dark fantasy continental expedition, painterly cinematic realism matching supplied art references. Legendary TANGIBLE equipment, one large heroic relic with a highly distinctive clear silhouette filling foreground. Quiet monumental Western ruins, atmospheric depth, substantial weathered materials, medium detail, restrained controlled glow, readable at 64px. No human figure; no text, numbers, letters, rank badges, card frame, borders, watermark, UI. No East Asian fantasy, calligraphy, overly fine decoration, particle noise or overexposed magic. Identity: Hạc Cầm Bốn Xứ. Actual ability: Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.. Exact physical subject and environment: One large tangible Western golden harp with four broad distinct gemstone-tipped strings in red, green, ice blue and antique gold, standing in ancient forest continental alliance ruins, restrained light. Make the object convincingly exceptional and majestic through scale and construction, without busy decoration.",
+    "generated_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a11661-670e-7523-a58b-e2030b598800\\exec-11a9966f-0c57-4849-bdf3-53929fa49407.png",
+    "cost": 300,
+    "craftTier": 5
+  }
+]

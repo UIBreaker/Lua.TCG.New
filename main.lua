@@ -1,5 +1,7 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-equipment-tiers" then local ok,err=pcall(require,"tests.equipment_tiers_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
+    if a=="--test-equipment-feedback" then local ok,err=pcall(require,"tests.equipment_feedback_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-run-resume" then local ok,err=pcall(require,"tests.run_resume_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-backpack" then local ok,err=pcall(require,"tests.backpack_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a == "--capture-continental52" then require("tests.continental52_capture");return end

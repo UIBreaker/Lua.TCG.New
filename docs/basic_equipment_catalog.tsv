@@ -1,0 +1,18 @@
+basic_bandage	Băng Vải	+1 HP khi lá tính điểm.	A rolled linen bandage tied with a green cord on a mossy expedition table, forest ruins behind	2
+basic_herb	Rễ Sinh Lực	+2 HP khi lá tính điểm.	One thick medicinal root with two green leaves in a wooden bowl on a forest camp stone	3
+basic_salve	Hộp Cao Lành	+3 HP khi lá tính điểm.	An open bronze tin of emerald healing salve with a wooden applicator at a ruined forest infirmary	4
+basic_plate	Tấm Sắt	+2 Giáp khi lá tính điểm.	One simple curved iron armor plate with two rivets resting on stone in a snowy western mountain forge	2
+basic_leather	Da Thuộc	+4 Giáp khi lá tính điểm.	A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp	3
+basic_chain	Khoanh Xích	+6 Giáp khi lá tính điểm.	A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette	4
+basic_lace	Dây Giày	+1 Tốc đánh cho lá được gắn.	One pair of braided silver blue boot laces laid in a clear loop on a coastal expedition stone	3
+basic_spur	Đinh Thúc	+2 Tốc đánh cho lá được gắn.	A single steel riding spur with a small star wheel and leather strap on a glacial pass camp rock	5
+basic_feather	Lông Gió	+3 Tốc đánh cho lá được gắn.	One long silver feather pinned in a simple bronze clasp on a high forest cliff, subtle horizontal breeze	7
+basic_pouch	Túi Đồng	+1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One small worn brown leather coin purse with a few antique copper coins on a desert caravan table	5
+basic_weight	Quả Cân	+2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One large brass merchant scale weight beside two antique coins on a bone gold desert market slab	10
+basic_stamp	Con Dấu Buôn	+3 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post	15
+crafted_guard	Áo Hộ Mệnh	+2 HP · +4 Giáp khi lá tính điểm.	A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone	6
+crafted_runner	Ủng Hồi Sức	+3 HP · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.	One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail	8
+crafted_bulwark	Giáp Hành Quân	+6 Giáp · +3 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.	One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass	11
+crafted_medic	Túi Quân Y	+4 HP · +1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One large open leather field medic satchel showing a bronze salve tin, linen rolls and a tiny coin pocket in a forest infirmary	12
+crafted_caravan	Khiên Thương Đội	+8 Giáp · +2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones	17
+crafted_courier	La Bàn Giao Thương	+4 Tốc đánh · +3 Vàng. Tốc khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.	One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters	26

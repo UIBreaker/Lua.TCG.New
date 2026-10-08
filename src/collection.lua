@@ -209,6 +209,7 @@ local function buildItems(category, packFilter)
         for _, pool in ipairs({Equipment.POOL, Equipment.SOUL_POOL}) do
             for _, id in ipairs(pool or {}) do equipmentIds[#equipmentIds+1] = id end
         end
+        for _,eq in ipairs(require("src.basic_equipment").definitions) do equipmentIds[#equipmentIds+1]=eq.id end
         for _, id in ipairs(equipmentIds) do
             local eq = Equipment.ITEMS[id]
             if eq and not seen[eq.id or id] then

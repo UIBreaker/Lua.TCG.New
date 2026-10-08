@@ -463,6 +463,16 @@ function Shop.refresh(shop, gameState)
         end
     end
 
+    -- Four distinct basic offers plus two finite discounted offers per stock refresh.
+    local basics=require("src.basic_equipment").basic
+    local candidates={};for _,id in ipairs(basics) do candidates[#candidates+1]=id end
+    for slot=1,6 do
+        local pick=Rng.random(#candidates);local eq=Equipment.ITEMS[table.remove(candidates,pick)]
+        local sale=slot>4;local cost=sale and math.max(1,math.floor(eq.cost*.65)) or eq.cost
+        shop.items[#shop.items+1]={section=sale and "discount" or "basic",bay= sale and slot-4 or slot,
+            category="equipment",equipment=eq,name=eq.name,desc=eq.desc,color=eq.color,cost=cost,
+            originalCost=eq.cost,backpack=true,sale=sale,subtitle=eq.name}
+    end
     -- Each freshly generated shop reroll gets its edition chance once.
     for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
     Shop.applyVoucherStock(shop, gameState)
@@ -575,6 +585,11 @@ function Shop.buyItem(shop, itemIndex, gameState)
         local eq = item.equipment
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
+        if item.backpack then
+            gameState.backpackEquipment=gameState.backpackEquipment or {}
+            table.insert(gameState.backpackEquipment,eq.id)
+            return true,"Đã cất "..eq.name.." vào balo."
+        end
         return true, "open_socketing", eq
 
     elseif item.category == "card" then

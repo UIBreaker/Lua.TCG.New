@@ -75,7 +75,18 @@ function D.resolve(item,game)
         if game then for slot,c in pairs(game.deities or {}) do if c==item and Boss.isSlotLocked(game,"spn",slot) then text=text.."\nÔ SPN BỊ KHÓA trong tay này." end end end
         return item.name,text
     end
-    if Equipment.ITEMS[item.id] then return item.name,"ITM · "..Equipment.getDescription(item) end
+    if Equipment.ITEMS[item.id] then
+        local text="ITM · "..Equipment.getDescription(item)
+        if item.basic then
+            for _,recipe in ipairs(require("src.basic_equipment").recipes) do
+                for i,id in ipairs(recipe.ingredients) do if id==item.id then
+                    text=text.."\nGhép với "..Equipment.ITEMS[recipe.ingredients[i==1 and 2 or 1]].name.." → "..Equipment.ITEMS[recipe.id].name.."; công ghép "..recipe.fee.." Vàng."
+                end end
+            end
+        end
+        if item.basic or item.crafted then text=text.."\nChiếm 1 hốc. Gắn/tháo miễn phí trong balo; tháo trước khi dùng làm nguyên liệu." end
+        return item.name,text
+    end
     if item.category=="evolution" or item.id=="cons_evolution" then
         return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +1 cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
     end

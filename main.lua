@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-backpack" then local ok,err=pcall(require,"tests.backpack_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a == "--capture-continental52" then require("tests.continental52_capture");return end
     if a == "--test-continental52-regressions" then
         io.stdout:setvbuf("no");local failed=false
@@ -69,6 +70,7 @@ local Sound = require("src.sound")
 local UI = require("src.ui")
 UI.Inventory=require("src.inventory")
 UI.InventoryRail=require("ui.inventory_rail")
+UI.Backpack=require("ui.backpack")
 local Motion = require("src.motion")
 local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
@@ -286,12 +288,10 @@ local monsterMotion = { attack = 0, hit = 0 }
 
 local function getDeitySlotRect(i, currentState)
     currentState = currentState or state
-    if currentState=="playing" or currentState=="scoring" or currentState=="shop" then
+    if currentState=="shop" then return UI.Backpack.rect("spn",i,game) end
+    if currentState=="playing" or currentState=="scoring" then
         local localIndex,visible=UI.InventoryRail.localIndex("spn",i,game)
         if not localIndex then return -10000,-10000,1,1 end
-        if currentState=="shop" then
-            return 1042+((localIndex-1)%3)*72,112+math.floor((localIndex-1)/3)*106,64,88
-        end
         return Layout.fanCardRect(Layout.battle.spm,localIndex,visible)
     end
     return 295+(i-1)*96,32,82,118
@@ -530,10 +530,10 @@ local function spawnShopFx(kind, item, x, y, w, h)
 end
 
 local function getConsumableSlotRect(i,currentState)
-    if currentState=="playing" or currentState=="scoring" or currentState=="shop" then
+    if currentState=="shop" then return UI.Backpack.rect("consumable",i,game) end
+    if currentState=="playing" or currentState=="scoring" then
         local localIndex,visible=UI.InventoryRail.localIndex("consumable",i,game)
         if not localIndex then return -10000,-10000,1,1 end
-        if currentState=="shop" then return 1042+(localIndex-1)*72,358,64,88 end
         return Layout.fanCardRect(Layout.battle.consumables,localIndex,visible)
     end
     return 295+(i-1)*96,32,82,118
@@ -1011,6 +1011,7 @@ local function beginPlayerDefeat(played)
     state = "defeating"
     buttons = {}
     screenShake = 0
+    UI.Backpack.close()
     isPauseMenuOpen, isSettingsOpen, isDeckViewerOpen, isHandbookOpen = false, false, false, false
     inspectCardModal = nil
     UI.CardPhysics.release()
@@ -5886,103 +5887,6 @@ local function drawShopState()
     local hoveredShopItem = nil
     hoveredDeityTooltip = nil
 
-    -- SPM and consumables live in a compact right-side rail.
-    local deiCount = Deities.getCount(game.deities)
-    local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
-    local firstDei,lastDei=UI.InventoryRail.range("spn",game)
-    local firstCon,lastCon=UI.InventoryRail.range("consumable",game)
-    local deiSlotW = 64
-    local deiSlotH = 88
-    local deiGap = 14
-    local deiStartX = 1042
-    local deiSlotY = 112
-
-    UI.drawGildedPanel(deiStartX - 14, 73, 239, 248)
-
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print("SPN (" .. deiCount .. "/" .. maxDeiSlots .. ")", deiStartX + 4, 82)
-
-    for i = firstDei, lastDei do
-        local sx, sy, deiSlotW, deiSlotH = getDeitySlotRect(i, "shop")
-        local d = game.deities and game.deities[i]
-        local isDeiDragged = (deityDrag.active and deityDrag.isDragging and deityDrag.deityIndex == i)
-        local isDeiHovered = (mx >= sx and mx <= sx + deiSlotW and my >= sy and my <= sy + deiSlotH)
-        local isDropTarget = (deityDrag.active and deityDrag.isDragging and isDeiHovered and deityDrag.deityIndex ~= i)
-
-        if d then
-            if isDeiHovered and not (deityDrag.active and deityDrag.isDragging) then
-                hoveredDeityTooltip = d
-                d.slotIndex = i
-            end
-
-            local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
-            love.graphics.push()
-            love.graphics.translate(sx + deiSlotW / 2, sy + deiSlotH / 2 + math.sin(((juice and juice.ambientTimer) or 0) * 1.15 + i * 0.72) * 2)
-            love.graphics.rotate(math.sin(((juice and juice.ambientTimer) or 0) * 0.75 + i) * 0.008)
-            love.graphics.translate(-sx - deiSlotW / 2, -sy - deiSlotH / 2)
-            if not UI.Polish.hiddenOwned(d) then
-                UI.drawPatronCard(d, sx, sy, deiSlotW, deiSlotH, isDeiHovered, juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
-            end
-            if pendingEvolutionCard then
-                love.graphics.setLineWidth(2.5)
-                love.graphics.setColor(0.84, 0.68, 1, 0.95)
-                UI.drawCardBorder(sx, sy, deiSlotW, deiSlotH, UI.COLORS.goldYellow, nil, d)
-            end
-            love.graphics.pop()
-
-            -- Drag the whole card to reorder it or offer it at the altar.
-            local btnDei = {
-                id = "deity_" .. i,
-                text = "",
-                x = sx,
-                y = sy,
-                w = deiSlotW,
-                h = deiSlotH,
-                invisible = true,
-                deityIndex = i,
-            }
-            table.insert(buttons, btnDei)
-        else
-            love.graphics.setColor(0.09, 0.11, 0.13, isDropTarget and 0.85 or 0.6)
-            UI.drawRoundedRect("fill", sx, sy, deiSlotW, deiSlotH, 6)
-            love.graphics.setLineWidth(isDropTarget and 2.5 or 1)
-            love.graphics.setColor(isDropTarget and UI.COLORS.hpGreen or { 0.25, 0.28, 0.35, 0.5 })
-            UI.drawRoundedRect("line", sx, sy, deiSlotW, deiSlotH, 6)
-            if isDropTarget then
-                love.graphics.setFont(UI.fonts.tiny)
-                love.graphics.setColor(UI.COLORS.hpGreen)
-                love.graphics.printf("THẢ VÀO\nĐÂY", sx + 4, sy + deiSlotH / 2 - 14, deiSlotW - 8, "center")
-            else
-                love.graphics.setFont(UI.fonts.large)
-                love.graphics.setColor(0.28, 0.32, 0.38, 0.5)
-                love.graphics.printf("+", sx, sy + deiSlotH / 2 - 18, deiSlotW, "center")
-            end
-        end
-    end
-
-    -- Consumables (0/2)
-    local conStartX = 1042
-    local conSlotW = 64
-    local conSlotH = 88
-    local conGap = 14
-    UI.drawGildedPanel(conStartX - 14, 318, 239, 145, { 0.45, 0.85, 0.65, 1 })
-
-    game.consumables = game.consumables or {}
-    local conCount = #game.consumables
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor({ 0.45, 0.85, 0.65, 1 })
-    love.graphics.print("TIÊU HAO (" .. conCount .. "/"..UI.Inventory.limit(game)..")", conStartX + 4, 327)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.printf(UI.InventoryRail.hint("spn",game),1042,99,210,"right")
-    love.graphics.printf(UI.InventoryRail.hint("consumable",game),1042,344,210,"right")
-
-    for i = firstCon, lastCon do
-        local cx, cy = getConsumableSlotRect(i, "shop")
-        local c = game.consumables[i]
-        drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, i, mx, my)
-    end
-
     ----------------------------------------------------------------------------
     -- 3. MAIN SHOP BOARD (Upper: Cards On Sale | Lower: Voucher & Packs)
     ----------------------------------------------------------------------------
@@ -6054,17 +5958,12 @@ local function drawShopState()
         shopData, game, buttons, shopDrag, mx, my, juice.ambientTimer)
 
     ----------------------------------------------------------------------------
-    -- Deck is now a viewer, not a purchase drop target.
-    local deck = shopDrag.purchaseZone
-    local isDeckHovered = mx >= deck.x and mx <= deck.x+deck.w and my >= deck.y and my <= deck.y+deck.h
-    UI.components.DeckCounter.draw(deck.x,deck.y,deck.w,deck.h,#(game.deck or {}),#(game.persistentDeck or {}),UI.fonts,isDeckHovered)
-    table.insert(buttons,{id="open_deck_viewer",text="",x=deck.x,y=deck.y,w=deck.w,h=deck.h,invisible=true})
-    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("NHẤP ĐỂ XEM BỘ BÀI", deck.x-20,deck.y+deck.h+6,deck.w+40,"center")
-    love.graphics.setFont(UI.fonts.small);love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("GIAO DỊCH",1125,520,130,"center")
-    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Quân bài: dùng\nLá Tiêu Hủy để\nnhận linh hồn.\nSPN / tiêu hao:\nchọn để bán.",1125,556,130,"center")
+    local bagButton={id="open_backpack",text="BALO VIỄN CHINH",x=1028,y=600,w=238,h=95,color=UI.COLORS.btnSpecial,font=UI.fonts.small}
+    buttons[#buttons+1]=bagButton
+    UI.drawButton(bagButton,mx>=1028 and mx<=1266 and my>=600 and my<=695)
+    UI.Backpack.icon(1045,620,32,45)
+    love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.goldYellow)
+    love.graphics.printf(tostring(game.gold or 0).." Vàng · "..#(game.persistentDeck or {}).." lá bài",1036,671,222,"center")
     if hoveredShopItem then UI.descriptionCandidate = hoveredShopItem end
 
     ----------------------------------------------------------------------------
@@ -6580,6 +6479,10 @@ function love.draw()
     if state == "chest" or state == "treasure" then drawChestReveal() end
     UI.CardPhysics.resume()
 
+    if state=="shop" and UI.Backpack.open then
+        local bx,by=toVirtual(love.mouse.getPosition())
+        UI.Backpack.draw(UI,game,buttons,bx,by,drawConsumableSlot)
+    end
     if isDeckViewerOpen then
         UI.CardPhysics.blockBehind()
         drawDeckViewerModal()
@@ -7015,6 +6918,8 @@ local function handleShopMousepressed(mx, my, button)
             elseif btn.id == "reroll" then
                 UI.Polish.reroll(shopData, game)
                 return true
+            elseif btn.id == "open_backpack" then
+                UI.Backpack.show();Sound.play("card_deal");return true
             elseif btn.id == "open_shop_transfer" then
                 isShopTransferOpen = true
                 transferSourceCard = nil
@@ -7664,6 +7569,39 @@ local function handleModalsMousepressed(mx, my, button)
     return false
 end
 
+UI.Backpack.handle=function(mx,my,button)
+    UI.Backpack.mouse(UI,game,buttons,mx,my,button,{
+        save=saveRunAtSafePoint,inspect=function(c) inspectCardModal=c end,
+        cancel=function() pendingEditionCard=nil end,
+        activate=function(i)
+            if activateConsumable(i,"shop") then
+                UI.Backpack.close()
+                if pendingEditionCard then
+                    UI.Backpack.show();UI.Backpack.tab="cards"
+                    UI.Backpack.message="Chọn lá bài để áp dụng Ấn Bản; có thể chuyển sang ngăn SPN."
+                end
+            end
+        end,
+        target=function(c)
+            if not pendingEditionCard then return false end
+            local storedIndex
+            for i,item in ipairs(game.consumables or {}) do if item==pendingEditionCard then storedIndex=i;break end end
+            if not storedIndex then pendingEditionCard=nil;UI.Backpack.message="Thẻ Ấn Bản không còn trong balo.";return true end
+            if not Shop.applyEdition(c,pendingEditionCard.edition) then
+                UI.Backpack.message="Ấn Bản này cần lá bài có bậc và chất.";return true
+            end
+            if c.rank then
+                for _,pile in ipairs({game.hand or {},game.deck or {},game.discardPile or {}}) do
+                    for _,copy in ipairs(pile) do if copy.id==c.id then Shop.applyEdition(copy,pendingEditionCard.edition) end end
+                end
+            end
+            table.remove(game.consumables,storedIndex)
+            UI.Abilities.consumableUsed(game);pendingEditionCard=nil
+            UI.Backpack.message="Đã áp dụng Ấn Bản.";Sound.play("round_win");saveRunAtSafePoint();return true
+        end,
+    })
+end
+
 function love.mousepressed(x, y, button, istouch)
     if istouch then return end
     Touch.mouseInput()
@@ -7685,11 +7623,17 @@ function love.mousepressed(x, y, button, istouch)
                     socketingReturnState="shop";state="socketing";saveRunAtSafePoint()
                 elseif type(action)=="number" then
                     isDeckViewerOpen=false;saveRunAtSafePoint()
+                else
+                    saveRunAtSafePoint()
                 end
             end)
             return
         end
         UI.Polish.clearFocus()
+    end
+    if state=="shop" and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
+        UI.Backpack.handle(mx,my,button)
+        return
     end
     if UI.CardPhysics.isLabOpen() then
         UI.CardPhysics.press(mx, my, button)
@@ -8339,6 +8283,7 @@ function love.keypressed(key)
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if Renderer.keypressed(key) then return end
     if state == "shop" and UI.Polish.busy() then return end
+    if key=="escape" and state=="shop" and UI.Backpack.open and not inspectCardModal then UI.Backpack.close();pendingEditionCard=nil;return end
     if key == "escape" and UI.Polish.focus then UI.Polish.clearFocus();UI.Description.reset();return end
     if (key == "tab" or key == "b" or key == "h") and UI.Polish.focus then UI.Polish.clearFocus() end
     if UI.AbilityUI.key(key) then return end

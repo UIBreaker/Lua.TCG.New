@@ -3445,3 +3445,150 @@ Source: `src/chest_depth.lua`; mode: built-in image_gen
 ## Playing cards — v2
 
 [Bộ 52 chân dung v2 và prompt riêng](CONTINENTAL_52_PROMPTS.md)
+
+
+# Basic equipment and crafted equipment — backpack shop
+
+## itm / basic_bandage — Băng Vải
+
+Ability: +1 HP khi lá tính điểm.
+
+Concept: A rolled linen bandage tied with a green cord on a mossy expedition table, forest ruins behind
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Băng Vải. Actual ability: +1 HP. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: A rolled linen bandage tied with a green cord on a mossy expedition table, forest ruins behind. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_herb — Rễ Sinh Lực
+
+Ability: +2 HP khi lá tính điểm.
+
+Concept: One thick medicinal root with two green leaves in a wooden bowl on a forest camp stone
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Rễ Sinh Lực. Actual ability: +2 HP. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: One thick medicinal root with two green leaves in a wooden bowl on a forest camp stone. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_salve — Hộp Cao Lành
+
+Ability: +3 HP khi lá tính điểm.
+
+Concept: An open bronze tin of emerald healing salve with a wooden applicator at a ruined forest infirmary
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Hộp Cao Lành. Actual ability: +3 HP. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: An open bronze tin of emerald healing salve with a wooden applicator at a ruined forest infirmary. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_plate — Tấm Sắt
+
+Ability: +2 Giáp khi lá tính điểm.
+
+Concept: One simple curved iron armor plate with two rivets resting on stone in a snowy western mountain forge
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Tấm Sắt. Actual ability: +2 Giáp. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: One simple curved iron armor plate with two rivets resting on stone in a snowy western mountain forge. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_leather — Da Thuộc
+
+Ability: +4 Giáp khi lá tính điểm.
+
+Concept: A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Da Thuộc. Actual ability: +4 Giáp. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: A folded heavy brown hide armor pad with broad stitched seams at a windswept coastal camp. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_chain — Khoanh Xích
+
+Ability: +6 Giáp khi lá tính điểm.
+
+Concept: A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, single primary tangible physical equipment subject in foreground, strong large readable silhouette, quiet atmospheric western ruins behind, subdued cinematic rim light and controlled glow, matches Continental relic cards. Plain practical basic expedition equipment, NOT an elaborate supernatural relic. No text, letters, numbers, frame, borders, UI, logo, watermark, East Asian designs, palace roofs, tiny ornament or particle noise. Item identity: Khoanh Xích. Actual ability: +6 Giáp. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Composition: A tightly coiled length of thick steel chain on a frost dusted anvil, clear circular silhouette. Object occupies 65 percent of image, read at 56px wide. Carefully painted leather/metal/linen textures, ancient practical handmade craft, no painted playing cards.
+
+## itm / basic_lace — Dây Giày
+
+Ability: +1 Tốc đánh cho lá được gắn.
+
+Concept: One pair of braided silver blue boot laces laid in a clear loop on a coastal expedition stone
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Dây Giày. Actual ability: +1 Tốc đánh. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Concept: One pair of braided silver blue boot laces laid in a clear loop on a coastal expedition stone.
+
+## itm / basic_spur — Đinh Thúc
+
+Ability: +2 Tốc đánh cho lá được gắn.
+
+Concept: A single steel riding spur with a small star wheel and leather strap on a glacial pass camp rock
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Đinh Thúc. Actual ability: +2 Tốc đánh. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Concept: A single steel riding spur with a small star wheel and leather strap on a glacial pass camp rock.
+
+## itm / basic_feather — Lông Gió
+
+Ability: +3 Tốc đánh cho lá được gắn.
+
+Concept: One long silver feather pinned in a simple bronze clasp on a high forest cliff, subtle horizontal breeze
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Lông Gió. Actual ability: +3 Tốc đánh. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Concept: One long silver feather pinned in a simple bronze clasp on a high forest cliff, subtle horizontal breeze.
+
+## itm / basic_pouch — Túi Đồng
+
+Ability: +1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One small worn brown leather coin purse with a few antique copper coins on a desert caravan table
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Túi Đồng. Actual ability: +1 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Concept: One small worn brown leather coin purse with a few antique copper coins on a desert caravan table.
+
+## itm / basic_weight — Quả Cân
+
+Ability: +2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One large brass merchant scale weight beside two antique coins on a bone gold desert market slab
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Quả Cân. Actual ability: +2 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Concept: One large brass merchant scale weight beside two antique coins on a bone gold desert market slab.
+
+## itm / basic_stamp — Con Dấu Buôn
+
+Ability: +3 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail. One primary tangible physical equipment object, plain practical handmade basic equipment, NOT elaborate magical relic. Large clear silhouette occupying 65 percent of frame, quiet western expedition background, restrained cinematic lighting, readable at 56px. Match Continental relic cards: glacial blue or coastal navy for speed, desert bone gold and antique bronze for economy. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian motifs, dense ornament or particles. Item: Con Dấu Buôn. Actual ability: +3 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Concept: One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post.
+
+## itm / crafted_guard — Áo Hộ Mệnh
+
+Ability: +2 HP · +4 Giáp khi lá tính điểm.
+
+Concept: A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: Áo Hộ Mệnh. Actual ability: +2 HP · +4 Giáp. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Unique composition: A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone.
+
+## itm / crafted_runner — Ủng Hồi Sức
+
+Ability: +3 HP · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+
+Concept: One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: Ủng Hồi Sức. Actual ability: +3 HP · +2 Tốc đánh. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Unique composition: One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail.
+
+## itm / crafted_bulwark — Giáp Hành Quân
+
+Ability: +6 Giáp · +3 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.
+
+Concept: One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: Giáp Hành Quân. Actual ability: +6 Giáp · +3 Tốc đánh. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm.. Unique composition: One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass.
+
+## itm / crafted_medic — Túi Quân Y
+
+Ability: +4 HP · +1 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One large open leather field medic satchel showing a bronze salve tin, linen rolls and a tiny coin pocket in a forest infirmary
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: Túi Quân Y. Actual ability: +4 HP · +1 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Unique composition: One large open leather field medic satchel showing a bronze salve tin, linen rolls and a tiny coin pocket in a forest infirmary.
+
+## itm / crafted_caravan — Khiên Thương Đội
+
+Ability: +8 Giáp · +2 Vàng khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: Khiên Thương Đội. Actual ability: +8 Giáp · +2 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Unique composition: One broad iron caravan shield with a central brass weight shaped boss and short chain, on desert caravan stones.
+
+## itm / crafted_courier — La Bàn Giao Thương
+
+Ability: +4 Tốc đánh · +3 Vàng. Tốc khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.
+
+Concept: One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters
+
+Prompt: Create ONE production game card illustration, PNG full bleed portrait 2:3 1024x1536. Cinematic Dark-Fantasy Expedition, Western fantasy mysterious continent, painterly cinematic realism, medium detail, one primary tangible physical crafted expedition equipment, large readable silhouette occupying 65 percent of frame, quiet atmospheric western ruins or expedition environment. Carefully make the craft visibly combine its practical components, stout usable leather/metal construction rather than an abstract glowing gem. Controlled rim light and restrained magic, readable at 56px. Continental relic card palette forest green, glacial blue, coastal navy, bone gold desert and antique bronze as the environment requires. No text, letters, numbers, frames, borders, UI, logos, painted playing cards, East Asian designs, dense tiny ornament or particle noise. Item: La Bàn Giao Thương. Actual ability: +4 Tốc đánh · +3 Vàng. Tốc áp dụng khi gắn; chỉ số khác khi lá tính điểm. Các trang bị cơ bản/ghép: tối đa 6 Vàng mỗi tay.. Unique composition: One large antique bronze merchant compass with a silver feather needle and wax seal, on a coastal expedition map without letters.

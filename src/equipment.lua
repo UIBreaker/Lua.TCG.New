@@ -214,4 +214,5 @@ function Equipment.attach(card, equipItem)
     return true, "Đã gắn " .. equipItem.name .. " vào lá " .. (card.rankName or "") .. (card.suitSymbol or "")
 end
 
+for _,item in ipairs(require("src.basic_equipment").definitions) do Equipment.ITEMS[item.id]=item end
 return Equipment

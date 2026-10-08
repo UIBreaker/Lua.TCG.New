@@ -35,6 +35,12 @@ local function panel(x, y, w, h, title, note, accent)
 end
 
 local function price(item, x, y, w, affordable)
+    if item.sale then
+        love.graphics.setColor(0.20,0.15,0.065,1)
+        UI.drawRoundedRect("fill",x-15,y,w+30,21,5)
+        text("$"..item.originalCost.." → $"..item.cost,x-15,y+3,w+30,UI.fonts.tiny,affordable and C.gold or C.red,"center")
+        return
+    end
     love.graphics.setColor(affordable and { 0.20, 0.16, 0.09, 1 } or C.inset)
     UI.drawRoundedRect("fill", x + (w - 54) / 2, y, 54, 21, 5)
     text(item.currency=="souls" and (item.cost.." LH") or ("$"..item.cost), x, y + 2, w, UI.fonts.small, affordable and C.gold or C.red, "center")
@@ -116,6 +122,7 @@ local function art(item, x, y, w, h, hovered, mx, my)
             ticket(item, 0, 0, w, h, hovered)
         end
     end
+    if item.backpack and item.equipment then require("ui.backpack").stats(UI,item.equipment,0,0,w,h) end
     love.graphics.pop()
 end
 
@@ -133,6 +140,9 @@ local function privilege(item, x, y, w, h, hovered, affordable)
 end
 privilege = UI.CardPhysics.wrap(privilege, nil, 6)
 local function position(item,index,packIndex)
+    if item.section=="basic" or item.section=="discount" then
+        return 1044+((item.bay-1)%2)*110,(item.section=="basic" and 148 or 462)+math.floor((item.bay-1)/2)*130,56,84
+    end
     if item.section=="upper" then return 67+((retailOrder[item.category] or index)-1)*186,151,118,176 end
     if item.category=="voucher" or item.category=="book" then return 48,422,218,186 end
     if item.category=="pack" then return 318+(packIndex-1)*134,435,112,158 end
@@ -247,6 +257,8 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
     panel(32, 88, 961, 268, "HÀNG TUYỂN CHỌN", "Nhấp chọn hàng → MUA · Rê chuột xem chi tiết", C.cyan)
     panel(32, 368, 250, 256, "ĐẶC QUYỀN", "Mua một lần · Hiệu lực suốt run", C.gold)
     panel(294, 368, 699, 256, "KHO RƯƠNG", "Thế đánh · Ba rương ngẫu nhiên · Ấn bản khi xuất hiện", C.purple)
+    panel(1024,76,242,313,"TRANG BỊ CƠ BẢN","Mua vào balo · Ghép hoặc gắn",C.green)
+    panel(1024,394,242,190,"HÀNG GIẢM GIÁ","Giá cũ → giá hôm nay",C.gold)
     UI.Polish.ensureShop(shop)
     local hoveredItem
     local packIndex = 0

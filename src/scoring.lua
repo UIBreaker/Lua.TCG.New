@@ -40,6 +40,8 @@ Damage to Monster = Score * (1 + Total Extra Damage Pct)
 ]]
 
 function Scoring.calculate(handInfo, deities, context)
+    context=context or {}
+    context.basicEquipmentGold=0
     Depth.begin(context)
     if context then context.depthHandType=handInfo.type.id end
     local abilityGame = context and context.gameState
@@ -527,7 +529,7 @@ function Scoring.calculate(handInfo, deities, context)
                         local res = eq.onCardScore(card, handInfo.scoringCards, idx, context)
                         if res then
                             local pc, pm, px, pd = cardEvent.addedChips, cardEvent.addedMult, xMultBonus, totalExtraDamagePct
-                            local eqMult = isDiamond(card) and 1.5 or 1.0
+                            local eqMult = (not eq.basic and not eq.crafted and isDiamond(card)) and 1.5 or 1.0
                             if res.addChips then
                                 local c = math.floor(res.addChips * eqMult)
                                 bonusChips = bonusChips + c

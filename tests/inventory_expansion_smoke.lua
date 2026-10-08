@@ -40,10 +40,11 @@ end
 -- Scroll reveals higher logical indices without shrinking or moving the panels.
 Rail.offsets={spn=0,consumable=0}
 assert(Rail.localIndex("spn",1,g)==1 and not Rail.localIndex("spn",7,g))
-assert(Rail.scroll(g,"shop",1100,200,-1) and Rail.localIndex("spn",7,g)==1)
-assert(Rail.scroll(g,"shop",1100,400,-1) and Rail.localIndex("consumable",4,g)==1)
-assert(Rail.canSwipe(g,"shop",1100,400),"expanded inventory accepts touch swipe")
-assert(not Rail.canSwipe(g,"shop",100,400),"swipe outside inventory does not hijack card gestures")
+assert(not Rail.scroll(g,"shop",1100,200,-1),"shop rail replaced by backpack")
+assert(Rail.scroll(g,"playing",1100,200,-1) and Rail.localIndex("spn",7,g)==1)
+assert(Rail.scroll(g,"playing",1100,400,-1) and Rail.localIndex("consumable",4,g)==1)
+assert(Rail.canSwipe(g,"playing",1100,400),"battle inventory accepts touch swipe")
+assert(not Rail.canSwipe(g,"playing",100,400),"swipe outside inventory does not hijack card gestures")
 Rail.reveal("consumable",203,g);assert(Rail.localIndex("consumable",203,g)==3)
 Rail.reveal("spn",205,g);assert(Rail.localIndex("spn",205,g)==6)
 -- All six normal-shop utility offers are obtainable.

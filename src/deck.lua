@@ -342,7 +342,9 @@ function Deck.getCardAttackSpeed(card)
     if not card then return 1 end
     local base = Deck.getAttackSpeed(card.rank)
     card.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
-    card.attackSpeed = math.max(1, math.min(999, base + card.speedBonus + (card.temporarySpeedBonus or 0)))
+    local equipmentSpeed=0
+    for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
+    card.attackSpeed = math.max(1, math.min(999, base + card.speedBonus + (card.temporarySpeedBonus or 0) + equipmentSpeed))
     return card.attackSpeed
 end
 

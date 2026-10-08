@@ -108,6 +108,7 @@ function P.confirm(shop,game,done)
         require("ui.inventory_rail").reveal("consumable",#game.consumables,game)
         local x,y,w,h=require("src.ui").getConsumableSlotRect(#game.consumables,"shop");target={x=x+w/2,y=y+h/2}
     end
+    if kind=="buy" and (f.item.backpack or target and target.x<0) then target={x=1147,y=640} end
     P.job={kind=kind,age=0,duration=Config[kind],item=f.item,rect=f.rect,target=target,button=b,
         items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
         soul=soulTransaction,acquired=acquired,gold=gold,

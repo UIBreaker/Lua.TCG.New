@@ -8,12 +8,21 @@ local DescriptionView = require("ui.components.card_description")
 local D = {}
 local hoverItem, hoverAge, offered = nil, 0, false
 local scrollOffset,lastLayout,lastExpanded=0,nil,nil
+local activeCandidate,anchorX,anchorY,lastContext
 function D.update(dt)
     hoverAge = hoverAge + dt
 end
-function D.reset() hoverItem=nil;hoverAge=0;scrollOffset=0;lastLayout=nil end
+function D.reset()
+    hoverItem=nil;hoverAge=0;scrollOffset=0;lastLayout=nil;lastExpanded=nil
+    activeCandidate=nil;anchorX=nil;anchorY=nil;lastContext=nil
+end
+function D.candidate(item,context)
+    if context~=lastContext then D.reset();lastContext=context end
+    if lastLayout and love.keyboard.isDown("lshift","rshift") then return activeCandidate end
+    return item
+end
 function D.wheelmoved(y)
-    if not lastLayout or lastLayout.maxScroll<=0 then return false end
+    if not lastLayout or not love.keyboard.isDown("lshift","rshift") then return false end
     scrollOffset=math.max(0,math.min(lastLayout.maxScroll,scrollOffset-y*42))
     return true
 end
@@ -117,7 +126,7 @@ function D.draw(UI,item,mx,my,game)
     if not item or item.faceDown then return end
     offered=true
     local key=item.hoverKey or item.card or item.deity or item.equipment or item
-    if key~=hoverItem then hoverItem=key;hoverAge=0;scrollOffset=0;lastLayout=nil end
+    if key~=hoverItem then hoverItem=key;hoverAge=0;scrollOffset=0;lastLayout=nil;anchorX=nil;anchorY=nil end
     if hoverAge < require("config.ux_polish_config").hoverDelay then return end
     local title,body=D.resolve(item,game)
     local expanded=love.keyboard.isDown("lshift","rshift")
@@ -125,6 +134,7 @@ function D.draw(UI,item,mx,my,game)
     local model=DescriptionView.model(item,title,body,expanded)
     local layout=DescriptionView.layout(model,UI.fonts)
     lastLayout=layout
+    activeCandidate=item
     local w,h=layout.w*layout.scale,layout.h*layout.scale
     local surface=UI.CardPhysics.getState(key) or UI.CardPhysics.getState(item)
     local r=surface and UI.Polish and UI.Polish.rect(UI,item)
@@ -133,6 +143,10 @@ function D.draw(UI,item,mx,my,game)
     local left=r and r.x-w-24 or mx-w-16
     local x=math.max(10,math.min(1270-w,right+w<=1270 and right or left))
     local y=math.max(10,math.min(710-h,my+14))
+    if expanded and anchorX then
+        x=math.max(10,math.min(1270-w,anchorX));y=math.max(10,math.min(710-h,anchorY))
+    end
+    anchorX,anchorY=x,y
     DescriptionView.draw(model,layout,x,y,scrollOffset)
 end
 return D

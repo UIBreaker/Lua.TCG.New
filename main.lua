@@ -6613,9 +6613,12 @@ function love.draw()
     end
     love.graphics.pop()
 
-    if UI.descriptionCandidate and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and UI.Polish.tooltipAllowed(UI.descriptionCandidate)
+    local descriptionContext=inspectCardModal or isSettingsOpen and "settings" or isPauseMenuOpen and "pause"
+        or isHandbookOpen and "handbook" or isCollectionOpen and "collection" or isDeckViewerOpen and "deck" or state
+    local descriptionCandidate=UI.Description.candidate(UI.descriptionCandidate,descriptionContext)
+    if descriptionCandidate and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and UI.Polish.tooltipAllowed(descriptionCandidate)
         and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
-        UI.Description.draw(UI, UI.descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
+        UI.Description.draw(UI, descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
     UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
     UI.Description.finishFrame()
@@ -8523,11 +8526,11 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if UI.Description.wheelmoved(y) then return end
     if state=="shop" and UI.Backpack.open and not inspectCardModal and not isSettingsOpen then
         local mx,my=toVirtual(love.mouse.getPosition())
         if UI.Backpack.wheel(mx,my,y) then return end
     end
-    if UI.Description.wheelmoved(y) then return end
     if (state=="shop" or state=="playing") and not isCollectionOpen and not isDeckViewerOpen
         and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen
         and not (shopData and shopData.currentPackOpening) and not UI.Polish.busy() then

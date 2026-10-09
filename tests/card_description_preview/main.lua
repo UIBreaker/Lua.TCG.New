@@ -55,13 +55,17 @@ function love.load()
         local model=View.model(item,title,body)
         local layout=View.layout(model,UI.fonts)
         assert(layout.h*layout.scale<=680.001,"description must fit viewport")
+        assert(layout.maxScroll==0,"default mode shows complete content without scrolling")
         for i,row in ipairs(model.rows) do
+            assert(row.kind~="rules","global ability rules are omitted from default tooltips")
+            local bounds=layout.rows[i]
+            assert(bounds.x+bounds.w<=layout.w and bounds.y+bounds.h<=layout.viewportH+0.001,"all default rows visible inside the panel")
             local font=row.kind=="rules" and layout.referenceFont or (row.kind=="stats" or row.kind=="sockets") and layout.labelFont or layout.font
             if row.kind=="equipment" then
-                local _,lines=font:getWrap(row.text,layout.w-88)
+                local _,lines=font:getWrap(row.text,bounds.w-88)
                 assert(layout.rows[i].h>=26+layout.rows[i].nameH+#lines*(font:getHeight()+2)+10,"equipment name and full effect fit")
             else
-                local _,lines=font:getWrap(row.text,layout.w-40)
+                local _,lines=font:getWrap(row.text,bounds.w-40)
                 assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(font:getHeight()+2)+8,"no clipped prose")
             end
         end
@@ -80,6 +84,7 @@ function love.load()
     assert(foundEquipment and additions and additions:find("Dấu ấn",1,true),"equipment has its own tier/slot row; modifiers remain visible")
     local title,body=Description.resolve(modified)
     local expanded=View.model(modified,title,body,true)
+    for _,row in ipairs(expanded.rows) do assert(row.kind~="rules","global ability rules are also omitted from Shift details") end
     assert(#expanded.rows>#longModel.rows,"secondary information available on Shift")
     local stats,role=longModel.stats~=nil,false
     for _,row in ipairs(longModel.rows) do
@@ -107,27 +112,34 @@ function love.load()
     local equipmentCount=0
     for _,row in ipairs(eightModel.rows) do if row.kind=="equipment" then equipmentCount=equipmentCount+1 end end
     local eightLayout=View.layout(eightModel,UI.fonts)
-    assert(equipmentCount==8 and eightLayout.maxScroll>0 and eightLayout.h<=640,"all eight equipment effects remain reachable")
+    assert(equipmentCount==8 and eightLayout.maxScroll==0 and eightLayout.h<=640 and eightLayout.scale==1,"all eight equipment effects visible at once without shrinking text")
     local huge=View.model(jack,"Long",("Effect\n"):rep(100),true)
     local hugeLayout=View.layout(huge,UI.fonts)
     assert(hugeLayout.maxScroll>0 and hugeLayout.h<=640 and hugeLayout.scale==1,"long cards scroll with original font")
     local render,isDown=View.draw,love.keyboard.isDown
-    local capturedModel,capturedLayout,capturedScroll
-    View.draw=function(m,l,x,y,scroll) capturedModel,capturedLayout,capturedScroll=m,l,scroll end
+    local capturedModel,capturedLayout,capturedScroll,capturedX,capturedY
+    View.draw=function(m,l,x,y,scroll) capturedModel,capturedLayout,capturedScroll,capturedX,capturedY=m,l,scroll,x,y end
     love.keyboard.isDown=function() return false end
-    Description.reset();Description.draw(UI,modified,640,360);Description.update(1);Description.draw(UI,modified,640,360)
-    local canScroll=capturedLayout.maxScroll>0
-    assert(Description.wheelmoved(-999)==canScroll,"wheel handled only when content overflows")
-    Description.draw(UI,modified,640,360)
-    assert(capturedScroll==capturedLayout.maxScroll,"scroll clamps at final content")
+    Description.reset();Description.draw(UI,eight,640,360);Description.update(1);Description.draw(UI,eight,640,360)
+    assert(not Description.wheelmoved(-999) and capturedLayout.maxScroll==0,"normal tooltip never steals the wheel")
     love.keyboard.isDown=function() return true end
-    Description.draw(UI,modified,640,360)
+    Description.draw(UI,eight,640,360)
     assert(capturedModel.expanded and capturedScroll==0,"Shift expands and resets scroll")
+    assert(capturedLayout.maxScroll>0 and Description.wheelmoved(-999),"Shift enables scrolling")
+    local ax,ay=capturedX,capturedY
+    local pinned=Description.candidate(nil)
+    assert(pinned==eight and Description.candidate(jack)==eight,"Shift retains original card when pointer enters tooltip or another card")
+    Description.finishFrame();Description.draw(UI,pinned,1200,700);Description.finishFrame()
+    assert(capturedScroll==capturedLayout.maxScroll and capturedX==ax and capturedY==ay,"expanded panel stays anchored and scroll reaches the final content")
+    assert(Description.candidate(jack,"new-scene")==jack and not Description.wheelmoved(-1),"changing scene clears the pinned tooltip even while Shift is held")
+    love.keyboard.isDown=function() return false end
+    assert(Description.candidate(nil)==nil and not Description.wheelmoved(-1),"releasing Shift returns hover and wheel to game")
+    Description.finishFrame();assert(Description.candidate(nil)==nil,"lost hover closes panel after releasing Shift")
     Description.reset();assert(not Description.wheelmoved(-1),"inactive tooltip does not steal scrolling")
     View.draw,love.keyboard.isDown=render,isDown
     local spn=assert(next(Deities.CATALOG)); spn=Deities.CATALOG[spn]
     local astrid=Deck.newCard(7,"spades");astrid.equipments={phoenix}
-    cases={astrid,phoenix,modified,boosted}
+    cases={eight}
     assert(View.model(jack,Description.resolve(jack)).level=="0","evolution extracted")
     local warning=View.model(jack,"Test","Effect\nKHẢ NĂNG VÔ HIỆU trong tay này.")
     assert(warning.rows[1].kind=="warning","disabled ability has priority")

@@ -2273,6 +2273,7 @@ function love.load()
 end
 
 function love.resize(w, h)
+    require("ui.combat_chrome").resize()
     updateScale()
 end
 
@@ -3837,7 +3838,7 @@ local function drawBattleHud(m, mx, my)
         hpBounce = juice.hpBounce, armorBounce = juice.armorBounce,
         meters = juice.meters,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
-        discards = game.discardsRemaining or 0,
+        discards = game.discardsRemaining or 0, resolving = state == "scoring",
     }, UI.fonts, mx, my, juice.buttonPressedId)
     for _, btn in ipairs(hudButtons) do table.insert(buttons, btn) end
 end
@@ -3859,15 +3860,16 @@ local function drawBattleInfoPanel(m, eval, preview)
     local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
     local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
     local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or 0
-    local handName = scoring and (anim.sequence and anim.sequence.handName)
+    local handName = scoring and (anim.sequence and (anim.sequence.handName or anim.sequence.result.steps[1].vnName))
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
     local detail = scoring and (finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
         or ("Đã gây " .. UI.formatNumber(anim.displayFinalScore or 0) .. " sát thương"))
         or UI.localizeText(anim.stepLog or "")) or ""
     UI.components.HandInfoPanel.draw({
-        handName = UI.truncateUtf8(handName, 24), chips = chips, mult = mult, xMult = xMult, aura = aura,
-        scoring = scoring, enemyName = UI.truncateUtf8((m and m.name) or "Không rõ", 13),
+        handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
+        previewAura = preview and preview.finalScore,
+        scoring = scoring, enemyName = (m and m.name) or "Không rõ",
         enemyHp = math.floor(math.max(0, scoring and anim.sequence.hp or (m and m.hp) or 0)), enemyMaxHp = (m and m.maxHp) or 1,
         enemyBarHp = scoring and anim.sequence.hp or (m and (m.damageLagHp or m.hp) or 0),
         enemyTrailHp = scoring and anim.sequence.hpTrail,
@@ -3975,6 +3977,7 @@ local function drawPlayingState()
         starterDeckId = game.starterDeckId,
         handsPlayedThisCombat = game.handsPlayedThisCombat or 0,
     }) or nil
+    require("ui.combat_chrome").table(game,UI,state=="scoring",anim.enemyTurn,UI.localizeText(anim.stepLog or ""))
     drawBattleEnemy(m)
     drawBattleHud(m, mx, my)
     drawBattleInfoPanel(m, eval, scPreview)
@@ -3991,8 +3994,8 @@ local function drawPlayingState()
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
     local spnRect,consRect=Layout.battle.spm,Layout.battle.consumables
-    love.graphics.printf(UI.InventoryRail.hint("spn",game),spnRect[1]+130,spnRect[2]+10,spnRect[3]-140,"right")
-    love.graphics.printf(UI.InventoryRail.hint("consumable",game),consRect[1]+130,consRect[2]+10,consRect[3]-140,"right")
+    love.graphics.printf(UI.InventoryRail.hint("spn",game),spnRect[1]+16,spnRect[2]+168,spnRect[3]-32,"right")
+    love.graphics.printf(UI.InventoryRail.hint("consumable",game),consRect[1]+16,consRect[2]+168,consRect[3]-32,"right")
 
     -- 2. RIGHT RAIL: SPM & CONSUMABLES
     ----------------------------------------------------------------------------
@@ -4141,7 +4144,7 @@ local function drawPlayingState()
     local hcH = 22
     local hcX = UI.BATTLE_CENTER_X - hcW / 2
     local hcY = 608
-    UI.components.Panel.draw(hcX, hcY, hcW, hcH)
+    require("ui.combat_chrome").well(hcX, hcY, hcW, hcH,Theme.colors.gold)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(handCountText, hcX, hcY + 3, hcW, "center")
@@ -4155,7 +4158,7 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     local hasSelection = (#selectedCards >= 1 and #selectedCards <= getMaxSelectableCards())
     local actionY = 636
-    UI.components.Panel.draw(365, 626, 530, 72)
+    require("ui.combat_chrome").panel(365, 626, 530, 72)
 
     -- Left: Chơi Tay Bài [Space]
     local handLimitIsFinal = game.monster and game.monster.isBoss and game.monster.bossData
@@ -4170,7 +4173,7 @@ local function drawPlayingState()
         y = actionY,
         w = 175,
         h = 58,
-        font = UI.fonts.small,
+        font = UI.fonts.bookChapter,
         variant = "cyan",
         disabled = anim.enemyTurn ~= nil or state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
@@ -4180,15 +4183,14 @@ local function drawPlayingState()
         btnPlay.animationScale = 1 - 0.05 * (1 - pulseProgress) * math.cos(pulseProgress * math.pi * 2)
     end
     table.insert(buttons, btnPlay)
-    UI.drawButton(btnPlay, mx >= btnPlay.x and mx <= btnPlay.x + btnPlay.w and my >= btnPlay.y and my <= btnPlay.y + btnPlay.h,
-        juice.buttonPressedId == btnPlay.id)
+    require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,"SPACE · ĐÁNH")
 
     -- Center: Sắp Xếp Container Box
     local sortBoxX = UI.BATTLE_CENTER_X - 65
     local sortBoxY = actionY - 8
     local sortBoxW = 145
     local sortBoxH = 68
-    UI.components.Panel.draw(sortBoxX, sortBoxY, sortBoxW, sortBoxH)
+    require("ui.combat_chrome").panel(sortBoxX, sortBoxY, sortBoxW, sortBoxH)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(Theme.colors.muted)
     love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
@@ -4202,10 +4204,10 @@ local function drawPlayingState()
         h = 36,
         font = UI.fonts.tiny,
         selected = game.sortMode == "rank",
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil,
     }
     table.insert(buttons, btnSortRank)
-    UI.drawButton(btnSortRank, mx >= btnSortRank.x and mx <= btnSortRank.x + btnSortRank.w and my >= btnSortRank.y and my <= btnSortRank.y + btnSortRank.h,
-        juice.buttonPressedId == btnSortRank.id)
+    require("ui.combat_chrome").button(UI,btnSortRank,mx,my,juice.buttonPressedId,nil)
 
     local btnSortSuit = {
         id = "sort_suit",
@@ -4216,10 +4218,10 @@ local function drawPlayingState()
         h = 36,
         font = UI.fonts.tiny,
         selected = game.sortMode == "suit",
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil,
     }
     table.insert(buttons, btnSortSuit)
-    UI.drawButton(btnSortSuit, mx >= btnSortSuit.x and mx <= btnSortSuit.x + btnSortSuit.w and my >= btnSortSuit.y and my <= btnSortSuit.y + btnSortSuit.h,
-        juice.buttonPressedId == btnSortSuit.id)
+    require("ui.combat_chrome").button(UI,btnSortSuit,mx,my,juice.buttonPressedId,nil)
 
     -- Right: Bỏ Bài [D]
     local btnDiscard = {
@@ -4229,13 +4231,12 @@ local function drawPlayingState()
         y = actionY,
         w = 160,
         h = 58,
-        font = UI.fonts.small,
+        font = UI.fonts.bookChapter,
         variant = "red",
-        disabled = not hasSelection or game.discardsRemaining <= 0,
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil or not hasSelection or game.discardsRemaining <= 0,
     }
     table.insert(buttons, btnDiscard)
-    UI.drawButton(btnDiscard, mx >= btnDiscard.x and mx <= btnDiscard.x + btnDiscard.w and my >= btnDiscard.y and my <= btnDiscard.y + btnDiscard.h,
-        juice.buttonPressedId == btnDiscard.id)
+    require("ui.combat_chrome").button(UI,btnDiscard,mx,my,juice.buttonPressedId,"D · ĐỔI BÀI")
 
     if Touch.enabled then
         local btnTouch = {id="touch_reorder",text=Touch.reorder and "ĐANG ĐỔI CHỖ" or "ĐỔI CHỖ",
@@ -6558,7 +6559,7 @@ function love.draw()
     end
 
     -- In-game sleek Pause / Menu button at top right
-    if state ~= "menu" and state ~= "BLIND_SELECT" and state ~= "playing" and state ~= "defeating" and state ~= "gameover" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
+    if state ~= "menu" and state ~= "BLIND_SELECT" and state ~= "playing" and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen and not isDeckViewerOpen and not isHandbookOpen and not inspectCardModal and not isCollectionOpen and not isShopTransferOpen then
         local mx, my = toVirtual(love.mouse.getPosition())
         local btnMenu = {
             id = "open_pause_menu",

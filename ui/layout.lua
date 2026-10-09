@@ -19,11 +19,11 @@ function Layout.fanCardRect(panelRect, index, count, cardW, cardH)
     local padding = 16
     local availableW = panelRect[3] - padding * 2
     local step = count > 1 and math.max(0, (availableW - cardW) / (count - 1)) or 0
-    return panelRect[1] + padding + (index - 1) * step, panelRect[2] + 29, cardW, cardH
+    return panelRect[1] + padding + (index - 1) * step, panelRect[2] + 43, cardW, cardH
 end
 
 Layout.battle = {
-    hud = {55, 5, 1170, 65},
+    hud = {12, 10, 1256, 60},
     hand = {12, 76, 222, 615},
     spm = {988, 73, 276, 184},
     consumables = {988, 265, 276, 184},

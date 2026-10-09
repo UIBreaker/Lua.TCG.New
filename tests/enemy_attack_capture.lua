@@ -18,11 +18,13 @@ function T.update(game,cb)
         end
         cb.setScoringSpeed(case==2)
         game.hand={Deck.newCard(8,"spades")};game.selectedIndices={};game.deities={}
-        game.playerHp=100;game.maxPlayerHp=100
+        game.playerHp=200;game.maxPlayerHp=200;game.playerArmor=0;game.playerShield=0
         game.monster.hp=10000000;game.monster.maxHp=10000000;game.monster.damageLagHp=10000000
         for _,m in ipairs(game.enemies) do
             m.hp=10000000;m.maxHp=10000000;m.damageLagHp=10000000
             m.attackSpeed=case==1 and 99 or 1
+            -- Exceed the armor cap so every contact still changes HP after card balance updates.
+            m.attack=40;m.intent={type="attack",value=40,label="Tấn Công 40 ST"}
         end
         game.abilityApproved={}
         if case==3 then game.handsRemaining=0;assert(cb.endPlayerTurn())
@@ -48,7 +50,8 @@ function T.update(game,cb)
         end
         if game.playerHp~=lastHp then hits=hits+1;lastHp=game.playerHp end
         if seen.recover and not a.enemyTurn and state=="playing" and not a.active then
-            assert(hits==(case==4 and 3 or 1) and seen.prepare and seen.strike and seen.pause)
+            assert(hits==(case==4 and 3 or 1) and seen.prepare and seen.strike and seen.pause,
+                string.format("case %d: HP contacts=%d; pause=%s prepare=%s strike=%s; armor=%s",case,hits,tostring(seen.pause),tostring(seen.prepare),tostring(seen.strike),tostring(game.playerArmor)))
             print("Combat timing case "..case.." passed");started=nil
         end
     end

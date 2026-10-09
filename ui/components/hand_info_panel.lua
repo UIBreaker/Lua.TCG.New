@@ -1,28 +1,17 @@
 local Theme = require("ui.theme")
-local Panel = require("ui.components.panel")
 local Core = require("ui.components.core")
 local HandInfoPanel = {}
 local utf8 = require("utf8")
 
-local PANEL_IMAGE = "assets/ui/hand_info_panel_v2.png"
 local ICON_IMAGE = "assets/ui/hand_info_icons_v2.png"
 local ICON_INDEX = {damage = 1, power = 2, aura = 3, health = 4, intent = 5, trait = 6}
-local loaded, panelImage, iconImage, iconQuads, iconCellW, iconCellH = false, nil, nil, {}, 0, 0
-local auraBackground
+local loaded, iconImage, iconQuads, iconCellW, iconCellH = false, nil, {}, 0, 0
 
 local function loadImages()
     if loaded then return end
     loaded = true
 
-    local ok, image = pcall(love.graphics.newImage, PANEL_IMAGE)
-    if ok and image then
-        panelImage = image
-        image:setFilter("linear", "linear")
-        local w,h=image:getDimensions()
-        auraBackground=love.graphics.newQuad(w*9/222,h*0.66,w*204/222,h*77/615,w,h)
-    end
-
-    ok, image = pcall(love.graphics.newImage, ICON_IMAGE)
+    local ok, image = pcall(love.graphics.newImage, ICON_IMAGE)
     if ok and image then
         iconImage = image
         iconImage:setFilter("linear", "linear")
@@ -89,175 +78,71 @@ local function drawMetric(x, y, w, h, label, value, variant, icon, fonts, bounce
     love.graphics.pop()
 end
 
-function HandInfoPanel.draw(data, fonts, formatNumber)
-    data = data or {}
-    loadImages()
+function HandInfoPanel.draw(data,fonts,formatNumber)
+ data=data or {};loadImages()
+ local Chrome=require("ui.combat_chrome")
+ local g=love.graphics;g.push("all")
+ local x,y,w=12,76,222
+ local info=(fonts and fonts.info) or fonts or {};local base=g.getFont()
+ local f={detail=info.detail or base,label=info.label or base,body=info.body or base,
+  title=info.title or base,value=info.value or base,aura=info.aura or base}
+ local fmt=formatNumber or tostring
+ Chrome.panel(x,y,w,615)
+ Chrome.well(x+12,y+10,w-24,53,Theme.colors.gold)
+ Chrome.crest(x+35,y+36,15,Theme.colors.gold)
+ Chrome.title("THẾ TRẬN",x+59,y+15,w-74,(fonts and fonts.bookChapter) or f.title,Theme.colors.gold)
+ Core.text(data.scoring and "ĐANG TÍNH AURA" or "DỰ BÁO TAY BÀI",x+59,y+40,w-74,f.detail,Theme.colors.muted)
 
-    local x, y, w, h = 12, 76, 222, 615
-    local infoFonts = (fonts and fonts.info) or fonts or {}
-    local baseFont = love.graphics.getFont()
-    local drawFonts = {
-        detail = infoFonts.detail or (fonts and fonts.tiny) or baseFont,
-        label = infoFonts.label or (fonts and fonts.small) or baseFont,
-        body = infoFonts.body or (fonts and fonts.regular) or baseFont,
-        title = infoFonts.title or (fonts and fonts.medium) or baseFont,
-        value = infoFonts.value or (fonts and fonts.medium) or baseFont,
-        aura = infoFonts.aura or (fonts and fonts.large) or baseFont,
-    }
-    local fmt = formatNumber or tostring
-    local g = love.graphics
-
-    if panelImage then
-        local iw, ih = panelImage:getDimensions()
-        g.push("all")
-        g.setColor(1, 1, 1, 1)
-        g.draw(panelImage, x, y, 0, w / iw, h / ih)
-        if not data.scoring then
-            -- Use the panel's own empty texture to remove the baked aura frame.
-            g.draw(panelImage,auraBackground,x+9,y+174,0,w/iw,h/ih)
-        end
-        g.pop()
-    else
-        Panel.draw(x, y, w, h)
-    end
-
-    Core.text("TAY BÀI", x + 16, y + 13, w - 32, drawFonts.title, Theme.colors.gold)
-    Core.textLine(data.handName or "Chọn bài để xem", x + 16, y + 41, w - 32,
-        drawFonts.body, Theme.colors.text, "left", drawFonts.label)
-
-    if data.scoring then
-        g.push("all")
-        g.setBlendMode("add")
-        for _, metric in ipairs({{x+12, data.chipsBounce or 1, Theme.colors.cyan},
-            {x+116, data.multBounce or 1, Theme.colors.red}}) do
-            local col, pulse = metric[3], math.max(0, metric[2] - 1)
-            g.setColor(col[1], col[2], col[3], math.min(0.22, pulse))
-            g.rectangle("fill", metric[1], y+78, 94, 66, 5)
-        end
-        local pulse = math.max(0, (data.auraBounce or 1) - 1)
-        g.setColor(1, 0.77, 0.34, math.min(0.24, pulse))
-        g.rectangle("fill", x+16, y+175, w-32, 63, 5)
-        g.pop()
-    end
-
-    drawMetric(x + 12, y + 78, 94, 66, "SÁT THƯƠNG", fmt(data.chips or 0),
-        "cyan", "damage", drawFonts, data.chipsBounce)
-    drawMetric(x + 116, y + 78, 94, 66, "CƯỜNG HÓA", fmt(data.mult or 0),
-        "red", "power", drawFonts, data.multBounce)
-
-    Core.text(tostring(fmt(data.chips or 0)) .. " × " .. tostring(fmt(data.mult or 0))
-        .. ((data.xMult or 1) > 1 and (" × " .. string.format("%.2f", data.xMult)) or ""),
-        x + 12, y + 151, w - 24, drawFonts.label, Theme.colors.muted, "center")
-
-    if data.scoring then
-    local auraLabel = data.phase=="AURA_COUNT" and "AURA • TÍCH NĂNG"
-        or (data.aura or 0)>0 and "AURA • SẴN SÀNG" or "AURA • HÌNH THÀNH"
-    Core.text(auraLabel, x + 20, y + 181, w - 40, drawFonts.label, Theme.colors.gold, "center")
-    drawIcon("aura", x + 27, y + 207, 24)
-    local auraText = tostring(fmt(data.aura or 0))
-    local auraFont = fitValue(auraText, drawFonts, w - 78)
-    local auraCenterX = x + 56 + (w - 80) / 2
-    love.graphics.push()
-    love.graphics.translate(auraCenterX, y + 216)
-    love.graphics.scale(data.auraBounce or 1, data.auraBounce or 1)
-    love.graphics.translate(-auraCenterX, -(y + 216))
-    Core.text(auraText, x + 56, y + 202, w - 80, auraFont, Theme.colors.gold, "center")
-    love.graphics.pop()
-    local progress=math.max(0,math.min(1,data.scoreProgress or 0))
-    g.push("all")
-    g.setColor(0.14,0.11,0.07,0.95);g.rectangle("fill",x+23,y+240,w-46,2)
-    g.setColor(0.93,0.69,0.28,0.75);g.rectangle("fill",x+23,y+240,(w-46)*progress,2)
-    if progress>0 and progress<1 then
-        g.setBlendMode("add");g.setColor(1,0.87,0.55,0.8)
-        g.circle("fill",x+23+(w-46)*progress,y+241,2)
-    end
-    g.pop()
-
-    end
-
-    drawIcon("trait", x + 14, y + 267, 19)
-    Core.text(data.humanEnemy and "ĐỐI THỦ" or "QUÁI VẬT", x + 39, y + 268, w - 53, drawFonts.title, Theme.colors.gold)
-    Core.textLine(data.enemyName or "Không rõ", x + 16, y + 293, w - 32,
-        drawFonts.body, Theme.colors.text, "left", drawFonts.label)
-
-    drawIcon("health", x + 16, y + 318, 15)
-    Core.textLine("MÁU " .. fmt(data.enemyHp or 0) .. "/" .. fmt(data.enemyMaxHp or 0),
-        x + 38, y + 317, w - 54, drawFonts.label, Theme.colors.muted, "left", drawFonts.detail)
-
-    local barX, barY, barW, barH = x + 18, y + 340, w - 36, 16
-    local hp, maxHp = math.max(0, tonumber(data.enemyBarHp or data.enemyHp) or 0), tonumber(data.enemyMaxHp) or 1
-    local ratio = math.max(0, math.min(1, hp / math.max(1, maxHp)))
-    if data.enemyTrailHp then
-        local trail = math.max(0, math.min(1, data.enemyTrailHp / math.max(1,maxHp)))
-        g.push("all")
-        g.setColor(1,0.68,0.28,0.55)
-        g.rectangle("fill", barX+3,barY+3,(barW-6)*trail,barH-6,2,2)
-        g.pop()
-    end
-    if ratio > 0 then
-        g.push("all")
-        g.setColor(0.76, 0.18, 0.20, 1)
-        g.rectangle("fill", barX + 3, barY + 3, (barW - 6) * ratio, barH - 6, 2, 2)
-        g.pop()
-    end
-
-    drawIcon("intent", x + 15, y + 363, 18)
-    Core.text("CHIÊU TIẾP THEO", x + 39, y + 364, w - 53,
-        drawFonts.label, Theme.colors.red)
-    local intentText = boundedLines(data.intent or "Chưa rõ", drawFonts.body, w - 32, 2)
-    Core.text(intentText, x + 16, y + 388, w - 32, drawFonts.body, Theme.colors.text)
-    local _, intentLines = drawFonts.body:getWrap(intentText, w - 32)
-    local speedY = math.max(y + 414, y + 388 + math.max(1, #intentLines) * drawFonts.body:getHeight() + 3)
-
-    local enemySpeed = tonumber(data.enemySpeed)
-    if enemySpeed then
-        local playerSpeed = tonumber(data.playerSpeed)
-        local enemyLabel = data.humanEnemy and "ĐỐI THỦ" or "QUÁI"
-        local speedText = "TỐC ĐÁNH " .. enemyLabel .. " " .. tostring(enemySpeed)
-        local speedColor = Theme.colors.red
-        if playerSpeed then
-            local shownPlayerSpeed = playerSpeed % 1 == 0 and tostring(playerSpeed) or string.format("%.1f", playerSpeed)
-            speedText = "TỐC ĐÁNH " .. shownPlayerSpeed .. " • " .. enemyLabel .. " " .. tostring(enemySpeed)
-            speedColor = playerSpeed >= enemySpeed and Theme.colors.cyan or Theme.colors.red
-        end
-        Core.textLine(speedText, x + 16, speedY, w - 32, drawFonts.detail, speedColor, "left", drawFonts.detail)
-    end
-
-    local traitY = math.max(y + 442, speedY + 27)
-    drawIcon("trait", x + 15, traitY, 18)
-    Core.text(data.isBoss and "NỘI TẠI / KỸ NĂNG" or "ĐẶC ĐIỂM", x + 39, traitY + 1,
-        w - 53, drawFonts.label, data.isBoss and Theme.colors.red or Theme.colors.gold)
-    if data.isBoss and data.boss then
-        local Boss=require("src.boss_abilities")
-        local m=data.boss;local bs=Boss.state(m);local a=m.bossData.active
-        local summary=(Boss.passiveEnabled(m) and "NỘI TẠI ĐANG BẬT" or "NỘI TẠI VÔ HIỆU")
-            .."\n"..(a and a.name or "").." · SAU "..(bs and bs.activeCountdown or 1).." tay"
-            .."\n"..boundedLines(Boss.activeDescription(m),drawFonts.detail,w-32,2)
-            ..(bs and bs.cancelNextActive>0 and "\nĐÃ PHONG ẤN CHỦ ĐỘNG" or "")
-        Core.text(boundedLines(summary,drawFonts.detail,w-32,5),x+16,traitY+25,w-32,drawFonts.detail,Theme.colors.text)
-        local UI=require("src.ui");local mx,my=UI.virtualMouseX or 0,UI.virtualMouseY or 0
-        if mx>=x and mx<=x+w and my>=traitY and my<=traitY+165 then
-            UI.descriptionCandidate={name=m.name,desc=Boss.describe(m),hoverKey=m}
-        end
-    else
-    Core.text(boundedLines(data.debuff or "Không có hiệu ứng bất lợi",
-        drawFonts.detail, w - 32, 5), x + 16, traitY + 25, w - 32,
-        drawFonts.detail, Theme.colors.muted)
-    if data.boss and data.boss.enemyAbility then
-        local UI=require("src.ui");local mx,my=UI.virtualMouseX or 0,UI.virtualMouseY or 0
-        if mx>=x and mx<=x+w and my>=traitY and my<=traitY+165 then
-            UI.descriptionCandidate={name=data.boss.name,desc=data.debuff,hoverKey=data.boss}
-        end
-    end
-
-    end
-
-    if data.scoring and not data.isBoss then
-        Core.text(data.category or "ĐANG CỘNG AURA", x + 16, y + 535,
-            w - 32, drawFonts.label, Theme.colors.gold)
-        Core.text(boundedLines(data.formula or data.detail or "", drawFonts.detail, w - 32, 3),
-            x + 16, y + 557, w - 32, drawFonts.detail, Theme.colors.text)
-    end
+ Core.textLine(data.handName or "Chọn bài để xem",x+16,y+76,w-32,f.body,Theme.colors.text,"left",f.label)
+ for _,v in ipairs({{x+12,"SÁT THƯƠNG",data.chips,"cyan","damage",data.chipsBounce},
+  {x+116,"CƯỜNG HÓA",data.mult,"red","power",data.multBounce}}) do
+  Chrome.well(v[1],y+108,94,68,Theme.colors[v[4]])
+  drawMetric(v[1],y+108,94,68,v[2],fmt(v[3] or 0),v[4],v[5],f,v[6])
+ end
+ local formula=fmt(data.chips or 0).." × "..fmt(data.mult or 0)
+  ..((data.xMult or 1)>1 and " × "..string.format("%.2f",data.xMult) or "")
+ Core.textLine(formula,x+16,y+181,w-32,f.detail,Theme.colors.muted,"center")
+ local aura=data.scoring and (data.aura or 0) or data.previewAura
+ Chrome.panel(x+12,y+206,w-24,100,Theme.colors.gold)
+ Chrome.crest(x+44,y+252,21,Theme.colors.gold)
+ Chrome.title(data.scoring and "AURA · TÍCH NĂNG" or "AURA DỰ KIẾN",x+68,y+216,w-85,f.detail,Theme.colors.gold,"center")
+ local text=aura~=nil and fmt(aura) or "—"
+ g.push();g.translate(x+w/2,y+258);g.scale(data.auraBounce or 1);g.translate(-x-w/2,-y-258)
+ Chrome.title(text,x+69,y+239,w-89,fitValue(tostring(text),f,w-89),{1,.91,.72},"center");g.pop()
+ local note=data.scoring and (data.category or "ĐANG KẾT TOÁN") or aura~=nil and "Trước giảm trừ của mục tiêu" or "Chọn lá bài để tính Aura"
+ Core.textLine(note,x+21,y+278,w-42,f.detail,Theme.colors.muted,"center")
+ if data.scoring then
+  local progress=math.max(0,math.min(1,data.scoreProgress or 0))
+  Core.color(Theme.colors.gold,.85);g.rectangle("fill",x+22,y+294,(w-44)*progress,2)
+ end
+ local es=tonumber(data.enemySpeed);local ps=tonumber(data.playerSpeed)
+ Chrome.well(x+12,y+309,w-24,54,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red)
+ Core.text(ps and ps>=(es or 1) and "BẠN RA ĐÒN TRƯỚC" or ps and "ĐỐI THỦ RA ĐÒN TRƯỚC" or "THỨ TỰ HÀNH ĐỘNG",x+21,y+317,w-42,f.detail,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red,"center")
+ local speed=ps and string.format("%.1f",ps):gsub("%.0$","") or "—"
+ Core.text("Tốc bạn "..speed.."  /  Địch "..tostring(es or "—"),x+21,y+338,w-42,f.detail,Theme.colors.muted,"center")
+ Chrome.rule(x+16,y+378,w-32)
+ Chrome.title(data.humanEnemy and "MỤC TIÊU / ĐỐI THỦ" or "MỤC TIÊU / QUÁI VẬT",x+16,y+390,w-32,f.detail,Theme.colors.gold)
+ Core.textLine(data.enemyName or "Không rõ",x+16,y+411,w-32,f.body,Theme.colors.text,"left",f.label)
+ require("ui.components.health_bar").draw(x+16,y+438,w-32,18,data.enemyBarHp or data.enemyHp or 0,data.enemyMaxHp or 1,
+  {variant="red",font=f.detail,label="MÁU "..fmt(data.enemyHp or 0).." / "..fmt(data.enemyMaxHp or 1),trailValue=data.enemyTrailHp})
+ Chrome.title("CHIÊU TIẾP THEO",x+16,y+469,w-32,f.detail,Theme.colors.red)
+ Core.text(boundedLines(data.intent or "Chưa rõ",f.label,w-32,2),x+16,y+489,w-32,f.label,Theme.colors.text)
+ local traitY=y+534
+ Core.text(data.isBoss and "NỘI TẠI / KỸ NĂNG" or "ĐẶC ĐIỂM",x+16,traitY,w-32,f.detail,Theme.colors.gold)
+ local trait=data.debuff or "Không có hiệu ứng bất lợi"
+ if data.isBoss and data.boss and data.boss.bossData then
+  local Boss=require("src.boss_abilities");local bs=Boss.state(data.boss);local a=data.boss.bossData.active
+  trait=(Boss.passiveEnabled(data.boss) and "Nội tại đang bật" or "Nội tại vô hiệu")
+   ..(a and " · "..a.name.." / "..(bs and bs.activeCountdown or 1).." tay" or "")
+   ..(bs and bs.cancelNextActive>0 and " · Đã phong ấn" or "")
+ end
+ Core.text(boundedLines(trait,f.detail,w-32,3),x+16,traitY+20,w-32,f.detail,Theme.colors.muted)
+ if data.boss and (data.boss.enemyAbility or data.isBoss) then
+  local UI=require("src.ui");local mx,my=UI.virtualMouseX or 0,UI.virtualMouseY or 0
+  if mx>=x and mx<=x+w and my>=traitY and my<=y+615 then
+   UI.descriptionCandidate={name=data.boss.name,desc=data.isBoss and require("src.boss_abilities").describe(data.boss) or data.debuff,hoverKey=data.boss}
+  end
+ end
+ g.pop()
 end
-
 return HandInfoPanel

@@ -138,9 +138,9 @@ local function trigger(anim, st)
     anim.bounceScale.chips = s.toChips ~= beforeChips and C.pulse.damage or 1
     anim.bounceScale.mult = s.toMult ~= beforeMult and (s.multiply and C.pulse.multiply or C.pulse.enhance) or 1
     local popupY=y-(cardIndex and 94 or 52)
-    link(s, st.addedChips or 0, "ST", x, popupY, 70, 197, C.color.damage)
-    link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 197, C.color.enhance)
-    link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 126, 292, C.color.aura)
+    link(s, st.addedChips or 0, "ST", x, popupY, 70, 229, C.color.damage)
+    link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 229, C.color.enhance)
+    link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 148, 329, C.color.aura)
     if st.type=="equipment_trigger" then
         local rows={{st.addArmor,"GIÁP",{0.4,0.75,1,1}},{st.healHp,"HP",{0.4,0.95,0.6,1}},{st.addGold,"VÀNG",C.color.aura}}
         local offset=0
@@ -161,7 +161,7 @@ local function trigger(anim, st)
         local factor = (st.xAura or 1)>1 and st.xAura or chips and st.xChips or st.auraMultiplier or st.xMult or anim.displayXMult
         s.links[#s.links + 1] = {text = "×" .. string.format("%.2f",factor)
             .. (aura and " AURA" or chips and " ST" or " C.H"), x = x, y = popupY-21,
-            tx = aura and 126 or chips and 70 or 176, ty = aura and 292 or 197,
+            tx = aura and 148 or chips and 70 or 176, ty = aura and 329 or 229,
             age = 0, duration = 0.48, color = C.color.aura, multiply = true}
     end
     anim.stepCategory = categories[st.type] or "HIỆU ỨNG"
@@ -190,14 +190,14 @@ local function enter(anim, ev)
         s.fromMult, s.toMult = 0, 0
         anim.bounceScale.chips = C.pulse.damage
         anim.stepCategory, anim.stepLog = "SÁT THƯƠNG GỐC", tostring(ev.source.chips) .. " Sát thương"
-        link(s, ev.source.chips, "ST", 78, 223, 78, 197, C.color.damage)
+        link(s, ev.source.chips, "ST", 78, 255, 78, 229, C.color.damage)
         play(s, "damage")
     elseif ev.kind == "BASE_ENHANCE" then
         s.fromChips, s.toChips = ev.source.chips, ev.source.chips
         s.fromMult, s.toMult = 0, ev.source.mult
         anim.bounceScale.mult = C.pulse.enhance
         anim.stepCategory, anim.stepLog = "CƯỜNG HÓA GỐC", tostring(ev.source.mult) .. " Cường hóa"
-        link(s, ev.source.mult, "C.H", 176, 223, 176, 197, C.color.enhance)
+        link(s, ev.source.mult, "C.H", 176, 255, 176, 229, C.color.enhance)
         play(s, "enhance")
     elseif ev.kind == "TRIGGER" then trigger(anim, ev.source)
     elseif ev.kind == "FORMULA" then

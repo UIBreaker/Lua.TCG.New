@@ -31,7 +31,9 @@ function F.hud(game,UI,mx,my,turn)
     local Health=require("ui.components.health_bar")
     local Core=require("ui.components.core")
     g.push("all")
-    Core.text("ĐỐI THỦ "..G.alive(list).."/"..#list.."  •  BẤM LÁ BÀI ĐỂ CHỌN MỤC TIÊU",560,89,445,UI.fonts.tiny,{0.89,0.79,0.57},"center")
+    local Style=require("ui.backpack_style");local Chrome=require("ui.combat_chrome")
+    Chrome.panel(400,82,460,26,{.86,.68,.39})
+    Core.text("ĐẤU TRƯỜNG  ·  "..G.alive(list).." / "..#list.." ĐỐI THỦ  ·  NHẤN ĐỂ CHỌN MỤC TIÊU",414,88,432,UI.fonts.tiny,{.86,.76,.57},"center")
     for i,m in ipairs(list) do
         local x,y,w,h=G.rect(i,#list);local target=m==game.monster;local alive=m.hp>0
         local moving=turn and turn.attackers[turn.index]==m and turn.phase~="pause"
@@ -43,7 +45,8 @@ function F.hud(game,UI,mx,my,turn)
         local armor = m.creatureArmor or 0
         local state=meters[m] or {}
         local hasArmor=armor>0 or state.armor and state.armor.trail>0.05
-        Core.textLine(title,x-24,hasArmor and 110 or 120,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
+        Chrome.panel(x-18,hasArmor and 110 or 117,w+36,hasArmor and 54 or 47,c)
+        Core.textLine(title,x-24,hasArmor and 116 or 123,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
         if hasArmor then
             Health.draw(x-12,130,w+24,12,armor,m.creatureArmorMax or armor,
                 {variant="cyan",shield=true,font=UI.fonts.tiny,trailValue=state.armor and state.armor.trail,
@@ -52,13 +55,23 @@ function F.hud(game,UI,mx,my,turn)
         Health.draw(x-12,144,w+24,18,state.hp and state.hp.shown or m.hp,m.maxHp,{variant="red",font=UI.fonts.tiny,
             trailValue=state.hp and state.hp.trail,label=UI.formatNumber(m.hp).."/"..UI.formatNumber(m.maxHp)})
         if not moving then
-            Core.textLine(alive and ((target and "MỤC TIÊU  •  " or "").."ATK "..m.attack.." / TĐ "..m.attackSpeed) or "ĐÃ HẠ",x-24,y+h+14,w+48,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)
+            Style.glow(x+w/2,y+h+4,69,c,target and .16 or .06)
+            local cy=y+h+4
+            g.setColor(.004,.01,.015,.55);g.ellipse("fill",x+w/2,cy+5,w*.57,10)
+            g.setColor(.12,.11,.085,.85);g.ellipse("fill",x+w/2,cy+2,w*.55,8)
+            g.setColor(.34,.28,.18,.85);g.ellipse("fill",x+w/2,cy,w*.55,6)
+            Core.color(c,target and .82 or .30);g.setLineWidth(1.5);g.ellipse("line",x+w/2,cy,w*.55,6)
+            Chrome.panel(x-18,y+h+12,w+36,m.hasBed and 65 or 49,c)
+            if target and alive then
+                Core.color(c,.85);g.polygon("fill",x+w/2,y+h+7,x+w/2+4,y+h+11,x+w/2,y+h+15,x+w/2-4,y+h+11)
+            end
+            Core.textLine(alive and ((target and "MỤC TIÊU  •  " or "").."ATK "..m.attack.." / TĐ "..m.attackSpeed) or "ĐÃ HẠ",x-24,y+h+19,w+48,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)
         end
         if alive and not moving then
             local ability=m.enemyAbility and m.enemyAbility.name or m.isBoss and "NỘI TẠI / KỸ NĂNG" or "NHÀ THÁM HIỂM"
             if (m.creatureArmor or 0)>0 then ability=ability.." / GIÁP "..UI.formatNumber(m.creatureArmor)
             elseif m.reassembled then ability=ability.." / ĐÃ TÁI SINH" end
-            Core.textLine(ability,x-24,y+h+35,w+48,UI.fonts.tiny,{0.65,0.74,0.78},"center",UI.fonts.tiny)
+            Core.textLine(ability,x-24,y+h+37,w+48,UI.fonts.tiny,{0.65,0.74,0.78},"center",UI.fonts.tiny)
             if m.hasBed then
                 local image=UI.getConsumableImage({id="cons_bed"})
                 if image then g.setColor(1,1,1,1);UI.CardFrame.image(image,x+w-30,y+h-46,28,42);UI.drawCardBorder(x+w-30,y+h-46,28,42) end
@@ -66,7 +79,10 @@ function F.hud(game,UI,mx,my,turn)
             end
         end
     end
-    if (game.enemyPoison or 0)>0 then Core.text("ĐỘC "..game.enemyPoison.." • GIẢM 1 TẦNG / TAY",310,423,640,UI.fonts.tiny,{0.54,0.89,0.45},"center") end
+    if (game.enemyPoison or 0)>0 then
+        Chrome.panel(250,82,138,26,{.54,.89,.45})
+        Core.textLine("ĐỘC "..game.enemyPoison.." · −1 / TAY",260,88,118,UI.fonts.tiny,{.54,.89,.45},"center")
+    end
     g.pop()
 end
 function F.press(game,x,y)

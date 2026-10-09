@@ -319,7 +319,7 @@ end
 function A.damageGuard(game,damage)
     local ctx={damage=damage}
     A.dispatch(game,"damage",game.abilityHand and game.abilityHand.active or game.hand or {},ctx)
-    return require("src.spn_anomalies").guard(game,require("src.soul_relics").guard(game,ctx.damage))
+    return require("src.spn_anomalies").guard(game,require("src.spn_convergence").guard(game,require("src.soul_relics").guard(game,ctx.damage)))
 end
 function A.spnTriggered(game,slot)
     local ctx=game.abilityHand; if not ctx then return 0 end

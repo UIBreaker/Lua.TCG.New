@@ -33,18 +33,19 @@ assert(m8.isBoss == true, "Round 8 should be BOSS 2")
 assert(m8.hp > m4.hp, "Later boss encounters must scale above earlier bosses")
 print(" Test 2 Passed: Explicit normal/boss encounters and HP scaling")
 
--- Test 3: Card Equipment attachment (3 slots, no duplicates)
+-- Test 3: Card Equipment attachment (4 base slots, no duplicates)
 local card = Deck.newCard(14, "hearts")
 assert(#card.equipments == 0)
 assert(Equipment.attach(card, Equipment.ITEMS.gem_fire) == true)
 assert(Equipment.attach(card, Equipment.ITEMS.gem_blast) == true)
 assert(Equipment.attach(card, Equipment.ITEMS.ward_stone) == true)
-assert(Equipment.attach(card, Equipment.ITEMS.lucky_coin) == false, "Fourth slot should be rejected")
+assert(Equipment.attach(card, Equipment.ITEMS.lucky_coin) == true, "Fourth base socket should be available")
+assert(Equipment.attach(card, Equipment.ITEMS.vitality_gem) == false, "Fifth slot requires expansion")
 assert(Equipment.attach(card, Equipment.ITEMS.gem_fire) == false, "Duplicate equipment should be rejected")
-print(" Test 3 Passed: 3 Equipment Slots and Duplicate Guard")
+print(" Test 3 Passed: 4 Equipment Slots and Duplicate Guard")
 
 -- Test 4: Scoring with Equipment
--- Two-card pair: outer Fire Gem gives +30 Chips; Blast Gem gives +4 Mult.
+-- Two-card pair: outer Fire Gem gives +22 Chips; Blast Gem gives +3 Mult.
 local baseC1 = Deck.newCard(10, "hearts")
 local baseC2 = Deck.newCard(10, "hearts")
 local basePair = Poker.evaluate({ baseC1, baseC2 })
@@ -59,22 +60,22 @@ Equipment.attach(c2, Equipment.ITEMS.lucky_coin)
 
 local pairHand = Poker.evaluate({ c1, c2 })
 local calc = Scoring.calculate(pairHand, {}, {})
-assert(calc.totalChips == baseCalc.totalChips + 30, "Fire Gem must add exactly 30 chips")
-assert(calc.totalMult == baseCalc.totalMult + 4, "Blast Gem must add exactly 4 mult")
+assert(calc.totalChips == baseCalc.totalChips + 22, "Fire Gem must add exactly 22 chips")
+assert(calc.totalMult == baseCalc.totalMult + 3, "Blast Gem must add exactly 3 mult")
 assert(calc.finalScore > baseCalc.finalScore, "Equipment must increase final score")
 assert(calc.bonusGoldAwarded == 0, "Lucky Coin only triggers on an Ace")
 print(" Test 4 Passed: Equipment Chips, Mult, and Gold Integration")
 
 -- Test 5: Adjacent Mirror equipment
 -- cA (9), cB (9 with mirror), cC (9)
--- cB should buff two adjacent cards of different suits (+12 each).
+-- cB should buff two adjacent cards of different suits (+15 each).
 local ca = Deck.newCard(9, "hearts")
 local cb = Deck.newCard(9, "spades")
 Equipment.attach(cb, Equipment.ITEMS.mirror_adjacent)
 local cc = Deck.newCard(9, "clubs")
 
 local mirrorBuffs = Equipment.ITEMS.mirror_adjacent.onHandEvaluate(cb, { ca, cb, cc }, 2)
-assert(mirrorBuffs[1].addChips == 12 and mirrorBuffs[3].addChips == 12, "Adjacent mirror must add exactly 24 chips")
+assert(mirrorBuffs[1].addChips == 15 and mirrorBuffs[3].addChips == 15, "Adjacent mirror must add exactly 30 chips")
 print(" Test 5 Passed: Spillover Mirror Adjacent Buff")
 
 -- Test 6: SPN evolution rarity, concrete stats, round reward choice, and attack speed

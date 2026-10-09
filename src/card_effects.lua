@@ -7,6 +7,7 @@ CardEffects.debugToggleKey = Config.debugToggleKey
 local shaders = {}
 local elapsed = 0
 local cardStates = setmetatable({}, { __mode = "k" })
+local equipmentPulses = setmetatable({}, { __mode = "k" })
 local debugEnabled = false
 local debugCard
 local mouseUVUniform = { 0.5, 0.5 }
@@ -177,6 +178,13 @@ local function approach(current, target, dt)
 end
 
 function CardEffects.update(dt)
+    for card,pulses in pairs(equipmentPulses) do
+        for index,value in pairs(pulses) do
+            value=math.max(0,value-dt/0.42)
+            pulses[index]=value>0 and value or nil
+        end
+        if not next(pulses) then equipmentPulses[card]=nil end
+    end
     elapsed = elapsed + dt
     for card, state in pairs(cardStates) do
         local effectName = CardEffects.getEffectName(card)
@@ -220,6 +228,15 @@ function CardEffects.triggerScorePulse(card)
     local state = stateFor(card, Config.effects[effectName])
     state.scoreTimer = Config.scoreStateDuration
     state.scorePulse = 1
+end
+
+function CardEffects.triggerEquipmentPulse(card,index)
+    if not card or not index then return end
+    equipmentPulses[card]=equipmentPulses[card] or {}
+    equipmentPulses[card][index]=1
+end
+function CardEffects.getEquipmentPulse(card,index)
+    return equipmentPulses[card] and equipmentPulses[card][index] or 0
 end
 
 function CardEffects.triggerSelectPulse(card)

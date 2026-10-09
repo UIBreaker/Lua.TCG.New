@@ -42,8 +42,14 @@ function love.load()
         local layout=View.layout(model,UI.fonts)
         assert(layout.h*layout.scale<=680.001,"description must fit viewport")
         for i,row in ipairs(model.rows) do
-            local _, lines=layout.font:getWrap(row.text,layout.w-40)
-            assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(layout.font:getHeight()+2)+8,"no clipped prose")
+            local font=(row.kind=="stats" or row.kind=="sockets") and layout.labelFont or layout.font
+            if row.kind=="equipment" then
+                local _,lines=font:getWrap(Equipment.getDescription(row.equipment),layout.w-96)
+                assert(layout.rows[i].h>=32+layout.rows[i].nameH+#lines*(font:getHeight()+2)+14,"equipment name and effect fit")
+            else
+                local _,lines=font:getWrap(row.text,layout.w-40)
+                assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(font:getHeight()+2)+8,"no clipped prose")
+            end
         end
         total=total+1
     end
@@ -56,11 +62,19 @@ function love.load()
     assert(longLayout.h<=440 and longLayout.scale==1,"compact viewport never shrinks text")
     local additions
     for _,row in ipairs(longModel.rows) do if row.kind=="additions" then additions=row.text end end
-    assert(additions and additions:find("Đá Tiên Phong",1,true) and additions:find("Dấu ấn",1,true),"modifications grouped, never discarded")
+    local foundEquipment=false;for _,row in ipairs(longModel.rows) do if row.kind=="equipment" and row.text:find("Đá Tiên Phong",1,true) then foundEquipment=true end end
+    assert(foundEquipment and additions and additions:find("Dấu ấn",1,true),"equipment has its own tier/slot row; modifiers remain visible")
     local title,body=Description.resolve(modified)
     local expanded=View.model(modified,title,body,true)
     assert(#expanded.rows>#longModel.rows,"secondary information available on Shift")
-    for _,row in ipairs(longModel.rows) do assert(row.kind~="detail" and row.kind~="stats" and row.kind~="next","hide reference information by default") end
+    local stats,role=false,false
+    for _,row in ipairs(longModel.rows) do
+        assert(row.kind~="detail" and row.kind~="next","hide reference information by default")
+        stats=stats or row.kind=="stats";role=role or row.kind=="role"
+    end
+    assert(stats and role,"combat stats and royal bonus must be visible without Shift")
+    local empty=View.model(jack,Description.resolve(jack))
+    for _,row in ipairs(empty.rows) do assert(row.kind~="sockets","empty socket tutorial stays out of quick view") end
     local huge=View.model(jack,"Long",("Effect\n"):rep(100),true)
     local hugeLayout=View.layout(huge,UI.fonts)
     assert(hugeLayout.maxScroll>0 and hugeLayout.h<=600 and hugeLayout.scale==1,"long cards scroll with original font")

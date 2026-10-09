@@ -133,5 +133,5 @@ for _,row in ipairs(A.entries) do
     Combat.start(restored,Monster.create(1,false,false,1),2)
     assert(not next(restored.spnCombat),row[1].." reset")
 end
-assert(#D.getRandomShopPool({},99)==32)
+assert(#D.getRandomShopPool({},99)==48)
 print("SPN anomalies PASS: all 10 mechanics, costs, order, enemy armor/revival, preview budgets, locks, UX snapshots, save/load and battle reset")

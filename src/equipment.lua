@@ -1,12 +1,29 @@
 local Rng = require("src.rng")
 local Equipment = {}
 
-Equipment.MAX_SLOTS = 3
-Equipment.SOCKET_CAP = 6
+Equipment.MAX_SLOTS = 4
+Equipment.SOCKET_CAP = 8
 
 function Equipment.getMaxSlots(card)
     return math.max(Equipment.MAX_SLOTS, math.min(Equipment.SOCKET_CAP,
         math.floor(tonumber(card and card.maxSockets) or Equipment.MAX_SLOTS)))
+end
+
+local tiers={common=1,uncommon=2,rare=3,epic=4,legendary=5,mythic=6,transcendent=7,unique=8}
+function Equipment.getTier(item)
+    return math.max(1,math.min(8,math.floor(tonumber(item and item.craftTier) or tiers[item and item.rarity] or 1)))
+end
+function Equipment.getTierColor(item)
+    return require("src.deities").RARITIES[Equipment.getTier(item)].color
+end
+function Equipment.getSocketEntries(card)
+    local entries={}
+    for index,item in ipairs(card and card.equipments or {}) do
+        for part=1,item.slotsNeeded or 1 do
+            entries[#entries+1]={equipment=item,equipmentIndex=index,linked=part>1}
+        end
+    end
+    return entries
 end
 
 -- Ordinary equipment and soul relics use separate reward pools.
@@ -238,8 +255,11 @@ for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
     if effect then item.onCardScore=function(c,cs,index,ctx)
         if index==0 then return nil end
         if ctx then
-            ctx.equipmentSeen=ctx.equipmentSeen or {};local key=tostring(c.id)..":"..id..":"..tostring(ctx.equipmentIndex or 1)
-            if ctx.equipmentSeen[key] then return nil end;ctx.equipmentSeen[key]=true
+            ctx.equipmentSeen=ctx.equipmentSeen or {}
+            local seen=ctx.equipmentSeen[c]
+            if not seen then seen={};ctx.equipmentSeen[c]=seen end
+            local key=ctx.equipmentIndex or item
+            if seen[key] then return nil end;seen[key]=true
         end
         local r=effect(c,cs,index,ctx)
         if r then

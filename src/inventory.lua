@@ -6,7 +6,7 @@ function Inventory.canUpgradeCard(consumable,target)
     local E=require("src.equipment")
     if not target or not target.rank or target.destroyed then return false,"Chọn một quân bài còn trong bộ." end
     if consumable.category=="socket_expansion" then
-        if E.getMaxSlots(target)>=E.SOCKET_CAP then return false,"Lá đã đủ 6 hốc trang bị." end
+        if E.getMaxSlots(target)>=E.SOCKET_CAP then return false,"Lá đã đủ 8 hốc trang bị." end
     elseif consumable.category=="rule_break" then
         if target.allowDuplicateEquipment then return false,"Lá đã có Phá Luật." end
     else return false,"Thẻ không nâng cấp trang bị." end

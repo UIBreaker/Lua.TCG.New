@@ -94,9 +94,10 @@ function Deities.scaleEffect(deity, result)
             local def=Deities.CATALOG[deity.id]
             if def and def.integerEffect and key==def.stat then scaled=math.floor(scaled) end
             if key=="addTransmutePct" then scaled=math.min(90,scaled) end
+            if key=="addRedirectPct" then scaled=math.min(100,scaled) end
             result[key] = scaled
 
-            local message = result.message
+            local message = not result.fixedMessage and result.message
             if message then
                 local number = formatEffectNumber(value)
                 local startAt, endAt = message:find(number, 1, true)
@@ -111,8 +112,8 @@ function Deities.scaleEffect(deity, result)
         end
     end
 
-    if type(result.xMult) == "number" and result.xMult > 1 then
-        result.xMult = 1 + (result.xMult - 1) * multiplier
+    for _,key in ipairs({"xMult","xChips","xAura"}) do
+        if type(result[key])=="number" and result[key]>1 then result[key]=1+(result[key]-1)*multiplier end
     end
     return result
 end
@@ -231,6 +232,8 @@ for _, row in ipairs(tacticalEntries) do
 end
 
 require("src.spn_anomalies").register(Deities)
+require("src.spn_convergence").register(Deities)
+require("src.spn_velocity").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -238,7 +241,10 @@ function Deities.getDescription(deity)
     local value=def.values.value*(def.stat=="bedExplosionPct" and 1 or effectMultiplier(deity))
     if def.integerEffect then value=math.floor(value) end
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
+    if def.stat=="addRedirectPct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
+    local growth=require("src.spn_convergence").describe(deity)
+    if growth then text=text.."\n"..growth end
     local spell=require("src.chest_expansion").byId[deity.enchantment]
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end
     return text

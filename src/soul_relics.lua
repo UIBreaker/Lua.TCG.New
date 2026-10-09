@@ -28,11 +28,11 @@ local function state(g)
     g.soulRelicCombat=g.soulRelicCombat or {used={},claimed={},freeze=0}
     return g.soulRelicCombat
 end
-local function report(g,card,eq,message)
+local function report(g,card,eq,message,equipmentIndex)
     local ctx=g.abilityHand and not g.abilityHand.finished and g.abilityHand or g.abilityCombat
     if ctx then
         ctx.feedback=ctx.feedback or {}
-        ctx.feedback[#ctx.feedback+1]={type="equipment_trigger",card=card,equipment=eq,message=eq.name.." · "..message,addedChips=0,addedMult=0}
+        ctx.feedback[#ctx.feedback+1]={type="equipment_trigger",card=card,equipment=eq,equipmentIndex=equipmentIndex,message=eq.name.." · "..message,addedChips=0,addedMult=0}
     end
 end
 function R.score(g,card,ctx)
@@ -65,12 +65,17 @@ function R.score(g,card,ctx)
                     if other and not other.destroyed then require("src.card_abilities").repeatCard(g,other,2,ctx);n=n+1 end
                 end
                 if n>0 then message="VỌNG ÂM "..n.." LÁ KỀ" end
-            elseif id=="soul_evolution_quill" and not s.used[key] then
+            elseif id=="soul_evolution_quill" then
+                local Abilities=require("src.card_abilities")
                 local target
                 for _,other in ipairs(ctx.scoring) do
-                    if other~=card and not other.destroyed and (not target or (other.evolutionLevel or 0)<(target.evolutionLevel or 0)) then target=other end
+                    if other~=card and not other.destroyed and not other.exhausted and Abilities.definition(other)
+                        and (other.evolutionLevel or 0)<Abilities.config.maxEvolutionLevel
+                        and (not target or (other.evolutionLevel or 0)<(target.evolutionLevel or 0)) then target=other end
                 end
-                if target and require("src.card_abilities").upgrade(g,target,1,false) then s.used[key]=true;message="TIẾN HÓA ĐỒNG ĐỘI" end
+                if s.used[key] then message="ĐÃ DÙNG TRONG TRẬN"
+                elseif target and Abilities.upgrade(g,target,1,false) then s.used[key]=true;message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +1 CẤP"
+                else message="CẦN ĐỒNG ĐỘI TÍNH ĐIỂM CHƯA ĐẠT TRẦN" end
             elseif id=="soul_silence_anchor" and not s.used[key] and require("src.boss_abilities").state(g.monster) then
                 local Boss=require("src.boss_abilities");local bs=Boss.state(g.monster)
                 local remaining=math.max(0,math.max(bs.passiveUntil or 0,bs.activeUntil or 0)-bs.handIndex)
@@ -98,7 +103,7 @@ function R.score(g,card,ctx)
                     s.used[key]=true;message="ẤN BẢN → "..nextEdition
                 end
             end
-            if message then report(g,card,eq,message) end
+            if message then report(g,card,eq,message,equipmentIndex) end
         end
     end
 end
@@ -111,7 +116,7 @@ function R.guard(g,damage)
                 local key=tostring(card.id or card)..":"..eq.id..":"..equipmentIndex
                 if eq.id=="soul_phoenix_lantern" and not s.used[key] then
                     s.used[key]=true;g.playerHp=math.max(1,math.floor((g.maxPlayerHp or 100)*.5))
-                    report(g,card,eq,"CHẶN CHÍ TỬ · HỒI SINH");return 0
+                    report(g,card,eq,"CHẶN CHÍ TỬ · HỒI SINH",equipmentIndex);return 0
                 end
             end
         end

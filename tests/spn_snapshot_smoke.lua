@@ -16,7 +16,7 @@ for id,def in pairs(D.CATALOG) do
     assert(D.evolve(deity))
     local after=P.snapshot(game)
     assert(after[deity][def.stat]>=before[deity][def.stat],id.." evolved stat")
-    local expected=def.stat=="xMult" and 1+def.values.value*1.5 or def.stat:sub(1,3)=="add" and def.values.value*1.5 or def.values.value
+    local expected=def.stat:sub(1,1)=="x" and 1+def.values.value*1.5 or def.stat:sub(1,3)=="add" and def.values.value*1.5 or def.values.value
     if def.integerEffect then expected=math.floor(expected) end
     assert(math.abs(after[deity][def.stat]-expected)<0.00001,id.." scaling")
     P.applications={}
@@ -28,5 +28,5 @@ for id,def in pairs(D.CATALOG) do
     assert(P.snapshot(restored)[saved][def.stat]==after[deity][def.stat],id.." existing saves")
     count=count+1
 end
-assert(count==32)
-print("SPN snapshot PASS: all 32 SPNs, evolution feedback, XMult scaling, sparse slots, shared cards and save/load")
+assert(count==48)
+print("SPN snapshot PASS: all 48 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load")

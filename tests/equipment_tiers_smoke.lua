@@ -100,7 +100,7 @@ for _,item in ipairs(T.definitions) do
  assert(B.attach(run,1,card));assert(E.getUsedSlots(card)==(item.craftTier==5 and 2 or 1))
  if item.craftTier==5 then
   assert(item.legacyCost==E.ITEMS.void_catalyst.legacyCost,"same tier should not inflate soul conversion")
-  assert(E.attach(card,E.ITEMS.basic_plate));assert(not E.canAttach(card,E.ITEMS.basic_lace));table.remove(card.equipments,2)
+  assert(E.attach(card,E.ITEMS.basic_plate));assert(E.attach(card,E.ITEMS.basic_lace));assert(not E.canAttach(card,E.ITEMS.basic_chain));table.remove(card.equipments,3);table.remove(card.equipments,2)
  end
  assert(B.detach(run,card,1));assert(B.investment(run.backpackEquipment[1])==item.craftCost)
 end

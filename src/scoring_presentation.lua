@@ -30,7 +30,7 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId)
     append(q, "BASE_ENHANCE", t.base, base, 1)
     for i = 2, #result.steps do
         local st = result.steps[i]
-        if st.type ~= "final_score" then
+        if st.type ~= "final_score" and not (st.equipment and (st.type=="armor_gain" or st.type=="heal_hp") and st.cardIndex) then
             if st.type == "card_scored" then
                 -- These contributions are already in addedChips/addedMult. Split only their presentation.
                 local core = {}
@@ -110,6 +110,7 @@ local function trigger(anim, st)
         Feedback.destroyCard(st.card,x,y)
         if st.card then st.card.destroyFxActive=true;st.card.destroyFx=0 end
     end
+    if st.type=="equipment_trigger" then Effects.triggerEquipmentPulse(st.card,st.equipmentIndex) end
     anim.activeCardIndex = cardIndex
     if st.slotIndex then
         anim.deityBounce[st.slotIndex] = C.pulse.spn
@@ -133,18 +134,31 @@ local function trigger(anim, st)
     -- Card XMult is additive and capped by the calculator; hand SPN XMult is already in resultingMult.
     local beforeX = anim.displayXMult
     if st.cardXMultTotal then anim.displayXMult = st.cardXMultTotal end
-    s.multiply = (st.xMult or 1) > 1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
+    s.multiply = (st.xMult or 1) > 1 or (st.xChips or 1)>1 or (st.xAura or 1)>1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
     anim.bounceScale.chips = s.toChips ~= beforeChips and C.pulse.damage or 1
     anim.bounceScale.mult = s.toMult ~= beforeMult and (s.multiply and C.pulse.multiply or C.pulse.enhance) or 1
     local popupY=y-(cardIndex and 94 or 52)
     link(s, st.addedChips or 0, "ST", x, popupY, 70, 197, C.color.damage)
     link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 197, C.color.enhance)
     link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 126, 292, C.color.aura)
+    if st.type=="equipment_trigger" then
+        local rows={{st.addArmor,"GIÁP",{0.4,0.75,1,1}},{st.healHp,"HP",{0.4,0.95,0.6,1}},{st.addGold,"VÀNG",C.color.aura}}
+        local offset=0
+        for _,row in ipairs(rows) do
+            if (row[1] or 0)>0 then
+                s.links[#s.links+1]={text="+"..row[1].." "..row[2],x=x,y=popupY-24-offset,
+                    tx=x,ty=popupY-24-offset,age=0,duration=0.62,color=row[3],resource=true}
+                offset=offset+22
+            end
+        end
+    end
     if s.multiply then
-        local factor = st.auraMultiplier or st.xMult or anim.displayXMult
+        local aura=(st.xAura or 1)>1 or st.auraMultiplier or st.cardXMultTotal
+        local chips=(st.xChips or 1)>1
+        local factor = (st.xAura or 1)>1 and st.xAura or chips and st.xChips or st.auraMultiplier or st.xMult or anim.displayXMult
         s.links[#s.links + 1] = {text = "×" .. string.format("%.2f",factor)
-            .. ((st.auraMultiplier or st.cardXMultTotal) and " AURA" or " C.H"), x = x, y = popupY-21,
-            tx = st.auraMultiplier and 126 or 176, ty = st.auraMultiplier and 292 or 197,
+            .. (aura and " AURA" or chips and " ST" or " C.H"), x = x, y = popupY-21,
+            tx = aura and 126 or chips and 70 or 176, ty = aura and 292 or 197,
             age = 0, duration = 0.48, color = C.color.aura, multiply = true}
     end
     anim.stepCategory = categories[st.type] or "HIỆU ỨNG"
@@ -230,7 +244,10 @@ function Feel.formula(s)
     if (r.localAuraBonus or 0) ~= 0 then text=text.." + "..fmt(r.localAuraBonus).." AURA Đa Sắc" end
     if (r.totalExtraDamagePct or 0) ~= 0 then text = text .. " × " .. string.format("%.2f", 1 + r.totalExtraDamagePct) end
     if (r.auraEditionMultiplier or 1) ~= 1 then text = text .. " × " .. string.format("%.2f", r.auraEditionMultiplier) end
-    if (r.flatDamageBonus or 0) ~= 0 then text = text .. " + " .. fmt(r.flatDamageBonus) .. " ST cố định" end
+    local flat=(r.flatDamageBonus or 0)+(r.auraDebtTotal or 0)
+    if flat ~= 0 then text = text .. " + " .. fmt(flat) .. " ST cố định" end
+    if (r.spnAuraMultiplier or 1)~=1 then text=text.." → ×"..string.format("%.2f",r.spnAuraMultiplier).." AURA tổng" end
+    if (r.auraDebtTotal or 0)>0 then text=text.." - "..fmt(r.auraDebtTotal).." nợ AURA" end
     return text .. " = " .. fmt(r.finalScore)
 end
 

@@ -51,6 +51,54 @@ function Frame.tier(card)
     return math.min(#Frame.styles, absolute), math.max(0, absolute - #Frame.styles)
 end
 
+function Frame.socketPosition(index,w,h)
+    local inset=math.min(w,h)*0.046
+    local positions={{inset,inset},{w-inset,inset},{w-inset,h-inset},{inset,h-inset},
+        {w/2,inset},{w-inset,h/2},{w/2,h-inset},{inset,h/2}}
+    return positions[index][1],positions[index][2]
+end
+
+function Frame.socketGem(cx,cy,radius,color,alpha,pulse,linked)
+    local g=love.graphics
+    alpha,pulse=alpha or 1,pulse or 0
+    g.setColor(0.018,0.026,0.038,alpha)
+    g.circle("fill",cx,cy,radius*1.35,8)
+    g.setLineWidth(math.max(0.7,radius*0.25))
+    g.setColor(0.53,0.59,0.63,alpha*(color and 0.9 or 0.45))
+    g.circle("line",cx,cy,radius*1.22,8)
+    if not color then
+        g.setColor(0.17,0.22,0.27,alpha*0.8);g.circle("fill",cx,cy,radius*0.65,4)
+        return
+    end
+    if pulse>0 then
+        g.setColor(color[1],color[2],color[3],alpha*pulse*0.25)
+        g.circle("fill",cx,cy,radius*(1.8+pulse),12)
+    end
+    local strength=linked and 0.65 or 1
+    g.setColor(color[1]*strength,color[2]*strength,color[3]*strength,alpha)
+    g.polygon("fill",cx,cy-radius,cx+radius,cy,cx,cy+radius,cx-radius,cy)
+    g.setColor(1,1,1,alpha*0.6)
+    g.polygon("fill",cx,cy-radius,cx,cy,cx-radius,cy)
+    g.setColor(0.01,0.025,0.045,alpha*0.45)
+    g.polygon("fill",cx,cy,cx+radius,cy,cx,cy+radius)
+    g.setColor(1,1,1,alpha*(0.7+pulse*0.3))
+    g.circle("fill",cx-radius*0.2,cy-radius*0.4,math.max(0.5,radius*0.18),6)
+end
+
+function Frame.drawSockets(x,y,w,h,card,alpha)
+    if not card or not card.rank or not card.suit then return end
+    local E=require("src.equipment")
+    local entries=E.getSocketEntries(card)
+    local radius=math.min(w,h)*0.023
+    for i=1,E.getMaxSlots(card) do
+        local cx,cy=Frame.socketPosition(i,w,h)
+        local entry=entries[i]
+        local color=entry and E.getTierColor(entry.equipment)
+        local pulse=entry and require("src.card_effects").getEquipmentPulse(card,entry.equipmentIndex) or 0
+        Frame.socketGem(x+cx,y+cy,radius,color,alpha,pulse,entry and entry.linked)
+    end
+end
+
 function Frame.draw(x, y, w, h, highlight, alpha, card)
     local g = love.graphics
     alpha = (alpha or 1) * (highlight and highlight[4] or 1)
@@ -79,7 +127,7 @@ function Frame.draw(x, y, w, h, highlight, alpha, card)
     end
     g.setColor(r,b,c,alpha); g.setLineWidth(stroke)
     g.polygon("line",outline(x,y,w,h,0.75))
-    if tier == 1 then g.pop(); return end
+    if tier == 1 then Frame.drawSockets(x,y,w,h,card,alpha);g.pop(); return end
     local bevel, reach = size*0.06,size*(0.055+0.012*tier)
     g.setLineWidth(math.max(0.75,unit))
     for _, corner in ipairs({{x,y,1,1},{x+w,y,-1,1},{x,y+h,1,-1},{x+w,y+h,-1,-1}}) do
@@ -97,7 +145,7 @@ function Frame.draw(x, y, w, h, highlight, alpha, card)
             g.line(3*unit,bevel+reach,8*unit,bevel+reach-5*unit,6*unit,bevel+reach-10*unit)
             g.line(bevel+reach,3*unit,bevel+reach-5*unit,8*unit,bevel+reach-10*unit,6*unit)
         end
-        if tier >= 7 then
+        if tier >= 7 and not (card and card.suit) then
             g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha*0.85)
             g.circle("fill",bevel+7*unit,bevel+7*unit,1.3*unit)
         end
@@ -111,8 +159,8 @@ function Frame.draw(x, y, w, h, highlight, alpha, card)
         g.setColor(1,0.97,0.89,alpha*0.9);g.line(cx-radius*0.5,cy,cx,cy-radius*0.5)
     end
     local radius = (tier >= 5 and 3 or 2)*unit
-    if tier >= 3 then gem(x+w/2,y+h-5*unit,radius) end
-    if tier >= 4 then gem(x+w/2,y+5*unit,radius) end
+    if tier >= 3 and not (card and card.suit) then gem(x+w/2,y+h-5*unit,radius) end
+    if tier >= 4 and not (card and card.suit) then gem(x+w/2,y+5*unit,radius) end
     if tier >= 5 then
         g.setColor(r,b,c,alpha)
         for _, cy in ipairs({y+5*unit,y+h-5*unit}) do
@@ -120,7 +168,7 @@ function Frame.draw(x, y, w, h, highlight, alpha, card)
             g.line(x+w/2+15*unit,cy,x+w/2+8*unit,cy+3*unit,x+w/2,cy)
         end
     end
-    if tier >= 6 then gem(x+5*unit,y+h/2,radius); gem(x+w-5*unit,y+h/2,radius) end
+    if tier >= 6 and not (card and card.suit) then gem(x+5*unit,y+h/2,radius); gem(x+w-5*unit,y+h/2,radius) end
     if tier >= 7 then
         g.setColor(r,b,c,alpha*0.55);g.setLineWidth(unit*0.7)
         for _, cx in ipairs({x+4*unit,x+w-4*unit}) do
@@ -142,6 +190,7 @@ function Frame.draw(x, y, w, h, highlight, alpha, card)
             g.line(x+w/2+dx,y+h-16*unit,x+w/2+dx,y+h-14*unit)
         end
     end
+    Frame.drawSockets(x,y,w,h,card,alpha)
     g.pop()
 end
 

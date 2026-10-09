@@ -245,7 +245,7 @@ local function soulShop(shop, game, buttons, mx, my, time)
     end
     text("NGHI LỄ & THẺ HỖ TRỢ",40,409,440,UI.fonts.small,{0.86,0.76,1,1})
     text("HIẾN TẾ TẠI CHỢ: ×2 LH · +10 HP · +5 VÀNG",580,411,660,nil,C.gold,"right")
-    local summaries={evolution="Tiến hóa +1",speed_single="Tốc đơn +5",speed_team="Tốc đội +2",vitality="Máu tối đa +20",socket_expansion="Hốc +1 / 6",rule_break="ITM trùng loại"}
+    local summaries={evolution="Tiến hóa +1",speed_single="Tốc đơn +5",speed_team="Tốc đội +2",vitality="Máu tối đa +20",socket_expansion="Hốc +1 / 8",rule_break="ITM trùng loại"}
     for slot=1,#Shop.SOUL_SUPPORT+1 do
         local definition=Shop.SOUL_SUPPORT[slot]
         local id=definition and definition.id or "soul_reaper"

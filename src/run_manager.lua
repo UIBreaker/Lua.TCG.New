@@ -344,7 +344,7 @@ end
 
 function RunManager.createSocketCard()
     return {id="cons_socket",category="socket_expansion",name="Khảm Hốc Linh Hồn",
-        desc="Chọn một quân bài: thêm vĩnh viễn 1 hốc trang bị, tối đa 6 hốc. Hủy lựa chọn hoặc đã đủ hốc thì không mất thẻ.",
+        desc="Chọn một quân bài: thêm vĩnh viễn 1 hốc trang bị, tối đa 8 hốc. Hủy lựa chọn hoặc đã đủ hốc thì không mất thẻ.",
         color={.95,.76,.4,1}}
 end
 function RunManager.createRulebreakCard()

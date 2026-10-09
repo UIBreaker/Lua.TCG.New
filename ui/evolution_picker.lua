@@ -74,7 +74,7 @@ function Picker.draw(UI,m,mx,my)
         local after
         if upgrade then
             before="Trang bị: "..require("src.equipment").getUsedSlots(c).." / "..maximum.." hốc đang dùng.\n"..(c.allowDuplicateEquipment and "Có thể gắn trang bị trùng loại." or "Mỗi loại trang bị chỉ được gắn một món.")
-            after=sockets and ("Thêm 1 hốc trang bị vĩnh viễn: "..(maximum+1).." hốc. Tối đa 6 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
+            after=sockets and ("Thêm 1 hốc trang bị vĩnh viễn: "..(maximum+1).." hốc. Tối đa 8 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
         elseif d then after=A.description(c,A.level(c)+1)
         else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+1;after=Deities.getDescription(copy) end
         text(UI,"HIỆN TẠI",848,291,324,"tiny",muted)

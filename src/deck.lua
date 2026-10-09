@@ -338,13 +338,18 @@ function Deck.getAttackSpeed(rank)
     return math.max(1,14-rank) -- Low ranks win initiative; high ranks hit harder.
 end
 
-function Deck.getCardAttackSpeed(card)
+function Deck.peekCardAttackSpeed(card)
     if not card then return 1 end
     local base = Deck.getAttackSpeed(card.rank)
-    card.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
     local equipmentSpeed=0
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
-    card.attackSpeed = math.max(1, math.min(999, base + card.speedBonus + (card.temporarySpeedBonus or 0) + equipmentSpeed))
+    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed))
+end
+
+function Deck.getCardAttackSpeed(card)
+    if not card then return 1 end
+    card.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
+    card.attackSpeed = Deck.peekCardAttackSpeed(card)
     return card.attackSpeed
 end
 
@@ -403,9 +408,9 @@ function Deck.newCard(rank, suit)
         roleTitle = role.title,
         roleIcon = role.icon,
         roleDesc = role.desc,
-        equipments = {}, -- Up to 3 equipment slots
-        maxSockets = 3,
-        unlockedSockets = 3,
+        equipments = {}, -- Four corner sockets; expansions add edge sockets.
+        maxSockets = require("src.equipment").MAX_SLOTS,
+        unlockedSockets = require("src.equipment").MAX_SLOTS,
         isWildSuit = false,
         isDualRankAce = false,
         isPrimalDrone = false,
@@ -423,7 +428,7 @@ function Deck.newCard(rank, suit)
     }
     if requestedSuit == "red_deck" then
         card.suitName = Deck.STANDARD_SUIT_NAMES[actualSuit] or card.suitName
-        card.unlockedSockets = 3
+        card.unlockedSockets = require("src.equipment").MAX_SLOTS
     end
     nextCardId = nextCardId + 1
     return card
@@ -440,7 +445,7 @@ function Deck.createRedStarterDeck()
     card.isWildSuit = false
     card.isDualRankAce = false
     card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-    card.unlockedSockets = 3
+    card.unlockedSockets = require("src.equipment").MAX_SLOTS
     return { card }
 end
 
@@ -739,7 +744,7 @@ function Deck.createRewardCard(excludeSuit)
         card.isWildSuit = false
         card.isDualRankAce = false
         card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-        card.unlockedSockets = 3
+        card.unlockedSockets = require("src.equipment").MAX_SLOTS
     end
     return card
 end

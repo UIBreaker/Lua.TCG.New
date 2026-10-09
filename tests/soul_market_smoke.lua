@@ -40,18 +40,18 @@ for _,id in ipairs({"cons_socket","cons_rulebreak"}) do
 end
 assert(g.souls==0 and #g.consumables==0)
 for _,pile in ipairs({g.persistentDeck,g.hand,g.deck,g.discardPile}) do
-    for _,copy in ipairs(pile) do if copy.id==c.id then assert(copy.maxSockets==4 and copy.unlockedSockets==4 and copy.allowDuplicateEquipment) end end
+    for _,copy in ipairs(pile) do if copy.id==c.id then assert(copy.maxSockets==5 and copy.unlockedSockets==5 and copy.allowDuplicateEquipment) end end
 end
 g.consumables={Run.createRulebreakCard()};assert(not I.useCardUpgrade(g,1,c) and #g.consumables==1)
 g.consumables={Run.createSocketCard()};assert(not I.useCardUpgrade(g,1,D.newCard(2,"valoria")) and #g.consumables==1)
-assert(I.useCardUpgrade(g,1,c));g.consumables={Run.createSocketCard()};assert(I.useCardUpgrade(g,1,c))
-g.consumables={Run.createSocketCard()};assert(not I.useCardUpgrade(g,1,c) and #g.consumables==1 and c.maxSockets==6)
-for _=1,6 do assert(E.attach(c,E.ITEMS.gem_fire)) end
+for _=1,3 do assert(I.useCardUpgrade(g,1,c));g.consumables={Run.createSocketCard()} end
+g.consumables={Run.createSocketCard()};assert(not I.useCardUpgrade(g,1,c) and #g.consumables==1 and c.maxSockets==8)
+for _=1,8 do assert(E.attach(c,E.ITEMS.gem_fire)) end
 assert(not E.attach(c,E.ITEMS.gem_fire))
 local loaded=P.restoreSnapshot(P.makeSnapshot(g,"shop"));local saved=loaded.persistentDeck[1]
-assert(saved.maxSockets==6 and saved.unlockedSockets==6 and saved.allowDuplicateEquipment and #saved.equipments==6)
-local copy=D.cloneCard(saved);assert(copy.maxSockets==6 and copy.allowDuplicateEquipment and #copy.equipments==6)
-D.transformCard(loaded,saved,11);assert(saved.maxSockets==6 and saved.allowDuplicateEquipment)
+assert(saved.maxSockets==8 and saved.unlockedSockets==8 and saved.allowDuplicateEquipment and #saved.equipments==8)
+local copy=D.cloneCard(saved);assert(copy.maxSockets==8 and copy.allowDuplicateEquipment and #copy.equipments==8)
+D.transformCard(loaded,saved,11);assert(saved.maxSockets==8 and saved.allowDuplicateEquipment)
 local ordinary=D.newCard(8,"valoria");assert(E.attach(ordinary,E.ITEMS.gem_fire));assert(not E.attach(ordinary,E.ITEMS.gem_fire))
 -- Picker cancellation preserves the consumable. Only confirmation applies it.
 local Modal=require("ui.ability_choices")
@@ -116,6 +116,6 @@ assert(require("src.souls").award(loaded,D.cloneCard(c),2)==0 and loaded.souls==
 g,c=fixture();g.shopMode="normal";g.playerHp=40;g.gold=10;g.consumables={Shop.destructionItem().consumable}
 assert(Shop.activateDestruction(g,g.consumables[1]) and Shop.destroyCard(g,c))
 assert(g.souls==1 and g.playerHp==40 and g.gold==10)
-print("Soul market PASS: purchase, permanent upgrades, cancellation, six sockets, duplicate scores and charged relics, previews, save/reload, ritual rewards and receipts")
+print("Soul market PASS: purchase, permanent upgrades, cancellation, eight sockets, duplicate scores and charged relics, previews, save/reload, ritual rewards and receipts")
 require("tests.soul_relics_smoke")
 require("tests.chest_depth_smoke")

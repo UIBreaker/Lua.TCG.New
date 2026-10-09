@@ -209,7 +209,7 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable)
    local c=game.persistentDeck[Bag.selected]
    local compact=#(c and c.equipments or {})>3
    for i,eq in ipairs(c and c.equipments or {}) do
-    local column=compact and (i-1)%3 or i-1;local row=compact and math.floor((i-1)/3) or 0
+    local column=compact and (i-1)%4 or i-1;local row=compact and math.floor((i-1)/4) or 0
     button(UI,buttons,"bag_detach_"..i,"THÁO "..i.." · "..eq.name,380+column*188,(compact and 541 or 561)+row*32,178,compact and 29 or 36,mx,my)
    end
   end

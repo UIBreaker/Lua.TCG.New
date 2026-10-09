@@ -64,7 +64,7 @@ function T.update(game,cb)
     elseif stage==8 then choose()
     elseif stage==9 then confirmModal()
     elseif stage==10 then
-        assert(game.persistentDeck[1].maxSockets==4 and #game.consumables==0)
+        assert(game.persistentDeck[1].maxSockets==5 and #game.consumables==0)
         UI.Polish.clearFocus();buy(cb,"cons_rulebreak")
     elseif stage==11 then click(UI.Polish.button(game))
     elseif stage==12 then UI.Backpack.show();UI.Backpack.tab="consumable"
@@ -74,13 +74,13 @@ function T.update(game,cb)
     elseif stage==15 then capture("soul_market_rulebreak_preview",confirmModal);return
     elseif stage==16 then
         local c=game.persistentDeck[1];assert(c.allowDuplicateEquipment and #game.consumables==0)
-        c.maxSockets=6;c.unlockedSockets=6
-        for _=1,6 do assert(E.attach(c,E.ITEMS.gem_fire)) end
+        c.maxSockets=8;c.unlockedSockets=8
+        for _=1,8 do assert(E.attach(c,E.ITEMS.gem_fire)) end
         UI.Backpack.show();UI.Backpack.tab="cards";UI.Backpack.selected=1
     elseif stage==17 then
-        capture("soul_market_six_sockets",function()
-            local n=0;for _,b in ipairs(cb.getButtons()) do if b.id:match("^bag_detach_") then n=n+1;assert(b.x+b.w<=950 and b.y+b.h<=604) end end
-            assert(n==6);UI.Backpack.close();game.consumables={Shop.destructionItem().consumable};UI.Backpack.show();UI.Backpack.tab="consumable"
+        capture("soul_market_eight_sockets",function()
+            local n=0;for _,b in ipairs(cb.getButtons()) do if b.id:match("^bag_detach_") then n=n+1;assert(b.x+b.w<=1130 and b.y+b.h<=604) end end
+            assert(n==8);UI.Backpack.close();game.consumables={Shop.destructionItem().consumable};UI.Backpack.show();UI.Backpack.tab="consumable"
         end);return
     elseif stage==18 then
         local x,y,w,h=UI.Backpack.rect("consumable",1,game);pointer(x+w/2,y+h/2,2)
@@ -113,7 +113,7 @@ function T.update(game,cb)
     elseif stage==29 then capture("soul_market_relic_inspector");return
     elseif stage==30 then cb.closeInspector()
     elseif stage==31 then
-        print("Soul market UI PASS: all 14 offers, actual purchases, backpack right click, preview/cancel/confirm, 6 visible detach controls, duplicate attachment and doubled destruction rewards")
+        print("Soul market UI PASS: all 14 offers, actual purchases, backpack right click, preview/cancel/confirm, 8 visible detach controls, duplicate attachment and doubled destruction rewards")
         love.event.quit(0)
     end
     stage=stage+1;deadline=love.timer.getTime()+(stage==1 and 2 or .8)

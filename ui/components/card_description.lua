@@ -2,8 +2,8 @@ local Theme = require("ui.theme")
 local Core = require("ui.components.core")
 local View = {}
 local prefixes = {
-    {"KẾ TIẾP: ", "Cấp kế tiếp", "next"}, {"Cơ bản: ", "Chỉ số", "stats"},
-    {"Vai trò ", "", "role"}, {"ITM · ", "", "equipment"},
+    {"KẾ TIẾP: ", "Cấp kế tiếp", "next"}, {"Cơ bản: ", "", "stats"},
+    {"Vai trò ", "THƯỞNG QUÂN BÀI", "role"}, {"ITM · ", "", "equipment"},
     {"ẤN · ", "Dấu ấn", "modifier"}, {"RÈN · ", "Cường hóa", "modifier"},
     {"ẤN BẢN · ", "Ấn bản", "edition"},
 }
@@ -48,8 +48,10 @@ function View.model(item,title,body,expanded)
             local row=classify(line,def)
             if previous and previous.kind=="edition" and row.kind=="state" then previous.text=previous.text..": "..row.text
             elseif row.kind=="warning" then warnings[#warnings+1]=row
-            elseif row.kind=="next" or row.kind=="stats" or row.kind=="role" or row.kind=="detail" then details[#details+1]=row
-            elseif row.kind=="equipment" or row.kind=="modifier" or row.kind=="edition" then additions[#additions+1]=row
+            elseif row.kind=="next" or row.kind=="detail" then details[#details+1]=row
+            elseif row.kind=="equipment" then -- Structured equipment rows below retain slot and tier.
+            elseif row.text:match("^HỐC TRANG BỊ") then
+            elseif row.kind=="modifier" or row.kind=="edition" then additions[#additions+1]=row
             elseif row.text~="" then primary[#primary+1]=row end
             previous=row
         end
@@ -61,6 +63,20 @@ function View.model(item,title,body,expanded)
     for _,row in ipairs(additions) do
         if row.text~="" then lines[#lines+1]="• "..(row.label~="" and row.label..": " or "")..row.text end
     end
+    if def then
+        local E=require("src.equipment")
+        if E.getUsedSlots(item)>0 or expanded then
+            m.rows[#m.rows+1]={text="TRANG BỊ KHẢM · "..E.getUsedSlots(item).." / "..E.getMaxSlots(item).." hốc",kind="sockets"}
+        end
+        for slot,entry in ipairs(E.getSocketEntries(item)) do
+            if not entry.linked then
+                local eq=entry.equipment
+                m.rows[#m.rows+1]={kind="equipment",equipment=eq,slot=slot,
+                    label="Ô "..slot..((eq.slotsNeeded or 1)>1 and ("–"..(slot+eq.slotsNeeded-1)) or "").." · TẦNG "..E.getTier(eq),
+                    text=eq.name.."\n"..E.getDescription(eq)}
+            end
+        end
+    end
     if #lines>0 then m.rows[#m.rows+1]={label="BỔ SUNG",text=table.concat(lines,"\n"),kind="additions"} end
     if expanded then append(details) end
     return m
@@ -70,15 +86,17 @@ local function height(font,text,width,gap)
     return #lines*(font:getHeight()+(gap or 2))
 end
 function View.layout(m,fonts)
-    local l={w=340,font=fonts.description or fonts.small,titleFont=fonts.regular or fonts.small,labelFont=fonts.tiny,rows={},scale=1}
-    l.headerH=42+height(l.titleFont,m.title,l.w-36,1)
+    local l={w=360,font=fonts.description or fonts.small,titleFont=fonts.medium or fonts.regular or fonts.small,nameFont=fonts.small,labelFont=fonts.tiny,rows={},scale=1}
+    l.headerH=48+height(l.titleFont,m.title,l.w-36,1)
     local y=0
     for i,row in ipairs(m.rows) do
         local labelH=row.label and row.label~="" and 20 or 0
-        local h=labelH+height(l.font,row.text,l.w-40)+16
-        l.rows[i]={y=y,h=h,textY=labelH+8};y=y+h+4
+        local nameH=row.kind=="equipment" and height(l.nameFont,row.equipment.name,l.w-96,1) or 0
+        local rowFont=(row.kind=="stats" or row.kind=="sockets") and l.labelFont or l.font
+        local h=row.kind=="equipment" and math.max(92,32+nameH+height(l.font,require("src.equipment").getDescription(row.equipment),l.w-96)+14) or labelH+height(rowFont,row.text,l.w-40)+(row.kind=="effect" and 24 or 16)
+        l.rows[i]={y=y,h=h,textY=labelH+(row.kind=="effect" and 12 or 8),nameH=nameH};y=y+h+6
     end
-    l.contentH=math.max(0,y-4);l.footerH=(m.hasDetails or tonumber(m.level or 0)>0 or m.temporary) and 32 or 12
+    l.contentH=math.max(0,y-6);l.footerH=m.hasDetails and 30 or 12
     l.h=math.min(m.expanded and 600 or 440,l.headerH+l.contentH+l.footerH+8)
     l.viewportH=l.h-l.headerH-l.footerH-8;l.maxScroll=math.max(0,l.contentH-l.viewportH)
     if l.maxScroll>0 then l.footerH=32;l.viewportH=l.h-l.headerH-l.footerH-8;l.maxScroll=math.max(0,l.contentH-l.viewportH) end
@@ -101,8 +119,16 @@ function View.draw(m,l,x,y,scroll)
     g.push("all");g.translate(x,y)
     g.setColor(0,0,0,0.28);g.rectangle("fill",3,5,w,h,7,7)
     g.setColor(0.035,0.053,0.067,0.99);g.rectangle("fill",0,0,w,h,7,7)
+    Core.color(accent,0.06);g.rectangle("fill",1,1,w-2,l.headerH-1,7,7)
     g.setLineWidth(1);Core.color(accent,0.45);g.rectangle("line",0.5,0.5,w-1,h-1,7,7)
-    Core.text(m.badge,18,13,w-36,l.labelFont,accent)
+    local level=tonumber(m.level) or 0
+    local levelText=(level>0 and "Cấp "..level or "")..(m.temporary and " +"..m.temporary.." tạm" or "")
+    local levelW=levelText~="" and l.labelFont:getWidth(levelText)+16 or 0
+    Core.text(m.badge,18,13,w-36-levelW,l.labelFont,accent)
+    if levelW>0 then
+        Core.color(accent,0.13);g.rectangle("fill",w-18-levelW,9,levelW,21,4,4)
+        Core.text(levelText,w-18-levelW,13,levelW,l.labelFont,accent,"center")
+    end
     Core.text(m.title,18,33,w-36,l.titleFont,Theme.colors.text)
     Core.color(Theme.colors.metal,0.5);g.line(18,l.headerH-4,w-18,l.headerH-4)
     g.push("all")
@@ -113,23 +139,46 @@ function View.draw(m,l,x,y,scroll)
         local r=l.rows[i];local ry=l.headerH+r.y-scroll
         if ry+r.h>l.headerH and ry<l.headerH+l.viewportH then
             local color=row.kind=="warning" and Theme.colors.red or row.kind=="next" and Theme.colors.cyan or row.kind=="additions" and Theme.colors.green or accent
-            if row.kind=="warning" then Core.color(color,0.1);g.rectangle("fill",12,ry,w-24,r.h,4,4)
-            elseif row.kind=="additions" then Core.color(Theme.colors.metal,0.35);g.line(18,ry,w-18,ry) end
-            if row.label and row.label~="" then Core.text(row.label,20,ry+6,w-40,l.labelFont,Theme.colors.muted) end
-            g.setFont(l.font);g.setColor(1,1,1,1)
-            local old=l.font:getLineHeight();l.font:setLineHeight((l.font:getHeight()+2)/l.font:getHeight())
-            g.printf(rich(row.text,color),20,ry+r.textY,w-40,"left");l.font:setLineHeight(old)
+            if row.kind=="equipment" then
+                local E=require("src.equipment")
+                local eq=row.equipment;local tint=E.getTierColor(eq)
+                Core.color(tint,0.055);g.rectangle("fill",12,ry,w-24,r.h,5,5)
+                Core.color(tint,0.20);g.rectangle("line",12.5,ry+0.5,w-25,r.h-1,5,5)
+                local Frame=require("ui.components.card_frame")
+                Frame.socketGem(34,ry+16,4,tint)
+                Core.text(row.label,48,ry+8,w-68,l.labelFont,tint)
+                local UI=require("src.ui");local image=UI.getEquipmentImage(eq.id)
+                if image then g.setColor(1,1,1,1);Frame.image(image,20,ry+33,42,63) end
+                Core.text(eq.name,76,ry+29,w-96,l.nameFont,Theme.colors.text)
+                g.setFont(l.font);g.setColor(1,1,1,1)
+                local old=l.font:getLineHeight();l.font:setLineHeight((l.font:getHeight()+2)/l.font:getHeight())
+                g.printf(rich(E.getDescription(eq),tint),76,ry+32+r.nameH,w-96,"left");l.font:setLineHeight(old)
+            else
+                if row.kind=="warning" or row.kind=="effect" then
+                    Core.color(color,row.kind=="effect" and 0.07 or 0.1);g.rectangle("fill",12,ry,w-24,r.h,4,4)
+                    Core.color(color,0.7);g.rectangle("fill",12,ry+8,2,r.h-16,1,1)
+                elseif row.kind=="additions" or row.kind=="sockets" then Core.color(Theme.colors.metal,0.35);g.line(18,ry,w-18,ry) end
+                if row.label and row.label~="" then Core.text(row.label,20,ry+6,w-40,l.labelFont,Theme.colors.muted) end
+                local font=(row.kind=="stats" or row.kind=="sockets") and l.labelFont or l.font
+                g.setFont(font);g.setColor(1,1,1,1)
+                local old=font:getLineHeight();font:setLineHeight((font:getHeight()+2)/font:getHeight())
+                g.printf(rich(row.text,color),20,ry+r.textY,w-40,"left");font:setLineHeight(old)
+            end
         end
     end
     g.pop()
+    if l.maxScroll>0 and scroll<l.maxScroll then
+        for n=1,12 do
+            g.setColor(0.035,0.053,0.067,n/12)
+            g.rectangle("fill",12,l.headerH+l.viewportH-12+n-1,w-24,1)
+        end
+    end
     if l.maxScroll>0 then
         local track=l.viewportH;local thumb=math.max(24,track*track/l.contentH)
         Core.color(Theme.colors.metal,0.3);g.rectangle("fill",w-8,l.headerH,2,track,1,1)
         Core.color(accent,0.6);g.rectangle("fill",w-8,l.headerH+(track-thumb)*scroll/l.maxScroll,2,thumb,1,1)
     end
     local footerY=h-l.footerH+8
-    local level=tonumber(m.level) or 0
-    if level>0 or m.temporary then Core.text("Cấp "..level..(m.temporary and " · +"..m.temporary.." tạm" or ""),18,footerY,120,l.labelFont,accent) end
     local hint=l.maxScroll>0 and (m.hasDetails and not m.expanded and "Shift · Chi tiết / Cuộn" or "Cuộn để xem thêm")
         or m.hasDetails and (m.expanded and "Thả Shift để thu gọn" or "Shift · Chi tiết")
     if hint then Core.text(hint,18,footerY,w-36,l.labelFont,Theme.colors.muted,"right") end

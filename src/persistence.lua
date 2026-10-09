@@ -188,6 +188,7 @@ local function restoreDeity(savedDeity)
     for key, value in pairs(savedDeity) do
         if type(value) ~= "function" then deity[key] = sanitize(value) end
     end
+    require("src.spn_convergence").migrate(deity)
     return deity
 end
 

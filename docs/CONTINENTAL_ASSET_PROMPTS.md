@@ -3935,3 +3935,326 @@ Ability: Cho phép vĩnh viễn gắn trang bị trùng loại trên một quân
 Prompt: Create ONE production game card illustration, PNG portrait 2:3 1024x1536 full bleed. Match the Continental Relic cinematic painterly Western dark fantasy expedition style: monumental continental cliffs, eroded Western arches, medium detail, one primary subject with a strong silhouette readable at 64px, controlled glow and rim light, quiet atmospheric depth, antique gold. No text, letters, numbers, badge, symbols of rank or suit, card frame or outer border, logo, watermark, UI. No East Asian fantasy, roofs, calligraphy, dense micro-ornament, blown-out glow or particle noise. Identity: Rule Breaker. Ability: permanently break the prohibition on duplicate equipment for a chosen character, opening future possibilities. One imposing broken iron law tablet lying upright on a void altar, split down its center by a single antique golden wedge, a snapped heavy chain draped across its base. Two IDENTICAL clearly readable bronze gem amulets, each with the same violet crystal shape, float together freely inside the split gap: the broken restriction permits them to coexist. Tablet has NO writing, only simple blank stone surfaces. Violet abyss and distant Western floating arches, controlled amulet glow, bold triangular composition, strong broken tablet silhouette.
 
 Output: `assets/cards/continental/utility/cons_rulebreak.png`
+
+
+## 10 SPN giao hội — 2026-10-09 (built-in imagegen)
+
+### Tích Nguyên Sơ (`spirit_primeval_product`)
+
+Ability: Đúng 2 lá tính điểm: +1 Sát thương mỗi 4 điểm tích hai hạng (làm tròn xuống).
+
+Concept: A single twin-headed spectral ram, one unified smoky body, its two antler crowns intersecting and birthing a small bright crystalline knot. Bone-gold desert canyon, Western ruined expedition arches. Conveys two card ranks multiplied into force.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. A single twin-headed spectral ram, one unified smoky body, its two antler crowns intersecting and birthing a small bright crystalline knot. Bone-gold desert canyon, Western ruined expedition arches. Conveys two card ranks multiplied into force.
+
+Output: `assets/cards/continental/spn/spirit_primeval_product.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-16852bb6-e248-4b8b-857f-517934d6441d.png`
+
+### Lưỡng Cực (`spirit_parity`)
+
+Ability: +2 Cường hóa × (số lá chẵn × số lá lẻ tính điểm). J=11, Q=12, K=13, A=14.
+
+Concept: A single supernatural moth apparition with asymmetrical wings: one wing has paired cold-blue icy lobes, the other jagged ember-orange lobes. The two wings overlap in one pale-violet focal spark. Volcanic glacier boundary. Represents even and odd populations multiplying together.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. A single supernatural moth apparition with asymmetrical wings: one wing has paired cold-blue icy lobes, the other jagged ember-orange lobes. The two wings overlap in one pale-violet focal spark. Volcanic glacier boundary. Represents even and odd populations multiplying together.
+
+Output: `assets/cards/continental/spn/spirit_parity.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-e59c1b6b-5c81-40a5-a8fc-b28144579a43.png`
+
+### Giao Điểm Vô Cực (`spirit_extremes`)
+
+Ability: Có ít nhất 3 hạng khác nhau tính điểm: thêm 1 × (hạng thấp nhất × cao nhất) sát thương cố định vào AURA.
+
+Concept: One enormous translucent violet stilt-legged stag spirit stretches between a tiny stone island below and a floating high cliff above, a single bright thread joins its lowest hoof to its highest antler. Vast void ravine with distant Western ruins. Lowest and highest ranks combine.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One enormous translucent violet stilt-legged stag spirit stretches between a tiny stone island below and a floating high cliff above, a single bright thread joins its lowest hoof to its highest antler. Vast void ravine with distant Western ruins. Lowest and highest ranks combine.
+
+Output: `assets/cards/continental/spn/spirit_extremes.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-85fa6ec0-1589-4503-9027-ca8f8edd2fc3.png`
+
+### Đồng Hồ Nhân (`spirit_hour_product`)
+
+Ability: +6 Sát thương × (lượt đánh còn lại × lượt bỏ còn lại), tại lúc tính SPN.
+
+Concept: One floating spectral hourglass giant made of two intersecting streams of antique golden sand, not a physical relic. One stream descends and the other travels sideways through its hollow chest, their crossing multiplies into a storm of light. Desert, ruined Western aqueduct. Represents remaining attacks multiplied by remaining discards.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One floating spectral hourglass giant made of two intersecting streams of antique golden sand, not a physical relic. One stream descends and the other travels sideways through its hollow chest, their crossing multiplies into a storm of light. Desert, ruined Western aqueduct. Represents remaining attacks multiplied by remaining discards.
+
+Output: `assets/cards/continental/spn/spirit_hour_product.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-aaf38776-e1e4-46c6-9628-9b28149ff8e3.png`
+
+### Mộ Chữ Số (`spirit_number_grave`)
+
+Ability: Gom hạng các lá đã chơi không tính điểm. Mỗi tay thứ 3: thêm 2 × tổng đã gom sát thương cố định vào AURA, rồi xóa mộ.
+
+Concept: One hooded wraith of dark soil and spectral bone kneels above a shallow crater, three pale stone-like spirit embers rise from its open chest; swallowed discarded fragments accumulate and erupt. Bone desert necropolis, no writing or symbols on stones. Controlled eerie green-gold light.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One hooded wraith of dark soil and spectral bone kneels above a shallow crater, three pale stone-like spirit embers rise from its open chest; swallowed discarded fragments accumulate and erupt. Bone desert necropolis, no writing or symbols on stones. Controlled eerie green-gold light.
+
+Output: `assets/cards/continental/spn/spirit_number_grave.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-b5dc52c3-e917-429f-917b-88fd749d2452.png`
+
+### Bậc Thang Ngược (`spirit_reverse_stair`)
+
+Ability: Chơi ít lá hơn tay ngay trước: ×1.6 Cường hóa. Tay đầu không kích hoạt.
+
+Concept: One icy spectral mountain ibex descending impossible floating stone steps that become smaller toward a bright cold blue abyss. Strong curved horn silhouette, a ribbon of frost flowing backward uphill behind it. Glacial Western cliff fortress ruins. Less cards yields greater power.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One icy spectral mountain ibex descending impossible floating stone steps that become smaller toward a bright cold blue abyss. Strong curved horn silhouette, a ribbon of frost flowing backward uphill behind it. Glacial Western cliff fortress ruins. Less cards yields greater power.
+
+Output: `assets/cards/continental/spn/spirit_reverse_stair.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-53688675-091d-42bc-92f9-2623db03c6f1.png`
+
+### Nhịp Sao Rơi (`spirit_three_moons`)
+
+Ability: Luân phiên mỗi tay: +30 Sát thương → +6 Cường hóa → hồi 3 HP. Cả ba hiệu ứng tăng khi tiến hóa; bắt đầu từ Sát thương.
+
+Concept: One ethereal three-faced lunar sentinel, three large separated crescent halos in a vertical orbit around its translucent body, blue offensive light above, amber strength in center, soft green healing below. Dark forest clearing, Western fantasy, restrained glow.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One ethereal three-faced lunar sentinel, three large separated crescent halos in a vertical orbit around its translucent body, blue offensive light above, amber strength in center, soft green healing below. Dark forest clearing, Western fantasy, restrained glow.
+
+Output: `assets/cards/continental/spn/spirit_three_moons.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c85eadd6-8380-4edc-93f2-983fd2c3e04d.png`
+
+### Kẻ Ăn Tên (`spirit_name_eater`)
+
+Ability: Lặp kiểu tay ngay trước: +3 Cường hóa mỗi lần lặp liên tiếp (tối đa 4). Đổi kiểu xóa chuỗi; tay đầu không thưởng.
+
+Concept: One faceless violet void spirit with an enormous dark open mouth, swallowing three identical luminous mask silhouettes in a curved repeating trail. Masks are simple featureless faces, no lettering. Western shattered cathedral arch on floating cliff. Repeated same pattern feeds growing power.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One faceless violet void spirit with an enormous dark open mouth, swallowing three identical luminous mask silhouettes in a curved repeating trail. Masks are simple featureless faces, no lettering. Western shattered cathedral arch on floating cliff. Repeated same pattern feeds growing power.
+
+Output: `assets/cards/continental/spn/spirit_name_eater.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-eaab93f2-7eb8-45c2-bf68-9c0bfcf8ce31.png`
+
+### Cửa Bốn Mùa (`spirit_four_seasons`)
+
+Ability: Các lá tính điểm có đủ 4 chất: hồi 6 HP.
+
+Concept: One supernatural guardian stag woven from four broad elemental ribbons: deep-blue ocean, pale-blue frost, emerald forest and orange fire. All four converge visibly into one warm healing heart. A Western woodland stone portal. Clear elegant silhouette, no card suit symbols.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One supernatural guardian stag woven from four broad elemental ribbons: deep-blue ocean, pale-blue frost, emerald forest and orange fire. All four converge visibly into one warm healing heart. A Western woodland stone portal. Clear elegant silhouette, no card suit symbols.
+
+Output: `assets/cards/continental/spn/spirit_four_seasons.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-1f38e880-d309-4cda-aa34-b9c56c884fbb.png`
+
+### Quỹ Đạo Khuyết (`spirit_missing_orbit`)
+
+Ability: Ít nhất 4 lá tính điểm, hạng không trùng, chỉ có một khoảng cách 2 và các khoảng khác bằng 1: ×1.7 Cường hóa. A chỉ là 14.
+
+Concept: One colossal spectral serpent curls in a nearly closed violet ring around a floating Western tower; a single conspicuous break in the ring releases a bright comet through the missing segment. Void purple sky, only one focal apparition. An almost straight sequence with exactly one missing rank becomes power.
+
+Prompt: Create one game SPN card illustration in the established Continental art direction. Portrait 2:3, 1024x1536 PNG, full bleed. Cinematic Western dark fantasy expedition on a mysterious continent, painterly realistic materials, dramatic atmospheric depth. One primary supernatural entity or phenomenon with a clear silhouette readable at thumbnail size; medium detail, restrained highlights and glow, background secondary. No text, letters, numbers, calligraphy, logos, borders, card frame, badges or suit icons. No East Asian architecture or motifs. Distinct original composition. One colossal spectral serpent curls in a nearly closed violet ring around a floating Western tower; a single conspicuous break in the ring releases a bright comet through the missing segment. Void purple sky, only one focal apparition. An almost straight sequence with exactly one missing rank becomes power.
+
+Output: `assets/cards/continental/spn/spirit_missing_orbit.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-8e21f906-2615-4797-9902-5d38e6333f57.png`
+
+
+## Làm lại 10 SPN — tích số là tích lũy sức mạnh, 2026-10-09
+
+Các prompt và khả năng dưới đây thay thế thiết kế phép nhân trước đó; PNG cũ được giữ lại. Dùng built-in imagegen.
+
+### Cổ Linh Bồi Tụ (`spirit_primeval_product`, v2)
+
+Ability: Mỗi lá đã chơi thêm 1 tầng vĩnh viễn trong chuyến đi; mỗi tầng +2 Sát thương. Tính cả lá không ghi điểm.
+
+Concept: One huge spectral twin-horned ram growing from layers of ancient glowing stone and streaming card-sized blank stone fragments being absorbed into its chest; each new fragment visibly strengthens its body. Bone-gold eroded canyon, Western arches. Accumulation from every card played.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One huge spectral twin-horned ram growing from layers of ancient glowing stone and streaming card-sized blank stone fragments being absorbed into its chest; each new fragment visibly strengthens its body. Bone-gold eroded canyon, Western arches. Accumulation from every card played.
+
+Output: `assets/cards/continental/spn/spirit_primeval_product_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c730dab0-5efe-406d-9d43-eb9fde947d44.png`
+
+### Lưỡng Cực (`spirit_parity`, v2)
+
+Ability: Mỗi tay tích 1 điện; đổi ưu thế chẵn/lẻ so với tay trước thêm 1 điện. Mỗi điện tăng hệ số Cường hóa thêm 0.04. Điện giữ suốt chuyến đi; hòa chẵn/lẻ không đổi cực.
+
+Concept: One supernatural moth with blue frost and orange ember wings, a bold alternating helix spirals into its chest from both wings, successive broad coils build a growing energetic core. A volcanic glacier boundary. Alternating even and odd energies accumulate over a journey.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One supernatural moth with blue frost and orange ember wings, a bold alternating helix spirals into its chest from both wings, successive broad coils build a growing energetic core. A volcanic glacier boundary. Alternating even and odd energies accumulate over a journey.
+
+Output: `assets/cards/continental/spn/spirit_parity_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-f554e418-2da0-4270-bf15-77ace4a72005.png`
+
+### Vết Nứt Vô Cực (`spirit_extremes`, v2)
+
+Ability: Mỗi tay thêm 5 vết nứt; mỗi HP thực mất do đòn quái thêm 1 vết. Mỗi vết thêm 1 sát thương cố định vào AURA. Giữ suốt chuyến đi.
+
+Concept: One towering translucent violet stag spirit with several deep luminous fractures across its chest; each wound crystallizes into a thicker bright antler branch. One small expedition silhouette below illustrates scale. Dark void ravine and Western ruins. Strength grows from battle and real wounds.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One towering translucent violet stag spirit with several deep luminous fractures across its chest; each wound crystallizes into a thicker bright antler branch. One small expedition silhouette below illustrates scale. Dark void ravine and Western ruins. Strength grows from battle and real wounds.
+
+Output: `assets/cards/continental/spn/spirit_extremes_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-21c9245f-b6ae-4630-a9df-7a8238019288.png`
+
+### Đồng Hồ Vô Tận (`spirit_hour_product`, v2)
+
+Ability: Mỗi tay tích 1 hạt cát suốt chuyến đi. Mỗi 4 hạt: thêm 1 nhịp lực và hồi đúng 1 lượt đánh. Mỗi nhịp +2 Cường hóa; nhịp không tiêu hao.
+
+Concept: One immaterial golden hourglass guardian with four large sand ribbons circling its chest; one completed sand circuit folds into a new rising spiral, visibly bringing time back. Bone desert and monumental Western ruined aqueduct, controlled antique-gold light. Accumulated time earns strength and additional attacks.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One immaterial golden hourglass guardian with four large sand ribbons circling its chest; one completed sand circuit folds into a new rising spiral, visibly bringing time back. Bone desert and monumental Western ruined aqueduct, controlled antique-gold light. Accumulated time earns strength and additional attacks.
+
+Output: `assets/cards/continental/spn/spirit_hour_product_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-b334e84b-e113-44a8-b366-df0d13523708.png`
+
+### Mộ Chữ Số (`spirit_number_grave`, v2)
+
+Ability: Chôn tối đa 15 Giáp hiện tại của mục tiêu mỗi tay; mỗi Giáp bị chôn thêm 6 sát thương cố định vào AURA. Giáp thực sự bị lấy đi.
+
+Concept: One hooded spectral gravekeeper pulling an enemy's heavy iron armor plates into a dark open grave; the plates dissolve and erupt as a single violet bone lance above the grave. Bone desert necropolis, blank stones with no writing. Steals and buries armor to create attack power.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One hooded spectral gravekeeper pulling an enemy's heavy iron armor plates into a dark open grave; the plates dissolve and erupt as a single violet bone lance above the grave. Bone desert necropolis, blank stones with no writing. Steals and buries armor to create attack power.
+
+Output: `assets/cards/continental/spn/spirit_number_grave_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-691576d9-e5e6-4da1-9a5f-492560cfe3d5.png`
+
+### Bậc Thang Ngược (`spirit_reverse_stair`, v2)
+
+Ability: Tại ô này, hoán đổi toàn bộ Sát thương và Cường hóa đang có, rồi ×1.25 Cường hóa. Các SPN phía sau tính trên hai trục đã đảo.
+
+Concept: One spectral ice ibex suspended at the turning point of two inverted stairways; a massive broad stair becomes a narrow stair while a narrow stair expands, exchanging their sizes in one blue arc. Western glacial cliff ruins. Exchanges current damage and enhancement axes.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One spectral ice ibex suspended at the turning point of two inverted stairways; a massive broad stair becomes a narrow stair while a narrow stair expands, exchanging their sizes in one blue arc. Western glacial cliff ruins. Exchanges current damage and enhancement axes.
+
+Output: `assets/cards/continental/spn/spirit_reverse_stair_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-326ac9da-590b-401d-898c-ec33e0aeac1e.png`
+
+### Nhịp Sao Rơi (`spirit_three_moons`, v2)
+
+Ability: Chơi 1 lá: đốt Giáp đang có, hồi 1 HP mỗi Giáp. Chơi 3 lá: +1 sát thương cố định mỗi HP thiếu. Chơi 5 lá: đổi 1 lượt bỏ để cả bầy quái ngủ 1 đòn. Tính cả lá không ghi điểm.
+
+Concept: One three-faced ethereal lunar sentinel with three large crescent moons around its body: blue crescent receives a bronze shield dissolving into healing light, gold crescent burns around a wounded spectral heart, green crescent casts a veil over three sleeping beast silhouettes. Western dark forest clearing, clear primary silhouette. Three spells selected by playing one, three, or five cards.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One three-faced ethereal lunar sentinel with three large crescent moons around its body: blue crescent receives a bronze shield dissolving into healing light, gold crescent burns around a wounded spectral heart, green crescent casts a veil over three sleeping beast silhouettes. Western dark forest clearing, clear primary silhouette. Three spells selected by playing one, three, or five cards.
+
+Output: `assets/cards/continental/spn/spirit_three_moons_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-60d07293-d31b-4ba6-9e56-f31181e703d1.png`
+
+### Kẻ Ăn Tên (`spirit_name_eater`, v2)
+
+Ability: Chơi đúng 2 lá, trả 2 Vàng: 50% sát thương sau Giáp của đòn mục tiêu kế tiếp chuyển sang một quái khác còn sống. Có thể kết liễu; cần ít nhất 2 quái. Tối đa 100%; không ghi đè mặt nạ chưa dùng.
+
+Concept: One faceless violet puppeteer wraith placing a single glowing pale mask on a large armored beast; the masked beast turns its raised claw toward another beast silhouette rather than the tiny expedition warrior. Western ruined cathedral cliff, controlled violet and antique gold. Redirects an enemy attack into its ally.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One faceless violet puppeteer wraith placing a single glowing pale mask on a large armored beast; the masked beast turns its raised claw toward another beast silhouette rather than the tiny expedition warrior. Western ruined cathedral cliff, controlled violet and antique gold. Redirects an enemy attack into its ally.
+
+Output: `assets/cards/continental/spn/spirit_name_eater_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c4bc3994-ba75-440a-8146-68d6f6ba7fde.png`
+
+### Cửa Bốn Mùa (`spirit_four_seasons`, v2)
+
+Ability: Chơi đủ 4 chất, kể cả lá không ghi điểm: AURA đòn chính tăng 25%, rồi chia đều cho mọi quái còn sống. Mỗi phần chịu phòng thủ riêng; nhiều cổng dùng cổng mạnh nhất.
+
+Concept: One elemental stag guardian opens four huge connected portals in its antler branches, deep ocean blue, frost blue, forest green and lava orange. One central beam splits equally through the portals toward three distant beast silhouettes. Western stone woodland gateway. Shares one attack across an enemy group.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One elemental stag guardian opens four huge connected portals in its antler branches, deep ocean blue, frost blue, forest green and lava orange. One central beam splits equally through the portals toward three distant beast silhouettes. Western stone woodland gateway. Shares one attack across an enemy group.
+
+Output: `assets/cards/continental/spn/spirit_four_seasons_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-0bc0bd1e-d886-49d5-a1bf-35f6e5b7a093.png`
+
+### Quỹ Đạo Khuyết (`spirit_missing_orbit`, v2)
+
+Ability: Còn ít nhất 2 lượt đánh và không mắc nợ: né tối đa 20 sát thương của đòn quái kế tiếp. Số né trở thành nợ, trừ nguyên số vào AURA tay sau; tay trả nợ không mở né mới.
+
+Concept: One violet spectral serpent forms an open circular orbit around an expedition warrior fading into a translucent outline; a hostile red spear passes harmlessly through the fading body and leaves a dark tether leading toward the next glowing comet. Floating Western tower, violet void. Avoided damage becomes a debt paid by the next attack.
+
+Prompt: Create ONE SPN game card painting. Portrait 2:3 PNG 1024x1536 full bleed. Match Continental cinematic painterly Western dark-fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, clear large silhouette readable as thumbnail, medium detail, atmospheric depth, controlled glow and highlights. Background secondary. No text, letters, numbers, badge, suit icons, border, frame, logos or UI. No East Asian motifs or architecture, dense tiny ornament, or particle noise. One violet spectral serpent forms an open circular orbit around an expedition warrior fading into a translucent outline; a hostile red spear passes harmlessly through the fading body and leaves a dark tether leading toward the next glowing comet. Floating Western tower, violet void. Avoided damage becomes a debt paid by the next attack.
+
+Output: `assets/cards/continental/spn/spirit_missing_orbit_v2.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-2d54eb8f-7e1e-4ab3-aaa7-8e81555d87af.png`
+
+
+## 6 SPN tốc đánh và hệ số nhân — 2026-10-09 (built-in imagegen)
+
+### Phong Nha (`spirit_galefang`)
+
+Ability: +4 Sát thương mỗi điểm tốc đánh trung bình của toàn bộ lá đã chơi, gồm trang bị và thưởng tốc kỹ năng.
+
+Concept: One enormous spectral silver wolf made of concentrated cyan wind, sprinting horizontally across a dark coastal cliff; a single long wind-blade grows sharply from its leading fang as its motion increases. Deep navy ocean, Western ruined arches, controlled cyan and silver highlights. Speed becomes damage.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One enormous spectral silver wolf made of concentrated cyan wind, sprinting horizontally across a dark coastal cliff; a single long wind-blade grows sharply from its leading fang as its motion increases. Deep navy ocean, Western ruined arches, controlled cyan and silver highlights. Speed becomes damage.
+
+Output: `assets/cards/continental/spn/spirit_galefang.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-92c9eb58-a1ed-4cf6-9cca-b5b8f31524a2.png`
+
+### Mạch Lôi (`spirit_thunderpulse`)
+
+Ability: +1 Cường hóa mỗi điểm tốc đánh trung bình của toàn bộ lá đã chơi, gồm trang bị và thưởng tốc kỹ năng.
+
+Concept: One ethereal eagle with a bright restrained electric heart; several broad evenly spaced lightning pulses trail from its wings and converge into one powerful central rhythm. Glacial Western mountain spire, pale-blue and silver palette. Faster attack rhythm increases enhancement.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One ethereal eagle with a bright restrained electric heart; several broad evenly spaced lightning pulses trail from its wings and converge into one powerful central rhythm. Glacial Western mountain spire, pale-blue and silver palette. Faster attack rhythm increases enhancement.
+
+Output: `assets/cards/continental/spn/spirit_thunderpulse.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-53365e92-8214-41ff-a875-e8f7d7b45c0d.png`
+
+### Cự Linh Trễ Nhịp (`spirit_slow_colossus`)
+
+Ability: Tốc đánh trung bình thấp hơn mục tiêu: ×2 Sát thương tại ô SPN này. Bằng tốc không kích hoạt.
+
+Concept: One massive supernatural stone-and-lava tortoise guardian slowly raises a gigantic glowing forelimb; a tiny faster shadow streak passes ahead while the slow descending limb casts an immense crushing shockwave. Western volcanic canyon, antique bone stone and controlled ember orange. Attacking slower than the enemy doubles the damage axis.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One massive supernatural stone-and-lava tortoise guardian slowly raises a gigantic glowing forelimb; a tiny faster shadow streak passes ahead while the slow descending limb casts an immense crushing shockwave. Western volcanic canyon, antique bone stone and controlled ember orange. Attacking slower than the enemy doubles the damage axis.
+
+Output: `assets/cards/continental/spn/spirit_slow_colossus.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-f7320962-e37e-45f5-bbdf-460505af37a3.png`
+
+### Song Nhịp (`spirit_twinbeat`)
+
+Ability: Chơi đúng 2 lá có tốc đánh cá nhân bằng nhau: ×2 Cường hóa tại ô này. Tính cả trang bị và tăng tốc cá nhân.
+
+Concept: One unified spectral guardian with two perfectly synchronized winged lion heads sharing a single translucent silver body; two identical broad amber pulse rings align around its chest to form one brilliant focus. Western ruined aqueduct, twilight, antique gold and silver. Two played cards with equal attack speed double enhancement.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One unified spectral guardian with two perfectly synchronized winged lion heads sharing a single translucent silver body; two identical broad amber pulse rings align around its chest to form one brilliant focus. Western ruined aqueduct, twilight, antique gold and silver. Two played cards with equal attack speed double enhancement.
+
+Output: `assets/cards/continental/spn/spirit_twinbeat.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-675d108e-5d6a-45d4-adb6-61139fcdd010.png`
+
+### Dư Chấn Tàn Quang (`spirit_afterstorm`)
+
+Ability: Có ít nhất 3 lá đã chơi không tính điểm: ×2 AURA tổng, gồm sát thương cố định. Sau đó mới trả nợ AURA.
+
+Concept: One dark ethereal raven apparition lifts three large fading blank card-shaped spirit fragments into its wings; their leftover light joins a single intense violet comet bursting from its chest. Western ruins on floating cliff, void violet, restrained gold accent. Three or more unscored played cards double total aura.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One dark ethereal raven apparition lifts three large fading blank card-shaped spirit fragments into its wings; their leftover light joins a single intense violet comet bursting from its chest. Western ruins on floating cliff, void violet, restrained gold accent. Three or more unscored played cards double total aura.
+
+Output: `assets/cards/continental/spn/spirit_afterstorm.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-623e45c2-b0af-43b6-a84f-84306a844776.png`
+
+### Mặt Trời Cuối (`spirit_last_sun`)
+
+Ability: Tay đánh cuối cùng (không còn lượt sau khi chơi), còn ít nhất 10 Giáp: đốt toàn bộ Giáp hiện có để ×3 AURA tổng. Sau đó mới trả nợ AURA.
+
+Concept: One enormous spectral phoenix shaped as a dying miniature sun rises from ten large shattered bronze armor plates; a final triple-lobed flare pours from its wings toward a dark abyss. Western desert cliff fortress, bone gold and orange, controlled highlights. On the last attack, sacrifice all current armor of at least ten to triple total aura.
+
+Prompt: Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One enormous spectral phoenix shaped as a dying miniature sun rises from ten large shattered bronze armor plates; a final triple-lobed flare pours from its wings toward a dark abyss. Western desert cliff fortress, bone gold and orange, controlled highlights. On the last attack, sacrifice all current armor of at least ten to triple total aura.
+
+Output: `assets/cards/continental/spn/spirit_last_sun.png`
+
+Source: built-in imagegen; `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-54ce4439-dc9d-44c7-94e4-8ed0ffb02ebe.png`

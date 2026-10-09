@@ -33,8 +33,11 @@ function Combat.resolvePlayerAttack(game, aura)
     local bedExplosions=Combat.bedExplosions(game,aura,locked)
     if #bedExplosions>0 then target.hasBed=nil end
     local hpBefore=target.hp
-    local damage = Monster.takeDamage(target, aura)
+    local routedAura,portalHits=require("src.spn_convergence").route(game,aura,locked)
+    local damage = Monster.takeDamage(target, routedAura)
+    for _,hit in ipairs(portalHits) do hit.damage=Monster.takeDamage(hit.enemy,hit.raw) end
     local splashHits = Anomalies.playerAttack(game,aura,hpBefore,damage,locked)
+    for _,hit in ipairs(portalHits) do splashHits[#splashHits+1]=hit end
     for _,explosion in ipairs(bedExplosions) do
         for _,enemy in ipairs(Group.members(game)) do
             if enemy.hp>0 then
@@ -86,7 +89,7 @@ end
 function Combat.getAverageAttackSpeed(cards,game,handInfo)
     local total, count = 0, 0
     for _, card in ipairs(cards or {}) do
-        total = total + Deck.getCardAttackSpeed(card)
+        total = total + Deck.peekCardAttackSpeed(card)
         count = count + 1
     end
     local bonus=0
@@ -120,6 +123,7 @@ local function resolveOneAttack(game)
     armor = math.floor((armor - absorbed) * 0.5)
     local damage = attack - absorbed
 
+    damage = require("src.spn_convergence").redirect(game,monster,damage)
     damage = Abilities.damageGuard(game, damage)
     game.playerArmor = execution and (game.playerArmor or game.playerShield or 0) or armor
     game.playerShield = game.playerArmor

@@ -276,8 +276,8 @@ function P.snapshot(game)
         local def=D.CATALOG[card.id]
         if def then
             local value=def.values.value
-            -- XMult values store the bonus above 1, as in the scoring callback.
-            local effect=D.scaleEffect(card,{[def.stat]=def.stat=="xMult" and 1+value or value})
+            -- Multipliers store their bonus above 1.
+            local effect=D.scaleEffect(card,{[def.stat]=def.stat:sub(1,1)=="x" and 1+value or value})
             params={[def.stat]=effect[def.stat]};values.rarity=D.getRarityBadge(card)
         end
         for k,v in pairs(params or {}) do if type(v)=="number" then values[k]=v end end
@@ -292,6 +292,8 @@ local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",
     addHands="LƯỢT ĐÁNH",addOverkillArmorPct="TÀN DƯ (%)",bedExplosionPct="VỤ NỔ (%)",
+    addRedirectPct="CHUYỂN ĐÒN (%)",addPortalPct="CỔNG AURA (%)",addDebtGuard="NÉ TRẢ NỢ",
+    xChips="HỆ SỐ SÁT THƯƠNG",xAura="HỆ SỐ AURA",
     armor="GIÁP",gold="VÀNG",mult="CƯỜNG HÓA",chips="SÁT THƯƠNG",damage="SÁT THƯƠNG",repeats="TÁI KÍCH HOẠT",
     frozen="ĐÓNG BĂNG",cursed="NGUYỀN",returnArmor="GIÁP TRẢ BÀI",healPercent="HỒI HP (%)",
     maxStacks="TRẦN TÍCH",capacity="KÍCH THƯỚC TAY",returns="LÁ TRẢ",draw="LÁ RÚT",block="CHẶN ST",

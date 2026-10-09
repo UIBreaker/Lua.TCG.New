@@ -1,0 +1,20 @@
+Scoring runtime PASS: 154 checks; 87 equipment and 48 SPNs, 4 hand sizes each
+Soul market PASS: purchase, permanent upgrades, cancellation, eight sockets, duplicate scores and charged relics, previews, save/reload, ritual rewards and receipts
+Soul relics passed: 10 distinct mechanics, battle limits, piles, clones, kills, crafting and persistence
+PASS: second 40 cards, multi-turn combinations, discard/attack hooks, costs, preview isolation, persistence, reset and chest availability
+Equipment sockets PASS: default 4 / maximum 8, expansion and persistence, per-owner +4 armor, all 8 instances, linked sockets and independent jewel pulse
+SPN snapshot PASS: all 48 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load
+Equipment tiers PASS: 25 unique additions / 5 per tier; 60 recipes; 10800 condition/resource/preview checks; tier ceilings, gold cap, conversions, sockets and persistence
+AL lib: (EE) alc_cleanup: 1 device not closed
+Action VFX PASS: 10 profiles at 30/60/144 FPS, bounds/expiry, stat signs, destruction dedup, equip at contact, failed/successful/spam transactions, soul destruction
+Equipment feedback PASS: attach/detach dispatch, failure silence, inventory/speed, expiry at 30/60/144 FPS and action regressions
+PASS: 40 chest discoveries, activation, scoring, persistence and random reward coverage
+SPN tactics: all 10 conditions, caps, scoring, preview safety, evolution, sparse slots, boss locks, persistence and battle reset passed
+SPN combat: opening armor/reset/evolution, random live adjacency, group victory, armor, rounding, solo and preview safety passed
+SPN anomalies PASS: all 10 mechanics, costs, order, enemy armor/revival, preview budgets, locks, UX snapshots, save/load and battle reset
+SPN rework PASS: 4 persistent growth engines, 6 rule-breaking strategies, costs, save migration, preview purity, locks, damage routing and debt
+SPN velocity PASS: 6 cards, pure real speed, bonuses, equality, slot order, multiplier products, armor budgets, unscaled debts, save/load, evolution and locks
+Continental 52 PASS: 11232 scenarios; unique names; pure preview; bounded resources; no retrigger farming; initiative and charges
+Nine editions passed: pool, imprint/persistence, 20 ST, +10 Mult, local Aura, full Echo, evolution, held gold, wild suit, both neighbors and ten final activations
+Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all five Lab presets passed
+Scoring audit: 17 suites, 0 failures

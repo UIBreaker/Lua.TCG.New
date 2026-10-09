@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-equipment-sockets" then require("tests.equipment_sockets_capture");return end
     if a=="--test-soul-market" then local ok,err=pcall(require,"tests.soul_market_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-equipment-tiers" then local ok,err=pcall(require,"tests.equipment_tiers_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-equipment-feedback" then local ok,err=pcall(require,"tests.equipment_feedback_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
@@ -10,7 +11,7 @@ for _, a in ipairs(arg or {}) do
         io.stdout:setvbuf("no");local failed=false
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
-            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke"}) do
+            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
         end
@@ -1933,6 +1934,8 @@ local function playSelectedHand()
     local function beginScoring()
         -- Calculate scoring steps & equipment
         local context = {
+            playerAttackSpeed = playerSpeed,
+            handsAfterPlay = game.handsRemaining,
             handsRemaining = game.handsRemaining,
             discardsRemaining = game.discardsRemaining,
             round = game.round,
@@ -2136,12 +2139,18 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
-        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" then
+        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" then
             local ok, err = pcall(function()
                 local ids,output
                 if argument=="--test-spn-anomalies-art" then
                     ids={};for _,row in ipairs(require("src.spn_anomalies").entries) do ids[#ids+1]=row[1] end
                     output="docs/spn_anomalies_runtime.png"
+                elseif argument=="--test-spn-convergence-art" then
+                    ids={};for _,row in ipairs(require("src.spn_convergence").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_convergence_runtime.png"
+                elseif argument=="--test-spn-velocity-art" then
+                    ids={};for _,row in ipairs(require("src.spn_velocity").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_velocity_runtime.png"
                 end
                 require("tests.spn_art_smoke").verify(ids,output)
             end)
@@ -2798,7 +2807,7 @@ function love.update(dt)
                     for _, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
-                        ft.label = hit.deity.name .. (hit.explosion and " · NỔ GIƯỜNG" or " · AURA LAN")
+                        ft.label = hit.deity.name .. (hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
                         anim.deityBounce[hit.slotIndex] = 1.15
@@ -3922,6 +3931,8 @@ local function drawPlayingState()
     local eval = (#selectedCards > 0) and Poker.evaluate(selectedCards, game.unlockedHands, game.handLevels) or nil
     local scPreview = eval and Scoring.calculate(eval, game.deities, {
         preview = true,
+        playerAttackSpeed = Combat.getAverageAttackSpeed(selectedCards,game,eval),
+        handsAfterPlay = math.max(0,game.handsRemaining-1),
         gameState = game,
         handsRemaining = game.handsRemaining,
         discardsRemaining = game.discardsRemaining,
@@ -5558,73 +5569,8 @@ local function drawCardInspectorModal(card)
         love.graphics.printf("PHÁ LUẬT · ITM TRÙNG",cardArtX+8,durY+durH-44,cardArtW-16,"center")
     end
 
-    -- Right side: Equipment Sockets
-    local rightX = modalX + 230
-    local rightW = modalW - 260
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.textLight)
-    local currentEqCount = Equipment.getUsedSlots(card)
-    local maxSockets = Equipment.getMaxSlots(card)
-    love.graphics.print("CÁC Ô KHẢM TRANG BỊ (" .. currentEqCount .. "/" .. maxSockets .. " Ô):", rightX, modalY + 80)
+    require("ui.components.equipment_panel").draw(UI,card,modalX+230,modalY+80,modalW-260,modalH-100)
 
-    local slotH = maxSockets>3 and 57 or 68
-    local slotStartY = modalY + 115
-    local socketItems={}
-    for _,eq in ipairs(card.equipments or {}) do
-        socketItems[#socketItems+1]={equipment=eq}
-        for _=2,eq.slotsNeeded or 1 do socketItems[#socketItems+1]={equipment=eq,linked=true} end
-    end
-    for s = 1, maxSockets do
-        local sy = slotStartY + (s - 1) * (slotH + (maxSockets>3 and 5 or 12))
-        local isUnlocked = s <= (card.unlockedSockets or 1)
-        local entry=socketItems[s]
-        local eq=entry and entry.equipment
-
-        if eq then
-            love.graphics.setColor(0.16, 0.20, 0.26, 0.95)
-            UI.drawRoundedRect("fill", rightX, sy, rightW, slotH, 8)
-            love.graphics.setLineWidth(2)
-            love.graphics.setColor(eq.color or UI.COLORS.goldYellow)
-            UI.drawRoundedRect("line", rightX, sy, rightW, slotH, 8)
-
-            -- Slot badge & name
-            love.graphics.setFont(maxSockets>3 and UI.fonts.small or UI.fonts.regular)
-            love.graphics.setColor(eq.color or UI.COLORS.goldYellow)
-            love.graphics.print("[Ô " .. s .. "/" .. maxSockets .. "] " .. (entry.linked and "↳ " or "") .. eq.name, rightX + 16, sy + 10)
-
-            love.graphics.setFont(maxSockets>3 and UI.fonts.tiny or UI.fonts.small)
-            love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf(entry.linked and ("Hốc phụ của di vật chiếm "..eq.slotsNeeded.." hốc.") or eq.desc, rightX + 20, sy + (maxSockets>3 and 30 or 38), rightW - 40, "left")
-        elseif not isUnlocked then
-            love.graphics.setColor(0.10, 0.10, 0.12, 0.5)
-            UI.drawRoundedRect("fill", rightX, sy, rightW, slotH, 8)
-            love.graphics.setLineWidth(1)
-            love.graphics.setColor(0.22, 0.22, 0.26, 0.4)
-            UI.drawRoundedRect("line", rightX, sy, rightW, slotH, 8)
-
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(0.35, 0.38, 0.45, 0.6)
-            love.graphics.print("[Ô " .. s .. "/" .. maxSockets .. "] 🔒 Hốc Khảm Chưa Mở Khóa", rightX + 16, sy + 14)
-
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.print("Mở khóa thêm hốc khảm bài bằng Khế Ước hoặc sự kiện đặc biệt.", rightX + 20, sy + 40)
-        else
-            love.graphics.setColor(0.11, 0.13, 0.17, 0.6)
-            UI.drawRoundedRect("fill", rightX, sy, rightW, slotH, 8)
-            love.graphics.setLineWidth(1)
-            love.graphics.setColor(0.28, 0.32, 0.38, 0.4)
-            UI.drawRoundedRect("line", rightX, sy, rightW, slotH, 8)
-
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(0.4, 0.45, 0.52, 0.7)
-            love.graphics.print("[Ô " .. s .. "/" .. maxSockets .. "] Ô Khảm Trống", rightX + 16, sy + 14)
-
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textMuted)
-            love.graphics.print("Mua trang bị tại Cửa Hàng hoặc nhặt từ Rương Báu để khảm vào ô này.", rightX + 20, sy + 40)
-        end
-    end
 end
 
 local function drawHandbookModal()

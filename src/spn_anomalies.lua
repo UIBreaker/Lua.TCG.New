@@ -64,8 +64,8 @@ local handEffects={
         seen[hand.type.id]=true;count=count+1
         return {nextSpnState={seen=count>=3 and {} or seen},addDiscards=count>=3 and amount or 0}
     end,
-    spirit_borrowed_turn=function(hand,game,state,amount)
-        if not state.used and #(hand.scoringCards or {})==3 and #(hand.unscoredCards or {})==0 and (game.discardsRemaining or 0)>=1 then
+    spirit_borrowed_turn=function(hand,game,state,amount,context)
+        if not state.used and #(hand.scoringCards or {})==3 and #(hand.unscoredCards or {})==0 and (context.discardsAvailable or game.discardsRemaining or 0)>=1 then
             return {discardCost=1,addHands=amount,nextSpnState={used=true}}
         end
     end,
@@ -98,6 +98,7 @@ function A.commitHand(game,slot,result)
         game.discardsRemaining=math.min(game.spnDiscardCap or game.maxDiscards or 3,game.discardsRemaining+result.addDiscards)
     end
     if (result.addHands or 0)>0 then game.handsRemaining=(game.handsRemaining or 0)+result.addHands end
+    require("src.spn_convergence").commit(game,slot,result)
 end
 function A.playerAttack(game,aura,hpBefore,damage,locked)
     local hits={};local target=game.monster
@@ -143,6 +144,7 @@ function A.guard(game,damage)
     return damage
 end
 function A.enemyAttack(game,monster,damage)
+    require("src.spn_convergence").enemyDamage(game,damage)
     active(game,function(deity,slot,state)
         if deity.id=="spirit_reprisal" and damage>0 and monster.hp>1 then
             local amount=math.min(monster.hp-1,math.floor(damage*value(deity)/100))

@@ -1,7 +1,7 @@
 local S={entries={
     {"spirit_primeval_product","Cổ Linh Bồi Tụ","addChips",2,"Mỗi lá đã chơi thêm 1 tầng vĩnh viễn trong chuyến đi; mỗi tầng +{value} Sát thương. Tính cả lá không ghi điểm."},
     {"spirit_parity","Lưỡng Cực","xMult",0.04,"Mỗi tay tích 1 điện; đổi ưu thế chẵn/lẻ so với tay trước thêm 1 điện. Mỗi điện tăng hệ số Cường hóa thêm {value}. Điện giữ suốt chuyến đi; hòa chẵn/lẻ không đổi cực."},
-    {"spirit_extremes","Vết Nứt Vô Cực","addFlatDamage",1,"Mỗi tay thêm 5 vết nứt; mỗi HP thực mất do đòn quái thêm 1 vết. Mỗi vết thêm {value} sát thương cố định vào AURA. Giữ suốt chuyến đi."},
+    {"spirit_extremes","Vết Nứt Vô Cực","addChips",1,"Mỗi tay thêm 5 vết nứt; mỗi HP thực mất do đòn quái thêm 1 vết. Mỗi vết thêm {value} Sát thương tính điểm; mỗi 100 vết thêm 1 Cường hóa. Giữ suốt chuyến đi."},
     {"spirit_hour_product","Đồng Hồ Vô Tận","addMult",2,"Mỗi tay tích 1 hạt cát suốt chuyến đi. Mỗi 4 hạt: thêm 1 nhịp lực và hồi đúng 1 lượt đánh. Mỗi nhịp +{value} Cường hóa; nhịp không tiêu hao."},
     {"spirit_number_grave","Mộ Chữ Số","addFlatDamage",6,"Chôn tối đa 15 Giáp hiện tại của mục tiêu mỗi tay; mỗi Giáp bị chôn thêm {value} sát thương cố định vào AURA. Giáp thực sự bị lấy đi."},
     {"spirit_reverse_stair","Bậc Thang Ngược","xMult",0.25,"Tại ô này, hoán đổi toàn bộ Sát thương và Cường hóa đang có, rồi ×{factor} Cường hóa. Các SPN phía sau tính trên hai trục đã đảo."},
@@ -43,7 +43,7 @@ local effects={
     end,
     spirit_extremes=function(hand,game,memory,value,context,growth)
         local cracks=(growth.cracks or 0)+5
-        return {addFlatDamage=cracks*value,nextSpnGrowth={cracks=cracks},fixedMessage=true,message="VẾT NỨT · "..cracks}
+        return {addChips=cracks*value,addMult=math.floor(cracks/100),nextSpnGrowth={cracks=cracks},fixedMessage=true,message="VẾT NỨT · "..cracks}
     end,
     spirit_hour_product=function(hand,game,memory,value,context,growth)
         local sand=(growth.sand or 0)+1;local beats=math.floor(sand/4)

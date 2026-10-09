@@ -5,7 +5,7 @@ local summaries={
     soul_rift_compass="Kéo lá rank cao nhất\nvào tay khi tính điểm.",
     soul_return_chain="Tính điểm xong,\ntrở lại tay.",
     soul_echo_mirror="Lá kề trái/phải\nkích hoạt thêm 2 lần.",
-    soul_evolution_quill="Tiến hóa đồng đội +1.\nMột lần mỗi trận.",
+    soul_evolution_quill="Tiến hóa đồng đội ngẫu nhiên +1 khi tính điểm.",
     soul_silence_anchor="Khóa kỹ năng boss\nqua 2 tay bài kế tiếp.",
     soul_plague_chalice="Độc: 8% HP tối đa\nmỗi đòn, trong 3 đòn.",
     soul_reaper_contract="Mỗi địch chết +3 LH\nsau khi tính điểm.",
@@ -17,7 +17,7 @@ R.definitions = {
     {id="soul_rift_compass",name="La Bàn Khe Nứt",cost=26,slotsNeeded=1,color={.35,.75,1,1},desc="Mỗi tay tính điểm: kéo lá rank cao nhất còn trong bộ vào tay, vượt giới hạn cầm bài."},
     {id="soul_return_chain",name="Xích Vòng Luân Hồi",cost=30,slotsNeeded=1,color={.8,.5,1,1},desc="Sau khi tính điểm: lá mang xích trở lại tay thay vì nằm trong cọc bỏ."},
     {id="soul_echo_mirror",name="Gương Song Vọng",cost=36,slotsNeeded=2,color={.55,.85,.95,1},desc="Mỗi tay tính điểm: tái kích hoạt 2 lần cho mỗi lá kề trái/phải trong vùng tính điểm."},
-    {id="soul_evolution_quill",name="Bút Ký Khởi Nguyên",cost=40,slotsNeeded=2,color={.6,.95,.4,1},desc="Khi tính điểm: tiến hóa vĩnh viễn +1 cấp cho đồng đội ít tiến hóa nhất đang tính điểm. Một lần mỗi trận."},
+    {id="soul_evolution_quill",name="Bút Ký Khởi Nguyên",cost=40,slotsNeeded=2,color={.6,.95,.4,1},desc="Khi tính điểm: tiến hóa vĩnh viễn +1 cấp cho đồng đội ngẫu nhiên đang tính điểm."},
     {id="soul_silence_anchor",name="Neo Câm Lặng",cost=32,slotsNeeded=2,color={.65,.45,.95,1},desc="Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss thêm 2 tay bài kế tiếp. Từng món dùng một lần mỗi trận; nhiều món nối tiếp thời hạn."},
     {id="soul_plague_chalice",name="Chén Độc Vĩnh Dạ",cost=28,slotsNeeded=1,color={.4,.85,.3,1},desc="Khi tính điểm: đặt độc riêng của món này lên mục tiêu trong 3 đòn, mỗi đòn gây 8% máu tối đa địch. Nhiều món cộng dồn; chính món đó làm mới thời hạn."},
     {id="soul_reaper_contract",name="Khế Ước Người Gặt",cost=30,slotsNeeded=1,color={.85,.65,.95,1},desc="Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận từ từng khế ước đã kích hoạt. Mỗi cái chết chỉ trả một lần."},
@@ -67,14 +67,15 @@ function R.score(g,card,ctx)
                 if n>0 then message="VỌNG ÂM "..n.." LÁ KỀ" end
             elseif id=="soul_evolution_quill" then
                 local Abilities=require("src.card_abilities")
-                local target
+                local target,candidates
                 for _,other in ipairs(ctx.scoring) do
                     if other~=card and not other.destroyed and not other.exhausted and Abilities.definition(other)
-                        and (other.evolutionLevel or 0)<Abilities.config.maxEvolutionLevel
-                        and (not target or (other.evolutionLevel or 0)<(target.evolutionLevel or 0)) then target=other end
+                        and (other.evolutionLevel or 0)<Abilities.config.maxEvolutionLevel then
+                        candidates=candidates or {};candidates[#candidates+1]=other
+                    end
                 end
-                if s.used[key] then message="ĐÃ DÙNG TRONG TRẬN"
-                elseif target and Abilities.upgrade(g,target,1,false) then s.used[key]=true;message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +1 CẤP"
+                target=candidates and candidates[require("src.rng").random(#candidates)]
+                if target and Abilities.upgrade(g,target,1,false) then message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +1 CẤP"
                 else message="CẦN ĐỒNG ĐỘI TÍNH ĐIỂM CHƯA ĐẠT TRẦN" end
             elseif id=="soul_silence_anchor" and not s.used[key] and require("src.boss_abilities").state(g.monster) then
                 local Boss=require("src.boss_abilities");local bs=Boss.state(g.monster)

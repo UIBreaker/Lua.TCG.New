@@ -53,12 +53,21 @@ local info={type={id="high_card"},scoringCards={left,c,right},unscoredCards={}}
 local ctx=A.beginHand(g,info,info.scoringCards);ctx.index=2
 R.score(g,c,ctx);assert(#ctx.queue==7 and ctx.repeats[left.id]==2 and ctx.repeats[right.id]==2)
 ctx.retrigger=true;R.score(g,c,ctx);assert(#ctx.queue==7)
--- Growth writes back to the canonical card and is limited to one per battle.
+-- Growth writes back to the canonical card on every scoring hand.
 g,c=fixture("soul_evolution_quill")
 local target=D.newCard(5,"elaris");g.persistentDeck[#g.persistentDeck+1]=target
 local live=D.cloneCard(target);score(g,c,{live})
 assert(live.evolutionLevel==1 and target.evolutionLevel==1)
-score(g,c,{live});assert(target.evolutionLevel==1)
+score(g,c,{live});assert(target.evolutionLevel==2)
+local rng=require("src.rng")
+local savedRng=rng.getState()
+g,c=fixture("soul_evolution_quill")
+local first,least=D.newCard(5,"elaris"),D.newCard(6,"vharos")
+first.evolutionLevel=2
+g.persistentDeck[2],g.persistentDeck[3]=first,least
+rng.seed(1);score(g,c,{D.cloneCard(first),D.cloneCard(least)})
+assert(first.evolutionLevel==3 and least.evolutionLevel==0,"quill chooses randomly, not the least evolved")
+rng.setState(savedRng)
 -- Boss lock covers both kinds of skills; it cannot keep extending on retriggers.
 g,c=fixture("soul_silence_anchor")
 g.monster.isBoss=true;g.monster.bossData={id="the_water",debuffId="the_water"}

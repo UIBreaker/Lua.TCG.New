@@ -1,419 +1,252 @@
 local Sound = {}
+local Catalog = require("config.audio_catalog")
+local pools, voices, loops, failed, lastPlayed, variations = {}, {}, {}, {}, {}, {}
+local volumes = {master=1, sfx=.8, music=.8, ambience=.65}
+local enabled, focused = false, true
+local duck, quietRemaining = 1, 0
+local limiter = 1
+local MAX_VOICES, POOL_SIZE, MAX_LOOPS = 24, 3, 6
+local aliases = {buy="shop_buy", destroy="card_destroy"}
 
-local sounds = {}
-local enabled = true
-local activeVoices = {}
-local lastPlayed = {}
-local menuMusic
-local menuMusicLoadAttempted = false
-local MAX_VOICES = 18
-local gain = {
-    bed_explosion_charge=.25, bed_explosion_boom=.94, bed_explosion_debris=.30, bed_explosion_rumble=.40,
-    ui_hover = 0.26, ui_click = 0.48,
-    card_select = 0.52, card_deselect = 0.46, card_slide = 0.42,
-    card_draw = 0.60, card_deal = 0.50, card_play = 0.78,
-    chip_tick = 0.40, mult_pop = 0.60, coin = 0.66,
-    score_impact = 0.80, damage_hit = 0.70, damage_heavy = 0.76,
-    xmult_boom = 0.72, jackpot = 0.72,
-    round_win = 0.72, game_over = 0.72,
-    shop_buy = 0.60, shop_reroll = 0.52, pack_open = 0.70,
-    chest_dissolve = 0.62, card_activate = 0.62,
-    equip = 0.66, sell = 0.58, consume = 0.65, card_destroy = 0.56,
-    cant_afford = 0.55,
-}
-local rewardAliases = {
-    bed_explosion_charge="consume", bed_explosion_boom="damage_heavy", bed_explosion_debris="card_destroy", bed_explosion_rumble="xmult_boom",
-    enemy_death_hit = "damage_heavy", enemy_ash_break = "chest_dissolve",
-    defeat_hit = "damage_heavy", defeat_collapse = "card_destroy",
-    defeat_ambience = "game_over", defeat_text_reveal = "score_impact",
-    reward_coin_spawn = "coin", reward_coin_land = "coin", reward_coin_collect = "coin",
-    reward_gold_total = "shop_buy", reward_loot_reveal = "card_deal",
-    reward_rare_reveal = "jackpot", reward_chest_open = "pack_open",
-}
-local attackAliases = {
-    highcard_compress="consume", pair_slash_1="card_play", pair_slash_2="card_slide",
-    twopair_orbit_a="equip", twopair_orbit_b="card_play",
-    threekind_node_1="chip_tick", threekind_node_2="mult_pop", threekind_node_3="xmult_boom",
-    straight_step_1="chip_tick", straight_step_2="chip_tick", straight_step_3="mult_pop",
-    straight_step_4="mult_pop", straight_step_5="card_play", flush_wave="consume",
-    fullhouse_core_a="equip", fullhouse_core_b="mult_pop", fullhouse_core_merge="xmult_boom",
-    fourkind_seal_1="equip", fourkind_seal_2="equip", fourkind_seal_3="equip", fourkind_seal_4="equip",
-    straightflush_blade_summon="card_deal", straightflush_barrage="card_play", straightflush_final="damage_heavy",
-}
-gain.enemy_death_hit, gain.enemy_ash_break = 0.68, 0.48
-gain.defeat_hit, gain.defeat_collapse, gain.defeat_ambience, gain.defeat_text_reveal = 0.64, 0.40, 0.24, 0.36
-for _,id in ipairs(require("config.hand_vfx_config").order) do
-    attackAliases[id.."_charge"]="consume"
-    attackAliases[id.."_release"]="card_play"
-    attackAliases[id.."_impact"]=id=="high_card" and "damage_hit" or "damage_heavy"
+local function clamp(value, fallback)
+    if type(value) ~= "number" or value ~= value then return fallback end
+    return math.max(0, math.min(1, value))
 end
-for hook,source in pairs(attackAliases) do rewardAliases[hook]=source;gain[hook]=0.60 end
-gain.reward_coin_spawn, gain.reward_coin_land, gain.reward_coin_collect = 0.22, 0.18, 0.42
-gain.reward_gold_total, gain.reward_loot_reveal, gain.reward_rare_reveal, gain.reward_chest_open = 0.62, 0.34, 0.65, 0.56
-local cooldown = {
-    ui_hover = 0.07, ui_click = 0.035, card_slide = 0.035,
-    card_draw = 0.025, chip_tick = 0.022, mult_pop = 0.028,
-    damage_hit = 0.05, damage_heavy = 0.08,
-}
-
-cooldown.reward_coin_spawn, cooldown.reward_coin_land, cooldown.reward_coin_collect = 0.055, 0.065, 0.035
-
-local function generateSound(duration, sampleRate, generator)
-    local sampleCount = math.floor(duration * sampleRate)
-    local soundData = love.sound.newSoundData(sampleCount, sampleRate, 16, 1)
-    for i = 0, sampleCount - 1 do
-        local t = i / sampleRate
-        local sample = generator(t, duration)
-        -- Clamp between -1.0 and 1.0
-        local edge = math.min(1, t * 500, (duration - t) * 80)
-        sample = math.max(-1.0, math.min(1.0, sample * math.max(0, edge)))
-        soundData:setSample(i, sample)
+local function now()
+    return love and love.timer and love.timer.getTime and love.timer.getTime() or os.clock()
+end
+local function release(source)
+    source:stop()
+    if source.release then source:release() end
+end
+local function prune()
+    for i=#voices,1,-1 do
+        if not voices[i].source:isPlaying() then table.remove(voices,i) end
     end
-    return love.audio.newSource(soundData, "static")
+end
+local function mixVoices()
+    -- Headroom falls with density so scoring cascades do not overwhelm impacts.
+    local headroom = 1 / math.sqrt(math.max(1, #voices / 4))
+    local peak=0
+    for _,v in ipairs(voices) do peak=peak+v.gain*volumes.sfx*headroom*.64 end
+    for _,l in pairs(loops) do
+        peak=peak+l.level*l.gain*volumes[l.bus]*duck*(l.bus=="ambience" and .32 or l.name=="menu" and 1 or .48)
+    end
+    -- WAV peak ceilings are verified at build time; bound even coincident hits.
+    limiter=math.min(1,.92/math.max(.001,peak))
+    for _,v in ipairs(voices) do v.source:setVolume(v.gain * volumes.sfx * headroom * limiter) end
+    for _,l in pairs(loops) do l.source:setVolume(l.level*l.gain*volumes[l.bus]*duck*limiter) end
 end
 
+function Sound.stopAll()
+    for _,v in ipairs(voices) do v.source:stop() end
+    voices = {}
+    for key,l in pairs(loops) do release(l.source);loops[key]=nil end
+    quietRemaining, Sound.quietUntil, duck = 0, 0, 1
+end
 function Sound.init()
-    if not love.sound or not love.audio then
-        enabled = false
-        return false
+    Sound.stopAll()
+    for _,pool in pairs(pools) do for _,source in ipairs(pool) do release(source) end end
+    pools, failed, lastPlayed, variations = {}, {}, {}, {}
+    enabled = love and love.audio and love.audio.newSource ~= nil or false
+    if not enabled then return false end
+    local complete = true
+    for name,c in pairs(Catalog.cues) do
+        local ok,source = pcall(love.audio.newSource,c.path,"static")
+        if ok then
+            local pool = {source}
+            for i=2,POOL_SIZE do
+                local cloned,copy = pcall(source.clone,source)
+                if cloned then pool[#pool+1]=copy end
+            end
+            pools[name]=pool
+        else
+            complete=false
+            print("[Sound] Missing cue "..name..": "..tostring(source))
+        end
     end
-
-    enabled = true
-    sounds, activeVoices, lastPlayed = {}, {}, {}
-    local success, err = pcall(function()
-        local rate = 44100
-
-        -- 1. Card Click / Select (Soft crisp pop)
-        sounds.card_select = generateSound(0.04, rate, function(t, d)
-            local env = (1 - t / d) ^ 2
-            local freq = 480 + (t / d) * 320
-            return env * 0.4 * math.sin(2 * math.pi * freq * t)
-        end)
-
-        -- 2. Card Deselect (Lower soft pop)
-        sounds.card_deselect = generateSound(0.03, rate, function(t, d)
-            local env = (1 - t / d) ^ 2
-            local freq = 360 - (t / d) * 100
-            return env * 0.3 * math.sin(2 * math.pi * freq * t)
-        end)
-
-        -- 3. Card Discard / Deal (Swoosh)
-        sounds.card_deal = generateSound(0.08, rate, function(t, d)
-            local env = (1 - t / d) ^ 3
-            local noise = (love.math.random() * 2 - 1)
-            local sine = math.sin(2 * math.pi * (200 + t * 400) * t)
-            return env * 0.35 * (noise * 0.5 + sine * 0.5)
-        end)
-
-        -- Individual card draw (paper flick + soft table landing)
-        sounds.card_draw = generateSound(0.12, rate, function(t, d)
-            local progress = t / d
-            local paper = (love.math.random() * 2 - 1) * math.sin(progress * math.pi) * 0.22
-            local flick = math.sin(2 * math.pi * (760 - progress * 420) * t) * math.exp(-t * 28)
-            local landing = (t > 0.065) and math.sin(2 * math.pi * 190 * (t - 0.065)) * math.exp(-(t - 0.065) * 45) or 0
-            return paper + flick * 0.32 + landing * 0.34
-        end)
-
-        -- Cards committed to the play area (fast swoosh + firm snap)
-        sounds.card_play = generateSound(0.18, rate, function(t, d)
-            local progress = t / d
-            local swoosh = (love.math.random() * 2 - 1) * math.sin(progress * math.pi) * 0.28
-            local snap = (t > 0.105) and math.sin(2 * math.pi * 260 * (t - 0.105)) * math.exp(-(t - 0.105) * 38) or 0
-            return swoosh + snap * 0.58
-        end)
-
-        -- Final score impact (short bass hit, separate from XMult sparkle)
-        sounds.score_impact = generateSound(0.22, rate, function(t, d)
-            local env = math.exp(-t * 16)
-            local freq = 105 - 45 * (t / d)
-            local bass = math.sin(2 * math.pi * freq * t)
-            local crack = (love.math.random() * 2 - 1) * math.exp(-t * 70)
-            return env * 0.72 * bass + crack * 0.22
-        end)
-
-        -- Enemy hit: brief armor crack over a low impact.
-        sounds.damage_hit = generateSound(0.20, rate, function(t, d)
-            local p = t / d
-            local thud = math.sin(2 * math.pi * (150 - 75 * p) * t) * math.exp(-t * 18)
-            local crack = (love.math.random() * 2 - 1) * math.exp(-t * 65)
-            return thud * 0.56 + crack * 0.24
-        end)
-
-        -- Heavier impact for large damage or a finishing blow.
-        sounds.damage_heavy = generateSound(0.35, rate, function(t, d)
-            local p = t / d
-            local bass = math.sin(2 * math.pi * (120 - 75 * p) * t) * math.exp(-t * 9)
-            local breakNoise = (love.math.random() * 2 - 1) * math.exp(-t * 32)
-            local ring = math.sin(2 * math.pi * 620 * t) * math.exp(-t * 18)
-            return bass * 0.66 + breakNoise * 0.23 + ring * 0.14
-        end)
-
-        -- 4. Chip Tick (Clear crystal bell ping)
-        sounds.chip_tick = generateSound(0.07, rate, function(t, d)
-            local env = math.exp(-t * 35)
-            local s1 = math.sin(2 * math.pi * 980 * t)
-            local s2 = math.sin(2 * math.pi * 1960 * t) * 0.3
-            return env * 0.45 * (s1 + s2)
-        end)
-
-        -- 5. Mult Pop (Punchy ascending thump)
-        sounds.mult_pop = generateSound(0.1, rate, function(t, d)
-            local env = math.exp(-t * 22)
-            local freq = 320 + (t / d) * 200
-            local s = math.sin(2 * math.pi * freq * t)
-            return env * 0.55 * s
-        end)
-
-        -- 6. XMult Explosion (Boom + sparkle)
-        sounds.xmult_boom = generateSound(0.3, rate, function(t, d)
-            local env = math.exp(-t * 12)
-            local bass = math.sin(2 * math.pi * (140 - t * 180) * t)
-            local noise = (love.math.random() * 2 - 1) * math.exp(-t * 25)
-            local sparkle = math.sin(2 * math.pi * 1760 * t) * math.exp(-t * 15) * 0.3
-            return env * 0.7 * (bass * 0.6 + noise * 0.25 + sparkle)
-        end)
-
-        -- 7. Win Fanfare
-        sounds.round_win = generateSound(0.45, rate, function(t, d)
-            local env = (1 - t / d)
-            local note = 440
-            if t > 0.30 then note = 880
-            elseif t > 0.20 then note = 659.25
-            elseif t > 0.10 then note = 554.37
-            end
-            local s = math.sin(2 * math.pi * note * t)
-            return env * 0.5 * s
-        end)
-
-        -- 8. Game Over tone
-        sounds.game_over = generateSound(0.5, rate, function(t, d)
-            local env = (1 - t / d)
-            local freq = 220 - (t / d) * 110
-            return env * 0.5 * (math.sin(2 * math.pi * freq * t) + math.sin(2 * math.pi * (freq * 1.5) * t) * 0.5)
-        end)
-
-        -- 9. Jackpot chime (Bright rapid casino victory chimes)
-        sounds.jackpot = generateSound(0.55, rate, function(t, d)
-            local env = (1 - t / d) ^ 1.5
-            local note = 523.25 -- C5
-            if t > 0.40 then note = 1046.50 -- C6
-            elseif t > 0.28 then note = 783.99 -- G5
-            elseif t > 0.14 then note = 659.25 -- E5
-            end
-            local chime = math.sin(2 * math.pi * note * t) + 0.35 * math.sin(2 * math.pi * note * 2 * t)
-            return env * 0.55 * chime
-        end)
-
-        -- 10. UI Button Hover (Subtle soft blip)
-        sounds.ui_hover = generateSound(0.025, rate, function(t, d)
-            local env = (1 - t / d) ^ 2
-            local freq = 620 + (t / d) * 180
-            return env * 0.18 * math.sin(2 * math.pi * freq * t)
-        end)
-
-        -- 11. UI Button Click (Tactile mechanical clack + woody switch thud)
-        sounds.ui_click = generateSound(0.05, rate, function(t, d)
-            -- A. Sharp mechanical snap / clack transient (0 to 6ms)
-            local snapNoise = (love.math.random() * 2 - 1) * math.exp(-t * 160) * 0.45
-            local snapChirp = math.sin(2 * math.pi * (2400 - t * 16000) * t) * math.exp(-t * 110) * 0.35
-
-            -- B. Tactile woody switch thud body (360-480 Hz bottom-out)
-            local bodyFreq = 420 * math.exp(-t * 16)
-            local body = math.sin(2 * math.pi * bodyFreq * t) + 0.35 * math.sin(4 * math.pi * bodyFreq * t)
-            local bodyEnv = math.exp(-t * 40)
-
-            -- C. Secondary micro tactile release ping around 10ms
-            local ping = 0
-            if t > 0.010 then
-                local pt = t - 0.010
-                ping = math.sin(2 * math.pi * 1350 * pt) * math.exp(-pt * 85) * 0.18
-            end
-
-            return (snapNoise + snapChirp) * 0.55 + body * bodyEnv * 0.50 + ping
-        end)
-
-        -- 12. Shop Buy (Crystal coin chimes + paper grab snap)
-        sounds.shop_buy = generateSound(0.38, rate, function(t, d)
-            local env = math.exp(-t * 12)
-            -- Ascending bell arpeggio notes
-            local note = 1318.51 -- E6
-            if t > 0.18 then note = 2637.02 -- E7
-            elseif t > 0.11 then note = 1975.53 -- B6
-            elseif t > 0.05 then note = 1661.22 -- G#6
-            end
-            local bell = math.sin(2 * math.pi * note * t) + 0.4 * math.sin(2 * math.pi * note * 2.75 * t)
-            local grabSnap = (t < 0.04) and ((love.math.random() * 2 - 1) * 0.35) or 0
-            return env * 0.5 * bell + grabSnap
-        end)
-
-        -- 13. Shop Reroll (Crisp card riffle shuffle & deck slide)
-        sounds.shop_reroll = generateSound(0.26, rate, function(t, d)
-            local progress = t / d
-            local env = math.sin(progress * math.pi) ^ 0.7
-            -- Rapid riffle tick bursts
-            local tickPhase = (t * 65) % 1.0
-            local tick = (tickPhase < 0.3) and 1.0 or 0.15
-            local noise = (love.math.random() * 2 - 1) * tick
-            local freq = 380 + progress * 720
-            local swoosh = math.sin(2 * math.pi * freq * t) * 0.4
-            return env * 0.5 * (noise * 0.6 + swoosh * 0.4)
-        end)
-
-        -- 14. Can't Afford (Dull error thock)
-        sounds.cant_afford = generateSound(0.12, rate, function(t, d)
-            local env = math.exp(-t * 32)
-            local freq = 160 - (t / d) * 70
-            local thock = math.sin(2 * math.pi * freq * t) + 0.3 * math.sin(2 * math.pi * (freq * 0.5) * t)
-            return env * 0.45 * thock
-        end)
-
-        -- 15. Booster Pack Open (Foil tear + magic shimmer)
-        sounds.pack_open = generateSound(0.42, rate, function(t, d)
-            local env = math.exp(-t * 9)
-            local tearNoise = (t < 0.09) and ((love.math.random() * 2 - 1) * (1 - t / 0.09)) or 0
-            local shimmerFreq = 1200 + (t / d) * 1600
-            local shimmer = math.sin(2 * math.pi * shimmerFreq * t) * 0.5 + 0.25 * math.sin(2 * math.pi * (shimmerFreq * 1.5) * t)
-            return env * 0.45 * (tearNoise * 0.7 + shimmer * 0.5)
-        end)
-
-        -- The chest dissolves after its seal is broken.
-        sounds.chest_dissolve = generateSound(0.48, rate, function(t, d)
-            local p = t / d
-            local dust = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.22
-            local magic = math.sin(2 * math.pi * (940 - 500 * p) * t) * math.exp(-t * 5)
-            local chime = math.sin(2 * math.pi * 1480 * t) * math.exp(-t * 11)
-            return dust + magic * 0.29 + chime * 0.12
-        end)
-
-        -- Soft paper drag; the hand reordering action used to be silent.
-        sounds.card_slide = generateSound(0.11, rate, function(t, d)
-            local p = t / d
-            local paper = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.22
-            local tap = math.sin(2 * math.pi * 420 * t) * math.exp(-t * 34)
-            return paper + tap * 0.20
-        end)
-
-        sounds.coin = generateSound(0.24, rate, function(t)
-            local bell = math.sin(2 * math.pi * 1174.66 * t)
-                + 0.35 * math.sin(2 * math.pi * 1761.99 * t)
-            return bell * math.exp(-t * 17) * 0.48
-        end)
-
-        sounds.equip = generateSound(0.20, rate, function(t)
-            local click = math.sin(2 * math.pi * 280 * t) * math.exp(-t * 65)
-            local ring = (math.sin(2 * math.pi * 784 * t)
-                + 0.32 * math.sin(2 * math.pi * 1176 * t)) * math.exp(-t * 16)
-            return click * 0.54 + ring * 0.28 + (love.math.random()*2-1)*math.exp(-t*170)*0.12
-        end)
-
-        sounds.sell = generateSound(0.22, rate, function(t)
-            local swipe = (love.math.random() * 2 - 1) * math.exp(-t * 38)
-            local coin = math.sin(2 * math.pi * 880 * t) * math.exp(-t * 18)
-            return swipe * 0.16 + coin * 0.40
-        end)
-
-        sounds.consume = generateSound(0.36, rate, function(t, d)
-            local p = t / d
-            local shimmer = math.sin(2 * math.pi * (620 + 620 * p) * t)
-            local body = math.sin(2 * math.pi * 220 * t)
-            return (shimmer * 0.42 + body * 0.18) * math.sin(math.pi * p)
-        end)
-
-        -- Right-click card activation: a paper flick followed by a bright rune ping.
-        sounds.card_activate = generateSound(0.30, rate, function(t, d)
-            local p = t / d
-            local paper = (love.math.random() * 2 - 1) * math.sin(math.pi * p) * 0.19
-            local ping = math.sin(2 * math.pi * (740 + 540 * p) * t) * math.exp(-t * 10)
-            return paper + ping * 0.42
-        end)
-
-        sounds.card_destroy = generateSound(0.34, rate, function(t, d)
-            local p = t / d
-            local noise = (love.math.random() * 2 - 1) * math.exp(-t * 11)
-            local fall = math.sin(2 * math.pi * (520 - 360 * p) * t) * math.exp(-t * 13)
-            return noise * 0.30 + fall * 0.28
-        end)
-    end)
-
-    if not success then
-        print("[Sound] Init warning: audio synthesizer disabled (" .. tostring(err) .. ")")
-        enabled = false
-    end
-    return success
+    Sound.setMasterVolume(volumes.master)
+    return complete
 end
-
-local masterVolume = 0.8
-if love and love.audio and love.audio.setVolume then
-    love.audio.setVolume(masterVolume)
+function Sound.setMasterVolume(value)
+    volumes.master=clamp(value,1)
+    if love and love.audio and love.audio.setVolume then love.audio.setVolume(volumes.master) end
 end
-
-function Sound.setVolume(vol)
-    masterVolume = math.max(0, math.min(1.0, vol or 0.8))
-    if love and love.audio and love.audio.setVolume then
-        love.audio.setVolume(masterVolume)
+function Sound.getMasterVolume() return volumes.master end
+local function setBus(bus,value)
+    volumes[bus]=clamp(value,bus=="ambience" and .65 or .8)
+    mixVoices()
+end
+function Sound.setVolume(value) setBus("sfx",value) end
+function Sound.getVolume() return volumes.sfx end
+function Sound.setMusicVolume(value) setBus("music",value) end
+function Sound.getMusicVolume() return volumes.music end
+function Sound.setAmbienceVolume(value) setBus("ambience",value) end
+function Sound.getAmbienceVolume() return volumes.ambience end
+function Sound.setFocused(value)
+    focused=value~=false
+    if not focused then
+        for _,v in ipairs(voices) do v.source:stop() end
+        voices={}
+        for _,l in pairs(loops) do l.source:pause() end
+    else
+        for _,l in pairs(loops) do if l.level>0 or l.target>0 then l.source:play() end end
     end
 end
 
-function Sound.getVolume()
-    return masterVolume
+local function loop(bus,name)
+    local key=bus..":"..name
+    if loops[key] then return loops[key] end
+    if failed[key] or not focused or not love or not love.audio then return nil end
+    local entry=Catalog[bus][name]
+    if not entry then return nil end
+    local count,oldest=0,nil
+    for k,l in pairs(loops) do
+        count=count+1
+        if l.target==0 and (not oldest or l.level<loops[oldest].level) then oldest=k end
+    end
+    if count>=MAX_LOOPS then
+        if not oldest then return nil end
+        release(loops[oldest].source);loops[oldest]=nil
+    end
+    local ok,source=pcall(love.audio.newSource,entry.path,"stream")
+    if not ok then
+        failed[key]=true
+        print("[Sound] Missing loop "..key..": "..tostring(source))
+        return nil
+    end
+    source:setLooping(true);source:setVolume(0)
+    local l={source=source,bus=bus,name=name,gain=entry.gain,level=0,target=0}
+    -- Combat, boss and percussion stems share the same 120 BPM / 16 second grid.
+    if bus=="music" and (name=="tension" or name=="boss" or name=="combat") then
+        for _,other in pairs(loops) do
+            if other.bus=="music" and (other.name=="combat" or other.name=="boss" or other.name=="tension") and other.source.tell then
+                source:seek(other.source:tell("seconds")%16,"seconds");break
+            end
+        end
+    end
+    loops[key]=l
+    return l
 end
-
+-- Compatibility for callers that explicitly start/stop title music.
 function Sound.setMenuMusicEnabled(shouldPlay)
-    if not love or not love.audio or not love.audio.newSource then return false end
     if not shouldPlay then
-        if menuMusic and menuMusic:isPlaying() then menuMusic:stop() end
+        local l=loops["music:menu"]
+        if l then release(l.source);loops["music:menu"]=nil end
         return true
     end
-    if not menuMusic and not menuMusicLoadAttempted then
-        menuMusicLoadAttempted = true
-        local ok, source = pcall(love.audio.newSource, "assets/audio/menu_theme.mp3", "stream")
-        if ok then
-            menuMusic = source
-            menuMusic:setLooping(true)
-            menuMusic:setVolume(0.38)
-        else
-            print("[Sound] Menu music could not be loaded: " .. tostring(source))
-        end
-    end
-    if not menuMusic then return false end
-    if not menuMusic:isPlaying() then return pcall(menuMusic.play, menuMusic) end
+    local l=loop("music","menu")
+    if not l then return false end
+    l.level,l.target=1,1
+    mixVoices()
+    if not l.source:isPlaying() then l.source:play() end
     return true
 end
-
-function Sound.has(name)
-    return sounds[rewardAliases[name] or name] ~= nil
-end
-
+function Sound.has(name) return pools[aliases[name] or name]~=nil end
 function Sound.silence(duration)
-    Sound.quietUntil=((love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock())+math.min(0.08,duration or 0.06)
-    for _,voice in ipairs(activeVoices) do voice:stop() end
+    quietRemaining=math.max(0,math.min(.08,duration or .06))
+    Sound.quietUntil=now()+quietRemaining
+    for _,v in ipairs(voices) do v.source:stop() end
+    voices={}
+    duck=.14
+    mixVoices()
 end
-
-function Sound.play(name, pitch)
-    if not enabled or masterVolume <= 0 then return false end
-    local s = sounds[rewardAliases[name] or name]
-    if not s then return false end
-    local now = (love and love.timer and love.timer.getTime and love.timer.getTime()) or os.clock()
-    if now < (Sound.quietUntil or 0) then return false end
-    if now - (lastPlayed[name] or -math.huge) < (cooldown[name] or 0) then return false end
-    lastPlayed[name] = now
-
-    local ok = pcall(function()
-        for i = #activeVoices, 1, -1 do
-            if not activeVoices[i]:isPlaying() then table.remove(activeVoices, i) end
+function Sound.play(name,pitch)
+    name=aliases[name] or name
+    if not enabled or not focused or volumes.master<=0 or volumes.sfx<=0 then return false end
+    local pool,c=pools[name],Catalog.cues[name]
+    if not pool or not c then return false end
+    local time=now()
+    if time<(Sound.quietUntil or 0) or time-(lastPlayed[name] or -math.huge)<c.cooldown then return false end
+    prune()
+    local source
+    for _,s in ipairs(pool) do if not s:isPlaying() then source=s;break end end
+    if not source then return false end
+    if #voices>=MAX_VOICES then
+        local victim
+        for i,v in ipairs(voices) do
+            if v.priority<=c.priority and (not victim or v.priority<voices[victim].priority) then victim=i end
         end
-        while #activeVoices >= MAX_VOICES do
-            local oldest = table.remove(activeVoices, 1)
-            oldest:stop()
-        end
-        local voice = s.clone and s:clone() or s
-        if voice == s then voice:stop() end
-        if voice.setPitch then voice:setPitch(math.max(0.2, math.min(3, pitch or 1))) end
-        if voice.setVolume then voice:setVolume(gain[name] or 0.6) end
-        voice:play()
-        activeVoices[#activeVoices + 1] = voice
+        if not victim then return false end
+        table.remove(voices,victim).source:stop()
+    end
+    local ok=pcall(function()
+        variations[name]=(variations[name] or 0)+1
+        local variation=1+((variations[name]*7)%5-2)*.007
+        if type(pitch)~="number" or pitch~=pitch then pitch=1 end
+        source:setPitch(math.max(.35,math.min(2.5,pitch*variation)))
+        voices[#voices+1]={source=source,gain=c.gain,priority=c.priority,name=name}
+        if c.priority>=4 then duck=math.min(duck,.48) end
+        mixVoices();source:play()
     end)
+    if ok then lastPlayed[name]=time end
     return ok
 end
 
+local presetAmbience={RUINS="ruins",ICE="ice",FOREST="forest",DESERT="desert",VOID="void",VOLCANIC="volcanic",MYSTIC="mystic"}
+function Sound.context(state,game,menuMode,scene)
+    game=game or {}
+    local m=game.monster or {}
+    local combat=state=="playing" or state=="scoring"
+    local track=state=="menu" and (menuMode==nil or menuMode=="title") and "menu"
+        or combat and (m.isBoss and "boss" or "combat")
+        or state=="shop" and "shop" or state=="rest" and "rest"
+        or state=="victory" and "victory" or (state=="gameover" or state=="defeating") and "defeat"
+        or (state=="chest" or state=="treasure" or state=="CASH_OUT") and "victory"
+        or (state=="socketing" or state=="event" or state=="boss_deity") and "mystery" or "exploration"
+    local stage=game.run and game.run.ante or m.stage or game.act or 1
+    local ambient
+    if state~="menu" then
+        local _,definition,preset=require("config.scene_definitions").resolve(state,m.stage and m or {stage=stage})
+        if scene and scene.definition then definition,preset=scene.definition,scene.preset end
+        ambient=stage>20 and stage<=40 and "sea" or presetAmbience[definition.preset]
+        if not ambient then
+            for name,p in pairs(require("config.scene_definitions").presets) do
+                if p==preset then ambient=presetAmbience[name];break end
+            end
+        end
+        ambient=ambient or "ruins"
+    end
+    local weather=combat and ((scene and scene.weather) or require("render.weather").resolve({stage=stage})).kind or nil
+    weather=(weather=="rain" or weather=="storm") and weather or nil
+    local health=(game.playerHp or 100)/math.max(1,game.maxPlayerHp or 100)
+    local intensity=combat and math.max(m.isBoss and .65 or .18,state=="scoring" and .45 or 0,health<.3 and .95 or 0) or 0
+    return track,ambient,weather,intensity
+end
+function Sound.update(dt,state,game,paused,menuMode,scene)
+    if not focused then return end
+    dt=math.max(0,dt or 0)
+    prune()
+    quietRemaining=math.max(0,quietRemaining-dt)
+    local targetDuck=quietRemaining>0 and .14 or 1
+    for _,v in ipairs(voices) do if v.priority>=4 then targetDuck=math.min(targetDuck,.58) end end
+    duck=duck+(targetDuck-duck)*(1-math.exp(-dt*(targetDuck<duck and 24 or 3)))
+    for _,l in pairs(loops) do l.target=0 end
+    local track,ambient,weather,intensity=Sound.context(state,game,menuMode,scene)
+    Sound.currentTrack,Sound.currentAmbience=track,ambient
+    if volumes.music>0 and volumes.master>0 then
+        local l=loop("music",track);if l then l.target=paused and .4 or 1 end
+        if intensity>0 then local stem=loop("music","tension");if stem then stem.target=paused and intensity*.2 or intensity end end
+    end
+    if ambient and volumes.ambience>0 and volumes.master>0 then
+        local l=loop("ambience",ambient);if l then l.target=paused and .4 or 1 end
+        if weather then local w=loop("ambience",weather);if w then w.target=paused and .2 or .65 end end
+    end
+    for key,l in pairs(loops) do
+        local step=dt/(l.bus=="music" and 1.25 or 1.8)
+        l.level=l.level<l.target and math.min(l.target,l.level+step) or math.max(l.target,l.level-step)
+        if l.level==0 and l.target==0 then
+            release(l.source);loops[key]=nil
+        else
+            if not l.source:isPlaying() then l.source:play() end
+        end
+    end
+    mixVoices()
+end
+function Sound.stats()
+    local loopCount,cueCount=0,0
+    for _ in pairs(loops) do loopCount=loopCount+1 end
+    for _ in pairs(pools) do cueCount=cueCount+1 end
+    return {voices=#voices,maxVoices=MAX_VOICES,loops=loopCount,maxLoops=MAX_LOOPS,cues=cueCount,duck=duck,limiter=limiter}
+end
 return Sound

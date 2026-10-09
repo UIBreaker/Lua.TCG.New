@@ -100,7 +100,7 @@ assert(g.souls==6);R.reap(g);assert(g.souls==6)
 g,c=fixture("soul_plague_chalice");relicScore(g,c);R.beforeAttack(g,g.monster);assert(g.monster.hp==840)
 R.beforeAttack(g,g.monster);R.beforeAttack(g,g.monster);assert(g.monster.hp==520 and g.monster.soulPoisonTurns==0)
 g,c=fixture("soul_evolution_quill");local ally=g.persistentDeck[2];relicScore(g,c,{ally});assert(ally.evolutionLevel==2)
-relicScore(g,c,{ally});assert(ally.evolutionLevel==2)
+relicScore(g,c,{ally});assert(ally.evolutionLevel==4)
 g,c=fixture("soul_edition_prism");relicScore(g,c,{g.persistentDeck[2],g.persistentDeck[3]})
 assert(require("src.card_effects").getEffectName(c)=="holographic")
 g,c=fixture("soul_silence_anchor");g.monster.isBoss=true;g.monster.bossData={id="the_water",debuffId="the_water"}

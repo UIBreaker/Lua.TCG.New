@@ -20,8 +20,8 @@ return {
     color = { damage = {0.32, 0.80, 1, 1}, enhance = {1, 0.34, 0.43, 1},
         aura = {1, 0.77, 0.34, 1} },
     audio = { minPitch = 0.92, maxPitch = 1.28, pitchStep = 0.014,
-        hand = "equip", damage = "chip_tick", enhance = "mult_pop", multiply = "xmult_boom",
-        count = "chip_tick", peak = "jackpot", charge = "consume", release = "card_play",
+        hand = "score_hand", damage = "chip_tick", enhance = "mult_pop", multiply = "xmult_boom",
+        count = "chip_tick", peak = "jackpot", charge = "score_charge", release = "score_release",
         impact = "damage_hit", heavyImpact = "damage_heavy" },
     debugKey = "f5", labKey = "f6",
 }

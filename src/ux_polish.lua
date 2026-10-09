@@ -5,7 +5,7 @@ local Sound = require("src.sound")
 local Effects = require("src.card_effects")
 local Config = require("config.ux_polish_config")
 local Feedback = require("src.combat_feedback")
-local P = {config=Config, focus=nil, job=nil, age=0, time=0, applications={}}
+local P = {config=Config, focus=nil, job=nil, age=0, time=0, applications={},moneyFeedback={}}
 local motion=setmetatable({}, {__mode="k"})
 local shader, canvas, loaded
 local function clamp(t) return math.max(0,math.min(1,t)) end
@@ -14,6 +14,9 @@ local function smooth(t) t=clamp(t);return t*t*(3-2*t) end
 local function inside(r,x,y) return r and x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
 local function identity(item) return item and (item.card or item.deity or item.equipment or item) end
 function P.busy() return P.job~=nil end
+function P.goldValue(actual)
+    return math.floor((P.goldMeter and P.goldMeter.value==actual and P.goldMeter.shown or actual or 0)+0.5)
+end
 function P.goldPulse()
     local j=P.job
     if not j then return 1 end
@@ -81,6 +84,7 @@ function P.confirm(shop,game,done)
     local b=P.button(game);if not b then P.clearFocus();return false end
     if b.disabled then Sound.play("cant_afford");return false end
     local soulTransaction=f.kind=="card" or f.kind=="stock" and f.item.currency=="souls"
+    local goldBefore=game.gold or 0
     local before=soulTransaction and (game.souls or 0) or (game.gold or 0)
     local occupied={};for slot,d in pairs(game.deities or {}) do occupied[slot]=d end
     local ok,action,equipment
@@ -117,6 +121,15 @@ function P.confirm(shop,game,done)
         items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
         soul=soulTransaction,acquired=acquired,gold=gold,
         done=function() if done then done(action,equipment) end end}
+    if (game.gold or 0)~=goldBefore then
+        if not P.goldMeter or P.goldMeter.value~=goldBefore then P.goldMeter=Feedback.updateMeter(nil,goldBefore,0) end
+        P.goldMeter=Feedback.updateMeter(P.goldMeter,game.gold,0,0.58)
+        local wallet=soulTransaction and Config.gold or gold
+        local fx=Feedback.new("gold",game.gold-goldBefore,wallet.x,wallet.y+58,require("src.ui").formatNumber)
+        fx.target=wallet;fx.coinSource={x=f.rect.x+f.rect.w/2,y=f.rect.y+f.rect.h/2}
+        P.moneyFeedback[#P.moneyFeedback+1]=fx
+        while #P.moneyFeedback>4 do table.remove(P.moneyFeedback,1) end
+    end
     if f.kind=="card" then P.job.effect=Feedback.destroyCard(f.item,f.rect.x+f.rect.w/2,f.rect.y+f.rect.h/2,f.rect,true)
     elseif kind=="sell" then
         P.job.effect=Feedback.emit(kind,f.rect.x+f.rect.w/2,f.rect.y+f.rect.h/2,math.max(1,math.abs(P.job.delta)),f.rect,true)
@@ -143,6 +156,10 @@ end
 function P.update(dt,fast,state,shop)
     local step=dt*(fast and Config.fastFactor or 1)
     P.time=P.time+step;P.age=P.age+step
+    if P.goldMeter then P.goldMeter=Feedback.updateMeter(P.goldMeter,P.goldMeter.value,step,0.58) end
+    for i=#P.moneyFeedback,1,-1 do
+        if Feedback.update(P.moneyFeedback[i],step) then table.remove(P.moneyFeedback,i) end
+    end
     if state=="shop" and shop then P.ensureShop(shop) elseif not P.job then P.clearFocus();P.shop=nil end
     if P.focus then P.focus.age=P.focus.age+step end
     if P.message then P.messageAge=P.messageAge+step;if P.messageAge>Config.popup then P.message=nil end end
@@ -377,18 +394,21 @@ function P.draw(UI,game,buttons,mx,my)
             P.dissolve(UI,-r.w/2,-r.h/2,r.w,r.h,out((t-0.12)/0.60),job.effect and job.effect.kind=="destroy" and Feedback.config.profiles.destroy.color or tint,function(a,c,w,h) drawItem(job.item,a,c,w,h) end)
         else drawItem(job.item,-r.w/2,-r.h/2,r.w,r.h) end
         g.pop()
-        for i=1,(job.kind=="sell" and job.effect and 0 or 4) do
+        for i=1,(job.soul and 4 or 0) do
             local p=out((t-Config.coinStart-i*0.015)/Config.coinTravel)
             local sx,sy,tx,ty=job.gold.x,job.gold.y,r.x+r.w/2,r.y+r.h/2
             if job.kind=="sell" then sx,sy,tx,ty=tx,ty,sx,sy end
             g.setColor(tint[1],tint[2],tint[3],math.sin(p*math.pi));g.ellipse("fill",sx+(tx-sx)*p,sy+(ty-sy)*p-math.sin(p*math.pi)*(20+i*3),2+math.abs(math.cos(t*18+i)),4)
         end
+        if job.soul then
         local since=math.max(0,t-(job.kind=="sell" and 0.84 or 0.18))
         local pulse=1+0.12*math.exp(-since*18)*math.sin(since*36)
         g.push("all");g.translate(job.gold.x,job.gold.y+24-out(t)*16);g.scale(pulse)
         g.setFont(UI.fonts.small);g.setColor(1,0.8,0.35,job.kind=="sell" and clamp((1-t)/0.16) or 1-t)
         g.print((job.delta>0 and "+" or "-")..(job.soul and "" or "$")..math.abs(job.delta)..(job.soul and " LH" or ""),0,0);g.pop()
+        end
     end
+    for _,fx in ipairs(P.moneyFeedback) do Feedback.draw(fx,UI) end
     for _,a in ipairs(P.applications) do
         local current=UI.CardPhysics.getState(a.target)
         if a.fixedRect then

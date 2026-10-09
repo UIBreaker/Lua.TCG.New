@@ -1,6 +1,12 @@
+-- Fail capture runs in the console instead of waiting in a graphical error screen.
+love.errorhandler=function(message)
+ print(debug.traceback(message,2));io.stdout:flush()
+ return function() return 1 end
+end
 local T={};local E=require("src.bed_explosion");local R=require("render.renderer")
 local D=require("src.deck");local Deities=require("src.deities");local Group=require("src.enemy_group")
 local case,started,expected,lastHp,hits=0,nil,0,0,0
+local expectedSplash=0
 for _,value in ipairs(arg or {}) do if value=="--bed-preview-only" then case=11 end end
 local sawPending=false;local captured={};local originalDraw=E.draw;local originalUpdate=E.update
 local previewIndex=0;local previews={{"anticipation",.035},{"contact",.050},{"shockwave",.11},{"fireball",.19},{"debris",.37},{"smoke",.75}}
@@ -10,7 +16,7 @@ local function shot(name)
   local f=assert(io.open("docs/bed_explosion/"..name..".png","wb"));f:write(data:encode("png"):getString());f:close()
  end)
 end
-function T.update(game,cb)
+local function update(game,cb)
  if case==11 then
   if previewIndex==0 then
    for _,name in ipairs({"bed_explosion_charge","bed_explosion_boom","bed_explosion_debris","bed_explosion_rumble"}) do assert(require("src.sound").has(name),"missing audio hook: "..name) end
@@ -43,7 +49,7 @@ function T.update(game,cb)
    for _,name in ipairs({"bed_explosion_charge","bed_explosion_boom","bed_explosion_debris","bed_explosion_rumble"}) do assert(require("src.sound").has(name),"missing audio hook: "..name) end
    E.draw=function()
     if E.active and E.detonated then
-     assert(not game.monster.hasBed and game.monster.hp==10000000-expected-math.floor(expected*2),"rendered contact must match HP")
+     assert(not game.monster.hasBed and game.monster.hp==10000000-expected-expectedSplash,"rendered contact must match HP")
     end
     local g=love.graphics;local canvas,shader,image=g.newCanvas,g.newShader,g.newImage
     local function prohibit() error("GPU allocation during explosion draw") end
@@ -56,7 +62,7 @@ function T.update(game,cb)
   case=case+1
   if case>10 then
    assert(#R.post.diagnostics==0,"shader fallback")
-   print("Bed explosion live: 10 real three-enemy traps / contact HP sync / unchanged 200% AoE / input lock / 3 qualities / audio resources / shaders passed")
+   print("Bed explosion live: 10 real three-enemy traps / contact HP sync / unchanged catalog AoE / input lock / 3 qualities / audio resources / shaders passed")
    E.draw=originalDraw;E.update=function() end;captured={};return
   end
   cb.startNewGame("red_deck");cb.startMonsterEncounter(3,false);cb.setScoringSpeed(case%2==0)
@@ -70,7 +76,9 @@ function T.update(game,cb)
   game.hand={D.newCard(8,"spades")};game.deck={};game.discardPile={};game.selectedIndices={};game.abilityApproved={}
   cb.selectCardIndex(1);cb.playSelectedHand()
   local anim,state=cb.getScoringState();assert(state=="scoring")
-  expected=anim.scoringData.finalScore;lastHp=game.monster.hp;hits=0;sawPending=false;started=love.timer.getTime()
+  expected=anim.scoringData.finalScore
+  expectedSplash=math.floor(expected*Deities.CATALOG.spirit_hell_sleep.onAttack().bedExplosionPct/100)
+  lastHp=game.monster.hp;hits=0;sawPending=false;started=love.timer.getTime()
   local hands=game.handsRemaining;cb.playSelectedHand();assert(hands==game.handsRemaining)
  else
   local a,state=cb.getScoringState()
@@ -80,16 +88,20 @@ function T.update(game,cb)
 
   end
   if E.active and E.detonated and not a.pendingBedScore then
-   assert(not game.monster.hasBed and game.monster.hp==10000000-expected-math.floor(expected*2),"HP/contact sync")
+   assert(not game.monster.hasBed and game.monster.hp==10000000-expected-expectedSplash,"HP/contact sync")
 
   end
   if game.monster.hp~=lastHp then hits=hits+1;lastHp=game.monster.hp end
   if state~="scoring" then
    assert(sawPending and hits==1 and a.damageDealt==expected and not a.pendingBedScore)
-   for i,m in ipairs(Group.members(game)) do assert(m.hp==10000000-math.floor(expected*2)-(i==1 and expected or 0),"unchanged AoE") end
+   for i,m in ipairs(Group.members(game)) do assert(m.hp==10000000-expectedSplash-(i==1 and expected or 0),"unchanged AoE") end
    print("Bed real combat "..case.." / "..R.quality.." / "..expected.." passed")
    started=nil
   end
  end
+end
+function T.update(game,cb)
+ local ok,err=xpcall(function() update(game,cb) end,debug.traceback)
+ if not ok then print("Bed GPU FAILED: "..err);io.stdout:flush();love.event.quit(1) end
 end
 return T

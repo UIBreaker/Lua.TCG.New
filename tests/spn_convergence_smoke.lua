@@ -43,11 +43,13 @@ score(g,hand({2,3}));assert(g.deities[5].spnGrowth.charge==5 and g.deities[5].sp
 g=game("spirit_extremes");score(g);assert(g.deities[5].spnGrowth.cracks==5)
 g.playerArmor=4;Combat.resolveMonsterAttack(g)
 assert(g.deities[5].spnGrowth.cracks==11,"only six actual HP lost add cracks")
-assert(effect(g).addFlatDamage==16)
+assert(effect(g).addChips==16)
 g.monster.attack=500;g.playerHp=3;g.playerArmor=0;Combat.resolveMonsterAttack(g)
 assert(g.deities[5].spnGrowth.cracks==14,"lethal loss uses actual remaining HP")
 D.evolve(g.deities[5]);local evolved=D.scaleEffect(g.deities[5],effect(g))
-assert(evolved.addFlatDamage==28.5 and evolved.message=="VẾT NỨT · 19","evolution scales damage, not the displayed stack counter")
+assert(evolved.addChips==28.5 and evolved.message=="VẾT NỨT · 19","evolution scales damage, not the displayed stack counter")
+g.deities[5].spnGrowth.cracks=99
+local hundred=effect(g);assert(hundred.addChips==104 and hundred.addMult==1,"100 cracks add one Mult")
 g=game("spirit_hour_product")
 for i=1,3 do score(g);assert(g.handsRemaining==3) end
 preview=score(g,nil,true);assert(g.handsRemaining==3 and g.deities[5].spnGrowth.sand==3)

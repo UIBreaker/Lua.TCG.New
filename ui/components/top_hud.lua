@@ -1,5 +1,6 @@
 local Core = require("ui.components.core")
 local Theme = require("ui.theme")
+local Health = require("ui.components.health_bar")
 
 local TopHUD = {}
 local assets
@@ -61,41 +62,27 @@ local function drawHealth(data, fonts)
     local hp = math.max(0, tonumber(data.hp) or 0)
     local maxHp = math.max(1, tonumber(data.maxHp) or 1)
     local armor = math.max(0, tonumber(data.armor) or 0)
+    local meters=data.meters or {}
+    local shownHp=meters.hp and meters.hp.shown or hp
+    local shownArmor=meters.armor and meters.armor.shown or armor
     local x, y, w, h = 231, 32, 187, 23
-    local ratio = math.max(0, math.min(1, hp / maxHp))
+    local ratio = math.max(0, math.min(1, shownHp / maxHp))
 
     Core.color({0.025, 0.11, 0.075, 0.94})
     g.rectangle("fill", x, y, w, h, 4, 4)
+    if meters.hp and meters.hp.loss then
+        Core.color({1,0.58,0.36},0.7)
+        g.rectangle("fill",x+1,y+1,(w-2)*math.min(1,meters.hp.trail/maxHp),h-2,3,3)
+    end
     if ratio > 0 then
         Core.gradient(x + 1, y + 1, math.max(1, (w - 2) * ratio), h - 2,
             {0.18, 0.70, 0.42, 1}, {0.08, 0.38, 0.24, 1}, 3)
     end
 
-    -- A distinct armor layer sits above HP, including an explicit empty state.
-    Core.color({0.025,0.07,0.12,0.98})
-    g.rectangle("fill", x, 16, w, 14, 3, 3)
-    local armorRatio = math.min(1, armor / math.max(1, data.armorCap or 30))
-    if armorRatio > 0 then
-        local fillW=(w-2)*armorRatio
-        Core.gradient(x+1,17,fillW,12,{0.18,0.65,0.84,1},{0.07,0.25,0.47,1},2)
-        Core.color({0.7,0.94,1,0.5});g.rectangle("fill",x+3,18,math.max(0,fillW-4),1)
-        local flash=math.min(1,math.max(0,((data.armorBounce or 1)-1)*10))
-        Core.color({0.7,0.95,1,flash*0.42})
-        g.rectangle("fill",x+1,17,fillW,12,2,2)
-        Core.color({0.8,0.97,1,flash*0.7})
-        g.rectangle("fill",x+2+(fillW-4)*(1-flash),18,2,10)
-        for i=1,5 do
-            local sx=x+w*i/6
-            if sx<x+fillW then Core.color({0.03,0.13,0.22,0.28});g.line(sx,19,sx,27) end
-        end
-    end
-    Core.color({0.45,0.83,1,0.9})
-    g.setLineWidth(1)
-    g.rectangle("line", x, 16, w, 14, 3, 3)
-    g.push("all");g.translate(x+w/2,23);g.scale(data.armorBounce or 1);g.translate(-x-w/2,-23)
-    Core.text("GIÁP " .. tostring(math.floor(armor)), x+4, 16, w-8, fonts.hudArmor,
-        {0.75,0.94,1,1}, "center")
-    g.pop()
+    Health.draw(x,15,w,15,shownArmor,data.armorCap or 30,{variant="cyan",shield=true,
+        trailValue=meters.armor and meters.armor.trail,trailColor={0.65,0.86,1},
+        pulse=((data.armorBounce or 1)-1)*8,font=fonts.hudArmor,label="GIÁP "..math.floor(armor)})
+    Core.color({0.24,0.58,0.40},0.65);g.setLineWidth(1);g.rectangle("line",x,y,w,h,4,4)
     drawIcon("heart", x + 5, y, 23)
     local label = "MÁU " .. tostring(math.floor(hp)) .. " / " .. tostring(math.floor(maxHp))
     local font = fitText(label, w - 40, fonts.hudStat, fonts.hudSmall)
@@ -167,7 +154,8 @@ function TopHUD.draw(data, fonts, mx, my, pressedId)
     g.line(454,12,454,21);g.line(450,16,458,16)
     g.setBlendMode("alpha")
     drawIcon("coin", 430, 14, 25)
-    Core.textLine(tostring(data.gold or 0), 460, 17, 48, hudStat, Theme.colors.gold, "left", hudSmall)
+    local gold=data.meters and data.meters.gold
+    Core.textLine(tostring(math.floor((gold and gold.shown or data.gold or 0)+0.5)), 460, 17, 48, hudStat, Theme.colors.gold, "left", hudSmall)
     g.pop()
     Core.textLine(tostring(data.souls or 0).." LH", 430, 43, 78, hudFonts.hudArmor, Theme.colors.purple, "center")
 

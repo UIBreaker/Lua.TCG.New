@@ -144,10 +144,13 @@ local function trigger(anim, st)
     if st.type=="equipment_trigger" then
         local rows={{st.addArmor,"GIÁP",{0.4,0.75,1,1}},{st.healHp,"HP",{0.4,0.95,0.6,1}},{st.addGold,"VÀNG",C.color.aura}}
         local offset=0
-        for _,row in ipairs(rows) do
+        for resourceIndex,row in ipairs(rows) do
             if (row[1] or 0)>0 then
+                local feedback=Feedback.new(({"armor","heal","gold"})[resourceIndex],row[1],x,popupY-24-offset,s.ui.formatNumber)
+                feedback.compact=true
                 s.links[#s.links+1]={text="+"..row[1].." "..row[2],x=x,y=popupY-24-offset,
                     tx=x,ty=popupY-24-offset,age=0,duration=0.62,color=row[3],resource=true}
+                s.links[#s.links].feedback=feedback
                 offset=offset+22
             end
         end
@@ -168,7 +171,8 @@ local function trigger(anim, st)
             .. s.ui.formatNumber(st.addedChips or 0) .. " Sát thương / +"
             .. s.ui.formatNumber(st.addedMult or 0) .. " Cường hóa"
     end
-    play(s, s.multiply and "multiply" or (s.toMult ~= beforeMult and "enhance" or "damage"))
+    play(s, st.slotIndex and "spn_trigger" or st.type=="equipment_trigger" and "equip"
+        or s.multiply and "multiply" or (s.toMult ~= beforeMult and "enhance" or "damage"))
     while #s.links>18 do table.remove(s.links,1) end
 end
 
@@ -390,6 +394,10 @@ function Feel.draw(anim, ui)
         g.pop()
         -- The value stays beside its source; only a small energy mote travels.
         if l.x>=240 then
+        if l.feedback then
+            l.feedback.age=l.age;l.feedback.alpha=fade
+            Feedback.draw(l.feedback,ui)
+        else
         g.push("all");g.translate(l.x,l.y-10*smooth(k))
         local pop=1+0.23*math.exp(-l.age*11)*math.sin(l.age*26)-0.12*math.exp(-l.age*35)
         g.scale(pop);g.rotate(l.multiply and math.sin(l.age*19)*math.exp(-l.age*12)*0.035 or 0)
@@ -403,6 +411,7 @@ function Feel.draw(anim, ui)
         g.setColor(0.01,0.015,0.025,fade);g.printf(l.text,-125,-10,250,"center")
         g.setColor(l.color[1],l.color[2],l.color[3],fade);g.printf(l.text,-125,-12,250,"center")
         g.pop()
+        end
         end
     end
     g.pop()

@@ -1,5 +1,7 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-feedback-render" then require("tests.feedback_upgrade_capture");return end
+    if a=="--test-audio" then require("tests.audio_capture");return end
     if a=="--test-equipment-sockets" then require("tests.equipment_sockets_capture");return end
     if a=="--test-soul-market" then local ok,err=pcall(require,"tests.soul_market_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-equipment-tiers" then local ok,err=pcall(require,"tests.equipment_tiers_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
@@ -136,6 +138,12 @@ for _, a in ipairs(arg or {}) do
     end
 end
 local Capture = isCaptureMode and require("capture_screens") or nil
+if isCaptureMode then
+    io.stdout:setvbuf("no")
+    function love.errorhandler(message)
+        print(debug.traceback(message,2));return function() return 1 end
+    end
+end
 
 -- Game States: "menu", "BLIND_SELECT", "map", "playing", "scoring", "CASH_OUT", "shop", "event", "boss_deity", "chest", "socketing", "gameover", "victory"
 local state = "menu"
@@ -228,6 +236,9 @@ local collectionScrollY = 0
 -- Settings Data
 local settings = {
     sfxVolume = 0.8,
+    masterVolume = 1.0,
+    musicVolume = 0.8,
+    ambienceVolume = 0.65,
     fastScoring = false,
     fullscreen = false,
     crtEnabled = false,
@@ -834,6 +845,9 @@ local function startNewGame(chosenDeck)
     GameState.resetRun(game, chosenDeck or "red_deck")
     Feedback.clearVfx()
     juice.lastGold, juice.lastHp, juice.lastArmor = game.gold or 0, game.playerHp or 100, game.playerArmor or 0
+    juice.meters = nil
+    UI.Polish.moneyFeedback = {}
+    UI.Polish.goldMeter = nil
     juice.floatingTexts = {}
     pendingCombatNode = nil
 
@@ -1279,7 +1293,7 @@ local function useConsumable(idx)
         end
         if #options==0 then return false end
         UI.AbilityUI.openChoices(game,{{card=c,title="CÁI GIƯỜNG · CHỌN NGƯỜI NGỦ",
-            description="Ngủ hồi đầy HP và bỏ một lượt. Đặt lên quái để hồi máu cho chúng hoặc kích bẫy Ngủ Dưới Địa Ngục.",options=options}},function(decisions)
+            description="Ngủ hồi đầy HP và bỏ một lượt. Đặt lên quái để hồi máu cho chúng.",options=options}},function(decisions)
             local choice=decisions[1];if not choice then return end
             local index;for i,card in ipairs(game.consumables) do if card==c then index=i;break end end
             if not index then return end
@@ -1812,7 +1826,7 @@ local function applyPendingSpeedAt(mx, my)
             if not rewardIndex then pendingSpeedCard = nil; return true end
 
             local speed = Shop.getConsumableParams(pendingSpeedCard).speed
-            if pendingSpeedCard.id == "cons_speed_small" or pendingSpeedCard.id == "cons_speed_large" then
+            if (pendingSpeedCard.id == "cons_speed_small" or pendingSpeedCard.id == "cons_speed_large") and not pendingSpeedCard.permanentSpeed then
                 Deck.applyTemporaryAttackSpeedBonus(card, speed)
             else
                 for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
@@ -2195,6 +2209,9 @@ function love.load()
     end
     Sound.init()
     Sound.setVolume(settings.sfxVolume)
+    Sound.setMasterVolume(settings.masterVolume)
+    Sound.setMusicVolume(settings.musicVolume)
+    Sound.setAmbienceVolume(settings.ambienceVolume)
     if settings.fullscreen then
         love.window.setFullscreen(true, "desktop")
     end
@@ -2259,6 +2276,7 @@ function love.resize(w, h)
 end
 
 function love.focus(focused)
+    Sound.setFocused(focused)
     if focused then
         if Touch.nativeMobile then love.window.setFullscreen(true, "desktop"); updateScale() end
         return
@@ -2370,7 +2388,13 @@ local function updateCaptureMode()
     })
 end
 
+-- Keep the large update closure within LÖVE's Lua 5.1 upvalue limit.
+Sound.updateGame = function(dt)
+    Sound.update(dt, state, game, isPauseMenuOpen or isSettingsOpen, menuMode, Renderer.scene)
+end
+
 function love.update(dt)
+    require("ui.enemy_formation").update(game,dt)
     if not isCollectionOpen then Collection.prepareCacheStep() end
     if isCollectionOpen and require("ui.collection_book").update(dt) then
         isCollectionOpen = false
@@ -2425,6 +2449,7 @@ function love.update(dt)
     cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
         game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory") and {stage=game.run and game.run.ante or 1} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
+    Sound.updateGame(dt)
     if state == "defeating" then
         if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
         juice.ambientTimer = juice.ambientTimer + dt
@@ -2445,7 +2470,6 @@ function love.update(dt)
     local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
     if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
     local motionDt = hitStopped and 0 or dt
-    Sound.setMenuMusicEnabled(state == "menu" and menuMode == "title")
     if state=="playing" and game and game.abilityCombat then
         local notices=UI.Abilities.takeFeedback(game)
         for _,notice in ipairs(notices) do
@@ -2705,6 +2729,10 @@ function love.update(dt)
     end
 
     -- Update juice floating texts
+    juice.meters=juice.meters or {}
+    juice.meters.hp=Feedback.updateMeter(juice.meters.hp,game.playerHp,dt)
+    juice.meters.armor=Feedback.updateMeter(juice.meters.armor,armor,dt)
+    juice.meters.gold=Feedback.updateMeter(juice.meters.gold,game.gold,dt,0.58)
     for i = #juice.floatingTexts, 1, -1 do
         local ft = juice.floatingTexts[i]
         if ft.kind then Feedback.update(ft, dt)
@@ -3806,6 +3834,7 @@ local function drawBattleHud(m, mx, my)
         armor = game.playerArmor or game.playerShield or 0,
         armorCap = UI.Abilities.config.armorCap, goldBounce = juice.goldBounce,
         hpBounce = juice.hpBounce, armorBounce = juice.armorBounce,
+        meters = juice.meters,
         hands = game.handsRemaining or 0, maxHands = game.maxHands or 0,
         discards = game.discardsRemaining or 0,
     }, UI.fonts, mx, my, juice.buttonPressedId)
@@ -5788,6 +5817,8 @@ local function drawSettingsModal()
 
     UI.drawGildedPanel(modalX, modalY, modalW, modalH)
 
+    require("ui.audio_settings").draw(UI, settings, buttons, modalX-244, modalY+70, mx, my)
+
     -- Header
     love.graphics.setFont(UI.fonts.large)
     love.graphics.setColor(UI.COLORS.goldYellow)
@@ -5909,7 +5940,7 @@ local function drawShopState()
     love.graphics.push()
     love.graphics.translate(325,35);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-325,-35)
     love.graphics.print(shopData.soulMode and (tostring(game.souls or 0).." LINH HỒN")
-        or ("◉ " .. tostring(game.gold or 0) .. "   •   "..tostring(game.souls or 0).." LH"), 310, 28)
+        or ("◉ " .. tostring(UI.Polish.goldValue(game.gold)) .. "   •   "..tostring(game.souls or 0).." LH"), 310, 28)
     love.graphics.pop()
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
@@ -7139,6 +7170,10 @@ local function handleModalsMousepressed(mx, my, button)
         if button == 1 then
             for _, btn in ipairs(buttons) do
                 if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                    if require("ui.audio_settings").activate(btn.id, settings) then
+                        saveSettings()
+                        return true
+                    end
                     if btn.id == "close_settings" then
                         isSettingsOpen = false
                         Sound.play("ui_click")

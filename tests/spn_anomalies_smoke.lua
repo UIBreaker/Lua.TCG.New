@@ -90,9 +90,17 @@ assert(g.discardsRemaining==3,"refund capped at opening discard allowance")
 g=game("spirit_borrowed_turn");h=hand("THREE_OF_A_KIND")
 h.scoringCards={Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts")}
 for _,c in ipairs(h.scoringCards) do c.disableFactionPassives=true end
-preview=score(g,h,true);assert(g.handsRemaining==2 and g.discardsRemaining==3 and not next(g.spnCombat))
-score(g,h);assert(g.handsRemaining==3 and g.discardsRemaining==2)
-score(g,h);assert(g.handsRemaining==3 and g.discardsRemaining==2,"one borrowed moment per fight")
+preview=score(g,h,true);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.consumables==0 and not next(g.spnCombat))
+score(g,h);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.consumables==1)
+assert(g.consumables[1].id=="cons_speed_small" and g.consumables[1].permanentSpeed)
+score(g,h);assert(#g.consumables==1,"one permanent speed card per fight")
+g=game("spirit_borrowed_turn");g.consumables={
+    require("src.shop").healingItem("upper","cons_bed").consumable,
+    require("src.shop").healingItem("upper","cons_bed").consumable,
+    require("src.shop").healingItem("upper","cons_bed").consumable}
+score(g,h);assert(#g.consumables==3 and #g.pendingRewardCards==1 and g.pendingRewardCards[1].permanentSpeed)
+table.remove(g.consumables)
+assert(require("src.run_manager").deliverEvolutionRewards(nil,g)==1 and g.consumables[3].permanentSpeed)
 
 g=game("spirit_dream_jailer")
 Combat.resolvePlayerAttack(g,10);assert(g.monster.spnSleep==1 and g.playerArmor==4)

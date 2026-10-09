@@ -25,4 +25,7 @@ function love.conf(t)
     t.modules.window = true
     t.modules.system = true
     t.modules.video = true
+    for _,a in ipairs(arg or {}) do
+        if a=="--test-audio" then t.window=false end
+    end
 end

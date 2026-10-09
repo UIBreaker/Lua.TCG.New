@@ -1,9 +1,11 @@
 -- lovec.exe . --test-ux-polish : real input, graphics/shader and timed shop flow; no player saves.
 local UI=require("src.ui")
+io.stdout:setvbuf("no")
 local P=UI.Polish
 local Shop=require("src.shop")
 local Deck=require("src.deck")
 local Test={};local stage="start";local deadline=0
+function love.errorhandler(message) print(debug.traceback(message,2));return function() return 1 end end
 local shop,item,index,before,size,old,swap
 local tooltipBody, tooltipCount, lastTooltipCount
 local function watchTooltip()
@@ -33,6 +35,10 @@ end
 local function findCard()
     for i,v in ipairs(shop.items) do if v.card then index,item=i,v;return end end
     error("no card stock")
+end
+local function pointAtCard(click)
+    local r=P.rect(UI,item)
+    pointer(r.x+r.w/2,r.y+r.h/2,click)
 end
 local function confirm(game)
     local b=assert(P.button(game));pointer(b.x+b.w/2,b.y+b.h/2,true)
@@ -76,7 +82,7 @@ function Test.update(game,callbacks)
         dissolveCheck();pointer(2,2);nextStage("arrival",0.55)
     elseif stage=="arrival" then
         shot("shot_ux_shop.png");findCard();before=game.gold;size=#game.persistentDeck
-        tooltipBody=select(2,UI.Description.resolve(item,game));pointer(498,225)
+        tooltipBody=select(2,UI.Description.resolve(item,game));pointAtCard()
         nextStage("hover_early",0.08)
     elseif stage=="hover_early" then
         assert(lastTooltipCount==0,"tooltip must not appear on a mouse fly-by")
@@ -84,28 +90,30 @@ function Test.update(game,callbacks)
     elseif stage=="hover_ready" then
         assert(lastTooltipCount==1,"one delayed tooltip after stable hover")
         tooltipBody=nil
-        pointer(498,225,true);assert(P.focus and game.gold==before,"click focuses without purchase")
+        pointAtCard(true);assert(P.focus and P.focus.item==item and game.gold==before,"click focuses without purchase")
         nextStage("focus",0.22)
     elseif stage=="focus" then
         shot("shot_ux_focus.png");nextStage("focus_confirm",0.15)
     elseif stage=="focus_confirm" then
         love.keypressed("escape");assert(not P.focus)
-        pointer(498,225,true);game.gold=0;assert(P.button(game).disabled);confirm(game)
+        pointAtCard(true);game.gold=0;assert(P.button(game).disabled);confirm(game)
         assert(not P.busy() and #game.persistentDeck==size,"poor buy rejected")
-        game.gold=before;pointer(498,225,true);confirm(game)
+        game.gold=before;pointAtCard(true);confirm(game)
         assert(P.busy() and game.gold==before-item.cost and #game.persistentDeck==size+1)
         pointer(282,674,true);love.keypressed("escape")
         assert(P.job.kind=="buy","transaction blocks spam and Escape")
         nextStage("purchase",0.17)
     elseif stage=="purchase" then shot("shot_ux_purchase.png");nextStage("bought",0.48)
     elseif stage=="bought" then
-        assert(not P.busy());callbacks.openDeckViewer();nextStage("sell_focus")
+        assert(not P.busy())
+        local reaper={id="soul_reaper"};game.consumables={reaper};game.soulDestroyConsumable=reaper;game.soulDestroyActive=true
+        callbacks.openDeckViewer();nextStage("sell_focus")
     elseif stage=="sell_focus" then
         local acquired=game.persistentDeck[#game.persistentDeck]
         local r=assert(UI.CardPhysics.getState(acquired),"owned card renderer")
         pointer(r.x+r.w/2,r.y+r.h/2,true)
         assert(P.focus and P.focus.kind=="card","inventory click focuses sale")
-        before=game.gold;confirm(game);assert(P.job.kind=="sell" and game.gold>before)
+        before=game.souls or 0;confirm(game);assert(P.job.kind=="sell" and game.souls>before)
         nextStage("selling",0.14)
     elseif stage=="selling" then shot("shot_ux_sell.png");nextStage("sold",0.50)
     elseif stage=="sold" then
@@ -123,7 +131,7 @@ function Test.update(game,callbacks)
         shot("shot_ux_backs.png");nextStage("revealed",0.58)
     elseif stage=="revealed" then
         assert(not P.busy() and shop.items~=old);shot("shot_ux_reveal.png")
-        findCard();pointer(498,225,true);assert(P.focus and P.focus.item==item)
+        findCard();pointAtCard(true);assert(P.focus and P.focus.item==item)
         callbacks.setScoringSpeed(true);before=game.gold;confirm(game)
         assert(game.gold==before-item.cost);nextStage("fast",0.34)
     elseif stage=="fast" then

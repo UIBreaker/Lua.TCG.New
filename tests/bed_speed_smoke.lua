@@ -26,8 +26,13 @@ g,a,b=game();assert(I.useBed(g,1,a))
 g.deities={D.CATALOG.spirit_hell_sleep}
 local damage,dead,hits=Combat.resolvePlayerAttack(g,50)
 assert(damage==50 and not dead and #hits==2)
-assert(a.hp==850 and b.hp==900 and not a.hasBed and not a.bedHeal)
-Combat.resolvePlayerAttack(g,50);assert(a.hp==800 and b.hp==900,"trap is single use")
+assert(a.hp==700 and b.hp==750 and not a.hasBed and not a.bedHeal)
+Combat.resolvePlayerAttack(g,50);assert(a.hp==650 and b.hp==750,"trap is single use")
+g.consumables={bed()}
+assert(D.CATALOG.spirit_hell_sleep.onHandScored(nil,{gameState=g}).addMult==10)
+g.consumables={bed(),bed()};assert(D.CATALOG.spirit_hell_sleep.onHandScored(nil,{gameState=g}).addMult==20)
+local evolved={};for k,v in pairs(D.CATALOG.spirit_hell_sleep) do evolved[k]=v end
+assert(D.evolve(evolved) and D.getDescription(evolved):find("+15 Cường hóa",1,true))
 g,a,b=game();I.useBed(g,1,a);g.deities={D.CATALOG.spirit_hell_sleep}
 Combat.resolvePlayerAttack(g,1500);assert(a.hp==0 and b.hp==0,"a lethal first hit must still explode")
 g,a,b=game();I.useBed(g,1,a);g.deities={D.CATALOG.spirit_hell_sleep}
@@ -64,8 +69,9 @@ end
 local speedFirst=assert(source:find("local function applyPendingSpeedAt",1,true))
 local speedLast=assert(source:find("local function startEnemyAttack",speedFirst,true))
 local speedChunk=source:sub(speedFirst,speedLast-1).."\nreturn applyPendingSpeedAt"
-for _,id in ipairs({"cons_speed_small","cons_speed_large"}) do
-    local item=Shop.healingItem("upper",id).consumable
+for _,id in ipairs({"cons_speed_small","cons_speed_large","reward_speed_small"}) do
+    local item=Shop.healingItem("upper",id=="reward_speed_small" and "cons_speed_small" or id).consumable
+    item.permanentSpeed=id=="reward_speed_small"
     local card=Deck.newCard(7,"spades")
     card.visualX,card.visualY=0,0
     g.hand={card};g.persistentDeck={Deck.cloneCard(card)};g.deck={};g.discardPile={};g.consumables={item}
@@ -78,9 +84,9 @@ for _,id in ipairs({"cons_speed_small","cons_speed_large"}) do
     local old=Deck.getCardAttackSpeed(card)
     assert(speedLoader()(10,10) and #g.consumables==0)
     assert(Deck.getCardAttackSpeed(card)==old+Shop.getConsumableParams(item).speed)
-    assert(Deck.getCardAttackSpeed(g.persistentDeck[1])==old)
+    assert(Deck.getCardAttackSpeed(g.persistentDeck[1])==old+(item.permanentSpeed and 3 or 0))
 end
 local restored=require("src.persistence").restoreSnapshot(require("src.persistence").makeSnapshot({
     deities={D.CATALOG.spirit_hell_sleep},consumables={bed()},persistentDeck={}},"shop"))
-assert(restored.deities[1].onAttack().bedExplosionPct==200 and restored.consumables[1].category=="bed")
-print("Bed/speed passed: self heal, cancel, lost turn dispatch, enemy heal, lethal trap, 200% AoE, one use, speed params and persistence")
+assert(restored.deities[1].onAttack().bedExplosionPct==500 and restored.consumables[1].category=="bed")
+print("Bed/speed passed: self heal, cancel, lost turn dispatch, enemy heal, lethal trap, 500% AoE, one use, temporary and permanent speed")

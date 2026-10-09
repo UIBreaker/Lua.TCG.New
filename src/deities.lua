@@ -122,9 +122,9 @@ end
 Deities.CATALOG = {}
 local entries = {
     {"spirit_pebble","Cổ Thạch","hand","addChips",20,nil,"+{value} Sát thương mỗi tay."},
-    {"spirit_ember","Tàn Hỏa","hand","addMult",4,nil,"+{value} Cường hóa mỗi tay."},
-    {"spirit_blade","Kiếm Ảnh","card","addChips",8,nil,"Mỗi lá tạo Aura nhận +{value} Chips"},
-    {"spirit_drum","Trống Lôi","card","addMult",1,nil,"Mỗi lá tạo Aura nhận +{value} Mult"},
+    {"spirit_ember","Tàn Hỏa","hand","xMult",1,nil,"×{factor} Cường hóa mỗi tay."},
+    {"spirit_blade","Kiếm Ảnh","card","addChips",10,nil,"Mỗi lá tính điểm: +{value} Sát thương."},
+    {"spirit_drum","Trống Lôi","card","addMult",2,nil,"Mỗi lá tính điểm: +{value} Cường hóa."},
     {"spirit_pair","Song Đôi","hand","addMult",6,"pair","Đôi: +{value} Cường hóa."},
     {"spirit_straight","Lộ Kiếm","hand","addChips",30,"straight","Sảnh: +{value} Sát thương."},
     {"spirit_flush","Đồng Chất","hand","addMult",5,"flush","Thùng: +{value} Cường hóa."},
@@ -132,16 +132,16 @@ local entries = {
     {"spirit_coin","Kim Tệ","win","addGold",2,nil,"Thắng trận: +{value} Vàng."},
     {"spirit_ward","Băng Vệ","start","addArmor",10,nil,"Vào trận: +{value} Giáp."},
     {"spirit_echo","Dội Lôi","attack","addSplashPct",20,nil,"Mỗi lần đánh: gây {value}% tổng AURA lên 1 quái còn sống ngẫu nhiên ngay bên cạnh mục tiêu."},
-    {"spirit_hell_sleep","Ngủ Dưới Địa Ngục","attack","bedExplosionPct",200,nil,"Tấn công quái đang cầm Giường: tiêu hủy giường, gây vụ nổ bằng {value}% tổng AURA lên tất cả quái. Giường không hồi máu khi nổ."},
+    {"spirit_hell_sleep","Ngủ Dưới Địa Ngục","attack","bedExplosionPct",500,nil,"Mỗi Giường đang giữ: +10 Cường hóa khi tính điểm."},
 }
 for _, row in ipairs(entries) do
     local entry={id=row[1],name=row[2],trigger=row[3],stat=row[4],values={value=row[5]},condition=row[6],
         descriptionTemplate=row[7],rarity="common",cost=4,lore="Hộ linh đồng hành cùng các lá bài."}
-    entry.desc=row[7]:gsub("{value}",tostring(row[5]));entry.baseDesc=entry.desc
+    entry.desc=row[7]:gsub("{value}",tostring(row[5])):gsub("{factor}",tostring(1+row[5]));entry.baseDesc=entry.desc
     local function callback(subject)
         if entry.condition=="royal" and not (subject and subject.rank>=11 and subject.rank<=13) then return nil end
         if entry.condition and entry.condition~="royal" and not (subject and subject.type and subject.type.id==entry.condition) then return nil end
-        return {[entry.stat]=entry.values.value,message=entry.desc}
+        return {[entry.stat]=entry.stat=="xMult" and 1+entry.values.value or entry.values.value,message=entry.desc}
     end
     if entry.trigger=="card" then entry.onCardScored=callback
     elseif entry.trigger=="hand" then entry.onHandScored=callback
@@ -149,6 +149,12 @@ for _, row in ipairs(entries) do
     elseif entry.trigger=="attack" then entry.onAttack=callback
     else entry.onRoundWin=callback end
     Deities.CATALOG[entry.id]=entry
+end
+Deities.CATALOG.spirit_hell_sleep.onHandScored=function(hand,context)
+    local game=context and (context.gameState or context) or {}
+    local beds=0
+    for _,item in ipairs(game.consumables or {}) do if item.id=="cons_bed" then beds=beds+1 end end
+    if beds>0 then return {addMult=10*beds} end
 end
 -- These callbacks only read the evaluated hand and battle state, so previews
 -- and real scoring use the same conditions without spending resources.
@@ -165,7 +171,7 @@ local factionAliases = {
     elaris="clubs", feral_swarm="clubs", vharos="spades", iron_axiom="spades",
 }
 local tacticalEntries = {
-    {"spirit_lone", "Độc Hành", 0.8, "Chơi đúng 1 lá: ×{factor} Cường hóa.", function(hand, game, value)
+    {"spirit_lone", "Độc Hành", 1, "Chơi đúng 1 lá: ×{factor} Cường hóa.", function(hand, game, value)
         if #playedCards(hand) == 1 then return {xMult=1 + value} end
     end},
     {"spirit_confluence", "Hội Lưu", 3, "Ít nhất 3 phe trong các lá tính điểm: +{value} Cường hóa mỗi phe.", function(hand, game, value)
@@ -188,9 +194,16 @@ local tacticalEntries = {
         local armor = math.min(30, math.max(0, game.playerArmor or game.playerShield or 0))
         if armor > 0 then return {xMult=1 + value * armor} end
     end},
-    {"spirit_stillness", "Tĩnh Triều", 8, "Chưa bỏ bài trong trận: +{value} Sát thương mỗi lượt bỏ còn lại.", function(hand, game, value)
+    {"spirit_stillness", "Tĩnh Triều", 8, "Chưa bỏ bài trong trận: +{value} Cường hóa mỗi lượt bỏ còn lại. Chơi lá 8: tiêu hủy lá đó sau tính điểm để tăng vĩnh viễn 1 lượt bỏ.", function(hand, game, value)
         local remaining = math.max(0, game.discardsRemaining or 0)
-        if (game.discardsUsedInCombat or 0) == 0 and remaining > 0 then return {addChips=value * remaining} end
+        local result={}
+        if (game.discardsUsedInCombat or 0) == 0 and remaining > 0 then result.addMult=value * remaining end
+        if #(game.persistentDeck or {})>1 then
+            for _,card in ipairs(playedCards(hand)) do
+                if card.rank==8 and not card.destroyed then result.destroyEight=card;break end
+            end
+        end
+        if next(result) then return result end
     end},
     {"spirit_molt", "Lột Xác", 2, "Mỗi lượt bỏ đã dùng trong trận: +{value} Cường hóa (tính tối đa 3 lượt).", function(hand, game, value)
         local used = math.min(3, math.max(0, game.discardsUsedInCombat or 0))
@@ -219,7 +232,7 @@ local tacticalEntries = {
 }
 local tacticalStats = {
     spirit_lone="xMult", spirit_confluence="addMult", spirit_rearguard="addArmor",
-    spirit_wound="addChips", spirit_bastion="xMult", spirit_stillness="addChips",
+    spirit_wound="addChips", spirit_bastion="xMult", spirit_stillness="addMult",
     spirit_molt="addMult", spirit_pivot="xMult", spirit_mender="addHealHp", spirit_gleaner="addGold",
 }
 for _, row in ipairs(tacticalEntries) do
@@ -243,6 +256,9 @@ function Deities.getDescription(deity)
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
+    if deity.id=="spirit_hell_sleep" then
+        text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."
+    end
     local growth=require("src.spn_convergence").describe(deity)
     if growth then text=text.."\n"..growth end
     local spell=require("src.chest_expansion").byId[deity.enchantment]

@@ -1,5 +1,14 @@
 local G=require("src.enemy_group")
 local F={}
+local meters=setmetatable({}, {__mode="k"})
+function F.update(game,dt)
+    local Feedback=require("src.combat_feedback")
+    for _,m in ipairs(G.members(game)) do
+        local state=meters[m] or {};meters[m]=state
+        state.hp=Feedback.updateMeter(state.hp,m.hp,dt)
+        state.armor=Feedback.updateMeter(state.armor,m.creatureArmor,dt)
+    end
+end
 function F.world(game,UI,Renderer,Art,Death,art,time,motion,scoring,turn)
     local list=G.members(game)
     for i,m in ipairs(list) do
@@ -32,12 +41,16 @@ function F.hud(game,UI,mx,my,turn)
         end
         local title=m.human and (m.kingdom.." • "..require("src.expedition").rankName(m.cardRank)) or UI.truncateUtf8(m.name,21)
         local armor = m.creatureArmor or 0
-        Core.textLine(title,x-24,armor>0 and 110 or 120,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
-        if armor>0 then
+        local state=meters[m] or {}
+        local hasArmor=armor>0 or state.armor and state.armor.trail>0.05
+        Core.textLine(title,x-24,hasArmor and 110 or 120,w+48,UI.fonts.small,c,"center",UI.fonts.tiny)
+        if hasArmor then
             Health.draw(x-12,130,w+24,12,armor,m.creatureArmorMax or armor,
-                {variant="cyan",font=UI.fonts.tiny,label="GIÁP "..UI.formatNumber(armor)})
+                {variant="cyan",shield=true,font=UI.fonts.tiny,trailValue=state.armor and state.armor.trail,
+                    trailColor={0.65,0.86,1},label="GIÁP "..UI.formatNumber(armor)})
         end
-        Health.draw(x-12,144,w+24,18,target and (m.damageLagHp or m.hp) or m.hp,m.maxHp,{variant="red",font=UI.fonts.tiny,label=UI.formatNumber(m.hp).."/"..UI.formatNumber(m.maxHp)})
+        Health.draw(x-12,144,w+24,18,state.hp and state.hp.shown or m.hp,m.maxHp,{variant="red",font=UI.fonts.tiny,
+            trailValue=state.hp and state.hp.trail,label=UI.formatNumber(m.hp).."/"..UI.formatNumber(m.maxHp)})
         if not moving then
             Core.textLine(alive and ((target and "MỤC TIÊU  •  " or "").."ATK "..m.attack.." / TĐ "..m.attackSpeed) or "ĐÃ HẠ",x-24,y+h+14,w+48,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)
         end

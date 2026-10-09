@@ -20,8 +20,10 @@ function P.update(s, game, dt)
     s.age = s.age + math.min(dt, 0.05)
     if s.age < P.timing[s.phase] then return false end
     s.age = 0
-    if s.phase == "pause" then s.phase = "prepare"
-    elseif s.phase == "prepare" then s.phase = "strike"
+    if s.phase == "pause" then
+        s.phase = "prepare"; require("src.sound").play("enemy_prepare")
+    elseif s.phase == "prepare" then
+        s.phase = "strike"; require("src.sound").play("enemy_strike")
     elseif s.phase == "strike" then
         s.phase = "recover"
         s.result = Combat.resolveMonsterAttack(game, s.order, s.speed, s.attackers[s.index])

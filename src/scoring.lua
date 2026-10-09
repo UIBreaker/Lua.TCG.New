@@ -1165,7 +1165,7 @@ end
                         spnContext.discardsAvailable=math.min(abilityGame and (abilityGame.spnDiscardCap or abilityGame.maxDiscards or 3) or 3,spnContext.discardsAvailable+res.addDiscards)
                     end
                     if abilityGame and not (context and context.preview)
-                        and (res.nextSpnState or res.nextSpnGrowth or res.soulCost or res.discardCost or res.addDiscards or res.addHands) then
+                        and (res.nextSpnState or res.nextSpnGrowth or res.soulCost or res.discardCost or res.addDiscards or res.addHands or res.destroyEight) then
                         require("src.spn_anomalies").commitHand(abilityGame,di,res)
                     end
                     flatDamageBonus=flatDamageBonus+(res.addFlatDamage or 0)-(res.auraTax or 0)

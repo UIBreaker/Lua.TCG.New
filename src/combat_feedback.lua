@@ -2,6 +2,26 @@
 local F = {config=require("config.action_vfx_config"),vfx={}}
 local colors = {{1,0.88,0.72}, {1,0.75,0.32}, {1,0.48,0.20}, {1,0.28,0.38}, {0.88,0.65,1}}
 local labels = {"SÁT THƯƠNG", "ĐÒN MẠNH", "BÙNG NỔ", "HỦY DIỆT", "SIÊU VIỆT"}
+local sizes = {1,1.06,1.18,1.25,1.38}
+
+-- Display values follow resolved resources; labels and gameplay keep the exact totals.
+function F.updateMeter(m, value, dt, duration)
+    value=math.max(0,value or 0)
+    if not m then return {value=value,shown=value,trail=value,from=value,trailFrom=value,age=1} end
+    if value~=m.value then
+        m.from,m.trailFrom=m.shown,math.max(m.trail,m.shown)
+        m.loss=value<m.shown
+        m.value,m.age=value,0
+    end
+    m.age=m.age+math.max(0,dt)
+    local p=math.min(1,m.age/(duration or 0.32))
+    m.shown=m.from+(m.value-m.from)*(1-(1-p)^3)
+    if m.loss then
+        local trail=math.max(0,math.min(1,(m.age-0.12)/0.38))
+        m.trail=m.trailFrom+(m.value-m.trailFrom)*trail*trail*(3-2*trail)
+    else m.trail=m.shown end
+    return m
+end
 
 function F.tier(amount)
     amount = math.abs(amount or 0)
@@ -24,9 +44,10 @@ function F.new(kind, amount, x, y, format)
     if kind == "gold" then text = text .. " VÀNG"
     elseif kind == "armor" then text = text .. " GIÁP"
     elseif kind == "heal" then text = text .. " HP" end
-    local duration = kind == "damage" and (1.25 + tier * 0.16) or 1.05
+    local rewardLevel=math.abs(amount)>=100 and 4 or math.abs(amount)>=25 and 3 or math.abs(amount)>=10 and 2 or 1
+    local duration = kind == "damage" and (1.25 + tier * 0.16) or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,
-        age=0, life=duration, maxLife=duration, alpha=1,
+        age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,
         label=kind == "damage" and labels[tier] or nil}
 end
 
@@ -93,24 +114,68 @@ local function luminousText(g,text,color,alpha,strength)
     g.setBlendMode("alpha")
 end
 
+local function resourceIcon(g,kind,x,y,color,alpha,negative)
+    g.setColor(color[1],color[2],color[3],alpha);g.setLineWidth(1.5)
+    if kind=="gold" then
+        g.circle("fill",x,y,6);g.setColor(0.17,0.09,0.025,alpha);g.circle("line",x,y,4)
+        g.line(x,y-2,x,y+2)
+    elseif kind=="armor" then
+        g.polygon("line",x-6,y-5,x,y-7,x+6,y-5,x+5,y+3,x,y+7,x-5,y+3)
+        if negative then g.line(x-2,y-5,x+2,y-1,x-2,y+2,x+1,y+5)
+        else g.line(x-3,y,x,y+3,x+3,y-2) end
+    else g.setLineWidth(2);g.line(x-4,y,x+4,y);g.line(x,y-4,x,y+4) end
+end
+
+local function impactCrest(g,tier,color,alpha,age)
+    local shock=math.exp(-age*(tier>=4 and 4.5 or 8))
+    local spread=1-math.exp(-age*8)
+    g.setBlendMode("add")
+    g.setColor(color[1],color[2],color[3],alpha*shock*0.09)
+    g.ellipse("fill",0,20,90+spread*40,30)
+    if tier>=3 then
+        for i=1,6+tier*2 do
+            local a=i*2.399;local r=45+spread*(32+tier*9)
+            local x,y=math.cos(a)*r,20+math.sin(a)*r*0.5
+            g.setColor(color[1],color[2],color[3],alpha*shock*0.7)
+            g.setLineWidth(i%3==0 and 2 or 1)
+            g.line(x,y,x+math.cos(a)*(8+tier*2),y+math.sin(a)*(8+tier*2)*0.5)
+        end
+    end
+    if tier>=4 then
+        g.setLineWidth(1)
+        g.setColor(color[1],color[2],color[3],alpha*shock*0.55)
+        local r=68+spread*25
+        g.polygon("line",-r,20,0,-20,r,20,0,60)
+        if tier==5 then
+            g.ellipse("line",0,20,r*1.15,32)
+            for _,side in ipairs({-1,1}) do
+                g.line(side*32,-11,side*57,-25,side*82,-11)
+                sparkle(g,side*82,-11,4,color,alpha*shock)
+            end
+        end
+    end
+    g.setBlendMode("alpha")
+end
+
 function F.draw(ft, ui)
     local g = love.graphics
     local age, tier = ft.age or 0, ft.tier or 1
     local alpha = ft.kind and ft.alpha or math.min(1, ft.life and ft.life/0.35 or ft.alpha or 1)
     local color = ft.color or {1,1,1}
     g.push("all")
-    local rise = ft.kind and (1-math.exp(-age*2.5))*42 or 0
+    local rise = ft.kind and (1-math.exp(-age*2.5))*(ft.kind=="damage" and 30+tier*8 or ft.compact and 13 or 32) or 0
     if ft.kind == "gold" then
         -- Coin flight stays in HUD coordinates, independent of the number's spring.
         local target = ft.target or {x=ft.x,y=ft.y-58}
-        local count = math.min(12,4+math.floor(math.sqrt(math.abs(ft.amount))))
+        local source = ft.coinSource or {x=ft.x,y=ft.y+22}
+        local count = ft.compact and 3 or math.min(16,3+(ft.rewardLevel or 1)*2+math.floor(math.sqrt(math.abs(ft.amount))))
         for i=1,count do
-            local p=math.max(0,math.min(1,(age-i*0.026)/0.62))
+            local p=math.max(0,math.min(1,(age-i*0.022)/0.66))
             local k=p*p*(3-2*p)
-            local sx,sy,tx,ty=ft.x+math.sin(i*2.4)*38,ft.y+22,target.x,target.y
-            if ft.amount<0 then sx,sy,tx,ty=target.x,target.y,ft.x+math.sin(i*2.4)*38,ft.y+26 end
+            local sx,sy,tx,ty=source.x+math.sin(i*2.4)*38,source.y,target.x,target.y
+            if ft.amount<0 then sx,sy,tx,ty=target.x,target.y,source.x+math.sin(i*2.4)*38,source.y+4 end
             local x,y=sx+(tx-sx)*k,sy+(ty-sy)*k-math.sin(p*math.pi)*(30+i*2)
-            local a=alpha*math.sin(p*math.pi)
+            local a=alpha*math.min(1,p*12,(1-p)*8)
             local w=1.2+4.4*math.abs(math.cos(age*17+i))
             g.setBlendMode("add")
             g.setColor(1,0.62,0.12,a*0.12);g.ellipse("fill",x,y,w+5,10)
@@ -123,14 +188,33 @@ function F.draw(ft, ui)
             g.line(x-w*0.5,y-3,x+w*0.3,y-4)
             sparkle(g,x+8,y-7,3+math.sin(i+age*14),{1,0.94,0.62},a*0.65)
         end
-        local arrival=math.max(0,1-math.abs(age-0.66)/0.22)
+        local arrival=math.max(0,1-math.abs(age-0.74)/0.26)
+        g.setBlendMode("add");g.setColor(1,0.81,0.26,arrival*0.45);g.setLineWidth(1.2)
+        g.ellipse("line",target.x,target.y,7+(1-arrival)*18,5+(1-arrival)*10)
+        g.setBlendMode("alpha")
         sparkle(g,target.x,target.y,10,{1,0.93,0.5},arrival*0.8)
     end
-    g.translate(ft.x, math.max(72,ft.y-rise))
+    local font = ft.kind=="damage" and (tier>=4 and ui.fonts.huge or tier>=2 and ui.fonts.title or ui.fonts.large)
+        or (not ft.life and ui.fonts.large) or ft.kind and (ui.fonts.regular or ui.fonts.medium) or ui.fonts.medium
+    font=font or ui.fonts.large
+    local text = ui.sanitizeText and ui.sanitizeText(ft.text) or ft.text
     local pulse=ft.kind=="heal" and (ft.amount>0 and 0.12 or 0.25) or ft.kind=="armor" and 0.22 or 0.16
-    local scale = ft.kind=="damage" and (1+(tier-1)*0.16+(0.32+tier*0.065)*math.exp(-age*9)*math.sin(age*25)-0.15*math.exp(-age*35))
+    local scale = ft.kind=="damage" and (sizes[tier]+(0.32+tier*0.065)*math.exp(-age*9)*math.sin(age*25)-0.15*math.exp(-age*35))
         or ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
+    if ft.compact then scale=scale*0.78 end
+    local maxWidth=ft.kind=="damage" and 360 or 230
+    scale=scale*math.min(1,maxWidth/math.max(1,font:getWidth(text)*scale))
+    local half=font:getWidth(text)*scale/2+30
+    local x=ft.kind and math.max(half+8,math.min(1280-half-8,ft.x)) or ft.x
+    g.translate(x,math.max(72,ft.y-rise))
     g.scale(scale)
+    if ft.kind=="damage" then
+        g.rotate(tier>=3 and -0.045*math.exp(-age*6) or 0)
+        impactCrest(g,tier,color,alpha,age)
+        local tw=font:getWidth(text)
+        g.setColor(0.012,0.018,0.03,alpha*(tier>=3 and 0.45 or 0.24))
+        g.rectangle("fill",-tw/2-10,3,tw+20,font:getHeight()-2,6,6)
+    end
     if ft.kind == "damage" and tier >= 2 then
         local p = math.min(1, age/0.56)
         g.setBlendMode("add")
@@ -152,13 +236,18 @@ function F.draw(ft, ui)
         end
         g.setBlendMode("alpha")
     end
-    local text = ui.sanitizeText and ui.sanitizeText(ft.text) or ft.text
-    local font = (ft.kind == "damage" or not ft.life) and ui.fonts.large
-        or ft.kind and (ui.fonts.regular or ui.fonts.medium) or ui.fonts.medium
     g.setFont(font)
-    -- Long legacy notifications wrap; damage values stay on a single fitted line.
-    if ft.kind and font:getWidth(text)>420 then g.scale(420/font:getWidth(text)) end
-    local tw=math.min(420,font:getWidth(text))
+    local tw=font:getWidth(text)
+    if ft.kind and ft.kind~="damage" then
+        local left,right=-tw/2-29,tw/2+12
+        local bottom=font:getHeight()+3
+        g.setColor(0.012,0.024,0.039,alpha*0.94)
+        g.polygon("fill",left+5,-4,right-5,-4,right,1,right,bottom-5,right-5,bottom,left+5,bottom,left,bottom-5,left,1)
+        g.setColor(color[1],color[2],color[3],alpha*0.48);g.setLineWidth(0.8)
+        g.line(left+5,bottom,right-5,bottom)
+        g.setColor(color[1],color[2],color[3],alpha*0.16);g.rectangle("fill",left+2,0,20,bottom-3,3,3)
+        resourceIcon(g,ft.kind,left+12,bottom/2-1,color,alpha,ft.amount<0)
+    end
     if ft.kind=="damage" and tier>=4 then
         for i=2,1,-1 do
             g.push();g.scale(1+i*0.035)
@@ -166,12 +255,13 @@ function F.draw(ft, ui)
             g.printf(text,-230-i*4,i*3,460,"center");g.pop()
         end
     end
-    if ft.kind=="damage" or ft.kind=="gold" then
-        luminousText(g,text,color,alpha,ft.kind=="gold" and 1.25 or 0.5+tier*0.16)
+    if ft.kind then
+        luminousText(g,text,color,alpha,ft.kind=="gold" and 0.95 or 0.5+tier*0.16)
     end
-    outlined(g,text,-230,0,460,color,alpha)
+    local ink=ft.kind=="damage" and tier>=3 and {1,0.92,0.79} or color
+    outlined(g,text,-230,0,460,ink,alpha)
     if ft.kind=="gold" then
-        sparkle(g,-tw/2-9,8,4,{1,0.94,0.57},alpha*(0.55+0.25*math.sin(age*14)))
+        sparkle(g,-tw/2-21,-5,4,{1,0.94,0.57},alpha*(0.55+0.25*math.sin(age*14)))
         sparkle(g,tw/2+9,14,3,{1,0.94,0.57},alpha*(0.55+0.25*math.cos(age*14)))
     end
     if ft.kind then

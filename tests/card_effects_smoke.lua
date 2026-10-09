@@ -39,10 +39,10 @@ assert(Deck.cloneCard(polyCard).edition == "polychrome", "Polychrome must surviv
 local rareDeity = {}
 for key, value in pairs(Deities.CATALOG.spirit_blade) do rareDeity[key] = value end
 assert(Deities.setRarity(rareDeity, "rare"), "shop rarity should initialize an SPN tier")
-assert(rareDeity.desc == "Mỗi lá tạo Aura nhận +16 Chips",
+assert(rareDeity.desc == "Mỗi lá tính điểm: +20 Sát thương.",
     "rare SPN description should show its actual tier-scaled value")
-local rareEffect = Deities.scaleEffect(rareDeity, { addChips = 8, message = "+8 Chips" })
-assert(rareEffect.addChips == 16 and rareEffect.message == "+16 Chips",
+local rareEffect = Deities.scaleEffect(rareDeity, { addChips = 10, message = "+10 Chips" })
+assert(rareEffect.addChips == 20 and rareEffect.message == "+20 Chips",
     "rare SPN scoring should scale by its rarity, not stay at Common strength")
 local rareScore = Scoring.calculate({
     type = { id = "high_card", name = "High Card", vnName = "Đơn Thủ", baseChips = 8, baseMult = 1 },
@@ -56,10 +56,10 @@ local commonScore = Scoring.calculate({
     scoringCards = { Deck.newCard(4, "valoria") },
     unscoredCards = {},
 }, {}, {})
-assert(rareScore.bonusChips == commonScore.bonusChips + 16,
+assert(rareScore.bonusChips == commonScore.bonusChips + 20,
     "rarity multiplier should apply inside the real scoring flow")
 assert(Deities.evolve(rareDeity) and rareDeity.rarity == "epic"
-    and rareDeity.desc == "Mỗi lá tạo Aura nhận +20 Chips",
+    and rareDeity.desc == "Mỗi lá tính điểm: +25 Sát thương.",
     "evolving a rare SPN should retain rarity scaling and apply the next +50% base step")
 
 local nonCardItem = { category = "equipment", card = Deck.newCard(8, "clubs") }

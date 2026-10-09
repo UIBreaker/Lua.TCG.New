@@ -21,7 +21,7 @@ local function effect(id, h, game)
     return d.onHandScored(h, {gameState=game or {}})
 end
 local solo = hand({card(3)})
-assert(effect("spirit_lone",solo).xMult == 1.8)
+assert(effect("spirit_lone",solo).xMult == 2)
 assert(not effect("spirit_lone",hand({card(3)}, {card(5)})))
 assert(effect("spirit_confluence",hand({card(2,"hearts"),card(3,"clubs"),card(4,"spades")})).addMult == 9)
 assert(not effect("spirit_confluence",hand({card(2,"hearts"),card(3,"valoria"),card(4,"clubs")})))
@@ -31,7 +31,7 @@ assert(effect("spirit_wound",solo,{playerHp=10,maxPlayerHp=100}).addChips == 60)
 assert(not effect("spirit_wound",solo,{playerHp=100,maxPlayerHp=100}))
 assert(effect("spirit_bastion",solo,{playerArmor=100}).xMult == 1.6)
 assert(not effect("spirit_bastion",solo,{playerArmor=0}))
-assert(effect("spirit_stillness",solo,{discardsRemaining=3}).addChips == 24)
+assert(effect("spirit_stillness",solo,{discardsRemaining=3}).addMult == 24)
 assert(not effect("spirit_stillness",solo,{discardsRemaining=3,discardsUsedInCombat=1}))
 assert(effect("spirit_molt",solo,{discardsUsedInCombat=8}).addMult == 6)
 assert(not effect("spirit_molt",solo))
@@ -50,12 +50,12 @@ game.playerHp, game.playerArmor = 40, 20
 game.discardsRemaining, game.discardsUsedInCombat = 2, 1
 game.abilityCombat = {previousHandType="high_card"}
 local cases = {
-    {"spirit_lone",solo,"xMult",1.8},
+    {"spirit_lone",solo,"xMult",2},
     {"spirit_confluence",hand({card(2,"hearts"),card(3,"clubs"),card(4,"spades")}),"addMult",9},
     {"spirit_rearguard",hand({card(5)}, {card(2),card(3)}),"addArmor",8},
     {"spirit_wound",solo,"addChips",60},
     {"spirit_bastion",solo,"xMult",1.4},
-    {"spirit_stillness",solo,"addChips",16},
+    {"spirit_stillness",solo,"addMult",16},
     {"spirit_molt",solo,"addMult",2},
     {"spirit_pivot",equipped,"xMult",1.4},
     {"spirit_mender",equipped,"healHp",4},
@@ -95,6 +95,20 @@ for _,preview in ipairs({true,false}) do
     for _,step in ipairs(result.steps) do assert(step.type~="deity_hand") end
 end
 game.monster=nil
+game.deities={}
+local eight=card(8)
+local spare=card(3)
+game.hand={eight,spare};game.deck={};game.discardPile={}
+game.persistentDeck={Deck.cloneCard(eight),Deck.cloneCard(spare)}
+game.deities={[5]=D.CATALOG.spirit_stillness}
+game.maxDiscards=3;game.discardsRemaining=3;game.spnDiscardCap=3;game.discardsUsedInCombat=0
+local eightHand=hand({eight})
+local before=Scoring.calculate(eightHand,game.deities,{preview=true,gameState=game})
+assert(not eight.destroyed and game.maxDiscards==3)
+local after=Scoring.calculate(eightHand,game.deities,{gameState=game})
+assert(before.finalScore==after.finalScore and eight.destroyed and game.maxDiscards==4 and game.discardsRemaining==4)
+Combat.cleanupDestroyedCards(game)
+assert(#game.persistentDeck==1 and game.persistentDeck[1].id==spare.id)
 game.deities={}
 -- The HUD now passes gameState to previews; a King must not spend real gold.
 game.gold=20

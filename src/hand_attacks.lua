@@ -24,7 +24,7 @@ function A.new(result,cards,ui,target,handId)
     local profile=C.hands[id] or C.hands.high_card
     local intensity,tier,ratio=A.power(result.finalScore,target)
     local a={profile=profile,intensity=intensity,tier=tier,ratio=ratio, color=profile.colorProfile,
-        sources={},rankOrder={},launch={},ribbon={},seal={},beat=0,charge=0,orbit=0,quality="high",cx=ui.BATTLE_CENTER_X}
+        sources={},rankOrder={},launch={},ribbon={},wave={},seal={},beat=0,charge=0,orbit=0,quality="high",cx=ui.BATTLE_CENTER_X}
     local groups={}
     for i,card in ipairs(cards) do
         groups[card.rank]=(groups[card.rank] or 0)+1
@@ -78,36 +78,46 @@ local function glow(g,col,alpha,width,x1,y1,x2,y2)
 end
 local function blade(g,a,x,y,angle,size,alpha)
     g.push();g.translate(x,y);g.rotate(angle)
-    -- Long tapered silhouette with a hot thin spine; no opaque oval around every blade.
-    g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.10)
-    g.polygon("fill",0,-size*1.2,-size*0.22,size*0.65,0,size*0.25,size*0.22,size*0.65)
-    g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.8)
-    g.polygon("fill",0,-size,-size*0.08,size*0.52,0,size*0.22,size*0.08,size*0.52)
-    g.setColor(0.94,0.99,1,alpha*C.motion.coreAlpha)
-    g.polygon("fill",0,-size,-size*0.022,size*0.32,size*0.022,size*0.32)
+    local image=require("render.lighting").radial
+    if image then
+        g.setColor(a.color[1],a.color[2],a.color[3],alpha*0.17)
+        g.draw(image,-size*.35,-size*1.2,0,size*.7/128,size*1.85/128)
+    end
+    g.setBlendMode("alpha")
+    g.setColor(a.color[1]*.48,a.color[2]*.48,a.color[3]*.48,alpha*.88)
+    g.polygon("fill",0,-size,-size*.13,-size*.2,-size*.09,size*.37,0,size*.53,size*.09,size*.37,size*.13,-size*.2)
+    g.setBlendMode("add")
+    g.setColor(.96,.99,1,alpha*C.motion.coreAlpha)
+    g.polygon("fill",0,-size,-size*.026,-size*.16,0,size*.37,size*.035,-size*.18)
+    g.setColor(a.color[1],a.color[2],a.color[3],alpha*.75)
+    g.setLineWidth(math.max(.7,size*.025));g.line(-size*.22,size*.36,0,size*.30,size*.22,size*.36)
     g.pop()
 end
-local function slash(g,a,x,y,angle,size,alpha)
-    local points=a.ribbon
-    g.push();g.translate(x,y);g.rotate(angle)
-    for layer=2,1,-1 do
-        local count=12
-        for j=0,count do
-            local t=j/count;local arc=-1.1+t*1.65
-            local radius=size*(layer==2 and 1.08 or 1)
-            points[j*2+1]=math.cos(arc)*radius-size*0.65
-            points[j*2+2]=math.sin(arc)*radius
-        end
-        for j=count,0,-1 do
-            local t=j/count;local arc=-1.1+t*1.65
-            local thickness=math.sin(t*math.pi)^1.2*size*(layer==2 and 0.18 or 0.10)
-            local radius=size*(layer==2 and 1.08 or 1)-thickness
-            local index=(count+1+count-j)*2+1
-            points[index]=math.cos(arc)*radius-size*0.65;points[index+1]=math.sin(arc)*radius
-        end
-        g.setColor(a.color[1],a.color[2],a.color[3],alpha*(layer==2 and 0.12 or 0.65))
-        g.polygon("fill",points)
+local function band(g,a,x,y,rx,ry,start,sweep,width,alpha)
+    local points=a.ribbon;local count=16
+    width=math.min(width,rx*.75)
+    for j=0,count do
+        local angle=start+sweep*j/count
+        points[j*2+1]=x+math.cos(angle)*rx;points[j*2+2]=y+math.sin(angle)*ry
     end
+    for j=count-1,1,-1 do
+        local t=j/count;local angle=start+sweep*t
+        local thickness=math.sin(t*math.pi)^1.3*width
+        local index=(count+1+count-1-j)*2+1
+        points[index]=x+math.cos(angle)*(rx-thickness)
+        points[index+1]=y+math.sin(angle)*(ry-thickness*ry/rx)
+    end
+    g.setBlendMode("alpha")
+    g.setColor(a.color[1]*.82,a.color[2]*.82,a.color[3]*.82,alpha)
+    g.polygon("fill",points)
+    g.setBlendMode("add")
+    g.setColor(.9+.1*a.color[1],.9+.1*a.color[2],1,alpha*.46)
+    g.setLineWidth(.8);g.polygon("line",points)
+end
+local function slash(g,a,x,y,angle,size,alpha)
+    g.push();g.translate(x,y);g.rotate(angle)
+    band(g,a,-size*.65,0,size*1.10,size*1.10,-1.25,1.95,size*.24,alpha*.10)
+    band(g,a,-size*.65,0,size,size,-1.25,1.95,size*.13,alpha*.78)
     g.pop()
 end
 paths={}
@@ -235,42 +245,77 @@ structures.blade_storm=function(g,a,p)
 end
 local impacts={}
 impacts.pierce=function(g,a,r,k)
-    glow(g,a.color,(1-k)^2,3,a.cx,295,a.cx,225-k*30)
+    local fade=(1-k)^2
+    glow(g,a.color,fade,5+a.intensity*3,a.cx,298,a.cx,206-k*42)
+    blade(g,a,a.cx,242-k*30,0,38*(1-k)+18,fade)
+    band(g,a,a.cx,270,r*.68,r*.25,0.15,2.7,5,fade*.5)
 end
 impacts.cross=function(g,a,r,k)
-    glow(g,a.color,(1-k)^2,3+a.intensity*5,a.cx-r,270-r,a.cx+r,270+r)
-    glow(g,a.color,(1-k)^2,3+a.intensity*5,a.cx+r,270-r,a.cx-r,270+r)
+    local fade=(1-k)^2
+    slash(g,a,a.cx,270,-.85,r*.95+20,fade)
+    slash(g,a,a.cx,270,.85,r*.95+20,fade*.8)
 end
 impacts.collapse=function(g,a,r,k)
-    for i=1,4 do local t=i*math.pi/2;glow(g,a.color,1-k,3,a.cx+math.cos(t)*r,270+math.sin(t)*r,a.cx+math.cos(t)*r*0.3,270+math.sin(t)*r*0.3) end
+    for i=1,4 do
+        local angle=i*math.pi/2+k*.5
+        band(g,a,a.cx,270,r,r*.62,angle,1.12,9+7*a.intensity,(1-k)^2*.8)
+        glow(g,a.color,(1-k)^3,2,a.cx+math.cos(angle)*r,270+math.sin(angle)*r*.62,a.cx,270)
+    end
 end
 impacts.triangle_seal=function(g,a,r,k)
-    local points=a.seal
-    for i=1,3 do local t=i*math.pi*2/3-math.pi/2;points[i*2-1]=a.cx+math.cos(t)*r;points[i*2]=270+math.sin(t)*r end
-    g.polygon("line",points)
+    local points=a.seal;local spin=-k*.18
+    for i=1,3 do
+        local angle=i*math.pi*2/3-math.pi/2+spin
+        points[i*2-1]=a.cx+math.cos(angle)*r;points[i*2]=270+math.sin(angle)*r*.8
+    end
+    g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^3*.07);g.polygon("fill",points)
+    g.setLineWidth(2+3*(1-k));g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*.8);g.polygon("line",points)
+    for i=1,3 do
+        local x,y=points[i*2-1],points[i*2]
+        blade(g,a,x,y,i*math.pi*2/3+spin,10+10*(1-k),(1-k)^2)
+    end
 end
 impacts.long_wave=function(g,a,r,k)
-    for i=1,5 do local x=a.cx+(i-3)*14;glow(g,a.color,(1-k)^2,2,x,300+k*20,x+math.sin(i)*r*0.3,220-k*30) end
+    for i=1,5 do
+        local age=clamp(k-(i-1)*.045);local x=a.cx+(i-3)*17
+        slash(g,a,x,270+math.sin(i*1.7)*12,-.22+(i-3)*.13,r*.6+18,(1-age)^3*.65)
+    end
 end
 impacts.tidal_wave=function(g,a,r,k)
-    g.ellipse("line",a.cx,270,r*1.6,r*0.42)
-    g.arc("line","open",a.cx,270,r,math.pi*0.1,math.pi*0.9)
+    band(g,a,a.cx,270,r*1.65,r*.55,.05,2.95,13+10*a.intensity,(1-k)^2*.78)
+    band(g,a,a.cx,276,r*1.15,r*.38,math.pi+.2,2.7,7,(1-k)^3*.5)
 end
 impacts.detonation=function(g,a,r,k)
-    g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^3*0.2);g.circle("fill",a.cx,270,r*0.7)
-    g.setColor(1,0.85,0.6,(1-k)^2*0.8);g.circle("line",a.cx,270,r*0.45)
-    g.circle("line",a.cx,270,r*1.25)
+    local image=require("render.lighting").radial
+    if image then
+        g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^3*.45)
+        g.draw(image,a.cx-r,270-r*.8,0,r/64,r*.8/64)
+    end
+    for i=1,3 do
+        band(g,a,a.cx,270,r*(.7+i*.17),r*(.28+i*.1),i*2.1+k,1.9,12*(1-k)+2,(1-k)^2*.65)
+    end
+    blade(g,a,a.cx,270,0,28*(1-k)+12,(1-k)^3)
 end
 impacts.square_seal=function(g,a,r,k)
-    g.push();g.translate(a.cx,270);g.rotate(k*0.35)
-    g.rectangle("line",-r*0.6,-r*0.6,r*1.2,r*1.2)
-    g.rectangle("line",-r*0.3,-r*0.3,r*0.6,r*0.6);g.pop()
+    local size=r*.68;local gap=size*.32
+    g.push();g.translate(a.cx,270);g.rotate(.785+k*.12)
+    for i=1,4 do
+        g.push();g.rotate(i*math.pi/2)
+        glow(g,a.color,(1-k)^2,3+3*(1-k),-size+gap,-size,-size,-size)
+        glow(g,a.color,(1-k)^2,3+3*(1-k),-size,-size,-size,-size+gap)
+        g.pop()
+    end
+    g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^3*.45);g.setLineWidth(1)
+    g.rectangle("line",-size*.48,-size*.48,size*.96,size*.96);g.pop()
 end
 impacts.grand_convergence=function(g,a,r,k)
-    blade(g,a,a.cx,270,0,80*(1-k)+20,1-k)
-    g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.6)
-    g.ellipse("line",a.cx,270,r*1.6,r*0.4)
-    for i=1,6 do local angle=i*math.pi/3;glow(g,a.color,(1-k)^2,2,a.cx+math.cos(angle)*r*0.5,270+math.sin(angle)*r*0.5,a.cx+math.cos(angle)*r,270+math.sin(angle)*r) end
+    blade(g,a,a.cx,268-k*18,0,105*(1-k)+24,(1-k)^1.6)
+    band(g,a,a.cx,270,r*1.5,r*.44,-.2,2.8,12,(1-k)^2*.65)
+    band(g,a,a.cx,270,r*1.15,r*.34,math.pi+.15,2.8,8,(1-k)^3*.5)
+    for i=1,6 do
+        local angle=i*2.399
+        glow(g,a.color,(1-k)^2,2,a.cx+math.cos(angle)*r*.5,270+math.sin(angle)*r*.4,a.cx+math.cos(angle)*r*1.1,270+math.sin(angle)*r*.6)
+    end
 end
 local heads={}
 heads.spear=function(g,a,x,y,angle,p) blade(g,a,x,y,angle,20+25*a.intensity,0.85) end
@@ -297,8 +342,9 @@ heads.chain=function(g,a,x,y,angle,p)
     glow(g,a.color,0.9,3+a.intensity*4,x-10,y+14,x+6,y-16)
 end
 heads.wave=function(g,a,x,y,angle,p)
-    g.setColor(a.color[1],a.color[2],a.color[3],0.6);g.setLineWidth(3+a.intensity*5)
-    g.arc("line","open",x,y,12+a.intensity*10,math.pi,math.pi*2)
+    g.push();g.translate(x,y);g.rotate(angle)
+    band(g,a,0,0,26+16*a.intensity,14+10*a.intensity,math.pi+.15,2.85,6+5*a.intensity,.65)
+    g.pop()
 end
 heads.fusion=function(g,a,x,y,angle,p)
     local radius=(10+12*a.intensity)*(1-math.sin(p*math.pi)*0.35)
@@ -341,23 +387,38 @@ function A.draw(a,phase,p,impactAge)
         local k=clamp(impactAge/C.camera.duration)
         local expansion=1-(1-k)^C.motion.impactExpansion
         local radius=8+expansion*C.shockwave.radius*(0.3+a.intensity)
-        g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.7)
-        g.setLineWidth(C.shockwave.thickness*(1-k)+0.5)
-        g.circle("line",a.cx,C.arena.targetY,radius)
+        g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.82)
+        g.setLineWidth(C.shockwave.thickness*(1-k)+0.8)
+        local ring=a.wave
+        for i=0,24 do
+            local angle=i*math.pi/12
+            local ripple=1+0.025*math.sin(angle*7+a.tier)
+            ring[i*2+1]=a.cx+math.cos(angle)*radius*ripple
+            ring[i*2+2]=C.arena.targetY+math.sin(angle)*radius*0.48*ripple
+        end
+        g.polygon("line",ring)
+        if k<0.62 then
+            g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^3*0.48)
+            g.setLineWidth(1+3*(1-k))
+            g.ellipse("line",a.cx,C.arena.targetY,radius*0.48,radius*0.22)
+        end
         if a.tier>=4 and a.profile.id=="high_card" and k>0.35 then
             g.circle("line",a.cx,C.arena.targetY-40,(k-0.35)*80)
         end
         -- A narrow hot contact, then the wider hand-specific silhouette and wave.
         -- Keeps the boss readable while making the very first frozen frame feel like a hit.
-        g.setColor(0.96,0.99,1,0.7*(1-k)^7)
-        g.ellipse("fill",a.cx,270,(13+13*a.intensity)*(1-k)^3,4+3*a.intensity)
+        g.setColor(0.96,0.99,1,0.9*(1-k)^6)
+        g.ellipse("fill",a.cx,270,(17+19*a.intensity)*(1-k)^2,5+4*a.intensity)
         g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.75)
         impacts[a.profile.impact](g,a,radius+(1-k)^3*14*a.intensity,k)
-        for i=1,math.min(math.floor(6+(C.particle.count-6)*a.intensity),C.quality[a.quality]) do
-            local angle=math.pi/2+(i%7-3)*0.28
-            local distance=(1-(1-k)^2)*(C.particle.length+i*2)*(0.5+a.intensity)
-            local x=a.cx+math.cos(angle)*distance;local y=270+math.sin(angle)*distance
-            glow(g,a.color,(1-k)^3,1,x,y,x-math.cos(angle)*12*(1-k),y-math.sin(angle)*12*(1-k))
+        local burstCount=math.min(math.floor(6+(C.particle.count-6)*a.intensity),C.quality[a.quality])
+        for i=1,burstCount do
+            local spread=(i-0.5)/burstCount-0.5
+            local angle=math.pi/2+spread*2.45
+            local distance=(1-(1-k)^2)*(C.particle.length+((i*7)%11)*2)*(0.65+a.intensity)
+            local x=a.cx+math.cos(angle)*distance;local y=270+math.sin(angle)*distance*0.72
+            local trail=8+10*(1-k)
+            glow(g,a.color,(1-k)^2,1.2,x,y,x-math.cos(angle)*trail,y-math.sin(angle)*trail*0.72)
         end
     end
     g.pop()

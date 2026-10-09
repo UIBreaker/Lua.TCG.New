@@ -6,7 +6,7 @@ local source = {
     play = function(self) self.playing = true; played = played + 1 end,
     stop = function(self) self.playing = false; stopped = stopped + 1 end,
     setLooping = function(_, value) looping = value end,
-    setVolume = function(_, value) assert(value > 0 and value <= 1) end,
+    setVolume = function(_, value) assert(value >= 0 and value <= 1) end,
 }
 love = {audio = {
     setVolume = function() end,

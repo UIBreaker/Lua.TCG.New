@@ -17,4 +17,26 @@ for i=1,100 do F.add(list,"gold",i,475,96) end
 assert(#list==24)
 assert(F.new("gold",-20,0,0).text=="−20 VÀNG")
 assert(F.new("armor",-12,0,0).text=="−12 GIÁP")
-print("Combat feedback: five tiers/boundaries, gain/spend/absorption, overlap, bounded queue and expiration passed")
+assert(F.new("gold",3,0,0).rewardLevel==1 and F.new("gold",120,0,0).rewardLevel==4)
+local rng=require("src.rng");local before=rng.getState()
+for _,fps in ipairs({30,60,120,144}) do
+    local meter=F.updateMeter(nil,100,0)
+    meter=F.updateMeter(meter,40,1/fps)
+    assert(meter.value==40 and meter.shown>40 and meter.trail==100,"damage has a visible delayed trail")
+    for _=1,fps do
+        meter=F.updateMeter(meter,40,1/fps)
+        assert(meter.shown>=40 and meter.shown<=100 and meter.trail>=meter.shown-1e-9)
+    end
+    assert(meter.shown==40 and meter.trail==40)
+    meter=F.updateMeter(meter,90,1/fps,0.58)
+    assert(meter.shown>40 and meter.shown<90 and meter.trail==meter.shown)
+    -- New gains/spends can arrive while a previous count is still moving.
+    for _,amount in ipairs({5,120,0,12,0}) do
+        meter=F.updateMeter(meter,amount,1/fps,0.58)
+        assert(meter.shown>=0 and meter.shown<=120)
+    end
+    meter=F.updateMeter(meter,0,2,0.58)
+    assert(meter.shown==0 and meter.trail==0,"armor depletion and interrupted counts settle exactly")
+end
+assert(rng.getState()==before,"feedback must not consume gameplay RNG")
+print("Combat feedback PASS: five tiers through 1e15, reward intensity, 30/60/120/144 FPS resource gain/loss/reversal, delayed armor/HP trails, exact settle, overlap, bounded queue, no gameplay RNG")

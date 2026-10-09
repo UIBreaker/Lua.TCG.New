@@ -150,6 +150,7 @@ function Shop.getConsumableParams(item)
     return rule and rule.params or {}
 end
 function Shop.getConsumableDescription(item)
+    if item.permanentSpeed then return item.desc end
     if item.id=="spell_aura" then
         local foil=CardEffects.getDefinition("foil").score
         local holo=CardEffects.getDefinition("holographic").score
@@ -1164,7 +1165,7 @@ Shop.POTIONS={
     {id="armor_potion_large",name="Bình Giáp Lớn",cost=6,armorAmt=20},
     {id="cons_speed_small",name="Tốc Đánh Nhỏ",cost=3,speed=3,category="speed_single"},
     {id="cons_speed_large",name="Tốc Đánh Lớn",cost=8,speed=10,category="speed_single"},
-    {id="cons_bed",name="Cái Giường",cost=9,category="bed",desc="Tiêu hao: hồi 100% HP tối đa. Trong trận, chọn bản thân (bỏ một lượt để ngủ) hoặc một quái để đặt giường. Quái nhận sát thương mà sống sẽ dùng giường hồi đầy HP; Ngủ Dưới Địa Ngục biến giường thành bẫy nổ."},
+    {id="cons_bed",name="Cái Giường",cost=9,category="bed",desc="Tiêu hao: hồi 100% HP tối đa. Trong trận, chọn bản thân (bỏ một lượt để ngủ) hoặc một quái để đặt giường. Quái nhận sát thương mà sống sẽ dùng giường hồi đầy HP."},
 }
 function Shop.healingItem(section,id)
     local def=Shop.POTIONS[1]

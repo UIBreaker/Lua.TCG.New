@@ -1,5 +1,8 @@
 -- E:/Lua/Lua/lua.exe tests/ux_polish_smoke.lua
 local P=require("src.ux_polish")
+local UI=require("src.ui")
+UI.getDeitySlotRect=function() return 1042,112,64,88 end
+UI.getConsumableSlotRect=function() return 1042,300,64,88 end
 local Shop=require("src.shop")
 local Deck=require("src.deck")
 local Game=require("src.game_state")
@@ -19,13 +22,19 @@ assert(P.button(game).disabled and not P.confirm(shop,game) and not P.busy())
 game.gold=100
 local before=game.gold;local size=#game.persistentDeck
 assert(P.confirm(shop,game));assert(game.gold==before-item.cost and #game.persistentDeck==size+1)
+assert(#P.moneyFeedback==1 and P.moneyFeedback[1].amount==-item.cost and P.moneyFeedback[1].coinSource.x==rect.x+rect.w/2)
+assert(P.goldValue(game.gold)==before,"spend display counts from the prior balance")
 assert(not P.confirm(shop,game) and not P.focusItem(item,"stock",index,rect))
 settle();assert(not P.busy())
+assert(P.goldValue(game.gold)==game.gold,"wallet settles to exact resolved balance")
 local acquired=game.persistentDeck[#game.persistentDeck]
-P.focusItem(acquired,"card",nil,rect);local price=Shop.getSacrificePrice(acquired,"card",game);before=game.gold
-assert(P.confirm(shop,game));assert(game.gold==before+price and #game.persistentDeck==size)
+local reaper={id="soul_reaper"};game.consumables={reaper};game.soulDestroyConsumable=reaper;game.soulDestroyActive=true
+P.focusItem(acquired,"card",nil,rect);local rewards=Shop.getDestructionRewards(game,acquired);before=game.gold
+local souls=game.souls or 0
+assert(P.confirm(shop,game));assert(game.gold==before+rewards.gold and game.souls==souls+rewards.souls and #game.persistentDeck==size)
 settle(true)
 P.focusItem(game.persistentDeck[1],"card",nil,rect)
+game.soulDestroyActive=true
 assert(P.button(game).disabled and not P.confirm(shop,game))
 P.clearFocus()
 local old=shop.items;before=game.gold;local cost=Shop.getRerollCost(shop,game)
@@ -71,5 +80,13 @@ P.clearFocus();game.freeRerolls=1;gold=game.gold
 assert(P.reroll(shop,game) and game.gold==gold and game.freeRerolls==0);settle(true)
 game.vouchers.v_welcome=true;shop.welcomeRerollUsed=false
 assert(P.reroll(shop,game) and game.gold==gold and shop.welcomeRerollUsed);settle(true)
-print("UX polish smoke PASS: click/confirm, cancel, affordability, minimum deck, single charge, hidden swap, spam lock, Fast")
+P.update(2,false,"shop",shop);assert(#P.moneyFeedback==0,"coin rewards expire after the purchase/sale job")
+local ritual=Game.new();ritual.shopMode="soul";ritual.gold=10
+ritual.persistentDeck={Deck.newCard(4,"hearts"),Deck.newCard(5,"spades")}
+local reaper={id="soul_reaper"};ritual.consumables={reaper};ritual.soulDestroyConsumable=reaper;ritual.soulDestroyActive=true
+P.focusItem(ritual.persistentDeck[1],"card",nil,rect)
+assert(P.confirm(Shop.new(),ritual) and ritual.gold==15)
+assert(#P.moneyFeedback==1 and P.moneyFeedback[1].amount==5,"gold awarded alongside souls gets its own gold feedback")
+P.update(2,false,"shop");assert(#P.moneyFeedback==0 and P.goldValue(ritual.gold)==ritual.gold)
+print("UX polish smoke PASS: click/confirm, cancel, affordability, minimum deck, single charge, wallet count/coin flight/expiration, hidden swap, spam lock, Fast")
 print("UX stock coverage PASS: heal, expansion, SPN sale/capacity, consumable sale, equipment destination, all 9 packs")

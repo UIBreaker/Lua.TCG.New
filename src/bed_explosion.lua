@@ -22,6 +22,7 @@ function E.start(x,y,quality,environment,power)
   E.count=E.count+1;local p=pool[E.count];local r=noise(i)
   p.kind="debris";p.size=i<=large and 25+r*16 or i<=large+medium and 9+r*10 or 2+r*3
   p.material=i%5==0 and "metal" or i%3==0 and "fabric" or "wood"
+  p.notch=.12+noise(i+71)*.18;p.fold=noise(i+77)*6.28
   p.x=x+(r-.5)*55;p.y=y+(noise(i+8)-.5)*18;p.floor=y+62+noise(i+13)*30
   local side=r<.5 and -1 or 1
   p.vx=side*(280+noise(i+5)*470)*E.intensity;p.vy=-(260+noise(i+17)*440)*E.intensity
@@ -57,8 +58,9 @@ function E.reaction(x)
  if not E.active or not E.detonated then return 0,0,0 end
  local t=(E.age-C.anticipation)/.26
  if t>1 then return 0,0,0 end
- local fall=(1-t)^3;local side=x<E.x and -1 or 1
- return side*math.sin(t*math.pi)*27*fall,-math.sin(t*math.pi)*21*fall,fall*.65
+ local fall=(1-t)^3*clamp(1-math.abs(x-E.x)/C.shockwave.radius)
+ local side=x<E.x and -1 or 1
+ return side*math.sin(t*math.pi)*30*fall,-math.sin(t*math.pi)*23*fall,fall*.78
 end
 function E.update(dt)
  if not E.active then return end
@@ -190,9 +192,22 @@ function E.draw()
    g.push();g.translate(p.x,p.y);g.rotate(p.rotation)
    local hot=math.max(0,1-age/.20)*.75
    g.setColor(math.min(1,color[1]+hot),color[2]+hot*.35,color[3]+hot*.06,a)
-   if p.material=="fabric" then g.polygon("fill",-p.size*.6,-p.size*.25,p.size*.6,-p.size*.2,p.size*.35,p.size*.35,-p.size*.5,p.size*.2)
-   else g.rectangle("fill",-p.size*.6,-p.size*.22,p.size*1.2,p.size*.44,1,1) end
-   g.setColor(.68,.41,.20,a*.6);g.setLineWidth(1);g.line(-p.size*.5,-p.size*.12,p.size*.45,-p.size*.12)
+   local size=p.size
+   if p.material=="fabric" then
+    local fold=math.sin(age*16+p.fold)*.14
+    g.polygon("fill",-size*.6,-size*.25,size*.5,-size*.18,size*.58,size*(.23+fold),-size*.4,size*.3)
+    g.setColor(.65+hot*.2,.21+hot*.15,.16,a*.65)
+    g.polygon("fill",-size*.6,-size*.25,size*.5,-size*.18,-size*.15,size*(.1+fold))
+   elseif p.material=="metal" then
+    g.rectangle("fill",-size*.5,-size*.14,size,size*.28,1,1)
+    g.setColor(.9,.76+hot*.15,.47+hot*.3,a*.85);g.setLineWidth(1.2)
+    g.line(-size*.5,-size*.14,size*.5,-size*.14,size*.5,size*.14)
+   else
+    g.polygon("fill",-size*.68,-size*.14,size*.43,-size*.16,size*.68,-size*p.notch,size*.55,size*.03,size*.69,size*.15,-size*.5,size*.18,-size*.62,size*.06)
+    g.setColor(.73+hot*.2,.43+hot*.1,.20,a*.65);g.setLineWidth(.8)
+    g.line(-size*.57,-size*.10,size*.4,-size*.11,size*.62,-size*p.notch)
+    g.setColor(.12,.065,.035,a*.65);g.line(-size*.48,size*.04,size*.42,size*.03)
+   end
    g.pop()
   end
  end

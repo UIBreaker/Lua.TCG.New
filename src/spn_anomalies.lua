@@ -8,7 +8,7 @@ A.entries={
     {"spirit_soul_furnace","Lò Hồn","addFlatDamage",25,"Mỗi tay: đốt tối đa 3 Linh Hồn; mỗi hồn thêm {value} sát thương cố định vào AURA.","hand"},
     {"spirit_transmuter","Nghịch Luyện","addTransmutePct",10,"Tại ô này: chuyển {value}% Sát thương đang có sang Cường hóa (tối đa 90%).","hand"},
     {"spirit_archive","Thư Viện Mù","addDiscards",1,"Mỗi 3 kiểu tay khác nhau: hồi {value} lượt bỏ (không vượt mức vào trận), rồi xóa bộ nhớ.","hand"},
-    {"spirit_borrowed_turn","Vay Khoảnh Khắc","addHands",1,"Một lần mỗi trận: chơi đúng 3 lá đều tính điểm, đổi 1 lượt bỏ lấy {value} lượt đánh.","hand"},
+    {"spirit_borrowed_turn","Vay Khoảnh Khắc","addHands",0,"Một lần mỗi trận: chơi đúng 3 lá đều tính điểm, nhận Tốc Đánh Nhỏ áp dụng tốc đánh vĩnh viễn cho một lá.","hand"},
     {"spirit_dream_jailer","Cai Ngục Mộng","addArmor",4,"Lần đầu đánh mỗi quái: nếu quái sống, nó bỏ 1 đòn kế tiếp và bạn nhận +{value} Giáp.","attack"},
     {"spirit_abyss_feast","Nuốt Tàn Dư","addOverkillArmorPct",40,"Hạ quái bằng đòn chính: chuyển {value}% sát thương dư thành Giáp (tối đa 30).","attack"},
     {"spirit_zero_hour","Không Thời","xMult",1,"Chặn hoàn toàn một đòn quái: tích ×{factor} Cường hóa cho tay kế tiếp; không cộng dồn.","hand"},
@@ -65,8 +65,8 @@ local handEffects={
         return {nextSpnState={seen=count>=3 and {} or seen},addDiscards=count>=3 and amount or 0}
     end,
     spirit_borrowed_turn=function(hand,game,state,amount,context)
-        if not state.used and #(hand.scoringCards or {})==3 and #(hand.unscoredCards or {})==0 and (context.discardsAvailable or game.discardsRemaining or 0)>=1 then
-            return {discardCost=1,addHands=amount,nextSpnState={used=true}}
+        if not state.used and #(hand.scoringCards or {})==3 and #(hand.unscoredCards or {})==0 then
+            return {grantPermanentSpeedSmall=true,nextSpnState={used=true}}
         end
     end,
     spirit_zero_hour=function(hand,game,state,amount)
@@ -92,6 +92,23 @@ end
 -- Called only when scoring commits; callbacks and HUD previews stay read-only.
 function A.commitHand(game,slot,result)
     if result.nextSpnState then store(game,slot,result.nextSpnState) end
+    if result.destroyEight and #(game.persistentDeck or {})>1 and require("src.card_abilities").destroy(game,result.destroyEight) then
+        game.maxDiscards=(game.maxDiscards or 3)+1
+        game.discardsRemaining=(game.discardsRemaining or 0)+1
+        game.spnDiscardCap=(game.spnDiscardCap or game.maxDiscards-1)+1
+    end
+    if result.grantPermanentSpeedSmall then
+        local reward=require("src.shop").healingItem("upper","cons_speed_small").consumable
+        reward.permanentSpeed=true
+        reward.desc="Chọn một lá đang trên tay: +3 tốc đánh vĩnh viễn (tối đa 999)."
+        game.consumables=game.consumables or {}
+        if #game.consumables<require("src.inventory").limit(game) then
+            game.consumables[#game.consumables+1]=reward
+        else
+            game.pendingRewardCards=game.pendingRewardCards or {}
+            game.pendingRewardCards[#game.pendingRewardCards+1]=reward
+        end
+    end
     game.souls=math.max(0,(game.souls or 0)-(result.soulCost or 0))
     game.discardsRemaining=math.max(0,(game.discardsRemaining or 0)-(result.discardCost or 0))
     if (result.addDiscards or 0)>0 then

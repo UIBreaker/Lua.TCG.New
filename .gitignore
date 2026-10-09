@@ -8,3 +8,4 @@ graphify-out/
 dist/
 __pycache__/
 .android-signing/
+/downloads/LUA-TCG-0.118.0-Android.apk

@@ -37,7 +37,7 @@ def main():
     args = parser.parse_args()
     from build_release import package, runtime_files
     if args.game is None:
-        args.game = ROOT / "dist/LUA-TCG-0.118.0-Mobile.love"
+        args.game = ROOT / "dist/LUA-TCG-0.119.0-Mobile.love"
         package(args.game, mobile=True)
     with zipfile.ZipFile(args.game) as game:
         for path in runtime_files(ROOT):
@@ -79,8 +79,8 @@ def main():
             '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
             '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 11800")
-    text = text.replace("versionName: 11.5a", "versionName: 0.118.0-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 11900")
+    text = text.replace("versionName: 11.5a", "versionName: 0.119.0-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
     metadata.write_text(text, encoding="utf-8")
     # Boot in immersive mode too, before Lua initializes or restores old settings.
     with zipfile.ZipFile(args.game) as source, zipfile.ZipFile(work / "assets/game.love", "w", zipfile.ZIP_DEFLATED) as bundled:
@@ -112,7 +112,7 @@ def main():
             "-keyalg", "RSA", "-keysize", "3072", "-validity", "10000", "-storetype", "PKCS12",
             "-storepass:env", "TERRA_SIGNING_PASSWORD", "-dname", "CN=Terra Suit, OU=Game, O=UIBreaker, C=VN")
         del os.environ["TERRA_SIGNING_PASSWORD"]
-    output = ROOT / "downloads/LUA-TCG-0.118.0-Android.apk"
+    output = ROOT / "downloads/LUA-TCG-0.119.0-Android.apk"
     output.parent.mkdir(exist_ok=True)
     signer = sdk / "lib/apksigner.jar"
     run("java", "-jar", signer, "sign", "--ks", key, "--ks-pass", "file:" + str(password.relative_to(ROOT)),
@@ -124,7 +124,7 @@ def main():
         with zipfile.ZipFile(io.BytesIO(apk.read("assets/game.love"))) as game, zipfile.ZipFile(args.game) as source:
             assert b"t.window.fullscreen = true" in game.read("conf.lua")
             assert b"t.window.resizable = false" in game.read("conf.lua")
-            assert b"beta 0.118.0" in game.read("main.lua")
+            assert b"beta 0.119.0" in game.read("main.lua")
             assert game.read("main.lua") == source.read("main.lua")
         assert all(f"lib/{abi}/liblove.so" in apk.namelist() for abi in ("arm64-v8a", "armeabi-v7a"))
     digest = hashlib.sha256(output.read_bytes()).hexdigest()

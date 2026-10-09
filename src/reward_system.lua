@@ -150,6 +150,10 @@ local function createReward(id, game, source, depth)
             if item.packType == reward.packType then pack = copy(item); break end
         end
         if not pack then return fallback(reward, "Gói không còn hợp lệ") end
+        if id == "itm_pack" then
+            pack.name = reward.name
+            pack.desc = "Mở 3 Trang Bị Cơ Bản, chọn 1 để gắn vào bài."
+        end
         pack.cost, pack.category, pack.rewardPack = 0, "pack", true
         reward.opening = Shop.openPack(pack, game)
         if #reward.opening.cards == 0 then return fallback(reward, "Không còn nội dung gói hợp lệ") end

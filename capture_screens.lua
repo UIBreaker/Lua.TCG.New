@@ -61,6 +61,18 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-card-description" then
+            return require("tests.card_description_game_capture").update(gameRef,callbacks)
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-backpack-fullscreen" then
+            local ok,err=pcall(require("tests.backpack_fullscreen_capture").update,gameRef,callbacks)
+            if not ok then print("FULLSCREEN BACKPACK UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-soul-market" then
             local ok,err=pcall(require("tests.soul_market_capture").update,gameRef,callbacks)
             if not ok then print("SOUL MARKET UI FAIL: "..tostring(err));love.event.quit(1) end

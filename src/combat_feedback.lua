@@ -378,13 +378,22 @@ painters.hurt=function(g,e,p,c,alpha)
 end
 painters.equip=function(g,e,p,c,alpha)
     local age,hit=contact(e);local spring=math.exp(-age*22)*math.sin(age*48)
-    local r=18-2*hit+2*spring
-    g.push();g.rotate(spring*0.035);g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(2.2)
-    g.rectangle("line",-r,-r,r*2,r*2,2,2);g.pop()
-    for i=1,4 do local a=i*math.pi/2;local d=18+3*spring
-        line(g,c,alpha,2,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+6),math.sin(a)*(d+6)) end
-    g.setColor(1,0.95,0.7,alpha*hit*0.22);g.setLineWidth(1.4);g.circle("line",0,0,20+out(age/0.16)*16)
-    line(g,c,alpha*out(age/0.055),2.2,-5,0,0,5,7,-6)
+    local release=e.equipmentAction=="unequip";local snap=out(age/.14)
+    local r=release and 15+snap*18 or 31-snap*13+spring*2
+    g.setColor(c[1],c[2],c[3],alpha*.09);g.circle("fill",0,0,r+9)
+    g.setLineWidth(1.2);g.setColor(c[1],c[2],c[3],alpha*.7)
+    for i=1,6 do
+        local a=i*math.pi/3+(release and age or -age)*.6
+        g.arc("line","open",0,0,r,a,a+.66,8)
+        local x,y=math.cos(a)*(r+5),math.sin(a)*(r+5)
+        g.polygon("line",x,y-3,x+2,y,x,y+3,x-2,y)
+    end
+    local core=release and (1-snap)*8 or snap*8
+    g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(1.7)
+    g.polygon("line",0,-core,core*.6,0,0,core,-core*.6,0)
+    for i=0,3 do local a=i*math.pi/2;local d=release and 10+snap*17 or 21-snap*10
+        line(g,c,alpha*(release and 1-snap or snap),1.4,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+7),math.sin(a)*(d+7)) end
+    g.setColor(1,.94,.73,alpha*math.exp(-age*16)*.18);g.ellipse("fill",0,0,34,7)
 end
 painters.destroy=function(g,e,p,c,alpha)
     local age,hit=contact(e);local spread=out(age/0.34)

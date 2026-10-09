@@ -110,6 +110,7 @@ io.stdout:setvbuf("no")
 local isCaptureMode = false
 local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--capture-card-description" then isCaptureMode=true end
     if a == "--test-chest-expansion" then
         function love.load() require("tests.chest_expansion_render").run() end
         function love.errorhandler(message)
@@ -7675,6 +7676,11 @@ function love.mousepressed(x, y, button, istouch)
         UI.Polish.clearFocus()
     end
     if state=="shop" and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
+        for _,b in ipairs(buttons) do
+            if button==1 and b.id=="open_pause_menu" and mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
+                handleModalsMousepressed(mx,my,button);return
+            end
+        end
         UI.Backpack.handle(mx,my,button)
         return
     end
@@ -8517,6 +8523,10 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if state=="shop" and UI.Backpack.open and not inspectCardModal and not isSettingsOpen then
+        local mx,my=toVirtual(love.mouse.getPosition())
+        if UI.Backpack.wheel(mx,my,y) then return end
+    end
     if UI.Description.wheelmoved(y) then return end
     if (state=="shop" or state=="playing") and not isCollectionOpen and not isDeckViewerOpen
         and not isSettingsOpen and not isPauseMenuOpen and not isHandbookOpen

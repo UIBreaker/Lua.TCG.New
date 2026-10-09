@@ -71,9 +71,10 @@ Shop.PACK_CATALOG = {
     { packType = "seal", name = "GÓI CON DẤU", subtitle = "ẤN CHIẾN", desc = "Mở 3 Con Dấu chiến thuật, chọn 1 để đóng lên bài.", cost = 6, rarity = "Con Dấu", color = { 0.95, 0.70, 0.20, 1 }, icon = "🔴" },
     { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
     { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
-    { packType = "hand_styles", name = "RƯƠNG THẾ ĐÁNH", subtitle = "THẾ ĐÁNH", desc = "Mở 3 Bí Tịch ngẫu nhiên trong toàn bộ 9 thế đánh, chọn 1.", cost = 7, rarity = "Bí Tịch", color = { 0.95, 0.72, 0.22, 1 }, icon = "♠" },
+    { packType = "hand_styles", name = "RƯƠNG THẾ ĐÁNH", subtitle = "THẾ ĐÁNH", desc = "Ưu tiên Bí Tịch cho thế đánh chưa mở khóa; mở 3 lá, chọn 1.", cost = 7, rarity = "Bí Tịch", color = { 0.95, 0.72, 0.22, 1 }, icon = "♠" },
     { packType = "edition", name = "RƯƠNG ẤN BẢN", subtitle = "ẤN BẢN", desc = "Chọn một trong 9 Ấn Bản để cất hoặc khảm lên một lá bài.", cost = 8, rarity = "Ấn Bản", color = { 0.78, 0.48, 0.96, 1 }, icon = "✦" },
 }
+Shop.ADVANCED_HAND_CHEST = {packType="hand_styles_advanced",name="RƯƠNG THẾ ĐÁNH NÂNG CAO",subtitle="THẾ ĐÁNH NÂNG CAO",desc="Tính năng đang phát triển. Nếu mua, bạn sẽ được hoàn lại toàn bộ vàng.",cost=7,color={0.95,0.72,0.22,1},icon="♠"}
 
 Shop.SPN_RARITY_WEIGHTS = {
     common = 0.614, uncommon = 0.20, rare = 0.10, epic = 0.05,
@@ -130,9 +131,9 @@ Shop.CONSUMABLE_RULES={
     spec_sigil={params={},description="Đổi mọi lá đang trên tay thành cùng chất ngẫu nhiên vĩnh viễn trong bộ bài."},
     spec_ouija={params={handLoss=1},description="Đổi mọi lá đang trên tay thành cùng rank ngẫu nhiên 2–A vĩnh viễn trong bộ bài; kích thước tay cơ bản giảm vĩnh viễn {handLoss}, tối thiểu 1."},
     spec_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa thế đánh."},
-    celestial={params={levels=1},description=""},
+    celestial={params={levels=2},description=""},
     planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
-    planet_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
+    planet_black_hole={params={levels=2},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
 }
 for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SEAL_CARDS,"seals"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
     local cards={}
@@ -162,7 +163,8 @@ function Shop.getConsumableDescription(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     if item.handId and item.handId~="random" and item.handId~="all" then
         local scale=Poker.HAND_LEVEL_SCALING[item.handId];local stats=Poker.getHandStats(item.handId,1)
-        if scale then return "Nâng thế đánh "..item.handId.." +"..(rule and rule.params.levels or 1).." cấp: mỗi cấp +"..scale.chips.." ST và +"..scale.mult.." Cường hóa. Nền cấp 1: "..stats.chips.." × "..stats.mult.."; không tự mở khóa." end
+        local levels=rule and rule.params.levels or (item.id and item.id:match("^planet_") and Shop.CONSUMABLE_RULES.celestial.params.levels or 1)
+        if scale then return "Nâng thế đánh "..item.handId.." +"..levels.." cấp: mỗi cấp +"..scale.chips.." ST và +"..scale.mult.." Cường hóa. Nền cấp 1: "..stats.chips.." × "..stats.mult.."; không tự mở khóa." end
     end
     if not rule then return nil end
     return rule.description:gsub("{([%w_]+)}",function(k) return tostring(rule.params[k] or 0) end)
@@ -433,11 +435,16 @@ function Shop.refresh(shop, gameState)
         icon = v.icon or "🎟️",
     }) end
 
-    -- B. Fixed hand-style chest: all nine books form its reward pool.
+    -- B. Replace the hand-style chest once every hand is unlocked.
     local handChest
     for _, pack in ipairs(Shop.PACK_CATALOG) do
         if pack.packType == "hand_styles" then handChest = pack break end
     end
+    local allUnlocked = true
+    for _, hand in ipairs(Poker.HAND_TYPES_ORDERED) do
+        if hand.id ~= "high_card" and not (gameState.unlockedHands and gameState.unlockedHands[hand.id]) then allUnlocked = false break end
+    end
+    if allUnlocked then handChest = Shop.ADVANCED_HAND_CHEST end
     if handChest then appendPackItem(shop, handChest) end
 
     -- C. Three random chests, without same-shop duplicates or the two fixed chests.
@@ -620,6 +627,11 @@ function Shop.buyItem(shop, itemIndex, gameState)
         gameState.gold = gameState.gold - item.cost
         local pack = item
         table.remove(shop.items, itemIndex)
+        if pack.packType == "hand_styles_advanced" then
+            gameState.gold = gameState.gold + item.cost
+            Sound.play("shop_buy")
+            return true, "Rương Thế Đánh Nâng Cao đang phát triển. Đã hoàn lại " .. item.cost .. " Vàng."
+        end
         Sound.play("pack_open")
         local packData = Shop.openPack(pack, gameState)
         shop.currentPackOpening = packData
@@ -675,7 +687,7 @@ function Shop.openPack(packItem, gameState)
         end
 
     elseif packItem.packType == "arcana" then
-        local pool=copyList(Equipment.POOL)
+        local pool=copyList(packItem.rewardPack and require("src.basic_equipment").basic or Equipment.POOL)
         for i=#pool,2,-1 do local j=Rng.random(i);pool[i],pool[j]=pool[j],pool[i] end
         for i=1,math.min(3,#pool) do candidates[i]=Equipment.ITEMS[pool[i]] end
 
@@ -713,12 +725,15 @@ function Shop.openPack(packItem, gameState)
         for i = 1, 3 do table.insert(candidates, planets[i]) end
 
     elseif packItem.packType == "hand_styles" then
-        local books = Shop.getPackContents("hand_styles")
-        for i = #books, 2, -1 do
-            local j = Rng.random(i)
-            books[i], books[j] = books[j], books[i]
+        local locked, unlocked = {}, {}
+        for _, book in ipairs(Shop.getPackContents("hand_styles")) do
+            local pool = book.handId ~= "high_card" and not (gameState.unlockedHands and gameState.unlockedHands[book.handId]) and locked or unlocked
+            pool[#pool + 1] = book
         end
-        for i = 1, math.min(3, #books) do candidates[i] = books[i] end
+        for _, pool in ipairs({locked, unlocked}) do
+            for i = #pool, 2, -1 do local j = Rng.random(i); pool[i], pool[j] = pool[j], pool[i] end
+            for _, book in ipairs(pool) do if #candidates < 3 then candidates[#candidates + 1] = book end end
+        end
 
     elseif packItem.packType == "edition" then
         local editions=CardEffects.getEditionCatalog()
@@ -992,13 +1007,13 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             return true, "Siêu Tân Tinh: Nâng cấp " .. h.vnName .. " lên +3 Cấp (Cấp " .. gameState.handLevels[h.id] .. ")!"
         elseif card.handId == "all" or card.id == "planet_black_hole" or card.id == "black_hole" then
             for _, ht in pairs(Poker.HAND_TYPES) do
-                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 1
+                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 2
             end
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
-            return true, "Hố Đen: Nâng cấp TẤT CẢ các thế bài Poker lên +1 Cấp độ!"
+            return true, "Hố Đen: Nâng cấp TẤT CẢ các thế bài Poker lên +2 Cấp độ!"
         elseif card.handId then
-            gameState.handLevels[card.handId] = (gameState.handLevels[card.handId] or 1) + 1
+            gameState.handLevels[card.handId] = (gameState.handLevels[card.handId] or 1) + 2
             local hType = nil
             for _, ht in pairs(Poker.HAND_TYPES) do if ht.id == card.handId then hType = ht break end end
             local vName = hType and hType.vnName or card.name

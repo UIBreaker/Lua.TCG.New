@@ -79,7 +79,7 @@ function T.update(game,cb)
         UI.Backpack.show();UI.Backpack.tab="cards";UI.Backpack.selected=1
     elseif stage==17 then
         capture("soul_market_eight_sockets",function()
-            local n=0;for _,b in ipairs(cb.getButtons()) do if b.id:match("^bag_detach_") then n=n+1;assert(b.x+b.w<=1130 and b.y+b.h<=604) end end
+            local n=0;for _,b in ipairs(cb.getButtons()) do if b.id:match("^bag_detach_") then n=n+1;assert(b.x+b.w<=1280 and b.y+b.h<=679) end end
             assert(n==8);UI.Backpack.close();game.consumables={Shop.destructionItem().consumable};UI.Backpack.show();UI.Backpack.tab="consumable"
         end);return
     elseif stage==18 then

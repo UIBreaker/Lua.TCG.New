@@ -19,7 +19,7 @@ local function grid()
 end
 local function selectTier(tier)
  UI.Backpack.craftTier=tier;local rows=UI.Backpack.recipeList();local id=additions[(tier-1)*5+1].id
- for pos,v in ipairs(rows) do if v.recipe.id==id then UI.Backpack.page=math.ceil(pos/5);UI.Backpack.recipeSelection=v.index;return end end
+ for pos,v in ipairs(rows) do if v.recipe.id==id then UI.Backpack.page=math.ceil(pos/UI.Backpack.recipePageSize);UI.Backpack.recipeSelection=v.index;require("ui.crafting_tree").select(id);return end end
  error("Missing tier recipe "..id)
 end
 function T.update(game,cb)

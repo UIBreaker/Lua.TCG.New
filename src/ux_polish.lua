@@ -101,7 +101,8 @@ function P.confirm(shop,game,done)
         elseif f.kind=="deity" then ok,action=Shop.sellDeity(game,f.index)
         elseif f.kind=="consumable" then ok,action=Shop.sellConsumable(game,f.index) end
     end
-    if not ok then P.message=type(action)=="string" and action or "Không thể giao dịch.";P.messageAge=0;return false,action end
+    if not ok then P.message=type(action)=="string" and action or "Không thể giao dịch.";P.messageAge=0;P.messageIsNotice=nil;return false,action end
+    if f.item.packType=="hand_styles_advanced" then P.message=action;P.messageAge=0;P.messageIsNotice=true end
     local kind=f.kind=="stock" and "buy" or "sell"
     local target={x=Config.deck.x,y=Config.deck.y}
     local acquired
@@ -162,7 +163,7 @@ function P.update(dt,fast,state,shop)
     end
     if state=="shop" and shop then P.ensureShop(shop) elseif not P.job then P.clearFocus();P.shop=nil end
     if P.focus then P.focus.age=P.focus.age+step end
-    if P.message then P.messageAge=P.messageAge+step;if P.messageAge>Config.popup then P.message=nil end end
+    if P.message then P.messageAge=P.messageAge+step;if P.messageAge>(P.messageIsNotice and 4 or Config.popup) then P.message=nil;P.messageIsNotice=nil end end
     local job=P.job
     if job then
         job.age=job.age+step
@@ -194,9 +195,8 @@ function P.update(dt,fast,state,shop)
             a.hit=true;Effects.triggerScorePulse(a.target)
             if a.kind=="equip" or a.kind=="unequip" then
                 a.effect=Feedback.emit("equip",a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2,1,nil,a.kind=="unequip")
-                if a.kind=="unequip" then
-                    local profile={};for k,v in pairs(a.effect.profile) do profile[k]=v end;profile.color=a.color;a.effect.profile=profile
-                end
+                a.effect.equipmentAction=a.kind
+                local profile={};for k,v in pairs(a.effect.profile) do profile[k]=v end;profile.color=a.color;a.effect.profile=profile
                 if a.kind=="unequip" then Sound.play("card_slide",.9) end
                 local pose=require("src.card_physics").getState(a.target)
                 if pose then pose.active=true;pose.vy=48;pose.angularVelocity=0.13;pose.stretch=-0.025 end
@@ -274,7 +274,7 @@ function P.application(UI,source,target,text,sourceRect,targetRect,kind)
     local r=targetRect or P.rect(UI,target)
     local a={source=s,target=target,rect=r,text=text,age=0,kind=kind,color=kind=="equip" and Feedback.config.profiles.equip.color or Effects.getBeamColor(target)}
     if (kind=="equip" or kind=="unequip") and source and require("src.equipment").ITEMS[source.id] then
-        a.sourceItem=source;a.duration=.8;a.popup=1.2
+        a.sourceItem=source;a.duration=.9;a.popup=1.1
         a.color=kind=="equip" and {1,.78,.34} or {.45,.84,1}
         a.text=(kind=="equip" and "ĐÃ GẮN · " or "ĐÃ THÁO · ")..source.name.."\n"..text
     end
@@ -423,43 +423,13 @@ function P.draw(UI,game,buttons,mx,my)
             g.push();g.translate(a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2);g.scale(1+bounce,1-bounce*0.4)
             P.renderItem(UI,a.target,-a.rect.w/2,-a.rect.h/2,a.rect.w,a.rect.h);g.pop()
         end
-        if a.effect then a.effect.x=a.rect.x+a.rect.w/2;a.effect.y=a.rect.y+a.rect.h/2 end
+        if a.effect then local destination=a.kind=="unequip" and a.source or a.rect;a.effect.x=destination.x+destination.w/2;a.effect.y=destination.y+destination.h/2 end
         local r,s=a.rect,a.source;local p=smooth(a.age/((a.duration or Config.application)*0.6))
         local x=s.x+s.w/2+(r.x+r.w/2-s.x-s.w/2)*p
         local y=s.y+s.h/2+(r.y+r.h/2-s.y-s.h/2)*p-math.sin(p*math.pi)*45
         local c=a.color
         if a.sourceItem then
-            if a.kind=="unequip" then
-                x=r.x+r.w/2+(s.x+s.w/2-r.x-r.w/2)*p
-                y=r.y+r.h/2+(s.y+s.h/2-r.y-r.h/2)*p-math.sin(p*math.pi)*45
-            end
-            local alpha=p<1 and 1 or math.max(0,1-(a.age-(a.duration or Config.application)*.6)/.32)
-            local image=UI.getEquipmentImage(a.sourceItem.id)
-            g.push("all");g.setBlendMode("add")
-            if p<1 then
-                local from,to=a.kind=="unequip" and r or s,a.kind=="unequip" and s or r
-                local previousX,previousY=x,y
-                for i=1,7 do
-                    local t=math.max(0,p-i*.025)
-                    local px=from.x+from.w/2+(to.x+to.w/2-from.x-from.w/2)*t
-                    local py=from.y+from.h/2+(to.y+to.h/2-from.y-from.h/2)*t-math.sin(t*math.pi)*45
-                    g.setColor(c[1],c[2],c[3],alpha*.35*(1-i/8));g.setLineWidth(4-i*.4)
-                    g.line(previousX,previousY,px,py);previousX,previousY=px,py
-                end
-            end
-            for i=1,4 do g.setColor(c[1],c[2],c[3],alpha*.05*(5-i));g.circle("fill",x,y,20+i*5) end
-            g.pop()
-            g.push("all");g.translate(x,y);g.rotate(math.sin(p*math.pi)*.13*(a.kind=="unequip" and -1 or 1))
-            local size=1+.12*math.sin(p*math.pi)-.3*p
-            g.scale(size);g.setColor(1,1,1,alpha)
-            if image then UI.CardFrame.image(image,-22,-33,44,66);UI.drawCardBorder(-22,-33,44,66,{c[1],c[2],c[3],alpha},alpha,a.sourceItem) end
-            g.pop()
-            if a.hit then
-                local pulse=math.max(0,1-(a.age-(a.duration or Config.application)*.6)/.65)
-                g.setColor(c[1],c[2],c[3],pulse*.7);g.setLineWidth(2)
-                local cx,cy=r.x+r.w/2,r.y+r.h/2
-                for i=1,2 do g.ellipse("line",cx,cy,(r.w*.5+12+i*8)*(1-pulse*.15),r.h*.55+14+i*8) end
-            end
+            require("ui.equipment_motion").draw(UI,a)
         else
             g.setColor(c[1],c[2],c[3],1-p);g.circle("fill",x,y,5)
         end
@@ -469,7 +439,7 @@ function P.draw(UI,game,buttons,mx,my)
         if a.hit and contact<0.10 then
             g.setColor(c[1],c[2],c[3],0.08*(1-contact/0.10));g.rectangle("fill",r.x,r.y,r.w,r.h,5,5)
         end
-        if a.hit then
+        if a.hit and not require("ui.equipment_motion").confirmation(UI,a,clamp(contact/.08)*clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/.25)) then
             g.setColor(c[1],c[2],c[3],clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/0.25))
             g.setFont(UI.fonts.tiny)
             if not a.height then local _,lines=UI.fonts.tiny:getWrap(a.text,190);a.height=#lines*UI.fonts.tiny:getHeight() end
@@ -482,7 +452,13 @@ function P.draw(UI,game,buttons,mx,my)
             g.printf(a.text,tx,ty,190,"center")
         end
     end
-    if P.message then g.setColor(1,0.5,0.4,1);g.setFont(UI.fonts.small);g.printf(P.message,350,640,580,"center") end
+    if P.message then
+        if P.messageIsNotice then
+            g.setColor(.025,.04,.055,.96);UI.drawRoundedRect("fill",340,612,600,64,8)
+            g.setColor(.95,.72,.22,1);UI.drawRoundedRect("line",340,612,600,64,8)
+        else g.setColor(1,.5,.4,1) end
+        g.setFont(UI.fonts.small);g.printf(P.message,350,634,580,"center")
+    end
     UI.CardPhysics.resume()
 end
 return P

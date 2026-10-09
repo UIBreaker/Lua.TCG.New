@@ -18,6 +18,20 @@ function love.load()
         return newFont(path,...)
     end
     UI.initFonts(); love.graphics.newFont=newFont
+    -- Load the real artwork while this standalone harness lives under tests/.
+    local paths=require("config.continental_asset_paths")
+    local images={}
+    UI.getEquipmentImage=function(id)
+        if images[id] then return images[id] end
+        local path=paths[id];if not path then return nil end
+        local runtime=path:gsub("assets/cards/continental/","assets/cards/continental/runtime/"):gsub("%.png$",".jpg")
+        local file=io.open(root.."/"..runtime,"rb")
+        if file then path=runtime else file=io.open(root.."/"..path,"rb") end
+        if not file then return nil end
+        local bytes=file:read("*a");file:close()
+        images[id]=love.graphics.newImage(love.filesystem.newFileData(bytes,path))
+        return images[id]
+    end
     View = require("ui.components.card_description")
     Description = require("src.card_description")
     local Deck = require("src.deck")
@@ -42,10 +56,10 @@ function love.load()
         local layout=View.layout(model,UI.fonts)
         assert(layout.h*layout.scale<=680.001,"description must fit viewport")
         for i,row in ipairs(model.rows) do
-            local font=(row.kind=="stats" or row.kind=="sockets") and layout.labelFont or layout.font
+            local font=row.kind=="rules" and layout.referenceFont or (row.kind=="stats" or row.kind=="sockets") and layout.labelFont or layout.font
             if row.kind=="equipment" then
-                local _,lines=font:getWrap(Equipment.getDescription(row.equipment),layout.w-96)
-                assert(layout.rows[i].h>=32+layout.rows[i].nameH+#lines*(font:getHeight()+2)+14,"equipment name and effect fit")
+                local _,lines=font:getWrap(row.text,layout.w-88)
+                assert(layout.rows[i].h>=26+layout.rows[i].nameH+#lines*(font:getHeight()+2)+10,"equipment name and full effect fit")
             else
                 local _,lines=font:getWrap(row.text,layout.w-40)
                 assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(font:getHeight()+2)+8,"no clipped prose")
@@ -59,25 +73,44 @@ function love.load()
     modified.edition="foil"; modified.seal="gold"; modified.enhancement=next(Deck.ENHANCEMENTS)
     local longModel=View.model(modified,Description.resolve(modified))
     local longLayout=View.layout(longModel,UI.fonts)
-    assert(longLayout.h<=440 and longLayout.scale==1,"compact viewport never shrinks text")
+    assert(longLayout.h<=640 and longLayout.scale==1,"complete viewport never shrinks text")
     local additions
     for _,row in ipairs(longModel.rows) do if row.kind=="additions" then additions=row.text end end
-    local foundEquipment=false;for _,row in ipairs(longModel.rows) do if row.kind=="equipment" and row.text:find("Đá Tiên Phong",1,true) then foundEquipment=true end end
+    local foundEquipment=false;for _,row in ipairs(longModel.rows) do if row.kind=="equipment" and row.equipment.id=="gem_fire" then foundEquipment=true end end
     assert(foundEquipment and additions and additions:find("Dấu ấn",1,true),"equipment has its own tier/slot row; modifiers remain visible")
     local title,body=Description.resolve(modified)
     local expanded=View.model(modified,title,body,true)
     assert(#expanded.rows>#longModel.rows,"secondary information available on Shift")
-    local stats,role=false,false
+    local stats,role=longModel.stats~=nil,false
     for _,row in ipairs(longModel.rows) do
         assert(row.kind~="detail" and row.kind~="next","hide reference information by default")
-        stats=stats or row.kind=="stats";role=role or row.kind=="role"
+        role=role or row.kind=="role"
     end
     assert(stats and role,"combat stats and royal bonus must be visible without Shift")
     local empty=View.model(jack,Description.resolve(jack))
-    for _,row in ipairs(empty.rows) do assert(row.kind~="sockets","empty socket tutorial stays out of quick view") end
+    local sockets=false
+    for _,row in ipairs(empty.rows) do sockets=sockets or row.kind=="sockets" end
+    assert(sockets and empty.level=="0","show empty sockets and initial level explicitly")
+    local boosted=Deck.newCard(7,"spades");boosted.speedBonus=2;boosted.temporarySpeedBonus=3
+    boosted.temporaryAbilityLevels=2;boosted.equipments={Equipment.ITEMS.itm_horizonengine}
+    local boostedModel=View.model(boosted,Description.resolve(boosted))
+    assert(boostedModel.stats.speed==Deck.peekCardAttackSpeed(boosted) and boostedModel.temporary=="2","live buffs and equipment included")
+    local phoenix=Equipment.ITEMS.itm_phoenixcradle
+    local phoenixModel=View.model(phoenix,Description.resolve(phoenix))
+    assert(phoenixModel.rows[1].kind=="equipment" and phoenixModel.rows[1].text:find("\n",1,true),"standalone equipment shares full presentation")
+    local low=phoenix.onCardScore(Deck.newCard(7,"spades"),{},1,{gameState={playerHp=30,maxPlayerHp=100}})
+    local high=phoenix.onCardScore(Deck.newCard(7,"spades"),{},1,{gameState={playerHp=31,maxPlayerHp=100}})
+    assert(low.healHp==16 and low.extraDamagePct==0.25 and high.addChips==90,"phoenix description agrees with both HP branches")
+    local eight=Deck.newCard(12,"hearts");eight.maxSockets=8;eight.equipments={}
+    for _,id in ipairs({"gem_fire","gem_blast","mirror_adjacent","storm_eye","lucky_coin","ward_stone","vitality_gem","blood_ring"}) do eight.equipments[#eight.equipments+1]=Equipment.ITEMS[id] end
+    local eightModel=View.model(eight,Description.resolve(eight))
+    local equipmentCount=0
+    for _,row in ipairs(eightModel.rows) do if row.kind=="equipment" then equipmentCount=equipmentCount+1 end end
+    local eightLayout=View.layout(eightModel,UI.fonts)
+    assert(equipmentCount==8 and eightLayout.maxScroll>0 and eightLayout.h<=640,"all eight equipment effects remain reachable")
     local huge=View.model(jack,"Long",("Effect\n"):rep(100),true)
     local hugeLayout=View.layout(huge,UI.fonts)
-    assert(hugeLayout.maxScroll>0 and hugeLayout.h<=600 and hugeLayout.scale==1,"long cards scroll with original font")
+    assert(hugeLayout.maxScroll>0 and hugeLayout.h<=640 and hugeLayout.scale==1,"long cards scroll with original font")
     local render,isDown=View.draw,love.keyboard.isDown
     local capturedModel,capturedLayout,capturedScroll
     View.draw=function(m,l,x,y,scroll) capturedModel,capturedLayout,capturedScroll=m,l,scroll end
@@ -93,7 +126,8 @@ function love.load()
     Description.reset();assert(not Description.wheelmoved(-1),"inactive tooltip does not steal scrolling")
     View.draw,love.keyboard.isDown=render,isDown
     local spn=assert(next(Deities.CATALOG)); spn=Deities.CATALOG[spn]
-    cases={jack,spn,Equipment.ITEMS.gem_fire,modified}
+    local astrid=Deck.newCard(7,"spades");astrid.equipments={phoenix}
+    cases={astrid,phoenix,modified,boosted}
     assert(View.model(jack,Description.resolve(jack)).level=="0","evolution extracted")
     local warning=View.model(jack,"Test","Effect\nKHẢ NĂNG VÔ HIỆU trong tay này.")
     assert(warning.rows[1].kind=="warning","disabled ability has priority")
@@ -106,7 +140,7 @@ function love.draw()
         local title,body=Description.resolve(item)
         local model=View.model(item,title,body)
         local layout=View.layout(model,UI.fonts)
-        View.draw(model,layout,20+(i-1)*385,40)
+        View.draw(model,layout,20+(i-1)*450,20)
     end
     frames=frames+1
     if frames==2 then

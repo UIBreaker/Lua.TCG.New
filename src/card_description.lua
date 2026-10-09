@@ -56,7 +56,9 @@ function D.resolve(item,game)
         if level<A.config.maxEvolutionLevel then text=text.."\nKẾ TIẾP: "..A.description(item,A.level(item)+1) end
         text=text.."\nCơ bản: "..(item.baseChips or Deck.getChipValue(item.rank)).." ST · Tốc đánh "..Deck.getCardAttackSpeed(item)
         if item.rank==11 then text=text.."\nVai trò J: +15 ST và +2 Cường hóa mỗi lá 2–10 được chơi."
-        elseif item.rank==12 then text=text.."\nVai trò Q: +0.1 hệ số và +15 ST / +2 Cường hóa mỗi ITM trên lá."
+        elseif item.rank==12 then
+            local count=#(item.equipments or {})
+            text=text.."\nVai trò Q: +0.1 hệ số; +"..(15*count).." ST và +"..(2*count).." Cường hóa từ "..count.." trang bị hiện tại (+15 ST / +2 Cường hóa mỗi món)."
         elseif item.rank==13 then text=text.."\nVai trò K: +25 ST và +5 Cường hóa."
         elseif item.rank==14 then text=text.."\nVai trò A: +15 ST." end
         local state=item.abilityState or {}

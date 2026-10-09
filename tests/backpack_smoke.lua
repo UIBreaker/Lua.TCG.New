@@ -79,6 +79,7 @@ local Display=require("ui.shop_display")
 local _,_,sw,sh=Display.position({section="upper",category="deity"},1,0)
 for _,kind in ipairs({"basic","discount"}) do local _,_,w,h=Display.position({section=kind,bay=1},1,0);assert(w==sw and h==sh) end
 local Bag=require("ui.backpack");Bag.open=true;Bag.tab="craft"
+require("tests.backpack_tree_smoke")
 local inspected;Bag.mouse(require("src.ui"),fresh,{{id="bag_recipe_35",x=0,y=0,w=100,h=100}},50,50,2,{inspect=function(item) inspected=item end})
 assert(inspected==E.ITEMS.void_catalyst);Bag.close()
 local f=assert(io.open("docs/basic_equipment_catalog.tsv","wb"))

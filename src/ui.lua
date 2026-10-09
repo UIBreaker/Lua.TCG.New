@@ -163,6 +163,8 @@ function UI.initFonts()
     -- Description prose stays lighter than the surrounding controls.
     local okDescription, descriptionFont = pcall(love.graphics.newFont, fontRegularPath, 14)
     UI.fonts.description = okDescription and descriptionFont or UI.fonts.small
+    local okNote,noteFont=pcall(love.graphics.newFont,fontRegularPath,12)
+    UI.fonts.descriptionNote=okNote and noteFont or UI.fonts.tiny
 
     local function loadHudFont(size)
         if not windowsFonts then return loadFont(size) end
@@ -839,6 +841,7 @@ local PACK_TYPE_MAP = {
 
     -- Shared full-bleed chest illustrations; never fall back to the old icon.
     hand_styles = "pack_standard",
+    hand_styles_advanced = "pack_standard",
     edition = "pack_joker_edition",
     standard = "pack_standard",
     pack_standard = "pack_standard",

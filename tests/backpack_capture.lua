@@ -2,7 +2,21 @@ local T={};local stage="start";local deadline=0
 local inspectorOnly=false;for _,a in ipairs(arg or {}) do if a=="--capture-backpack-inspector" then inspectorOnly=true end end
 local UI=require("src.ui");local E=require("src.equipment");local B=require("src.basic_equipment")
 local D=require("src.deck");local Shop=require("src.shop")
+local currentButtons
 local function click(x,y,button)
+ local id
+ if x==230 then id=({[391]="equipment",[298]="spn",[345]="consumable",[486]="craft",[439]="cards"})[y];id=id and "bag_tab_"..id
+ elseif x==489 and y==579 then id=UI.Backpack.tab=="equipment" and "bag_equip" or "bag_detach_1"
+ elseif x==1130 and y==163 then id="bag_next"
+ elseif x==893 and y==165 then id="bag_tier_5"
+ elseif x==873 and y==227 then id="bag_craft_1"
+ elseif x==500 and y==215 then id="bag_recipe_1"
+ elseif x==428 and y==260 then local r=UI.Backpack.cellRect(1);x,y=r.x+r.w/2,r.y+r.h/2 end
+ if id then
+  local found=false
+  for _,b in ipairs(currentButtons or {}) do if b.id==id then x,y=b.x+b.w/2,b.y+b.h/2;found=true;break end end
+  assert(found,"Missing backpack control "..id)
+ end
  local w,h=love.graphics.getDimensions();local scale=math.min(w/1280,h/720)
  local px,py=(w-1280*scale)/2+x*scale,(h-720*scale)/2+y*scale
  love.mouse.setPosition(px,py);love.mousepressed(px,py,button or 1);love.mousereleased(px,py,button or 1)
@@ -14,6 +28,7 @@ local function shot(name)
 end
 local function confirm(g) local b=assert(UI.Polish.button(g));click(b.x+b.w/2,b.y+b.h/2) end
 function T.update(g,cb)
+ currentButtons=cb.getButtons()
  if love.timer.getTime()<deadline or UI.Polish.busy() then return end
  if stage=="start" then
   cb.startNewGame("red_deck");g.gold=120;g.playerHp=40

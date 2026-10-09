@@ -112,17 +112,17 @@ Poker.HAND_LEVEL_SCALING = {
 }
 
 Poker.PLANET_CARDS = {
-    { id = "planet_pluto", handId = "high_card", name = "Sao Diêm Vương (Pluto)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho ĐƠN THỦ (+10 Chips, +1 Mult)", icon = "🪐", color = { 0.45, 0.55, 0.70, 1 } },
-    { id = "planet_mercury", handId = "pair", name = "Sao Thủy (Mercury)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho SONG ĐAO (+15 Chips, +1 Mult)", icon = "🪐", color = { 0.35, 0.75, 0.95, 1 } },
-    { id = "planet_uranus", handId = "two_pair", name = "Sao Thiên Vương (Uranus)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho SONG ĐÔI (+20 Chips, +1 Mult)", icon = "🪐", color = { 0.30, 0.85, 0.85, 1 } },
-    { id = "planet_venus", handId = "three_of_a_kind", name = "Sao Kim (Venus)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho TAM HOA (+20 Chips, +2 Mult)", icon = "🪐", color = { 0.95, 0.75, 0.25, 1 } },
-    { id = "planet_saturn", handId = "straight", name = "Sao Thổ (Saturn)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho TRƯỜNG LONG (+30 Chips, +3 Mult)", icon = "🪐", color = { 0.90, 0.60, 0.25, 1 } },
-    { id = "planet_jupiter", handId = "flush", name = "Sao Mộc (Jupiter)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho ĐỒNG KHÍ (+15 Chips, +2 Mult)", icon = "🪐", color = { 0.85, 0.35, 0.45, 1 } },
-    { id = "planet_earth", handId = "full_house", name = "Địa Cầu (Earth)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho HỖN NGUYÊN (+25 Chips, +2 Mult)", icon = "🌍", color = { 0.25, 0.75, 0.45, 1 } },
-    { id = "planet_mars", handId = "four_of_a_kind", name = "Sao Hỏa (Mars)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho TỨ TƯỢNG (+30 Chips, +3 Mult)", icon = "🪐", color = { 0.95, 0.30, 0.25, 1 } },
-    { id = "planet_neptune", handId = "straight_flush", name = "Sao Hải Vương (Neptune)", subtitle = "HÀNH TINH", desc = "+1 Cấp cho VẠN KIẾM QUY TÔNG (+40 Chips, +4 Mult)", icon = "🪐", color = { 0.25, 0.45, 0.95, 1 } },
+    { id = "planet_pluto", handId = "high_card", name = "Sao Diêm Vương (Pluto)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho ĐƠN THỦ (+20 Chips, +2 Mult)", icon = "🪐", color = { 0.45, 0.55, 0.70, 1 } },
+    { id = "planet_mercury", handId = "pair", name = "Sao Thủy (Mercury)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho SONG ĐAO (+30 Chips, +2 Mult)", icon = "🪐", color = { 0.35, 0.75, 0.95, 1 } },
+    { id = "planet_uranus", handId = "two_pair", name = "Sao Thiên Vương (Uranus)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho SONG ĐÔI (+40 Chips, +2 Mult)", icon = "🪐", color = { 0.30, 0.85, 0.85, 1 } },
+    { id = "planet_venus", handId = "three_of_a_kind", name = "Sao Kim (Venus)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho TAM HOA (+40 Chips, +4 Mult)", icon = "🪐", color = { 0.95, 0.75, 0.25, 1 } },
+    { id = "planet_saturn", handId = "straight", name = "Sao Thổ (Saturn)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho TRƯỜNG LONG (+60 Chips, +6 Mult)", icon = "🪐", color = { 0.90, 0.60, 0.25, 1 } },
+    { id = "planet_jupiter", handId = "flush", name = "Sao Mộc (Jupiter)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho ĐỒNG KHÍ (+30 Chips, +4 Mult)", icon = "🪐", color = { 0.85, 0.35, 0.45, 1 } },
+    { id = "planet_earth", handId = "full_house", name = "Địa Cầu (Earth)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho HỖN NGUYÊN (+50 Chips, +4 Mult)", icon = "🌍", color = { 0.25, 0.75, 0.45, 1 } },
+    { id = "planet_mars", handId = "four_of_a_kind", name = "Sao Hỏa (Mars)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho TỨ TƯỢNG (+60 Chips, +6 Mult)", icon = "🪐", color = { 0.95, 0.30, 0.25, 1 } },
+    { id = "planet_neptune", handId = "straight_flush", name = "Sao Hải Vương (Neptune)", subtitle = "HÀNH TINH", desc = "+2 Cấp cho VẠN KIẾM QUY TÔNG (+80 Chips, +8 Mult)", icon = "🪐", color = { 0.25, 0.45, 0.95, 1 } },
     { id = "planet_supernova", handId = "random", name = "Siêu Tân Tinh (Supernova)", subtitle = "KỲ QUAN", desc = "Nâng ngẫu nhiên 1 thế bài lên +3 Cấp độ!", icon = "🌟", color = { 0.98, 0.88, 0.25, 1 } },
-    { id = "planet_black_hole", handId = "all", name = "Hố Đen (Black Hole)", subtitle = "HỐ ĐEN", desc = "Nâng cấp TẤT CẢ 9 thế bài Poker lên +1 Cấp độ!", icon = "🕳️", color = { 0.45, 0.25, 0.65, 1 } },
+    { id = "planet_black_hole", handId = "all", name = "Hố Đen (Black Hole)", subtitle = "HỐ ĐEN", desc = "Nâng cấp TẤT CẢ 9 thế bài Poker lên +2 Cấp độ!", icon = "🕳️", color = { 0.45, 0.25, 0.65, 1 } },
 }
 
 function Poker.getHandStats(handId, level)

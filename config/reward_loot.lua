@@ -27,7 +27,7 @@ local C = {
         playing_card = {type = "PLAYING_CARD", rarity = "common", name = "QUÂN BÀI"},
         card_pack = {type = "CARD_PACK", packType = "standard", rarity = "uncommon", name = "CARD PACK"},
         spn_pack = {type = "SPN_PACK", packType = "buffoon", rarity = "rare", name = "SPN PACK"},
-        itm_pack = {type = "ITM_PACK", packType = "arcana", rarity = "rare", name = "ITM PACK"},
+        itm_pack = {type = "ITM_PACK", packType = "arcana", rarity = "rare", name = "RƯƠNG TRANG BỊ CƠ BẢN"},
         consumable = {type = "CONSUMABLE", rarity = "uncommon", name = "TIẾP LỰC"},
         evolution = {type = "CONSUMABLE", consumable = "evolution", rarity = "epic", name = "TIẾN HÓA"},
         consumable_pack = {type = "CONSUMABLE_PACK", packType = "celestial", rarity = "uncommon", name = "GÓI HÀNH TINH"},

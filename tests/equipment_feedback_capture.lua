@@ -1,6 +1,12 @@
 local T={};local stage=0;local waitUntil=0
 local UI=require("src.ui");local P=UI.Polish;local Bag=UI.Backpack
+local currentButtons
 local function click(x,y)
+ if x==428 and y==260 then local r=Bag.cellRect(1);x,y=r.x+r.w/2,r.y+r.h/2
+ elseif x==489 and y==579 then
+  local id=Bag.tab=="equipment" and "bag_equip" or "bag_detach_1"
+  for _,b in ipairs(currentButtons) do if b.id==id then x,y=b.x+b.w/2,b.y+b.h/2;break end end
+ end
  local w,h=love.graphics.getDimensions();local scale=math.min(w/1280,h/720)
  local px,py=(w-1280*scale)/2+x*scale,(h-720*scale)/2+y*scale
  love.mousepressed(px,py,1);love.mousereleased(px,py,1)
@@ -12,6 +18,7 @@ local function shot(name)
  end)
 end
 function T.update(g,cb)
+ currentButtons=cb.getButtons()
  if love.timer.getTime()<waitUntil then return end
  if stage==0 then
   cb.startNewGame("red_deck");g.backpackEquipment={{id="basic_lace",investment=3}}

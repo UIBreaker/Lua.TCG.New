@@ -522,10 +522,12 @@ function Feel.drawLab(ui)
     if a then
         ui.components.HandInfoPanel.draw({handName=a.sequence.attack.profile.name .. " / " .. Attacks.config.tierNames[a.sequence.attack.tier], scoring=true, chips=a.displayChips, mult=a.displayMult,
             aura=a.displayAura, chipsBounce=a.bounceScale.chips, multBounce=a.bounceScale.mult,
-            auraBounce=a.bounceScale.score, enemyHp=math.floor(a.sequence.hp), enemyBarHp=a.sequence.hp,
-            enemyTrailHp=a.sequence.hpTrail, enemyMaxHp=a.sequence.hpBefore, category=a.stepCategory,
+            auraBounce=a.bounceScale.score, category=a.stepCategory,
             detail=a.stepLog, enemyName="Mục tiêu thử"}, ui.fonts, ui.formatNumber)
         local offset, squash, flash = Feel.enemyReaction(a)
+        require("ui.components.health_bar").draw(ui.BATTLE_CENTER_X-90,178,180,18,a.sequence.hp,a.sequence.hpBefore,
+            {variant="red",font=ui.fonts.tiny,trailValue=a.sequence.hpTrail,
+                label=ui.formatNumber(math.max(0,math.floor(a.sequence.hp))).." / "..ui.formatNumber(a.sequence.hpBefore)})
         g.setColor(0.24+flash*0.5,0.36+flash*0.3,0.43+flash*0.2,1)
         g.ellipse("fill", ui.BATTLE_CENTER_X, 265+offset, 43*squash, 56/squash)
         Feel.drawDim(a)

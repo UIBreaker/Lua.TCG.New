@@ -54,19 +54,15 @@ function love.load()
         local title, body = Description.resolve(item)
         local model=View.model(item,title,body)
         local layout=View.layout(model,UI.fonts)
-        assert(layout.h*layout.scale<=680.001,"description must fit viewport")
+        assert(layout.w*layout.scale<=400 and layout.h*layout.scale<=520.001,"default panel must remain compact")
         assert(layout.maxScroll==0,"default mode shows complete content without scrolling")
         for i,row in ipairs(model.rows) do
             assert(row.kind~="rules","global ability rules are omitted from default tooltips")
             local bounds=layout.rows[i]
             assert(bounds.x+bounds.w<=layout.w and bounds.y+bounds.h<=layout.viewportH+0.001,"all default rows visible inside the panel")
-            local font=row.kind=="rules" and layout.referenceFont or (row.kind=="stats" or row.kind=="sockets") and layout.labelFont or layout.font
-            if row.kind=="equipment" then
-                local _,lines=font:getWrap(row.text,bounds.w-88)
-                assert(layout.rows[i].h>=26+layout.rows[i].nameH+#lines*(font:getHeight()+2)+10,"equipment name and full effect fit")
-            else
-                local _,lines=font:getWrap(row.text,bounds.w-40)
-                assert(layout.rows[i].h>=layout.rows[i].textY+#lines*(font:getHeight()+2)+8,"no clipped prose")
+            if not bounds.summary then
+                local _,lines=bounds.font:getWrap(bounds.text,bounds.textW)
+                assert(bounds.h>=bounds.textY+#lines*(bounds.font:getHeight()+2)+6,"rendered prose fits its row")
             end
         end
         total=total+1
@@ -77,7 +73,7 @@ function love.load()
     modified.edition="foil"; modified.seal="gold"; modified.enhancement=next(Deck.ENHANCEMENTS)
     local longModel=View.model(modified,Description.resolve(modified))
     local longLayout=View.layout(longModel,UI.fonts)
-    assert(longLayout.h<=640 and longLayout.scale==1,"complete viewport never shrinks text")
+    assert(longLayout.w==400 and longLayout.h<=520 and longLayout.scale==1,"modified card stays in one compact panel without shrinking")
     local additions
     for _,row in ipairs(longModel.rows) do if row.kind=="additions" then additions=row.text end end
     local foundEquipment=false;for _,row in ipairs(longModel.rows) do if row.kind=="equipment" and row.equipment.id=="gem_fire" then foundEquipment=true end end
@@ -112,7 +108,19 @@ function love.load()
     local equipmentCount=0
     for _,row in ipairs(eightModel.rows) do if row.kind=="equipment" then equipmentCount=equipmentCount+1 end end
     local eightLayout=View.layout(eightModel,UI.fonts)
-    assert(equipmentCount==8 and eightLayout.maxScroll==0 and eightLayout.h<=640 and eightLayout.scale==1,"all eight equipment effects visible at once without shrinking text")
+    assert(equipmentCount==8 and eightLayout.maxScroll==0 and eightLayout.w==400 and eightLayout.h<=520 and eightLayout.scale==1 and eightLayout.summarized,"long loadout shows every item in a compact panel: "..eightLayout.h.." / "..eightLayout.scale.." / "..eightLayout.maxScroll)
+    local eightExpanded=View.model(eight,Description.resolve(eight))
+    eightExpanded.expanded=true
+    local fullEquipment=View.layout(eightExpanded,UI.fonts)
+    for i,row in ipairs(eightExpanded.rows) do
+        if row.kind=="equipment" then assert(not fullEquipment.rows[i].summary and fullEquipment.rows[i].text==row.text,"Shift preserves every complete equipment effect") end
+    end
+    local small=Deck.newCard(2,"clubs");small.speedBonus=14-Deck.getCardAttackSpeed(small)
+    small.equipments={Equipment.ITEMS.basic_pouch,Equipment.ITEMS.basic_salve,Equipment.ITEMS.basic_bandage}
+    small.edition="resonant";small.enhancement="enh_overcharged"
+    local smallModel=View.model(small,Description.resolve(small))
+    local smallLayout=View.layout(smallModel,UI.fonts)
+    assert(smallLayout.w==400 and smallLayout.h<=520 and smallLayout.scale==1 and not smallLayout.summarized,"reported three-item card shows every current effect in one compact column")
     local huge=View.model(jack,"Long",("Effect\n"):rep(100),true)
     local hugeLayout=View.layout(huge,UI.fonts)
     assert(hugeLayout.maxScroll>0 and hugeLayout.h<=640 and hugeLayout.scale==1,"long cards scroll with original font")
@@ -139,7 +147,7 @@ function love.load()
     View.draw,love.keyboard.isDown=render,isDown
     local spn=assert(next(Deities.CATALOG)); spn=Deities.CATALOG[spn]
     local astrid=Deck.newCard(7,"spades");astrid.equipments={phoenix}
-    cases={eight}
+    cases={small,eight,phoenix}
     assert(View.model(jack,Description.resolve(jack)).level=="0","evolution extracted")
     local warning=View.model(jack,"Test","Effect\nKHẢ NĂNG VÔ HIỆU trong tay này.")
     assert(warning.rows[1].kind=="warning","disabled ability has priority")
@@ -152,7 +160,7 @@ function love.draw()
         local title,body=Description.resolve(item)
         local model=View.model(item,title,body)
         local layout=View.layout(model,UI.fonts)
-        View.draw(model,layout,20+(i-1)*450,20)
+        View.draw(model,layout,12+(i-1)*422,20)
     end
     frames=frames+1
     if frames==2 then

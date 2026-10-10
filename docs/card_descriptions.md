@@ -9,17 +9,21 @@ Thưởng Q hiển thị số cụ thể theo số món đang khảm, không the
 Khung mô tả không hiện mục Quy tắc khả năng, kể cả khi giữ Shift.
 Tiểu sử và cấp kế tiếp nằm trong phần tham khảo khi giữ Shift.
 Giữ Shift để đọc các thông tin tham khảo này; thả Shift để thu gọn.
-Cảnh báo khóa/vô hiệu luôn đứng đầu. Trang bị, dấu ấn, cường hóa và ấn bản
-giữ đầy đủ hiệu ứng. Trang bị có tên, tầng, vị trí hốc và tranh thu nhỏ;
+Cảnh báo khóa/vô hiệu luôn đứng đầu. Trang bị có tên, tầng, vị trí hốc và tranh thu nhỏ;
 hốc đã dùng / tổng hốc luôn hiển thị. Trang bị được ưu tiên trước
 dấu ấn/cường hóa/ấn bản khi có nhiều thông tin. Tên ấn bản đi cùng hiệu ứng thực tế.
 
-Chữ nội dung Arial thường 14px, quy tắc tham khảo Arial thường 12px,
-tiêu đề 22px. Khung quân bài rộng 400px, loại khác 360px.
-Chế độ thường ưu tiên hiện đủ trên một khung, tự chia tối đa ba cột khi dài;
-không có thanh cuộn. Danh mục và mẫu tám trang bị giữ nguyên cỡ chữ.
-Nội dung vượt cả ba cột mới co toàn khung để vừa màn hình, không bỏ thông tin.
-Giữ Shift mở chi tiết trong khung một cột, cao tối đa 600px trên hệ tọa độ
+Chữ nội dung Arial thường 14px, hiệu ứng trang bị đã khảm ở chế độ thường 12px,
+tiêu đề 22px. Khung quân bài rộng 400px, loại khác 360px, luôn một cột.
+Chế độ thường cao tối đa 520px, ưu tiên hiện đủ thông tin và không có thanh cuộn.
+Tầng và hốc nằm cùng dòng với tên trang bị; tranh nhỏ 24×36px. Danh tính nhân vật
+phụ chỉ hiện khi giữ Shift. Mẫu ba trang bị kèm cường hóa, ấn bản hiện đầy đủ
+hiệu ứng mà không mở rộng ngang hay co chữ.
+Nếu nội dung quá dài, khung thường giữ danh sách tên/tầng/hốc của tất cả trang bị;
+Shift mở toàn bộ hiệu ứng. Nếu vẫn quá dài, phần bổ sung hiện số hiệu ứng và hướng
+dẫn Shift. Khung không tự mở thêm cột để che sân đấu. Nội dung cực dài vượt các
+bước này mới co toàn khung để giữ kích thước giới hạn.
+Giữ Shift mở chi tiết đầy đủ trong khung một cột, cao tối đa 560px trên hệ tọa độ
 game 1280×720. Thanh cuộn chỉ xuất hiện trong chế độ này nếu nội dung dài.
 Con lăn được ưu tiên cho khung Shift; khung giữ nguyên lá và vị trí khi đưa
 chuột vào mô tả. Thả Shift trả lại hành vi rê và cuộn của game.

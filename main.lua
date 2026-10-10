@@ -3831,7 +3831,6 @@ local function drawBattleHud(m, mx, my)
     local hudButtons = UI.components.TopHUD.draw({
         ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.currentBlindIndex) or game.round or 1,
-        enemyName = m and m.name or "Đối thủ",
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
         armor = game.playerArmor or game.playerShield or 0,
         armorCap = UI.Abilities.config.armorCap, goldBounce = juice.goldBounce,
@@ -3851,14 +3850,14 @@ end
 local function drawBattleEnemy(m)
     if not m then return end
     local mx,my=toVirtual(love.mouse.getPosition())
-    EnemyFormation.hud(game,UI,mx,my,anim.enemyTurn)
+    EnemyFormation.hud(game,UI,mx,my,anim.enemyTurn,state=="scoring" and anim.active and anim.sequence or nil)
 end
 
-local function drawBattleInfoPanel(m, eval, preview)
+local function drawBattleInfoPanel(m, eval)
     local scoring = state == "scoring" and anim.active
-    local chips = scoring and (anim.displayChips or 0) or (preview and preview.totalChips or 0)
-    local mult = scoring and (anim.displayMult or 0) or (preview and preview.totalMult or 0)
-    local xMult = scoring and (anim.displayXMult or 1) or (preview and preview.xMultTotal or 1)
+    local chips = scoring and (anim.displayChips or 0) or nil
+    local mult = scoring and (anim.displayMult or 0) or nil
+    local xMult = scoring and (anim.displayXMult or 1) or 1
     local aura = scoring and (anim.displayAura or anim.displayFinalScore or 0) or 0
     local handName = scoring and (anim.sequence and (anim.sequence.handName or anim.sequence.result.steps[1].vnName))
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
@@ -3868,11 +3867,7 @@ local function drawBattleInfoPanel(m, eval, preview)
         or UI.localizeText(anim.stepLog or "")) or ""
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
-        previewAura = preview and preview.finalScore,
         scoring = scoring, enemyName = (m and m.name) or "Không rõ",
-        enemyHp = math.floor(math.max(0, scoring and anim.sequence.hp or (m and m.hp) or 0)), enemyMaxHp = (m and m.maxHp) or 1,
-        enemyBarHp = scoring and anim.sequence.hp or (m and (m.damageLagHp or m.hp) or 0),
-        enemyTrailHp = scoring and anim.sequence.hpTrail,
         auraIntensity = scoring and anim.sequence.intensity or 0,
         phase = scoring and anim.sequence.events[anim.sequence.index] and anim.sequence.events[anim.sequence.index].kind,
         scoreProgress = scoring and math.min(1,(anim.sequence.index-1+(anim.sequence.age/
@@ -3885,7 +3880,6 @@ local function drawBattleInfoPanel(m, eval, preview)
             or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards(),game,
                 Poker.evaluate(getSelectedCards(),game.unlockedHands,game.handLevels)) or nil),
         enemySpeed = m and (m.attackSpeed or 1),
-        humanEnemy = m and m.human,
         chipsBounce = scoring and anim.bounceScale.chips or 1,
         multBounce = scoring and anim.bounceScale.mult or 1,
         auraBounce = scoring and anim.bounceScale.score or 1,
@@ -3958,29 +3952,12 @@ local function drawPlayingState()
     buttons = {}
 
     local m = game.monster
-    -- Preview uses the same scoring logic as the attack animation.
     local selectedCards = getSelectedCards()
     local eval = (#selectedCards > 0) and Poker.evaluate(selectedCards, game.unlockedHands, game.handLevels) or nil
-    local scPreview = eval and Scoring.calculate(eval, game.deities, {
-        preview = true,
-        playerAttackSpeed = Combat.getAverageAttackSpeed(selectedCards,game,eval),
-        handsAfterPlay = math.max(0,game.handsRemaining-1),
-        gameState = game,
-        handsRemaining = game.handsRemaining,
-        discardsRemaining = game.discardsRemaining,
-        round = game.round,
-        monster = game.monster,
-        discardBuffs = game.discardBuffs,
-        selectedSuit = game.selectedSuit,
-        selectedFaction = game.selectedFaction,
-        playedHandsHistory = game.playedHandsHistory,
-        starterDeckId = game.starterDeckId,
-        handsPlayedThisCombat = game.handsPlayedThisCombat or 0,
-    }) or nil
-    require("ui.combat_chrome").table(game,UI,state=="scoring",anim.enemyTurn,UI.localizeText(anim.stepLog or ""))
+    require("ui.combat_chrome").table(game,UI)
     drawBattleEnemy(m)
     drawBattleHud(m, mx, my)
-    drawBattleInfoPanel(m, eval, scPreview)
+    drawBattleInfoPanel(m, eval)
     local curDeiCount = Deities.getCount(game.deities)
     local maxDeiSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 5
     local firstDei,lastDei=UI.InventoryRail.range("spn",game)
@@ -4148,17 +4125,18 @@ local function drawPlayingState()
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(handCountText, hcX, hcY + 3, hcW, "center")
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf(Touch.enabled and "Chạm: chọn • Rê: chọn nhiều • Giữ: xem / dùng • Đổi chỗ: kéo sắp xếp"
-        or "Giữ chuột: rê chọn • Shift + kéo: đổi vị trí", UI.BATTLE_ARENA_X,
-        704, UI.BATTLE_ARENA_W, "center")
+    if state=="playing" and (Touch.enabled or mx>=250 and mx<=1010 and my>=450 and my<=627) then
+        love.graphics.setColor(UI.COLORS.textMuted)
+        love.graphics.printf(Touch.enabled and "Chạm: chọn · Giữ: xem / dùng · Đổi chỗ: kéo sắp xếp"
+            or "Rê chuột: chọn nhiều · Shift + kéo: đổi vị trí", UI.BATTLE_ARENA_X,
+            704, UI.BATTLE_ARENA_W, "center")
+    end
 
     ----------------------------------------------------------------------------
     -- 5. BALATRO ACTION BUTTONS ROW
     ----------------------------------------------------------------------------
     local hasSelection = (#selectedCards >= 1 and #selectedCards <= getMaxSelectableCards())
     local actionY = 636
-    require("ui.combat_chrome").panel(365, 626, 530, 72)
 
     -- Left: Chơi Tay Bài [Space]
     local handLimitIsFinal = game.monster and game.monster.isBoss and game.monster.bossData
@@ -4185,15 +4163,13 @@ local function drawPlayingState()
     table.insert(buttons, btnPlay)
     require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,"SPACE · ĐÁNH")
 
-    -- Center: Sắp Xếp Container Box
+    -- Secondary sort controls sit between the two primary actions.
     local sortBoxX = UI.BATTLE_CENTER_X - 65
     local sortBoxY = actionY - 8
     local sortBoxW = 145
-    local sortBoxH = 68
-    require("ui.combat_chrome").panel(sortBoxX, sortBoxY, sortBoxW, sortBoxH)
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(Theme.colors.muted)
-    love.graphics.printf("SẮP XẾP BÀI", sortBoxX, sortBoxY + 4, sortBoxW, "center")
+    love.graphics.printf("Sắp xếp", sortBoxX, sortBoxY + 7, sortBoxW, "center")
 
     local btnSortRank = {
         id = "sort_rank",

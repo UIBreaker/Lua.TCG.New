@@ -1,6 +1,7 @@
 local T={}
 local age,card,pointed,stage=0,nil,false,0
 local expanded=false
+local eight
 local panel
 local function screenshot(path,done)
     love.graphics.captureScreenshot(function(data)
@@ -14,9 +15,13 @@ function T.update(game,cb)
     assert(age<16,"description capture timed out")
     if not card then
         cb.startNewGame("red_deck");cb.startMonsterEncounter(1,false)
-        card=require("src.deck").newCard(12,"hearts");card.maxSockets=8;card.equipments={}
+        local Deck=require("src.deck");local Equipment=require("src.equipment")
+        card=Deck.newCard(2,"clubs");card.speedBonus=14-Deck.getCardAttackSpeed(card)
+        card.equipments={Equipment.ITEMS.basic_pouch,Equipment.ITEMS.basic_salve,Equipment.ITEMS.basic_bandage}
+        card.edition="resonant";card.enhancement="enh_overcharged"
+        eight=Deck.newCard(12,"hearts");eight.maxSockets=8;eight.equipments={}
         for _,id in ipairs({"gem_fire","gem_blast","mirror_adjacent","storm_eye","lucky_coin","ward_stone","vitality_gem","blood_ring"}) do
-            card.equipments[#card.equipments+1]=require("src.equipment").ITEMS[id]
+            eight.equipments[#eight.equipments+1]=Equipment.ITEMS[id]
         end
         local View=require("ui.components.card_description")
         local render=View.draw
@@ -38,9 +43,13 @@ function T.update(game,cb)
         love.mouse.setPosition((w-1280*scale)/2+x*scale,(h-720*scale)/2+y*scale)
         pointed=true
     elseif pointed and stage==0 and age>2 then
-        assert(panel and not panel.model.expanded and panel.layout.maxScroll==0,"live default panel fits all eight equipment effects")
+        assert(panel and not panel.model.expanded and panel.layout.maxScroll==0 and not panel.layout.summarized and panel.layout.w==400 and panel.layout.h<=520,"reported three-item card stays compact with every effect visible")
+        for _,row in ipairs(panel.layout.rows) do assert(row.x==0 and not row.summary,"default no longer expands into columns") end
         stage=0.5
-        screenshot("docs/card_description_combat.png",function() expanded=true;stage=1 end)
+        screenshot("docs/card_description_combat.png",function()
+            card.equipments=eight.equipments;card.maxSockets=8
+            expanded=true;stage=1
+        end)
     elseif stage==1 and age>2.4 then
         assert(panel.model.expanded and panel.layout.maxScroll>0,"live Shift detail has scrollable overflow")
         local w,h=love.graphics.getDimensions();local scale=math.min(w/1280,h/720)

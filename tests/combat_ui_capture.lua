@@ -22,7 +22,39 @@ end
 function T.update(game,cb)
  local now=love.timer.getTime();if now<T.deadline then return end
  local n=T.stage
- if n==0 then cb.startNewGame("red_deck");cb.startMonsterEncounter(1,false)
+ if n==0 then
+  cb.startNewGame("red_deck");cb.startMonsterEncounter(1,false)
+  local Panel=UI.components.HandInfoPanel;T.panelDraw=Panel.draw;T.preparedFrames=0;T.auraFrames=0
+  Panel.draw=function(data,...)
+   if not data.scoring then
+    assert(data.previewAura==nil and data.chips==nil and data.mult==nil,"preparation must not reveal the score")
+    T.preparedFrames=T.preparedFrames+1
+   end
+   return T.panelDraw(data,...)
+  end
+  local Core=require("ui.components.core");T.textDraw=Core.text
+  Core.text=function(value,...)
+   assert(value~="AURA DỰ KIẾN","predicted Aura must never be rendered")
+   if value=="AURA · TÍCH NĂNG" then
+    local _,state=cb.getScoringState();assert(state=="scoring","Aura is revealed only during scoring")
+    T.auraFrames=T.auraFrames+1
+   end
+   return T.textDraw(value,...)
+  end
+  local Health=require("ui.components.health_bar");T.healthDraw=Health.draw;T.hpTrailFrames=0
+  Health.draw=function(x,y,w,h,value,maxHp,options)
+   local a,state=cb.getScoringState()
+   if state=="scoring" and a.active and a.sequence and y==144 then
+    for i,m in ipairs(Group.members(game)) do
+     local tx=Group.rect(i,#Group.members(game))
+     if m==game.monster and x==tx-12 then
+      assert(value==a.sequence.hp and options.trailValue==a.sequence.hpTrail,"target HP must follow the scoring impact and trail")
+      if value~=options.trailValue then T.hpTrailFrames=T.hpTrailFrames+1 end
+     end
+    end
+   end
+   return T.healthDraw(x,y,w,h,value,maxHp,options)
+  end
  elseif n==1 then
   if not T.materialCheck then require("tests.combat_material_smoke")(UI);T.materialCheck=true end
   if not T.starterShot then shot("starter");T.starterShot=true;T.deadline=now+.6;return end
@@ -73,7 +105,15 @@ function T.update(game,cb)
  elseif n==10 then require("tests.combat_material_smoke")(UI);shot("960");control(cb,"sort_suit",true)
  elseif n==11 then assert(game.sortMode=="suit");love.window.setMode(1920,1080,{resizable=true});love.resize(1920,1080)
  elseif n==12 then require("tests.combat_material_smoke")(UI);shot("1920");control(cb,"sort_rank",true)
- elseif n==13 then assert(game.sortMode=="rank");print("Combat UI PASS: starter, disabled/active controls, 8-card squad, target click, inventory rails, real scoring, boss, handbook/deck/options, 960/1920 input mapping");love.event.quit(0);return end
+ elseif n==13 then
+  assert(game.sortMode=="rank" and T.hpTrailFrames>0,"target HP trail must be visible after impact")
+  assert(T.preparedFrames>0 and T.auraFrames>0,"preparation hides score; scoring reveals Aura")
+  UI.components.HandInfoPanel.draw=T.panelDraw
+  require("ui.components.core").text=T.textDraw
+  require("ui.components.health_bar").draw=T.healthDraw
+  print("Combat UI PASS: hidden score during preparation, revealed Aura during scoring, target HP trail, starter/squad/boss, controls and 960/1920 input mapping")
+  love.event.quit(0);return
+ end
  T.stage=n+1;T.deadline=now+.6
 end
 return T

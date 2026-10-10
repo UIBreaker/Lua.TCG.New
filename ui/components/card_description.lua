@@ -90,7 +90,7 @@ function View.model(item,title,body,expanded)
             end
         end
     end
-    if #lines>0 then m.rows[#m.rows+1]={label="BỔ SUNG",text=table.concat(lines,"\n"),kind="additions"} end
+    if #lines>0 then m.rows[#m.rows+1]={label="BỔ SUNG",text=table.concat(lines,"\n"),summaryText=#lines.." hiệu ứng bổ sung · Shift xem chi tiết",kind="additions"} end
     if expanded then append(details) end
     return m
 end
@@ -100,45 +100,52 @@ local function height(font,text,width,gap)
 end
 function View.layout(m,fonts)
     local l={w=m.stats and 400 or 360,font=fonts.description or fonts.small,referenceFont=fonts.descriptionNote or fonts.tiny,titleFont=fonts.medium or fonts.regular or fonts.small,nameFont=fonts.small,valueFont=fonts.regular or fonts.small,labelFont=fonts.tiny,rows={},scale=1}
-    local columnW=l.w
-    l.headerH=42+height(l.titleFont,m.title,l.w-36,1)
+    l.headerH=38+height(l.titleFont,m.title,l.w-36,1)
     l.subtitleY=l.headerH-6
-    if m.subtitle then l.headerH=l.headerH+height(l.labelFont,m.subtitle,l.w-36)+5 end
+    l.showSubtitle=m.expanded and m.subtitle
+    if l.showSubtitle then l.headerH=l.headerH+height(l.labelFont,m.subtitle,l.w-36)+5 end
     l.statsY=l.headerH
-    if m.stats then l.headerH=l.headerH+38 end
-    local y=0
-    for i,row in ipairs(m.rows) do
-        local labelH=row.label and row.label~="" and 16 or 0
-        local nameH=row.kind=="equipment" and not row.standalone and height(l.nameFont,row.equipment.name,l.w-88,1) or 0
-        local rowFont=row.kind=="rules" and l.referenceFont or (row.kind=="stats" or row.kind=="sockets") and l.labelFont or l.font
-        local h=row.kind=="equipment" and math.max(78,26+nameH+height(l.font,row.text,l.w-88)+10) or labelH+height(rowFont,row.text,l.w-40)+16
-        l.rows[i]={x=0,y=y,w=columnW,h=h,textY=labelH+8,nameH=nameH};y=y+h+5
-    end
-    l.contentH=math.max(0,y-5);l.footerH=m.hasDetails and 26 or 12
-    if not m.expanded and l.headerH+l.contentH+l.footerH+8>600 then
-        -- Keep complete rows readable; widen the same panel before resorting to scaling.
-        local capacity=600-l.headerH-l.footerH-8
-        local col,cy,tallest=0,0,0
-        for _,r in ipairs(l.rows) do
-            if cy>0 and cy+r.h>capacity then col=col+1;cy=0 end
-            r.x=col*(columnW+12);r.y=cy
-            cy=cy+r.h+5;tallest=math.max(tallest,cy-5)
-        end
-        if col>2 then
-            -- Exceptional content still fits without discarding any information.
-            local target=math.max(capacity,math.ceil((y-5)/3))
-            col,cy,tallest=0,0,0
-            for _,r in ipairs(l.rows) do
-                if col<2 and cy>0 and cy+r.h>target then col=col+1;cy=0 end
-                r.x=col*(columnW+12);r.y=cy
-                cy=cy+r.h+5;tallest=math.max(tallest,cy-5)
+    if m.stats then l.headerH=l.headerH+30 end
+    l.footerH=m.hasDetails and 24 or 12
+    local function measure(summarizeEquipment,summarizeAdditions)
+        local y=0
+        for i,row in ipairs(m.rows) do
+            local labelH=row.label and row.label~="" and 14 or 0
+            local r={x=0,y=y,w=l.w,text=row.text,font=(row.kind=="stats" or row.kind=="sockets") and l.labelFont or l.font,textX=20,textY=labelH+6,textW=l.w-40,nameH=0}
+            if row.kind=="equipment" then
+                r.summary=summarizeEquipment and not row.standalone
+                r.compact=not m.expanded and not row.standalone
+                r.textX=r.summary and 44 or r.compact and 56 or 68
+                r.textW=l.w-r.textX-20
+                r.metaW=l.labelFont:getWidth(row.label)
+                r.nameW=r.compact and r.textW-r.metaW-10 or r.textW
+                r.nameH=not row.standalone and height(l.nameFont,row.equipment.name,r.nameW,1) or 0
+                if r.summary then
+                    r.h=math.max(26,r.nameH+8)
+                elseif r.compact then
+                    r.font=l.referenceFont;r.textY=8+r.nameH
+                    r.h=math.max(48,r.textY+height(r.font,row.text,r.textW)+8)
+                else
+                    r.textY=26+r.nameH
+                    r.h=math.max(78,r.textY+height(r.font,row.text,r.textW)+10)
+                end
+            else
+                if summarizeAdditions and row.kind=="additions" then r.text=row.summaryText end
+                r.h=labelH+height(r.font,r.text,r.textW)+12
             end
+            l.rows[i]=r;y=y+r.h+3
         end
-        l.w=(col+1)*columnW+col*12;l.contentH=tallest
+        l.contentH=math.max(0,y-3)
+        return l.headerH+l.contentH+l.footerH+8
     end
-    local fullH=l.headerH+l.contentH+l.footerH+8
-    l.h=m.expanded and math.min(600,fullH) or fullH
-    if not m.expanded then l.scale=math.min(1,600/l.h) end
+    local fullH=measure(false,false)
+    if not m.expanded and fullH>520 then
+        -- Long loadouts keep every item name; Shift retains every full effect.
+        l.summarized=true;l.footerH=24;fullH=measure(true,false)
+        if fullH>520 then fullH=measure(true,true) end
+    end
+    l.h=m.expanded and math.min(560,fullH) or fullH
+    if not m.expanded then l.scale=math.min(1,520/l.h) end
     l.viewportH=l.h-l.headerH-l.footerH-8;l.maxScroll=math.max(0,l.contentH-l.viewportH)
     if l.maxScroll>0 then l.footerH=32;l.viewportH=l.h-l.headerH-l.footerH-8;l.maxScroll=math.max(0,l.contentH-l.viewportH) end
     return l
@@ -171,7 +178,7 @@ function View.draw(m,l,x,y,scroll)
         Core.text(levelText,w-18-levelW,13,levelW,l.labelFont,accent,"center")
     end
     Core.text(m.title,18,29,w-36,l.titleFont,Theme.colors.text)
-    if m.subtitle then Core.text(m.subtitle,18,l.subtitleY,w-36,l.labelFont,Theme.colors.muted) end
+    if l.showSubtitle then Core.text(m.subtitle,18,l.subtitleY,w-36,l.labelFont,Theme.colors.muted) end
     if m.stats then
         local tileW=(math.min(w,400)-44)/2
         Core.color(Theme.colors.metal,0.35);g.line(18,l.statsY-3,w-18,l.statsY-3)
@@ -199,22 +206,26 @@ function View.draw(m,l,x,y,scroll)
                 local Frame=require("ui.components.card_frame")
                 Core.color(tint,0.20);g.line(18,ry,w-18,ry)
                 local UI=require("src.ui");local image=UI.getEquipmentImage(eq.id)
-                if image then g.setColor(1,1,1,1);Frame.image(image,20,ry+10,36,54) end
-                if not row.standalone then Core.text(eq.name,68,ry+8,w-88,l.nameFont,Theme.colors.text) end
-                Core.text(row.label,68,ry+9+r.nameH,w-88,l.labelFont,tint)
-                g.setFont(l.font);g.setColor(1,1,1,1)
-                local old=l.font:getLineHeight();l.font:setLineHeight((l.font:getHeight()+2)/l.font:getHeight())
-                g.printf(rich(row.text,tint),68,ry+26+r.nameH,w-88,"left");l.font:setLineHeight(old)
+                local iw,ih=r.summary and 16 or r.compact and 24 or 36,r.summary and 24 or r.compact and 36 or 54
+                if image then g.setColor(1,1,1,1);Frame.image(image,20,ry+(r.h-ih)/2,iw,ih) end
+                if not row.standalone then Core.text(eq.name,r.textX,ry+6,r.nameW,l.nameFont,Theme.colors.text) end
+                if r.compact then Core.text(row.label,w-20-r.metaW,ry+7,r.metaW,l.labelFont,tint)
+                else Core.text(row.label,r.textX,ry+9+r.nameH,r.textW,l.labelFont,tint) end
+                if not r.summary then
+                    g.setFont(r.font);g.setColor(1,1,1,1)
+                    local old=r.font:getLineHeight();r.font:setLineHeight((r.font:getHeight()+2)/r.font:getHeight())
+                    g.printf(rich(r.text,tint),r.textX,ry+r.textY,r.textW,"left");r.font:setLineHeight(old)
+                end
             else
                 if row.kind=="warning" or row.kind=="effect" then
                     Core.color(color,row.kind=="effect" and 0.07 or 0.1);g.rectangle("fill",12,ry,w-24,r.h,4,4)
                     Core.color(color,0.7);g.rectangle("fill",12,ry+8,2,r.h-16,1,1)
                 elseif row.kind=="additions" or row.kind=="sockets" then Core.color(Theme.colors.metal,0.35);g.line(18,ry,w-18,ry) end
                 if row.label and row.label~="" then Core.text(row.label,20,ry+6,w-40,l.labelFont,Theme.colors.muted) end
-                local font=row.kind=="rules" and l.referenceFont or (row.kind=="stats" or row.kind=="sockets") and l.labelFont or l.font
+                local font=r.font
                 g.setFont(font);g.setColor(1,1,1,1)
                 local old=font:getLineHeight();font:setLineHeight((font:getHeight()+2)/font:getHeight())
-                g.printf(rich(row.text,color),20,ry+r.textY,w-40,"left");font:setLineHeight(old)
+                g.printf(rich(r.text,color),r.textX,ry+r.textY,r.textW,"left");font:setLineHeight(old)
             end
             g.pop()
         end
@@ -233,6 +244,7 @@ function View.draw(m,l,x,y,scroll)
     end
     local footerY=h-l.footerH+8
     local hint=m.expanded and l.maxScroll>0 and "Giữ Shift · Cuộn để xem thêm"
+        or l.summarized and "Shift · Xem đầy đủ hiệu ứng"
         or m.hasDetails and (m.expanded and "Thả Shift để thu gọn" or "Shift · Chi tiết")
     if hint then Core.text(hint,18,footerY,w-36,l.labelFont,Theme.colors.muted,"right") end
     g.pop()

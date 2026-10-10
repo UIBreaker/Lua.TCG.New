@@ -19,7 +19,6 @@ local function skin()
    w=xs[col+1]-xs[col],h=ys[row+1]-ys[row],row=row,col=col}
  end end
  skins.plate={image=image,quads=quads}
- skins.crest=g.newImage("assets/ui/crest_star_compass.png");skins.crest:setFilter("linear","linear")
  return skins.plate
 end
 local function shape(x,y,w,h,cut)
@@ -77,12 +76,15 @@ function H.well(x,y,w,h,color)
  local g=love.graphics;g.push("all");g.setColor(1,1,1);g.setBlendMode("alpha","premultiplied");g.draw(plate(w,h,color,"well"),x,y,0,.5,.5);g.pop()
 end
 function H.crest(x,y,r,color,kind)
- local g=love.graphics;g.push("all");skin()
+ local g=love.graphics;g.push("all")
  g.setColor(.007,.012,.016,.7);g.ellipse("fill",x,y+4,r*1.05,r)
- C.gradient(x-r,y-r,r*2,r*2,{.26,.22,.16,1},{.048,.053,.051,1},r)
+ g.setColor(.46,.37,.22);g.circle("fill",x,y,r)
+ g.setColor(.105,.12,.11);g.circle("fill",x,y,r-2)
+ g.setColor(.19,.18,.14);g.circle("fill",x,y-1,r-3)
+ g.setColor(.065,.08,.082);g.circle("fill",x,y,r-5)
  C.color(color or T.colors.gold,.70);g.setLineWidth(1.2);g.circle("line",x,y,r-1)
  if kind then S.glyph(kind,x,y,r*.57,color or T.colors.gold)
- else g.setColor(.95,.83,.60);g.draw(skins.crest,x-r*.75,y-r*.75,0,r*1.5/38,r*1.5/38) end
+ else S.compass(x,y,r*.73,color or T.colors.gold,.92,0) end
  g.setColor(1,.87,.60,.40);g.arc("line","open",x,y,r-3,math.pi,math.pi*1.8)
  g.pop()
 end
@@ -97,39 +99,32 @@ end
 function H.rail(rect,count,limit,fonts,kind,title,color)
  local x,y,w,h=unpack(rect);local g=love.graphics;g.push("all")
  H.panel(x,y,w,h,color)
- H.well(x+13,y+10,w-26,27,color)
  S.glyph(kind,x+29,y+23,8,color)
  H.title(title,x+47,y+15,w-122,fonts.small,color)
  C.text(count.." / "..limit,x+w-72,y+16,47,fonts.tiny,T.colors.text,"right")
+ C.color(color,.23);g.line(x+17,y+35,x+w-17,y+35)
  if count==0 then
-  H.well(x+15,y+47,w-30,h-62,{.34,.37,.36})
-  H.crest(x+w/2,y+90,23,color,kind)
-  C.text(kind=="spn" and "Chưa có hộ linh đồng hành" or "Chưa có vật phẩm hỗ trợ",x+20,y+126,w-40,fonts.tiny,T.colors.muted,"center")
-  C.text(kind=="spn" and "Thu thập SPN trong hành trình" or "Mua tại cửa hàng · Dùng khi chiến đấu",x+20,y+146,w-40,fonts.tiny,T.colors.goldDim,"center")
+  S.glyph(kind,x+w/2,y+89,18,T.colors.goldDim)
+  C.text(kind=="spn" and "Chưa có hộ linh" or "Chưa có vật phẩm",x+20,y+123,w-40,fonts.tiny,T.colors.muted,"center")
  end
  g.pop()
 end
-function H.table(game,UI,scoring,turn,detail)
+function H.table(game,UI)
  local g=love.graphics;g.push("all")
- if scoring and detail and detail~="" then
-  H.well(280,424,700,24,T.colors.gold)
-  C.textLine(detail,291,429,678,UI.fonts.tiny,T.colors.text,"center")
- end
- H.panel(250,450,760,177,T.colors.gold)
- g.setColor(.17,.105,.053,.18);g.rectangle("fill",274,478,712,124,6)
- S.compass(630,535,63,T.colors.gold,.065,0)
- H.title("TAY BÀI",269,460,135,UI.fonts.small,T.colors.gold)
- C.text(scoring and (turn and "ĐỐI THỦ ĐANG HÀNH ĐỘNG" or "ĐANG KẾT TOÁN AURA") or "CHỌN BÀI · KIẾN TẠO ĐÒN ĐÁNH",760,460,232,UI.fonts.tiny,T.colors.muted,"right")
+ local trayW=math.min(760,math.max(260,(#game.hand-1)*106+160))
+ local trayX=630-trayW/2
+ H.panel(trayX,450,trayW,177,T.colors.gold)
+ g.setColor(.17,.105,.053,.18);g.rectangle("fill",trayX+24,478,trayW-48,124,6)
  H.panel(1027,467,237,230)
- H.well(1041,477,209,34,T.colors.gold)
  H.title("KHO BÀI",1048,482,195,UI.fonts.bookChapter or UI.fonts.small,T.colors.gold,"center")
- H.well(1039,528,85,58,T.colors.gold)
- H.well(1039,593,85,58,T.colors.gold)
- C.text("Còn lại",1043,539,86,UI.fonts.tiny,T.colors.muted)
- C.text(#game.deck,1043,557,80,UI.fonts.medium,T.colors.text)
- C.text("Đã bỏ",1043,598,80,UI.fonts.tiny,T.colors.muted)
- C.text(#game.discardPile,1043,616,80,UI.fonts.medium,T.colors.text)
- C.text("Nhấn chồng bài để xem",1043,675,199,UI.fonts.tiny,T.colors.muted)
+ C.color(T.colors.gold,.23);g.line(1044,513,1247,513)
+ C.text("ĐÃ BỎ",1044,542,80,UI.fonts.tiny,T.colors.muted,"center")
+ H.title(#game.discardPile,1044,565,80,UI.fonts.medium,T.colors.text,"center")
+ C.text("Còn / Tổng",1140,514,115,UI.fonts.tiny,T.colors.muted,"center")
+ local mx,my=UI.virtualMouseX or -1,UI.virtualMouseY or -1
+ if mx>=1140 and mx<=1255 and my>=535 and my<=695 then
+  C.text("Nhấn để xem bộ bài",1044,653,80,UI.fonts.tiny,T.colors.goldDim,"center")
+ end
  g.pop()
 end
 function H.button(UI,b,mx,my,pressed,shortcut)

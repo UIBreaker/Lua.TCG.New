@@ -1,0 +1,4 @@
+NEN real combat frame intervals (capture/encoding included, first 150ms per attack omitted)
+frames 92892 / mean 7.53ms / P95 6.91ms / P99 7.52ms / peak 456.42ms
+peak draw calls 171 / peak Niệm particles 18
+Not an isolated GPU timer or a guarantee on other hardware.

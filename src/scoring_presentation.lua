@@ -4,6 +4,7 @@ local Effects = require("src.card_effects")
 local Sound = require("src.sound")
 local Attacks = require("src.hand_attacks")
 local Feedback = require("src.combat_feedback")
+local Nen = require("src.nen_combat")
 Feel.Attacks = Attacks
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
@@ -19,9 +20,16 @@ local function append(q, kind, duration, source, index)
     q[#q + 1] = {kind = kind, duration = duration, source = source, sourceIndex = index}
 end
 
-function Feel.start(anim, result, ui, deities, initialHp, enemy, handId)
-    local attack = Attacks.new(result, anim.playedCards, ui, enemy and (enemy.targetAura or enemy.maxHp), handId)
+function Feel.start(anim, result, ui, deities, initialHp, enemy, handId,context)
+    context=context or {}
+    if not context.lab then
+        local now=love and love.timer and love.timer.getTime and love.timer.getTime() or os.clock()
+        Feel.streak=Feel.lastEnemy==enemy and now-(Feel.lastAttackTime or 0)<Nen.config.repeatAcceleration.window and (Feel.streak or 0)+1 or 0
+        Feel.lastEnemy,Feel.lastAttackTime=enemy,now;context.streak=Feel.streak
+    end
+    local attack = Attacks.new(result, anim.playedCards, ui, enemy and (enemy.targetAura or enemy.maxHp), handId,enemy,context)
     attack.cx=enemy and enemy.screenX or attack.cx
+    if attack.nen then attack.nen.snapshot.targetX=attack.cx end
     local q, t = {}, C.timing
     append(q, "ENTRY", t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
     local base = result.steps[1]
@@ -56,16 +64,22 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId)
     append(q, "FORMULA", t.formula, result.steps[#result.steps], #result.steps)
     append(q, "AURA_COUNT", t.countMin + (t.countMax - t.countMin) * intensity)
     append(q, "AURA_PEAK", t.peak)
+    if attack.nen then
+        Nen.timeline(attack,append,q)
+        for _,event in ipairs(q) do if event.kind=="ENEMY_IMPACT" then event.source=result.steps[#result.steps];event.sourceIndex=#result.steps end end
+        q[#q].duration=math.max(q[#q].duration,t.trailDelay+t.trail-q[#q-1].duration-q[#q-2].duration+C.maxFrameDt)
+    else
     append(q, "ENERGY_CONVERSION", attack.profile.timing[1])
     append(q, "ANTICIPATION", attack.profile.timing[2])
     if attack.tier >= 4 then append(q, "CONVERGENCE", attack.tier == 5 and Attacks.config.silence or Attacks.config.convergence) end
     append(q, "ATTACK", attack.profile.timing[3])
     append(q, "ENEMY_IMPACT", attack.profile.timing[4], result.steps[#result.steps], #result.steps)
     append(q, "SETTLE", math.max(attack.profile.timing[5], t.trailDelay+t.trail-attack.profile.timing[4]))
+    end
     anim.sequence = {events = q, index = 1, age = 0, time = 0, entered = false, finished = false,
         attack = attack, intensity = intensity, result = result, ui = ui, deities = deities or {},
         hp = initialHp or 0, hpTrail = initialHp or 0, hpBefore = initialHp or 0,
-        cameraAge = Attacks.config.camera.duration, damageApplied = false, energy = {}, links = {},
+        cameraAge = attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration, damageApplied = false, energy = {}, links = {},
         high = attack.tier >= 3, tickAge = 0, milestone = 1000}
     anim.displayChips, anim.displayMult, anim.displayFinalScore, anim.displayAura = 0, 0, 0, 0
     anim.displayXMult, anim.displayAuraEditionMultiplier, anim.displayFlatDamage = 1, 1, 0
@@ -218,7 +232,7 @@ local function enter(anim, ev)
         anim.stepCategory = "AURA ĐẠT ĐỈNH"
         play(s, "peak", -0.04)
         for _, card in ipairs(anim.playedCards) do Effects.triggerScorePulse(card) end
-    elseif ev.kind == "ENERGY_CONVERSION" then
+    elseif ev.kind == "ENERGY_CONVERSION" or ev.kind=="CARD_TRANSFORMATION" then
         anim.stepCategory, anim.stepLog = "CHUYỂN HÓA NĂNG LƯỢNG", "Bài chuyển thành năng lượng"
         for i,card in ipairs(anim.playedCards) do
             anim.cardTransform[i] = 0
@@ -226,13 +240,20 @@ local function enter(anim, ev)
         end
         -- Hand charge hook owns this beat.
     elseif ev.kind == "CONVERGENCE" then anim.stepCategory = "HỘI TỤ NĂNG LƯỢNG"
+    elseif ev.kind == "PREPARE" then
+        anim.stepCategory="CHUẨN BỊ TUYỆT KỸ"
+        if s.attack.nen then anim.stepLog=s.attack.nen.profile.name end
+    elseif ev.kind == "NEN_AWAKENING" then anim.stepCategory="NIỆM THỨC TỈNH"
+    elseif ev.kind == "CHARGE" then anim.stepCategory="NÉN NIỆM"
+    elseif ev.kind == "RELEASE" or ev.kind=="TRAVEL" then anim.stepCategory="THI TRIỂN TUYỆT KỸ"
+    elseif ev.kind == "AFTERSHOCK" then anim.stepCategory="DƯ CHẤN NIỆM"
     elseif ev.kind == "ANTICIPATION" then anim.stepCategory = "TÍCH NĂNG"
     elseif ev.kind == "ATTACK" then
         anim.stepCategory, anim.stepLog = "PHÓNG NĂNG LƯỢNG", "Năng lượng lao vào quái"
         -- Hand release hook owns this beat.
     elseif ev.kind == "ENEMY_IMPACT" then
         s.cameraAge = 0
-        anim.hitStop = s.attack.profile.hitStop[s.attack.tier]
+        anim.hitStop = s.attack.nen and (s.attack.nen.reducedMotion and .015 or Nen.config.hitStop[s.attack.nen.tier]) or s.attack.profile.hitStop[s.attack.tier]
         -- Impact illumination belongs to the world renderer, preserving sharp UI.
         anim.stepCategory, anim.stepLog = "ĐÁNH TRÚNG", "Năng lượng chạm quái"
         -- Hand impact hook owns this beat.
@@ -260,6 +281,13 @@ function Feel.skipOrFastForward(anim)
 end
 
 function Feel.isFinished(anim) return anim.sequence and anim.sequence.finished end
+function Feel.cancel(anim)
+    local s=anim and anim.sequence
+    if not s then return end
+    Nen.cancel(s.attack);s.finished=true;s.index=#s.events+1;s.links={}
+    s.cameraAge=Nen.config.camera.duration+.1
+    anim.hitStop=0;anim.cardTransform={}
+end
 
 function Feel.update(anim, dt, fast)
     local s = anim.sequence
@@ -267,7 +295,7 @@ function Feel.update(anim, dt, fast)
     local speed = s.forward and C.speed.forward or (fast and C.speed.fast or C.speed.normal)
     dt = clamp(dt, 0, C.maxFrameDt) * speed
     s.time = s.time + dt
-    s.cameraAge = math.min(Attacks.config.camera.duration, s.cameraAge + dt)
+    s.cameraAge = math.min(s.attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration, s.cameraAge + dt)
     for i = #s.links, 1, -1 do
         local p = s.links[i]
         p.age = p.age + dt
@@ -311,12 +339,14 @@ function Feel.update(anim, dt, fast)
                 anim.bounceScale.score = 1.08 + s.intensity * 0.10
                 repeat s.milestone = s.milestone * 10 until anim.displayAura < s.milestone
             end
-        elseif ev.kind == "ENERGY_CONVERSION" then
+        elseif ev.kind == "ENERGY_CONVERSION" or ev.kind=="CARD_TRANSFORMATION" then
             for i in ipairs(anim.playedCards) do
                 local order = s.attack.sources[i].order
                 local stagger = s.attack.profile.id == "straight" and (order-1)*0.09 or 0
                 anim.cardTransform[i] = clamp((p-stagger)/(1-stagger),0,1)*0.42
             end
+        elseif ev.kind=="CHARGE" or ev.kind=="RELEASE" or ev.kind=="TRAVEL" then
+            for i in ipairs(anim.playedCards) do anim.cardTransform[i]=.42 end
         end
         if s.age < ev.duration then break end
         if ev.kind == "TRIGGER" or ev.kind == "BASE_DAMAGE" or ev.kind == "BASE_ENHANCE" or ev.kind == "FORMULA" then
@@ -334,7 +364,16 @@ function Feel.damageApplied(anim, hp, actualDamage)
     s.damageApplied, s.hpAge, s.hpTarget, s.actualDamage = true, 0, math.max(0, hp), actualDamage
     anim.damageDealt = actualDamage
     if actualDamage > 0 then
-        Feedback.add(anim.floatingTexts, "damage", actualDamage, s.attack.cx or s.ui.BATTLE_CENTER_X, 214, s.ui.formatNumber)
+        local nen=s.attack.nen
+        local x=s.attack.cx or s.ui.BATTLE_CENTER_X
+        -- Leave the contact silhouette visible while keeping damage beside the target.
+        if nen then x=math.max(390,math.min(840,x+(x>700 and -142 or 142))) end
+        local text=Feedback.add(anim.floatingTexts, "damage", actualDamage, x, nen and 204 or 214, s.ui.formatNumber)
+        if nen then
+            text.tier=nen.reducedMotion and 1 or ({1,3,4})[nen.tier]
+            text.label=Nen.config.tierNames[nen.tier]
+            text.maxLife=1.1+nen.tier*.1;text.life=text.maxLife
+        end
     else
         anim.floatingTexts[#anim.floatingTexts+1] = {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},
             x=s.attack.cx or s.ui.BATTLE_CENTER_X,y=232,alpha=1.6}
@@ -344,6 +383,7 @@ end
 function Feel.camera(anim)
     local s = anim.sequence
     if not s then return 0, 0 end
+    if s.attack.nen then return Nen.camera(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local amount = 0.5 + Attacks.config.camera.maxKick * s.intensity
     local decay = math.exp(-7*p)*(1-p)
@@ -356,6 +396,7 @@ end
 function Feel.enemyReaction(anim)
     local s = anim.sequence
     if not s then return 0, 1, 0 end
+    if s.attack.nen then return Nen.reaction(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2
     local force=s.attack.tier>1 and s.intensity or 0.12
@@ -419,7 +460,7 @@ end
 
 function Feel.drawWorld(anim, ui)
     local s = anim.sequence
-    if not s then return end
+    if not s or s.finished then return end
     local ev = s.events[s.index]
     if not ev then return end
     Attacks.draw(s.attack, ev.kind, clamp(s.age/ev.duration,0,1), s.impactDispatched and s.cameraAge or nil)
@@ -428,6 +469,7 @@ end
 function Feel.drawDim(anim)
     local s = anim.sequence
     if not s or not s.high or s.finished then return end
+    if s.attack.nen and s.attack.nen.reducedMotion then return end
     local ev = s.events[s.index]
     if ev and (ev.kind == "AURA_COUNT" or ev.kind == "AURA_PEAK" or ev.kind == "ENERGY_CONVERSION"
         or ev.kind == "CONVERGENCE" or ev.kind == "ANTICIPATION") then
@@ -455,14 +497,38 @@ end
 -- Isolated developer scene: never borrows or mutates the current run.
 function Feel.labKeypressed(key, ui)
     if key == C.debugKey then Feel.debug = not Feel.debug; return true end
-    if key == C.labKey then Feel.labOpen = not Feel.labOpen; return true end
+    if key == C.labKey then
+        Feel.labOpen = not Feel.labOpen
+        if Feel.labOpen and not Feel.labAnim then Feel.labHand=1;Feel.labKeypressed("1",ui) end
+        return true
+    end
     if not Feel.labOpen then return false end
     if key == "escape" then Feel.labOpen = false
-    elseif key == "r" then Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
+    elseif key=="n" then
+        Feel.labFilter=((Feel.labFilter or 0)+1)%7
+        for index,id in ipairs(Attacks.config.labOrder) do
+            if Feel.labFilter==0 or Nen.config.hands[id].nenType==Nen.config.types[Feel.labFilter].id then Feel.labHand=index;break end
+        end
+        Feel.labKeypressed("r",ui)
+    elseif key == "r" then
+        local keep=Feel.labKeepAura;Feel.labKeepAura=true
+        Feel.labKeypressed(tostring(Feel.labTier or 3), ui);Feel.labKeepAura=keep
     elseif key == "right" or key == "left" then
-        Feel.labHand = ((Feel.labHand or 1)-1+(key == "right" and 1 or -1))%#Attacks.config.labOrder+1
+        repeat
+            Feel.labHand = ((Feel.labHand or 1)-1+(key == "right" and 1 or -1))%#Attacks.config.labOrder+1
+        until not Feel.labFilter or Feel.labFilter==0 or Nen.config.hands[Attacks.config.labOrder[Feel.labHand]].nenType==Nen.config.types[Feel.labFilter].id
         Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
     elseif key == "tab" then Feel.labFast = not Feel.labFast
+    elseif key=="q" then
+        local R=require("render.renderer");R.setQuality(({LOW="MEDIUM",MEDIUM="HIGH",HIGH="LOW"})[R.quality or "HIGH"])
+    elseif key=="b" then Feel.labBossSize=((Feel.labBossSize or 2)%3)+1
+    elseif key=="l" then Feel.labSlow=not Feel.labSlow
+    elseif key=="t" then Feel.labTimeline=not Feel.labTimeline
+    elseif key=="v" then Feel.labAnchor=not Feel.labAnchor
+    elseif key=="m" then Feel.labReduced=not Feel.labReduced;Feel.labKeypressed("r",ui)
+    elseif key=="=" or key=="-" then
+        Feel.labAura=math.max(1,(Feel.labAura or 1000)*(key=="=" and 1.5 or 1/1.5))
+        Feel.labKeepAura=true;Feel.labKeypressed("r",ui);Feel.labKeepAura=nil
     elseif key == "space" and Feel.labAnim then Feel.skipOrFastForward(Feel.labAnim)
     else
         local index = tonumber(key)
@@ -470,9 +536,12 @@ function Feel.labKeypressed(key, ui)
             local Deck = require("src.deck")
             Feel.labTier = index
             local id = Attacks.config.labOrder[Feel.labHand or 1]
-            local ratios = {0.25,0.75,1.5,3,5}
-            local aura = 10 ^ (index + 1) -- Existing tier-key compatibility.
-            local target = aura/ratios[index]
+            local ready=Nen.config.hands[id].ready
+            if ready then index=math.min(3,index);Feel.labTier=index end
+            local ratios = ready and {.25,1,2.5} or {0.25,0.75,1.5,3,5}
+            local target=Feel.labReference or 1000
+            local aura = Feel.labKeepAura and Feel.labAura or target*ratios[index]
+            Feel.labAura=aura
             local presets = {
                 high_card={14},pair={8,8},two_pair={8,8,11,11},three_of_a_kind={8,8,8},
                 straight={7,8,9,10,11},flush={2,5,8,11,14},full_house={8,8,8,11,11},
@@ -490,7 +559,8 @@ function Feel.labKeypressed(key, ui)
             steps[#steps+1] = {type="deity_hand", addedChips=0, addedMult=0, xMult=aura/100,
                 resultingChips=100, resultingMult=aura/100, message="SPN thử: ×" .. aura/100}
             steps[#steps+1] = {type="final_score", finalScore=aura}
-            Feel.start(a, {steps=steps, totalChips=100, totalMult=aura/100, rawScore=aura, finalScore=aura}, ui, {}, aura*1.2, {targetAura=target}, id)
+            Feel.start(a, {steps=steps, totalChips=100, totalMult=aura/100, rawScore=aura, finalScore=aura}, ui, {}, aura*1.2, {targetAura=target}, id,
+                {lab=true,reducedMotion=Feel.labReduced==true})
             Feel.labAnim = a
         end
     end
@@ -501,7 +571,8 @@ function Feel.updateLab(dt)
     if Feel.labOpen and Feel.labAnim then
         local a = Feel.labAnim
         if (a.hitStop or 0)>0 then a.hitStop=math.max(0,a.hitStop-dt);return end
-        if Feel.update(a, dt, Feel.labFast) then Feel.damageApplied(a, a.sequence.hpBefore - a.sequence.result.finalScore, a.sequence.result.finalScore) end
+        a.sequence.attack.quality=string.lower(require("render.renderer").quality or "HIGH")
+        if Feel.update(a, dt*(Feel.labSlow and .25 or 1), Feel.labFast) then Feel.damageApplied(a, a.sequence.hpBefore - a.sequence.result.finalScore, a.sequence.result.finalScore) end
         for i=#a.floatingTexts,1,-1 do
             local ft=a.floatingTexts[i]
             if ft.kind then Feedback.update(ft,dt) else ft.alpha=math.max(0,ft.alpha-dt*1.1) end
@@ -516,11 +587,15 @@ function Feel.drawLab(ui)
     g.push("all")
     g.setColor(0.035, 0.055, 0.07, 1); g.rectangle("fill", 0, 0, 1280, 720)
     g.setColor(1, 0.80, 0.40, 1); g.setFont(ui.fonts.medium)
-    g.print("HAND VFX LAB — 1..5: NORMAL / STRONG / POWERFUL / EXTREME / TRANSCEND", 255, 32)
-    g.setFont(ui.fonts.small); g.print("←/→: 27 thế • R: replay • Tab: Normal/Fast • Space: forward • F6/Esc: đóng", 255, 64)
+    g.print("TERRA SUIT / NIỆM LAB — 1..3: BÌNH THƯỜNG / MẠNH / CỰC MẠNH", 255, 25)
+    g.setFont(ui.fonts.small); g.print("←/→: thế • N: lọc hệ • R: replay • Tab: Fast • Q: quality • L: chậm • Space: skip", 255, 54)
+    g.print("B: cỡ boss • +/-: AURA • M: giảm chuyển động • T: timeline • V: tâm mục tiêu • F6: đóng",255,78)
     local a = Feel.labAnim
     if a then
-        ui.components.HandInfoPanel.draw({handName=a.sequence.attack.profile.name .. " / " .. Attacks.config.tierNames[a.sequence.attack.tier], scoring=true, chips=a.displayChips, mult=a.displayMult,
+        local attack=a.sequence.attack;local nen=attack.nen;local profile=Nen.config.hands[attack.profile.id]
+        local tierName=nen and Nen.config.tierNames[nen.tier] or Attacks.config.tierNames[attack.tier]
+        local name=nen and profile.name or attack.profile.name
+        ui.components.HandInfoPanel.draw({handName=name .. " / " .. tierName, scoring=true, chips=a.displayChips, mult=a.displayMult,
             aura=a.displayAura, chipsBounce=a.bounceScale.chips, multBounce=a.bounceScale.mult,
             auraBounce=a.bounceScale.score, category=a.stepCategory,
             detail=a.stepLog, enemyName="Mục tiêu thử"}, ui.fonts, ui.formatNumber)
@@ -528,8 +603,13 @@ function Feel.drawLab(ui)
         require("ui.components.health_bar").draw(ui.BATTLE_CENTER_X-90,178,180,18,a.sequence.hp,a.sequence.hpBefore,
             {variant="red",font=ui.fonts.tiny,trailValue=a.sequence.hpTrail,
                 label=ui.formatNumber(math.max(0,math.floor(a.sequence.hp))).." / "..ui.formatNumber(a.sequence.hpBefore)})
+        g.push("all")
+        local cameraX,cameraY=Feel.camera(a);g.translate(cameraX,cameraY)
+        local framing=nen and not nen.reducedMotion and Nen.config.camera.zoom[nen.tier]*(a.sequence.impactDispatched and 1-clamp(a.sequence.cameraAge/(Nen.config.camera.duration+.1),0,1) or nen.charge) or 0
+        g.translate(ui.BATTLE_CENTER_X,270);g.scale(1+framing);g.translate(-ui.BATTLE_CENTER_X,-270)
         g.setColor(0.24+flash*0.5,0.36+flash*0.3,0.43+flash*0.2,1)
-        g.ellipse("fill", ui.BATTLE_CENTER_X, 265+offset, 43*squash, 56/squash)
+        local bossSize=({.75,1,1.35})[Feel.labBossSize or 2]
+        g.ellipse("fill", ui.BATTLE_CENTER_X, 265+offset, 43*squash*bossSize, 56/squash*bossSize)
         Feel.drawDim(a)
         for i, card in ipairs(a.playedCards) do
             local progress = (a.cardTransform[i] or 0) / 0.42
@@ -547,11 +627,31 @@ function Feel.drawLab(ui)
                 card.alpha = oldAlpha
             end
         end
-        Feel.drawWorld(a,ui); Feel.draw(a,ui)
+        Feel.drawWorld(a,ui);g.pop(); Feel.draw(a,ui)
         for _,text in ipairs(a.floatingTexts) do
             Feedback.draw(text,ui)
         end
         Feel.drawDebug(a,ui)
+        g.setShader();g.setBlendMode("alpha");g.setFont(ui.fonts.small);g.setColor(.8,.86,.92,1)
+        local typeName
+        for _,kind in ipairs(Nen.config.types) do if kind.id==profile.nenType then typeName=kind.name;break end end
+        local stats=g.getStats and g.getStats() or {}
+        g.print(string.format("%s / %s / %s / AURA %s / ratio %.2f / particles %d / draw %d",typeName,
+            nen and "NIỆM" or "VFX HIỆN TẠI",require("render.renderer").quality or "HIGH",ui.formatNumber(Feel.labAura or 0),
+            nen and nen.ratio or attack.ratio,nen and nen.particleCount or 0,stats.drawcalls or 0),255,578)
+        if Feel.labAnchor then
+            g.setColor(1,.6,.3,.8);g.setLineWidth(1);g.line(attack.cx-18,270,attack.cx+18,270);g.line(attack.cx,252,attack.cx,288)
+        end
+        if Feel.labTimeline then
+            local x=255;local count=#a.sequence.events
+            for i,event in ipairs(a.sequence.events) do
+                local w=720/count;g.setColor(i<a.sequence.index and .35 or .12,i==a.sequence.index and .82 or .26,.44,1)
+                g.rectangle("fill",x+(i-1)*w,612,w-2,14)
+            end
+            local event=a.sequence.events[a.sequence.index]
+            g.setColor(.85,.9,.96,1);g.print(string.format("%s / %.2fs / %s",event and event.kind or "DONE",a.sequence.time,
+                nen and nen.variant.choreography or attack.profile.projectile),255,638)
+        end
     end
     g.pop()
 end

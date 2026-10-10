@@ -175,7 +175,10 @@ function Capture.update(gameRef, callbacks)
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-hand-vfx-combat" then return require("tests.hand_vfx_combat_capture").update(gameRef, callbacks) end
-        if value == "--test-hand-vfx" then return require("tests.hand_vfx_capture").update() end
+        if value == "--test-hand-vfx" then
+            for _,option in ipairs(arg or {}) do if option=="--nen-lab" then return require("tests.nen_lab_capture").update() end end
+            return require("tests.hand_vfx_capture").update()
+        end
         if value == "--test-hd2d" then return require("tests.hd2d_capture").update(gameRef, callbacks) end
     end
     if backCropOnly then return require("tests.card_back_crop").update() end

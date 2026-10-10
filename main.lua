@@ -247,6 +247,7 @@ local settings = {
     debugEnabled = false,
     graphicsQuality = Touch.lowPower and "LOW" or "HIGH",
     cinematicEnabled = true,
+    reducedMotion = false,
 }
 
 local function saveSettings()
@@ -811,6 +812,7 @@ local function getMaxSelectableCards()
 end
 
 local function initializeCombat(monster, round)
+    UI.ScoringFeel.cancel(anim)
     local result = Combat.start(game, monster, round)
     if result.slaughterChips > 0 then
         table.insert(anim.floatingTexts, {
@@ -2037,7 +2039,8 @@ local function playSelectedHand()
         anim.particles, anim.fireParticles = {}, {}
         anim.impactFlash, anim.hitStop, anim.screenFlash, anim.screenDistortion = 0, 0, 0, 0
         anim.energyVolleyPending, anim.exitProgress, anim.exitStarted = 0, 0, false
-        UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring, game.monster)
+        UI.ScoringFeel.start(anim, scoreResult, UI, game.deities, anim.hpBeforeScoring, game.monster,evalResult.type.id,
+            {enemies=EnemyGroup.members(game),reducedMotion=settings.reducedMotion})
         anim.entryCompleteAt = UI.ScoringFeel.config.timing.lift + UI.ScoringFeel.config.timing.travel
             + math.max(0, #playedCards - 1) * UI.ScoringFeel.config.timing.stagger
 
@@ -2223,6 +2226,7 @@ function love.load()
     require("ui.collection_book").prepare(mainCanvas)
     Renderer.config.enabled = settings.cinematicEnabled
     Renderer.crtEnabled = settings.crtEnabled
+    require("src.nen_combat").reducedMotion=settings.reducedMotion==true
     Renderer.load(battleArt, settings.graphicsQuality)
     UI.BedExplosion.load()
     DeathVFX.load()
@@ -2838,15 +2842,18 @@ function love.update(dt)
                     local advance=game.advancedFeedback
                     if advance then
                         for i,entry in ipairs({{"heal",advance.heal},{"armor",advance.armor},{"gold",advance.gold},{"speed",advance.speed}}) do
-                            if entry[2]>0 then local ft=Feedback.add(anim.floatingTexts,entry[1],entry[2],UI.BATTLE_CENTER_X+132,230+i*34,UI.formatNumber);ft.label=advance.name end
+                            if entry[2]>0 then Feedback.add(anim.floatingTexts,entry[1],entry[2],UI.BATTLE_CENTER_X+220,326+i*40,UI.formatNumber) end
                         end
                         game.advancedFeedback=nil
                     end
                     require("src.spn_anomalies").showFeedback(game,anim)
-                    for _, hit in ipairs(splashHits) do
+                    for hitIndex, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
-                        local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
+                        local y=214
+                        if hit.advanced then x=math.max(390,math.min(840,x+(x>700 and 142 or -142)));y=208+(hitIndex-1)*40 end
+                        local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, y, UI.formatNumber)
                         ft.label = hit.deity.name .. (hit.advanced and "" or hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
+                        if hit.advanced then ft.compact=true;ft.label="SÉT "..hitIndex;ft.maxLife=.85;ft.life=ft.maxLife end
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
                         if hit.slotIndex then anim.deityBounce[hit.slotIndex] = 1.15 end
@@ -3244,7 +3251,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.121.0", 48, 185)
+    g.print("beta 0.122.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -5816,7 +5823,7 @@ local function drawSettingsModal()
 
     -- Separate visual controls preserve all established settings hit regions.
     local visualX, visualY = modalX + modalW + 14, modalY + 70
-    UI.drawGildedPanel(visualX, visualY, 220, 208)
+    UI.drawGildedPanel(visualX, visualY, 220, 253)
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf("THẾ GIỚI ĐIỆN ẢNH", visualX + 12, visualY + 16, 196, "center")
@@ -5824,12 +5831,14 @@ local function drawSettingsModal()
         x=visualX+12,y=visualY+52,w=196,h=34,font=UI.fonts.small}
     local cinemaButton = {id="setting_cinematic", text=settings.cinematicEnabled and "HIỆU ỨNG: BẬT" or "HIỆU ỨNG: TẮT",
         x=visualX+12,y=visualY+98,w=196,h=34,font=UI.fonts.small}
-    for _,btn in ipairs({qualityButton,cinemaButton}) do
+    local motionButton = {id="setting_reduced_motion",text=settings.reducedMotion and "GIẢM CHUYỂN ĐỘNG: BẬT" or "GIẢM CHUYỂN ĐỘNG: TẮT",
+        x=visualX+12,y=visualY+144,w=196,h=34,font=UI.fonts.small}
+    for _,btn in ipairs({qualityButton,cinemaButton,motionButton}) do
         buttons[#buttons+1]=btn
         UI.drawButton(btn,mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
     end
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("F1: kiểm tra render\nUI luôn sắc nét",visualX+12,visualY+151,196,"center")
+    love.graphics.printf("F1: kiểm tra render\nUI luôn sắc nét",visualX+12,visualY+197,196,"center")
 
     -- 1. SFX Volume Option
     local row1Y = modalY + 80
@@ -7206,6 +7215,12 @@ local function handleModalsMousepressed(mx, my, button)
                         local nextQuality = {LOW="MEDIUM",MEDIUM="HIGH",HIGH="LOW"}
                         settings.graphicsQuality = nextQuality[Renderer.quality]
                         Renderer.setQuality(settings.graphicsQuality)
+                        saveSettings()
+                        Sound.play("ui_click")
+                        return true
+                    elseif btn.id == "setting_reduced_motion" then
+                        settings.reducedMotion = not settings.reducedMotion
+                        require("src.nen_combat").reducedMotion=settings.reducedMotion
                         saveSettings()
                         Sound.play("ui_click")
                         return true

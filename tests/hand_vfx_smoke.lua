@@ -53,6 +53,7 @@ for index,id in ipairs(A.config.order) do
     for _,quality in ipairs({"low","medium","high"}) do
         for tier=1,5 do
             local a=A.new({steps={{}},finalScore=100},cards,ui,100,id)
+            a.nen=nil -- Legacy path geometry; Niệm continuity is checked in nen_vfx_smoke.
             a.quality,a.tier=quality,tier
             local n=a.profile.blades and math.min(a.profile.blades[tier],A.config.quality[quality]) or (id=="high_card" and 1 or (id=="full_house" and 2 or #cards))
             A.enter(a,"ENERGY_CONVERSION");A.update(a,"ENERGY_CONVERSION",1)
@@ -96,6 +97,7 @@ for _,h in ipairs(require("src.advanced_hands").ordered) do
     for i,rank in ipairs({2,4,6,8,10}) do cards[i]=D.newCard(rank,"spades") end
     for _,quality in ipairs({"low","medium","high"}) do for tier=1,5 do
         local a=A.new({steps={{}},finalScore=100},cards,ui,100,h.id)
+        a.nen=nil
         a.quality,a.tier=quality,tier
         local n=math.min(a.profile.blades and a.profile.blades[tier] or a.profile.emitters,A.config.quality[quality])
         A.enter(a,"ENERGY_CONVERSION");A.update(a,"ENERGY_CONVERSION",1)
@@ -125,7 +127,8 @@ print("Advanced VFX continuity: "..advancedCases.." hand/tier/quality cases; uni
 F.labOpen=true
 for index,id in ipairs(A.config.labOrder) do for tier=1,5 do
     F.labHand=index;F.labKeypressed(tostring(tier),ui)
-    assert(F.labAnim.sequence.attack.profile.id==id and F.labAnim.sequence.attack.tier==tier)
+    local attack=F.labAnim.sequence.attack
+    assert(attack.profile.id==id and (attack.nen and attack.nen.tier==math.min(3,tier) or not attack.nen and attack.tier==tier))
 end end
 F.labOpen=false
-print("All 27 isolated VFX Lab previews / all 5 tiers passed")
+print("All 27 isolated VFX Lab previews / 3 Nen tiers (legacy keys clamped) passed")

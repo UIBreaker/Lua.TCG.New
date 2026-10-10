@@ -1,6 +1,7 @@
 local Sound = {}
 local Catalog = require("config.audio_catalog")
 local pools, voices, loops, failed, lastPlayed, variations = {}, {}, {}, {}, {}, {}
+local proceduralCues={}
 local volumes = {master=1, sfx=.8, music=.8, ambience=.65}
 local enabled, focused = false, true
 local duck, quietRemaining = 1, 0
@@ -48,6 +49,7 @@ function Sound.init()
     Sound.stopAll()
     for _,pool in pairs(pools) do for _,source in ipairs(pool) do release(source) end end
     pools, failed, lastPlayed, variations = {}, {}, {}, {}
+    proceduralCues={}
     enabled = love and love.audio and love.audio.newSource ~= nil or false
     if not enabled then return false end
     local complete = true
@@ -65,8 +67,19 @@ function Sound.init()
             print("[Sound] Missing cue "..name..": "..tostring(source))
         end
     end
+    require("src.nen_audio").register(Sound)
     Sound.setMasterVolume(volumes.master)
     return complete
+end
+function Sound.registerProcedural(name,data,cue)
+    if not enabled then return false end
+    local ok,source=pcall(love.audio.newSource,data,"static")
+    if not ok then failed[name]=tostring(source);return false end
+    if pools[name] then for _,s in ipairs(pools[name]) do release(s) end end
+    local pool={source}
+    for i=2,POOL_SIZE do local success,copy=pcall(source.clone,source);if success then pool[#pool+1]=copy end end
+    pools[name]=pool;proceduralCues[name]=cue
+    return true
 end
 function Sound.setMasterVolume(value)
     volumes.master=clamp(value,1)
@@ -154,7 +167,7 @@ end
 function Sound.play(name,pitch)
     name=aliases[name] or name
     if not enabled or not focused or volumes.master<=0 or volumes.sfx<=0 then return false end
-    local pool,c=pools[name],Catalog.cues[name]
+    local pool,c=pools[name],proceduralCues[name] or Catalog.cues[name]
     if not pool or not c then return false end
     local time=now()
     if time<(Sound.quietUntil or 0) or time-(lastPlayed[name] or -math.huge)<c.cooldown then return false end

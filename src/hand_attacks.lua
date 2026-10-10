@@ -1,6 +1,7 @@
 -- Bounded procedural geometry, reused by the real scoring sequence and isolated Lab.
 local A = {config=require("config.hand_vfx_config")}
 local C=A.config
+local Nen=require("src.nen_combat")
 local clamp=function(x) return math.max(0,math.min(1,x)) end
 local mix=function(a,b,p) return a+(b-a)*p end
 local smooth=function(p) p=clamp(p);return p*p*(3-2*p) end
@@ -15,7 +16,7 @@ function A.power(aura,target)
     for _,edge in ipairs(C.auraTiers) do if ratio>=edge then tier=tier+1 end end
     return clamp(math.log(1+math.min(ratio,64))/math.log(5)),tier,ratio
 end
-function A.new(result,cards,ui,target,handId)
+function A.new(result,cards,ui,target,handId,enemy,context)
     local id=handId
     if not id then
         local name=result.steps[1].handName
@@ -41,10 +42,12 @@ function A.new(result,cards,ui,target,handId)
     for order,i in ipairs(a.rankOrder) do a.sources[i].order=order end
     for _,s in ipairs(a.sources) do s.cluster=groups[s.card.rank]>=3 and -1 or 1 end
     if id=="flush" then a.color=C.suitColors[cards[1] and cards[1].suit] or a.color end
+    Nen.attach(a,result,enemy or {targetAura=target},context)
     return a
 end
 function A.enter(a,phase)
     a.phase=phase
+    if a.nen then Nen.enter(a,phase);return end
     a.beat=0
     if phase=="ENERGY_CONVERSION" then a.charge,a.orbit=0,0;a.launch={} end
     if phase=="ATTACK" then
@@ -60,6 +63,7 @@ function A.enter(a,phase)
     if key then require("src.sound").play(a.profile.soundHooks[key],0.9+a.intensity*0.3) end
 end
 function A.update(a,phase,p)
+    if a.nen then Nen.update(a,phase,p);return end
     if phase=="ENERGY_CONVERSION" then a.charge=p*0.55
     elseif phase=="ANTICIPATION" then a.charge=0.55+p*0.45
     elseif phase=="CONVERGENCE" then a.charge=1 end
@@ -364,6 +368,7 @@ heads.crossfire=function(g,a,x,y,angle,p)
     g.setColor(a.color[1],a.color[2],a.color[3],0.6);g.circle("line",x,y,5+a.intensity*4)
 end
 function A.draw(a,phase,p,impactAge)
+    if a.nen then require("render.nen_effects").draw(a,phase,p,impactAge);return end
     local g=love.graphics
     g.push("all")
     local left,top=g.transformPoint(C.arena.left,C.arena.top)
@@ -445,6 +450,7 @@ conversions.dual_clusters=function(a,i,p) return a.sources[i].cluster*50*p,-18*p
 conversions.cardinal=function(a,i,p) local angle=(i-1)*math.pi/2;return math.cos(angle)*65*p,math.sin(angle)*65*p,p*0.3 end
 conversions.blade_fragments=function(a,i,p) local angle=i*math.pi*2/5;return math.cos(angle)*85*p,math.sin(angle)*60*p,p*(i%2==0 and 1 or -1) end
 function A.cardPose(a,i,p)
+    if a.nen then return Nen.cardPose(a,i,p) end
     local eased=smooth(p)
     local dx,dy,r=conversions[a.profile.cardConversion](a,i,eased)
     if a.profile.advanced then
@@ -456,6 +462,7 @@ function A.cardPose(a,i,p)
     return dx,dy-lift,r,math.max(0.10,1-smooth((p-0.08)/0.92)*0.9)
 end
 function A.fragments(a,i,p,x,y)
+    if a.nen then require("render.nen_effects").fragments(a,i,p,x,y);return end
     if p<=0 or p>=1 then return end
     local g=love.graphics
     local dest=i

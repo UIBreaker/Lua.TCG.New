@@ -36,6 +36,7 @@ function P.bind(preset,eventStrength,dim,crtEnabled,sequence)
     local cfg=require("config.hand_vfx_config")
     local age=sequence and sequence.cameraAge or cfg.camera.duration
     local wave=attack and attack.tier>=3 and sequence.impactDispatched and age<cfg.camera.duration
+    if attack and attack.nen then wave=not attack.nen.reducedMotion and attack.nen.tier>=2 and sequence.impactDispatched and age<cfg.camera.duration end
     local progress=math.min(1,age/cfg.camera.duration)
     shader:send("waveAspect",1/.48)
     shader:send("waveCenter",{(attack and attack.cx or 635)/1280,cfg.arena.targetY/720})

@@ -87,8 +87,8 @@ Feel.labKeypressed("f6",ui)
 for key=1,5 do
     Feel.labKeypressed(tostring(key),ui)
     for frame=1,1500 do Feel.updateLab(1/120); if Feel.isFinished(Feel.labAnim) then break end end
-    assert(Feel.isFinished(Feel.labAnim) and Feel.labAnim.sequence.actualDamage==10^(key+1))
+    assert(Feel.isFinished(Feel.labAnim) and Feel.labAnim.sequence.actualDamage==Feel.labAura)
 end
 Feel.labKeypressed("escape",ui)
 assert(not Feel.labOpen)
-print("Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all five Lab presets passed")
+print("Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all three Nen Lab tiers passed")

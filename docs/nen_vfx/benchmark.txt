@@ -1,0 +1,4 @@
+Native HIGH Lab / all 81 variants / Normal+Fast / no screenshots or encoding
+22776 frames after 1s Lab startup and 120ms per-case warm-up / mean 6.06ms / P95 6.79ms / P99 7.06ms / peak 9.39ms
+frames over 16.67ms: 0 / peak draw calls 236 / peak particles 18
+Frame intervals include game/UI/audio on this host, not an isolated GPU timer or a hardware guarantee.

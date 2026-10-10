@@ -26,6 +26,7 @@ end
 function R.load(art, quality)
     Scene.load(art); Scene.update(0,"menu")
     Post.load(); Lighting.load(); Entity.load(); R.depthShader=Post.shaders.depth
+    require("render.nen_effects").load()
     R.setQuality(quality)
     local ok,canvas=pcall(love.graphics.newCanvas,1920,1080)
     R.transitionCanvas=ok and canvas or nil; R.transitionAge=C.transition.duration
@@ -37,23 +38,26 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
     Scene.update(dt,state,monster)
     local event=state=="scoring" and sequence and sequence.events[sequence.index]
     local kind=event and event.kind
-    local bossFocus=kind=="AURA_PEAK" or kind=="ANTICIPATION" or kind=="ATTACK" or kind=="ENEMY_IMPACT"
+    local bossFocus=kind=="AURA_PEAK" or kind=="ANTICIPATION" or kind=="CHARGE" or kind=="RELEASE" or kind=="TRAVEL" or kind=="ATTACK" or kind=="ENEMY_IMPACT"
     local cardsFocus=kind=="ENTRY" or kind=="TRIGGER" or kind=="AURA_COUNT"
     local intensity=sequence and sequence.intensity or 0.3
     local handAttack=event and sequence.attack
+    local nen=handAttack and handAttack.nen
+    local reduced=nen and nen.reducedMotion
     R.attackSequence=handAttack and sequence or nil
     if handAttack then handAttack.quality=string.lower(R.quality) end
     
     local target=bossFocus and intensity or cardsFocus and intensity*0.3 or 0
     local response=1-math.exp(-8*math.min(dt,0.1))
     R.eventStrength=R.eventStrength+(target-R.eventStrength)*response
-    Scene.attackPulse=handAttack and handAttack.tier>=4 and R.eventStrength or 0
+    Scene.attackPulse=handAttack and not reduced and (nen and nen.tier==3 or not nen and handAttack.tier>=4) and R.eventStrength or 0
     local dimTarget=event and kind~="SETTLE" and 0.10 or 0
     if handAttack then dimTarget=handAttack.tier>=3 and (0.05+0.05*intensity) or 0 end
+    if nen then dimTarget=not reduced and nen.tier==3 and (handAttack.profile.id=="eclipse_duality" and .10 or .045) or 0 end
     if kind=="SETTLE" then dimTarget=0 end
     R.dim=R.dim+(dimTarget-R.dim)*response
     if kind~=R.lastEvent and kind=="ENEMY_IMPACT" then
-        Lighting.flash(630,270,handAttack and handAttack.color or C.palette.magic,0.22+intensity*0.25,0.24)
+        Lighting.flash(handAttack and handAttack.cx or 630,270,handAttack and handAttack.color or C.palette.magic,reduced and .09 or .22+intensity*0.25,0.24)
     end
     if (attack or 0)>0.8 and (R.lastAttack or 0)<=0.8 then
         Lighting.flash(630,285,C.palette.danger,0.22,0.30)
@@ -67,12 +71,13 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
     R.lastReward=rewardState
     Lighting.setAmbient(Scene.preset.ambientColor); Lighting.update(dt)
     local zoom=bossFocus and (handAttack and require("config.hand_vfx_config").camera.zoom*(handAttack.tier>=3 and intensity or 0) or C.camera.zoom) or (attack or 0)*C.camera.attackZoom
-    Camera.focus(C.enabled and bossFocus and C.camera.focusX or 0,C.enabled and (bossFocus and C.camera.focusY or cardsFocus and 3) or 0,
+    if nen then zoom=not reduced and bossFocus and require("config.nen_vfx_config").camera.zoom[nen.tier] or 0 end
+    Camera.focus(C.enabled and not reduced and bossFocus and C.camera.focusX or 0,C.enabled and not reduced and (bossFocus and C.camera.focusY or cardsFocus and 3) or 0,
         C.enabled and 1+zoom or 1)
     local collapse=death and death.kind=="player" and death.cardProgress() or 0
     Lighting.presentationDim=collapse*(death and death.config.player.torchDim or 0)
     if collapse>0 and C.enabled then Camera.focus(0,death.config.player.drift*collapse,1+death.config.player.zoom*collapse) end
-    Camera.update(dt,C.enabled and Scene.preset.cameraIdle or 0,C.enabled and impulseX or 0,C.enabled and impulseY or 0)
+    Camera.update(dt,C.enabled and not reduced and Scene.preset.cameraIdle or 0,C.enabled and not reduced and impulseX or 0,C.enabled and not reduced and impulseY or 0)
 end
 function R.beginFrame(previousFrame)
     if not R.transitionPending then return end

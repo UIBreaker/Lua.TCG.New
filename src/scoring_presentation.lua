@@ -460,7 +460,7 @@ function Feel.labKeypressed(key, ui)
     if key == "escape" then Feel.labOpen = false
     elseif key == "r" then Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
     elseif key == "right" or key == "left" then
-        Feel.labHand = ((Feel.labHand or 1)-1+(key == "right" and 1 or -1))%#Attacks.config.order+1
+        Feel.labHand = ((Feel.labHand or 1)-1+(key == "right" and 1 or -1))%#Attacks.config.labOrder+1
         Feel.labKeypressed(tostring(Feel.labTier or 3), ui)
     elseif key == "tab" then Feel.labFast = not Feel.labFast
     elseif key == "space" and Feel.labAnim then Feel.skipOrFastForward(Feel.labAnim)
@@ -469,7 +469,7 @@ function Feel.labKeypressed(key, ui)
         if index and index >= 1 and index <= 5 then
             local Deck = require("src.deck")
             Feel.labTier = index
-            local id = Attacks.config.order[Feel.labHand or 1]
+            local id = Attacks.config.labOrder[Feel.labHand or 1]
             local ratios = {0.25,0.75,1.5,3,5}
             local aura = 10 ^ (index + 1) -- Existing tier-key compatibility.
             local target = aura/ratios[index]
@@ -479,7 +479,7 @@ function Feel.labKeypressed(key, ui)
                 four_of_a_kind={8,8,8,8},straight_flush={10,11,12,13,14},
             }
             local cards = {}
-            for i,rank in ipairs(presets[id]) do cards[i]=Deck.newCard(rank, (id=="flush" or id=="straight_flush") and "spades" or ({"spades","hearts","clubs","diamonds"})[(i-1)%4+1]) end
+            for i,rank in ipairs(presets[id] or Attacks.config.hands[id].previewCards) do cards[i]=Deck.newCard(rank, (id=="flush" or id=="straight_flush") and "spades" or ({"spades","hearts","clubs","diamonds"})[(i-1)%4+1]) end
             for i, card in ipairs(cards) do Effects.setEffect(card, ({"foil", "holographic", "polychrome"})[i]) end
             local a = {playedCards = cards, cardBounce = {}, cardHit = {}, deityBounce = {}, scoredCards = {},
                 bounceScale = {chips=1,mult=1,score=1}, displayFlatDamage=0, displayAuraEditionMultiplier=1,
@@ -517,7 +517,7 @@ function Feel.drawLab(ui)
     g.setColor(0.035, 0.055, 0.07, 1); g.rectangle("fill", 0, 0, 1280, 720)
     g.setColor(1, 0.80, 0.40, 1); g.setFont(ui.fonts.medium)
     g.print("HAND VFX LAB — 1..5: NORMAL / STRONG / POWERFUL / EXTREME / TRANSCEND", 255, 32)
-    g.setFont(ui.fonts.small); g.print("←/→: hand • R: replay • Tab: Normal/Fast • Space: forward • F6/Esc: đóng", 255, 64)
+    g.setFont(ui.fonts.small); g.print("←/→: 27 thế • R: replay • Tab: Normal/Fast • Space: forward • F6/Esc: đóng", 255, 64)
     local a = Feel.labAnim
     if a then
         ui.components.HandInfoPanel.draw({handName=a.sequence.attack.profile.name .. " / " .. Attacks.config.tierNames[a.sequence.attack.tier], scoring=true, chips=a.displayChips, mult=a.displayMult,

@@ -43,7 +43,8 @@ function F.new(kind, amount, x, y, format)
     local text = (kind == "damage" and "−" or positive and "+" or "−") .. number
     if kind == "gold" then text = text .. " VÀNG"
     elseif kind == "armor" then text = text .. " GIÁP"
-    elseif kind == "heal" then text = text .. " HP" end
+    elseif kind == "heal" then text = text .. " HP"
+    elseif kind == "speed" then text = text .. " TỐC" end
     local rewardLevel=math.abs(amount)>=100 and 4 or math.abs(amount)>=25 and 3 or math.abs(amount)>=10 and 2 or 1
     local duration = kind == "damage" and (1.25 + tier * 0.16) or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,

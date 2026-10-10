@@ -948,6 +948,7 @@ local HAND_ALIAS_MAP = {
 function UI.getHandImage(handId)
     if not handId then return nil end
     local mapped = HAND_ALIAS_MAP[handId] or handId
+    mapped=mapped:gsub("^book_", "")
     local continental=ContinentalArt.get(mapped)
     if continental then UI.illustratedImages[continental]=true;return continental end
     if UI.handImages[mapped] ~= nil then
@@ -1176,7 +1177,7 @@ function UI.localizeText(value)
         :gsub("Full House", "Cù Lũ")
         :gsub("Two Pair", "Hai Đôi")
         :gsub("Three of a Kind", "Sám Cô")
-        :gsub("High Card", "Đơn Thủ")
+        :gsub("High Card", "Kỵ Sĩ Tiên Phong")
         :gsub("Straight", "Sảnh")
         :gsub("Flush", "Thùng")
         :gsub("Pair", "Đôi")
@@ -1207,7 +1208,7 @@ function UI.getPackCardImage(packType, card)
     local canonicalId = require("src.consumable_art").id(card)
     local artwork = UI.getConsumableImage(card)
         or (packType == "arcana" and UI.getEquipmentImage(canonicalId))
-        or ((packType == "celestial" or packType == "hand_styles") and UI.getHandImage(card.handId or canonicalId))
+        or ((packType == "celestial" or packType == "hand_styles" or packType == "hand_styles_advanced") and UI.getHandImage(card.handId or canonicalId))
     if artwork then return artwork, true end
     if not UI.useLegacyPixelArt and love.graphics.newCanvas then
         local key = table.concat({ tostring(packType), tostring(card.id or card.handId or card.name or ""),

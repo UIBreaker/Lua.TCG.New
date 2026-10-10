@@ -19,6 +19,7 @@ function GameState.resetRun(game, faction)
     game.gold = 6
     game.souls = 0
     game.depthCombat = nil
+    game.advancedHand=nil;game.advancedCombat=nil;game.advancedFeedback=nil
     game.soulDestroyedIds = {}
     game.soulRerollCount = 0
     game.soulShopStock = nil
@@ -44,6 +45,7 @@ function GameState.resetRun(game, faction)
     game.unlockedHands = { high_card = true }
     game.handLevels = {}
     for _, handId in ipairs(HAND_IDS) do game.handLevels[handId] = 1 end
+    for _, h in ipairs(require("src.advanced_hands").ordered) do game.handLevels[h.id]=1 end
     game.consumables = {}
     game.backpackEquipment = {}
     game.maxConsumables = 3

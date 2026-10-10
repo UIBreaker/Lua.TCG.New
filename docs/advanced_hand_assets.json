@@ -1,0 +1,146 @@
+[
+  {
+    "id": "planet_tesla_369",
+    "handId": "tesla_369",
+    "name": "Sao Cộng Hưởng",
+    "concept": "A blue storm planet with THREE enormous lightning conductors forming a triangular orbit above a western mountain observatory. Three distinct controlled lightning arcs join its poles, antique brass coil pedestal foreground.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A blue storm planet with THREE enormous lightning conductors forming a triangular orbit above a western mountain observatory. Three distinct controlled lightning arcs join its poles, antique brass coil pedestal foreground.",
+    "file": "assets/cards/continental/planet/planet_tesla_369.png"
+  },
+  {
+    "id": "planet_jackpot_777",
+    "handId": "jackpot_777",
+    "name": "Sao Vận Mệnh",
+    "concept": "A golden planet with THREE broad intersecting orbit rings and seven large bronze star-shaped stones over a ruined western desert treasury. Single gold celestial focus, luck and prosperity, no gambling machines or text.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A golden planet with THREE broad intersecting orbit rings and seven large bronze star-shaped stones over a ruined western desert treasury. Single gold celestial focus, luck and prosperity, no gambling machines or text.",
+    "file": "assets/cards/continental/planet/planet_jackpot_777.png"
+  },
+  {
+    "id": "planet_fibonacci",
+    "handId": "fibonacci",
+    "name": "Sao Sinh Mệnh",
+    "concept": "A green living planet encircled by one elegant nautilus spiral of nebula light over a lush continental gorge, ancient root-covered observatory in foreground. Natural spiral progression, luminous seedlings.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A green living planet encircled by one elegant nautilus spiral of nebula light over a lush continental gorge, ancient root-covered observatory in foreground. Natural spiral progression, luminous seedlings.",
+    "file": "assets/cards/continental/planet/planet_fibonacci.png"
+  },
+  {
+    "id": "planet_prime",
+    "handId": "prime",
+    "name": "Sao Nguyên Tố",
+    "concept": "An ivory-violet faceted celestial orb surrounded by five separated crystalline moons of different sizes above isolated stone monoliths on a rugged western plateau. Five distinct primal points, restrained purple/gold glow.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An ivory-violet faceted celestial orb surrounded by five separated crystalline moons of different sizes above isolated stone monoliths on a rugged western plateau. Five distinct primal points, restrained purple/gold glow.",
+    "file": "assets/cards/continental/planet/planet_prime.png"
+  },
+  {
+    "id": "planet_odd_star",
+    "handId": "odd_star",
+    "name": "Sao Bình Minh",
+    "concept": "A warm amber sun-like planet with nine large crown-like solar rays above a lava escarpment and western expedition tower. Clear radial shape, burnished gold/copper, controlled orange light.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A warm amber sun-like planet with nine large crown-like solar rays above a lava escarpment and western expedition tower. Clear radial shape, burnished gold/copper, controlled orange light.",
+    "file": "assets/cards/continental/planet/planet_odd_star.png"
+  },
+  {
+    "id": "planet_even_frost",
+    "handId": "even_frost",
+    "name": "Sao Băng Giá",
+    "concept": "An icy blue planet with five clean horizontal glacial rings and ten broad ice petals above a frozen continental fortress and dark lake. Frozen geometry and deep blue shadows, muted cyan.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An icy blue planet with five clean horizontal glacial rings and ten broad ice petals above a frozen continental fortress and dark lake. Frozen geometry and deep blue shadows, muted cyan.",
+    "file": "assets/cards/continental/planet/planet_even_frost.png"
+  },
+  {
+    "id": "planet_crimson_tide",
+    "handId": "crimson_tide",
+    "name": "Sao Biển Đỏ",
+    "concept": "A deep crimson ocean planet drawing one large red tidal arc over a western coastal temple, two red moons reflected in water, sea spray restrained, healing blood-red life glow over dark rocks.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A deep crimson ocean planet drawing one large red tidal arc over a western coastal temple, two red moons reflected in water, sea spray restrained, healing blood-red life glow over dark rocks.",
+    "file": "assets/cards/continental/planet/planet_crimson_tide.png"
+  },
+  {
+    "id": "planet_obsidian_tide",
+    "handId": "obsidian_tide",
+    "name": "Sao Đá Đen",
+    "concept": "A black obsidian planet protected by a broad dark metallic ring above a basalt coastal fortress, two charcoal moons, geometric reflective armour plates and muted silver/violet seams.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A black obsidian planet protected by a broad dark metallic ring above a basalt coastal fortress, two charcoal moons, geometric reflective armour plates and muted silver/violet seams.",
+    "file": "assets/cards/continental/planet/planet_obsidian_tide.png"
+  },
+  {
+    "id": "planet_eclipse_duality",
+    "handId": "eclipse_duality",
+    "name": "Sao Nhật Thực",
+    "concept": "Two interlocking celestial discs, one copper-red and one black-silver, eclipsing above a western stone bridge spanning shadow and sunset. Balanced mirrored arcs and a thin violet corona.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. Two interlocking celestial discs, one copper-red and one black-silver, eclipsing above a western stone bridge spanning shadow and sunset. Balanced mirrored arcs and a thin violet corona.",
+    "file": "assets/cards/continental/planet/planet_eclipse_duality.png"
+  },
+  {
+    "id": "planet_four_kingdom_prism",
+    "handId": "four_kingdom_prism",
+    "name": "Sao Lăng Kính",
+    "concept": "A large four-faced crystalline planet refracting four broad beams, subdued red gold green blue, onto four continental cliffs around a western ruined observatory. One crystalline celestial centre.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A large four-faced crystalline planet refracting four broad beams, subdued red gold green blue, onto four continental cliffs around a western ruined observatory. One crystalline celestial centre.",
+    "file": "assets/cards/continental/planet/planet_four_kingdom_prism.png"
+  },
+  {
+    "id": "planet_four_kingdom_expedition",
+    "handId": "four_kingdom_expedition",
+    "name": "Sao Viễn Chinh",
+    "concept": "A weathered golden-blue world globe with four immense continental masses, an ancient brass compass in foreground at a western expedition camp, four distant standards without text. Journey between kingdoms.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A weathered golden-blue world globe with four immense continental masses, an ancient brass compass in foreground at a western expedition camp, four distant standards without text. Journey between kingdoms.",
+    "file": "assets/cards/continental/planet/planet_four_kingdom_expedition.png"
+  },
+  {
+    "id": "planet_destiny_crown",
+    "handId": "destiny_crown",
+    "name": "Sao Vương Quyền",
+    "concept": "A deep navy planet crowned by five monumental gilded orbital spires, above a weathered western royal observatory. Strong crown silhouette, controlled gold light, no eastern palace.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A deep navy planet crowned by five monumental gilded orbital spires, above a weathered western royal observatory. Strong crown silhouette, controlled gold light, no eastern palace.",
+    "file": "assets/cards/continental/planet/planet_destiny_crown.png"
+  },
+  {
+    "id": "planet_continental_gate",
+    "handId": "continental_gate",
+    "name": "Sao Đại Lục",
+    "concept": "A colossal ancient stone gateway framing an ivory planet with four small orbiting moons, western ruined arches atop continental cliffs and waterfalls. Single celestial key-shaped alignment formed by orbit and gateway.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A colossal ancient stone gateway framing an ivory planet with four small orbiting moons, western ruined arches atop continental cliffs and waterfalls. Single celestial key-shaped alignment formed by orbit and gateway.",
+    "file": "assets/cards/continental/planet/planet_continental_gate.png"
+  },
+  {
+    "id": "planet_answer_42",
+    "handId": "answer_42",
+    "name": "Sao Chân Trời",
+    "concept": "A brass astronomical map disc aligned beneath a distant ochre planet with two rings and four pale moons, western stone lookout at the edge of a vast continental canyon. Ancient navigation, no map labels.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A brass astronomical map disc aligned beneath a distant ochre planet with two rings and four pale moons, western stone lookout at the edge of a vast continental canyon. Ancient navigation, no map labels.",
+    "file": "assets/cards/continental/planet/planet_answer_42.png"
+  },
+  {
+    "id": "planet_sealed_gate",
+    "handId": "sealed_gate",
+    "name": "Sao Thức Tỉnh",
+    "concept": "A violet planet breaking through a sealed western stone arch, three large ivory moons above and two golden moons below, cracks with controlled purple light, monumental unlocking event.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A violet planet breaking through a sealed western stone arch, three large ivory moons above and two golden moons below, cracks with controlled purple light, monumental unlocking event.",
+    "file": "assets/cards/continental/planet/planet_sealed_gate.png"
+  },
+  {
+    "id": "planet_seven_stars",
+    "handId": "seven_stars",
+    "name": "Sao Dẫn Lối",
+    "concept": "A dark azure planet beneath a clear constellation of seven large gold stars, a single western brass fate astrolabe in foreground on a mountain terrace. Broad constellation lines, tranquil transformative starlight.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A dark azure planet beneath a clear constellation of seven large gold stars, a single western brass fate astrolabe in foreground on a mountain terrace. Broad constellation lines, tranquil transformative starlight.",
+    "file": "assets/cards/continental/planet/planet_seven_stars.png"
+  },
+  {
+    "id": "planet_five_ley_lines",
+    "handId": "five_ley_lines",
+    "name": "Sao Năng Lượng",
+    "concept": "An emerald-brown planet connected by five broad golden energy meridians to five large standing stones atop a forested continental plateau. Grounded earth power, distinct pentagonal structure, no busy fine runes.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An emerald-brown planet connected by five broad golden energy meridians to five large standing stones atop a forested continental plateau. Grounded earth power, distinct pentagonal structure, no busy fine runes.",
+    "file": "assets/cards/continental/planet/planet_five_ley_lines.png"
+  },
+  {
+    "id": "planet_endless_cycle",
+    "handId": "endless_cycle",
+    "name": "Sao Bất Tận",
+    "concept": "A silver-green planet encircled by one seamless double-loop orbital ribbon above a western ruined circular observatory. Four small moons spaced around the loop, perpetual cycle, misty continental coast.",
+    "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A silver-green planet encircled by one seamless double-loop orbital ribbon above a western ruined circular observatory. Four small moons spaced around the loop, perpetual cycle, misty continental coast.",
+    "file": "assets/cards/continental/planet/planet_endless_cycle.png"
+  }
+]

@@ -73,7 +73,7 @@ function Choices.draw(rewards,timer,title,mx,my,buttons,full,packType)
             local canKeep=not packType or packType=="joker_edition" or packType=="seal" or packType=="spectral" or packType=="celestial" or packType=="edition"
             for action=1,canKeep and 2 or 1 do
                 local btn={id=packType and ((action==1 and "choose_pack_" or "keep_pack_")..i) or "chest_choice_"..i.."_"..action,rewardIndex=i,cardIndex=packType and i,keep=action==2,
-                    text=action==1 and "DÙNG NGAY" or "GIỮ LẠI",x=x,y=y+C.cardH+44+(action-1)*(C.buttonH+8),
+                    text=action==1 and ((packType=="hand_styles" or packType=="hand_styles_advanced") and "HỌC / +1 CẤP" or "DÙNG NGAY") or "GIỮ LẠI",x=x,y=y+C.cardH+44+(action-1)*(C.buttonH+8),
                     w=C.cardW,h=C.buttonH,font=UI.fonts.small,color=action==1 and UI.COLORS.btnPlay or {0.20,0.35,0.49,1},disabled=action==2 and full}
                 buttons[#buttons+1]=btn;UI.drawButton(btn,not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
             end

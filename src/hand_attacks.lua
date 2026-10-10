@@ -24,7 +24,7 @@ function A.new(result,cards,ui,target,handId)
     local profile=C.hands[id] or C.hands.high_card
     local intensity,tier,ratio=A.power(result.finalScore,target)
     local a={profile=profile,intensity=intensity,tier=tier,ratio=ratio, color=profile.colorProfile,
-        sources={},rankOrder={},launch={},ribbon={},wave={},seal={},beat=0,charge=0,orbit=0,quality="high",cx=ui.BATTLE_CENTER_X}
+        sources={},rankOrder={},launch={},ribbon={},wave={},seal={},sigil={},beat=0,charge=0,orbit=0,quality="high",cx=ui.BATTLE_CENTER_X}
     local groups={}
     for i,card in ipairs(cards) do
         groups[card.rank]=(groups[card.rank] or 0)+1
@@ -121,9 +121,11 @@ local function slash(g,a,x,y,angle,size,alpha)
     g.pop()
 end
 paths={}
+local counts={spear=1,fusion=2,twin_blades=2,triangle=3,crossfire=4,orbital_blades=4}
 projectileCount=function(a)
     if a.profile.blades then return math.min(a.profile.blades[a.tier],C.quality[a.quality]) end
-    return a.profile.projectile=="spear" and 1 or (a.profile.projectile=="fusion" and 2 or #a.sources)
+    if a.profile.emitters then return math.min(a.profile.emitters,C.quality[a.quality]) end
+    return counts[a.profile.projectile] or #a.sources
 end
 paths.spear=function(a,i,p)
     local source=a.sources[a.strongest]
@@ -134,12 +136,12 @@ paths.twin_blades=function(a,i,p)
     return a.cx+side*135,350,a.cx-side*18,258,flight((p-(i-1)*0.30)/0.70),side*65
 end
 paths.orbital_blades=function(a,i,p)
-    local angle=(i-1)*math.pi/2+a.orbit
+    local angle=(i-1)*math.pi*2/projectileCount(a)+a.orbit
     return a.cx+math.cos(angle)*105,295+math.sin(angle)*75,a.cx,270,
         flight((p-(i-1)*0.10)/(1-(i-1)*0.10)),math.sin(angle)*35
 end
 paths.triangle=function(a,i,p)
-    local angle=(i-1)*math.pi*2/3-math.pi/2+a.orbit
+    local angle=(i-1)*math.pi*2/projectileCount(a)-math.pi/2+a.orbit
     return a.cx+math.cos(angle)*85,300+math.sin(angle)*70,a.cx,270,flight(p),math.cos(angle)*12
 end
 paths.chain=function(a,i,p)
@@ -157,7 +159,7 @@ paths.fusion=function(a,i,p)
     return a.cx+math.cos(orbit)*r*side,350+math.sin(orbit)*r*0.4,a.cx,270,flight(p),side*10
 end
 paths.crossfire=function(a,i,p)
-    local angle=(i-1)*math.pi/2-math.pi/2
+    local angle=(i-1)*math.pi*2/projectileCount(a)-math.pi/2
     return a.cx+math.cos(angle)*105,270+math.sin(angle)*95,a.cx,270,flight(p),0
 end
 paths.blade_storm=function(a,i,p)
@@ -169,6 +171,12 @@ paths.blade_storm=function(a,i,p)
 end
 sample=function(a,i,phase,p)
     local x0,y0,x1,y1,k,bend=paths[a.profile.projectile](a,i,phase=="ATTACK" and p or 0)
+    if a.profile.advanced then
+        local spread=a.profile.spread
+        x0=a.cx+(x0-a.cx)*spread;y0=300+(y0-300)*spread
+        k=clamp(k)^(a.profile.releasePower/C.motion.releasePower)
+        bend=bend*spread
+    end
     if phase~="ATTACK" then
         local source=a.sources[(i-1)%#a.sources+1]
         local form=smooth(a.charge/0.55)
@@ -205,7 +213,7 @@ end
 local structures={}
 structures.triangle=function(g,a,p)
     local vertices=a.seal
-    for i=1,3 do local x,y=sample(a,i,"ANTICIPATION",0);vertices[i*2-1]=x;vertices[i*2]=y end
+    for i=1,projectileCount(a) do local x,y=sample(a,i,"ANTICIPATION",0);vertices[i*2-1]=x;vertices[i*2]=y end
     g.setColor(a.color[1],a.color[2],a.color[3],0.5*(1-p)*smooth(a.charge/0.55));g.setLineWidth(2+a.intensity*2)
     g.polygon("line",vertices)
 end
@@ -231,8 +239,8 @@ structures.fusion=function(g,a,p)
     g.ellipse("line",a.cx,350,55*(1-p)+12,22*(1-p)+8)
 end
 structures.crossfire=function(g,a,p)
-    for i=1,4 do
-        local x,y=paths.crossfire(a,i,0)
+    for i=1,projectileCount(a) do
+        local x,y=sample(a,i,"ANTICIPATION",0)
         g.setColor(a.color[1],a.color[2],a.color[3],0.7)
         g.setLineWidth(2);g.rectangle("line",x-10-a.intensity*6,y-10-a.intensity*6,20+a.intensity*12,20+a.intensity*12)
         if p>0 then glow(g,a.color,math.sin(p*math.pi)*0.8,2+a.intensity*7,x,y,a.cx,270) end
@@ -363,7 +371,8 @@ function A.draw(a,phase,p,impactAge)
     g.setScissor(left,top,right-left,bottom-top);g.setBlendMode("add")
     local active=phase=="ENERGY_CONVERSION" or phase=="ANTICIPATION" or phase=="CONVERGENCE" or phase=="ATTACK"
     if active then
-        local structure=structures[a.profile.projectile]
+        if a.profile.advanced then require("ui.advanced_hand_sigils").draw(g,a,a.charge,(phase=="ATTACK" and (1-p)^2 or 0.65)*0.8) end
+        local structure=not a.profile.advanced and structures[a.profile.projectile]
         if structure then structure(g,a,phase=="ATTACK" and p or 0) end
         local n=projectileCount(a)
         for i=1,n do
@@ -372,7 +381,7 @@ function A.draw(a,phase,p,impactAge)
             local dx,dy=aheadX-x,aheadY-y
             if math.abs(dx)+math.abs(dy)<0.001 then dx,dy=a.cx-x,270-y end
             local angle=math.atan2 and math.atan2(dx,-dy) or math.atan(dx/(-dy+0.001))
-            local width=2+a.intensity*4
+            local width=(2+a.intensity*4)*(a.profile.advanced and 1.15 or 1)
             if a.profile.projectile=="wave" then width=width*1.8 end
             if phase=="ATTACK" then trail(g,a,i,p,width) end
             g.push();g.translate(x,y)
@@ -410,11 +419,13 @@ function A.draw(a,phase,p,impactAge)
         g.setColor(0.96,0.99,1,0.9*(1-k)^6)
         g.ellipse("fill",a.cx,270,(17+19*a.intensity)*(1-k)^2,5+4*a.intensity)
         g.setColor(a.color[1],a.color[2],a.color[3],(1-k)^2*0.75)
-        impacts[a.profile.impact](g,a,radius+(1-k)^3*14*a.intensity,k)
+        if a.profile.advanced then
+            require("ui.advanced_hand_sigils").draw(g,a,k,(1-k)^2*.9,true)
+        else impacts[a.profile.impact](g,a,radius+(1-k)^3*14*a.intensity,k) end
         local burstCount=math.min(math.floor(6+(C.particle.count-6)*a.intensity),C.quality[a.quality])
         for i=1,burstCount do
             local spread=(i-0.5)/burstCount-0.5
-            local angle=math.pi/2+spread*2.45
+            local angle=a.profile.advanced and i*2.399 or math.pi/2+spread*2.45
             local distance=(1-(1-k)^2)*(C.particle.length+((i*7)%11)*2)*(0.65+a.intensity)
             local x=a.cx+math.cos(angle)*distance;local y=270+math.sin(angle)*distance*0.72
             local trail=8+10*(1-k)
@@ -436,6 +447,11 @@ conversions.blade_fragments=function(a,i,p) local angle=i*math.pi*2/5;return mat
 function A.cardPose(a,i,p)
     local eased=smooth(p)
     local dx,dy,r=conversions[a.profile.cardConversion](a,i,eased)
+    if a.profile.advanced then
+        local tx,ty=sample(a,(i-1)%projectileCount(a)+1,"ANTICIPATION",1)
+        dx=mix(dx,(tx-a.sources[i].x)*.52,eased)
+        dy=mix(dy,(ty-a.sources[i].y)*.6,eased)
+    end
     local lift=math.sin(p*math.pi)*8
     return dx,dy-lift,r,math.max(0.10,1-smooth((p-0.08)/0.92)*0.9)
 end

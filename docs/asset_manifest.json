@@ -920,9 +920,9 @@
       "id": "flush",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài ĐỒNG KHÍ (Thùng). 5 lá cùng chất màu (35 Chips × 4 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài CHUNG MỘT NGỌN CỜ (Thùng). 5 lá cùng chất màu (35 Chips × 4 Mult).",
       "source": "src/poker.lua",
-      "name": "ĐỒNG KHÍ",
+      "name": "CHUNG MỘT NGỌN CỜ",
       "concept": "Five matching leaf-shaped shields forming one coherent green defensive crest beneath the luminous ancient tree.",
       "file": "assets/cards/continental/hand/flush.png",
       "previous_paths": [
@@ -945,9 +945,9 @@
       "id": "four_of_a_kind",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài TỨ TƯỢNG (Tứ Quý). 4 lá cùng số uy lực hủy diệt (60 Chips × 7 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài BỐN TRỤ THÀNH TRÌ (Tứ Quý). 4 lá cùng số uy lực hủy diệt (60 Chips × 7 Mult).",
       "source": "src/poker.lua",
-      "name": "TỨ TƯỢNG",
+      "name": "BỐN TRỤ THÀNH TRÌ",
       "concept": "Four matching western sword monoliths surrounding one square amber core in volcanic ruins, bold fourfold symmetry.",
       "file": "assets/cards/continental/hand/four_of_a_kind.png",
       "previous_paths": [
@@ -970,9 +970,9 @@
       "id": "full_house",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài HỖN NGUYÊN (Cù Lũ). Gồm 1 bộ ba và 1 bộ đôi (40 Chips × 4 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài PHÁO ĐÀI NĂM NGƯỜI (Cù Lũ). Gồm 1 bộ ba và 1 bộ đôi (40 Chips × 4 Mult).",
       "source": "src/poker.lua",
-      "name": "HỖN NGUYÊN",
+      "name": "PHÁO ĐÀI NĂM NGƯỜI",
       "concept": "One western stone fortress crest formed from three matching towers joined to two matching smaller towers, clear grouped silhouette.",
       "file": "assets/cards/continental/hand/full_house.png",
       "previous_paths": [
@@ -997,7 +997,7 @@
       "rarity": "",
       "ability": "Thế đánh cơ bản.",
       "source": "src/poker.lua",
-      "name": "ĐƠN THỦ",
+      "name": "KỴ SĨ TIÊN PHONG",
       "concept": "One lone western explorer with a raised short sword on a cliff ledge, a clear solitary silhouette and vast continent beyond.",
       "file": "assets/cards/continental/hand/high_card.png",
       "previous_paths": [
@@ -1020,9 +1020,9 @@
       "id": "pair",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài SONG ĐAO (Đôi). Đánh ra 2 lá cùng số (10 Chips × 2 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài CẶP HỘ VỆ (Đôi). Đánh ra 2 lá cùng số (10 Chips × 2 Mult).",
       "source": "src/poker.lua",
-      "name": "SONG ĐAO",
+      "name": "CẶP HỘ VỆ",
       "concept": "Two matching western swords crossed in a clean central silhouette at an old forest expedition camp.",
       "file": "assets/cards/continental/hand/pair.png",
       "previous_paths": [
@@ -1045,9 +1045,9 @@
       "id": "straight",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài TRƯỜNG LONG (Sảnh). 5 lá số liên tiếp nhau (30 Chips × 4 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài ĐƯỜNG HÀNH QUÂN (Sảnh). 5 lá số liên tiếp nhau (30 Chips × 4 Mult).",
       "source": "src/poker.lua",
-      "name": "TRƯỜNG LONG",
+      "name": "ĐƯỜNG HÀNH QUÂN",
       "concept": "Five ascending stone steps with one western blade on each, a continuous expedition path crossing a giant waterfall.",
       "file": "assets/cards/continental/hand/straight.png",
       "previous_paths": [
@@ -1070,9 +1070,9 @@
       "id": "straight_flush",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa tuyệt kỹ tối thượng VẠN KIẾM QUY TÔNG. 5 lá vừa sảnh vừa thùng (100 Chips × 8 Mult).",
+      "ability": "Mở khóa tuyệt kỹ tối thượng MŨI GIÁO HOÀNG GIA. 5 lá vừa sảnh vừa thùng (100 Chips × 8 Mult).",
       "source": "src/poker.lua",
-      "name": "VẠN KIẾM QUY TÔNG",
+      "name": "MŨI GIÁO HOÀNG GIA",
       "concept": "Five matching silver swords ascending together along an icy causeway toward one ancient light portal.",
       "file": "assets/cards/continental/hand/straight_flush.png",
       "previous_paths": [
@@ -1095,9 +1095,9 @@
       "id": "three_of_a_kind",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài TAM HOA (Sám Cô). Đánh ra 3 lá cùng số (30 Chips × 3 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài MŨI GIÁO BA NGƯỜI (Sám Cô). Đánh ra 3 lá cùng số (30 Chips × 3 Mult).",
       "source": "src/poker.lua",
-      "name": "TAM HOA",
+      "name": "MŨI GIÁO BA NGƯỜI",
       "concept": "Three matching bronze sword monoliths resonating together in a triangular formation in a desert ruin.",
       "file": "assets/cards/continental/hand/three_of_a_kind.png",
       "previous_paths": [
@@ -1120,9 +1120,9 @@
       "id": "two_pair",
       "group": "hand",
       "rarity": "",
-      "ability": "Mở khóa vĩnh viễn tay bài SONG ĐÔI (Hai Đôi). Đánh ra 2 cặp lá cùng số (20 Chips × 2 Mult).",
+      "ability": "Mở khóa vĩnh viễn tay bài HAI CÁNH TẤN CÔNG (Hai Đôi). Đánh ra 2 cặp lá cùng số (20 Chips × 2 Mult).",
       "source": "src/poker.lua",
-      "name": "SONG ĐÔI",
+      "name": "HAI CÁNH TẤN CÔNG",
       "concept": "Two distinct pairs of western shields arranged symmetrically on a fossil altar, four readable large shapes.",
       "file": "assets/cards/continental/hand/two_pair.png",
       "previous_paths": [
@@ -4051,7 +4051,7 @@
       "rarity": "common",
       "ability": "Đôi: +6 Cường hóa.",
       "source": "src/deities.lua",
-      "name": "Song Đôi",
+      "name": "Hai Cánh Tấn Công",
       "concept": "Twin ghostly stag guardians joined by one living-green thread above the ancient forest, a balanced paired silhouette.",
       "file": "assets/cards/continental/spn/spirit_pair.png",
       "previous_paths": [
@@ -8881,6 +8881,653 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-54ce4439-dc9d-44c7-94e4-8ed0ffb02ebe.png",
         "prompt": "Create ONE production SPN game card illustration. PNG portrait 2:3, 1024x1536, full bleed. Continental art direction: cinematic painterly Western dark fantasy expedition on a mysterious continent. One primary supernatural entity or phenomenon, a clear large silhouette readable at thumbnail size, medium detail and quiet atmospheric depth. Controlled glow and rim light, background secondary. No text, letters, numbers, rank or suit icons, badges, borders, card frames, logos or UI. No East Asian motifs or architecture, dense tiny decoration, noisy particles, blown-out whites. One enormous spectral phoenix shaped as a dying miniature sun rises from ten large shattered bronze armor plates; a final triple-lobed flare pours from its wings toward a dark abyss. Western desert cliff fortress, bone gold and orange, controlled highlights. On the last attack, sacrifice all current armor of at least ten to triple total aura."
       }
+    },
+    {
+      "id": "planet_tesla_369",
+      "group": "planet",
+      "name": "Sao Cộng Hưởng",
+      "ability": "+2 cấp BA CỘT SẤM SÉT; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A blue storm planet with THREE enormous lightning conductors forming a triangular orbit above a western mountain observatory. Three distinct controlled lightning arcs join its poles, antique brass coil pedestal foreground.",
+      "file": "assets/cards/continental/planet/planet_tesla_369.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A blue storm planet with THREE enormous lightning conductors forming a triangular orbit above a western mountain observatory. Three distinct controlled lightning arcs join its poles, antique brass coil pedestal foreground.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "tesla_369"
+    },
+    {
+      "id": "planet_jackpot_777",
+      "group": "planet",
+      "name": "Sao Vận Mệnh",
+      "ability": "+2 cấp KHO BÁU BA SỐ BẢY; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A golden planet with THREE broad intersecting orbit rings and seven large bronze star-shaped stones over a ruined western desert treasury. Single gold celestial focus, luck and prosperity, no gambling machines or text.",
+      "file": "assets/cards/continental/planet/planet_jackpot_777.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A golden planet with THREE broad intersecting orbit rings and seven large bronze star-shaped stones over a ruined western desert treasury. Single gold celestial focus, luck and prosperity, no gambling machines or text.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "jackpot_777"
+    },
+    {
+      "id": "planet_fibonacci",
+      "group": "planet",
+      "name": "Sao Sinh Mệnh",
+      "ability": "+2 cấp XOẮN ỐC SỰ SỐNG; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A green living planet encircled by one elegant nautilus spiral of nebula light over a lush continental gorge, ancient root-covered observatory in foreground. Natural spiral progression, luminous seedlings.",
+      "file": "assets/cards/continental/planet/planet_fibonacci.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A green living planet encircled by one elegant nautilus spiral of nebula light over a lush continental gorge, ancient root-covered observatory in foreground. Natural spiral progression, luminous seedlings.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "fibonacci"
+    },
+    {
+      "id": "planet_prime",
+      "group": "planet",
+      "name": "Sao Nguyên Tố",
+      "ability": "+2 cấp NĂM SAO ĐƠN ĐỘC; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "An ivory-violet faceted celestial orb surrounded by five separated crystalline moons of different sizes above isolated stone monoliths on a rugged western plateau. Five distinct primal points, restrained purple/gold glow.",
+      "file": "assets/cards/continental/planet/planet_prime.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An ivory-violet faceted celestial orb surrounded by five separated crystalline moons of different sizes above isolated stone monoliths on a rugged western plateau. Five distinct primal points, restrained purple/gold glow.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "prime"
+    },
+    {
+      "id": "planet_odd_star",
+      "group": "planet",
+      "name": "Sao Bình Minh",
+      "ability": "+2 cấp CHÍN TIA BÌNH MINH; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A warm amber sun-like planet with nine large crown-like solar rays above a lava escarpment and western expedition tower. Clear radial shape, burnished gold/copper, controlled orange light.",
+      "file": "assets/cards/continental/planet/planet_odd_star.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A warm amber sun-like planet with nine large crown-like solar rays above a lava escarpment and western expedition tower. Clear radial shape, burnished gold/copper, controlled orange light.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "odd_star"
+    },
+    {
+      "id": "planet_even_frost",
+      "group": "planet",
+      "name": "Sao Băng Giá",
+      "ability": "+2 cấp PHÒNG TUYẾN BĂNG GIÁ; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "An icy blue planet with five clean horizontal glacial rings and ten broad ice petals above a frozen continental fortress and dark lake. Frozen geometry and deep blue shadows, muted cyan.",
+      "file": "assets/cards/continental/planet/planet_even_frost.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An icy blue planet with five clean horizontal glacial rings and ten broad ice petals above a frozen continental fortress and dark lake. Frozen geometry and deep blue shadows, muted cyan.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "even_frost"
+    },
+    {
+      "id": "planet_crimson_tide",
+      "group": "planet",
+      "name": "Sao Biển Đỏ",
+      "ability": "+2 cấp SÓNG TRIỀU ĐỎ; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A deep crimson ocean planet drawing one large red tidal arc over a western coastal temple, two red moons reflected in water, sea spray restrained, healing blood-red life glow over dark rocks.",
+      "file": "assets/cards/continental/planet/planet_crimson_tide.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A deep crimson ocean planet drawing one large red tidal arc over a western coastal temple, two red moons reflected in water, sea spray restrained, healing blood-red life glow over dark rocks.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "crimson_tide"
+    },
+    {
+      "id": "planet_obsidian_tide",
+      "group": "planet",
+      "name": "Sao Đá Đen",
+      "ability": "+2 cấp SÓNG TRIỀU ĐÁ ĐEN; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A black obsidian planet protected by a broad dark metallic ring above a basalt coastal fortress, two charcoal moons, geometric reflective armour plates and muted silver/violet seams.",
+      "file": "assets/cards/continental/planet/planet_obsidian_tide.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A black obsidian planet protected by a broad dark metallic ring above a basalt coastal fortress, two charcoal moons, geometric reflective armour plates and muted silver/violet seams.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "obsidian_tide"
+    },
+    {
+      "id": "planet_eclipse_duality",
+      "group": "planet",
+      "name": "Sao Nhật Thực",
+      "ability": "+2 cấp HAI MẶT NHẬT THỰC; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "Two interlocking celestial discs, one copper-red and one black-silver, eclipsing above a western stone bridge spanning shadow and sunset. Balanced mirrored arcs and a thin violet corona.",
+      "file": "assets/cards/continental/planet/planet_eclipse_duality.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. Two interlocking celestial discs, one copper-red and one black-silver, eclipsing above a western stone bridge spanning shadow and sunset. Balanced mirrored arcs and a thin violet corona.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "eclipse_duality"
+    },
+    {
+      "id": "planet_four_kingdom_prism",
+      "group": "planet",
+      "name": "Sao Lăng Kính",
+      "ability": "+2 cấp LĂNG KÍNH BỐN MÀU; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A large four-faced crystalline planet refracting four broad beams, subdued red gold green blue, onto four continental cliffs around a western ruined observatory. One crystalline celestial centre.",
+      "file": "assets/cards/continental/planet/planet_four_kingdom_prism.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A large four-faced crystalline planet refracting four broad beams, subdued red gold green blue, onto four continental cliffs around a western ruined observatory. One crystalline celestial centre.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "four_kingdom_prism"
+    },
+    {
+      "id": "planet_four_kingdom_expedition",
+      "group": "planet",
+      "name": "Sao Viễn Chinh",
+      "ability": "+2 cấp LIÊN MINH VIỄN CHINH; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A weathered golden-blue world globe with four immense continental masses, an ancient brass compass in foreground at a western expedition camp, four distant standards without text. Journey between kingdoms.",
+      "file": "assets/cards/continental/planet/planet_four_kingdom_expedition.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A weathered golden-blue world globe with four immense continental masses, an ancient brass compass in foreground at a western expedition camp, four distant standards without text. Journey between kingdoms.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "four_kingdom_expedition"
+    },
+    {
+      "id": "planet_destiny_crown",
+      "group": "planet",
+      "name": "Sao Vương Quyền",
+      "ability": "+2 cấp VƯƠNG MIỆN ĐỊNH MỆNH; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A deep navy planet crowned by five monumental gilded orbital spires, above a weathered western royal observatory. Strong crown silhouette, controlled gold light, no eastern palace.",
+      "file": "assets/cards/continental/planet/planet_destiny_crown.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A deep navy planet crowned by five monumental gilded orbital spires, above a weathered western royal observatory. Strong crown silhouette, controlled gold light, no eastern palace.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "destiny_crown"
+    },
+    {
+      "id": "planet_continental_gate",
+      "group": "planet",
+      "name": "Sao Đại Lục",
+      "ability": "+2 cấp CỔNG LỤC ĐỊA THẤT LẠC; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A colossal ancient stone gateway framing an ivory planet with four small orbiting moons, western ruined arches atop continental cliffs and waterfalls. Single celestial key-shaped alignment formed by orbit and gateway.",
+      "file": "assets/cards/continental/planet/planet_continental_gate.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A colossal ancient stone gateway framing an ivory planet with four small orbiting moons, western ruined arches atop continental cliffs and waterfalls. Single celestial key-shaped alignment formed by orbit and gateway.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "continental_gate"
+    },
+    {
+      "id": "planet_answer_42",
+      "group": "planet",
+      "name": "Sao Chân Trời",
+      "ability": "+2 cấp BẢN ĐỒ CHÂN TRỜI; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A brass astronomical map disc aligned beneath a distant ochre planet with two rings and four pale moons, western stone lookout at the edge of a vast continental canyon. Ancient navigation, no map labels.",
+      "file": "assets/cards/continental/planet/planet_answer_42.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A brass astronomical map disc aligned beneath a distant ochre planet with two rings and four pale moons, western stone lookout at the edge of a vast continental canyon. Ancient navigation, no map labels.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "answer_42"
+    },
+    {
+      "id": "planet_sealed_gate",
+      "group": "planet",
+      "name": "Sao Thức Tỉnh",
+      "ability": "+2 cấp CÁNH CỔNG THỨC TỈNH; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A violet planet breaking through a sealed western stone arch, three large ivory moons above and two golden moons below, cracks with controlled purple light, monumental unlocking event.",
+      "file": "assets/cards/continental/planet/planet_sealed_gate.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A violet planet breaking through a sealed western stone arch, three large ivory moons above and two golden moons below, cracks with controlled purple light, monumental unlocking event.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "sealed_gate"
+    },
+    {
+      "id": "planet_seven_stars",
+      "group": "planet",
+      "name": "Sao Dẫn Lối",
+      "ability": "+2 cấp BẢY SAO DẪN LỐI; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A dark azure planet beneath a clear constellation of seven large gold stars, a single western brass fate astrolabe in foreground on a mountain terrace. Broad constellation lines, tranquil transformative starlight.",
+      "file": "assets/cards/continental/planet/planet_seven_stars.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A dark azure planet beneath a clear constellation of seven large gold stars, a single western brass fate astrolabe in foreground on a mountain terrace. Broad constellation lines, tranquil transformative starlight.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "seven_stars"
+    },
+    {
+      "id": "planet_five_ley_lines",
+      "group": "planet",
+      "name": "Sao Năng Lượng",
+      "ability": "+2 cấp NĂM MẠCH NĂNG LƯỢNG; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "An emerald-brown planet connected by five broad golden energy meridians to five large standing stones atop a forested continental plateau. Grounded earth power, distinct pentagonal structure, no busy fine runes.",
+      "file": "assets/cards/continental/planet/planet_five_ley_lines.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. An emerald-brown planet connected by five broad golden energy meridians to five large standing stones atop a forested continental plateau. Grounded earth power, distinct pentagonal structure, no busy fine runes.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "five_ley_lines"
+    },
+    {
+      "id": "planet_endless_cycle",
+      "group": "planet",
+      "name": "Sao Bất Tận",
+      "ability": "+2 cấp VÒNG XOAY BẤT TẬN; không tự mở khóa.",
+      "source": "src/advanced_hands.lua",
+      "concept": "A silver-green planet encircled by one seamless double-loop orbital ribbon above a western ruined circular observatory. Four small moons spaced around the loop, perpetual cycle, misty continental coast.",
+      "file": "assets/cards/continental/planet/planet_endless_cycle.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE canonical game planet card illustration. Vertical portrait 2:3 full-bleed PNG. Cinematic Western dark-fantasy expedition illustration matching Continental Relic Card Design; painterly realistic stone and celestial textures, one dominant silhouette, medium detail, restrained cinematic glow, readable when small. Celestial landmarks above the mysterious continent. NO text, letters, numerals, card ranks, badges, UI or frame, no eastern architecture, no dense microornament. A silver-green planet encircled by one seamless double-loop orbital ribbon above a western ruined circular observatory. Four small moons spaced around the loop, perpetual cycle, misty continental coast.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "handId": "endless_cycle"
+    },
+    {
+      "id": "hand_styles_advanced",
+      "group": "chest",
+      "name": "Rương Thế Đánh Nâng Cao",
+      "ability": "12 vàng; mở 3 bí tịch nâng cao, chọn 1; ưu tiên thế chưa học.",
+      "source": "src/shop.lua",
+      "concept": "Pentagonal dark bronze tactical reliquary with an ivory-gold astrolabe lock, five tactical insignia and controlled violet light; western continental ruins.",
+      "file": "assets/cards/continental/chest/hand_styles_advanced.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE game card illustration, vertical 2:3 full bleed PNG. A SECRET TACTICAL CHEST: monumental dark bronze pentagonal expedition reliquary opened slightly on a weathered stone terrace, a single ivory-gold astrolabe locking wheel and five large sculpted tactical insignia, narrow violet light from inside, a closed leather strategy folio beside it. Background distant western gothic floating ruins above continental cliffs and waterfalls, twilight violet eclipse. Cinematic Western dark fantasy, painterly medium detail, strong silhouette, readable at small size, restrained antique gold/void violet lighting. One chest primary focus. Match the Continental Relic Card Design art direction. NO letters, words, numbers, playing-card ranks, UI, badges, borders, eastern architecture, tiny ornament clutter or overexposed glow. Image is artwork only, no frame. This is a new chest distinct from the existing round-top strategy chest.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "tesla_369",
+      "group": "hand",
+      "concept": "A single western battle engineer commands three towering brass lightning pylons arranged as a triangle on a glacial battlefield, three controlled blue arcs strike outward, two small expedition shields in foreground. Tactical resonance, storm blue and antique brass.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A single western battle engineer commands three towering brass lightning pylons arranged as a triangle on a glacial battlefield, three controlled blue arcs strike outward, two small expedition shields in foreground. Tactical resonance, storm blue and antique brass.",
+      "file": "assets/cards/continental/hand/tesla_369.png",
+      "name": "BA CỘT SẤM SÉT",
+      "ability": "Có 3, 6, 9 cùng chất trong đúng 5 lá. Sau đòn chính: 3 tia sét, mỗi tia 6 ST xuyên giáp và phá 3 Giáp.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "jackpot_777",
+      "group": "hand",
+      "concept": "Three bronze expedition standards standing shoulder to shoulder before a western fortress treasury, a warrior captain holds a golden lucky token foreground, guarded gold coin stacks, three bright golden celestial sparks. Gold luck tactical trio, no written numerals.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. Three bronze expedition standards standing shoulder to shoulder before a western fortress treasury, a warrior captain holds a golden lucky token foreground, guarded gold coin stacks, three bright golden celestial sparks. Gold luck tactical trio, no written numerals.",
+      "file": "assets/cards/continental/hand/jackpot_777.png",
+      "name": "KHO BÁU BA SỐ BẢY",
+      "ability": "Đúng ba lá 7 trong 5 lá. +7 Vàng; hạ mục tiêu nhận thêm 7 Giáp.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "fibonacci",
+      "group": "hand",
+      "concept": "One druidic western strategist leads a five-part spiral formation of pale stone shields and living roots on an ancient forest battlefield, an expanding nautilus spiral of soft gold-green light guides their progression. Life regeneration and expanding tactical spiral.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One druidic western strategist leads a five-part spiral formation of pale stone shields and living roots on an ancient forest battlefield, an expanding nautilus spiral of soft gold-green light guides their progression. Life regeneration and expanding tactical spiral.",
+      "file": "assets/cards/continental/hand/fibonacci.png",
+      "name": "XOẮN ỐC SỰ SỐNG",
+      "ability": "Đúng A, 2, 3, 5, 8; không cần cùng chất. +1 Máu tối đa (tối đa 3/trận), hồi 2 Máu, +3 Giáp, +5 Tốc, +8 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "prime",
+      "group": "hand",
+      "concept": "Five isolated western sentinel monoliths of different heights form an irregular constellation-like defensive formation on a violet rocky battlefield, one white-silver commander in foreground summons five independent small crystalline lights, distinct primal nodes.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. Five isolated western sentinel monoliths of different heights form an irregular constellation-like defensive formation on a violet rocky battlefield, one white-silver commander in foreground summons five independent small crystalline lights, distinct primal nodes.",
+      "file": "assets/cards/continental/hand/prime.png",
+      "name": "NĂM SAO ĐƠN ĐỘC",
+      "ability": "Đúng 2, 3, 5, 7, J. Hồi 2 Máu, +3 Giáp, +5 Tốc, +7 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "odd_star",
+      "group": "hand",
+      "concept": "A western sun knight raising one bronze sword at the centre of a radial formation of nine broad golden lance shadows on a lava plateau. Strong heroic sunlight, copper-gold shield and controlled nine-point solar aura.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western sun knight raising one bronze sword at the centre of a radial formation of nine broad golden lance shadows on a lava plateau. Strong heroic sunlight, copper-gold shield and controlled nine-point solar aura.",
+      "file": "assets/cards/continental/hand/odd_star.png",
+      "name": "CHÍN TIA BÌNH MINH",
+      "ability": "Đúng A, 3, 5, 7, 9. Hồi 5 Máu, +9 Tốc; mục tiêu −3 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "even_frost",
+      "group": "hand",
+      "concept": "A western ice warden plants one massive shield before five evenly spaced frost barricades, their silhouettes reinforced by ten large frozen spears on a snowy fortress approach. Cold blue defensive discipline, readable frost geometry.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western ice warden plants one massive shield before five evenly spaced frost barricades, their silhouettes reinforced by ten large frozen spears on a snowy fortress approach. Cold blue defensive discipline, readable frost geometry.",
+      "file": "assets/cards/continental/hand/even_frost.png",
+      "name": "PHÒNG TUYẾN BĂNG GIÁ",
+      "ability": "Đúng 2, 4, 6, 8, 10. +12 Giáp; mục tiêu −2 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "crimson_tide",
+      "group": "hand",
+      "concept": "A western crimson battle priest guides one sweeping red healing tide through a five-part formation of red-cloaked expedition shields on a stormy coastline, half-circle wave silhouette, worn stone walls, restrained blood-red glow.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crimson battle priest guides one sweeping red healing tide through a five-part formation of red-cloaked expedition shields on a stormy coastline, half-circle wave silhouette, worn stone walls, restrained blood-red glow.",
+      "file": "assets/cards/continental/hand/crimson_tide.png",
+      "name": "SÓNG TRIỀU ĐỎ",
+      "ability": "5 số khác nhau, tổng 35; chỉ Cơ/Rô và có cả hai chất. Hồi 10 Máu; Máu dư đổi thành tối đa 5 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "obsidian_tide",
+      "group": "hand",
+      "concept": "A western dark-armoured marshal crouches behind a five-part staggered wall of broad obsidian tower shields on a basalt coastline, a low black-silver supernatural wave rises behind the formation. Defence and acceleration, dark mass with controlled silver edge.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western dark-armoured marshal crouches behind a five-part staggered wall of broad obsidian tower shields on a basalt coastline, a low black-silver supernatural wave rises behind the formation. Defence and acceleration, dark mass with controlled silver edge.",
+      "file": "assets/cards/continental/hand/obsidian_tide.png",
+      "name": "SÓNG TRIỀU ĐÁ ĐEN",
+      "ability": "5 số khác nhau, tổng 35; chỉ Bích/Tép và có cả hai chất. +15 Giáp, +2 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "eclipse_duality",
+      "group": "hand",
+      "concept": "One western masked tactician stands between two mirrored pairs of red and black armoured expedition shields, opposing eclipse crescents meet above the central figure. A clear five-part symmetric battlefield formation on a ruined bridge.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One western masked tactician stands between two mirrored pairs of red and black armoured expedition shields, opposing eclipse crescents meet above the central figure. A clear five-part symmetric battlefield formation on a ruined bridge.",
+      "file": "assets/cards/continental/hand/eclipse_duality.png",
+      "name": "HAI MẶT NHẬT THỰC",
+      "ability": "Đỏ/đen 3–2 hoặc 2–3; số lá 1=5, 2=4 theo thứ tự đánh. Đỏ nhiều: hồi 6 Máu, +3 Vàng. Đen nhiều: +10 Giáp, +3 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "four_kingdom_prism",
+      "group": "hand",
+      "concept": "A western crystal banner bearer stands at the centre of four distinct red, gold, green and blue expedition standards on four continental outcrops. A single faceted prism refracts four broad controlled beams over a five-part tactical formation.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crystal banner bearer stands at the centre of four distinct red, gold, green and blue expedition standards on four continental outcrops. A single faceted prism refracts four broad controlled beams over a five-part tactical formation.",
+      "file": "assets/cards/continental/hand/four_kingdom_prism.png",
+      "name": "LĂNG KÍNH BỐN MÀU",
+      "ability": "Đủ 4 chất, 5 số khác nhau; số lớn − nhỏ ≥9 (A=1). Hồi 4 Máu, +4 Giáp, +2 Tốc, +2 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "four_kingdom_expedition",
+      "group": "hand",
+      "concept": "A heroic western expedition leader with brass compass stands before four allies wearing distinct regional red, blue, green and ochre cloaks, a clear coordinated five-person formation at a continental mountain pass. Four kingdoms cooperate, large silhouettes, moderate detail.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A heroic western expedition leader with brass compass stands before four allies wearing distinct regional red, blue, green and ochre cloaks, a clear coordinated five-person formation at a continental mountain pass. Four kingdoms cooperate, large silhouettes, moderate detail.",
+      "file": "assets/cards/continental/hand/four_kingdom_expedition.png",
+      "name": "LIÊN MINH VIỄN CHINH",
+      "ability": "Đủ 4 chất; có A và K trong 5 lá. Hồi 8 Máu, +8 Giáp, +2 Tốc, +2 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "destiny_crown",
+      "group": "hand",
+      "concept": "A western crowned war commander lifts a single gilded sword before four massive royal battle standards in a western ruined citadel, five tall gold silhouette points form a crown-like tactical formation. Navy steel and antique gold, military destiny.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crowned war commander lifts a single gilded sword before four massive royal battle standards in a western ruined citadel, five tall gold silhouette points form a crown-like tactical formation. Navy steel and antique gold, military destiny.",
+      "file": "assets/cards/continental/hand/destiny_crown.png",
+      "name": "VƯƠNG MIỆN ĐỊNH MỆNH",
+      "ability": "Đúng 10, J, Q, K, A; không phải 5 lá cùng chất. +10 Giáp, +5 Tốc, +5 Vàng; boss −2 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "continental_gate",
+      "group": "hand",
+      "concept": "One western key-bearing champion approaches a colossal ancient stone gateway guarded by four ivory tower shields, four-to-one tactical formation, continental cliffs and waterfalls beyond, an immense restrained gold key-shaped magical alignment.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One western key-bearing champion approaches a colossal ancient stone gateway guarded by four ivory tower shields, four-to-one tactical formation, continental cliffs and waterfalls beyond, an immense restrained gold key-shaped magical alignment.",
+      "file": "assets/cards/continental/hand/continental_gate.png",
+      "name": "CỔNG LỤC ĐỊA THẤT LẠC",
+      "ability": "Bốn lá A và một lá K. Hồi 10 Máu, +20 Giáp, +3 Vàng; boss −3 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "answer_42",
+      "group": "hand",
+      "concept": "A western navigator captain unfolds one unlabelled bronze expedition map on a canyon overlook, four allied lanterns and two broad arcing paths reveal a five-node tactical route across distant fortress terraces. Ochre and navy, discovery and navigation, no map writing.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western navigator captain unfolds one unlabelled bronze expedition map on a canyon overlook, four allied lanterns and two broad arcing paths reveal a five-node tactical route across distant fortress terraces. Ochre and navy, discovery and navigation, no map writing.",
+      "file": "assets/cards/continental/hand/answer_42.png",
+      "name": "BẢN ĐỒ CHÂN TRỜI",
+      "ability": "5 số khác nhau có tổng đúng 42 (A=1). Hồi 4 Máu, +2 Giáp, +4 Tốc, +2 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "sealed_gate",
+      "group": "hand",
+      "concept": "A single western seal-breaker opens an ancient fortress gate using a three-point ivory barrier and two gold lock mechanisms, readable three-plus-two tactical formation, violet fissure and restrained sealing circles. Large western arch, dramatic opening.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A single western seal-breaker opens an ancient fortress gate using a three-point ivory barrier and two gold lock mechanisms, readable three-plus-two tactical formation, violet fissure and restrained sealing circles. Large western arch, dramatic opening.",
+      "file": "assets/cards/continental/hand/sealed_gate.png",
+      "name": "CÁNH CỔNG THỨC TỈNH",
+      "ability": "Ba lá A và hai lá K. +15 Giáp, +5 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "seven_stars",
+      "group": "hand",
+      "concept": "A western fate knight anchors a clear three-plus-one-plus-one formation of three glowing gold lances, one ivory tower shield and one bronze crowned standard under seven stars. Dark mountain battlefield and antique gold magic.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western fate knight anchors a clear three-plus-one-plus-one formation of three glowing gold lances, one ivory tower shield and one bronze crowned standard under seven stars. Dark mountain battlefield and antique gold magic.",
+      "file": "assets/cards/continental/hand/seven_stars.png",
+      "name": "BẢY SAO DẪN LỐI",
+      "ability": "Ba lá 7, một A và một K. +7 Vàng, hồi 7 Máu, +7 Giáp.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "five_ley_lines",
+      "group": "hand",
+      "concept": "A western earth marshal plants an antique bronze staff at the centre of five massive standing stones connected by five broad gold ley lines, each stone distinct in shape and height. Green forest plateau, grounded pentagonal tactical formation.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western earth marshal plants an antique bronze staff at the centre of five massive standing stones connected by five broad gold ley lines, each stone distinct in shape and height. Green forest plateau, grounded pentagonal tactical formation.",
+      "file": "assets/cards/continental/hand/five_ley_lines.png",
+      "name": "NĂM MẠCH NĂNG LƯỢNG",
+      "ability": "Đúng A, 4, 8, 10, K. +10 Giáp, +4 Tốc, +4 Vàng.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "endless_cycle",
+      "group": "hand",
+      "concept": "A western time warden pivots in a five-part formation of four large regional standards and one returning shield, a single seamless silver-green double-loop energy ribbon encloses the coordinated formation on a ruined circular fortress platform. Eternal cycle and return.",
+      "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western time warden pivots in a five-part formation of four large regional standards and one returning shield, a single seamless silver-green double-loop energy ribbon encloses the coordinated formation on a ruined circular fortress platform. Eternal cycle and return.",
+      "file": "assets/cards/continental/hand/endless_cycle.png",
+      "name": "VÒNG XOAY BẤT TẬN",
+      "ability": "5 số liên tiếp, đủ 4 chất; lá đầu/cuối cùng chất theo thứ tự đánh. Hồi 6 Máu, +6 Giáp; tay đánh kế tiếp +2 Tốc.",
+      "source": "src/advanced_hands.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ]
     }
   ],
   "completion": {

@@ -133,7 +133,7 @@ function Surfaces.fullReward(item,x,y,w,h,packType,hovered,opacity)
         or (packType=="arcana" and UI.getEquipmentImage(item.id))
         or (packType=="standard" and UI.getCardImage(item.suit,item.rank or item.rankName))
         or (packType=="buffoon" and UI.getDeityImage(item.id))
-        or ((packType=="celestial" or packType=="hand_styles") and UI.getHandImage(item.handId or item.id))
+        or ((packType=="celestial" or packType=="hand_styles" or packType=="hand_styles_advanced") and UI.getHandImage(item.handId or item.id))
     local backdrop=not art and UI.getPackImage(packType)
     art=art or backdrop
     if art then

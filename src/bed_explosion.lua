@@ -25,7 +25,7 @@ function E.start(x,y,quality,environment,power)
   p.notch=.12+noise(i+71)*.18;p.fold=noise(i+77)*6.28
   p.x=x+(r-.5)*55;p.y=y+(noise(i+8)-.5)*18;p.floor=y+62+noise(i+13)*30
   local side=r<.5 and -1 or 1
-  p.vx=side*(280+noise(i+5)*470)*E.intensity;p.vy=-(260+noise(i+17)*440)*E.intensity
+  p.vx=side*(320+noise(i+5)*510)*E.intensity;p.vy=-(290+noise(i+17)*460)*E.intensity
   p.rotation=noise(i+21)*6.28;p.angularVelocity=(noise(i+24)-.5)*25;p.gravity=C.debris.gravity
   p.drag=p.material=="fabric" and 2.7 or C.debris.drag;p.lifetime=.70+noise(i+28)*.60;p.bounceCount=0
  end
@@ -60,7 +60,7 @@ function E.reaction(x)
  if t>1 then return 0,0,0 end
  local fall=(1-t)^3*clamp(1-math.abs(x-E.x)/C.shockwave.radius)
  local side=x<E.x and -1 or 1
- return side*math.sin(t*math.pi)*30*fall,-math.sin(t*math.pi)*23*fall,fall*.78
+ return side*math.sin(t*math.pi)*36*fall,-math.sin(t*math.pi)*23*fall,fall*.78
 end
 function E.update(dt)
  if not E.active then return end
@@ -160,17 +160,17 @@ function E.draw()
    E.fireShader:send("phase",fire);E.fireShader:send("seed",E.serial*.73)
    E.fireShader:send("fireColor",C.palette.fire);E.fireShader:send("coreColor",C.palette.core)
    g.setShader(E.fireShader);g.setColor(1,1,1,1)
-   local r=C.fire.radius;g.draw(image,E.x-r,E.y-r*.90-22,0,r/64,r*.9/64)
+   local r=C.fire.radius*E.intensity;g.draw(image,E.x-r,E.y-r*.90-22,0,r/64,r*.9/64)
    g.setShader()
   else
    g.setColor(1,.38,.08,(1-fire)^2);soft(g,E.x,E.y-22,70+out(fire)*130,55+out(fire)*105)
   end
   g.setBlendMode("add")
-  require("render.lighting").glow(E.x,E.y-20,140+fire*90,C.palette.fire,(1-fire)^2*.65)
+  require("render.lighting").glow(E.x,E.y-20,165+fire*90,C.palette.fire,(1-fire)^2*.65)
  end
  if age<C.flash then
   local impact=1-age/C.flash
-  g.setBlendMode("add");g.setColor(1,.90,.55,.095*impact);g.rectangle("fill",0,0,1280,720)
+  g.setBlendMode("add");g.setColor(1,.90,.55,.06*impact);g.rectangle("fill",0,0,1280,720)
   require("render.lighting").glow(E.x,E.y-12,175,C.palette.core,1.2*impact)
   g.setColor(1,.97,.78,impact*.85)
   for i=1,8 do
@@ -188,6 +188,10 @@ function E.draw()
     g.setBlendMode("add");g.setColor(1,.48,.14,(1-age/.20)*.65)
     g.setLineWidth(p.size*.18);g.line(p.x,p.y,p.x-p.vx*.035,p.y-p.vy*.035)
     g.setBlendMode("alpha")
+   end
+   if p.size>20 then
+    local height=math.max(0,p.floor-p.y)
+    g.setColor(.035,.025,.02,a*.24/(1+height*.012));soft(g,p.x,p.floor,p.size*.7,2+height*.018)
    end
    g.push();g.translate(p.x,p.y);g.rotate(p.rotation)
    local hot=math.max(0,1-age/.20)*.75

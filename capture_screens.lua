@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-advanced-hands" then
+            local ok,err=pcall(require("tests.advanced_hands_capture").update,gameRef,callbacks)
+            if not ok then print("ADVANCED HANDS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-combat-ui" then
             local ok,err=pcall(require("tests.combat_ui_capture").update,gameRef,callbacks)
             if not ok then print("COMBAT UI FAIL: "..tostring(err));love.event.quit(1) end

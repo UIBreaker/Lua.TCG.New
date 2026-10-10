@@ -30,7 +30,7 @@ function Gallery.draw(fonts, mouseX, mouseY)
     Button.draw(close, closeOver and love.mouse.isDown(1) and "pressed"
         or closeOver and "hover" or "normal", fonts)
     Panel.draw(255, 76, 755, 610)
-    HandInfoPanel.draw({handName = "Đơn Thủ", chips = 18, mult = 3, xMult = 1, aura = 54,
+    HandInfoPanel.draw({handName = "Kỵ Sĩ Tiên Phong", chips = 18, mult = 3, xMult = 1, aura = 54,
         enemyName = "Tiểu Yêu", enemyHp = 62, enemyMaxHp = 76, intent = "Tấn công 12 ST",
         debuff = "Không có hiệu ứng bất lợi"}, fonts)
     SPMPanel.draw(1, 5, fonts)

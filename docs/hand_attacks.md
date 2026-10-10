@@ -52,7 +52,7 @@ The world renderer alone handles dim, focus, camera impulse, fog displacement, l
 
 ## Lab and checks
 
-F6 opens HAND VFX LAB. Left/right selects all nine hands, 1..5 selects tier, R replays, Tab toggles Normal/Fast, Space fast-forwards, F5 toggles diagnostics, F6/Esc closes. The Lab owns an isolated animation and does not mutate the current run.
+F6 opens HAND VFX LAB. Left/right selects all 27 basic and advanced hands, 1..5 selects tier, R replays, Tab toggles Normal/Fast, Space fast-forwards, F5 toggles diagnostics, F6/Esc closes. The Lab owns an isolated animation and does not mutate the current run.
 
 ```
 lua tests/hand_vfx_smoke.lua
@@ -82,3 +82,13 @@ New regression assertions cover 135 hand/tier/quality combinations for phase con
 ## Performance
 
 Local uncapped LÖVE run with screenshots enabled: 90 Lab cases, mean frame 3.51 ms, raw peak 242.01 ms. Excluding the first 120 ms of each case: P95 4.14 ms, P99 4.65 ms, 13/21459 frames exceeded 16.67 ms. PNG capture/encoding and asset warm-up are included in the harness and can cause spikes. These are wall-clock frame intervals, not isolated GPU timings or a guarantee for other hardware. Latest final-run measurements are recorded in `docs/hand_vfx/performance.txt`.
+
+## Juice pass — 2026-10-10
+
+Nine basic moves keep their silhouettes, with shorter anticipation for High Card / Pair / Two Pair / Three of a Kind, a sharper release curve and a 270ms pressure-wave falloff. Eighteen existing advanced moves now have individual emitter counts, formation spread, release acceleration and phase timing. Their existing sigils become moving contact silhouettes: lightning, seven stars, Fibonacci spiral, frost fractures, basalt slabs, twin eclipse, crown, opening gate, compass, five ley nodes and infinity curve.
+
+Fixed duplicate/unfinished projectile lanes when a five-card advanced hand inherited a two-, three- or four-lane base move. Launch positions remain frozen at release; advanced card reactions now gather toward their actual formation. Glyph points are reused from an attack-owned scratch buffer. No new attack mechanics or audio assets; advanced profiles retain their existing sound hooks.
+
+`lovec . --test-hand-vfx-combat --all-hand-vfx --vfx-review`: 270 real combat attacks, ten consecutive repeats per move, Normal/Fast and three qualities. Only score bookkeeping phases are accelerated in this test; conversion, anticipation, release, contact, settle and hit stop retain their normal timing. Checks single damage, input lock, advanced reward resolution, Tesla's existing 18 bonus damage, shader availability, clean contour buffers and zero draw-time Image/Canvas/Shader allocation.
+
+Headless checks: 270 basic scoring sequences, 135 basic continuity cases, 270 advanced continuity cases (unique origins and complete arrival at every tier/quality), all 27 Lab entries at five tiers, advanced gameplay/caps/save regression. F6 now previews all 27; arrows select, 1–5 set power, R repeats, Tab changes speed. Lab animation is isolated from the player's run.

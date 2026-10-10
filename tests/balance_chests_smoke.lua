@@ -16,6 +16,26 @@ local function handChest()
 end
 local _, firstChest = handChest()
 assert(firstChest and firstChest.packType == "hand_styles")
+-- Every missing basic hand, including the default one, keeps advanced stock gated.
+for _,missing in ipairs(Poker.HAND_TYPES_ORDERED) do
+    for _,hand in ipairs(Poker.HAND_TYPES_ORDERED) do game.unlockedHands[hand.id]=true end
+    game.unlockedHands[missing.id]=nil
+    for roll=1,12 do
+        shop.lastPackTypes={}
+        if roll==12 then
+            for _,pack in ipairs(Shop.PACK_CATALOG) do shop.lastPackTypes[#shop.lastPackTypes+1]=pack.packType end
+        end
+        Shop.refresh(shop,game)
+        local basicCount=0
+        for _,item in ipairs(shop.items) do
+            assert(item.packType~="hand_styles_advanced","advanced chest sold before all nine basic hands")
+            if item.packType=="hand_styles" then basicCount=basicCount+1 end
+        end
+        assert(basicCount==1)
+    end
+end
+game=GameState.new()
+Shop.refresh(shop,game)
 local opening = Shop.openPack({packType="hand_styles"}, game)
 assert(#opening.cards == 3)
 for _, book in ipairs(opening.cards) do assert(book.handId ~= "high_card" and not game.unlockedHands[book.handId]) end
@@ -28,17 +48,27 @@ game.unlockedHands.pair = true
 Shop.refresh(shop, game)
 local index, chest = handChest()
 assert(index and chest.packType == "hand_styles_advanced")
+for _=1,24 do
+    Shop.refresh(shop,game)
+    local advancedCount=0
+    for _,item in ipairs(shop.items) do
+        assert(item.packType~="hand_styles","basic chest must be replaced")
+        if item.packType=="hand_styles_advanced" then advancedCount=advancedCount+1 end
+    end
+    assert(advancedCount==1)
+end
+index,chest=handChest()
 game.gold = math.max(game.gold, chest.cost)
 local beforeGold = game.gold
 local ok, notice = Shop.buyItem(shop, index, game)
-assert(ok and notice:find("đang phát triển") and notice:find("hoàn lại"))
-assert(game.gold == beforeGold and not shop.currentPackOpening)
+assert(ok and notice=="open_pack")
+assert(game.gold == beforeGold-chest.cost and shop.currentPackOpening and #shop.currentPackOpening.cards==3)
 
 for _, planet in ipairs(Poker.PLANET_CARDS) do
     local state = GameState.new()
     local choice = {currentPackOpening={pack={packType="celestial"},cards={planet}}}
     local old = {}
-    for _, hand in ipairs(Poker.HAND_TYPES_ORDERED) do old[hand.id] = state.handLevels[hand.id] end
+    for _, hand in ipairs(Poker.ALL_HANDS_ORDERED) do old[hand.id] = state.handLevels[hand.id] end
     assert(Shop.choosePackCard(choice, 1, state))
     if planet.handId == "all" then
         for handId, level in pairs(old) do assert(state.handLevels[handId] == level + 2) end

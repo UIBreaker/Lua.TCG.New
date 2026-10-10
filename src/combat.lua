@@ -71,6 +71,7 @@ function Combat.resolvePlayerAttack(game, aura)
             end
         end
     end
+    for _,hit in ipairs(require("src.advanced_hands").resolve(game)) do splashHits[#splashHits+1]=hit end
     require("src.soul_relics").reap(game)
     return damage, Group.alive(Group.members(game)) == 0, splashHits
 end
@@ -97,6 +98,8 @@ function Combat.getAverageAttackSpeed(cards,game,handInfo)
         if handInfo then bonus=require("src.playing_card_tactics").preview(game,cards,handInfo)
         elseif game.abilityHand and not game.abilityHand.finished then bonus=game.abilityHand.tacticSpeed or 0 end
     end
+    local advanced=game and game.advancedCombat or {}
+    bonus=bonus+(advanced.speed or 0)+(handInfo and (advanced.nextSpeed or 0) or (advanced.currentSpeed or 0))
     return count > 0 and math.min(999,total/count+bonus) or 0
 end
 
@@ -221,6 +224,7 @@ function Combat.start(game, monster, round)
     end
     game.maxSelectableCards = nil
     game.abilityHand = nil
+    game.advancedHand=nil;game.advancedCombat={gold=0,maxHp=0,speed=0};game.advancedFeedback=nil
     game.depthCombat = {values={}}
     Boss.start(game)
     game.handsRemaining = game.maxHands

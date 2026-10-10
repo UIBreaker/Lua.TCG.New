@@ -15,8 +15,8 @@ vec4 effect(vec4 color, Image image, vec2 uv, vec2 screen) {
  vec2 p=(uv-.5)*2.0;
  p.y+=.20*phase;
  float angle=atan(p.y,p.x);
- float growth=.22+.68*(1.0-exp(-phase*8.0));
- vec2 flow=p*4.8+vec2(seed,phase*2.0);
+ float growth=.18+.76*(1.0-exp(-phase*12.0));
+ vec2 flow=p*4.8+vec2(seed,phase*2.8);
  flow+=vec2(noise(flow+7.0),noise(flow-11.0))*.55;
  float billow=cloud(flow);
  float rim=length(p)-growth*(.92+.08*sin(angle*5.0+seed)+.055*sin(angle*9.0-seed))-(billow-.5)*.30;

@@ -88,3 +88,44 @@ for suit,color in pairs(A.config.suitColors) do
     assert(flush.color==color)
 end
 print("Hand attacks: "..count.." real scoring sequences passed; tier boundaries, caps, nine silhouettes/conversions/impacts, Ace-low, four suits, FPS/speed, single damage and HP ordering")
+
+-- Advanced formations used to reuse five card indexes on 2/3/4-lane paths.
+local advancedCases=0
+for _,h in ipairs(require("src.advanced_hands").ordered) do
+    local cards={}
+    for i,rank in ipairs({2,4,6,8,10}) do cards[i]=D.newCard(rank,"spades") end
+    for _,quality in ipairs({"low","medium","high"}) do for tier=1,5 do
+        local a=A.new({steps={{}},finalScore=100},cards,ui,100,h.id)
+        a.quality,a.tier=quality,tier
+        local n=math.min(a.profile.blades and a.profile.blades[tier] or a.profile.emitters,A.config.quality[quality])
+        A.enter(a,"ENERGY_CONVERSION");A.update(a,"ENERGY_CONVERSION",1)
+        local before={}
+        for i=1,n do local x,y=A.position(a,i,"ENERGY_CONVERSION",1);before[i]={x,y} end
+        A.enter(a,"ANTICIPATION");A.update(a,"ANTICIPATION",0)
+        for i=1,n do local x,y=A.position(a,i,"ANTICIPATION",0)
+            assert(math.abs(x-before[i][1])+math.abs(y-before[i][2])<.001,"advanced formation teleport "..h.id)
+        end
+        A.update(a,"ANTICIPATION",1)
+        for i=1,n do local x,y=A.position(a,i,"ANTICIPATION",1);before[i]={x,y} end
+        for i=1,n do for j=i+1,n do
+            assert(math.abs(before[i][1]-before[j][1])+math.abs(before[i][2]-before[j][2])>1,"overlapping advanced lanes "..h.id)
+        end end
+        A.enter(a,"ATTACK")
+        for i=1,n do
+            local x,y=A.position(a,i,"ATTACK",0)
+            assert(math.abs(x-before[i][1])+math.abs(y-before[i][2])<.001,"advanced release teleport "..h.id)
+            local endX,endY=A.position(a,i,"ATTACK",1)
+            assert(endX==endX and endY==endY and endY<280,"unfinished advanced projectile "..h.id)
+        end
+        advancedCases=advancedCases+1
+    end end
+end
+print("Advanced VFX continuity: "..advancedCases.." hand/tier/quality cases; unique lanes and all projectiles reach impact passed")
+
+F.labOpen=true
+for index,id in ipairs(A.config.labOrder) do for tier=1,5 do
+    F.labHand=index;F.labKeypressed(tostring(tier),ui)
+    assert(F.labAnim.sequence.attack.profile.id==id and F.labAnim.sequence.attack.tier==tier)
+end end
+F.labOpen=false
+print("All 27 isolated VFX Lab previews / all 5 tiers passed")

@@ -262,14 +262,14 @@ function Monster.create(round, isBossOverride, isEliteOverride, encounterCountOv
     return require("src.expedition").decorate(monster, round, encounterCount)
 end
 
-function Monster.takeDamage(monster, rawDamage)
+function Monster.takeDamage(monster, rawDamage, trueDamage)
     local hpBefore=monster.hp
     local actualDamage = math.max(0,rawDamage or 0)
-    if monster.isBoss and monster.bossData and monster.bossData.modifyDamage and require("src.boss_abilities").passiveEnabled(monster) then
+    if not trueDamage and monster.isBoss and monster.bossData and monster.bossData.modifyDamage and require("src.boss_abilities").passiveEnabled(monster) then
         actualDamage = monster.bossData.modifyDamage(rawDamage)
     end
 
-    actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage)
+    if not trueDamage then actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage) end
     monster.hp = math.max(0, monster.hp - actualDamage)
     require("src.enemy_abilities").revive(monster)
 

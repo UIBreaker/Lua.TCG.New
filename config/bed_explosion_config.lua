@@ -1,7 +1,7 @@
 return {
  anticipation=.050,flash=.035,hitStop=.080,duration=1.35,
- shockwave={radius=320,duration=.135,delay=.012,strength=.013},
- fire={delay=.008,duration=.30,radius=190},dust={delay=.060,duration=.42,radius=265},
+ shockwave={radius=320,duration=.125,delay=.012,strength=.014},
+ fire={delay=.008,duration=.27,radius=225},dust={delay=.060,duration=.42,radius=265},
  smoke={delay=.090,duration=1.12},debris={delay=0,gravity=1380,drag=1.15,bounce=.25},
  camera={kickX=-8,kickY=8,shake=.22,amplitude=6.5},
  light={strength=1.1,duration=.24,radius=420},scorch={duration=1.25,radius=105},

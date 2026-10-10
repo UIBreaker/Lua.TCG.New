@@ -432,15 +432,15 @@ local function buildItems(category, packFilter)
         end
 
     elseif category == "other" then
-        -- 9 Poker Hand Types (Thế Đánh)
-        for _, h in ipairs(Poker.HAND_TYPES_ORDERED or {}) do
+        -- Basic and advanced hand catalog.
+        for _, h in ipairs(Poker.ALL_HANDS_ORDERED or {}) do
             table.insert(items, {
                 id = h.id,
                 handId = h.id,
                 name = h.vnName or h.name,
                 subtitle = "THẾ ĐÁNH • " .. string.upper(h.name),
-                rarity = "Bí Tịch Cửu Phẩm",
-                desc = "Aura cơ sở: " .. h.baseChips .. " Chips × " .. h.baseMult .. " Mult.\nTổ hợp yêu cầu: " .. (h.subtitle or h.name) .. " (" .. (h.requiredCards or 1) .. " lá).\nNâng cấp cấp độ vĩnh viễn thông qua các Thẻ Hành Tinh tương ứng!",
+                rarity = h.mythic and "Bí Tịch Huyền Thoại" or h.advanced and "Bí Tịch Nâng Cao" or "Bí Tịch Cơ Bản",
+                desc = "Aura cơ sở: " .. h.baseChips .. " Chips × " .. h.baseMult .. " Mult.\nTổ hợp yêu cầu: " .. (h.subtitle or h.name) .. " (" .. (h.requiredCards or 1) .. " lá).\n"..(h.effect or "").."\nNâng cấp bằng Hành Tinh tương ứng; mở khóa bằng Bí Tịch.",
                 icon = "🎴",
                 color = { 0.40, 0.75, 0.95, 1 },
             })

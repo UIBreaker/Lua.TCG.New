@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-advanced-hands" then local ok,err=pcall(require,"tests.advanced_hands_smoke");if not ok then print(err) end;os.exit(ok and 0 or 1) end
     if a=="--test-feedback-render" then require("tests.feedback_upgrade_capture");return end
     if a=="--test-audio" then require("tests.audio_capture");return end
     if a=="--test-equipment-sockets" then require("tests.equipment_sockets_capture");return end
@@ -790,7 +791,7 @@ local function getMaxSelectableCards()
     if game.unlockedHands then
         for handId, unlocked in pairs(game.unlockedHands) do
             if unlocked then
-                if handId == "straight_flush" or handId == "flush" or handId == "full_house" then
+                if handId == "straight_flush" or handId == "flush" or handId == "full_house" or require("src.advanced_hands").byId[handId] then
                     maxAllowed = math.max(maxAllowed, 5)
                 elseif handId == "four_of_a_kind" or handId == "two_pair" then
                     maxAllowed = math.max(maxAllowed, 4)
@@ -915,7 +916,7 @@ local function toggleCardSelection(index)
         else
             if maxAllowed == 1 then
                 table.insert(anim.floatingTexts, {
-                    text = "Mới vào chỉ đánh được 1 lá ĐƠN THỦ! Mua Sách Bí Tịch tại Shop để mở Đôi, Sảnh, Thùng!",
+                    text = "Mới vào chỉ đánh được 1 lá KỴ SĨ TIÊN PHONG! Mua Sách Bí Tịch tại Shop để mở Đôi, Sảnh, Thùng!",
                     color = UI.COLORS.xmultGold,
                     x = 640,
                     y = 480,
@@ -1450,7 +1451,7 @@ local function useConsumable(idx)
             Sound.play("xmult_boom")
             table.remove(game.consumables, idx)
             table.insert(anim.floatingTexts, {
-                text = "🕳️ Hố Đen: TẤT CẢ 9 thế bài tăng +1 Cấp độ!",
+                text = "🕳️ Hố Đen: Tất cả 27 thế đánh tăng +"..p.levels.." cấp!",
                 color = { 0.85, 0.45, 0.95, 1 },
                 x = 640,
                 y = 350,
@@ -1911,6 +1912,7 @@ local function playSelectedHand()
     local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalResult then return end
     UI.Abilities.beginHand(game, evalResult, playedCards, game.abilityApproved)
+    require("src.advanced_hands").begin(game,evalResult)
     local playerSpeed = Combat.getAverageAttackSpeed(playedCards,game)
     local monsterSpeed = game.monster and (game.monster.attackSpeed or 1) or 1
     game.lastPlayerAttackSpeed = playerSpeed
@@ -2833,14 +2835,21 @@ function love.update(dt)
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
                     local armorBeforeHit = game.monster.creatureArmor or 0
                     local actualDmg, defeated, splashHits = Combat.resolvePlayerAttack(game, st.finalScore)
+                    local advance=game.advancedFeedback
+                    if advance then
+                        for i,entry in ipairs({{"heal",advance.heal},{"armor",advance.armor},{"gold",advance.gold},{"speed",advance.speed}}) do
+                            if entry[2]>0 then local ft=Feedback.add(anim.floatingTexts,entry[1],entry[2],UI.BATTLE_CENTER_X+132,230+i*34,UI.formatNumber);ft.label=advance.name end
+                        end
+                        game.advancedFeedback=nil
+                    end
                     require("src.spn_anomalies").showFeedback(game,anim)
                     for _, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, 214, UI.formatNumber)
-                        ft.label = hit.deity.name .. (hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
+                        ft.label = hit.deity.name .. (hit.advanced and "" or hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
-                        anim.deityBounce[hit.slotIndex] = 1.15
+                        if hit.slotIndex then anim.deityBounce[hit.slotIndex] = 1.15 end
                         if hit.enemy.hp <= 0 then DeathVFX.startEnemy(hit.enemy, x, Renderer.quality) end
                     end
                     for _,enemy in ipairs(require("src.enemy_group").members(game)) do
@@ -5073,15 +5082,15 @@ local function drawDeckViewerModal()
 
     -- List of Poker Hands
     local handList = {
-        { id = "high_card", name = "ĐƠN THỦ", poker = "High Card", req = 1, base = "5 Chip x 1 Mult" },
-        { id = "pair", name = "SONG ĐAO", poker = "Đôi (Pair)", req = 2, base = "10 Chip x 2 Mult" },
-        { id = "two_pair", name = "SONG ĐÔI", poker = "Hai Đôi (Two Pair)", req = 4, base = "20 Chip x 2 Mult" },
-        { id = "three_of_a_kind", name = "TAM HOA", poker = "Sám Cô (3 of a Kind)", req = 3, base = "30 Chip x 3 Mult" },
-        { id = "straight", name = "TRƯỜNG LONG", poker = "Sảnh (Straight)", req = 5, base = "30 Chip x 4 Mult" },
-        { id = "flush", name = "ĐỒNG KHÍ", poker = "Thùng (Flush)", req = 5, base = "35 Chip x 4 Mult" },
-        { id = "full_house", name = "HỖN NGUYÊN", poker = "Cù Lũ (Full House)", req = 5, base = "40 Chip x 4 Mult" },
-        { id = "four_of_a_kind", name = "TỨ TƯỢNG", poker = "Tứ Quý (4 of a Kind)", req = 4, base = "60 Chip x 7 Mult" },
-        { id = "straight_flush", name = "VẠN KIẾM QUY TÔNG", poker = "Thùng Phá Sảnh", req = 5, base = "100 Chip x 8 Mult" },
+        { id = "high_card", name = "KỴ SĨ TIÊN PHONG", poker = "High Card", req = 1, base = "5 Chip x 1 Mult" },
+        { id = "pair", name = "CẶP HỘ VỆ", poker = "Đôi (Pair)", req = 2, base = "10 Chip x 2 Mult" },
+        { id = "two_pair", name = "HAI CÁNH TẤN CÔNG", poker = "Hai Đôi (Two Pair)", req = 4, base = "20 Chip x 2 Mult" },
+        { id = "three_of_a_kind", name = "MŨI GIÁO BA NGƯỜI", poker = "Sám Cô (3 of a Kind)", req = 3, base = "30 Chip x 3 Mult" },
+        { id = "straight", name = "ĐƯỜNG HÀNH QUÂN", poker = "Sảnh (Straight)", req = 5, base = "30 Chip x 4 Mult" },
+        { id = "flush", name = "CHUNG MỘT NGỌN CỜ", poker = "Thùng (Flush)", req = 5, base = "35 Chip x 4 Mult" },
+        { id = "full_house", name = "PHÁO ĐÀI NĂM NGƯỜI", poker = "Cù Lũ (Full House)", req = 5, base = "40 Chip x 4 Mult" },
+        { id = "four_of_a_kind", name = "BỐN TRỤ THÀNH TRÌ", poker = "Tứ Quý (4 of a Kind)", req = 4, base = "60 Chip x 7 Mult" },
+        { id = "straight_flush", name = "MŨI GIÁO HOÀNG GIA", poker = "Thùng Phá Sảnh", req = 5, base = "100 Chip x 8 Mult" },
     }
 
     local handItemY = modalY + 115
@@ -5606,7 +5615,7 @@ local function drawHandbookModal()
     -- Subtitle
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print("9 Tuyệt Kỹ Võ Đạo Thẻ Bài - Kiểm tra điều kiện kích hoạt & trạng thái Mở Khóa Bí Tịch", modalX + 32, modalY + 48)
+    love.graphics.print("27 thế đánh · Điều kiện, cấp độ và Bí Tịch", modalX + 32, modalY + 48)
 
     -- Close Button
     local btnClose = {
@@ -5622,6 +5631,9 @@ local function drawHandbookModal()
     table.insert(buttons, btnClose)
     UI.drawButton(btnClose, mx >= btnClose.x and mx <= btnClose.x + btnClose.w and my >= btnClose.y and my <= btnClose.y + btnClose.h)
 
+    local advancedBook=require("ui.advanced_handbook")
+    advancedBook.tabs(UI,buttons,mx,my,modalX+25,modalY+72)
+    if advancedBook.draw(game,UI,buttons,mx,my,modalX,modalY,modalW,modalH) then return end
     local handDescriptions = {
         straight_flush = "5 lá bài vừa có số liên tiếp vừa cùng một chất (Thùng phá sảnh)",
         four_of_a_kind = "4 lá bài có cùng một cấp số / Rank (Tứ quý uy lực)",
@@ -5634,9 +5646,9 @@ local function drawHandbookModal()
         high_card      = "1 lá bài có giá trị số cao nhất (Mậu thầu - Luôn mở khóa)",
     }
 
-    local rowY = modalY + 74
-    local rowH = 56
-    local rowGap = 6
+    local rowY = modalY + 108
+    local rowH = 52
+    local rowGap = 5
 
     for idx, h in ipairs(Poker.HAND_TYPES_ORDERED) do
         local cy = rowY + (idx - 1) * (rowH + rowGap)
@@ -6506,6 +6518,7 @@ function love.draw()
     end
 
     if isHandbookOpen then
+        UI.descriptionCandidate=nil
         UI.CardPhysics.blockBehind()
         drawHandbookModal()
     end
@@ -7284,6 +7297,7 @@ local function handleModalsMousepressed(mx, my, button)
     if isHandbookOpen then
         if button == 1 then
             for _, btn in ipairs(buttons) do
+                if mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h and require("ui.advanced_handbook").click(btn.id) then Sound.play("ui_click");return true end
                 if btn.id == "close_handbook" and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                     isHandbookOpen = false
                     Sound.play("card_deal")

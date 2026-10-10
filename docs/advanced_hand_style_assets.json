@@ -1,0 +1,146 @@
+[
+  {
+    "id": "tesla_369",
+    "group": "hand",
+    "concept": "A single western battle engineer commands three towering brass lightning pylons arranged as a triangle on a glacial battlefield, three controlled blue arcs strike outward, two small expedition shields in foreground. Tactical resonance, storm blue and antique brass.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A single western battle engineer commands three towering brass lightning pylons arranged as a triangle on a glacial battlefield, three controlled blue arcs strike outward, two small expedition shields in foreground. Tactical resonance, storm blue and antique brass.",
+    "file": "assets/cards/continental/hand/tesla_369.png",
+    "name": "BA CỘT SẤM SÉT"
+  },
+  {
+    "id": "jackpot_777",
+    "group": "hand",
+    "concept": "Three bronze expedition standards standing shoulder to shoulder before a western fortress treasury, a warrior captain holds a golden lucky token foreground, guarded gold coin stacks, three bright golden celestial sparks. Gold luck tactical trio, no written numerals.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. Three bronze expedition standards standing shoulder to shoulder before a western fortress treasury, a warrior captain holds a golden lucky token foreground, guarded gold coin stacks, three bright golden celestial sparks. Gold luck tactical trio, no written numerals.",
+    "file": "assets/cards/continental/hand/jackpot_777.png",
+    "name": "KHO BÁU BA SỐ BẢY"
+  },
+  {
+    "id": "fibonacci",
+    "group": "hand",
+    "concept": "One druidic western strategist leads a five-part spiral formation of pale stone shields and living roots on an ancient forest battlefield, an expanding nautilus spiral of soft gold-green light guides their progression. Life regeneration and expanding tactical spiral.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One druidic western strategist leads a five-part spiral formation of pale stone shields and living roots on an ancient forest battlefield, an expanding nautilus spiral of soft gold-green light guides their progression. Life regeneration and expanding tactical spiral.",
+    "file": "assets/cards/continental/hand/fibonacci.png",
+    "name": "XOẮN ỐC SỰ SỐNG"
+  },
+  {
+    "id": "prime",
+    "group": "hand",
+    "concept": "Five isolated western sentinel monoliths of different heights form an irregular constellation-like defensive formation on a violet rocky battlefield, one white-silver commander in foreground summons five independent small crystalline lights, distinct primal nodes.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. Five isolated western sentinel monoliths of different heights form an irregular constellation-like defensive formation on a violet rocky battlefield, one white-silver commander in foreground summons five independent small crystalline lights, distinct primal nodes.",
+    "file": "assets/cards/continental/hand/prime.png",
+    "name": "NĂM SAO ĐƠN ĐỘC"
+  },
+  {
+    "id": "odd_star",
+    "group": "hand",
+    "concept": "A western sun knight raising one bronze sword at the centre of a radial formation of nine broad golden lance shadows on a lava plateau. Strong heroic sunlight, copper-gold shield and controlled nine-point solar aura.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western sun knight raising one bronze sword at the centre of a radial formation of nine broad golden lance shadows on a lava plateau. Strong heroic sunlight, copper-gold shield and controlled nine-point solar aura.",
+    "file": "assets/cards/continental/hand/odd_star.png",
+    "name": "CHÍN TIA BÌNH MINH"
+  },
+  {
+    "id": "even_frost",
+    "group": "hand",
+    "concept": "A western ice warden plants one massive shield before five evenly spaced frost barricades, their silhouettes reinforced by ten large frozen spears on a snowy fortress approach. Cold blue defensive discipline, readable frost geometry.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western ice warden plants one massive shield before five evenly spaced frost barricades, their silhouettes reinforced by ten large frozen spears on a snowy fortress approach. Cold blue defensive discipline, readable frost geometry.",
+    "file": "assets/cards/continental/hand/even_frost.png",
+    "name": "PHÒNG TUYẾN BĂNG GIÁ"
+  },
+  {
+    "id": "crimson_tide",
+    "group": "hand",
+    "concept": "A western crimson battle priest guides one sweeping red healing tide through a five-part formation of red-cloaked expedition shields on a stormy coastline, half-circle wave silhouette, worn stone walls, restrained blood-red glow.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crimson battle priest guides one sweeping red healing tide through a five-part formation of red-cloaked expedition shields on a stormy coastline, half-circle wave silhouette, worn stone walls, restrained blood-red glow.",
+    "file": "assets/cards/continental/hand/crimson_tide.png",
+    "name": "SÓNG TRIỀU ĐỎ"
+  },
+  {
+    "id": "obsidian_tide",
+    "group": "hand",
+    "concept": "A western dark-armoured marshal crouches behind a five-part staggered wall of broad obsidian tower shields on a basalt coastline, a low black-silver supernatural wave rises behind the formation. Defence and acceleration, dark mass with controlled silver edge.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western dark-armoured marshal crouches behind a five-part staggered wall of broad obsidian tower shields on a basalt coastline, a low black-silver supernatural wave rises behind the formation. Defence and acceleration, dark mass with controlled silver edge.",
+    "file": "assets/cards/continental/hand/obsidian_tide.png",
+    "name": "SÓNG TRIỀU ĐÁ ĐEN"
+  },
+  {
+    "id": "eclipse_duality",
+    "group": "hand",
+    "concept": "One western masked tactician stands between two mirrored pairs of red and black armoured expedition shields, opposing eclipse crescents meet above the central figure. A clear five-part symmetric battlefield formation on a ruined bridge.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One western masked tactician stands between two mirrored pairs of red and black armoured expedition shields, opposing eclipse crescents meet above the central figure. A clear five-part symmetric battlefield formation on a ruined bridge.",
+    "file": "assets/cards/continental/hand/eclipse_duality.png",
+    "name": "HAI MẶT NHẬT THỰC"
+  },
+  {
+    "id": "four_kingdom_prism",
+    "group": "hand",
+    "concept": "A western crystal banner bearer stands at the centre of four distinct red, gold, green and blue expedition standards on four continental outcrops. A single faceted prism refracts four broad controlled beams over a five-part tactical formation.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crystal banner bearer stands at the centre of four distinct red, gold, green and blue expedition standards on four continental outcrops. A single faceted prism refracts four broad controlled beams over a five-part tactical formation.",
+    "file": "assets/cards/continental/hand/four_kingdom_prism.png",
+    "name": "LĂNG KÍNH BỐN MÀU"
+  },
+  {
+    "id": "four_kingdom_expedition",
+    "group": "hand",
+    "concept": "A heroic western expedition leader with brass compass stands before four allies wearing distinct regional red, blue, green and ochre cloaks, a clear coordinated five-person formation at a continental mountain pass. Four kingdoms cooperate, large silhouettes, moderate detail.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A heroic western expedition leader with brass compass stands before four allies wearing distinct regional red, blue, green and ochre cloaks, a clear coordinated five-person formation at a continental mountain pass. Four kingdoms cooperate, large silhouettes, moderate detail.",
+    "file": "assets/cards/continental/hand/four_kingdom_expedition.png",
+    "name": "LIÊN MINH VIỄN CHINH"
+  },
+  {
+    "id": "destiny_crown",
+    "group": "hand",
+    "concept": "A western crowned war commander lifts a single gilded sword before four massive royal battle standards in a western ruined citadel, five tall gold silhouette points form a crown-like tactical formation. Navy steel and antique gold, military destiny.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western crowned war commander lifts a single gilded sword before four massive royal battle standards in a western ruined citadel, five tall gold silhouette points form a crown-like tactical formation. Navy steel and antique gold, military destiny.",
+    "file": "assets/cards/continental/hand/destiny_crown.png",
+    "name": "VƯƠNG MIỆN ĐỊNH MỆNH"
+  },
+  {
+    "id": "continental_gate",
+    "group": "hand",
+    "concept": "One western key-bearing champion approaches a colossal ancient stone gateway guarded by four ivory tower shields, four-to-one tactical formation, continental cliffs and waterfalls beyond, an immense restrained gold key-shaped magical alignment.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. One western key-bearing champion approaches a colossal ancient stone gateway guarded by four ivory tower shields, four-to-one tactical formation, continental cliffs and waterfalls beyond, an immense restrained gold key-shaped magical alignment.",
+    "file": "assets/cards/continental/hand/continental_gate.png",
+    "name": "CỔNG LỤC ĐỊA THẤT LẠC"
+  },
+  {
+    "id": "answer_42",
+    "group": "hand",
+    "concept": "A western navigator captain unfolds one unlabelled bronze expedition map on a canyon overlook, four allied lanterns and two broad arcing paths reveal a five-node tactical route across distant fortress terraces. Ochre and navy, discovery and navigation, no map writing.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western navigator captain unfolds one unlabelled bronze expedition map on a canyon overlook, four allied lanterns and two broad arcing paths reveal a five-node tactical route across distant fortress terraces. Ochre and navy, discovery and navigation, no map writing.",
+    "file": "assets/cards/continental/hand/answer_42.png",
+    "name": "BẢN ĐỒ CHÂN TRỜI"
+  },
+  {
+    "id": "sealed_gate",
+    "group": "hand",
+    "concept": "A single western seal-breaker opens an ancient fortress gate using a three-point ivory barrier and two gold lock mechanisms, readable three-plus-two tactical formation, violet fissure and restrained sealing circles. Large western arch, dramatic opening.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A single western seal-breaker opens an ancient fortress gate using a three-point ivory barrier and two gold lock mechanisms, readable three-plus-two tactical formation, violet fissure and restrained sealing circles. Large western arch, dramatic opening.",
+    "file": "assets/cards/continental/hand/sealed_gate.png",
+    "name": "CÁNH CỔNG THỨC TỈNH"
+  },
+  {
+    "id": "seven_stars",
+    "group": "hand",
+    "concept": "A western fate knight anchors a clear three-plus-one-plus-one formation of three glowing gold lances, one ivory tower shield and one bronze crowned standard under seven stars. Dark mountain battlefield and antique gold magic.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western fate knight anchors a clear three-plus-one-plus-one formation of three glowing gold lances, one ivory tower shield and one bronze crowned standard under seven stars. Dark mountain battlefield and antique gold magic.",
+    "file": "assets/cards/continental/hand/seven_stars.png",
+    "name": "BẢY SAO DẪN LỐI"
+  },
+  {
+    "id": "five_ley_lines",
+    "group": "hand",
+    "concept": "A western earth marshal plants an antique bronze staff at the centre of five massive standing stones connected by five broad gold ley lines, each stone distinct in shape and height. Green forest plateau, grounded pentagonal tactical formation.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western earth marshal plants an antique bronze staff at the centre of five massive standing stones connected by five broad gold ley lines, each stone distinct in shape and height. Green forest plateau, grounded pentagonal tactical formation.",
+    "file": "assets/cards/continental/hand/five_ley_lines.png",
+    "name": "NĂM MẠCH NĂNG LƯỢNG"
+  },
+  {
+    "id": "endless_cycle",
+    "group": "hand",
+    "concept": "A western time warden pivots in a five-part formation of four large regional standards and one returning shield, a single seamless silver-green double-loop energy ribbon encloses the coordinated formation on a ruined circular fortress platform. Eternal cycle and return.",
+    "prompt": "Use case: stylized-concept. Create ONE canonical HAND STYLE / TACTICAL FORMATION game card artwork. Full bleed vertical portrait 2:3 PNG. Cinematic Western dark fantasy expedition matching the Continental collection. Painterly realistic weathered materials, medium detail, strong readable large composition and a single main tactical focus. Controlled biome lighting, restrained magic, atmospheric continental backdrop. NO text, labels, numbers, card ranks, suits, badges, border, frame, UI, eastern architecture, excessive tiny ornament or white overexposure. Do not depict a planet as the main subject; this is a learned combat formation, distinct from its celestial upgrade card. A western time warden pivots in a five-part formation of four large regional standards and one returning shield, a single seamless silver-green double-loop energy ribbon encloses the coordinated formation on a ruined circular fortress platform. Eternal cycle and return.",
+    "file": "assets/cards/continental/hand/endless_cycle.png",
+    "name": "VÒNG XOAY BẤT TẬN"
+  }
+]

@@ -20,7 +20,7 @@ jobs:
           python - <<'PY'
           import shutil
           from pathlib import Path
-          target = Path('LUA-TCG-0.120.0-Android.apk')
+          target = Path('LUA-TCG-0.121.0-Android.apk')
           parts = sorted(Path('.').glob(target.name + '.part*'))
           if parts:
               with target.open('wb') as output:
@@ -28,20 +28,20 @@ jobs:
                       with part.open('rb') as source:
                           shutil.copyfileobj(source, output)
           PY
-          sha256sum -c LUA-TCG-0.120.0-Android.apk.sha256
+          sha256sum -c LUA-TCG-0.121.0-Android.apk.sha256
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
-          "$signer" verify LUA-TCG-0.120.0-Android.apk
+          "$signer" verify LUA-TCG-0.121.0-Android.apk
           python - <<'PY'
           import io, zipfile
           from pathlib import Path
-          with zipfile.ZipFile('LUA-TCG-0.120.0-Android.apk') as apk:
+          with zipfile.ZipFile('LUA-TCG-0.121.0-Android.apk') as apk:
               assert apk.testzip() is None
               with zipfile.ZipFile(io.BytesIO(apk.read('assets/game.love'))) as game:
                   assert game.testzip() is None
                   assert 'main.lua' in game.namelist()
                   assert 'mobile_build.flag' in game.namelist()
                   assert b't.window.resizable = false' in game.read('conf.lua')
-                  assert b'beta 0.120.0' in game.read('main.lua')
+                  assert b'beta 0.121.0' in game.read('main.lua')
                   for name in game.namelist():
                       if name.endswith('.lua') and name != 'conf.lua':
                           assert game.read(name).replace(b'\r\n', b'\n') == (Path('..') / name).read_bytes().replace(b'\r\n', b'\n'), name
@@ -50,6 +50,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v0.120.0 >/dev/null 2>&1 || gh release create v0.120.0 --prerelease --target "$GITHUB_SHA" --title 'Terra Suit beta 0.120.0 — Android' --notes-file docs/RELEASE_NOTES_0.120.0.md
-          gh release upload v0.120.0 downloads/LUA-TCG-0.120.0-Android.apk downloads/LUA-TCG-0.120.0-Android.apk.sha256 --clobber
-          gh release edit v0.120.0 --notes-file docs/RELEASE_NOTES_0.120.0.md
+          gh release view v0.121.0 >/dev/null 2>&1 || gh release create v0.121.0 --prerelease --target "$GITHUB_SHA" --title 'Terra Suit beta 0.121.0 — Android' --notes-file docs/RELEASE_NOTES_0.121.0.md
+          gh release upload v0.121.0 downloads/LUA-TCG-0.121.0-Android.apk downloads/LUA-TCG-0.121.0-Android.apk.sha256 --clobber
+          gh release edit v0.121.0 --notes-file docs/RELEASE_NOTES_0.121.0.md

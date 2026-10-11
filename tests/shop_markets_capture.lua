@@ -103,7 +103,7 @@ function T.update(game,cb)
         local _,state=cb.getRunState();assert(state=="shop" and not cb.getShopData().soulMode and game.shopMode~="large")
         T.mode=game.shopMode;T.gold=game.gold;click(button(cb,"reroll"))
     elseif step==stallSteps+10 then
-        assert(game.shopMode==T.mode and cb.getShopData().mode==T.mode and game.gold==T.gold-5)
+        assert(game.shopMode==T.mode and cb.getShopData().mode==T.mode and game.gold==T.gold-2)
         click(button(cb,"leave_shop"))
     elseif step==stallSteps+11 then
         local _,state=cb.getRunState();assert(state=="BLIND_SELECT")

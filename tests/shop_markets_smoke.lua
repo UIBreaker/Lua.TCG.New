@@ -74,7 +74,7 @@ assert(state=="shop" and loaded.shopMode=="consumable" and loaded.consumables[1]
 for _,mode in ipairs(Shop.AFTER_COMBAT_MARKETS) do
     game.shopMode=mode;Shop.resetReroll(shop);Shop.refresh(shop,game)
     local before=game.gold
-    assert(Shop.reroll(shop,game) and game.gold==before-5 and game.shopMode==mode and shop.mode==mode)
+    assert(Shop.reroll(shop,game) and game.gold==before-2 and game.shopMode==mode and shop.mode==mode)
     local saved=P.restoreSnapshot(P.makeSnapshot(game,"shop"));assert(saved.shopMode==mode)
 end
 

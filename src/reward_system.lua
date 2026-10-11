@@ -74,7 +74,9 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
         factionBonus = math.ceil(subtotal * 0.25)
     end
 
-    local totalGold = subtotal + factionBonus
+    local bossVictoryBonus = not wasSkip and ((blind and blind.type == "boss") or (gameState.monster and gameState.monster.isBoss))
+        and require("config.reward_loot").bossVictoryGold or 0
+    local totalGold = subtotal + factionBonus + bossVictoryBonus
 
     return {
         blind = blind,
@@ -92,6 +94,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
         subtotal = subtotal,
         isValoria = isValoria,
         factionBonus = factionBonus,
+        bossVictoryBonus = bossVictoryBonus,
         totalGold = totalGold,
     }
 end
@@ -290,6 +293,7 @@ function RewardSystem.newAnimation(breakdown, result)
         {label = "LƯỢT ĐÁNH CÒN DƯ", valNum = breakdown.unusedHandsBonus},
         {label = "TIỀN LÃI", valNum = breakdown.interestBonus, interest = true},
     }
+    if (breakdown.bossVictoryBonus or 0) > 0 then lines[#lines + 1] = {label = "CHINH PHỤC BOSS", valNum = breakdown.bossVictoryBonus, boss = true} end
     if breakdown.deityBonus > 0 then lines[#lines + 1] = {label = "THƯỞNG HỘ LINH", valNum = breakdown.deityBonus} end
     if breakdown.factionBonus > 0 then lines[#lines + 1] = {label = "VIỆN TRỢ VALORIA", valNum = breakdown.factionBonus} end
     local slots = {}
@@ -303,7 +307,7 @@ function RewardSystem.newAnimation(breakdown, result)
         displayTotal = 0, walletTotal = breakdown.currentGold, totalRevealed = false,
         pulse = 0, finished = false, buttonActive = false, visualSeed = 17, coinsSpawned = 0,
         sparks = {}, flares = {}, goldFlare = 0,
-        soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0}
+        soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0, lootPage = 1}
 end
 
 -- Local presentation RNG: effects cannot advance the saved gameplay generator.
@@ -351,10 +355,10 @@ local function spawnCoins(anim, amount, row, interest)
     for i = 1, count do
         local r = visualRandom(anim)
         local batch = math.floor(amount / count) + (i <= amount % count and 1 or 0)
-        local startY = -35 + (row - 1) * 29
+        local startY = -20 + (row - 1) * 22
         local trail = {}
-        for _ = 1, Config.presentation.trailPoints do trail[#trail + 1] = {x = -219, y = startY} end
-        anim.coins[#anim.coins + 1] = {type = "reward_coin", x = -235 + r * 32,
+        for _ = 1, Config.presentation.trailPoints do trail[#trail + 1] = {x = -160, y = startY} end
+        anim.coins[#anim.coins + 1] = {type = "reward_coin", x = -176 + r * 32,
             y = startY, floorY = startY + 40, vx = 80 + r * 180, vy = -150 - r * 100,
             rotation = r * 6.28, angularVelocity = 4 + r * 9, age = -i * 0.018,
             amount = batch, interest = interest, phase = "SPAWN", depth = 0.7 + r * 0.5,
@@ -408,6 +412,7 @@ end
 local function revealSlot(anim, index)
     local slot = anim.slots[index]
     slot.revealedAt, anim.revealedLoot = anim.timer, index
+    anim.lootPage = math.ceil(index / 6)
     local reward = slot.reward
     local rarity = Config.rarities[reward.rarity] or Config.rarities.common
     anim.flares[index] = anim.timer
@@ -458,6 +463,7 @@ function RewardSystem.update(anim, dt)
         elseif state == "LOOT_PREPARE" then
             if anim.revealedLoot == #anim.slots then setState(anim, "SUMMARY")
             else
+                anim.lootPage = math.ceil((anim.revealedLoot + 1) / 6)
                 local slot = anim.slots[anim.revealedLoot + 1]
                 local rarity = Config.rarities[slot.reward.rarity] or Config.rarities.common
                 setState(anim, rarity.strength >= 3 and "RARE_REVEAL" or "LOOT_REVEAL")
@@ -485,9 +491,16 @@ function RewardSystem.finishImmediately(anim)
     anim.soulsCollected = anim.result.earnedSouls or 0
     anim.soulTotal = (anim.result.soulsBefore or 0) + anim.soulsCollected
     anim.soulFlare = 0
+    anim.lootPage = 1
     anim.walletTotal, anim.pulse = anim.breakdown.currentGold + anim.displayTotal, 0.16
     setState(anim, "SUMMARY")
     Sound.play("reward_gold_total")
+end
+
+function RewardSystem.changePage(anim, direction)
+    if not anim or not anim.finished then return false end
+    anim.lootPage = math.max(1, math.min(math.max(1, math.ceil(#anim.slots / 6)), (anim.lootPage or 1) + direction))
+    return true
 end
 
 local coinSprite, chestArt, glowMesh
@@ -535,9 +548,10 @@ end
 function RewardSystem.draw(anim, width, height, mx, my, buttons)
     if not anim then return end
     local g = love.graphics
-    local w, h = 1040, 660
+    local w, h = 1160, 680
     local x, y = (width - w) / 2, (height - h) / 2
     local gold = {1, 0.80, 0.39}
+    local boss = (anim.breakdown.bossVictoryBonus or 0) > 0 or (anim.breakdown.blind or {}).type == "boss"
     local muted = {0.57, 0.65, 0.73}
     local sprite = getCoinSprite()
     local function coin(cx, cy, size, rotation, spin)
@@ -559,6 +573,11 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     g.setColor(0.04, 0.057, 0.083, Visual.reward.panelAlpha); UI.drawRoundedRect("fill", x, y, w, h, 18)
     g.setColor(0.62, 0.47, 0.23, 0.55); g.setLineWidth(1); UI.drawRoundedRect("line", x, y, w, h, 18)
     g.setColor(0.97, 0.76, 0.35, 0.8); g.rectangle("fill", x + 32, y, 90, 2)
+    softGlow(x + w / 2, y + 60, w * 0.46, 115, boss and {0.85, 0.44, 1} or gold, 0.09)
+    for _, corner in ipairs({{x+12,y+12,1,1},{x+w-12,y+12,-1,1},{x+12,y+h-12,1,-1},{x+w-12,y+h-12,-1,-1}}) do
+        g.setColor(gold[1],gold[2],gold[3],0.65);g.setLineWidth(2)
+        g.line(corner[1]+corner[3]*28,corner[2],corner[1],corner[2],corner[1],corner[2]+corner[4]*28)
+    end
     -- Quiet moving dust and broad light shafts, behind the readable UI.
     if Visual.effects.particles then
         for i = 1, Config.presentation.ambience do
@@ -582,11 +601,13 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     end
     g.setColor(gold); g.polygon("fill", cx - 15, cy - 9, cx - 7, cy - 2, cx, cy - 15, cx + 7, cy - 2, cx + 15, cy - 9, cx + 12, cy + 10, cx - 12, cy + 10)
     g.setColor(0.99, 0.88, 0.59); g.rectangle("fill", cx - 11, cy + 13, 22, 3, 1)
-    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("KẾT QUẢ TRẬN ĐẤU", x + 110, y + 24)
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("LỄ TRAO THƯỞNG", x + 110, y + 24)
     g.setFont(UI.fonts.title); g.setColor(gold)
     local entrance = 1 - math.max(0, 1 - anim.timer / 0.35) ^ 3
     g.push(); g.translate(x + 108, y + 43 + (1 - entrance) * 8); g.scale(0.96 + entrance * 0.04)
-    g.print(anim.breakdown.wasSkipped and "QUÂN LƯƠNG" or "CHIẾN THẮNG", 0, 0); g.pop()
+    local headline = anim.breakdown.wasSkipped and "QUÂN LƯƠNG" or boss and "CHINH PHỤC BOSS" or "CHIẾN THẮNG"
+    local headlineScale = math.min(1, 445 / UI.fonts.title:getWidth(headline))
+    g.scale(headlineScale); g.print(headline, 0, 0); g.pop()
     local blind = anim.breakdown.blind or {}
     g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
     local encounterTitle = (blind.title or "ẢI CHIẾN THẮNG") .. "  /  " .. (blind.name or "")
@@ -600,63 +621,63 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     g.printf(anim.finished and "PHẦN THƯỞNG ĐÃ ĐƯỢC CỘNG" or "ĐANG KIỂM KÊ PHẦN THƯỞNG", x + 580, y + 64, w - 614, "right")
     g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + 99, x + w - 32, y + 99)
 
-    local leftX, leftW = x + 32, 536
-    local rightX, rightW = x + 586, 422
-    panel(leftX, y + 118, leftW, 205)
-    panel(rightX, y + 118, rightW, 141, true)
-    panel(rightX, y + 269, rightW, 54)
-    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("CHI TIẾT THƯỞNG", leftX + 20, y + 133)
-    g.printf("XU VÀNG", leftX + leftW - 112, y + 133, 92, "right")
-    local rowY = y + 160
+    local leftX, leftW = x + 32, 636
+    local rightX, rightW = x + 686, 442
+    panel(leftX, y + 114, leftW, 176)
+    panel(rightX, y + 114, rightW, 116, true)
+    panel(rightX, y + 240, rightW, 50)
+    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("NGÂN KHỐ CHIẾN THẮNG", leftX + 20, y + 125)
+    g.printf("XU VÀNG", leftX + leftW - 112, y + 125, 92, "right")
+    local rowY = y + 147
     for i, line in ipairs(anim.lines) do
         local rowEntrance = line.revealedAt and math.min(1, (anim.timer - line.revealedAt) / 0.16) or 0
-        local ry = rowY + (i - 1) * 29 + (1 - rowEntrance) * 4
+        local ry = rowY + (i - 1) * 22 + (1 - rowEntrance) * 4
         local revealed = i <= anim.revealedCount
         if revealed then
-            g.setColor(line.interest and 0.13 or 0.11, line.interest and 0.32 or 0.16, line.interest and 0.23 or 0.22, 0.45)
-            UI.drawRoundedRect("fill", leftX + 12, ry, leftW - 24, 26, 5)
+            g.setColor(line.boss and 0.38 or line.interest and 0.13 or 0.11, line.boss and 0.25 or line.interest and 0.32 or 0.16, line.boss and 0.10 or line.interest and 0.23 or 0.22, 0.45)
+            UI.drawRoundedRect("fill", leftX + 12, ry, leftW - 24, 20, 4)
         end
-        g.setColor(revealed and gold or muted); g.circle("fill", leftX + 26, ry + 13, 2)
+        g.setColor(revealed and gold or muted); g.circle("fill", leftX + 26, ry + 10, 2)
         g.setFont(UI.fonts.small); g.setColor(line.interest and revealed and {0.48, 0.89, 0.67} or revealed and UI.COLORS.textLight or muted)
-        g.print(line.label, leftX + 40, ry + 5)
-        if revealed then coin(leftX + leftW - 87, ry + 13, 21) end
-        g.setFont(UI.fonts.regular); g.setColor(revealed and gold or muted)
-        g.printf(revealed and "+" .. line.valNum or "—", leftX + leftW - 72, ry + 3, 50, "right")
-        if revealed and inside(mx, my, leftX + 12, ry, leftW - 24, 26) then
+        g.print(line.label, leftX + 40, ry + 2)
+        if revealed then coin(leftX + leftW - 87, ry + 10, 18) end
+        g.setFont(UI.fonts.small); g.setColor(revealed and gold or muted)
+        g.printf(revealed and "+" .. line.valNum or "—", leftX + leftW - 72, ry + 2, 50, "right")
+        if revealed and inside(mx, my, leftX + 12, ry, leftW - 24, 20) then
             UI.descriptionCandidate = {hoverKey = line, name = line.label, desc = line.interest and (anim.breakdown.isGilded and "+1 xu mỗi 4 xu, không giới hạn." or "+1 xu mỗi 5 xu. Trần lãi: " .. anim.breakdown.maxInterest .. " xu" .. (anim.breakdown.interestBonus >= anim.breakdown.maxInterest and " · Lãi tối đa." or "")) or "Nguồn thưởng được cộng vào túi vàng khi kết thúc trận.", color = gold}
         end
     end
-    local tx, ty = rightX + 114, y + 208
+    local tx, ty = rightX + 100, y + 180
     softGlow(tx, ty, 83, 83, gold, 0.20)
     local flash = anim.goldFlare / Config.presentation.flareDuration
     g.setBlendMode("add")
     softGlow(tx, ty, 88, 88, gold, flash * 0.32)
     g.setColor(1, 0.83, 0.43, flash * 0.65); g.setLineWidth(1.5)
-    g.circle("line", tx, ty, 45 + (1 - flash) * 45)
+    g.circle("line", tx, ty, 35 + (1 - flash) * 20)
     g.setBlendMode("alpha")
-    coin(tx, ty, 85)
-    g.setFont(UI.fonts.tiny); g.setColor(gold); g.print("TỔNG XU NHẬN ĐƯỢC", rightX + 177, y + 139)
-    g.push(); g.translate(rightX + 174, y + 162)
+    coin(tx, ty, 76)
+    g.setFont(UI.fonts.tiny); g.setColor(gold); g.print("TỔNG XU NHẬN ĐƯỢC", rightX + 157, y + 128)
+    g.push(); g.translate(rightX + 154, y + 150)
     local totalFont = UI.fonts.huge
     local totalScale = math.min(1, (rightW - 194) / math.max(1, totalFont:getWidth("+" .. anim.displayTotal)))
     g.scale((1 + anim.pulse) * totalScale)
     g.setFont(UI.fonts.huge); g.setColor(1, 0.87, 0.52)
     g.print("+" .. anim.displayTotal, 0, 0); g.pop()
     g.setFont(UI.fonts.tiny); g.setColor(muted)
-    g.print("TÚI  " .. anim.breakdown.currentGold .. "  →  " .. anim.walletTotal, rightX + 179, y + 233)
+    g.print("TÚI  " .. anim.breakdown.currentGold .. "  →  " .. anim.walletTotal, rightX + 159, y + 208)
     local soulColor = {0.38, 0.94, 0.88}
-    local sx, sy = rightX + 35, y + 296
+    local sx, sy = rightX + 30, y + 265
     local soulPulse = anim.soulFlare / 0.45
     softGlow(sx, sy, 32 + soulPulse * 12, 28 + soulPulse * 10, soulColor, 0.23 + soulPulse * 0.35)
     g.setColor(0.22, 0.68, 0.70, 0.7); g.circle("line", sx, sy, 18)
     g.setColor(soulColor); g.polygon("fill", sx, sy - 13, sx + 9, sy + 1, sx, sy + 12, sx - 9, sy + 1)
     g.setColor(0.87, 1, 0.97); g.ellipse("fill", sx - 2, sy - 2, 2.5, 5)
-    g.setFont(UI.fonts.tiny); g.setColor(soulColor); g.print("LINH HỒN THU THẬP", rightX + 64, y + 279)
-    g.setColor(muted); g.print("QUÁI +1  ·  BOSS +4", rightX + 64, y + 299)
+    g.setFont(UI.fonts.tiny); g.setColor(soulColor); g.print("LINH HỒN THU THẬP", rightX + 60, y + 247)
+    g.setColor(muted); g.print("QUÁI +1  ·  BOSS +4", rightX + 60, y + 267)
     g.setFont(UI.fonts.medium); g.setColor(soulColor)
-    g.printf("+" .. anim.soulsCollected, rightX + 244, y + 279, 60, "right")
+    g.printf("+" .. anim.soulsCollected, rightX + 264, y + 247, 60, "right")
     g.setFont(UI.fonts.tiny); g.setColor(UI.COLORS.textLight)
-    g.printf("TỔNG " .. anim.soulTotal, rightX + 304, y + 298, 100, "right")
+    g.printf("TỔNG " .. anim.soulTotal, rightX + 324, y + 267, 100, "right")
     if anim.state == "SOUL_GATHER" then
         -- Curved wisps converge on the crystal; tails fade without gameplay RNG.
         g.setBlendMode("add")
@@ -681,9 +702,9 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         end
         g.setBlendMode("alpha")
     end
-    if inside(mx, my, rightX, y + 269, rightW, 54) then
+    if inside(mx, my, rightX, y + 240, rightW, 50) then
         UI.descriptionCandidate = {hoverKey = anim.result, name = "LINH HỒN CHIẾN THẮNG", desc = "Mỗi quái thường: 1 linh hồn. Boss: 4 linh hồn.\nTrận này: " .. (anim.result.earnedSouls or 0) .. " linh hồn.\nDùng tại Chợ Linh Hồn; bỏ qua ải không nhận linh hồn.", color = soulColor}
-    elseif inside(mx, my, rightX, y + 118, rightW, 141) then
+    elseif inside(mx, my, rightX, y + 114, rightW, 116) then
         UI.descriptionCandidate = {hoverKey = anim, name = "TỔNG XU NHẬN ĐƯỢC", desc = "Thưởng bảo đảm: " .. anim.breakdown.totalGold .. " xu\nVàng thưởng từ chiến lợi phẩm: " .. anim.result.bonusGold .. " xu\nTổng cộng: " .. anim.result.earnedGold .. " xu. Tiền được cộng một lần; số dư bên dưới bao gồm tiền đang có.", color = gold}
     end
     for _, c in ipairs(anim.coins) do
@@ -711,33 +732,42 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
             g.setColor(1, 0.96, 0.72, 0.6); g.circle("fill", tx + c.x - 4, ty + c.y - 7, 1.2 * c.depth)
         end
     end
-    g.setFont(UI.fonts.medium); g.setColor(UI.COLORS.textLight); g.print("CHIẾN LỢI PHẨM", x + 32, y + 343)
+    g.setFont(UI.fonts.medium); g.setColor(gold); g.print("KHO BÁU CHIẾN LỢI PHẨM", x + 32, y + 302)
     g.setFont(UI.fonts.tiny); g.setColor(muted)
     local highlight = anim.highlightSlot and anim.slots[anim.highlightSlot]
     if highlight and anim.timer - anim.highlightAt < 0.7 then
         local rarity = Config.rarities[highlight.reward.rarity] or Config.rarities.common
         g.setColor(rarity.color)
-        g.printf("✦  " .. rarity.label .. "  ·  " .. highlight.reward.name, x + w - 522, y + 350, 490, "right")
+        g.printf("✦  " .. rarity.label .. "  ·  " .. highlight.reward.name, x + w - 522, y + 308, 490, "right")
     else
-        g.printf(anim.finished and "ĐÃ THU THẬP  /  " .. #anim.slots .. " VẬT PHẨM" or "ĐANG MỞ PHẦN THƯỞNG", x + w - 332, y + 350, 300, "right")
+        g.printf(anim.finished and "ĐÃ THU THẬP  /  " .. #anim.slots .. " PHẦN THƯỞNG" or "ĐANG MỞ PHẦN THƯỞNG", x + w - 332, y + 308, 300, "right")
     end
     local n = #anim.slots
-    local slotW = math.min(188, (w - 80) / math.max(1, n) - 12)
-    local slotH, gap = 190, 12
-    local startX = x + (w - (n * (slotW + gap) - gap)) / 2
+    local pageCount = math.max(1, math.ceil(n / 6))
+    local page = math.max(1, math.min(pageCount, anim.lootPage or 1))
+    local first, last = (page - 1) * 6 + 1, math.min(n, page * 6)
+    local visible = math.max(0, last - first + 1)
+    local slotW = math.min(200, (w - 80) / math.max(1, visible) - 12)
+    local slotH, gap = 230, 12
+    local startX = x + (w - (visible * (slotW + gap) - gap)) / 2
+    softGlow(x + w / 2, y + 528, w * 0.42, 70, gold, 0.07)
+    g.setColor(gold[1],gold[2],gold[3],0.10); g.setLineWidth(1)
+    g.ellipse("line",x+w/2,y+549,w*0.41,19)
     if n == 0 then
         g.setColor(UI.COLORS.textMuted); g.printf(anim.breakdown.wasSkipped and "Đã nhận phần thưởng bỏ qua ải" or "Không có chiến lợi phẩm thêm", x, y + 447, w, "center")
     end
-    for i, slot in ipairs(anim.slots) do
+    for i = first, last do
+        local slot = anim.slots[i]
         local reward = slot.reward
         local rarity = Config.rarities[reward.rarity] or Config.rarities.common
-        local sx, sy = startX + (i - 1) * (slotW + gap), y + 364
+        local sx, sy = startX + (i - first) * (slotW + gap), y + 326
         local revealed = i <= anim.revealedLoot
         local active = i == anim.revealedLoot + 1 and (anim.state == "RARE_REVEAL" or anim.state == "LOOT_REVEAL")
         local progress = revealed and math.min(1, (anim.timer - (slot.revealedAt or 0)) / 0.24) or 0
         local isHovered = revealed and inside(mx, my, sx, sy, slotW, slotH)
         local flareAge = anim.timer - (anim.flares[i] or -100)
         local flare = math.max(0, 1 - flareAge / Config.presentation.flareDuration)
+        softGlow(sx + slotW / 2, sy + slotH, slotW * 0.6, 17, rarity.color, revealed and 0.2 or 0.04)
         panel(sx, sy, slotW, slotH)
         g.setBlendMode("add")
         if active or flare > 0 then
@@ -769,8 +799,8 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         g.rectangle("fill", sx + 14, sy, slotW - 28, 2)
         local chestDrop = slot.chest and active and math.max(0, 1 - anim.phaseTime / 0.18) or 0
         local chestShake = slot.chest and active and anim.phaseTime > 0.18 and math.sin(anim.phaseTime * 65) * 2 or 0
-        g.push(); g.translate(sx + slotW / 2 + chestShake + (slot.parentIndex and revealed and (slot.parentIndex - i) * (slotW + gap) * (1 - progress) ^ 3 or 0),
-            sy + 78 - chestDrop * 45 - (1 - progress) * (revealed and (slot.parent and 42 or 12) or 0) - (isHovered and 5 or 0))
+        g.push(); g.translate(sx + slotW / 2 + chestShake + (slot.parentIndex and slot.parentIndex >= first and revealed and (slot.parentIndex - i) * (slotW + gap) * (1 - progress) ^ 3 or 0),
+            sy + 94 - chestDrop * 45 - (1 - progress) * (revealed and (slot.parent and 42 or 12) or 0) - (isHovered and 5 or 0))
         if isHovered then
             g.scale(1.05); g.rotate(math.max(-0.035, math.min(0.035, (mx - sx - slotW / 2) / slotW * 0.08)))
         end
@@ -782,24 +812,24 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         elseif revealed and progress >= 0.5 then
             if reward.packType then art = UI.getPackImage(reward.packType)
             elseif reward.card and reward.type == "PLAYING_CARD" then
-                UI.drawCardFace(reward.card, -36, -54, 72, 108, false)
+                UI.drawCardFace(reward.card, -46, -69, 92, 138, false)
             elseif reward.card then
-                require("ui.card_surfaces").fullReward(reward.card, -36, -54, 72, 108, nil, false)
+                require("ui.card_surfaces").fullReward(reward.card, -46, -69, 92, 138, nil, false)
             else
                 coin(0, 0, 67)
             end
         else
-            UI.drawCardBack(-36, -54, 72, 108)
+            UI.drawCardBack(-46, -69, 92, 138)
             g.setFont(UI.fonts.large); g.setColor(rarity.color); g.printf("?", -slotW / 2, -18, slotW, "center")
         end
         if art then
             g.setColor(1, 1, 1)
             local iw, ih = art:getDimensions()
             if reward.packType then
-                UI.CardFrame.image(art, -36, -54, 72, 108)
-                UI.CardFrame.draw(-36, -54, 72, 108, nil, 1, reward)
+                UI.CardFrame.image(art, -46, -69, 92, 138)
+                UI.CardFrame.draw(-46, -69, 92, 138, nil, 1, reward)
             else
-                local artScale = math.min(slotW * 0.72 / iw, 100 / ih)
+                local artScale = math.min(slotW * 0.76 / iw, 130 / ih)
                 g.draw(art, 0, -2, slot.chest and math.sin(anim.timer * 5) * (1 - progress) * 0.05 or 0, artScale, artScale, iw / 2, ih / 2)
                 if flare > 0 then
                     g.setBlendMode("add"); g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], flare * 0.16)
@@ -828,10 +858,10 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
             g.setFont(UI.fonts.tiny); g.setColor(rarity.color)
             g.printf(rarity.label, sx + 4, sy + 6, slotW - 8, "center")
             g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
-            g.printf(reward.type == "GOLD" and "+" .. reward.amount .. " XU VÀNG" or reward.name, sx + 8, sy + 134, slotW - 16, "center")
+            g.printf(reward.type == "GOLD" and "+" .. reward.amount .. " XU VÀNG" or UI.truncateUtf8(reward.name, 38), sx + 8, sy + 170, slotW - 16, "center")
             g.setFont(UI.fonts.tiny); g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], 0.12)
-            UI.drawRoundedRect("fill", sx + slotW / 2 - 40, sy + 167, 80, 18, 5)
-            g.setColor(rarity.color); g.printf(slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 169, slotW - 8, "center")
+            UI.drawRoundedRect("fill", sx + slotW / 2 - 40, sy + 207, 80, 18, 5)
+            g.setColor(rarity.color); g.printf(slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 209, slotW - 8, "center")
             if inside(mx, my, sx, sy, slotW, slotH) then
                 if reward.type == "PLAYING_CARD" then UI.descriptionCandidate = reward.card
                 else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
@@ -842,9 +872,9 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     for _, p in ipairs(anim.sparks) do
         local ax, ay = tx, ty
         if type(p.anchor) == "number" then
-            ax, ay = startX + (p.anchor - 1) * (slotW + gap) + slotW / 2, y + 442
+            ax, ay = startX + (p.anchor - first) * (slotW + gap) + slotW / 2, y + 420
         end
-        local alpha = (1 - p.age / p.life) ^ 2
+        local alpha = (type(p.anchor) ~= "number" or (p.anchor >= first and p.anchor <= last)) and (1 - p.age / p.life) ^ 2 or 0
         g.setColor(p.color[1], p.color[2], p.color[3], alpha * 0.7)
         g.setLineWidth(1)
         local px, py = ax + p.x, ay + p.y
@@ -852,6 +882,19 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         g.line(px, py - p.size * 2, px, py + p.size * 2)
     end
     g.setBlendMode("alpha")
+    if pageCount > 1 then
+        g.setFont(UI.fonts.tiny); g.setColor(muted)
+        g.printf("CHIẾN LỢI PHẨM  " .. page .. " / " .. pageCount, x + w / 2 - 120, y + 569, 240, "center")
+        if anim.finished then
+            for _, nav in ipairs({{id="cashout_prev",direction=-1,x=x+w/2-159,text="‹"},{id="cashout_next",direction=1,x=x+w/2+125,text="›"}}) do
+                nav.y,nav.w,nav.h=y+562,34,25
+                if buttons then buttons[#buttons+1]=nav end
+                g.setColor(gold[1],gold[2],gold[3],inside(mx,my,nav.x,nav.y,nav.w,nav.h) and 0.28 or 0.12)
+                UI.drawRoundedRect("fill",nav.x,nav.y,nav.w,nav.h,5)
+                g.setFont(UI.fonts.medium);g.setColor(gold);g.printf(nav.text,nav.x,nav.y+1,nav.w,"center")
+            end
+        end
+    end
     g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + h - 88, x + w - 32, y + h - 88)
     local btn = {id = "cashout_continue", text = anim.finished and "ĐẾN CỬA HÀNG  →" or "NHẬN NHANH PHẦN THƯỞNG", x = x + w - 362, y = y + h - 66, w = 330, h = 46,
         color = gold, font = UI.fonts.regular, variant = "gold"}

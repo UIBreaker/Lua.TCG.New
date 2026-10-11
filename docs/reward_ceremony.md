@@ -4,7 +4,7 @@
 
 Every defeated ordinary enemy grants 1 soul immediately, so a defeated squad of 1/2/3 grants 1/2/3. Each boss grants 4. `Souls.awardKills` marks individual enemies to prevent repeated payouts. The ceremony reports the encounter total through `earnedSouls` and `soulsBefore`, with curved teal wisps converging on a crystal and an animated balance. Skipped encounters grant none; saved CASH_OUT results and fast-forward only replay the presentation.
 
-An independent supply roll happens after the original loot roll: 35% for ordinary encounters, 65% for bosses. It adds at most one supply and preserves the original pack/chest odds. Its conditional distribution is small health 25%, large health 10%, small armor 20%, large armor 10%, small speed 20%, large speed 10%, destruction card 5%. Overall normal/boss probabilities respectively: small health 8.75/16.25%, large health 3.5/6.5%, small armor 7/13%, large armor 3.5/6.5%, small speed 7/13%, large speed 3.5/6.5%, destruction 1.75/3.25%.
+An independent supply roll happens after the loot rolls: 60% for ordinary encounters and guaranteed for bosses. It adds at most one supply. Its conditional distribution is small health 25%, large health 10%, small armor 20%, large armor 10%, small speed 20%, large speed 10%, destruction card 5%. Overall normal/boss probabilities respectively: small health 15/25%, large health 6/10%, small armor 12/20%, large armor 6/10%, small speed 12/20%, large speed 6/10%, destruction 3/5%.
 
 Supplies reuse `Shop.healingItem` and `Shop.destructionItem`: 15/60 HP, 8/20 armor, +3/+10 permanent attack speed for one chosen hand card, or the existing shop destruction ritual. They use existing Continental art and the shared card frame. A full consumable inventory converts the drop to the existing visibly labeled gold fallback. All chances live in `config/reward_loot.lua`.
 
@@ -36,15 +36,19 @@ Pack contents are rolled through `Shop.openPack()` at victory and stored in `gam
 | Silver chest | 1 | 12 |
 | Golden chest | 0 | 3 |
 
-Normal enemies roll once; bosses roll one or two times, so these are **per-roll** weights rather than the chance of any drop across the whole battle. Every weighted roll chooses exactly one entry. Skipped blinds keep guaranteed rewards and receive no victory loot.
+Normal encounters roll 2–3 times; bosses and all boss override tables roll 3–4 times, plus the separate supply above. These are **per-roll** weights rather than the chance of any drop across the whole battle. Every weighted roll chooses exactly one entry. Skipped blinds keep guaranteed rewards and receive no victory loot.
+
+Boss victories add exactly 10 gold after the original faction/interest calculation, reported separately as `breakdown.bossVictoryBonus` and a dedicated gold-source row. Skipping does not grant it. Existing saved ceremonies keep their stored payout. Gold shop rerolls now start at 2 (then 4, 7, …); the discount voucher lowers the starting price to 1, and free rerolls keep their existing behavior.
+
+The larger 1160×680 ceremony uses a gold treasury, separate teal soul crystal, six readable gold-source rows and larger Continental card art on lit pedestals. It shows up to six loot slots per page. Reveal follows the active page automatically; after completion, the arrow buttons or left/right keyboard keys review all pages without modifying rewards or advancing gameplay RNG.
 
 Silver chest: two rolls, gold 40 / playing card 30 / Card Pack 20 / consumable 10. Golden chest: two rolls, SPN Pack 35 / ITM Pack 35 / evolution consumable 20 / celestial consumable pack 10. Chest tables avoid recursive chests; the generator additionally limits nesting depth.
 
 Boss overrides use actual boss IDs:
 
-- `black_tax_collector` → `tax`: two rolls, gold 65 / Card Pack 25 / silver chest 10.
-- `memory_eater` → `memory`: one or two rolls, playing card 40 / evolution 20 / Card Pack 30 / silver chest 10.
-- `gatekeeper` → `gate`: one or two rolls, Card Pack 35 / SPN Pack 25 / ITM Pack 25 / silver chest 15.
+- `black_tax_collector` → `tax`: 3–4 rolls, gold 65 / Card Pack 25 / silver chest 10.
+- `memory_eater` → `memory`: 3–4 rolls, playing card 40 / evolution 20 / Card Pack 30 / silver chest 10.
+- `gatekeeper` → `gate`: 3–4 rolls, Card Pack 35 / SPN Pack 25 / ITM Pack 25 / silver chest 15.
 
 A blind or boss can set `lootTableId`. `begin(breakdown, game, context)` also accepts `context.lootTableId` and `context.weightModifier(entry)` for explicit performance/condition rules; none are enabled by default. Pity is disabled by default. Its saved `rewardPackDrought` counter can increase pack weights after six victories when enabled in config.
 
@@ -56,7 +60,7 @@ Effects use only the private presentation RNG and are capped at 40 coins and 72 
 
 The victory panel uses a framed charcoal-and-gold layout: itemized income at left, a large coin and earned amount at right, and the wallet before/after directly underneath. Currency uses coin icons and explicit XU VÀNG labels. Loot cards retain image aspect ratios and separate rarity, name and claimed status. The footer provides a gold continue button and context-sensitive keyboard instructions.
 
-`ENTER → GOLD_BREAKDOWN → COIN_RAIN → GOLD_SETTLE → LOOT_PREPARE → LOOT_REVEAL / RARE_REVEAL → SUMMARY → EXIT`
+`ENTER → GOLD_BREAKDOWN → COIN_RAIN → GOLD_SETTLE → SOUL_GATHER → LOOT_PREPARE → LOOT_REVEAL / RARE_REVEAL → SUMMARY → EXIT`
 
 Reward rows spawn `reward_coin` sprites with upward impulse, rotation, gravity, one bounce, then attraction to the gold counter. Each collected coin carries an integer batch of gold; the received total and wallet increase only on collection. Small collection pulses and a final 1.16 pulse settle the gold. At most 40 visual coins are budgeted across the whole ceremony, independent of currency size. Fixed physics steps keep slow frames from skipping collection.
 
@@ -71,9 +75,9 @@ Audio hooks: `reward_coin_spawn`, `reward_coin_land`, `reward_coin_collect`, `re
 To add a reward, add a definition and a weighted table entry in `config/reward_loot.lua`; new pack rewards need only a supported `packType`. For a genuinely new type, add generation/validation in `createReward`, grant handling in `begin` and presentation in `draw`. Adjust drop weights, gold ranges, rolls, rarity and timings in the same config. Keep rewards committed before reveal.
 
 - `lua tests/reward_ceremony_smoke.lua`: formulas, all reward types, capacity conversion, boss overrides, chest children, exact gold totals, visual RNG isolation, repeated fast-forward, particle budget, save round trips, free pack choices and ITM hand-off.
-- `lovec.exe . --test-reward-ceremony`: actual rendering, six slots, coin particles/audio hooks, keyboard continue/fast-forward, free pack choice, socketing and skip. Capture mode does not load/write player saves; screenshots are `shot_reward_*.png`.
+- `lovec.exe . --test-reward-ceremony`: actual rendering of six income rows, boss +10 gold and 4 souls, seven supply artworks, 12 loot slots across two pages, mouse/keyboard paging, coin particles/audio hooks, continue/fast-forward, free pack choice, socketing and skip. Capture mode does not load/write player saves; screenshots are `shot_reward_*.png`, including `shot_reward_boss_grand.png` and `shot_reward_boss_page2.png`.
 
-Combat/scoring formulas are untouched by this feature. These initial bonus weights still need playtesting across full runs; guaranteed reward economics are preserved, while bonus loot intentionally adds resources.
+Combat/scoring formulas are untouched by this feature. Reward balance still needs playtesting across full runs: bosses now pay 10 more guaranteed gold, and multiple loot rolls intentionally add resources.
 
 Verified on this implementation: reward smoke, gameplay expansion smoke (52 abilities / 22 bosses), voucher smoke, scoring presentation smoke, card effects and card physics smoke. Real LÖVE 11.5 reward capture passed, all nine existing pack types passed purchase/skip regression, and the scoring renderer/input/HP/victory lifecycle passed all four cases (mean 5.02 ms per sampled frame during the parallel run). The summary and tooltip screenshots were inspected for clipping and readability.
 

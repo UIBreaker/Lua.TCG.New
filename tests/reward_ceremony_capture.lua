@@ -27,17 +27,21 @@ end
 function Test.update(game, callbacks)
     frames = frames + 1
     if love.timer.getTime() < deadline then return end
-    assert(stage == "done" or started == 0 or love.timer.getTime() - started < 25, "Reward capture timed out at " .. stage)
+    assert(stage == "done" or started == 0 or love.timer.getTime() - started < 35, "Reward capture timed out at " .. stage)
     if stage == "start" then
         started = love.timer.getTime()
         callbacks.startNewGame("red_deck")
         game.gold, game.handsRemaining = 20, 3
+        game.monster = {isBoss=true,hp=0,maxHp=100,stage=1}
+        game.selectedFaction = "valoria"
+        game.lastRoundDeityRewards = {bonusGold=2,details={}}
         C.tables.capture = {rolls = {2, 2}, entries = {{id = "rare_reward", weight = 1}}}
         -- Four saved pack rewards exercise a full six-slot boss ceremony.
         C.tables.golden_chest = {rolls = {2, 2}, entries = {{id = "itm_pack", weight = 1}}}
         callbacks.openReward("capture")
         local anim, state = callbacks.getRewardAnimation()
         assert(state == "CASH_OUT" and #anim.slots == 6 and #game.rewardPacks == 4)
+        assert(anim.breakdown.bossVictoryBonus==10 and anim.result.earnedSouls==4 and #anim.lines==6)
         gold, before = game.gold, #game.persistentDeck
         originalRng = require("src.rng").getState()
         for _, name in ipairs({"reward_coin_spawn", "reward_coin_land", "reward_coin_collect", "reward_gold_total", "reward_loot_reveal", "reward_rare_reveal", "reward_chest_open"}) do assert(Sound.has(name), name) end
@@ -68,7 +72,7 @@ function Test.update(game, callbacks)
         nextStage("tooltip", 0.65)
     elseif stage == "tooltip" then
         local candidate = require("src.ui").descriptionCandidate
-        assert(candidate and candidate.hoverKey and candidate.name == "ITM PACK")
+        assert(candidate and candidate.hoverKey and candidate.name == callbacks.getRewardAnimation().slots[2].reward.name)
         shot("shot_reward_tooltip.png")
         nextStage("continue")
     elseif stage == "continue" then
@@ -125,9 +129,35 @@ function Test.update(game, callbacks)
     elseif stage == "supply_shot" then
         shot("shot_reward_"..C.supplies.entries[supplyIndex].id..".png")
         supplyIndex=supplyIndex+1
-        nextStage(supplyIndex<=#C.supplies.entries and "supply_start" or "done",0.1)
+        nextStage(supplyIndex<=#C.supplies.entries and "supply_start" or "overflow_start",0.1)
+    elseif stage == "overflow_start" then
+        game.rewardPacks={};game.consumables={}
+        C.tables.capture={rolls={4,4},entries={{id="rare_reward",weight=1}}}
+        callbacks.openReward("capture")
+        local anim=callbacks.getRewardAnimation()
+        assert(#anim.slots==12 and #game.rewardPacks==8)
+        love.keypressed("space")
+        gold=game.gold;originalRng=require("src.rng").getState()
+        nextStage("overflow_first",0.2)
+    elseif stage == "overflow_first" then
+        shot("shot_reward_boss_grand.png")
+        nextStage("overflow_next")
+    elseif stage == "overflow_next" then
+        clickButton(callbacks,"cashout_next")
+        assert(callbacks.getRewardAnimation().lootPage==2 and select(2,callbacks.getRewardAnimation())=="CASH_OUT")
+        nextStage("overflow_second",0.2)
+    elseif stage == "overflow_second" then
+        shot("shot_reward_boss_page2.png")
+        nextStage("overflow_back")
+    elseif stage == "overflow_back" then
+        love.keypressed("left");assert(callbacks.getRewardAnimation().lootPage==1)
+        love.keypressed("right");assert(callbacks.getRewardAnimation().lootPage==2)
+        clickButton(callbacks,"cashout_prev")
+        assert(callbacks.getRewardAnimation().lootPage==1 and game.gold==gold)
+        assert(require("src.rng").getState()==originalRng, "paging must not reroll rewards")
+        nextStage("done")
     elseif stage == "done" then
-        print("LÖVE reward ceremony passed: coins, soul harvest, seven supply artworks, six loot slots, audio, saved pack handoff, ITM socket, skip, direct card, keyboard fast-forward; " .. frames .. " frames")
+        print("LÖVE reward ceremony passed: boss +10, six gold sources, soul harvest, seven supply artworks, 12 loot slots, mouse/keyboard paging, audio, saved pack handoff, ITM socket, skip, direct card, fast-forward; " .. frames .. " frames")
         stage = "done"; love.event.quit(0)
     end
 end

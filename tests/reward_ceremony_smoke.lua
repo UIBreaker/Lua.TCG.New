@@ -204,6 +204,26 @@ assert(skipped.earnedSouls==0)
 -- Exercise the independent supply roll without changing original loot odds.
 local oldChance=C.supplies.normalChance;C.supplies.normalChance=1
 local supplies=game();local drops=Reward.begin(Reward.calculate(blind,supplies),supplies)
-assert(#drops.loot==2 and drops.loot[2].source=="TIẾP TẾ")
+assert(#drops.loot>=3 and #drops.loot<=4 and drops.loot[#drops.loot].source=="TIẾP TẾ")
 C.supplies.normalChance=oldChance
+for _, faction in ipairs({"aurelia","valoria"}) do
+    local rich = game();rich.selectedFaction=faction
+    local bossBlind={type="boss",baseReward=5}
+    local cash=Reward.calculate(bossBlind,rich)
+    assert(cash.bossVictoryBonus==10 and cash.totalGold==cash.subtotal+cash.factionBonus+10)
+    assert(Reward.calculate(bossBlind,rich,true).bossVictoryBonus==0)
+    local won=Reward.begin(cash,rich)
+    assert(#won.loot>=4 and #won.loot<=5 and won.loot[#won.loot].source=="TIẾP TẾ")
+    local wallet=rich.gold;assert(Reward.begin(cash,rich)==won and rich.gold==wallet)
+    local resume=Persistence.restoreSnapshot(Persistence.makeSnapshot(rich,"CASH_OUT"))
+    assert(Reward.begin(cash,resume).breakdown.bossVictoryBonus==10 and resume.gold==wallet)
+end
+local paged=Reward.newAnimation(large.breakdown,{loot={},earnedGold=large.earnedGold})
+for i=1,13 do paged.slots[i]={reward={}} end
+assert(not Reward.changePage(paged,1))
+Reward.finishImmediately(paged)
+Reward.changePage(paged,-1);assert(paged.lootPage==1)
+Reward.changePage(paged,1);assert(paged.lootPage==2)
+Reward.changePage(paged,100);assert(paged.lootPage==3)
+Reward.changePage(paged,-1);assert(paged.lootPage==2)
 print("Reward ceremony smoke passed: loot, seven supplies, per-enemy souls, bosses, skip, RNG, save/load, capacity, packs, animation")

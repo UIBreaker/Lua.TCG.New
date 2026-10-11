@@ -3265,7 +3265,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.124.1", 48, 185)
+    g.print("beta 0.125.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -7803,6 +7803,13 @@ function love.mousepressed(x, y, button, istouch)
 
     elseif state == "CASH_OUT" then
         if cashOutAnim then
+            for _, btn in ipairs(buttons) do
+                if (btn.id == "cashout_prev" or btn.id == "cashout_next")
+                    and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+                    RewardSystem.changePage(cashOutAnim, btn.direction)
+                    return
+                end
+            end
             if not cashOutAnim.finished then
                 RewardSystem.finishImmediately(cashOutAnim)
                 Sound.play("shop_buy")
@@ -8312,7 +8319,9 @@ function love.keypressed(key)
             UI.ScoringFeel.skipOrFastForward(anim)
         end
     elseif state == "CASH_OUT" then
-        if key == "space" or key == "return" then
+        if key == "left" or key == "right" then
+            RewardSystem.changePage(cashOutAnim, key == "left" and -1 or 1)
+        elseif key == "space" or key == "return" then
             if cashOutAnim and not cashOutAnim.finished then
                 RewardSystem.finishImmediately(cashOutAnim)
                 Sound.play("shop_buy")

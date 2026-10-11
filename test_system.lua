@@ -572,7 +572,7 @@ log("[PASS] 34. Text Sanitization (variation selector stripping) & Audio Volume 
 
 -- 35. Test Balatro Shop Structure, Incremental Reroll Cost, and Pack Opening
 local testShop = Shop.new()
-assert(testShop.rerollCost == 5, "Initial shop reroll cost must be $5")
+assert(testShop.rerollCost == 2, "Initial shop reroll cost must be $2")
 
 local testGs = { gold = 20, unlockedHands = { high_card = true }, deities = {} }
 Shop.refresh(testShop, testGs)
@@ -590,19 +590,19 @@ assert(hasVoucher, "Shop must generate lower voucher / skill book card")
 assert(hasPack, "Shop must generate lower booster packs")
 
 -- Test incremental reroll cost
-assert(testShop.rerollCost == 5, "Reroll cost starts at 5")
+assert(testShop.rerollCost == 2, "Reroll cost starts at 2")
 local rerollOk = Shop.reroll(testShop, testGs)
 assert(rerollOk == true, "Reroll must succeed with $20 gold")
-assert(testShop.rerollCost == 7, "Reroll cost must increase to $7 after 1st reroll")
-assert(testGs.gold == 15, "Gold must be deducted by $5")
+assert(testShop.rerollCost == 4, "Reroll cost must increase to $4 after 1st reroll")
+assert(testGs.gold == 18, "Gold must be deducted by $2")
 
 Shop.reroll(testShop, testGs)
-assert(testShop.rerollCost == 10, "Reroll cost must increase to $10 after 2nd reroll")
-assert(testGs.gold == 8, "Gold must be deducted by $7 (15 - 7 = 8)")
+assert(testShop.rerollCost == 7, "Reroll cost must increase to $7 after 2nd reroll")
+assert(testGs.gold == 14, "Gold must be deducted by $4 (18 - 4 = 14)")
 
 -- Test reset reroll
 Shop.resetReroll(testShop)
-assert(testShop.rerollCost == 5, "Shop.resetReroll must reset reroll cost back to $5")
+assert(testShop.rerollCost == 2, "Shop.resetReroll must reset reroll cost back to $2")
 
 -- Test pack opening
 local buffoonPack = { packType = "buffoon", name = "Gói Thần Bài" }
@@ -619,7 +619,7 @@ Sound.play("shop_reroll")
 Sound.play("cant_afford")
 Sound.play("pack_open")
 
-log("[PASS] 35. Balatro Shop Structure (Upper/Voucher/Packs), Steep Reroll ($5 -> $7 -> $10 -> reset $5), & Pack Opening verified")
+log("[PASS] 35. Balatro Shop Structure (Upper/Voucher/Packs), Steep Reroll ($2 -> $4 -> $7 -> reset $2), & Pack Opening verified")
 
 -- 36. Test Graphics Overhaul: Shaders, 3D Tilt & Deity Reordering
 local normX, normY = UI.calculateTilt(150, 150, 100, 100, 100, 100)
@@ -896,22 +896,22 @@ do
     assert(rr1 == true, "Reroll 1 should succeed")
     assert(mockShopGame.freeRerolls == 1, "Should have 1 free reroll remaining")
     assert(mockShopGame.gold == 20, "Gold should NOT be deducted when free reroll used")
-    assert(testShop.rerollCost == 5, "Reroll cost should stay 5")
+    assert(testShop.rerollCost == 2, "Reroll cost should stay 2")
 
     -- Reroll 2 consumes last free reroll
     local rr2 = Shop.reroll(testShop, mockShopGame)
     assert(mockShopGame.freeRerolls == 0, "Should have 0 free rerolls remaining")
     assert(mockShopGame.gold == 20, "Gold still unchanged")
 
-    -- Reroll 3 consumes $5 gold and increments cost to $7
+    -- Reroll 3 consumes $2 gold and increments cost to $4
     local rr3 = Shop.reroll(testShop, mockShopGame)
-    assert(mockShopGame.gold == 15, "Gold should decrease by $5")
-    assert(testShop.rerollCost == 7, "Reroll cost should increment to $7")
+    assert(mockShopGame.gold == 18, "Gold should decrease by $2")
+    assert(testShop.rerollCost == 4, "Reroll cost should increment to $4")
 
-    -- Entering next blind resets reroll cost back to $5
+    -- Entering next blind resets reroll cost back to $2
     Shop.resetReroll(testShop)
-    assert(testShop.rerollCost == 5, "Shop.resetReroll should reset cost to $5 on next blind")
-    log("[PASS] 50. Skip Blind Tags, Free Reroll Tag, and Shop Reroll mechanics ($5 -> $7 -> reset $5) verified")
+    assert(testShop.rerollCost == 2, "Shop.resetReroll should reset cost to $2 on next blind")
+    log("[PASS] 50. Skip Blind Tags, Free Reroll Tag, and Shop Reroll mechanics ($2 -> $4 -> reset $2) verified")
 end
 
 -- 51. Test Full 20-Ante Progression and Victory Condition
@@ -1095,14 +1095,14 @@ do
         local shop = Shop.new()
         Shop.refresh(shop, mockGame)
         assert(#shop.items > 0, "Shop must contain items")
-        assert(shop.rerollCost == 5, "Initial reroll cost must be $5")
+        assert(shop.rerollCost == 2, "Initial reroll cost must be $2")
 
-        -- Test Reroll ($5 -> $6)
+        -- Test Reroll ($2 -> $4)
         local goldBeforeReroll = mockGame.gold
         local rerollOk = Shop.reroll(shop, mockGame)
         assert(rerollOk == true, "Shop reroll must succeed")
-        assert(mockGame.gold == goldBeforeReroll - 5, "Reroll must deduct $5")
-        assert(shop.rerollCost == 7, "Next reroll cost increases to $7")
+        assert(mockGame.gold == goldBeforeReroll - 2, "Reroll must deduct $2")
+        assert(shop.rerollCost == 4, "Next reroll cost increases to $4")
 
         -- Test Mua Thần Bài vào Ô bất kỳ
         local testDeity = Deities.CATALOG.spirit_ember
@@ -1120,7 +1120,7 @@ do
         local cont, reason = RunManager.advanceAfterShop(run, mockGame)
         assert(cont == true, "Run continues to next blind")
         Shop.resetReroll(shop)
-        assert(shop.rerollCost == 5, "Reroll cost resets to $5 for new blind")
+        assert(shop.rerollCost == 2, "Reroll cost resets to $2 for new blind")
 
         -- 5. Big Blind must be beaten; attempted skip does nothing.
         local bb=RunManager.getCurrentBlind(run)

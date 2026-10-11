@@ -2,6 +2,7 @@
 local C = {
     fallbackGold = 2,
     goldBonus = {1, 3},
+    bossVictoryGold = 10,
     maxCoins = 40,
     rowInterval = 0.16,
     lootInterval = 0.18,
@@ -9,7 +10,7 @@ local C = {
     presentation = {maxSparks = 72, trailPoints = 5, flareDuration = 0.55, ambience = 18},
     pity = {enabled = false, after = 6, extraPackWeight = 5},
     -- One independent supply roll per won encounter; bosses have better odds.
-    supplies = {normalChance = 0.35, bossChance = 0.65, entries = {
+    supplies = {normalChance = 0.60, bossChance = 1, entries = {
         {id = "healing_potion_small", weight = 25}, {id = "healing_potion_large", weight = 10},
         {id = "armor_potion_small", weight = 20}, {id = "armor_potion_large", weight = 10},
         {id = "cons_speed_small", weight = 20}, {id = "cons_speed_large", weight = 10},
@@ -35,19 +36,19 @@ local C = {
         rare_reward = {type = "CHEST", rarity = "legendary", name = "RƯƠNG HOÀNG KIM", tableId = "golden_chest"},
     },
     tables = {
-        normal_enemy = {rolls = {1, 1}, entries = {
+        normal_enemy = {rolls = {2, 3}, entries = {
             {id = "gold_bonus", weight = 40}, {id = "playing_card", weight = 25},
             {id = "card_pack", weight = 15}, {id = "consumable", weight = 10},
             {id = "spn_pack", weight = 5}, {id = "itm_pack", weight = 4}, {id = "chest", weight = 1},
         }},
-        boss = {rolls = {1, 2}, entries = {
+        boss = {rolls = {3, 4}, entries = {
             {id = "gold_bonus", weight = 20}, {id = "playing_card", weight = 15},
             {id = "card_pack", weight = 20}, {id = "spn_pack", weight = 15},
             {id = "itm_pack", weight = 15}, {id = "chest", weight = 12}, {id = "rare_reward", weight = 3},
         }},
-        tax = {rolls = {2, 2}, entries = {{id = "gold_bonus", weight = 65}, {id = "card_pack", weight = 25}, {id = "chest", weight = 10}}},
-        memory = {rolls = {1, 2}, entries = {{id = "playing_card", weight = 40}, {id = "evolution", weight = 20}, {id = "card_pack", weight = 30}, {id = "chest", weight = 10}}},
-        gate = {rolls = {1, 2}, entries = {{id = "card_pack", weight = 35}, {id = "spn_pack", weight = 25}, {id = "itm_pack", weight = 25}, {id = "chest", weight = 15}}},
+        tax = {rolls = {3, 4}, entries = {{id = "gold_bonus", weight = 65}, {id = "card_pack", weight = 25}, {id = "chest", weight = 10}}},
+        memory = {rolls = {3, 4}, entries = {{id = "playing_card", weight = 40}, {id = "evolution", weight = 20}, {id = "card_pack", weight = 30}, {id = "chest", weight = 10}}},
+        gate = {rolls = {3, 4}, entries = {{id = "card_pack", weight = 35}, {id = "spn_pack", weight = 25}, {id = "itm_pack", weight = 25}, {id = "chest", weight = 15}}},
         silver_chest = {rolls = {2, 2}, entries = {{id = "gold_bonus", weight = 40}, {id = "playing_card", weight = 30}, {id = "card_pack", weight = 20}, {id = "consumable", weight = 10}}},
         golden_chest = {rolls = {2, 2}, entries = {{id = "spn_pack", weight = 35}, {id = "itm_pack", weight = 35}, {id = "evolution", weight = 20}, {id = "consumable_pack", weight = 10}}},
     },

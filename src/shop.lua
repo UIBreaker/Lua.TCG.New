@@ -265,8 +265,8 @@ end
 function Shop.new()
     return {
         items = {},
-        baseRerollCost = 5,
-        rerollCost = 5,
+        baseRerollCost = 2,
+        rerollCost = 2,
         currentPackOpening = nil,
         lastPackTypes = {},
     }
@@ -274,7 +274,7 @@ end
 
 function Shop.resetReroll(shop)
     if not shop then return end
-    shop.rerollCost = shop.baseRerollCost or 5
+    shop.rerollCost = shop.baseRerollCost or 2
     shop.rerollCount = 0
     shop.welcomeRerollUsed = false
 end
@@ -285,7 +285,7 @@ function Shop.getRerollCost(shop, gameState)
         or (gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed) then
         return 0
     end
-    return shop.rerollCost or 5
+    return shop.rerollCost or 2
 end
 
 -- Reprice existing stock as well as future rerolls, without stacking discounts.
@@ -395,8 +395,8 @@ local function finishStock(shop, gameState)
     end
     Shop.applyVoucherStock(shop, gameState)
     if gameState.vouchers and gameState.vouchers.v_discount then
-        shop.baseRerollCost = 3
-        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 3 end
+        shop.baseRerollCost = 1
+        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 1 end
     end
 end
 
@@ -753,7 +753,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
         gameState.vouchers = gameState.vouchers or {}
         gameState.vouchers[item.voucherId] = true
         if item.voucherId == "v_discount" then
-            shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 5) - p.discount)
+            shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 2) - p.discount)
             shop.rerollCost = math.max(1, shop.rerollCost - p.discount)
         elseif item.voucherId == "v_interest" then
             gameState.maxInterest = p.cap

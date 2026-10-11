@@ -12,12 +12,13 @@ local species={lock_royals="ancient_skeleton",black_tax_collector="forest_goblin
     max_3_cards="lava_golem",the_needle="desert_scorpion",the_fish="swamp_wraith",echo_knight="frost_wolf",
     taxman="forest_goblin",gem_devourer="lava_golem",executioner="ancient_skeleton",faceless="swamp_wraith"}
 function A.attach(m)
-    if m.human or (m.stage or 1)<=40 then return m end
+    if m.human or (m.regionId~="unknown" and (m.stage or 1)<=40) then return m end
     local key=m.artKey or m.bossData and (m.bossData.debuffId or m.bossData.id)
     m.creatureKind=A.types[key] and key or species[key] or "ancient_skeleton"
     m.enemyAbility=A.types[m.creatureKind]
     m.cardSuit=m.enemyAbility.suit
-    m.cardRank=math.min(13,(m.isBoss and 11 or m.isElite and 4 or 2)+math.floor(((m.stage or 41)-41)/4))
+    local progress=m.regionId=="unknown" and m.areaStage or math.max(1,(m.stage or 41)-40)
+    m.cardRank=math.min(13,(m.isBoss and 11 or m.isElite and 4 or 2)+math.floor((progress-1)/4))
     m.creatureCard=true
     m.title="QUÁI VẬT • CẤP "..require("src.expedition").rankName(m.cardRank)
     if not m.isBoss then m.desc=m.enemyAbility.name..": "..m.enemyAbility.desc end

@@ -34,11 +34,14 @@ function DebugTools.setAnte(game, value, blindIndex)
     game.run.ante = ante
     game.run.maxAnte = math.max(RunManager.MAX_ANTE, ante)
     game.run.endless = ante > RunManager.MAX_ANTE
-    game.run.travelPermit = ante > RunManager.MAX_ANTE
+    game.run.travelPermit = false
+    local E=require("src.expedition")
+    game.run.regionId=game.run.regionId or E.region(ante).id
+    game.run.areaStage=game.run.regionId=="unknown" and ante or ((ante-1)%20)+1
     game.run.victory = false
     game.run.currentBlindIndex = math.max(1, math.min(3, blindIndex or 1))
     game.run.shopsVisitedInAnte = 0
-    game.run.blinds = RunManager.generateAnteBlinds(ante, game.selectedFaction)
+    game.run.blinds = RunManager.generateAnteBlinds(ante, game.selectedFaction,game.run.regionId,game.run.areaStage)
     for i = 1, 3 do
         game.run.blinds[i].status = i < game.run.currentBlindIndex and "completed" or
             (i == game.run.currentBlindIndex and "current" or "upcoming")

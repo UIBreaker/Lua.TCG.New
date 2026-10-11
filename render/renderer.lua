@@ -33,6 +33,7 @@ function R.load(art, quality)
 end
 function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,death)
     local key=(state=="playing" or state=="scoring") and "battle" or state
+    if state=="shop" then key="shop:"..tostring(monster and monster.shopMode or "normal") end
     if R.stateKey and R.stateKey~=key then R.transitionPending=C.enabled end
     R.stateKey=key; R.transitionAge=math.min(C.transition.duration,(R.transitionAge or 0)+dt)
     Scene.update(dt,state,monster)

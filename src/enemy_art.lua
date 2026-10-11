@@ -8,6 +8,7 @@ Art.bosses = {
 }
 function Art.key(monster)
     if not monster then return nil end
+    if monster.neutralHuman then return "human_"..monster.cardRank end
     if monster.human then return monster.cardSuit .. "_" .. require("src.expedition").rankName(monster.cardRank) end
     if monster.artKey then return monster.artKey end
     if monster.isBoss then
@@ -19,6 +20,7 @@ function Art.key(monster)
     end
 end
 function Art.path(key)
+    if key and key:match("^human_%d+$") then return "assets/cards/continental/enemy/"..key..".png" end
     local human = key and key:match("^(%a+)_([%dJQKA]+)$")
     return (human and (human=="hearts" or human=="diamonds" or human=="clubs" or human=="spades"))
         and "assets/cards/"..key..".png" or "assets/scene/enemies/"..key..".png"
@@ -37,8 +39,14 @@ function Art.load()
     end
 end
 function Art.image(monster, fallback)
+    if monster.neutralHuman then
+        local image=require("src.continental_art").get(Art.key(monster))
+        return image and require("src.continental_art").withIndices(image,nil,monster.cardRank)
+    end
     if monster.human then
-        return require("src.ui").getCardImage(monster.cardSuit, monster.cardRank)
+        local image=require("src.ui").getCardImage(monster.cardSuit,monster.cardRank)
+        local continental=require("src.continental_art")
+        return image and continental.generated[image] and continental.withIndices(image,monster.cardSuit,monster.cardRank) or image
     end
     local illustration=Art.images[Art.key(monster)] or
         (monster.isBoss and fallback.enemyBoss or monster.isElite and fallback.enemyElite or fallback.enemySmall)

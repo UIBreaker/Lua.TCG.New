@@ -24,7 +24,7 @@ for stage=1,40 do
         assert(m.human and m.cardRank>=2 and m.cardRank<=13 and m.stage==stage)
         local f=assert(io.open(Art.path(Art.key(m)),"rb"));f:close()
         local _,d=Scene.resolve("playing",m)
-        assert(d.base==E.region(stage).background)
+        assert(d.base==E.area(m.areaStage,m.regionId).background)
         if stage>20 and m.isBoss then
             assert(m.bossData.active and m.bossData.active.cooldown==1)
             assert(m.bossData~=Run.BOSS_DEBUFFS[m.bossData.debuffId],"ship variants must not mutate shared bosses")
@@ -51,9 +51,8 @@ assert(run.stats.blindsWon==60)
 local saved=Persistence.makeSnapshot(g,"victory")
 local restored,state=Persistence.restoreSnapshot(saved)
 assert(restored.run.travelPermit and restored.run.maxAnte==20 and state=="victory")
-run.endless=true;run.victory=false
-assert(Run.advanceBlind(run,g) and run.ante==21)
-run.ante=40;run.currentBlindIndex=3;run.blinds=Run.generateAnteBlinds(40)
+assert(Run.resolveTravel(run,g,"unknown") and run.ante==21 and not run.travelPermit)
+run.ante=40;run.areaStage=20;run.currentBlindIndex=3;run.blinds=Run.generateAnteBlinds(40,nil,"unknown",20)
 Run.completeCurrentBlind(run,g);assert(Run.advanceBlind(run,g) and run.ante==41)
 for _,b in ipairs(run.blinds) do
     local m=Run.createBlindMonster(b,g,true)
@@ -61,7 +60,7 @@ for _,b in ipairs(run.blinds) do
     local _,d=Scene.resolve("playing",m);assert(d.base=="mysteriousCoast")
 end
 local migrated=Persistence.makeSnapshot(g,"BLIND_SELECT")
-migrated.game.run.ante=8;migrated.game.run.maxAnte=8;migrated.game.run.endless=false
+migrated.game.run.ante=8;migrated.game.run.areaStage=nil;migrated.game.run.regionId=nil;migrated.game.run.maxAnte=8;migrated.game.run.endless=false
 local old=assert(Persistence.restoreSnapshot(migrated));assert(old.run.maxAnte==20 and not old.run.victory)
 migrated.activeState="victory";migrated.game.run.victory=true;migrated.game.run.currentBlindIndex=3
 migrated.game.run.blinds[3].status="completed"

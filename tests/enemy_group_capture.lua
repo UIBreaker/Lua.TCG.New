@@ -40,6 +40,7 @@ function T.update(game,cb)
         game.persistentDeck={}
         for i=1,9 do local c=Deck.newCard(8,"spades");c.disableFactionPassives=true;game.persistentDeck[i]=c end
         game.maxHands=8;game.maxHandSize=3;game.maxPlayerHp=200;game.playerHp=200
+        game.run.regionId=case==1 and "human" or "unknown"
         Debug.setAnte(game,case==1 and 3 or 42,1);cb.setCaptureState("BLIND_SELECT")
         step="fight";deadline=now+0.8
     elseif step=="fight" then

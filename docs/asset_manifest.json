@@ -9528,11 +9528,323 @@
         1024,
         1536
       ]
+    },
+    {
+      "id": "human_2",
+      "group": "enemy",
+      "name": "Tân Binh Lữ Hành",
+      "file": "assets/cards/continental/enemy/human_2.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-746f25f0-ce1c-4a03-ae10-f6725c9bc273.png",
+      "ratio": "2:3",
+      "concept": "One young human expedition recruit in practical brown leather with a short iron sword and travel pack, taking a cautious combat stance on a green farmland road.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One young human expedition recruit in practical brown leather with a short iron sword and travel pack, taking a cautious combat stance on a green farmland road. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "c24e5dfbe17ef9c734c415de38351219003111f87eb837749557fbea4d54094f",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_2",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-746f25f0-ce1c-4a03-ae10-f6725c9bc273.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One young human expedition recruit in practical brown leather with a short iron sword and travel pack, taking a cautious combat stance on a green farmland road. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_3",
+      "group": "enemy",
+      "name": "Trinh Sát Biên Cương",
+      "file": "assets/cards/continental/enemy/human_3.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-a645146f-8b2c-4866-b2be-ae3b3040aa36.png",
+      "ratio": "2:3",
+      "concept": "One human female frontier scout wearing a weathered grey hood and holding a simple hunting spear, surveying a western river crossing with alert posture.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human female frontier scout wearing a weathered grey hood and holding a simple hunting spear, surveying a western river crossing with alert posture. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "21541d6abe7800cf9919432df45d162a29166294f94d7de2cafe7e72e347f1dc",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_3",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-a645146f-8b2c-4866-b2be-ae3b3040aa36.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human female frontier scout wearing a weathered grey hood and holding a simple hunting spear, surveying a western river crossing with alert posture. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_4",
+      "group": "enemy",
+      "name": "Xạ Thủ Thạch Kiều",
+      "file": "assets/cards/continental/enemy/human_4.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-dccf3ffb-cfe1-4f7a-af45-8a8935f93f04.png",
+      "ratio": "2:3",
+      "concept": "One human archer in neutral tan and slate clothing, drawing a longbow at a stone fortress bridge, clear bow silhouette.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human archer in neutral tan and slate clothing, drawing a longbow at a stone fortress bridge, clear bow silhouette. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "e9a78e6e66ef40e44a68e9ed590e5b3bd23fda27aabc3d90df3bb102a2cd82d3",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_4",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-dccf3ffb-cfe1-4f7a-af45-8a8935f93f04.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human archer in neutral tan and slate clothing, drawing a longbow at a stone fortress bridge, clear bow silhouette. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_5",
+      "group": "enemy",
+      "name": "Vệ Binh Khiên Thép",
+      "file": "assets/cards/continental/enemy/human_5.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-c014807c-3e78-4e73-871e-4e024ea5c8bb.png",
+      "ratio": "2:3",
+      "concept": "One stout human guard in worn iron chainmail, bracing a large plain steel shield and a mace before western frontier gates.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One stout human guard in worn iron chainmail, bracing a large plain steel shield and a mace before western frontier gates. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "7ad224c60535b63e13c532b2e6aa35b31f7313c49c4d73cf9f7f3853d98b6940",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_5",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-c014807c-3e78-4e73-871e-4e024ea5c8bb.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One stout human guard in worn iron chainmail, bracing a large plain steel shield and a mace before western frontier gates. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_6",
+      "group": "enemy",
+      "name": "Dược Sư Dã Chiến",
+      "file": "assets/cards/continental/enemy/human_6.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-2f26a280-12fe-453b-8b6b-d7e58f616a10.png",
+      "ratio": "2:3",
+      "concept": "One human field alchemist in muted brown coat, holding a tangible glass medicine flask and a satchel of bandages, standing by a human expedition tent.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human field alchemist in muted brown coat, holding a tangible glass medicine flask and a satchel of bandages, standing by a human expedition tent. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "b1039336e2bccb1af8d81d8c1828e0e9627502cf4940ce97eed70d3ef7c37cab",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_6",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-2f26a280-12fe-453b-8b6b-d7e58f616a10.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human field alchemist in muted brown coat, holding a tangible glass medicine flask and a satchel of bandages, standing by a human expedition tent. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_7",
+      "group": "enemy",
+      "name": "Kiếm Sĩ Lãng Du",
+      "file": "assets/cards/continental/enemy/human_7.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-4fbb8826-41f1-492b-97e3-7c40adbc92c9.png",
+      "ratio": "2:3",
+      "concept": "One human wandering duelist in dark leather and a neutral ivory scarf, single elegant steel rapier held ready on a western port dock.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human wandering duelist in dark leather and a neutral ivory scarf, single elegant steel rapier held ready on a western port dock. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "4026cc0a051f8625a777d5020a5f2cd5f84b97a7480deba811b5b60300b5d086",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_7",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-4fbb8826-41f1-492b-97e3-7c40adbc92c9.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human wandering duelist in dark leather and a neutral ivory scarf, single elegant steel rapier held ready on a western port dock. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_8",
+      "group": "enemy",
+      "name": "Công Binh Hội Thợ",
+      "file": "assets/cards/continental/enemy/human_8.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-c3199fd0-78f7-42a3-a85c-f4bbb566c8fd.png",
+      "ratio": "2:3",
+      "concept": "One human expedition engineer with a broad hammer and practical bronze tools at belt, rugged canvas coat, standing by harbor cranes.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human expedition engineer with a broad hammer and practical bronze tools at belt, rugged canvas coat, standing by harbor cranes. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "46e1dee7aee1f11d9e6af84c505b7c37e0863818289d4d55881509917630bc17",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_8",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-c3199fd0-78f7-42a3-a85c-f4bbb566c8fd.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human expedition engineer with a broad hammer and practical bronze tools at belt, rugged canvas coat, standing by harbor cranes. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_9",
+      "group": "enemy",
+      "name": "Lão Binh Thành Cổ",
+      "file": "assets/cards/continental/enemy/human_9.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-3b7b80b0-9553-48d7-89e8-e139588b967b.png",
+      "ratio": "2:3",
+      "concept": "One scarred older human soldier in battered steel armor and a brown cloak, a two-handed sword held calmly upright in a ruined western fortress.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One scarred older human soldier in battered steel armor and a brown cloak, a two-handed sword held calmly upright in a ruined western fortress. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "4ef64805614af0b6c89724d7031ae27bcdf9ff666a7b76dc45b726503f95b39b",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_9",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-3b7b80b0-9553-48d7-89e8-e139588b967b.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One scarred older human soldier in battered steel armor and a brown cloak, a two-handed sword held calmly upright in a ruined western fortress. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_10",
+      "group": "enemy",
+      "name": "Thống Lĩnh Thương Đoàn",
+      "file": "assets/cards/continental/enemy/human_10.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-66a16dd7-4751-41d2-880e-1a8ec21d6689.png",
+      "ratio": "2:3",
+      "concept": "One imposing human caravan marshal in layered bronze armor with a long halberd, guarding a western merchant harbor gateway.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One imposing human caravan marshal in layered bronze armor with a long halberd, guarding a western merchant harbor gateway. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "5154be18cb42e46ac6879887b49eca359d62d12e62e5b9861110a028777ae490",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_10",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-66a16dd7-4751-41d2-880e-1a8ec21d6689.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One imposing human caravan marshal in layered bronze armor with a long halberd, guarding a western merchant harbor gateway. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_11",
+      "group": "enemy",
+      "name": "Đội Trưởng Độc Lập",
+      "file": "assets/cards/continental/enemy/human_11.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-dd24a3cb-8c1c-4e3a-b629-29398326b9d7.png",
+      "ratio": "2:3",
+      "concept": "One human independent expedition captain in dignified neutral slate armor and ivory cloak, single sword at a low commanding stance, distant western council citadel.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human independent expedition captain in dignified neutral slate armor and ivory cloak, single sword at a low commanding stance, distant western council citadel. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "2cc8488bfa7c47dfa7d254fab8d66d3fe8c76d588dee995c807f5e2f982d7d55",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_11",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-dd24a3cb-8c1c-4e3a-b629-29398326b9d7.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human independent expedition captain in dignified neutral slate armor and ivory cloak, single sword at a low commanding stance, distant western council citadel. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_12",
+      "group": "enemy",
+      "name": "Nữ Công Tước Hội Đồng",
+      "file": "assets/cards/continental/enemy/human_12.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-d95aee11-c2f2-42cf-b64f-850a5b6feb84.png",
+      "ratio": "2:3",
+      "concept": "One human council duchess in practical antique gold and ivory plate armor, holding a simple staff of command, regal but battle-ready posture on a western stone terrace.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human council duchess in practical antique gold and ivory plate armor, holding a simple staff of command, regal but battle-ready posture on a western stone terrace. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "3c6c7763997ab8b0657dc676cdcfb9d4eeded6d89bcb183c7a368ec7bb497470",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_12",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-d95aee11-c2f2-42cf-b64f-850a5b6feb84.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One human council duchess in practical antique gold and ivory plate armor, holding a simple staff of command, regal but battle-ready posture on a western stone terrace. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
+    },
+    {
+      "id": "human_13",
+      "group": "enemy",
+      "name": "Đại Thủ Lĩnh Nhân Loại",
+      "file": "assets/cards/continental/enemy/human_13.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-fd1d1947-c587-4e90-be58-53b542633e5d.png",
+      "ratio": "2:3",
+      "concept": "One powerful grey-haired human grand expedition commander in weathered antique gold plate armor and a dark cloak, massive steel greatsword planted before him, monumental neutral human council citadel behind.",
+      "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One powerful grey-haired human grand expedition commander in weathered antique gold plate armor and a dark cloak, massive steel greatsword planted before him, monumental neutral human council citadel behind. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "1367242238a503d0d3e34acba407dd1d4e2cddaad125a66cbc43cf324b3646ea",
+      "status": "generated",
+      "rarity": "",
+      "ability": "Tấn công thông thường; vô chất. Thủ lĩnh giữ kỹ năng boss hiện có.",
+      "source": "src/expedition.lua",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "id": "human_13",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-fd1d1947-c587-4e90-be58-53b542633e5d.png",
+        "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One powerful grey-haired human grand expedition commander in weathered antique gold plate armor and a dark cloak, massive steel greatsword planted before him, monumental neutral human council citadel behind. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
+      }
     }
   ],
   "completion": {
-    "generated": 354,
-    "total": 354,
+    "generated": 403,
+    "total": 403,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

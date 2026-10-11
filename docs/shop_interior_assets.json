@@ -1,0 +1,84 @@
+{
+  "style": "Cinematic Dark-Fantasy Expedition",
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "id": "small",
+      "name": "Trạm Tiếp Tế",
+      "concept": "An intimate timber expedition provisioner. Walnut cabinets, folded canvas packs and rope at the left, a compact brass scale, crates at the sides, muted amber lantern light, moss green fabric on the broad merchant counter, a small leaded-glass window with dusk sky. Cozy practical general store, rich warm wood, understated green and antique gold.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber or stone counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. An intimate timber expedition provisioner. Walnut cabinets, folded canvas packs and rope at the left, a compact brass scale, crates at the sides, muted amber lantern light, moss green fabric on the broad merchant counter, a small leaded-glass window with dusk sky. Cozy practical general store, rich warm wood, understated green and antique gold.",
+      "file": "assets/scene/shops/small.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-e11a558f-8eac-4c18-9f1e-859ecc85f7ff.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "424e90eb7d5585640419c0df5127e4407b844c99823d34be3b72cbf2d8599455"
+    },
+    {
+      "id": "consumable",
+      "name": "Các Thẻ Phép",
+      "concept": "An arcane merchant's enclosed book and spell emporium. Floor-to-ceiling heavy oak bookcases at left, rolled blank parchment and wax seals, old western arched interior, a restrained violet astrolabe at left, navy velvet display bays and long dark wood counter, muted violet reflections and warm brass reading lamps. Scholars' store, tangible dark wood shelves, no floating spectacle.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber or stone counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. An arcane merchant's enclosed book and spell emporium. Floor-to-ceiling heavy oak bookcases at left, rolled blank parchment and wax seals, old western arched interior, a restrained violet astrolabe at left, navy velvet display bays and long dark wood counter, muted violet reflections and warm brass reading lamps. Scholars' store, tangible dark wood shelves, no floating spectacle.",
+      "file": "assets/scene/shops/consumable.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-de1f9fbe-4f98-4d5c-b8a6-fad703ef2f8a.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "c3e12407de1f055946b2f4142d3bdbb8db5e38c2121e342747f588b934006069"
+    },
+    {
+      "id": "equipment",
+      "name": "Lò Rèn Viễn Chinh",
+      "concept": "A sturdy enclosed western expedition armorer and crafting workshop. Stone masonry, iron-banded timber ceiling, a forge with restrained orange light at the far left, an anvil and bundled metal plates in left foreground, large tools and racks of simple cuirasses at the margins, broad empty charcoal metal display bays and timber workbench in the center/right, warm antique gold and steel tones. Real workshop, no active fire particles.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber or stone counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. A sturdy enclosed western expedition armorer and crafting workshop. Stone masonry, iron-banded timber ceiling, a forge with restrained orange light at the far left, an anvil and bundled metal plates in left foreground, large tools and racks of simple cuirasses at the margins, broad empty charcoal metal display bays and timber workbench in the center/right, warm antique gold and steel tones. Real workshop, no active fire particles.",
+      "file": "assets/scene/shops/equipment.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-fb15a971-fec1-4090-b960-a3cb56c87610.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "f00039e9aa135664e55344b9fa0a5060dfcddbd56511b9848509f5221020e7a9"
+    },
+    {
+      "id": "spn",
+      "name": "Điện Hộ Linh",
+      "concept": "An enclosed western occult spirit merchant's sanctum with deep navy stone, three broad arch bays, antique bronze celestial instruments and a contained violet-blue spirit orb at far left, dim brass lanterns, large quiet velvet-lined alcoves and low dark stone display counter in central/right areas, restrained blue and violet illumination, dignified mysterious but visibly a small indoor shop, no monsters or ghost figures.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber or stone counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. An enclosed western occult spirit merchant's sanctum with deep navy stone, three broad arch bays, antique bronze celestial instruments and a contained violet-blue spirit orb at far left, dim brass lanterns, large quiet velvet-lined alcoves and low dark stone display counter in central/right areas, restrained blue and violet illumination, dignified mysterious but visibly a small indoor shop, no monsters or ghost figures.",
+      "file": "assets/scene/shops/spn.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-70309573-7d05-4259-be5f-d8c680d3da33.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "0149e7b882394d25cabd794a68a035cc6ee563abbff8eb19bd5914f4a64efe20"
+    },
+    {
+      "id": "medicine",
+      "name": "Tiệm Thảo Dược",
+      "concept": "A cozy enclosed apothecary in a western expedition town. Timber beams and moss green stone walls, rounded green and amber glass bottles on shelves at the left and high along the back wall, hanging bundles of herbs at the outer left, copper mortar and pestle on the side counter, a green leaded-glass window at left, broad quiet dark wooden wall display bays in central/right, polished walnut counter edge, soft amber lantern light and restrained emerald accents. Readable large medicinal objects, warm welcoming interior.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber or stone counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. A cozy enclosed apothecary in a western expedition town. Timber beams and moss green stone walls, rounded green and amber glass bottles on shelves at the left and high along the back wall, hanging bundles of herbs at the outer left, copper mortar and pestle on the side counter, a green leaded-glass window at left, broad quiet dark wooden wall display bays in central/right, polished walnut counter edge, soft amber lantern light and restrained emerald accents. Readable large medicinal objects, warm welcoming interior.",
+      "file": "assets/scene/shops/medicine.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-cbb88739-ab30-4c83-b77b-9d5f3b53b37a.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "15851d5d55c12ccf9a56b9a5dd4705d6729dc60409e1c1bfca4daea6dff0cae3"
+    },
+    {
+      "concept": "An enclosed western fantasy playing-card merchant and expedition recruitment salon. Burgundy velvet-lined walnut cabinets with quiet empty display recesses, four broad fabric banners in muted crimson, antique gold, forest green and slate blue along the high ceiling representing four kingdoms, a brass gilding press and wax-seal tools at far left, leather card cases and a neat stack of blank-backed cards on the far left side counter, a modest warm amber lantern and window, dark cherry wood merchant counter edge. A refined tactile card shop, rich wine red and antique gold, controlled cinematic light.",
+      "prompt": "Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No displayed front-facing playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. An enclosed western fantasy playing-card merchant and expedition recruitment salon. Burgundy velvet-lined walnut cabinets with quiet empty display recesses, four broad fabric banners in muted crimson, antique gold, forest green and slate blue along the high ceiling representing four kingdoms, a brass gilding press and wax-seal tools at far left, leather card cases and a neat stack of blank-backed cards on the far left side counter, a modest warm amber lantern and window, dark cherry wood merchant counter edge. A refined tactile card shop, rich wine red and antique gold, controlled cinematic light.",
+      "id": "cards",
+      "name": "Hiệu Quân Bài",
+      "file": "assets/scene/shops/cards.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-52b7e01c-e2c8-4360-836c-d76a44c6583e.png",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "sha256": "cc27ecce5c28ad091892fcc7654de59393a2b10d47df3ebe435469e8d3a1e99e"
+    }
+  ]
+}

@@ -46,12 +46,20 @@ D.bossPresets = {echo_knight="ICE",taxman="DESERT",gem_devourer="MYSTIC",executi
 function D.resolve(state, monster)
     local name = D.states[state] or "archive"
     local definition = D.scenes[name]
+    if name=="shop" then
+        local scenes=require("config.shop_visuals").scenes
+        local interior=scenes[monster and monster.shopMode] or scenes.large
+        if not (monster and monster.shopMode=="soul") then
+            interior.layers=interior.layers or {D.layers[1],D.layers[6]}
+            return name,interior,D.presets[interior.preset]
+        end
+    end
     if name ~= "menu" and monster and monster.stage then
-        local region = require("src.expedition").region(monster.stage)
+        local area = require("src.expedition").area(monster.areaStage or monster.stage,monster.regionId)
         -- Outdoor paintings do not inherit shrine columns or arches.
-        local journey = {base=region.background, brightness=name=="battle" and 0.88 or 0.72,
-            preset=region.preset, layers={D.layers[1],D.layers[5],D.layers[6]}}
-        return name, journey, D.presets[region.preset]
+        local journey = {base=area.background, brightness=name=="battle" and 0.88 or 0.72,
+            preset=area.preset, layers={D.layers[1],D.layers[5],D.layers[6]}}
+        return name, journey, D.presets[area.preset]
     end
     local bossPreset=monster and monster.bossData and D.bossPresets[monster.bossData.id]
     local preset = monster and name=="battle" and (monster.environmentPreset or bossPreset) or definition.preset

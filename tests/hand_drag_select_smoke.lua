@@ -22,7 +22,7 @@ local env = setmetatable({
     Deities = {getMaxSlots = function() return 0 end},
     Deck = require("src.deck"),
     CardEffects = {triggerSelectPulse = function(card) card.pulses = (card.pulses or 0) + 1 end},
-    Sound = {play = function() sounds = sounds + 1 end},
+    Sound = {play = function() sounds = sounds + 1 end, setFocused = function() end},
     toVirtual = function(x, y) return x / 2, y / 2 end,
     getMaxSelectableCards = function() return limit end,
     getConsumableSlotRect = function() return -1000, -1000, 1, 1 end,
@@ -117,7 +117,7 @@ assert(#env.game.selectedIndices == 1 and env.game.hand[3].selected,
     "Tiny jitter across an overlapping edge must remain a single click")
 reset(8)
 local hoverCode = section("    if not handInputBlocked() and not (handDrag.active and handDrag.isDragging) then",
-    "    -- Draw non-dragged cards in order")
+    "    -- Hovered faces sit above their neighbors")
 local hoverChunk
 local wrapped = "return function(mx,my) local hoveredIdx,hoveredCard,hoveredCardTooltip\n"
     .. hoverCode .. "\nreturn hoveredIdx end"

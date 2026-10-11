@@ -23,6 +23,7 @@ local Deck = require("src.deck")
 local Equipment = require("src.equipment")
 local Deities = require("src.deities")
 local CardEffects = require("src.card_effects")
+UI.HandMotion = require("src.hand_motion")
 UI.CardPhysics = require("src.card_physics")
 UI.ScoringFeel = require("src.scoring_presentation")
 UI.Abilities = require("src.card_abilities")
@@ -454,8 +455,24 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     g.scale(cardScaleX, cardScaleY)
     g.translate(-w / 2, -h / 2)
     UI.CardPhysics.capture(card, 0, 0, w, h)
+    local handMotion = UI.HandMotion.get(card)
+    local onHand = handMotion and x == card.visualX and y == card.visualY and effectHovered ~= nil
+    if onHand and not card.faceDown and not isFloating then
+        local hover, chosen = handMotion.hover, handMotion.selected
+        local blue, gold = UI.COLORS.chipsBlue, UI.COLORS.goldYellow
+        g.setBlendMode("add")
+        for band = 3, 1, -1 do
+            g.setColor(blue[1] + (gold[1] - blue[1]) * chosen,
+                blue[2] + (gold[2] - blue[2]) * chosen,
+                blue[3] + (gold[3] - blue[3]) * chosen,
+                math.max(hover, chosen) * 0.055 * (card.alpha or 1))
+            UI.drawRoundedRect("fill", -band * 2, -band * 2, w + band * 4, h + band * 4, 6 + band)
+        end
+        g.setBlendMode("alpha")
+    end
     -- Height changes softness, offset and opacity; the artwork/material stays sharp.
     local height = isFloating and 15 or selected and 11 or hovered and 9 or 4
+    if onHand and not isFloating then height = 4 + math.max(handMotion.hover * 5, handMotion.selected * 7) end
     for band = 3, 1, -1 do
         g.setColor(0.005, 0.009, 0.017, (0.32 - height * 0.006) / 3)
         UI.drawRoundedRect("fill", 3 - band, height - band, w + band * 2, h + band * 2, 5 + band)

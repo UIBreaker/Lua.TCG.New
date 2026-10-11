@@ -43,7 +43,7 @@ function F.hud(game,UI,mx,my,turn,sequence)
         if turn and turn.attackers[turn.index]==m then
             c={1,0.67,0.34}
         end
-        local title=m.human and (m.kingdom.." • "..require("src.expedition").rankName(m.cardRank)) or UI.truncateUtf8(m.name,21)
+        local title=m.neutralHuman and UI.truncateUtf8(m.name,21) or m.human and (m.kingdom.." • "..require("src.expedition").rankName(m.cardRank)) or UI.truncateUtf8(m.name,21)
         local armor = m.creatureArmor or 0
         local state=meters[m] or {}
         local hasArmor=armor>0 or state.armor and state.armor.trail>0.05

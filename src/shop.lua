@@ -9,6 +9,23 @@ local CardEffects = require("src.card_effects")
 local Souls = require("src.souls")
 
 local Shop = {}
+
+Shop.MARKETS = {
+    small = {name="SHOP NHỎ", note="Quầy tổng hợp · SPN, trang bị, quân bài, đặc quyền, rương và tiêu hao", color={.35,.82,.78,1}},
+    consumable = {name="SHOP TIÊU HAO", note="Thẻ lẻ từ mọi rương tiêu hao · Giá cao hơn giá rương 20%, làm tròn lên", color={.74,.48,.94,1}},
+    equipment = {name="SHOP TRANG BỊ", note="4 nguyên liệu cơ bản + 4 trang bị lớn · Mua để cất vào balo", color={.95,.73,.35,1}},
+    spn = {name="SHOP SPN", note="Chỉ bán SPN · Ngẫu nhiên đủ 8 bậc từ Thường đến Độc Nhất", color={.53,.75,.98,1}},
+    medicine = {name="SHOP THUỐC", note="Hồi máu · Giáp · Giường · Tốc đánh — cất vào ô tiêu hao", color={.38,.88,.57,1}},
+    cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
+    large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
+    soul = {name="CHỢ LINH HỒN"},
+}
+Shop.AFTER_COMBAT_MARKETS = {"small", "consumable", "equipment", "spn", "medicine", "cards"}
+
+function Shop.marketMode(mode)
+    -- "normal" is retained for old callers that preview the original shop.
+    return Shop.MARKETS[mode] and mode or "large"
+end
 local function basicHandsUnlocked(gameState)
     for _, hand in ipairs(Poker.HAND_TYPES_ORDERED) do
         if not (gameState.unlockedHands and gameState.unlockedHands[hand.id]) then return false end
@@ -310,6 +327,130 @@ local function appendPackItem(shop, pack)
     }
 end
 
+local RETAIL_CONSUMABLE_PACKS = {
+    joker_edition="joker_spell", seal="seal", spectral="spectral",
+    celestial="celestial", edition="edition",
+}
+
+function Shop.getRetailConsumables()
+    local pool = {}
+    for _, pack in ipairs(Shop.PACK_CATALOG) do
+        local category = RETAIL_CONSUMABLE_PACKS[pack.packType]
+        if category then
+            for _, definition in ipairs(Shop.getPackContents(pack.packType)) do
+                local card = cloneDeity(definition)
+                card.category = category
+                card.desc = Shop.getConsumableDescription(card)
+                pool[#pool+1] = {id=card.id, category=category, consumable=card,
+                    name=card.name, desc=card.desc, color=card.color, sourcePack=pack.packType,
+                    cost=math.ceil(pack.cost*1.2), subtitle=pack.name}
+            end
+        end
+    end
+    return pool
+end
+
+local function shuffle(pool)
+    for i=#pool,2,-1 do local j=Rng.random(i);pool[i],pool[j]=pool[j],pool[i] end
+    return pool
+end
+
+local function equipmentOffer(eq)
+    return {id=eq.id, category="equipment", equipment=eq, backpack=true,
+        name=eq.name, desc=eq.desc, cost=eq.cost, color=eq.color,
+        subtitle=eq.basic and "NGUYÊN LIỆU CƠ BẢN" or "TRANG BỊ LỚN"}
+end
+
+Shop.CARD_SHOP_PRICES = {base=4, evolution=6, edition=8}
+
+function Shop.playingCardOffer(card)
+    local prices=Shop.CARD_SHOP_PRICES
+    local level=card.evolutionLevel or 0
+    local cost=prices.base+level*prices.evolution
+    local labels={}
+    local desc={"Thêm lá "..card.rankName..card.suitSymbol.." vào bộ bài, giữ nguyên mọi nâng cấp.",
+        "Tiến hóa cấp "..level.." · "..require("src.card_abilities").description(card)}
+    if level>0 then labels[#labels+1]="TIẾN HÓA "..level end
+    for _,eq in ipairs(card.equipments or {}) do
+        cost=cost+eq.cost
+        labels[#labels+1]="ĐỒ CƠ BẢN"
+        desc[#desc+1]="Trang bị cơ bản đã gắn: "..eq.name.." — "..Equipment.getDescription(eq)
+    end
+    local edition=CardEffects.getDefinition(CardEffects.getEffectName(card))
+    if edition then
+        cost=cost+prices.edition
+        labels[#labels+1]="ẤN BẢN"
+        desc[#desc+1]=edition.shopLabel.." — "..edition.shopText
+    end
+    return {id="standard_"..card.suit.."_"..card.rank, category="card", card=card,
+        name=card.rankName..card.suitSymbol, cost=cost, desc=table.concat(desc,"\n"),
+        subtitle=#labels>0 and table.concat(labels," · ") or "BẢN THƯỜNG",
+        editionName=edition and edition.shopLabel, icon=card.suitSymbol, color=card.color}
+end
+
+local function finishStock(shop, gameState)
+    -- The card stall rolls all nine editions before calculating its price and labels.
+    if shop.mode~="cards" then
+        for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
+    end
+    Shop.applyVoucherStock(shop, gameState)
+    if gameState.vouchers and gameState.vouchers.v_discount then
+        shop.baseRerollCost = 3
+        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 3 end
+    end
+end
+
+local function marketStock(shop, gameState)
+    local mode = shop.mode
+    if mode == "consumable" then
+        local pool = shuffle(Shop.getRetailConsumables())
+        for i=1,math.min(8,#pool) do shop.items[i]=pool[i] end
+    elseif mode == "equipment" then
+        local basics = require("src.basic_equipment").basic
+        for slot=1,4 do
+            shop.items[#shop.items+1]=equipmentOffer(Equipment.ITEMS[basics[(slot-1)*3+Rng.random(3)]])
+        end
+        local pool = {}
+        for id,eq in pairs(Equipment.ITEMS) do
+            if not eq.basic and not eq.soulOnly then pool[#pool+1]=id end
+        end
+        table.sort(pool);shuffle(pool)
+        for i=1,math.min(4,#pool) do shop.items[#shop.items+1]=equipmentOffer(Equipment.ITEMS[pool[i]]) end
+    elseif mode == "spn" then
+        for _, definition in ipairs(Deities.getRandomShopPool(gameState.deities, 6)) do
+            local d = cloneDeity(definition)
+            local rarity = Deities.RARITIES[Rng.random(#Deities.RARITIES)]
+            Deities.setRarity(d, rarity.id)
+            d.cost=math.ceil((tonumber(d.cost) or 4)*Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity.id])
+            shop.items[#shop.items+1]={id=d.id, category="deity", deity=d, name=d.name,
+                desc=d.desc, cost=d.cost, rarity=rarity.id, color=rarity.color, subtitle=rarity.name}
+        end
+    elseif mode == "medicine" then
+        for _, potion in ipairs(Shop.POTIONS) do shop.items[#shop.items+1]=Shop.healingItem("stall",potion.id) end
+    elseif mode == "cards" then
+        local pool=shuffle(copyList(Shop.STANDARD_CARDS))
+        local basics=require("src.basic_equipment").basic
+        local editions=CardEffects.getEditionCatalog()
+        for i=1,8 do
+            local printed=pool[i]
+            local card=Deck.newCard(printed.rank,printed.suit)
+            local evolution=Rng.random(100)
+            card.evolutionLevel=evolution<=35 and 1 or evolution<=50 and 2 or 0
+            if Rng.random()<.35 then
+                -- Deliberately use the basic-only catalog, never the general equipment pool.
+                Equipment.attach(card,cloneDeity(Equipment.ITEMS[basics[Rng.random(#basics)]]))
+            end
+            if Rng.random()<.30 then CardEffects.setEffect(card,editions[Rng.random(#editions)].edition) end
+            shop.items[i]=Shop.playingCardOffer(card)
+        end
+    else
+        return false
+    end
+    for i,item in ipairs(shop.items) do item.section="stall";item.bay=i end
+    finishStock(shop,gameState)
+    return true
+end
+
 function Shop.rollSoulStock(gameState)
     local previous={}
     for _,id in ipairs(gameState.soulShopStock or {}) do previous[id]=true end
@@ -322,6 +463,7 @@ end
 
 function Shop.refresh(shop, gameState)
     shop.items = {}
+    shop.mode = Shop.marketMode(gameState.shopMode)
     shop.soulMode = gameState.shopMode == "soul"
     if shop.soulMode then
         if not gameState.soulShopStock then Shop.rollSoulStock(gameState) end
@@ -347,6 +489,8 @@ function Shop.refresh(shop, gameState)
         end
         return
     end
+
+    if marketStock(shop, gameState) then return end
 
     ----------------------------------------------------------------------------
     -- 1. UPPER SECTION CARDS (Thần Hộ Mệnh, Trang Bị Khảm, Quân Bài Tuyển Mộ)
@@ -505,14 +649,28 @@ function Shop.refresh(shop, gameState)
         local eq=Equipment.ITEMS[table.remove(candidates,Rng.random(#candidates))]
         shop.items[#shop.items+1]=Shop.discountedEquipment(eq,bay)
     end
-    -- Each freshly generated shop reroll gets its edition chance once.
-    for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
-    Shop.applyVoucherStock(shop, gameState)
-    -- Restored runs rebuild the shop; retain the membership discount too.
-    if gameState.vouchers and gameState.vouchers.v_discount then
-        shop.baseRerollCost = 3
-        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 3 end
+    if shop.mode == "small" then
+        local stock = {}
+        for _,item in ipairs(shop.items) do
+            if item.section == "upper" or item.category == "voucher" then
+                stock[#stock+1]=item
+            end
+        end
+        local packs={}
+        for _,pack in ipairs(Shop.PACK_CATALOG) do
+            if pack.packType=="hand_styles" and basicHandsUnlocked(gameState) then
+                packs[#packs+1]=Shop.ADVANCED_HAND_CHEST
+            else packs[#packs+1]=pack end
+        end
+        local chest={items={}}
+        appendPackItem(chest,packs[Rng.random(#packs)])
+        stock[#stock+1]=chest.items[1]
+        local retail = Shop.getRetailConsumables()
+        stock[#stock+1]=retail[Rng.random(#retail)]
+        shop.items=stock
+        for i,item in ipairs(shop.items) do item.section="stall";item.bay=i end
     end
+    finishStock(shop,gameState)
 end
 
 function Shop.applyEdition(card, edition)
@@ -1230,7 +1388,30 @@ function Shop.enterSoulShop(gameState)
         gameState.soulShopPurchased = {}
         gameState.soulRerollCount = 0
         gameState.soulShopStock = nil
+        return true
     end
+    return false
+end
+
+function Shop.enterAfterCombat(gameState)
+    if not Shop.enterSoulShop(gameState) then
+        gameState.shopMode=Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)]
+    end
+    gameState.soulDestroyActive=false
+    gameState.soulDestroyConsumable=nil
+end
+
+function Shop.leave(shop, gameState)
+    gameState.soulDestroyActive=false
+    gameState.soulDestroyConsumable=nil
+    if gameState.shopMode == "soul" then
+        gameState.shopMode="large"
+        Shop.resetReroll(shop)
+        Shop.refresh(shop,gameState)
+        return "shop"
+    end
+    gameState.shopMode="normal"
+    return "advance"
 end
 
 function Shop.destroyCard(gameState, targetCard)

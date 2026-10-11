@@ -16,6 +16,11 @@ end
 function Scene.update(dt, state, monster)
     Scene.time=Scene.time+dt
     Scene.name, Scene.definition, Scene.preset = Definitions.resolve(state, monster)
+    local key=Scene.definition.base
+    local path=Scene.definition.backgroundPath or require("src.expedition").backgroundPaths[key]
+    if path and not Scene.art[key] and love.filesystem.getInfo(path) then
+        Scene.art[key]=love.graphics.newImage(path);Scene.art[key]:setFilter("linear","linear")
+    end
     Scene.weather = Scene.name == "battle" and Weather.resolve(monster) or nil
 end
 local function imageCover(image,brightness,tint)

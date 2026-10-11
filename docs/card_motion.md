@@ -2,6 +2,14 @@
 
 Tham khảo FFF3.mp4 về nhịp nghiêng nhẹ và hover theo con trỏ; giữ tranh Continental và chất kim loại cổ của game.
 
+Tinh chỉnh tay bài theo nhịp tương tác của FFF4.mp4 (2026-10-11):
+
+- `src/hand_motion.lua` giữ quán tính bằng spring chính xác theo thời gian; hover nâng 14 px, chọn nâng 28 px, hover trên lá đã chọn thêm 6 px. Phóng nhẹ 3.5%/4.5% và nhịp xác nhận nhỏ thay cho nhịp phóng mạnh trước đây.
+- Lá hover vẽ trên lá chọn và các lá còn lại. Vùng bấm tiếp tục neo vào ô tay bài để không rung hover ở mép và vẫn kéo chọn nhanh được.
+- Ánh xanh khi hover chuyển mềm sang vàng khi chọn; glow và bóng nằm trong cùng transform với tranh/viền kim loại Continental. Trạng thái quán tính/ánh sáng nằm trong bảng weak, không lưu vào card/save.
+- Kiểm thử toán và input: `lovec.exe . --test-hand-motion`, `tests/hand_drag_select_smoke.lua`; kiểm thử renderer/input thật: `lovec.exe . --test-hand-drag-select` và `lovec.exe . --test-card-motion`.
+- Đã qua: spring ở 30/60/120/144 FPS; 12 lượt kéo chọn ở độ rộng 960/1280/1920, 3 trường hợp mép lá, cảm ứng và Shift reorder; viền của 6 loại bài bám transform. Ảnh kiểm tra: `shot_drag_select.png`.
+
 - Các renderer dùng chung `src/card_physics.lua`: nhịp đứng yên riêng từng lá, hover nâng 3 px, phóng 2.5%, nghiêng theo vị trí chuột, chuyển trạng thái bằng spring và exponential smoothing. Không ghi trạng thái hình ảnh vào save.
 - Bài nhân vật trong trận có cùng thông số nghiêng/hover trong `render/entity.lua`, kết hợp chuyển động tấn công và recoil. Viền nằm cùng transform với tranh.
 - `UI.drawCardBorder` dùng ma trận cuối của mặt bài cho viền chọn/tiến hóa vẽ sau. Vùng chọn bài trên tay vẫn neo vào ô để không mất hover ở mép dưới.

@@ -1676,15 +1676,16 @@ do
     run.ante = 20
     run.currentBlindIndex = 3
     run.endless = true
+    run.regionId="unknown";run.areaStage=20
     run.maxAnte = 999
-    run.blinds = RunManager.generateAnteBlinds(run.ante)
+    run.blinds = RunManager.generateAnteBlinds(run.ante,nil,run.regionId,run.areaStage)
     RunManager.completeCurrentBlind(run)
     local cont, reason = RunManager.advanceAfterShop(run, { selectedFaction = "aurelia" })
     assert(cont == true, "Endless mode must continue instead of ending in victory")
     assert(reason == "next_ante", "Endless mode advances to next_ante")
     assert(run.ante == 21, "Endless mode advances run.ante to 9, got: " .. run.ante)
     assert(#run.blinds == 3, "Ante 9 must have 3 blinds generated")
-    log("[PASS] 71. Endless Mode scaling and progression beyond Ante 8 verified 100%")
+    log("[PASS] 71. Mysterious continent scaling and endless progression verified")
 end
 
 -- 72. Test Victory Modal Options
@@ -1694,12 +1695,13 @@ do
     run.currentBlindIndex = 3
     run.maxAnte = 20
     run.endless = false
-    run.blinds = RunManager.generateAnteBlinds(run.ante)
+    run.areaStage=20
+    run.blinds = RunManager.generateAnteBlinds(run.ante,nil,run.regionId,run.areaStage)
     RunManager.completeCurrentBlind(run)
     local cont, reason = RunManager.advanceAfterShop(run, { selectedFaction = "aurelia" })
-    assert(cont == false and reason == "victory", "Standard Ante 8 completion must trigger victory")
+    assert(cont == false and reason == "victory", "Local stage 20 completion must open travel choices")
     assert(run.victory == true, "run.victory must be true")
-    log("[PASS] 72. Ante 8 Victory trigger and 2-button choice state verified 100%")
+    log("[PASS] 72. Local stage 20 travel-choice trigger verified")
 end
 
 -- 73. Test Starter Hand Size (3) and Initial Play Limit (1)

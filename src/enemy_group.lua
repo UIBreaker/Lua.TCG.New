@@ -16,6 +16,7 @@ function G.build(primary)
         for k,v in pairs(primary) do if k~="group" then m[k]=v end end
         m.intent={type="attack",value=primary.attack,label=primary.intent.label}
         m.bossData=nil;m.isBoss=false
+        m.formationOffset=i-1
         m.encounterCount=(primary.encounterCount or 1)+i-1
         require("src.expedition").decorate(m,stage,m.encounterCount)
         enemies[i]=m

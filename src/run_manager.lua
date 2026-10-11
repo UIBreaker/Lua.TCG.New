@@ -169,7 +169,7 @@ function RunManager.calculateBlindHp(ante, blindType)
 end
 
 -- Generate 3 blinds for a given Ante
-function RunManager.generateAnteBlinds(ante, starterFaction)
+function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage)
     local a = math.max(1, ante or 1)
 
     local smallHp = RunManager.calculateBlindHp(a, "small")
@@ -180,7 +180,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
     local bKey = RunManager.BOSS_KEYS[((a - 1) % #RunManager.BOSS_KEYS) + 1]
     local bossDebuff = RunManager.BOSS_DEBUFFS[bKey] or RunManager.BOSS_DEBUFFS.the_needle
 
-    bossDebuff = Expedition.bossData(a, Monster.DISRUPTIVE_BOSSES, bossDebuff)
+    bossDebuff = Expedition.bossData(a, Monster.DISRUPTIVE_BOSSES, bossDebuff,regionId)
 
     local blinds = {
         {
@@ -226,12 +226,12 @@ function RunManager.generateAnteBlinds(ante, starterFaction)
     }
 
     for i, blind in ipairs(blinds) do
-        local identity = Expedition.decorate({isBoss=i==3, isElite=i==2, bossData=blind.debuff}, a, (a-1)*3+i)
+        local identity = Expedition.decorate({isBoss=i==3, isElite=i==2, bossData=blind.debuff}, a, (a-1)*3+i,regionId,areaStage)
         if identity.human then
             blind.name, blind.title, blind.color = identity.name, identity.title, identity.color
             blind.cardSuit, blind.cardRank, blind.kingdom = identity.cardSuit, identity.cardRank, identity.kingdom
         end
-        blind.stage, blind.regionId = a, Expedition.region(a).id
+        blind.stage, blind.regionId,blind.areaStage = a, identity.regionId,identity.areaStage
     end
     blinds[1].status = "current"
     return blinds
@@ -243,9 +243,12 @@ function RunManager.newRun(starterFaction)
         faction = starterFaction or "aurelia",
         selectedFaction = starterFaction or "aurelia",
         ante = 1,
+        regionId = "human",
+        areaStage = 1,
+        travelPermit = false,
         maxAnte = RunManager.MAX_ANTE,
         currentBlindIndex = 1, -- 1: Small, 2: Big, 3: Boss
-        blinds = RunManager.generateAnteBlinds(1, starterFaction),
+        blinds = RunManager.generateAnteBlinds(1, starterFaction,"human",1),
         victory = false,
         shopsVisitedInAnte = 0,
         stats = {
@@ -295,7 +298,7 @@ function RunManager.createBlindMonster(blind, gameState, preview)
         m.bossData = blind.debuff
     end
 
-    return Expedition.decorate(m, blind.ante, encounterCount)
+    return Expedition.decorate(m, blind.ante, encounterCount,blind.regionId,blind.areaStage)
 end
 
 -- Compatibility guard for old callers: skipping never changes the run.
@@ -410,7 +413,9 @@ function RunManager.completeCurrentBlind(run, gameState)
         blind.status = "completed"
         run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
         local completedAnte = blind.ante or run.ante
-        if completedAnte == 20 and blind.type == "boss" then run.travelPermit = true end
+        if (run.areaStage or completedAnte)==20 and blind.type=="boss" and run.regionId~="unknown" then
+            run.travelPermit=true
+        end
         local isAnteBoss = (blind.index == 3) or (run.currentBlindIndex == 3)
         run.stats.roundRewardAntes = run.stats.roundRewardAntes or {}
         if isAnteBoss and completedAnte % 4 == 0 and not run.stats.roundRewardAntes[completedAnte] then
@@ -429,7 +434,7 @@ function RunManager.completeCurrentBlind(run, gameState)
 end
 
 -- Advance to the next Blind directly or after leaving the Shop
--- Returns: true if game continues, false + "victory" if Stage 20 Boss defeated!
+-- A local stage-20 boss opens permit choices; the mysterious continent is endless.
 function RunManager.advanceBlind(run, gameState)
     if not run then return false end
     local current = RunManager.getCurrentBlind(run)
@@ -442,17 +447,40 @@ function RunManager.advanceBlind(run, gameState)
         return true, "next_blind"
     else
         -- Finished Boss Blind of the current Ante
-        if run.ante >= RunManager.MAX_ANTE and not run.endless then
+        if (run.areaStage or run.ante)>=20 and run.regionId~="unknown" and (run.regionId or not run.endless) then
             run.victory = true
             return false, "victory"
         else
             run.ante = run.ante + 1
+            run.areaStage = (run.areaStage or run.ante-1)+1
             run.currentBlindIndex = 1
             run.shopsVisitedInAnte = 0
-            run.blinds = RunManager.generateAnteBlinds(run.ante, gameState and gameState.selectedFaction)
+            run.blinds = RunManager.generateAnteBlinds(run.ante, gameState and gameState.selectedFaction,run.regionId,run.areaStage)
             return true, "next_ante"
         end
     end
+end
+
+-- One permit has exactly one outcome: a sale or a selected destination.
+function RunManager.resolveTravel(run,gameState,action)
+    if not run or not gameState or not run.victory or not run.travelPermit then return false,"missing_permit" end
+    local current=RunManager.getCurrentBlind(run)
+    if not current or current.type~="boss" or current.status~="completed" then return false,"incomplete" end
+    local destination=action=="sell" and (run.regionId or "human") or action
+    if not Expedition.byId[destination] or destination=="voyage" then return false,"invalid_destination" end
+    if action=="sell" then
+        gameState.gold=(gameState.gold or 0)+1000
+        run.stats.totalGoldEarned=(run.stats.totalGoldEarned or 0)+1000
+        run.stats.permitsSold=(run.stats.permitsSold or 0)+1
+    else
+        run.stats.journeys=(run.stats.journeys or 0)+1
+    end
+    run.travelPermit=false;run.victory=false;run.endless=true
+    run.regionId=destination;run.areaStage=1;run.ante=run.ante+1
+    run.currentBlindIndex=1;run.shopsVisitedInAnte=0
+    run.blinds=RunManager.generateAnteBlinds(run.ante,gameState.selectedFaction,destination,1)
+    gameState.monster=nil;gameState.enemies=nil
+    return true
 end
 
 -- Alias for backwards compatibility

@@ -1,14 +1,22 @@
 # Expedition journey
 
-Campaign stages 1–20 each contain three mandatory encounters: opponent, elite and leader. Completing stage 20 awards a travel permit and opens the victory screen. Boarding continues the same deck and inventory in endless mode at stage 21. Stages 21–40 take place on the expedition ship; stage 41 onward uses the rocky mysterious coast and monster artwork.
+The journey begins on the human continent. Each stage contains three mandatory encounters: opponent, elite and leader. Stages 1–5, 6–10, 11–15 and 16–20 each have their own authored landscape. Defeating the stage-20 leader awards a single-use travel permit. The destination screen offers the four suit kingdoms and the mysterious continent, or a sale for exactly 1,000 gold to start another human expedition. Subsequent kingdom completions issue another permit; selling one continues in the current region.
 
-Human opponents use the existing playing-card portraits of Valoria, Aurelia, Elaris and Vharos. Campaign ranks are 2–K; ship opponents are 8–K and leaders are K. Eight ship leaders reuse the existing passive hooks and have separate active abilities with a two-hand cycle. Shared boss definitions are never modified by a ship variant.
+Human-continent opponents have twelve dedicated neutral portraits (2–K), runtime rank indices, and no suit. Each kingdom uses only its own existing Continental playing-card suit: Valoria/hearts, Aurelia/diamonds, Elaris/clubs, Vharos/spades. Every kingdom has twenty local stages and four distinct backgrounds. Monster artwork and existing creature traits are used upon direct arrival at the mysterious continent, which remains endless. The former automatic ship route is retained only for compatibility with legacy encounter APIs.
+
+`run.ante` tracks cumulative progression and combat difficulty. `run.regionId` and `run.areaStage` track the current destination and local stage displayed in the HUD. Travel and sales preserve deck, inventory and HP. The permit is consumed atomically before returning to encounter selection; a second click or save/reload cannot repeat the sale. New saves persist route and local stage. Older saves retain cumulative progression and cards; stages 21–40 migrate to another human expedition, and stages 41 onward to the mysterious coast.
 
 Round skipping is disabled in both the primary run and legacy map APIs, the buttons are removed, and skip pacts no longer appear in the collection. Skipping a pack or socket reward remains a separate action. Older saves regenerate the new encounters and preserve deck/inventory; the former eight-stage victory resumes the campaign at stage 9.
 
 ## Backgrounds
 
 Created with the built-in imagegen tool. Final assets:
+
+- `assets/scene/journey/`: twenty new 16:9 battlefields, four per human/kingdom region.
+- `assets/cards/continental/enemy/human_2.png` through `human_13.png`: twelve new full-bleed neutral human portraits, with all indices and frames drawn by the game.
+- `docs/journey_assets.json`: exact prompts, concepts and generator source paths for all 32 new assets. The canonical card manifest includes the twelve portraits; the prompt catalog includes all 32.
+
+The three earlier backgrounds below remain available to legacy scenes:
 
 - `assets/scene/expedition_human.png`: medieval expedition guild courtyard, four kingdom banners, distant city and harbor, amber afternoon light and teal shadows.
 - `assets/scene/expedition_ship.png`: grand wooden expedition ship deck, rigging, furled sails, four rival kingdom banners, cold dusk ocean and amber lanterns.
@@ -33,8 +41,10 @@ The revised card frame uses full-width paintings, narrow engraved gold borders, 
 - `lua tests/enemy_art_smoke.lua`, `lua test_poker.lua`: asset selection and poker regression.
 - `lovec.exe . --test-features`: all six advanced checks pass.
 - `lua tests/enemy_group_smoke.lua`: 240 encounters, formation budgets, targeting, victory, speed order, six traits, ranks and save safety.
+- `lua tests/journey_routing_smoke.lua`: 666 opponent identities across six regions, four-area boundaries, full region campaigns, one-time sales, all destinations, inventory and save migration.
+- `lovec.exe . --test-journey-routing`: real fight clicks in twenty regional backgrounds plus the mysterious continent; twelve neutral rank overlays; actual permit sale and destination buttons. Captures use the `route_` prefix.
 - `lovec.exe . --test-enemy-groups`: actual target clicks and scored hands against three humans and three creatures, partial kills, skeleton resurrection, reward exactly once and export of 57 creature cards.
-- `lovec.exe . --test-expedition`: real rendering and fight-button input at stages 1, 20, 21, 40, 41 and 42; travel-permit screen and boarding input. PNG captures are stored here.
-- `lovec.exe . --test`: passes through check 99, then stops at the pre-existing English spirit-name expectation in check 100 (`The Rock` versus current `Cổ Thạch`). See `system.log`.
+- `lovec.exe . --test-expedition`: alias for the updated journey routing capture.
+- `lovec.exe . --test`: current run stops in the unrelated legacy SPN scoring expectation at `test_system.lua:1001`, expecting 15 Mult while current `spirit_ember` gives 6. HEAD already defines this SPN as a multiplier instead of the old +4 Mult assumed by that fixture.
 
 The existing exponential HP progression is retained. Long-run balance has not been established by automated progression checks.

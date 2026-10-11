@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-shop-markets" then
+            local ok,err=pcall(require("tests.shop_markets_capture").update,gameRef,callbacks)
+            if not ok then print("SHOP MARKETS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-advanced-hands" then
             local ok,err=pcall(require("tests.advanced_hands_capture").update,gameRef,callbacks)
             if not ok then print("ADVANCED HANDS UI FAIL: "..tostring(err));love.event.quit(1) end
@@ -159,6 +166,11 @@ function Capture.update(gameRef, callbacks)
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-expedition" then return require("tests.expedition_capture").update(gameRef, callbacks) end
+        if value == "--test-journey-routing" then
+            local ok,err=pcall(require("tests.journey_routing_capture").update,gameRef,callbacks)
+            if not ok then print("JOURNEY ROUTING UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
         if value == "--test-enemy-groups" then return require("tests.enemy_group_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do

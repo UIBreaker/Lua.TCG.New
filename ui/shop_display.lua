@@ -3,6 +3,7 @@ local Theme = require("ui.theme")
 local Shop = require("src.shop")
 local Visual = require("config.visual_config")
 local Lighting = require("render.lighting")
+local Interiors = require("ui.shop_interiors")
 
 local Display = {}
 local C = Theme.colors
@@ -142,7 +143,10 @@ local function privilege(item, x, y, w, h, hovered, affordable)
         x, y + 158, w, UI.fonts.small, affordable and C.gold or C.red, "center")
 end
 privilege = UI.CardPhysics.wrap(privilege, nil, 6)
-local function position(item,index,packIndex)
+local function position(item,index,packIndex,mode)
+    if item.section=="stall" then
+        return Interiors.position(mode,item,index)
+    end
     if item.section=="basic" then return 734+(item.bay-1)*132,153,118,176 end
     if item.section=="discount" then return 946+(item.bay-1)*164,443,118,176 end
     if item.section=="upper" then return 46+((retailOrder[item.category] or index)-1)*132,153,118,176 end
@@ -152,6 +156,7 @@ end
 function Display.drawWorld(shop,time)
     if not shop then return end
     if shop.soulMode then return end
+    if Interiors.profiles[shop.mode] then return Interiors.drawWorld(shop,time) end
     local g=love.graphics;local packIndex=0
     g.push("all")
     for index,item in ipairs(UI.Polish.items(shop) or {}) do
@@ -274,6 +279,31 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
     if shop.soulMode then
         UI.Polish.ensureShop(shop)
         return soulShop(shop,game,buttons,mx,my,time)
+    end
+    if shop.mode and shop.mode~="large" then
+        Interiors.draw(shop,game,time)
+        UI.Polish.ensureShop(shop)
+        local hoveredItem
+        for index,item in ipairs(UI.Polish.items(shop) or {}) do
+            local x,y,w,h=position(item,index,0,shop.mode)
+            if x then
+                local hovered=mx>=x and mx<=x+w and my>=y-25 and my<=y+h+25
+                local affordable=(game.gold or 0)>=item.cost
+                UI.Polish.surface(item,index,hovered,x,y,w,h,function()
+                    art(item,x,y,w,h,hovered,mx,my)
+                end)
+                love.graphics.setColor(C.goldDim);love.graphics.setLineWidth(1)
+                love.graphics.line(x+w+2,y+18,x+w+11,y+18)
+                price(item,x+w+9,y+7,54,affordable)
+                Interiors.label(item,x,y,w,h)
+                buttons[#buttons+1]={id="buy_"..index,text="",x=x,y=y-6,w=w,h=h+6,
+                    invisible=true,itemIndex=index,stockItem=item}
+                if hovered and UI.Polish.tooltipAllowed(item) and not UI.CardPhysics.isHolding()
+                    and not (drag.active and drag.isDragging) then hoveredItem=item end
+            end
+        end
+        if #shop.items==0 then text("QUẦY ĐÃ HẾT HÀNG · ĐỔI HÀNG ĐỂ TIẾP TỤC",300,340,680,UI.fonts.medium,C.muted,"center") end
+        return hoveredItem
     end
     panel(20,80,690,280,"HÀNG TUYỂN CHỌN","Nhấp chọn → mua · Rê chuột xem chi tiết",C.cyan)
     panel(722,80,540,280,"NGUYÊN LIỆU CƠ BẢN","Máu · Giáp · Tốc đánh · Kinh tế — cất vào balo để ghép",C.green)

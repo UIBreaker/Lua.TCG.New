@@ -108,6 +108,8 @@ local function snapshotRun(run)
         faction = run.faction,
         selectedFaction = run.selectedFaction,
         ante = run.ante,
+        regionId = run.regionId,
+        areaStage = run.areaStage,
         maxAnte = run.maxAnte,
         currentBlindIndex = run.currentBlindIndex,
         victory = run.victory,
@@ -130,15 +132,19 @@ local function restoreRun(saved, faction)
     if not saved then return RunManager.newRun(faction) end
     local run = RunManager.newRun(saved.selectedFaction or saved.faction or faction)
     run.ante = math.max(1, tonumber(saved.ante) or 1)
+    local Expedition=require("src.expedition")
+    run.regionId=Expedition.byId[saved.regionId] and saved.regionId~="voyage" and saved.regionId or (run.ante>40 and "unknown" or "human")
+    run.areaStage=math.max(1,math.floor(tonumber(saved.areaStage) or (run.regionId=="unknown" and run.ante-40 or ((run.ante-1)%20)+1)))
+    if run.regionId~="unknown" then run.areaStage=math.min(20,run.areaStage) end
     run.maxAnte = RunManager.MAX_ANTE
     run.currentBlindIndex = math.max(1, math.min(3, tonumber(saved.currentBlindIndex) or 1))
     run.victory = saved.victory == true
     run.endless = saved.endless == true or run.ante > 20
-    run.travelPermit = saved.travelPermit == true or run.ante > 20
-    if run.ante < 20 then run.victory = false end
+    run.travelPermit = saved.travelPermit == true and (saved.regionId~=nil or run.ante<=20)
+    if run.areaStage<20 or run.regionId=="unknown" then run.victory=false end
     run.shopsVisitedInAnte = tonumber(saved.shopsVisitedInAnte) or 0
     run.stats = sanitize(saved.stats) or run.stats
-    run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction)
+    run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction,run.regionId,run.areaStage)
     for i, blind in ipairs(run.blinds) do
         local savedBlind = saved.blinds and saved.blinds[i]
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
@@ -147,6 +153,8 @@ local function restoreRun(saved, faction)
     if saved.victory and run.ante < 20 and run.blinds[run.currentBlindIndex].status == "completed" then
         RunManager.advanceBlind(run)
     end
+    -- Old victory saves represent an earned, unspent permit.
+    if run.victory and run.blinds[3].status=="completed" then run.travelPermit=true end
     return run
 end
 
@@ -253,7 +261,8 @@ function Persistence.restoreSnapshot(snapshot)
     Deck.restoreDeck(game.persistentDeck)
     local restoredState = snapshot.activeState or "BLIND_SELECT"
     game.souls = math.max(0, tonumber(game.souls) or 0)
-    game.shopMode = game.shopMode == "soul" and "soul" or "normal"
+    local markets=require("src.shop").MARKETS
+    game.shopMode = markets[game.shopMode] and game.shopMode or "small"
     game.soulDestroyActive = false
     if game.pendingRewardEquipment then game.pendingRewardEquipment = restoreEquipment(game.pendingRewardEquipment) end
     if restoredState == "victory" and not game.run.victory then restoredState = "BLIND_SELECT" end

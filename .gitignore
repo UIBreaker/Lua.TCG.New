@@ -18,3 +18,6 @@ __pycache__/
 /downloads/LUA-TCG-0.122.1-Android.apk
 
 /downloads/LUA-TCG-0.122.2-Android.apk
+
+/.tmp/
+/downloads/LUA-TCG-0.123.0-Android.apk

@@ -178,6 +178,11 @@ function T.update(g,cb)
         pointer(1100,420,false);love.wheelmoved(0,1)
         nextStage("exit",0.7)
     elseif stage=="exit" then
+        local ante,index=g.run.ante,g.run.currentBlindIndex
+        pointer(108,674,true);assert(g.shopMode=="large" and not cb.getShopData().soulMode)
+        assert(g.run.ante==ante and g.run.currentBlindIndex==index)
+        nextStage("exit_large",0.7)
+    elseif stage=="exit_large" then
         pointer(108,674,true);assert(g.shopMode=="normal")
         cb.startMonsterEncounter(1,false)
         nextStage("battle_hud",1)

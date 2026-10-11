@@ -27,7 +27,7 @@ function Art.get(id)
     return image
 end
 function Art.withIndices(image,suit,rank)
-    local key=suit.."_"..tostring(rank)
+    local key=(suit or "neutral").."_"..tostring(rank)
     Art.indexed[image]=Art.indexed[image] or {}
     if Art.indexed[image][key] then return Art.indexed[image][key] end
     local g=love.graphics;local canvas=g.newCanvas(512,768)
@@ -35,13 +35,14 @@ function Art.withIndices(image,suit,rank)
     g.setColor(1,1,1,1);g.draw(image,0,0,0,512/image:getWidth(),768/image:getHeight())
     Art.indexFont=Art.indexFont or g.newFont("fonts/arialbd.ttf",64)
     Art.suitFont=Art.suitFont or g.newFont("fonts/arialbd.ttf",59)
-    local glyph=({hearts="♥",diamonds="♦",clubs="♣",spades="♠"})[suit] or "♠"
+    local glyph=({hearts="♥",diamonds="♦",clubs="♣",spades="♠"})[suit]
     local label=({[11]="J",[12]="Q",[13]="K",[14]="A"})[tonumber(rank)] or tostring(rank)
     local function index()
-        g.setColor(0.96,0.94,0.85,0.96);g.polygon("fill",8,8,90,8,90,126,8,151)
+        g.setColor(0.96,0.94,0.85,0.96)
+        g.polygon("fill",8,8,90,8,90,glyph and 126 or 78,8,glyph and 151 or 103)
         g.setColor((suit=="hearts" or suit=="diamonds") and {0.69,0.10,0.13,1} or {0.06,0.13,0.22,1})
         g.setFont(Art.indexFont);g.printf(label,9,8,80,"center")
-        g.setFont(Art.suitFont);g.printf(glyph,9,72,80,"center")
+        if glyph then g.setFont(Art.suitFont);g.printf(glyph,9,72,80,"center") end
     end
     index();g.push();g.translate(512,768);g.rotate(math.pi);index();g.pop();g.pop()
     canvas:setFilter("linear","linear");Art.indexed[image][key]=canvas;Art.generated[canvas]=true

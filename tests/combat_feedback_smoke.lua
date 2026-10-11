@@ -2,7 +2,8 @@ local F = require("src.combat_feedback")
 for tier,value in ipairs({25,250,2500,25000,250000}) do
     assert(F.tier(value)==tier)
     local ft = F.new("damage",value,640,214,tostring)
-    assert(ft.label and ft.tier==tier)
+    local label=({false,"CỰC MẠNH","BÙNG NỔ","SIÊU VIỆT","TUYỆT ĐỈNH"})[tier]
+    assert(ft.tier==tier and (ft.label or false)==label)
     F.update(ft,0.12)
     assert(ft.alpha==1 and ft.life>0)
     assert(F.update(ft,3) and ft.alpha==0)
@@ -57,12 +58,59 @@ for _,fps in ipairs({30,60,120,144}) do
         for _=1,math.floor(fps*2.5) do
             F.update(ft,1/fps)
             local sx,sy,tilt,rise=F.damagePose(ft)
-            assert(sx>0 and sy>0 and sx<2 and sy<2 and math.abs(tilt)<0.06 and rise<65)
+            assert(sx>0 and sx<1.6 and sx==sy and tilt==0 and rise<41,"digits keep their proportions and bounded size/rise")
         end
         assert(ft.alpha==0)
     end
 end
-assert(F.new("damage",1e9,0,0).label=="PHÁ GIỚI" and F.new("damage",1e15,0,0).label=="TUYỆT ĐỈNH")
+assert(F.new("damage",1e9,0,0).label=="TUYỆT ĐỈNH" and F.new("damage",1e15,0,0).label=="TUYỆT ĐỈNH")
+for _,amount in ipairs({25000,250000}) do
+    local reference
+    for _,fps in ipairs({30,60,120,144}) do
+        local ft=F.new("damage",amount,630,214)
+        local paths=F.lightningGeometry(ft,150,36)
+        local first=paths[1].points
+        assert(F.lightningGeometry(ft,150,36)==paths,"stable strike must reuse geometry")
+        local left,right,top,bottom=0,0,18,18
+        for _=1,fps do
+            F.update(ft,1/fps)
+            assert(F.lightningGeometry(ft,150,36)==paths and paths[1].points==first,"strike changes must not grow geometry buffers")
+            for _,path in ipairs(paths) do
+                assert(#path.points<=32 and #path.branches<=2)
+                for i=1,#path.points,2 do
+                    local x,y=path.points[i],path.points[i+1]
+                    assert(math.abs(x)<125 and y>-60 and y<96,"lightning stays close to its number")
+                    left,right,top,bottom=math.min(left,x),math.max(right,x),math.min(top,y),math.max(bottom,y)
+                end
+            end
+        end
+        assert(left<-75 and right>75 and top<0 and bottom>36,"arcs must wrap every side of the number")
+        if reference then assert(paths[1].points[1]==reference,"strike shape must follow elapsed time across FPS") end
+        reference=paths[1].points[1]
+        ft.reducedMotion=true
+        F.lightningGeometry(ft,150,36)
+        local still=paths[1].points[1]
+        ft.age=1.7;F.lightningGeometry(ft,150,36)
+        assert(paths[1].points[1]==still,"reduced motion keeps lightning static")
+    end
+end
+local Feel=require("src.scoring_presentation")
+for _,x in ipairs({454,630,806}) do
+    for _,tier in ipairs({1,2,3}) do
+        for _,amount in ipairs({77,2500,1e15}) do
+            local anim={floatingTexts={},sequence={attack={cx=x,nen={tier=tier,reducedMotion=true}},
+                ui={BATTLE_CENTER_X=630,formatNumber=tostring}}}
+            Feel.damageApplied(anim,0,amount)
+            Feel.damageApplied(anim,0,amount)
+            assert(#anim.floatingTexts==1,"resolved damage is emitted once")
+            local ft=anim.floatingTexts[1]
+            assert(ft.tier==F.tier(amount) and ft.x==x and ft.originX==x,"Nen intensity cannot inflate or displace damage numbers")
+            assert(ft.quietImpact and ft.reducedMotion and ft.text=="−"..tostring(amount))
+            local sx,sy,tilt,rise=F.damagePose(ft)
+            assert(sx==sy and tilt==0 and rise<=8)
+        end
+    end
+end
 assert(rng.getState()==before,"impact motion and bursts must not consume gameplay RNG")
-print("Damage impact PASS: squash/rebound through 1e15 at 30/60/120/144 FPS, three bounded burst lanes per target, newest-hit emphasis and apex labels")
+print("Damage impact PASS: proportional rebound through 1e15 at 30/60/120/144 FPS, bounded burst lanes, actual damage tiers independent of all Nen tiers/target positions and reduced motion")
 print("Combat feedback PASS: five tiers through 1e15, reward intensity, 30/60/120/144 FPS resource gain/loss/reversal, delayed armor/HP trails, exact settle, overlap, bounded queue, no gameplay RNG")

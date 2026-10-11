@@ -366,15 +366,11 @@ function Feel.damageApplied(anim, hp, actualDamage)
     if actualDamage > 0 then
         local nen=s.attack.nen
         local x=s.attack.cx or s.ui.BATTLE_CENTER_X
-        -- Leave the contact silhouette visible while keeping damage beside the target.
-        if nen then x=math.max(390,math.min(840,x+(x>700 and -142 or 142))) end
-        local text=Feedback.add(anim.floatingTexts, "damage", actualDamage, x, nen and 204 or 214, s.ui.formatNumber)
+        -- Attack intensity is relative to enemy HP; number styling follows actual damage.
+        local text=Feedback.add(anim.floatingTexts, "damage", actualDamage, x, 214, s.ui.formatNumber)
         if nen then
-            text.tier=nen.reducedMotion and 1 or ({1,3,4})[nen.tier]
             text.quietImpact=true
-            text.color=s.attack.color
-            text.label=Nen.config.tierNames[nen.tier]
-            text.maxLife=1.1+nen.tier*.1;text.life=text.maxLife
+            text.reducedMotion=nen.reducedMotion
         end
     else
         anim.floatingTexts[#anim.floatingTexts+1] = {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},

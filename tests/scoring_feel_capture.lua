@@ -16,40 +16,47 @@ local function snapshot(name)
         local file = io.open(name, "wb")
         if not file then
             -- Windows can briefly lock an existing PNG while its preview is open.
-            file=assert(io.open("docs/scoring_reference/"..tostring(os.time()).."_"..name,"wb"))
+            file=assert(io.open("docs/scoring_reference/"..tostring(os.time()).."_"..name:gsub("^.*/",""),"wb"))
         end
         file:write(data:encode("png"):getString()); file:close()
     end)
 end
 
 function Test.update(game, callbacks)
+    callbacks.closeDeckViewer()
     local now = love.timer.getTime()
     if now < deadline then return end
     if stage=="start" then
         case=case+1
         callbacks.startNewGame("red_deck")
         callbacks.startMonsterEncounter(1,false)
+        love.mouse.setPosition(4,4)
         callbacks.setScoringSpeed(case==2)
         game.maxHandSize=5
         game.unlockedHands={high_card=true,pair=true,three_of_a_kind=true,straight=true,flush=true,full_house=true,straight_flush=true}
         game.playerHp, game.maxPlayerHp = 100,100
-        game.monster.hp, game.monster.maxHp, game.monster.damageLagHp = case==4 and 21 or 1000000,1000000,1000000
+        game.monster.hp, game.monster.maxHp, game.monster.damageLagHp = case==5 and 32 or case==4 and 21 or 1000000,case==5 and 32 or 1000000,case==5 and 32 or 1000000
+        game.monster.creatureArmor=0
         game.monster.attackSpeed=case==3 and 999 or 1
-        game.monster.isBoss=case==3
+        game.monster.isBoss=case==3 or case==5
         if case==3 then game.monster.bossData={modifyDamage=function(value) return math.floor(value*0.5) end} end
+        if case==5 then
+            game.monster.targetAura=1
+            game.monster.bossData={modifyDamage=function() return 77 end}
+        end
         game.hand, game.deck, game.discardPile, game.selectedIndices = {},{},{},{}
-        local count=(case==1 or case==4) and 1 or 5
+        local count=(case==1 or case==4 or case==5) and 1 or 5
         for i=1,count do
             local card=Deck.newCard(i+7,case==1 and "hearts" or "spades")
             Effects.setEffect(card,({"foil","holographic","polychrome"})[(i-1)%3+1])
-            if case~=1 then
+            if case~=1 and case~=5 then
                 card.equipments={{id="scoring_capture_gem",name="Gem capture",onCardScore=function() return {addChips=25,addMult=3} end}}
                 card.enhancement="enh_blood"
             end
             game.hand[i]=card
         end
         game.deities={}
-        if case~=1 then
+        if case~=1 and case~=5 then
             game.deities={Deities.CATALOG.spirit_blade,Deities.CATALOG.thunder_drum,
                 {id="lab_multiplier",name="SPN test ×8",rarity="common",onHandScored=function() return {xMult=8} end}}
         end
@@ -63,7 +70,7 @@ function Test.update(game, callbacks)
             return
         end
         assert(state=="scoring" and anim.active)
-        expected=case==3 and math.floor(anim.scoringData.finalScore*0.5) or anim.scoringData.finalScore
+        expected=case==5 and 77 or case==3 and math.floor(anim.scoringData.finalScore*0.5) or anim.scoringData.finalScore
         assert(game.monster.hp==previousHp,"HP must stay unchanged at play")
         local hands=game.handsRemaining
         callbacks.playSelectedHand()
@@ -85,7 +92,8 @@ function Test.update(game, callbacks)
         local anim,state=callbacks.getScoringState()
         local seq=anim.sequence
         local ev=seq.events[seq.index]
-        if ev then transitions[ev.kind]=true end
+        -- Screenshot encoding may advance past a short event within one frame.
+        for i=1,math.min(seq.index,#seq.events) do transitions[seq.events[i].kind]=true end
         if not seq.impactDispatched then
             assert(game.monster.hp==previousHp and seq.hp==previousHp,"HP reduction before projectile impact")
         end
@@ -95,16 +103,34 @@ function Test.update(game, callbacks)
         if ev and ev.kind=="CONVERGENCE" and seq.age>ev.duration*0.45 then snapshot("shot_scoring_energy_"..case..".png") end
         if ev and ev.kind=="ATTACK" and seq.age>ev.duration*0.50 then snapshot("shot_scoring_attack_"..case..".png") end
         if ev and ev.kind=="SETTLE" then snapshot("shot_scoring_impact_"..case..".png") end
+        if case==5 and seq.damageApplied then
+            assert(seq.attack.nen.tier==3,"regression needs strongest Nen on small actual damage")
+            local damage
+            for _,ft in ipairs(anim.floatingTexts) do if ft.kind=="damage" then damage=ft end end
+            if damage then
+                assert(damage.amount==77 and damage.tier==1 and damage.label==nil)
+                assert(damage.originX==seq.attack.cx and damage.quietImpact)
+                for _,notice in ipairs(anim.floatingTexts) do
+                    if notice.text:find("Tiền Lãi",1,true) then
+                        assert(notice.y-damage.y>70,"victory gold notice must leave damage readable")
+                    end
+                end
+                if damage.age>=0.38 then snapshot("docs/combat_feedback/damage_77_nen.png") end
+            end
+        end
         frameCount,frameTime=frameCount+1,frameTime+love.timer.getDelta()
         if state~="scoring" then
             assert(seq.finished and seq.damageApplied,"unlock only after settle")
             assert(impacts==1,"damage must apply once")
             assert(anim.damageDealt==expected,"real damage includes boss conversion")
             assert(game.monster.hp==math.max(0,previousHp-expected))
+            if case==5 then assert(screenshots["docs/combat_feedback/damage_77_nen.png"],"resolved 77 damage must be captured") end
+            local transformed=seq.attack.nen and transitions.CARD_TRANSFORMATION or transitions.ENERGY_CONVERSION
+            local traveled=seq.attack.nen and transitions.TRAVEL or transitions.ATTACK
             assert(transitions.BASE_DAMAGE and transitions.BASE_ENHANCE and transitions.AURA_COUNT
-                and transitions.ENERGY_CONVERSION and transitions.ATTACK and transitions.ENEMY_IMPACT)
+                and transformed and traveled and transitions.ENEMY_IMPACT,"all scoring/contact phases must complete")
             print(string.format("Real scoring case %d passed: %d AURA / %d actual damage / %.2fs",case,seq.result.finalScore,expected,now-started))
-            if case<4 then stage,deadline="start",now+0.15
+            if case<5 then stage,deadline="start",now+0.15
             else
                 stage="lab"; love.keypressed("f6"); love.keypressed("5")
                 deadline=now+0.05

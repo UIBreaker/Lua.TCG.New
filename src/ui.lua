@@ -204,6 +204,9 @@ function UI.initFonts()
         value = loadInfoFont(25),
         aura = loadInfoFont(29),
     }
+    local feedback=require("src.combat_feedback")
+    feedback.prepareFire()
+    feedback.prepareFoil()
 end
 
 function UI.drawRoundedRect(mode, x, y, w, h, r)

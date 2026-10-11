@@ -1,8 +1,8 @@
 -- Presentation only: numbers always come from the resolved gameplay result.
 local F = {config=require("config.action_vfx_config"),vfx={}}
-local colors = {{1,0.88,0.72}, {1,0.75,0.32}, {1,0.48,0.20}, {1,0.28,0.38}, {0.88,0.65,1}}
-local labels = {"SÁT THƯƠNG", "ĐÒN MẠNH", "BÙNG NỔ", "HỦY DIỆT", "SIÊU VIỆT"}
-local sizes = {1,1.06,1.18,1.25,1.38}
+local colors = {{1,0.88,0.72}, {1,0.75,0.32}, {1,0.48,0.20}, {0.56,0.82,1}, {0.88,0.65,1}}
+local labels = {"BÌNH THƯỜNG", "CỰC MẠNH", "BÙNG NỔ", "SIÊU VIỆT", "TUYỆT ĐỈNH"}
+local sizes = {1,1.08,1.16,1.25,1.34}
 
 -- Display values follow resolved resources; labels and gameplay keep the exact totals.
 function F.updateMeter(m, value, dt, duration)
@@ -32,6 +32,33 @@ function F.tier(amount)
     return 1
 end
 
+function F.prepareFoil()
+    if F.foilPrepared or not (love and love.graphics) then return end
+    F.foilPrepared=true
+    local ok,shader=pcall(love.graphics.newShader,[[
+        extern number clock;
+        extern vec2 origin;
+        extern number span;
+        vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen) {
+            vec4 glyph=Texel(texture,uv);
+            vec2 p=screen-origin;
+            float phase=p.x/max(span,1.0)*4.0+p.y*0.018-clock*1.8;
+            vec3 spectrum=0.65+0.35*cos(phase+vec3(0.0,2.094,4.188));
+            float sheen=pow(0.5+0.5*sin(p.x*0.035+p.y*0.10-clock*3.0),12.0);
+            vec3 foil=mix(color.rgb,spectrum,0.72)+vec3(sheen*0.16);
+            return vec4(glyph.rgb*foil,glyph.a*color.a);
+        }
+    ]])
+    if ok then F.foilShader=shader else F.foilError=tostring(shader) end
+end
+
+function F.prepareFire()
+    if F.firePrepared or not (love and love.graphics) then return end
+    F.firePrepared=true
+    local ok,shader=pcall(love.graphics.newShader,"shaders/damage_fire.glsl")
+    if ok then F.fireShader=shader else F.fireError=tostring(shader) end
+end
+
 function F.new(kind, amount, x, y, format)
     local tier = kind == "damage" and F.tier(amount) or 1
     local positive = amount >= 0
@@ -48,7 +75,9 @@ function F.new(kind, amount, x, y, format)
     local rewardLevel=math.abs(amount)>=100 and 4 or math.abs(amount)>=25 and 3 or math.abs(amount)>=10 and 2 or 1
     local duration = kind == "damage" and (1.25 + tier * 0.16) or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
     local apex=kind=="damage" and math.max(0,math.min(1,(math.log(math.max(1,math.abs(amount)))/math.log(10)-5)/10)) or 0
-    local label=kind=="damage" and (math.abs(amount)>=1e12 and "TUYỆT ĐỈNH" or math.abs(amount)>=1e9 and "PHÁ GIỚI" or labels[tier]) or nil
+    local label=kind=="damage" and tier>=2 and labels[tier] or nil
+    if kind=="damage" and tier>=2 then F.prepareFire() end
+    if kind=="damage" and tier==5 then F.prepareFoil() end
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,
         originX=x,originY=y,lane=0,apex=apex,
         age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,label=label}
@@ -73,7 +102,7 @@ function F.add(list, kind, amount, x, y, format)
                 else other.crowded=true end
             end
         end
-        ft.x=x+({0,-30,30})[ft.lane+1];ft.y=y+ft.lane*64
+        ft.x=x+({0,-16,16})[ft.lane+1];ft.y=y+ft.lane*64
     else
     -- Separate repeated hits without changing the position of older numbers.
     for i=#list,1,-1 do
@@ -105,12 +134,11 @@ end
 function F.damagePose(ft)
     local age=math.max(0,ft.age or 0)
     local tier=ft.tier or 1
-    local kick=math.exp(-age*13)
-    local spring=math.exp(-age*8)*math.sin(age*24)
-    local base=sizes[tier]+(ft.apex or 0)*0.10
-    return base*(1+0.12*kick+0.11*spring),base*(1-0.34*kick+0.19*spring),
-        tier>=3 and -0.055*math.exp(-age*9) or 0,
-        (1-math.exp(-age*3))*(28+tier*7)
+    local base=sizes[tier]+(ft.apex or 0)*0.06
+    if ft.reducedMotion then return base,base,0,math.min(1,age/0.5)*8 end
+    -- One small, uniform rebound keeps digit proportions intact at every frame.
+    local scale=base*(1-0.12*math.exp(-age*22)+0.13*math.exp(-age*9)*math.sin(age*19))
+    return scale,scale,0,(1-math.exp(-age*2.4))*(20+tier*4)
 end
 
 function F.update(ft, dt)
@@ -160,55 +188,98 @@ local function resourceIcon(g,kind,x,y,color,alpha,negative)
     else g.setLineWidth(2);g.line(x-4,y,x+4,y);g.line(x,y-4,x,y+4) end
 end
 
-local function impactCrest(g,tier,color,alpha,age,apex)
-    local shock=math.exp(-age*(tier>=4 and 4.5 or 8))
-    local spread=1-math.exp(-age*8)
-    g.setBlendMode("add")
-    g.setColor(color[1],color[2],color[3],alpha*shock*0.09)
-    g.ellipse("fill",0,20,90+spread*40,30)
-    if tier>=3 then
-        for i=1,6+tier*2 do
-            local a=i*2.399;local r=45+spread*(32+tier*9)
-            local x,y=math.cos(a)*r,20+math.sin(a)*r*0.5
-            g.setColor(color[1],color[2],color[3],alpha*shock*0.7)
-            g.setLineWidth(i%3==0 and 2 or 1)
-            g.line(x,y,x+math.cos(a)*(8+tier*2),y+math.sin(a)*(8+tier*2)*0.5)
-            if i%2==0 then
-                g.setColor(1,0.92,0.77,alpha*shock*0.58)
-                g.polygon("fill",x,y,x+math.cos(a)*7,y+math.sin(a)*4,x+math.cos(a+0.7)*3,y+math.sin(a+0.7)*3)
+local function variation(n,seed) return (math.sin(n*12.9898+seed*78.233)*43758.5453)%1 end
+function F.lightningGeometry(ft,width,height)
+    local age=ft.reducedMotion and 0 or ft.age or 0
+    local frame=math.floor(age*12+1e-7)
+    local cache=ft.lightning or {paths={}}
+    ft.lightning=cache
+    if cache.frame==frame and cache.width==width and cache.height==height then return cache.paths end
+    cache.frame,cache.width,cache.height=frame,width,height
+    local seed=math.abs(ft.amount or 0)%991*0.071
+    local count=ft.tier==5 and 8 or 3
+    for i=1,count do
+        local path=cache.paths[i] or {points={},branches={}};cache.paths[i]=path
+        local start=(i-1)*math.pi*2/count+variation(i,seed+frame)*0.5
+        local sweep=(count==3 and 1.5 or 0.65)+variation(i+17,seed+frame)*0.85
+        for j=0,12 do
+            local angle=start+j/12*sweep
+            local cx,cy=math.cos(angle),math.sin(angle)
+            local jitter=(variation(i*31+j,seed+frame)-0.5)*6
+            path.points[j*2+1]=(cx<0 and -1 or 1)*math.abs(cx)^0.4*(width/2+7)+cx*jitter
+            path.points[j*2+2]=height*0.5+(cy<0 and -1 or 1)*math.abs(cy)^0.6*(height*0.4+7)+cy*jitter
+        end
+        for b=1,(count==8 and 2 or 1) do
+            local branch=path.branches[b] or {};path.branches[b]=branch
+            local j=3+b*3
+            local angle=start+j/12*sweep+(variation(i+b*41,seed+frame)-0.5)*0.9
+            local dx,dy=math.cos(angle),math.sin(angle)
+            local length=(count==8 and 13 or 8)+variation(i+b*13,seed+frame)*9
+            local x,y=path.points[j*2+1],path.points[j*2+2]
+            for k=0,4 do
+                local bend=k>0 and k<4 and (variation(i*61+b*17+k,seed+frame)-0.5)*5 or 0
+                branch[k*2+1]=x+dx*length*k/4-dy*bend
+                branch[k*2+2]=y+dy*length*k/4+dx*bend
             end
+        end
+    end
+    return cache.paths
+end
+
+local function electricStroke(g,points,alpha,branch)
+    g.setColor(0.35,0.47,1,alpha*0.12);g.setLineWidth(branch and 3 or 5)
+    g.line(points)
+    g.setColor(0.48,0.76,1,alpha*0.45);g.setLineWidth(branch and 1.3 or 2.2)
+    g.line(points)
+    g.setColor(0.92,0.97,1,alpha);g.setLineWidth(branch and 0.55 or 0.85)
+    g.line(points)
+end
+
+local function damageAura(g,ft,width,height,alpha)
+    local tier=ft.tier or 1
+    if tier<2 or ft.crowded then return end
+    local age=ft.reducedMotion and 0 or ft.age or 0
+    local intensity=math.min(1,(ft.age or 0)/0.06)*alpha
+    local reach=tier==2 and 9 or tier==3 and 18 or tier==4 and 21 or 26
+    g.setBlendMode("add")
+    if F.fireShader then
+        local cx,cy=g.transformPoint(0,height*0.5)
+        local px,py=g.transformPoint(1,height*0.5)
+        F.fireShader:send("clock",age)
+        F.fireShader:send("seed",math.abs(ft.amount or 0)%991*0.017)
+        F.fireShader:send("center",{cx,cy})
+        F.fireShader:send("halfSize",{width/2+1,height*0.34})
+        F.fireShader:send("pixelScale",math.sqrt((px-cx)^2+(py-cy)^2))
+        F.fireShader:send("reach",reach)
+        g.setShader(F.fireShader);g.setColor(1,1,1,intensity*0.80)
+        local pad=reach+10
+        g.rectangle("fill",-width/2-pad,-pad,width+pad*2,height+pad*2)
+        g.setShader()
+    else
+        -- Keep a soft ember rim readable on devices without procedural shaders.
+        for i=1,12 do
+            local a=i*math.pi/6
+            g.setColor(1,0.38,0.05,intensity*0.12)
+            g.ellipse("fill",math.cos(a)*(width/2+3),height*0.5+math.sin(a)*height*0.4,reach*0.5,reach*0.6)
+        end
+    end
+    if tier>=3 then
+        for i=1,6 do
+            local p=(age*0.7+i*0.618)%1
+            local x=(variation(i,ft.amount%991)-0.5)*(width+20)
+            local y=height*0.3-reach-p*22
+            local ember=intensity*math.sin(p*math.pi)*0.5
+            g.setColor(1,0.37,0.045,ember*0.25);g.circle("fill",x,y,2)
+            g.setColor(1,0.85,0.39,ember);g.circle("fill",x,y,0.7)
         end
     end
     if tier>=4 then
-        g.setLineWidth(1)
-        g.setColor(color[1],color[2],color[3],alpha*shock*0.55)
-        local r=68+spread*25
-        g.polygon("line",-r,20,0,-20,r,20,0,60)
-        if tier==5 then
-            g.ellipse("line",0,20,r*1.15,32)
-            for _,side in ipairs({-1,1}) do
-                g.line(side*32,-11,side*57,-25,side*82,-11)
-                sparkle(g,side*82,-11,4,color,alpha*shock)
-            end
-            if apex>0.3 then
-                local echo=math.max(0,age-0.14)
-                local tail=age>0.14 and math.exp(-echo*7) or 0
-                g.setColor(0.94,0.85,1,alpha*tail*apex*0.6);g.setLineWidth(1.2)
-                local r=82+(1-math.exp(-echo*5))*80
-                g.ellipse("line",0,20,r,12+r*0.2)
-                for _,side in ipairs({-1,1}) do
-                    g.line(side*18,-20,side*34,-34,side*50,-20)
-                    sparkle(g,side*34,-34,3+apex*2,color,alpha*tail)
-                end
-            end
+        for i,path in ipairs(F.lightningGeometry(ft,width,height)) do
+            local pulse=(age*5.5+i*0.31)%1
+            local light=intensity*(0.15+0.85*math.exp(-pulse*6))
+            electricStroke(g,path.points,light,false)
+            for _,branch in ipairs(path.branches) do electricStroke(g,branch,light*0.72,true) end
         end
-    end
-    if tier>=2 then
-        local slash=math.exp(-age*16)
-        g.setColor(1,0.96,0.80,alpha*slash*0.8);g.setLineWidth(2.2)
-        g.line(-85-spread*40,37,85+spread*40,-4)
-        g.setColor(color[1],color[2],color[3],alpha*slash*0.32);g.setLineWidth(6)
-        g.line(-85-spread*40,37,85+spread*40,-4)
     end
     g.setBlendMode("alpha")
 end
@@ -221,6 +292,7 @@ function F.draw(ft, ui)
     local crowded=ft.kind=="damage" and ft.crowded
     if crowded then alpha=alpha*0.62 end
     g.push("all")
+    g.setShader()
     local rise = ft.kind and (1-math.exp(-age*2.5))*(ft.kind=="damage" and 30+tier*8 or ft.compact and 13 or 32) or 0
     if ft.kind == "gold" then
         -- Coin flight stays in HUD coordinates, independent of the number's spring.
@@ -252,62 +324,30 @@ function F.draw(ft, ui)
         g.setBlendMode("alpha")
         sparkle(g,target.x,target.y,10,{1,0.93,0.5},arrival*0.8)
     end
-    local font = ft.kind=="damage" and (tier>=4 and ui.fonts.huge or tier>=2 and ui.fonts.title or ui.fonts.large)
+    local font = ft.kind=="damage" and (tier>=4 and ui.fonts.title or ui.fonts.large)
         or (not ft.life and ui.fonts.large) or ft.kind and (ui.fonts.regular or ui.fonts.medium) or ui.fonts.medium
     font=font or ui.fonts.large
     local text = ui.sanitizeText and ui.sanitizeText(ft.text) or ft.text
     local pulse=ft.kind=="heal" and (ft.amount>0 and 0.12 or 0.25) or ft.kind=="armor" and 0.22 or 0.16
     local scale = ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
     if ft.compact then scale=scale*0.78 end
-    local scaleY,tilt
+    local scaleY
     if ft.kind=="damage" then
+        local tilt
         scale,scaleY,tilt,rise=F.damagePose(ft)
-        if crowded then scale,scaleY=scale*0.63,scaleY*0.63 end
-        if ft.burst and not crowded then scale,scaleY=scale*0.82,scaleY*0.82 end
+        if ft.compact then scale,scaleY=scale*0.78,scaleY*0.78 end
+        if crowded then scale,scaleY=scale*0.82,scaleY*0.82 end
+        if ft.burst and not crowded then scale,scaleY=scale*0.94,scaleY*0.94 end
     end
     local maxWidth=ft.kind=="damage" and 360 or 230
     local fit=math.min(1,maxWidth/math.max(1,font:getWidth(text)*scale))
     scale=scale*fit;scaleY=(scaleY or scale/fit)*fit
-    local half=font:getWidth(text)*scale/2+30
+    local half=font:getWidth(text)*scale/2+(ft.kind=="damage" and 55 or 30)
     local x=ft.kind and math.max(half+8,math.min(1280-half-8,ft.x)) or ft.x
     g.translate(x,math.max(72,ft.y-rise))
     g.scale(scale,scaleY)
     if ft.kind=="damage" then
-        g.rotate(tilt)
-        if not ft.quietImpact and not crowded then
-            impactCrest(g,ft.burst and 2 or tier,color,ft.burst and alpha*0.45 or alpha,age,ft.apex or 0)
-        end
-        local tw=font:getWidth(text)
-        g.setColor(0.012,0.018,0.03,alpha*(tier>=3 and 0.45 or 0.24))
-        local left,right,bottom=-tw/2-10,tw/2+10,font:getHeight()+1
-        g.polygon("fill",left+7,3,right-7,3,right,10,right,bottom-7,right-7,bottom,left+7,bottom,left,bottom-7,left,10)
-        g.setColor(color[1],color[2],color[3],alpha*(0.30+math.exp(-age*6)*0.4));g.setLineWidth(1)
-        for _,side in ipairs({-1,1}) do
-            local edge=side*(tw/2+10)
-            g.line(edge-side*8,3,edge,10,edge,19)
-            g.line(edge,bottom-15,edge,bottom-7,edge-side*8,bottom)
-        end
-    end
-    if ft.kind == "damage" and tier >= 2 and not ft.quietImpact and not crowded and not ft.burst then
-        local p = math.min(1, age/0.56)
-        g.setBlendMode("add")
-        g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.045)
-        g.ellipse("fill",0,17,75+p*30,24)
-        for ring=1,(tier>=4 and 2 or 1) do
-            g.setColor(color[1],color[2],color[3],alpha*(1-p)*(0.5/ring))
-            g.setLineWidth(ring==1 and 1.8 or 0.8)
-            g.ellipse("line",0,17,(40+p*(38+tier*7))*ring,12+p*15)
-        end
-        for i=1,4+tier*2 do
-            local angle=i*2.399
-            local radius=35+p*(40+tier*7)
-            local x,y=math.cos(angle)*radius,17+math.sin(angle)*radius*0.42
-            sparkle(g,x,y,(2+tier*0.45)*(1-p),color,alpha*(1-p)*0.8)
-            g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.5)
-            g.setLineWidth(1)
-            g.line(x,y,x-math.cos(angle)*(6+tier),y-math.sin(angle)*(6+tier)*0.42)
-        end
-        g.setBlendMode("alpha")
+        damageAura(g,ft,font:getWidth(text),font:getHeight(),alpha)
     end
     g.setFont(font)
     local tw=font:getWidth(text)
@@ -321,43 +361,42 @@ function F.draw(ft, ui)
         g.setColor(color[1],color[2],color[3],alpha*0.16);g.rectangle("fill",left+2,0,20,bottom-3,3,3)
         resourceIcon(g,ft.kind,left+12,bottom/2-1,color,alpha,ft.amount<0)
     end
-    if ft.kind=="damage" and tier>=4 and not crowded then
-        for i=2,1,-1 do
-            g.push();g.scale(1+i*0.035)
-            g.setColor(color[1],color[2],color[3],alpha*math.exp(-age*8)*0.14/i)
-            g.printf(text,-230-i*4,i*3,460,"center");g.pop()
-        end
-    end
     if ft.kind then
-        luminousText(g,text,color,alpha,ft.kind=="gold" and 0.95 or 0.5+tier*0.16)
+        luminousText(g,text,color,alpha,ft.kind=="damage" and 0.26+tier*0.07 or ft.kind=="gold" and 0.95 or 0.5+tier*0.16)
     end
-    local ink=ft.kind=="damage" and tier>=3 and {1,0.92,0.79} or color
+    local ink=ft.kind=="damage" and {1,0.95,0.84} or color
     outlined(g,text,-230,0,460,ink,alpha)
     if ft.kind=="gold" then
         sparkle(g,-tw/2-21,-5,4,{1,0.94,0.57},alpha*(0.55+0.25*math.sin(age*14)))
         sparkle(g,tw/2+9,14,3,{1,0.94,0.57},alpha*(0.55+0.25*math.cos(age*14)))
     end
-    if ft.kind then
+    if ft.kind and not ft.reducedMotion then
         -- A brief ivory highlight sells impact without washing out the value.
         g.setColor(1,0.97,0.85,alpha*math.exp(-age*12)*0.75)
         g.printf(text,-230,-0.7,460,"center")
     end
-    if ft.label then
+    if ft.kind=="damage" and tier==5 and F.foilShader then
+        local shader=g.getShader()
+        local ox,oy=g.transformPoint(0,0)
+        local right=g.transformPoint(tw,0)
+        F.foilShader:send("clock",ft.reducedMotion and 0 or age)
+        F.foilShader:send("origin",{ox,oy})
+        F.foilShader:send("span",math.max(1,right-ox))
+        g.setShader(F.foilShader);g.setColor(ink[1],ink[2],ink[3],alpha)
+        g.printf(text,-230,0,460,"center")
+        g.setShader(shader)
+    end
+    if ft.label and not crowded then
         g.setFont(ui.fonts.tiny or ui.fonts.small)
         local labelY=font:getHeight()+5
-        local labelW=g.getFont():getWidth(ft.label)+24
-        g.setColor(0.02,0.025,0.05,alpha*0.82)
-        g.rectangle("fill",-labelW/2,labelY-1,labelW,17,4,4)
-        g.setColor(color[1],color[2],color[3],alpha*0.55)
-        g.setLineWidth(0.8);g.line(-labelW/2+6,labelY+16,labelW/2-6,labelY+16)
-        if ft.kind=="damage" and tier>=3 and not crowded then
-            for _,side in ipairs({-1,1}) do
-                g.line(side*(labelW/2+5),labelY+7,side*(labelW/2+19),labelY+7,side*(labelW/2+25),labelY+3)
-            end
+        if ft.kind~="damage" then
+            local labelW=g.getFont():getWidth(ft.label)+24
+            g.setColor(0.02,0.025,0.05,alpha*0.82)
+            g.rectangle("fill",-labelW/2,labelY-1,labelW,17,4,4)
+            g.setColor(color[1],color[2],color[3],alpha*0.55)
+            g.setLineWidth(0.8);g.line(-labelW/2+6,labelY+16,labelW/2-6,labelY+16)
         end
-        outlined(g,ft.label,-230,labelY,460,color,alpha*0.92)
-        sparkle(g,-tw/2-11,14,3.5,color,alpha*math.exp(-age*3)*0.8)
-        sparkle(g,tw/2+11,14,3.5,color,alpha*math.exp(-age*3)*0.8)
+        outlined(g,ft.label,-230,labelY,460,color,alpha*(ft.kind=="damage" and 0.78 or 0.92))
     end
     g.pop()
 end

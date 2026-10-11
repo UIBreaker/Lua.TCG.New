@@ -2850,10 +2850,9 @@ function love.update(dt)
                     for hitIndex, hit in ipairs(splashHits) do
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local y=214
-                        if hit.advanced then x=math.max(390,math.min(840,x+(x>700 and 142 or -142)));y=208+(hitIndex-1)*40 end
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, y, UI.formatNumber)
                         ft.label = hit.deity.name .. (hit.advanced and "" or hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
-                        if hit.advanced then ft.compact=true;ft.label="SÉT "..hitIndex;ft.maxLife=.85;ft.life=ft.maxLife end
+                        if hit.advanced then ft.compact=true;ft.quietImpact=true;ft.label="SÉT "..hitIndex;ft.maxLife=.85;ft.life=ft.maxLife end
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
                         if hit.slotIndex then anim.deityBounce[hit.slotIndex] = 1.15 end
@@ -3009,8 +3008,9 @@ function love.update(dt)
                                 text = "[Tiền Lãi] +$" .. interestBonus .. " Vàng!",
                                 color = UI.COLORS.goldYellow,
                                 x = 640,
-                                y = 230,
-                                alpha = 2.5,
+                                y = 430,
+                                alpha = 1.8,
+                                compact = true,
                             })
                         end
 
@@ -3251,7 +3251,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.122.1", 48, 185)
+    g.print("beta 0.122.2", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)

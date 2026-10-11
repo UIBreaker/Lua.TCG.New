@@ -8,6 +8,9 @@ end
 function love.errorhandler(message) print(debug.traceback(message,2));return function() return 1 end end
 function love.load()
     require("tests.combat_feedback_smoke")
+    assert(F.fireShader,"procedural fire did not compile: "..tostring(F.fireError))
+    assert(F.foilShader,"holographic shader did not compile: "..tostring(F.foilError))
+    local foil,fire=F.foilShader,F.fireShader
     UI.initFonts()
     local g=love.graphics
     local canvas=g.newCanvas(1280,1000)
@@ -15,15 +18,18 @@ function love.load()
         g.setColor(UI.COLORS.textLight);g.setFont(UI.fonts.small);g.printf(text,x,y,w,"center")
     end
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.025,0.037,0.05,1)
-    title("SÁT THƯƠNG · NĂM CẤP ĐỘ XUNG LỰC",0,18,1280)
+    title("BÌNH THƯỜNG / CỰC MẠNH / BÙNG NỔ / SIÊU VIỆT / TUYỆT ĐỈNH",0,18,1280)
     for i,amount in ipairs({25,250,2500,25000,250000}) do
         title(UI.formatNumber(amount),(i-1)*256,52,256)
         for row,age in ipairs({0.13,0.56}) do
             local ft=F.new("damage",amount,640,214,UI.formatNumber);F.update(ft,age)
             g.push("all");g.translate((i-1)*256+128,95+(row-1)*140);g.scale(0.59);g.translate(-640,-214)
-            local font,blend=g.getFont(),g.getBlendMode();local r,gg,b,a=g.getColor()
+            g.setShader(foil)
+            local font,blend,shader=g.getFont(),g.getBlendMode(),g.getShader();local r,gg,b,a=g.getColor()
             F.draw(ft,UI)
-            assert(font==g.getFont() and blend==g.getBlendMode(),"floating text leaks graphics state")
+            assert(font==g.getFont() and blend==g.getBlendMode() and shader==g.getShader(),"floating text leaks graphics state")
+            assert(F.foilShader==foil,"holographic shader must be reused")
+            assert(F.fireShader==fire,"combustion shader must be reused")
             local nr,ng,nb,na=g.getColor();assert(r==nr and gg==ng and b==nb and a==na)
             g.pop()
         end
@@ -74,7 +80,7 @@ function love.load()
     g.pop();save(canvas,"docs/combat_feedback/upgrade_gallery.png");canvas:release()
     canvas=g.newCanvas(1280,980)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.025,0.037,0.05,1)
-    title("SÁT THƯƠNG · NÉN / BẬT / DƯ CHẤN / GIỮ SỐ",0,18,1280)
+    title("SÁT THƯƠNG · XUẤT HIỆN / NẢY NHẸ / BAY LÊN / GIỮ SỐ",0,18,1280)
     for column,amount in ipairs({25,2500,250000,1e15}) do
         title(UI.formatNumber(amount),(column-1)*320,51,320)
         for row,age in ipairs({0.025,0.14,0.38,0.90}) do
@@ -92,9 +98,34 @@ function love.load()
     assert(#burst==3)
     for _,ft in ipairs(burst) do F.draw(ft,UI) end
     title("ĐI CÙNG NEN · GIỮ SỐ RÕ VÀ NHƯỜNG HIỆU ỨNG VA CHẠM",640,640,640)
-    local quiet=F.new("damage",1e15,960,756,UI.formatNumber)
-    quiet.quietImpact=true;F.update(quiet,0.14);F.draw(quiet,UI)
+    local anim={floatingTexts={},sequence={attack={cx=960,nen={tier=3}},ui=UI}}
+    require("src.scoring_presentation").damageApplied(anim,0,77)
+    local quiet=anim.floatingTexts[1]
+    assert(quiet.tier==1 and quiet.label==nil and quiet.x==960)
+    quiet.y=756;F.update(quiet,0.14);F.draw(quiet,UI)
     g.pop();save(canvas,"docs/combat_feedback/damage_apex.png");canvas:release()
+    local function comparison(ages,path)
+        local board=g.newCanvas(1280,120+#ages*150)
+        g.push("all");g.setCanvas(board);g.origin();g.clear(0.025,0.037,0.05,1)
+        title("BÌNH THƯỜNG · CHÁY NHẸ · CHÁY MẠNH · SẤM SÉT · HOLOGRAPHIC",0,18,1280)
+        for i,amount in ipairs({77,250,2500,25000,250000}) do
+            title(({"BÌNH THƯỜNG","CỰC MẠNH","BÙNG NỔ","SIÊU VIỆT","TUYỆT ĐỈNH"})[i],(i-1)*256,64,256)
+            for row,age in ipairs(ages) do
+                local ft=F.new("damage",amount,640,214,UI.formatNumber);ft.quietImpact=true;F.update(ft,age)
+                g.push("all");g.translate((i-1)*256+128,125+(row-1)*150);g.scale(0.67);g.translate(-640,-214)
+                F.draw(ft,UI);g.pop()
+            end
+        end
+        g.pop();save(board,path);board:release()
+    end
+    comparison({0.16,0.58},"docs/combat_feedback/damage_fire_tiers.png")
+    for _,argument in ipairs(arg or {}) do
+        if argument=="--feedback-motion" then
+            for frame=0,47 do
+                comparison({frame/24},string.format("docs/combat_feedback/_motion_%03d.png",frame))
+            end
+        end
+    end
     print("Feedback GPU PASS: five impact tiers, both phases, armor gain/absorption/depletion over HP, real shop purchase/sale, bounded coin tail, exact wallet settle and graphics state")
     love.event.quit(0)
 end

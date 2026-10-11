@@ -115,10 +115,15 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  -- Keep scoring targets fixed; only the preparation layout closes the empty space.
  y=y+(data.scoring and 0 or -108)
  local es=tonumber(data.enemySpeed);local ps=tonumber(data.playerSpeed)
- Chrome.well(x+12,y+309,w-24,54,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red)
+ Chrome.well(x+12,y+309,w-24,69,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red)
  Core.text(ps and ps>=(es or 1) and "BẠN RA ĐÒN TRƯỚC" or ps and "ĐỐI THỦ RA ĐÒN TRƯỚC" or "THỨ TỰ HÀNH ĐỘNG",x+21,y+317,w-42,f.detail,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red,"center")
  local speed=ps and string.format("%.1f",ps):gsub("%.0$","") or "—"
  Core.text("Tốc bạn "..speed.."  /  Địch "..tostring(es or "—"),x+21,y+338,w-42,f.detail,Theme.colors.muted,"center")
+ if ps then
+  local combat=require("src.combat")
+  Core.text(string.format("Trúng: bạn %.0f%% / địch %.0f%%",combat.getHitChance(ps,es)*100,combat.getHitChance(es,ps)*100),
+   x+21,y+356,w-42,f.detail,Theme.colors.cyan,"center")
+ end
  Chrome.rule(x+16,y+378,w-32)
  Chrome.title("MỤC TIÊU",x+16,y+390,w-32,f.detail,Theme.colors.gold)
  Core.textLine(data.enemyName or "Không rõ",x+16,y+411,w-32,f.body,Theme.colors.text,"left",f.label)

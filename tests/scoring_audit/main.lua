@@ -6,7 +6,7 @@ function love.load(args)
         "tests.equipment_tiers_smoke", "tests.equipment_feedback_smoke",
         "tests.soul_relics_smoke", "tests.chest_depth_smoke", "tests.chest_expansion_smoke",
         "tests.spn_tactics_smoke", "tests.spn_combat_smoke", "tests.spn_anomalies_smoke",
-        "tests.spn_convergence_smoke", "tests.spn_velocity_smoke",
+        "tests.spn_convergence_smoke", "tests.spn_velocity_smoke", "tests.spn_provisions_smoke",
         "tests.continental52_smoke", "tests.editions_smoke", "tests.scoring_presentation_smoke",
     }
     local failed = 0

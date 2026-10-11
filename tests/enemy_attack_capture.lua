@@ -22,7 +22,8 @@ function T.update(game,cb)
         game.monster.hp=10000000;game.monster.maxHp=10000000;game.monster.damageLagHp=10000000
         for _,m in ipairs(game.enemies) do
             m.hp=10000000;m.maxHp=10000000;m.damageLagHp=10000000
-            m.attackSpeed=case==1 and 99 or 1
+            -- Equal speed acts after the player and guarantees contact; this test isolates animation timing.
+            m.attackSpeed=case==1 and 99 or require("src.combat").getAverageAttackSpeed(game.hand,game)
             -- Exceed the armor cap so every contact still changes HP after card balance updates.
             m.attack=40;m.intent={type="attack",value=40,label="Tấn Công 40 ST"}
         end

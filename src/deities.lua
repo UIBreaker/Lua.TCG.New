@@ -88,6 +88,8 @@ function Deities.scaleEffect(deity, result)
     local multiplier = effectMultiplier(deity)
     if not result or multiplier == 1 then return result end
 
+    if result.consumableChancePct then result.consumableChancePct=math.min(100,result.consumableChancePct*multiplier) end
+
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier
@@ -247,6 +249,7 @@ end
 require("src.spn_anomalies").register(Deities)
 require("src.spn_convergence").register(Deities)
 require("src.spn_velocity").register(Deities)
+require("src.spn_provisions").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -255,6 +258,7 @@ function Deities.getDescription(deity)
     if def.integerEffect then value=math.floor(value) end
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end
+    if def.stat=="consumableChancePct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."

@@ -67,15 +67,22 @@ function F.hud(game,UI,mx,my,turn,sequence)
             g.setColor(.34,.28,.18,.85);g.ellipse("fill",x+w/2,cy,w*.55,6)
             Core.color(c,target and .82 or .30);g.setLineWidth(1.5);g.ellipse("line",x+w/2,cy,w*.55,6)
             local hasDetail=m.enemyAbility or m.isBoss or m.reassembled or m.hasBed
-            Chrome.well(x-18,y+h+12,w+36,m.hasBed and 65 or hasDetail and 49 or 30,c)
+            Chrome.well(x-18,y+h+12,w+36,m.hasBed and 65 or hasDetail and 65 or 49,c)
             if target and alive then
                 Core.color(c,.85);g.polygon("fill",x+w/2,y+h+7,x+w/2+4,y+h+11,x+w/2,y+h+15,x+w/2-4,y+h+11)
             end
-            Core.textLine(alive and ("ATK "..m.attack.."  ·  TĐ "..m.attackSpeed) or "ĐÃ HẠ",x-10,y+h+20,w+20,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)
+            local ability=require("src.enemy_abilities")
+            Core.textLine(alive and ("ATK "..ability.attack(m).."  ·  TĐ "..ability.speed(m)) or "ĐÃ HẠ",x-10,y+h+20,w+20,UI.fonts.tiny,alive and c or {0.48,0.51,0.54},"center",UI.fonts.tiny)
+            if alive then
+                local intent=m.intent or {}
+                local names={attack="TẤN CÔNG",armor="+ GIÁP",speed="+ TỐC",heal="HỒI HP",damage="+ ST"}
+                local to=intent.targetIndex and (intent.targetIndex==i and " · TỰ BUFF" or " · ĐỘI #"..intent.targetIndex) or ""
+                Core.textLine((names[intent.type] or "TẤN CÔNG")..to,x-10,y+h+37,w+20,UI.fonts.tiny,{.60,.85,1},"center",UI.fonts.tiny)
+            end
         end
         if alive and not moving then
             local ability=m.enemyAbility and m.enemyAbility.name or m.isBoss and "NỘI TẠI / KỸ NĂNG" or m.reassembled and "ĐÃ TÁI SINH"
-            if ability then Core.textLine(ability,x-10,y+h+37,w+20,UI.fonts.tiny,{0.65,0.74,0.78},"center",UI.fonts.tiny) end
+            if ability and not m.hasBed then Core.textLine(ability,x-10,y+h+53,w+20,UI.fonts.tiny,{0.65,0.74,0.78},"center",UI.fonts.tiny) end
             if m.hasBed then
                 local image=UI.getConsumableImage({id="cons_bed"})
                 if image then g.setColor(1,1,1,1);UI.CardFrame.image(image,x+w-30,y+h-46,28,42);UI.drawCardBorder(x+w-30,y+h-46,28,42) end

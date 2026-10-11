@@ -34,7 +34,7 @@ add(X.equipment,"itm_prism","Lăng Kính Viễn Chinh","Vùng tính điểm có 
 end)
 add(X.equipment,"itm_hourglass","Cát Chậm","Tốc đánh lá này thấp hơn quái mục tiêu: +11 Giáp khi tính điểm.","A heavy physical hourglass frozen inside glacial blue ice.",function(c,cs,i,ctx)
     local m=ctx and ctx.monster
-    if m and require("src.deck").getCardAttackSpeed(c)<(m.attackSpeed or 1) then return {addArmor=11} end
+    if m and require("src.deck").getCardAttackSpeed(c)<require("src.enemy_abilities").speed(m) then return {addArmor=11} end
 end)
 add(X.equipment,"itm_miser","Chìa Khóa Ngân Khố","Mỗi 6 Vàng đang giữ: +1 Cường hóa khi tính điểm, tối đa +12.","One antique gold vault key over a weathered expedition coin chest in a desert.",function(c,cs,i,ctx)
     return {addMult=math.min(12,math.floor((game(ctx).gold or 0)/6))}

@@ -8,6 +8,32 @@ local EnemyAbilities = require("src.enemy_abilities")
 local Anomalies = require("src.spn_anomalies")
 local Combat = { Abilities = Abilities, Boss = Boss }
 
+function Combat.getHitChance(attackerSpeed,targetSpeed)
+    if attackerSpeed==nil or targetSpeed==nil then return 1 end
+    attackerSpeed=math.max(0,attackerSpeed);targetSpeed=math.max(1,targetSpeed)
+    return math.max(.05,math.min(1,attackerSpeed/targetSpeed))
+end
+local function accuracy(attackerSpeed,targetSpeed)
+    local chance=Combat.getHitChance(attackerSpeed,targetSpeed)
+    return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
+end
+function Combat.rollPlayerAttack(game)
+    return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
+end
+
+function Combat.beginEnemyTurn(game,speed)
+    game.enemyActed={};game.enemyActionPhases={}
+    for _,m in ipairs(Group.members(game)) do
+        game.enemyActionPhases[m]=EnemyAbilities.speed(m)>(speed or game.lastPlayerAttackSpeed or 0) and "before" or "after"
+    end
+end
+function Combat.canEnemyAct(game,m,phase,speed)
+    if m.hp<=0 or phase and (game.enemyActed or {})[m] then return false end
+    local order=(game.enemyActionPhases or {})[m]
+        or (EnemyAbilities.speed(m)>(speed or game.lastPlayerAttackSpeed or 0) and "before" or "after")
+    return not phase or order==phase
+end
+
 function Combat.bedExplosions(game,aura,locked)
     local target=game.monster
     local bedExplosions={}
@@ -25,9 +51,14 @@ function Combat.bedExplosions(game,aura,locked)
     return bedExplosions
 end
 
-function Combat.resolvePlayerAttack(game, aura)
+function Combat.resolvePlayerAttack(game, aura,roll)
     local Monster = require("src.monster")
     local target = game.monster
+    roll=roll or Combat.rollPlayerAttack(game)
+    if roll.missed then
+        require("src.advanced_hands").resolve(game,false)
+        return 0,false,{},roll
+    end
     local locked = {}
     for slot = 1, Deities.getMaxSlots(game) do locked[slot] = Boss.isSlotLocked(game, "spn", slot) end
     local bedExplosions=Combat.bedExplosions(game,aura,locked)
@@ -73,7 +104,7 @@ function Combat.resolvePlayerAttack(game, aura)
     end
     for _,hit in ipairs(require("src.advanced_hands").resolve(game)) do splashHits[#splashHits+1]=hit end
     require("src.soul_relics").reap(game)
-    return damage, Group.alive(Group.members(game)) == 0, splashHits
+    return damage, Group.alive(Group.members(game)) == 0, splashHits,roll
 end
 
 function Combat.getOutcome(game)
@@ -103,7 +134,7 @@ function Combat.getAverageAttackSpeed(cards,game,handInfo)
     return count > 0 and math.min(999,total/count+bonus) or 0
 end
 
-local function resolveOneAttack(game)
+local function resolveOneAttack(game,playerSpeed)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
     if Anomalies.sleep(game,monster) then
@@ -114,8 +145,14 @@ local function resolveOneAttack(game)
     end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
+    local support=EnemyAbilities.support(game,monster)
+    if support then return support end
+    local roll=accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
+    if roll.missed then
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
+    end
     local baseAttack = (monster.attack or 12)
-    local attack = baseAttack + EnemyAbilities.attackBonus(game,monster)
+    local attack = EnemyAbilities.attack(monster) + EnemyAbilities.attackBonus(game,monster)
     local bossState = Boss.state(monster)
     if bossState and Boss.passiveEnabled(monster) then attack=attack+(bossState.excess or 0)*Boss.config.gateAttackPerCard end
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
@@ -151,27 +188,32 @@ local function resolveOneAttack(game)
         damage = damage,
         killedPlayer = game.playerHp <= 0,
         playerSpeed = game.lastPlayerAttackSpeed or 0,
-        monsterSpeed = monster.attackSpeed or 1,
+        monsterSpeed = EnemyAbilities.speed(monster),
+        action="attack",hitChance=roll.hitChance,
     }
 end
 
 -- Each living enemy acts on its own side of the player's speed, exactly once.
 function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
     if not game or not game.monster then return nil end
+    if (not attacker and phase~="after") or not game.enemyActionPhases then Combat.beginEnemyTurn(game,playerSpeed) end
     local target=game.monster
     local result
     for _,m in ipairs(Group.members(game)) do
-        local fast=(m.attackSpeed or 1)>(playerSpeed or game.lastPlayerAttackSpeed or 0)
-        if m.hp>0 and (not attacker or m==attacker) and (not phase or phase=="before" and fast or phase=="after" and not fast) then
+        if (not attacker or m==attacker) and Combat.canEnemyAct(game,m,phase,playerSpeed) then
             game.monster=m
-            local attack=resolveOneAttack(game)
+            local attack=resolveOneAttack(game,playerSpeed)
             if attack then
+                game.enemyActed[m]=true
+                EnemyAbilities.finishAction(game,m)
                 if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
                 result.attack=result.attack+attack.attack;result.absorbed=result.absorbed+attack.absorbed
                 result.damage=result.damage+attack.damage;result.attackerCount=result.attackerCount+1
-                result.monsterSpeed=math.max(result.monsterSpeed,m.attackSpeed or 1)
+                result.monsterSpeed=math.max(result.monsterSpeed,EnemyAbilities.speed(m))
                 result.killedPlayer=attack.killedPlayer
                 result.blocked=attack.blocked
+                result.missed=attack.missed;result.hitChance=attack.hitChance
+                result.action=attack.action;result.target=attack.target;result.value=attack.value;result.label=attack.label
             end
             if (game.playerHp or 0)<=0 then break end
         end
@@ -217,11 +259,13 @@ function Combat.start(game, monster, round)
     game.monster = monster
     game.enemies=Group.build(monster)
     game.enemyPoison=0;game.enemyFeedback=nil
+    game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
     end
+    for _,m in ipairs(game.enemies) do EnemyAbilities.plan(game,m) end
     game.maxSelectableCards = nil
     game.abilityHand = nil
     game.advancedHand=nil;game.advancedCombat={gold=0,maxHp=0,speed=0};game.advancedFeedback=nil
@@ -343,6 +387,9 @@ end
 -- Purification Seal (Ấn Thanh Tẩy): Cleanses 1 debuff when held in hand during monster action
 function Combat.onMonsterTurnEnd(game)
     if not game or not game.hand then return false end
+    for _,m in ipairs(Group.members(game)) do
+        if m.hp>0 and m.actionTurns~=nil then EnemyAbilities.plan(game,m) end
+    end
     game.combatFlags = game.combatFlags or {}
     if not game.combatFlags.purifyingSealUsed then
         for _, c in ipairs(game.hand) do

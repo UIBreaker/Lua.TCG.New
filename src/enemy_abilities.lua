@@ -26,7 +26,102 @@ function A.attach(m)
 end
 function A.start(m)
     m.enemyActions=0;m.reassembled=false
+    m.actionTurns=0;m.combatBuffs={}
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
+end
+function A.speed(m)
+    return math.min(999,(m.attackSpeed or 1)+(((m.combatBuffs or {}).speed or {}).value or 0))
+end
+function A.attack(m)
+    return (m.attack or 12)+(((m.combatBuffs or {}).damage or {}).value or 0)
+end
+
+local actionNames={armor="Gia cố",speed="Tăng tốc",damage="Cường hóa",heal="Hồi máu"}
+local actionStats={armor="Giáp",speed="Tốc",damage="ST",heal="HP"}
+local function recipient(game,m,kind,allies)
+    local best
+    for _,ally in ipairs(require("src.enemy_group").members(game)) do
+        if ally.hp>0 and (not allies or ally~=m) then
+            if not best or kind=="heal" and ally.hp/ally.maxHp<best.hp/best.maxHp
+                or kind=="armor" and (ally.creatureArmor or 0)<(best.creatureArmor or 0)
+                or kind=="speed" and A.speed(ally)>A.speed(best)
+                or kind=="damage" and A.attack(ally)>A.attack(best) then best=ally end
+        end
+    end
+    return best or m
+end
+function A.buffAmount(target,kind)
+    if kind=="armor" then return math.max(1,math.floor(target.maxHp*.25)) end
+    if kind=="heal" then return math.max(1,math.floor(target.maxHp*.20)) end
+    -- Recasting an active buff refreshes its snapshot instead of multiplying itself.
+    local active=(target.combatBuffs or {})[kind]
+    local value=active and active.value or math.max(1,math.floor((kind=="speed" and A.speed(target) or A.attack(target))*.25))
+    if kind=="speed" then
+        return math.max(0,math.min(999-(target.attackSpeed or 1),value))
+    end
+    return value
+end
+local function armorCap(target)
+    return math.max(1,math.floor(target.maxHp*.50))
+end
+
+function A.plan(game,m,turn)
+    turn=turn or (m.actionTurns or 0)+1
+    if turn%2==1 then
+        m.intent={type="attack",value=A.attack(m)+A.attackBonus(game,m),label="Tấn công "..(A.attack(m)+A.attackBonus(game,m)).." ST"}
+    else
+        local support=math.floor(turn/2)
+        local kind=({"armor","speed","damage"})[(support+(m.groupIndex or 1)-2)%3+1]
+        local wounded=recipient(game,m,"heal")
+        local target
+        if wounded.hp/wounded.maxHp<=.65 then kind="heal";target=wounded
+        else target=(support+(m.groupIndex or 1))%2==0 and m or recipient(game,m,kind,true) end
+        if kind=="speed" and A.speed(target)>=999
+            or kind=="armor" and (target.creatureArmor or 0)>=armorCap(target) then kind="damage" end
+        local value=A.buffAmount(target,kind)
+        local to=target==m and "bản thân" or "đồng đội #"..(target.groupIndex or 1)
+        m.intent={type=kind,value=value,targetIndex=target.groupIndex or 1,
+            label=actionNames[kind].." "..to.." +"..value.." "..actionStats[kind]
+                ..((kind=="speed" or kind=="damage") and " (2 hành động)" or "")}
+    end
+    return m.intent
+end
+
+function A.support(game,m)
+    local intent=m.intent or {};local kind=intent.type
+    if not actionNames[kind] then return nil end
+    local target
+    for _,ally in ipairs(require("src.enemy_group").members(game)) do
+        if (ally.groupIndex or 1)==intent.targetIndex and ally.hp>0 then target=ally;break end
+    end
+    if not target or kind=="heal" and target.hp>=target.maxHp then target=recipient(game,m,kind) end
+    local value=A.buffAmount(target,kind)
+    if kind=="heal" then
+        value=math.min(value,target.maxHp-target.hp);target.hp=target.hp+value
+    elseif kind=="armor" then
+        local before=target.creatureArmor or 0
+        target.creatureArmor=math.min(math.max(before,armorCap(target)),before+value)
+        value=target.creatureArmor-before
+        target.creatureArmorMax=math.max(target.creatureArmorMax or 0,target.creatureArmor)
+    else
+        target.combatBuffs=target.combatBuffs or {}
+        if kind=="speed" then value=math.min(value,999-(target.attackSpeed or 1)) end
+        -- Refresh rather than stack; a self buff also survives the current action's tick.
+        target.combatBuffs[kind]={value=value,turns=2+(target==m and 1 or 0)}
+    end
+    return {attack=0,absorbed=0,damage=0,killedPlayer=false,action=kind,target=target,value=value,
+        label=actionNames[kind]..(target==m and " bản thân" or " đồng đội #"..(target.groupIndex or 1))}
+end
+
+function A.finishAction(game,m)
+    for kind,buff in pairs(m.combatBuffs or {}) do
+        buff.turns=buff.turns-1
+        if buff.turns<=0 then m.combatBuffs[kind]=nil end
+    end
+    if m.actionTurns~=nil then
+        m.actionTurns=m.actionTurns+1
+        A.plan(game,m)
+    end
 end
 function A.reduceDamage(m,damage)
     local absorbed=math.min(m.creatureArmor or 0,damage)

@@ -24,7 +24,7 @@ local effects={
     spirit_thunderpulse=function(hand,context,value) return {addMult=value*V.speed(hand,context),message="MẠCH LÔI · TỐC THÀNH CƯỜNG HÓA"} end,
     spirit_slow_colossus=function(hand,context,value)
         local target=context.monster or context.gameState and context.gameState.monster
-        if target and V.speed(hand,context)<(target.attackSpeed or 1) then return {xChips=1+value,message="TRỄ NHỊP · NHÂN SÁT THƯƠNG"} end
+        if target and V.speed(hand,context)<require("src.enemy_abilities").speed(target) then return {xChips=1+value,message="TRỄ NHỊP · NHÂN SÁT THƯƠNG"} end
     end,
     spirit_twinbeat=function(hand,context,value)
         local cards=played(hand)

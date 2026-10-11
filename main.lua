@@ -1,5 +1,14 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-combat-tactics" then
+        local failed=false
+        for _,name in ipairs({"tests.combat_tactics_smoke","tests.enemy_group_smoke",
+            "tests.enemy_attack_presentation_smoke","tests.advanced_hands_smoke"}) do
+            local ok,err=pcall(require,name)
+            if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
+        end
+        os.exit(failed and 1 or 0)
+    end
     if a == "--test-hand-motion" then
         require("tests.hand_motion_smoke"); require("tests.card_physics_smoke"); os.exit(0)
     end
@@ -17,7 +26,7 @@ for _, a in ipairs(arg or {}) do
         io.stdout:setvbuf("no");local failed=false
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
-            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke"}) do
+            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
         end
@@ -131,6 +140,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-bed-explosion" then isCaptureMode = true end
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
+    if a == "--capture-combat-tactics" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
     if a == "--test-shop-chest" then isCaptureMode = true end
@@ -1862,6 +1872,23 @@ end
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
         require("src.spn_anomalies").showFeedback(game,anim)
+        if hit.action and hit.action~="attack" then
+            local target=hit.target or enemy
+            local ft=Feedback.add(anim.floatingTexts,hit.action=="damage" and "speed" or hit.action,
+                hit.value,target.screenX or UI.BATTLE_CENTER_X,184,UI.formatNumber)
+            ft.label=hit.label
+            if hit.action=="damage" then ft.text="+"..hit.value.." ST";ft.color={1,.65,.35} end
+            Sound.play("spn_trigger",.85)
+            return
+        elseif hit.missed then
+            table.insert(anim.floatingTexts,{text="ĐỊCH ĐÁNH HỤT",color={.64,.82,1},
+                x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
+            return
+        elseif hit.blocked then
+            table.insert(anim.floatingTexts,{text="HÀNH ĐỘNG BỊ CHẶN",color={.4,.84,1},
+                x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
+            return
+        end
         local heavy = hit.damage >= 8
         screenShake = math.max(screenShake or 0, heavy and 4.2 or 2.8)
         anim.hitStop = heavy and 0.060 or 0.040
@@ -1921,7 +1948,7 @@ local function playSelectedHand()
     UI.Abilities.beginHand(game, evalResult, playedCards, game.abilityApproved)
     require("src.advanced_hands").begin(game,evalResult)
     local playerSpeed = Combat.getAverageAttackSpeed(playedCards,game)
-    local monsterSpeed = game.monster and (game.monster.attackSpeed or 1) or 1
+    local monsterSpeed = game.monster and require("src.enemy_abilities").speed(game.monster) or 1
     game.lastPlayerAttackSpeed = playerSpeed
     game.monsterAttackedBeforePlayer = playerSpeed < monsterSpeed
     game.abilityApproved = nil
@@ -2038,6 +2065,7 @@ local function playSelectedHand()
         anim.playerAttackSpeed, anim.monsterAttackSpeed = playerSpeed, monsterSpeed
         anim.monsterAttackedBeforePlayer = game.monsterAttackedBeforePlayer
         anim.counterAttackStarted = false
+        anim.playerAttackResult=nil
         anim.monsterDefeated, anim.playerKilled, anim.earnedGold, anim.damageDealt = false, false, 0, 0
         anim.pitchStep, anim.cardBounce, anim.cardHit, anim.deityBounce = 0, {}, {}, {}
         anim.bounceScale = {chips = 1, mult = 1, xMult = 1, score = 1}
@@ -2164,7 +2192,7 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
-        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" then
+        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" then
             local ok, err = pcall(function()
                 local ids,output
                 if argument=="--test-spn-anomalies-art" then
@@ -2176,6 +2204,9 @@ function love.load()
                 elseif argument=="--test-spn-velocity-art" then
                     ids={};for _,row in ipairs(require("src.spn_velocity").entries) do ids[#ids+1]=row[1] end
                     output="docs/spn_velocity_runtime.png"
+                elseif argument=="--test-spn-provisions-art" then
+                    ids={};for _,row in ipairs(require("src.spn_provisions").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_provisions_runtime.png"
                 end
                 require("tests.spn_art_smoke").verify(ids,output)
             end)
@@ -2808,7 +2839,8 @@ function love.update(dt)
             if UI.BedExplosion.takeImpact() then st=anim.pendingBedScore;anim.pendingBedScore=nil end
         else
             st=UI.ScoringFeel.update(anim, deathStop and 0 or motionDt, settings.fastScoring)
-            if st and st.type=="final_score" and #Combat.bedExplosions(game,st.finalScore)>0 then
+            if st and st.type=="final_score" then anim.playerAttackResult=Combat.rollPlayerAttack(game) end
+            if st and st.type=="final_score" and not anim.playerAttackResult.missed and #Combat.bedExplosions(game,st.finalScore)>0 then
                 anim.pendingBedScore=st
                 UI.BedExplosion.start(game.monster.screenX or UI.BATTLE_CENTER_X,410,Renderer.quality,Renderer.scene.weather)
                 st=nil
@@ -2820,7 +2852,7 @@ function love.update(dt)
                 if st.type == "final_score" then
                     local monsterHpBeforeHit = (game.monster and game.monster.hp) or 0
                     local armorBeforeHit = game.monster.creatureArmor or 0
-                    local actualDmg, defeated, splashHits = Combat.resolvePlayerAttack(game, st.finalScore)
+                    local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult)
                     local advance=game.advancedFeedback
                     if advance then
                         for i,entry in ipairs({{"heal",advance.heal},{"armor",advance.armor},{"gold",advance.gold},{"speed",advance.speed}}) do
@@ -2848,13 +2880,13 @@ function love.update(dt)
                     end
                     anim.damageDealt = actualDmg
                     anim.monsterDefeated = defeated
-                    UI.ScoringFeel.damageApplied(anim, game.monster.hp, actualDmg)
+                    UI.ScoringFeel.damageApplied(anim, game.monster.hp, actualDmg,attackResult.missed)
                     if armorBeforeHit > (game.monster.creatureArmor or 0) then
                         local ft = Feedback.add(anim.floatingTexts, "armor", -(armorBeforeHit-game.monster.creatureArmor),
                             game.monster.screenX or UI.BATTLE_CENTER_X, 176, UI.formatNumber)
                         ft.label = "GIÁP HẤP THỤ"
                     end
-                    monsterMotion.hit = 0.24
+                    monsterMotion.hit = attackResult.missed and 0 or 0.24
                     -- HandAttacks draws capped directional impact sparks; avoid duplicate radial burst.
 
                     if defeated then
@@ -3233,7 +3265,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.123.0", 48, 185)
+    g.print("beta 0.124.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3861,7 +3893,8 @@ local function drawBattleInfoPanel(m, eval)
         or (eval and eval.type and eval.type.vnName) or "Chọn bài để xem"
     local finished = scoring and anim.scoringData and anim.currentStepIndex > #anim.scoringData.steps
     local detail = scoring and (finished and (anim.monsterDefeated and ("Hạ quái • +$" .. tostring(anim.earnedGold or 0))
-        or ("Đã gây " .. UI.formatNumber(anim.displayFinalScore or 0) .. " sát thương"))
+        or (anim.playerAttackResult and anim.playerAttackResult.missed and "Đánh hụt • 0 sát thương"
+            or "Đã gây " .. UI.formatNumber(anim.damageDealt or 0) .. " sát thương"))
         or UI.localizeText(anim.stepLog or "")) or ""
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
@@ -3874,10 +3907,10 @@ local function drawBattleInfoPanel(m, eval)
             and anim.sequence.events[anim.sequence.index].kind == "FORMULA"
             and UI.ScoringFeel.formula(anim.sequence) or nil,
         intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
-        playerSpeed = scoring and anim.playerAttackSpeed
+        playerSpeed = anim.enemyTurn and (anim.enemyTurn.speed or game.lastPlayerAttackSpeed) or scoring and anim.playerAttackSpeed
             or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards(),game,
                 Poker.evaluate(getSelectedCards(),game.unlockedHands,game.handLevels)) or nil),
-        enemySpeed = m and (m.attackSpeed or 1),
+        enemySpeed = m and require("src.enemy_abilities").speed(m),
         chipsBounce = scoring and anim.bounceScale.chips or 1,
         multBounce = scoring and anim.bounceScale.mult or 1,
         auraBounce = scoring and anim.bounceScale.score or 1,
@@ -3895,12 +3928,21 @@ local function drawCombatFeedback()
         local ev = anim.sequence.events[anim.sequence.index]
         local label = ev and (ev.kind == "ANTICIPATION" and "BẠN CHUẨN BỊ RA ĐÒN"
             or ev.kind == "ATTACK" and "BẠN TẤN CÔNG!"
-            or ev.kind == "ENEMY_IMPACT" and "BẠN ĐÁNH TRÚNG QUÁI")
+            or ev.kind == "ENEMY_IMPACT" and (anim.playerAttackResult and anim.playerAttackResult.missed and "BẠN ĐÁNH HỤT" or "BẠN ĐÁNH TRÚNG QUÁI"))
         if label then
             love.graphics.setFont(UI.fonts.medium)
             love.graphics.setColor(1, 0.83, 0.42, 1)
             love.graphics.printf(label, 310, 438, 640, "center")
         end
+    end
+    if turn and turn.phase~="pause" then
+        local intent=turn.intent
+        local label=turn.phase=="recover" and turn.result and
+            (turn.result.missed and "ĐỊCH ĐÁNH HỤT" or turn.result.blocked and "HÀNH ĐỘNG BỊ CHẶN" or turn.result.label)
+            or intent and intent.type~="attack" and intent.label
+            or (turn.phase=="prepare" and "ĐỊCH CHUẨN BỊ TẤN CÔNG" or "ĐỊCH TẤN CÔNG")
+        love.graphics.setFont(UI.fonts.small);love.graphics.setColor(.65,.86,1,1)
+        love.graphics.printf(label,280,438,700,"center")
     end
     if anim.particles and #anim.particles > 0 then
         love.graphics.setBlendMode("add")

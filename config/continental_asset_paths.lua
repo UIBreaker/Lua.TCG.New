@@ -458,4 +458,6 @@ return {
     ["human_11"] = "assets/cards/continental/enemy/human_11.png",
     ["human_12"] = "assets/cards/continental/enemy/human_12.png",
     ["human_13"] = "assets/cards/continental/enemy/human_13.png",
+    ["spirit_wayfarer"] = "assets/cards/continental/spn/spirit_wayfarer.png",
+    ["spirit_first_echo"] = "assets/cards/continental/spn/spirit_first_echo.png",
 }

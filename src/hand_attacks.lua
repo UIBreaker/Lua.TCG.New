@@ -368,6 +368,7 @@ heads.crossfire=function(g,a,x,y,angle,p)
     g.setColor(a.color[1],a.color[2],a.color[3],0.6);g.circle("line",x,y,5+a.intensity*4)
 end
 function A.draw(a,phase,p,impactAge)
+    if a.missed then impactAge=nil end
     if a.nen then require("render.nen_effects").draw(a,phase,p,impactAge);return end
     local g=love.graphics
     g.push("all")

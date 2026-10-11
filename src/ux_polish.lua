@@ -310,7 +310,7 @@ local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",
     addHands="LƯỢT ĐÁNH",addOverkillArmorPct="TÀN DƯ (%)",bedExplosionPct="VỤ NỔ (%)",
     addRedirectPct="CHUYỂN ĐÒN (%)",addPortalPct="CỔNG AURA (%)",addDebtGuard="NÉ TRẢ NỢ",
-    xChips="HỆ SỐ SÁT THƯƠNG",xAura="HỆ SỐ AURA",
+    xChips="HỆ SỐ SÁT THƯƠNG",xAura="HỆ SỐ AURA",consumableChancePct="TIẾP TẾ (%)",
     armor="GIÁP",gold="VÀNG",mult="CƯỜNG HÓA",chips="SÁT THƯƠNG",damage="SÁT THƯƠNG",repeats="TÁI KÍCH HOẠT",
     frozen="ĐÓNG BĂNG",cursed="NGUYỀN",returnArmor="GIÁP TRẢ BÀI",healPercent="HỒI HP (%)",
     maxStacks="TRẦN TÍCH",capacity="KÍCH THƯỚC TAY",returns="LÁ TRẢ",draw="LÁ RÚT",block="CHẶN ST",

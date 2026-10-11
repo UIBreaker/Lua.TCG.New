@@ -4815,3 +4815,29 @@ Concept: An enclosed western fantasy playing-card merchant and expedition recrui
 Prompt: Use case: stylized-concept. Create ONE production game SHOP INTERIOR background, wide landscape 16:9 PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design, Western fantasy, painterly cinematic realism, medium detail, large readable forms, restrained atmospheric glow, antique brass fittings. A believable enclosed indoor shop, eye-level camera as a customer standing at the doorway facing a merchandise counter. Doors, ceiling beams and interior walls clearly establish that we are inside. Composition: distinctive room character and props strongest along the outer left 22% and the top band; the central/right 75% has calm dark empty shop surfaces and broad wall bays, leaving room for a game to place two rows of 4 cards. Perspective furniture is at the margins; center-right merchandise display space is clean and visually quiet. Lower strip is a timber counter edge. This is an uninterrupted environment painting, not a UI mockup or collage. No displayed front-facing playing cards, no card frames, no UI, text, letters, numbers, logos, watermarks, people or creatures. No East Asian architecture or ornament, no dense tiny filigree or blown-out white glow. An enclosed western fantasy playing-card merchant and expedition recruitment salon. Burgundy velvet-lined walnut cabinets with quiet empty display recesses, four broad fabric banners in muted crimson, antique gold, forest green and slate blue along the high ceiling representing four kingdoms, a brass gilding press and wax-seal tools at far left, leather card cases and a neat stack of blank-backed cards on the far left side counter, a modest warm amber lantern and window, dark cherry wood merchant counter edge. A refined tactile card shop, rich wine red and antique gold, controlled cinematic light.
 
 Output: `assets/scene/shops/cards.png`
+
+## 2026-10-11 — Two consumable SPNs
+
+### spn / spirit_wayfarer — Sứ Giả Tiếp Tế
+
+Ability: Mỗi tay tính điểm: 25% nhận 1 tiêu hao ngẫu nhiên vào ô tiêu hao. Tiến hóa tăng xác suất, tối đa 100%. Cần ô trống.
+
+Concept: A hooded supernatural courier made of emerald mist arrives through a forest ruin gateway; its open spectral palm materializes a small potion from a few faint possibilities, conveying random supplies rather than a physical merchant.
+
+Prompt: Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single hooded otherworldly courier formed from emerald mist and worn spectral expedition robes, clear standing silhouette centered in a ruined forest gateway. One extended translucent palm conjures a solid amber potion flask; two very faint alternate silhouettes of a celestial orb and a folded magical parchment dissolve into mist beside it, communicating a random gift. This is a spirit apparition, not an item still life. Quiet deep forest green and antique gold, controlled amber light from the gift, broad mossy arches, atmospheric expedition landscape, medium detail.
+
+Output: `assets/cards/continental/spn/spirit_wayfarer.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-edb61f46-9a89-4002-acdf-585159ec71c5.png`
+
+### spn / spirit_first_echo — Ảnh Kép Đầu Tiên
+
+Ability: Mỗi tay tính điểm: 25% tạo bản sao tiêu hao đầu tiên trong ô tiêu hao. Tiến hóa tăng xác suất, tối đa 100%. Cần có tiêu hao và ô trống; giữ nguyên nâng cấp.
+
+Concept: One violet mirror wraith reaches across a spectral reflecting plane and pulls an exact twin of a single potion into existence, conveying first-item duplication.
+
+Prompt: Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single tall mirror wraith formed of violet smoke and fractured silver light, centered above a dark stone ledge in lost western void ruins. Its two spectral hands reach across a simple vertical plane of magical reflection: one intact amber potion flask sits on the ledge at left, its identical amber twin emerges solid from the reflection at right, visibly matching shape and contents. The ghost silhouette is the main subject, mirror is an unframed supernatural plane, not ornate furniture. Deep void violet with silver and restrained amber accent, calm distant cliffs, readable duplicated pair, controlled cinematic rim light.
+
+Output: `assets/cards/continental/spn/spirit_first_echo.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c33df400-8a44-4f34-9c0e-e10fb4735048.png`

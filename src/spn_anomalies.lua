@@ -116,6 +116,7 @@ function A.commitHand(game,slot,result)
     end
     if (result.addHands or 0)>0 then game.handsRemaining=(game.handsRemaining or 0)+result.addHands end
     require("src.spn_convergence").commit(game,slot,result)
+    require("src.spn_provisions").commit(game,slot,result)
 end
 function A.playerAttack(game,aura,hpBefore,damage,locked)
     local hits={};local target=game.monster

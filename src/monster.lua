@@ -293,44 +293,8 @@ function Monster.takeDamage(monster, rawDamage, trueDamage)
     return actualDamage, defeated
 end
 
--- Intent Types: "attack", "defend", "debuff", "drain_gold", "enrage"
 function Monster.nextIntent(monster, turnCount, gameState)
-    local turn = turnCount or 1
-    local intents = { "attack", "defend", "debuff", "drain_gold", "enrage" }
-    local chosenType = "attack"
-    if monster.isBoss then
-        local cycle = ((turn - 1) % 5) + 1
-        chosenType = intents[cycle]
-    else
-        local cycle = ((turn - 1) % 3) + 1
-        if cycle == 1 then chosenType = "attack"
-        elseif cycle == 2 then chosenType = "defend"
-        else chosenType = "attack"
-        end
-    end
-
-    local intentVal = monster.attack or 12
-    local label = "Tấn Công " .. intentVal .. " DMG"
-    if chosenType == "defend" then
-        intentVal = math.floor((monster.attack or 12) * 1.2)
-        label = "Phòng Thủ +" .. intentVal .. " Giáp"
-    elseif chosenType == "debuff" then
-        intentVal = 1
-        label = "Nguyền Rủa (-1 Hand)"
-    elseif chosenType == "drain_gold" then
-        intentVal = 2
-        label = "Đoạt Vàng (-$2)"
-    elseif chosenType == "enrage" then
-        intentVal = 1
-        label = "Cuồng Nộ (+8% ATK, +5% Giáp)"
-    end
-
-    monster.intent = {
-        type = chosenType,
-        value = intentVal,
-        label = label,
-    }
-    return monster.intent
+    return require("src.enemy_abilities").plan(gameState or {monster=monster,enemies=monster.group},monster,turnCount)
 end
 
 return Monster

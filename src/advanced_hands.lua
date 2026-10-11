@@ -111,7 +111,7 @@ function A.begin(game,eval)
     local c=game.advancedCombat;c.currentSpeed=c.nextSpeed or 0;c.nextSpeed=0
     game.advancedHand=eval.type.advanced and {id=eval.type.id,suits=eval.effectiveSuits} or nil
 end
-function A.resolve(game)
+function A.resolve(game,attackHit)
     local context=game.advancedHand
     if not context or context.resolved then return {} end
     context.resolved=true
@@ -136,7 +136,7 @@ function A.resolve(game)
     local slow=(b.slow or 0)+(game.monster.isBoss and (b.bossSlow or 0) or 0)
     game.monster.attackSpeed=math.max(1,(game.monster.attackSpeed or 1)-slow)
     local hits={}
-    if h.id=="tesla_369" then
+    if h.id=="tesla_369" and attackHit~=false then
         local members=require("src.enemy_group").members(game)
         local targetIndex=1;for i,m in ipairs(members) do if m==game.monster then targetIndex=i;break end end
         for hitIndex=1,3 do

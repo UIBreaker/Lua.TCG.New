@@ -163,6 +163,7 @@ function Capture.update(gameRef, callbacks)
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-enemy-attacks" then return require("tests.enemy_attack_capture").update(gameRef, callbacks) end
+        if value == "--capture-combat-tactics" then return require("tests.combat_tactics_capture").update(gameRef, callbacks) end
     end
     for _, value in ipairs(arg or {}) do
         if value == "--test-expedition" then return require("tests.expedition_capture").update(gameRef, callbacks) end

@@ -39,6 +39,7 @@ late.hand={};late.deities={}
 local hit=Combat.resolveMonsterAttack(late)
 assert(hit.absorbed==10 and hit.damage==80 and late.playerHp==20)
 late.monster.attack=500;late.playerArmor=0;late.playerShield=0
+late.monster.intent={type="attack"} -- This assertion isolates lethal damage, rather than the new support cycle.
 assert(Combat.resolveMonsterAttack(late).killedPlayer and late.playerHp==0)
 local g=start(3)
 assert(#g.enemies==3)

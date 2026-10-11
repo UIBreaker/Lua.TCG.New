@@ -192,7 +192,7 @@ end
 
 local function enter(anim, ev)
     local s, t = anim.sequence, C.timing
-    Attacks.enter(s.attack, ev.kind)
+    if ev.kind~="ENEMY_IMPACT" then Attacks.enter(s.attack, ev.kind) end
     if ev.sourceIndex then anim.currentStepIndex = ev.sourceIndex end
     s.multiply = false
     if ev.kind == "HAND_REVEAL" then
@@ -358,10 +358,15 @@ function Feel.update(anim, dt, fast)
     end
 end
 
-function Feel.damageApplied(anim, hp, actualDamage)
+function Feel.damageApplied(anim, hp, actualDamage,missed)
     local s = anim.sequence
     if not s or s.damageApplied then return end
     s.damageApplied, s.hpAge, s.hpTarget, s.actualDamage = true, 0, math.max(0, hp), actualDamage
+    s.missed=missed;s.attack.missed=missed
+    if missed then
+        anim.hitStop=0;s.cameraAge=10
+        anim.stepCategory,anim.stepLog="ĐÁNH HỤT","Mục tiêu né được đòn đánh"
+    else Attacks.enter(s.attack,"ENEMY_IMPACT") end
     anim.damageDealt = actualDamage
     if actualDamage > 0 then
         local nen=s.attack.nen
@@ -373,14 +378,14 @@ function Feel.damageApplied(anim, hp, actualDamage)
             text.reducedMotion=nen.reducedMotion
         end
     else
-        anim.floatingTexts[#anim.floatingTexts+1] = {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},
+        anim.floatingTexts[#anim.floatingTexts+1] = {text=missed and "BẠN ĐÁNH HỤT" or "ĐÒN BỊ CHẶN",color={0.4,0.84,1},
             x=s.attack.cx or s.ui.BATTLE_CENTER_X,y=232,alpha=1.6}
     end
 end
 
 function Feel.camera(anim)
     local s = anim.sequence
-    if not s then return 0, 0 end
+    if not s or s.missed then return 0, 0 end
     if s.attack.nen then return Nen.camera(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local amount = 0.5 + Attacks.config.camera.maxKick * s.intensity
@@ -393,7 +398,7 @@ end
 
 function Feel.enemyReaction(anim)
     local s = anim.sequence
-    if not s then return 0, 1, 0 end
+    if not s or s.missed then return 0, 1, 0 end
     if s.attack.nen then return Nen.reaction(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2

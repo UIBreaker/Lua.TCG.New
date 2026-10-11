@@ -9840,11 +9840,57 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-fd1d1947-c587-4e90-be58-53b542633e5d.png",
         "prompt": "Use case: stylized-concept. Create ONE full-bleed portrait 2:3 production enemy card illustration, high resolution PNG. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design. Western fantasy mysterious-continent expedition, painterly cinematic realism, medium detail, large readable forms, controlled rim light, atmospheric depth. No East Asian fantasy, palace roofs, calligraphy, micro-ornament, blown-out glow, text, letters, numbers, suit symbols, insignia, card frames, UI, watermarks. One powerful grey-haired human grand expedition commander in weathered antique gold plate armor and a dark cloak, massive steel greatsword planted before him, monumental neutral human council citadel behind. Exactly one primary human, full clear body or three-quarter figure, quiet atmospheric background. This opponent is a neutral human independent of all four suit kingdoms; no heart, diamond, club or spade emblems, no fixed rank or frame. Neutral earth, slate, steel and antique bronze colors. Silhouette reads strongly when reduced to 128 pixels. Entire image one artwork, no panels or collage."
       }
+    },
+    {
+      "id": "spirit_wayfarer",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay tính điểm: 25% nhận 1 tiêu hao ngẫu nhiên vào ô tiêu hao. Tiến hóa tăng xác suất, tối đa 100%. Cần ô trống.",
+      "source": "src/spn_provisions.lua",
+      "name": "Sứ Giả Tiếp Tế",
+      "concept": "A hooded supernatural courier made of emerald mist arrives through a forest ruin gateway; its open spectral palm materializes a small potion from a few faint possibilities, conveying random supplies rather than a physical merchant.",
+      "file": "assets/cards/continental/spn/spirit_wayfarer.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single hooded otherworldly courier formed from emerald mist and worn spectral expedition robes, clear standing silhouette centered in a ruined forest gateway. One extended translucent palm conjures a solid amber potion flask; two very faint alternate silhouettes of a celestial orb and a folded magical parchment dissolve into mist beside it, communicating a random gift. This is a spirit apparition, not an item still life. Quiet deep forest green and antique gold, controlled amber light from the gift, broad mossy arches, atmospheric expedition landscape, medium detail.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_wayfarer",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-edb61f46-9a89-4002-acdf-585159ec71c5.png",
+        "prompt": "Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single hooded otherworldly courier formed from emerald mist and worn spectral expedition robes, clear standing silhouette centered in a ruined forest gateway. One extended translucent palm conjures a solid amber potion flask; two very faint alternate silhouettes of a celestial orb and a folded magical parchment dissolve into mist beside it, communicating a random gift. This is a spirit apparition, not an item still life. Quiet deep forest green and antique gold, controlled amber light from the gift, broad mossy arches, atmospheric expedition landscape, medium detail."
+      }
+    },
+    {
+      "id": "spirit_first_echo",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay tính điểm: 25% tạo bản sao tiêu hao đầu tiên trong ô tiêu hao. Tiến hóa tăng xác suất, tối đa 100%. Cần có tiêu hao và ô trống; giữ nguyên nâng cấp.",
+      "source": "src/spn_provisions.lua",
+      "name": "Ảnh Kép Đầu Tiên",
+      "concept": "One violet mirror wraith reaches across a spectral reflecting plane and pulls an exact twin of a single potion into existence, conveying first-item duplication.",
+      "file": "assets/cards/continental/spn/spirit_first_echo.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single tall mirror wraith formed of violet smoke and fractured silver light, centered above a dark stone ledge in lost western void ruins. Its two spectral hands reach across a simple vertical plane of magical reflection: one intact amber potion flask sits on the ledge at left, its identical amber twin emerges solid from the reflection at right, visibly matching shape and contents. The ghost silhouette is the main subject, mirror is an unframed supernatural plane, not ornate furniture. Deep void violet with silver and restrained amber accent, calm distant cliffs, readable duplicated pair, controlled cinematic rim light.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_first_echo",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-c33df400-8a44-4f34-9c0e-e10fb4735048.png",
+        "prompt": "Use case: stylized-concept. Create ONE production SPN game card illustration, full-bleed vertical 2:3 PNG, 1024x1536. Cinematic Dark-Fantasy Expedition / Continental Relic Card Design: painterly cinematic Western fantasy, medium detail, one strong readable main silhouette, restrained glow, large forms readable at 64px. Mysterious colossal continent, eroded stone cliffs and lost western ruins. No text, letters, numbers, playing cards, borders, frames, badges, logos or watermark. No East Asian motifs, palace roofs or calligraphy, no dense ornament, no overexposed whites. Subject: a single tall mirror wraith formed of violet smoke and fractured silver light, centered above a dark stone ledge in lost western void ruins. Its two spectral hands reach across a simple vertical plane of magical reflection: one intact amber potion flask sits on the ledge at left, its identical amber twin emerges solid from the reflection at right, visibly matching shape and contents. The ghost silhouette is the main subject, mirror is an unframed supernatural plane, not ornate furniture. Deep void violet with silver and restrained amber accent, calm distant cliffs, readable duplicated pair, controlled cinematic rim light."
+      }
     }
   ],
   "completion": {
-    "generated": 403,
-    "total": 403,
+    "generated": 405,
+    "total": 405,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

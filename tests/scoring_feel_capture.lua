@@ -84,6 +84,8 @@ function Test.update(game, callbacks)
         callbacks.playSelectedHand();assert(game.handsRemaining==hands,"input locked during enemy attack")
         if anim.active then
             assert(state=="scoring")
+            -- The contact capture needs a guaranteed hit after verifying enemy-first order.
+            game.monster.attackSpeed=1
             expected=math.floor(anim.scoringData.finalScore*0.5)
             stage,impacts,lastHp,transitions="scoring",0,previousHp,{}
         end

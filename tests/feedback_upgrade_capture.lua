@@ -7,7 +7,18 @@ local function save(canvas,path)
 end
 function love.errorhandler(message) print(debug.traceback(message,2));return function() return 1 end end
 function love.load()
+    local newShader=love.graphics.newShader
+    local validated=0
+    love.graphics.newShader=function(code)
+        local source=code:find("\n") and code or (love.filesystem.read(code))
+        local valid,diagnostic=love.graphics.validateShader(true,source)
+        assert(valid,"OpenGL ES damage shader validation: "..tostring(diagnostic))
+        validated=validated+1
+        return newShader(code)
+    end
     require("tests.combat_feedback_smoke")
+    love.graphics.newShader=newShader
+    assert(validated==2,"both fire and holographic shaders must be checked for OpenGL ES")
     assert(F.fireShader,"procedural fire did not compile: "..tostring(F.fireError))
     assert(F.foilShader,"holographic shader did not compile: "..tostring(F.foilError))
     local foil,fire=F.foilShader,F.fireShader
@@ -98,7 +109,7 @@ function love.load()
     assert(#burst==3)
     for _,ft in ipairs(burst) do F.draw(ft,UI) end
     title("ĐI CÙNG NEN · GIỮ SỐ RÕ VÀ NHƯỜNG HIỆU ỨNG VA CHẠM",640,640,640)
-    local anim={floatingTexts={},sequence={attack={cx=960,nen={tier=3}},ui=UI}}
+    local anim={floatingTexts={},sequence={attack={cx=960,profile={id="high_card"},nen={tier=3}},ui=UI}}
     require("src.scoring_presentation").damageApplied(anim,0,77)
     local quiet=anim.floatingTexts[1]
     assert(quiet.tier==1 and quiet.label==nil and quiet.x==960)
@@ -119,13 +130,54 @@ function love.load()
         g.pop();save(board,path);board:release()
     end
     comparison({0.16,0.58},"docs/combat_feedback/damage_fire_tiers.png")
+    local function magnitudeComparison(age,path)
+        local board=g.newCanvas(1280,1080)
+        g.push("all");g.setCanvas(board);g.origin();g.clear(0.025,0.037,0.05,1)
+        title("SÁT THƯƠNG · MỖI BẬC SỐ MẠNH HƠN MỘT BẬC",0,18,1280)
+        for degree=0,15 do
+            local column,row=degree%4,math.floor(degree/4)
+            local amount=degree==0 and 7 or 7.7*10^degree
+            local ft=F.new("damage",amount,640,214,UI.formatNumber);F.update(ft,age)
+            title(ft.power.name,column*320,64+row*250,320)
+            g.push("all");g.translate(column*320+160,150+row*250);g.scale(0.68);g.translate(-640,-214)
+            F.draw(ft,UI);g.pop()
+        end
+        g.pop();save(board,path);board:release()
+    end
+    magnitudeComparison(0.38,"docs/combat_feedback/damage_magnitudes.png")
+    local Touch=require("src.touch_input")
+    local lowPower=Touch.lowPower
+    Touch.lowPower=true
+    magnitudeComparison(0.38,"docs/combat_feedback/damage_magnitudes_mobile.png")
+    -- A phone-sized canvas also exercises the fallback with fire/foil unavailable.
+    local phone=g.newCanvas(960,540)
+    g.push("all");g.setCanvas(phone);g.origin();g.clear(.025,.037,.05,1)
+    title("MOBILE · ĐẦY ĐỦ HIỆU ỨNG / DỰ PHÒNG KHÔNG SHADER",0,18,960)
+    for row=0,1 do
+        if row==1 then F.fireShader,F.foilShader=nil,nil end
+        for i,amount in ipairs({77,7700,7.7e9,7.7e11}) do
+            local ft=F.new("damage",amount,640,214,UI.formatNumber);F.update(ft,.38)
+            assert(ft.power.mobile)
+            g.push("all");g.translate((i-1)*240+120,142+row*225);g.scale(.52);g.translate(-640,-214)
+            F.draw(ft,UI);g.pop()
+            title(ft.power.name,(i-1)*240,205+row*225,240)
+        end
+    end
+    g.pop();save(phone,"docs/combat_feedback/damage_mobile.png");phone:release()
+    F.fireShader,F.foilShader=fire,foil;Touch.lowPower=lowPower
     for _,argument in ipairs(arg or {}) do
         if argument=="--feedback-motion" then
             for frame=0,47 do
                 comparison({frame/24},string.format("docs/combat_feedback/_motion_%03d.png",frame))
             end
+        elseif argument=="--magnitude-motion" then
+            for frame=0,39 do
+                magnitudeComparison(frame/20,string.format("docs/combat_feedback/_magnitude_motion_%03d.png",frame))
+            end
         end
     end
     print("Feedback GPU PASS: five impact tiers, both phases, armor gain/absorption/depletion over HP, real shop purchase/sale, bounded coin tail, exact wallet settle and graphics state")
+    print("Magnitude GPU PASS: all 16 orders from units through a million billion, shared fire/foil shaders")
+    print("Mobile feedback GPU PASS: all magnitude signatures, phone-sized canvas, shader fallback and OpenGL ES fire/foil validation")
     love.event.quit(0)
 end

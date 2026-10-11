@@ -1,8 +1,16 @@
 -- Presentation only: numbers always come from the resolved gameplay result.
 local F = {config=require("config.action_vfx_config"),vfx={}}
-local colors = {{1,0.88,0.72}, {1,0.75,0.32}, {1,0.48,0.20}, {0.56,0.82,1}, {0.88,0.65,1}}
+-- An authored accent per decimal order; fire retains a warm core throughout.
+local accents = {{1,.88,.72},{1,.82,.48},{1,.65,.20},{1,.38,.12},
+    {.46,.75,1},{.83,.52,1},{1,.72,.25},{.24,.95,.88},
+    {.97,.43,.72},{.38,.59,1},{.78,.43,1},{1,.90,.42},
+    {.38,.88,1},{1,.43,.28},{.62,1,.70},{.92,.75,1}}
 local labels = {"BÌNH THƯỜNG", "CỰC MẠNH", "BÙNG NỔ", "SIÊU VIỆT", "TUYỆT ĐỈNH"}
-local sizes = {1,1.08,1.16,1.25,1.34}
+local magnitudes = {"ĐƠN VỊ","CHỤC","TRĂM","NGHÌN","CHỤC NGHÌN","TRĂM NGHÌN",
+    "TRIỆU","CHỤC TRIỆU","TRĂM TRIỆU","TỈ","CHỤC TỈ","TRĂM TỈ",
+    "NGHÌN TỈ","CHỤC NGHÌN TỈ","TRĂM NGHÌN TỈ","TRIỆU TỈ"}
+local thresholds={}
+for degree=1,308 do thresholds[degree]=tonumber("1e"..degree) end
 
 -- Display values follow resolved resources; labels and gameplay keep the exact totals.
 function F.updateMeter(m, value, dt, duration)
@@ -23,13 +31,52 @@ function F.updateMeter(m, value, dt, duration)
     return m
 end
 
+function F.magnitude(amount)
+    local degree=0
+    amount=math.abs(amount or 0)
+    -- Compare thresholds directly: logarithms can round a value below a boundary upward.
+    while degree<308 and amount>=thresholds[degree+1] do degree=degree+1 end
+    local name=magnitudes[degree+1]
+    if not name and degree<=26 then
+        name=(degree%9==0 and "" or magnitudes[degree%9+1].." ").."TỈ"..string.rep(" TỈ",math.floor(degree/9)-1)
+    end
+    return degree,name or ("10^"..degree)
+end
+
 function F.tier(amount)
-    amount = math.abs(amount or 0)
-    if amount >= 100000 then return 5 end
-    if amount >= 10000 then return 4 end
-    if amount >= 1000 then return 3 end
-    if amount >= 100 then return 2 end
-    return 1
+    return math.max(1,math.min(5,(F.magnitude(amount))))
+end
+
+function F.damageProfile(amount, mobile)
+    local degree,name=F.magnitude(amount)
+    local tier=math.max(1,math.min(5,degree))
+    local growth=math.max(0,degree-5)
+    -- Continue above a million billion, with bounded geometry and screen coverage.
+    if growth>10 then growth=10+4*(1-math.exp(-(growth-10)/10)) end
+    local accent=accents[degree+1]
+    if not accent then
+        local phase=degree*2.399963
+        accent={.68+.30*math.cos(phase),.68+.30*math.cos(phase+2.094),.68+.30*math.cos(phase+4.188)}
+    end
+    local power={degree=degree,name=name,tier=tier,accent=accent,
+        signature=degree*0.73,corona=math.min(8,math.max(0,degree-5)),mobile=not not mobile,
+        reach=degree<2 and 0 or degree==2 and 9 or degree==3 and 18 or degree==4 and 23 or 26+growth*3,
+        energy=degree<2 and 0 or math.min(1,(degree-2)*0.045),
+        embers=degree<3 and 0 or math.min(30,4+(degree-3)*2),
+        bolts=degree<4 and 0 or degree==4 and 3 or math.min(20,8+math.floor(growth)),
+        branches=degree<5 and 1 or degree<10 and 2 or 3,
+        spread=7+growth*0.8,stroke=1+growth*0.045,
+        speed=1+growth*0.055,foil=math.min(1,0.62+growth*0.027),
+        scale=degree<2 and 1+degree*0.035 or 1.08+math.min(3,degree-2)*0.075+growth*0.007,
+        glow=0.26+math.min(5,degree)*0.07+growth*0.045,
+        duration=1.41+math.min(5,degree)*0.12+growth*0.022}
+    if mobile then
+        -- Keep the same signature and shaders, with fewer simultaneous geometry strokes.
+        power.bolts=math.min(12,math.ceil(power.bolts*.7))
+        power.branches=math.min(2,power.branches)
+        power.embers=math.min(18,math.ceil(power.embers*.7))
+    end
+    return power
 end
 
 function F.prepareFoil()
@@ -39,13 +86,15 @@ function F.prepareFoil()
         extern number clock;
         extern vec2 origin;
         extern number span;
+        extern number energy;
+        extern number signature;
         vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen) {
             vec4 glyph=Texel(texture,uv);
             vec2 p=screen-origin;
-            float phase=p.x/max(span,1.0)*4.0+p.y*0.018-clock*1.8;
+            float phase=p.x/max(span,1.0)*(4.0+mod(signature,3.0))+p.y*0.018-clock*(1.8+energy)+signature;
             vec3 spectrum=0.65+0.35*cos(phase+vec3(0.0,2.094,4.188));
             float sheen=pow(0.5+0.5*sin(p.x*0.035+p.y*0.10-clock*3.0),12.0);
-            vec3 foil=mix(color.rgb,spectrum,0.72)+vec3(sheen*0.16);
+            vec3 foil=mix(color.rgb,spectrum,energy)+vec3(sheen*(0.12+energy*0.12));
             return vec4(glyph.rgb*foil,glyph.a*color.a);
         }
     ]])
@@ -60,9 +109,10 @@ function F.prepareFire()
 end
 
 function F.new(kind, amount, x, y, format)
-    local tier = kind == "damage" and F.tier(amount) or 1
+    local power=kind=="damage" and F.damageProfile(amount,require("src.touch_input").lowPower) or nil
+    local tier = power and power.tier or 1
     local positive = amount >= 0
-    local color = kind == "damage" and colors[tier]
+    local color = kind == "damage" and power.accent
         or kind == "gold" and (positive and {1,0.83,0.26} or {1,0.57,0.30})
         or kind == "armor" and {0.40,0.84,1}
         or (positive and {0.45,1,0.65} or {1,0.35,0.39})
@@ -73,13 +123,12 @@ function F.new(kind, amount, x, y, format)
     elseif kind == "heal" then text = text .. " HP"
     elseif kind == "speed" then text = text .. " TỐC" end
     local rewardLevel=math.abs(amount)>=100 and 4 or math.abs(amount)>=25 and 3 or math.abs(amount)>=10 and 2 or 1
-    local duration = kind == "damage" and (1.25 + tier * 0.16) or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
-    local apex=kind=="damage" and math.max(0,math.min(1,(math.log(math.max(1,math.abs(amount)))/math.log(10)-5)/10)) or 0
-    local label=kind=="damage" and tier>=2 and labels[tier] or nil
+    local duration = power and power.duration or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
+    local label=power and tier>=2 and (labels[tier].." · "..power.name) or nil
     if kind=="damage" and tier>=2 then F.prepareFire() end
     if kind=="damage" and tier==5 then F.prepareFoil() end
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,
-        originX=x,originY=y,lane=0,apex=apex,
+        originX=x,originY=y,lane=0,power=power,
         age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,label=label}
 end
 
@@ -134,7 +183,7 @@ end
 function F.damagePose(ft)
     local age=math.max(0,ft.age or 0)
     local tier=ft.tier or 1
-    local base=sizes[tier]+(ft.apex or 0)*0.06
+    local base=ft.power.scale
     if ft.reducedMotion then return base,base,0,math.min(1,age/0.5)*8 end
     -- One small, uniform rebound keeps digit proportions intact at every frame.
     local scale=base*(1-0.12*math.exp(-age*22)+0.13*math.exp(-age*9)*math.sin(age*19))
@@ -197,24 +246,25 @@ function F.lightningGeometry(ft,width,height)
     if cache.frame==frame and cache.width==width and cache.height==height then return cache.paths end
     cache.frame,cache.width,cache.height=frame,width,height
     local seed=math.abs(ft.amount or 0)%991*0.071
-    local count=ft.tier==5 and 8 or 3
+    local power=ft.power
+    local count=power.bolts
     for i=1,count do
         local path=cache.paths[i] or {points={},branches={}};cache.paths[i]=path
-        local start=(i-1)*math.pi*2/count+variation(i,seed+frame)*0.5
-        local sweep=(count==3 and 1.5 or 0.65)+variation(i+17,seed+frame)*0.85
+        local start=(i-1)*math.pi*2/count+variation(i,seed+frame)*0.5+power.signature
+        local sweep=(power.degree==4 and 1.5 or 0.55+(power.degree%3)*0.15)+variation(i+17,seed+frame)*0.85
         for j=0,12 do
             local angle=start+j/12*sweep
             local cx,cy=math.cos(angle),math.sin(angle)
             local jitter=(variation(i*31+j,seed+frame)-0.5)*6
-            path.points[j*2+1]=(cx<0 and -1 or 1)*math.abs(cx)^0.4*(width/2+7)+cx*jitter
-            path.points[j*2+2]=height*0.5+(cy<0 and -1 or 1)*math.abs(cy)^0.6*(height*0.4+7)+cy*jitter
+            path.points[j*2+1]=(cx<0 and -1 or 1)*math.abs(cx)^0.4*(width/2+power.spread)+cx*jitter
+            path.points[j*2+2]=height*0.5+(cy<0 and -1 or 1)*math.abs(cy)^0.6*(height*0.4+power.spread)+cy*jitter
         end
-        for b=1,(count==8 and 2 or 1) do
+        for b=1,power.branches do
             local branch=path.branches[b] or {};path.branches[b]=branch
-            local j=3+b*3
+            local j=2+b*3
             local angle=start+j/12*sweep+(variation(i+b*41,seed+frame)-0.5)*0.9
             local dx,dy=math.cos(angle),math.sin(angle)
-            local length=(count==8 and 13 or 8)+variation(i+b*13,seed+frame)*9
+            local length=8+power.spread*0.7+variation(i+b*13,seed+frame)*9
             local x,y=path.points[j*2+1],path.points[j*2+2]
             for k=0,4 do
                 local bend=k>0 and k<4 and (variation(i*61+b*17+k,seed+frame)-0.5)*5 or 0
@@ -226,31 +276,45 @@ function F.lightningGeometry(ft,width,height)
     return cache.paths
 end
 
-local function electricStroke(g,points,alpha,branch)
-    g.setColor(0.35,0.47,1,alpha*0.12);g.setLineWidth(branch and 3 or 5)
+local function electricStroke(g,points,alpha,branch,strength,color)
+    g.setColor(color[1],color[2],color[3],alpha*0.16);g.setLineWidth((branch and 3 or 5)*strength)
     g.line(points)
-    g.setColor(0.48,0.76,1,alpha*0.45);g.setLineWidth(branch and 1.3 or 2.2)
+    g.setColor(0.48,0.76,1,alpha*0.45);g.setLineWidth((branch and 1.3 or 2.2)*strength)
     g.line(points)
-    g.setColor(0.92,0.97,1,alpha);g.setLineWidth(branch and 0.55 or 0.85)
+    g.setColor(0.92,0.97,1,alpha);g.setLineWidth((branch and 0.55 or 0.85)*strength)
     g.line(points)
 end
 
 local function damageAura(g,ft,width,height,alpha)
     local tier=ft.tier or 1
-    if tier<2 or ft.crowded then return end
+    if ft.crowded then return end
     local age=ft.reducedMotion and 0 or ft.age or 0
     local intensity=math.min(1,(ft.age or 0)/0.06)*alpha
-    local reach=tier==2 and 9 or tier==3 and 18 or tier==4 and 21 or 26
+    local power=ft.power
+    local reach=power.reach
+    local accent=power.accent
+    if tier<2 then
+        if power.degree==1 then
+            local shine=intensity*(.22+.18*math.exp(-age*4))
+            sparkle(g,-width/2-6,height*.5,2.5,accent,shine)
+            sparkle(g,width/2+6,height*.5,2.5,accent,shine)
+        end
+        return
+    end
     g.setBlendMode("add")
     if F.fireShader then
         local cx,cy=g.transformPoint(0,height*0.5)
         local px,py=g.transformPoint(1,height*0.5)
-        F.fireShader:send("clock",age)
+        F.fireShader:send("clock",age*power.speed)
         F.fireShader:send("seed",math.abs(ft.amount or 0)%991*0.017)
         F.fireShader:send("center",{cx,cy})
         F.fireShader:send("halfSize",{width/2+1,height*0.34})
         F.fireShader:send("pixelScale",math.sqrt((px-cx)^2+(py-cy)^2))
         F.fireShader:send("reach",reach)
+        F.fireShader:send("energy",power.energy)
+        F.fireShader:send("accent",accent)
+        F.fireShader:send("signature",power.signature)
+        F.fireShader:send("chroma",power.degree<4 and 0 or math.min(.72,.20+(power.degree-4)*.045))
         g.setShader(F.fireShader);g.setColor(1,1,1,intensity*0.80)
         local pad=reach+10
         g.rectangle("fill",-width/2-pad,-pad,width+pad*2,height+pad*2)
@@ -259,27 +323,38 @@ local function damageAura(g,ft,width,height,alpha)
         -- Keep a soft ember rim readable on devices without procedural shaders.
         for i=1,12 do
             local a=i*math.pi/6
-            g.setColor(1,0.38,0.05,intensity*0.12)
-            g.ellipse("fill",math.cos(a)*(width/2+3),height*0.5+math.sin(a)*height*0.4,reach*0.5,reach*0.6)
+            local tongue=.7+.3*math.sin(a*3+age*power.speed*5+power.signature)
+            g.setColor(accent[1],accent[2],accent[3],intensity*0.14)
+            g.ellipse("fill",math.cos(a)*(width/2+3),height*0.5+math.sin(a)*height*0.4,reach*.5*tongue,reach*.6*tongue)
         end
     end
     if tier>=3 then
-        for i=1,6 do
-            local p=(age*0.7+i*0.618)%1
+        for i=1,power.embers do
+            local p=(age*0.7*power.speed+i*0.618)%1
             local x=(variation(i,ft.amount%991)-0.5)*(width+20)
             local y=height*0.3-reach-p*22
             local ember=intensity*math.sin(p*math.pi)*0.5
-            g.setColor(1,0.37,0.045,ember*0.25);g.circle("fill",x,y,2)
+            g.setColor(accent[1],accent[2],accent[3],ember*0.25);g.circle("fill",x,y,2)
             g.setColor(1,0.85,0.39,ember);g.circle("fill",x,y,0.7)
         end
     end
     if tier>=4 then
         for i,path in ipairs(F.lightningGeometry(ft,width,height)) do
-            local pulse=(age*5.5+i*0.31)%1
-            local light=intensity*(0.15+0.85*math.exp(-pulse*6))
-            electricStroke(g,path.points,light,false)
-            for _,branch in ipairs(path.branches) do electricStroke(g,branch,light*0.72,true) end
+            local pulse=(age*5.5*power.speed+i*0.31)%1
+            local light=intensity*(0.15+power.energy*0.15+0.85*math.exp(-pulse*6))
+            electricStroke(g,path.points,light,false,power.stroke,accent)
+            for _,branch in ipairs(path.branches) do electricStroke(g,branch,light*0.72,true,power.stroke,accent) end
         end
+    end
+    for i=1,power.corona do
+        local angle=i*math.pi*2/power.corona+age*power.speed*.7+power.signature
+        local cx,cy=math.cos(angle),math.sin(angle)
+        local x=cx*(width/2+reach*.65+8)
+        local y=height*.5+cy*(height*.4+reach*.65+8)
+        local light=intensity*(.2+.3*variation(i,power.degree))
+        sparkle(g,x,y,2+power.energy*2,accent,light)
+        g.setColor(accent[1],accent[2],accent[3],light*.45);g.setLineWidth(1)
+        g.line(x-cy*6,y+cx*6,x+cy*6,y-cx*6)
     end
     g.setBlendMode("alpha")
 end
@@ -342,7 +417,8 @@ function F.draw(ft, ui)
     local maxWidth=ft.kind=="damage" and 360 or 230
     local fit=math.min(1,maxWidth/math.max(1,font:getWidth(text)*scale))
     scale=scale*fit;scaleY=(scaleY or scale/fit)*fit
-    local half=font:getWidth(text)*scale/2+(ft.kind=="damage" and 55 or 30)
+    local padding=ft.kind=="damage" and math.max(55,(ft.power.reach+10)*scale) or 30
+    local half=font:getWidth(text)*scale/2+padding
     local x=ft.kind and math.max(half+8,math.min(1280-half-8,ft.x)) or ft.x
     g.translate(x,math.max(72,ft.y-rise))
     g.scale(scale,scaleY)
@@ -362,7 +438,7 @@ function F.draw(ft, ui)
         resourceIcon(g,ft.kind,left+12,bottom/2-1,color,alpha,ft.amount<0)
     end
     if ft.kind then
-        luminousText(g,text,color,alpha,ft.kind=="damage" and 0.26+tier*0.07 or ft.kind=="gold" and 0.95 or 0.5+tier*0.16)
+        luminousText(g,text,color,alpha,ft.kind=="damage" and ft.power.glow or ft.kind=="gold" and 0.95 or 0.5+tier*0.16)
     end
     local ink=ft.kind=="damage" and {1,0.95,0.84} or color
     outlined(g,text,-230,0,460,ink,alpha)
@@ -379,7 +455,9 @@ function F.draw(ft, ui)
         local shader=g.getShader()
         local ox,oy=g.transformPoint(0,0)
         local right=g.transformPoint(tw,0)
-        F.foilShader:send("clock",ft.reducedMotion and 0 or age)
+        F.foilShader:send("clock",ft.reducedMotion and 0 or age*ft.power.speed)
+        F.foilShader:send("energy",ft.power.foil)
+        F.foilShader:send("signature",ft.power.signature)
         F.foilShader:send("origin",{ox,oy})
         F.foilShader:send("span",math.max(1,right-ox))
         g.setShader(F.foilShader);g.setColor(ink[1],ink[2],ink[3],alpha)

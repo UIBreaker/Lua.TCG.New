@@ -2,13 +2,40 @@
 
 `src/combat_feedback.lua` draws resolved values without changing damage, armor, or gold rules.
 
-- Below 100 — BÌNH THƯỜNG: compact ivory number, warm glow, no subtitle.
+- Below 100 — BÌNH THƯỜNG: compact ivory number, warm glow, no subtitle. Tens have a stronger glow/scale and two small gold glints flanking the value; single digits stay plain.
 - 100–999 — CỰC MẠNH: light fire around all four sides of the number.
 - 1,000–9,999 — BÙNG NỔ: stronger fire with rising embers.
 - 10,000–99,999 — SIÊU VIỆT: strong fire and three branching lightning paths around the number.
-- 100,000 and above — TUYỆT ĐỈNH: strongest fire, eight branched lightning arcs and a moving holographic finish inside the glyphs.
+- 100,000 — TUYỆT ĐỈNH starts with eight branched lightning arcs and a moving holographic finish inside the glyphs. Each higher decimal magnitude has its own stronger profile; it no longer shares a single capped treatment.
 
-Damage numbers enter with one small uniform rebound, then hold their proportions while rising smoothly and fading. Native 28/36px fonts, a dark outline, bright core and controlled tier-colored glow keep the value sharp over the scene. Fire surrounds the whole number with layered turbulence, buoyant billows, hot cores, red outer wisps and sparse rising embers. Its center is hollow so it cannot obscure the value. Lightning follows irregular paths around the number, with thin white cores, blue bloom, secondary branches and staggered afterglow. Geometry buffers are reused, and deterministic strike changes follow elapsed time. The holographic pass colors only the visible glyph pixels. No numeral squashing, rotation, oversized plates, duplicate outlines or decorative wings. The four stronger tiers add a small plain subtitle. Reduced motion preserves the tier with stable scale, static fire/lightning/foil and an 8px rise.
+`F.tier` retains the five approved style families. `F.magnitude` and each number's `power.degree` distinguish every decimal order, including negative amounts by absolute value. Thresholds are parsed from decimal notation and compared directly, avoiding logarithm and exponent rounding at boundaries. Effect strength follows the resolved damage, independently of Nen strength.
+
+| Minimum damage | Magnitude | Lightning paths |
+| --- | --- | --- |
+| 1 | Đơn vị | 0 |
+| 10 | Chục | 0 |
+| 100 | Trăm | 0 |
+| 1,000 | Nghìn | 0 |
+| 10,000 | Chục nghìn | 3 |
+| 100,000 | Trăm nghìn | 8 |
+| 1,000,000 | Triệu | 9 |
+| 10,000,000 | Chục triệu | 10 |
+| 100,000,000 | Trăm triệu | 11 |
+| 1,000,000,000 | Tỉ | 12 |
+| 10,000,000,000 | Chục tỉ | 13 |
+| 100,000,000,000 | Trăm tỉ | 14 |
+| 1,000,000,000,000 | Nghìn tỉ | 15 |
+| 10,000,000,000,000 | Chục nghìn tỉ | 16 |
+| 100,000,000,000,000 | Trăm nghìn tỉ | 17 |
+| 1,000,000,000,000,000 | Triệu tỉ | 18 |
+
+Every higher order increases scale and glow, with fire extent increasing from hundreds onward. Above a hundred thousand, flame turbulence/heat, rising ember density, lightning spread/thickness/afterglow, foil saturation/sheen and animation speed increase. From ten billion, each lightning path has three secondary branches. Higher magnitudes continue beyond a million billion, approaching bounded visual limits: 20 paths, three branches per path, 30 embers, less than 69 local pixels of fire reach, less than 1.5 base scale and less than 2.5 seconds lifetime. These limits constrain transient drawing, not gameplay damage. The subtitle includes the magnitude so adjacent high tiers are identifiable.
+
+Each order also has a distinct accent and signature, rather than just more identical arcs. In ascending order from tens: gold glints, amber flame, crimson flame, blue lightning, violet holographic lightning, solar gold, turquoise, rose, sapphire, amethyst, white gold, ice blue, molten orange, emerald and opal. Fire keeps its hot warm core while the perimeter takes on the accent. Lightning sweep/orientation, flame noise frequency and holographic band spacing/phase change with each order. From millions, rotating corona glints surround the outer flame, increasing up to eight. Above the authored orders, deterministic spectral accents and distinct phases continue through the finite numeric range; geometry stays bounded. All effects stay attached to the value and do not consume gameplay RNG.
+
+Android/iOS and the mobile package use the existing `Touch.lowPower` flag. Every order keeps the same palette, flame size/turbulence, corona and holographic identity. Mobile draws at most 12 lightning paths, two branches per path and 18 embers; it does not disable the upper style families. Both shared shaders are validated as OpenGL ES in the GPU capture test. If compilation fails on a device, accented animated ember rims, lightning and corona still render without shaders. `damage_magnitudes_mobile.png` shows all orders with the mobile budget; `damage_mobile.png` compares shader and fallback rendering on a 960×540 canvas. These desktop GPU checks do not replace testing on a physical Android device.
+
+Damage numbers enter with one small uniform rebound, then hold their proportions while rising smoothly and fading. Native 28/36px fonts, a dark outline, bright core and controlled tier-colored glow keep the value sharp over the scene. Fire surrounds the whole number with layered turbulence, buoyant billows, hot cores, red outer wisps and rising embers. Its center is hollow so it cannot obscure the value. Lightning follows irregular paths around the number, with thin white cores, blue bloom, secondary branches and staggered afterglow. Geometry buffers are reused, and deterministic strike changes follow elapsed time. The holographic pass colors only the visible glyph pixels. No numeral squashing, rotation, oversized plates, duplicate outlines or decorative wings. The four stronger style families add a small plain subtitle. Reduced motion preserves the magnitude with stable scale, static fire/lightning/foil and an 8px rise.
 
 Rapid hits use three bounded lanes per target, replacing the oldest value on a reused lane. Older values shrink and dim, with fire, lightning and subtitles hidden; the latest stays bright. Values use the existing UI formatter through 1e15 and fit within a bounded width. Numbers are anchored to the actual enemy center with only 16px lateral variation for repeated hits. Nen's relative attack intensity must never override the resolved damage tier, label, color or lifetime: 77 damage stays compact even with the strongest Nen. The numerical fire/lightning stays attached to the glyphs during Nen; there are no duplicate physical impact rings.
 
@@ -32,8 +59,9 @@ lua tests/enemy_attack_presentation_smoke.lua
 & '../love-11.5-win64/lovec.exe' . --test-combat-feedback
 & '../love-11.5-win64/lovec.exe' . --test-feedback-render
 & '../love-11.5-win64/lovec.exe' . --test-feedback-render --feedback-motion
+& '../love-11.5-win64/lovec.exe' . --test-feedback-render --magnitude-motion
 & '../love-11.5-win64/lovec.exe' . --test-scoring-feel
 & '../love-11.5-win64/lovec.exe' . --test-ux-polish
 ```
 
-Capture mode avoids player saves. It exports all five damage tiers, 1e15 damage, gold spending, recovery and armor depletion to `docs/combat_feedback/`. `upgrade_gallery.png` compares both impact phases, armor over HP and actual shop purchase/sale effects. `damage_apex.png` shows four damage phases, a rapid burst and the Nen overlay. `damage_fire_tiers.png` compares all five approved fire/lightning/foil treatments at two moments. `damage_fire_motion.gif` presents 48 captured frames with a shared palette; the optional motion flag exports the source PNGs for encoding. `damage_77_nen.png` exercises the real scoring-to-damage path with strongest Nen, 77 resolved damage and a defeated enemy. CPU checks cover all Nen tiers across three target positions, resource gains/losses, proportional rebound, wraparound lightning bounds/buffer reuse/static accessibility/FPS consistency and target lanes at 30/60/120/144 FPS, exact settle, bounded lifetime and unchanged gameplay RNG. GPU checks assert successful fire/foil compilation, reuse and shader/font/blend/color restoration.
+Capture mode avoids player saves. It exports all five damage style families, 1e15 damage, gold spending, recovery and armor depletion to `docs/combat_feedback/`. `upgrade_gallery.png` compares both impact phases, armor over HP and actual shop purchase/sale effects. `damage_apex.png` shows four damage phases, a rapid burst and the Nen overlay. `damage_fire_tiers.png` compares all five approved fire/lightning/foil treatments at two moments. `damage_fire_motion.gif` presents 48 captured frames with a shared palette; the optional motion flag exports the source PNGs for encoding. `damage_magnitudes.png` compares all 16 orders from single digits through a million billion; `damage_magnitudes_motion.gif` shows their evolution over 40 frames at 20 FPS. The magnitude motion flag exports its source PNGs for encoding. `damage_77_nen.png` exercises the real scoring-to-damage path with strongest Nen, 77 resolved damage and a defeated enemy. CPU checks cover positive/negative magnitude boundaries and escalating profiles through 1e30, extreme values through 1e308, all Nen tiers across three target positions, resource gains/losses, proportional rebound, wraparound lightning bounds/buffer reuse/static accessibility/FPS consistency and target lanes at 30/60/120/144 FPS, exact settle, bounded lifetime and unchanged gameplay RNG. GPU checks assert successful fire/foil compilation, reuse and shader/font/blend/color restoration.

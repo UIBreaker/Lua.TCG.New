@@ -3,13 +3,50 @@ for tier,value in ipairs({25,250,2500,25000,250000}) do
     assert(F.tier(value)==tier)
     local ft = F.new("damage",value,640,214,tostring)
     local label=({false,"CỰC MẠNH","BÙNG NỔ","SIÊU VIỆT","TUYỆT ĐỈNH"})[tier]
-    assert(ft.tier==tier and (ft.label or false)==label)
+    assert(ft.tier==tier and (not label and not ft.label or ft.label==label.." · "..ft.power.name))
     F.update(ft,0.12)
     assert(ft.alpha==1 and ft.life>0)
     assert(F.update(ft,3) and ft.alpha==0)
 end
 assert(F.tier(99)==1 and F.tier(100)==2 and F.tier(999)==2 and F.tier(1000)==3)
 assert(F.tier(9999)==3 and F.tier(10000)==4 and F.tier(100000)==5 and F.tier(1e15)==5)
+local previous
+for degree=0,30 do
+    local amount=tonumber("1e"..degree)
+    assert(F.magnitude(amount)==degree and F.magnitude(-amount)==degree,"every decimal boundary has its own magnitude")
+    if degree>0 then assert(F.magnitude(amount*(1-1e-12))==degree-1,"values below a boundary must stay in the lower magnitude") end
+    local power=F.damageProfile(amount)
+    assert(power.degree==degree and power.name and power.scale<1.5 and power.duration<2.5)
+    assert(power.bolts<=20 and power.embers<=30 and power.branches<=3 and power.reach<69)
+    if previous then
+        assert(power.scale>previous.scale and power.glow>previous.glow,"every decade must look stronger, including normal and beyond billions")
+        if degree>=3 then assert(power.reach>previous.reach and power.embers>=previous.embers) end
+        if degree>=6 then assert(power.stroke>previous.stroke and power.foil>=previous.foil and power.speed>previous.speed) end
+    end
+    previous=power
+end
+assert(F.magnitude(0)==0 and F.magnitude(9)==0 and F.magnitude(99)==1)
+assert(select(2,F.magnitude(1e9))=="TỈ" and select(2,F.magnitude(1e11))=="TRĂM TỈ")
+assert(F.magnitude(1e308)==308 and F.damageProfile(1e308).bolts<=20)
+local signatures={}
+local Touch=require("src.touch_input")
+local lowPower=Touch.lowPower
+for degree=0,308 do
+    local amount=tonumber("1e"..degree)
+    local desktop,mobile=F.damageProfile(amount),F.damageProfile(amount,true)
+    local key=table.concat(desktop.accent,",")..":"..desktop.signature
+    assert(not signatures[key],"every representable decimal order has a distinct visual signature")
+    signatures[key]=true
+    assert(mobile.signature==desktop.signature and mobile.tier==desktop.tier and mobile.name==desktop.name)
+    for i=1,3 do assert(mobile.accent[i]==desktop.accent[i]) end
+    assert(mobile.reach==desktop.reach and mobile.foil==desktop.foil and mobile.corona==desktop.corona,
+        "mobile must preserve flame, holographic strength and magnitude identity")
+    assert(mobile.bolts<=12 and mobile.branches<=2 and mobile.embers<=18)
+    assert((desktop.bolts==0)==(mobile.bolts==0),"mobile must retain lightning at every electric magnitude")
+    Touch.lowPower=true
+    assert(F.new("damage",amount,640,214).power.mobile,"APK/phone runtime must select the mobile drawing budget")
+end
+Touch.lowPower=lowPower
 local list={}
 F.add(list,"damage",50,640,214)
 F.add(list,"damage",50,640,214)
@@ -53,7 +90,7 @@ end
 for _,x in ipairs({454,806}) do for i=1,3 do F.add(burst,"damage",250,x,214) end end
 assert(#burst==9,"separate enemies keep separate damage lanes")
 for _,fps in ipairs({30,60,120,144}) do
-    for _,amount in ipairs({1,250,2500,25000,250000,1e9,1e15}) do
+    for _,amount in ipairs({1,25,250,2500,25000,250000,1e9,1e15,1e30,1e308}) do
         local ft=F.new("damage",amount,630,214)
         for _=1,math.floor(fps*2.5) do
             F.update(ft,1/fps)
@@ -63,8 +100,8 @@ for _,fps in ipairs({30,60,120,144}) do
         assert(ft.alpha==0)
     end
 end
-assert(F.new("damage",1e9,0,0).label=="TUYỆT ĐỈNH" and F.new("damage",1e15,0,0).label=="TUYỆT ĐỈNH")
-for _,amount in ipairs({25000,250000}) do
+assert(F.new("damage",1e9,0,0).label=="TUYỆT ĐỈNH · TỈ" and F.new("damage",1e15,0,0).label=="TUYỆT ĐỈNH · TRIỆU TỈ")
+for _,amount in ipairs({25000,250000,1e9,1e15,1e30,1e308}) do
     local reference
     for _,fps in ipairs({30,60,120,144}) do
         local ft=F.new("damage",amount,630,214)
@@ -76,7 +113,11 @@ for _,amount in ipairs({25000,250000}) do
             F.update(ft,1/fps)
             assert(F.lightningGeometry(ft,150,36)==paths and paths[1].points==first,"strike changes must not grow geometry buffers")
             for _,path in ipairs(paths) do
-                assert(#path.points<=32 and #path.branches<=2)
+                assert(#paths==ft.power.bolts and #path.points<=32 and #path.branches==ft.power.branches)
+                for _,branch in ipairs(path.branches) do
+                    assert(#branch==10)
+                    for i=1,#branch,2 do assert(math.abs(branch[i])<145 and branch[i+1]>-90 and branch[i+1]<126) end
+                end
                 for i=1,#path.points,2 do
                     local x,y=path.points[i],path.points[i+1]
                     assert(math.abs(x)<125 and y>-60 and y<96,"lightning stays close to its number")
@@ -98,7 +139,7 @@ local Feel=require("src.scoring_presentation")
 for _,x in ipairs({454,630,806}) do
     for _,tier in ipairs({1,2,3}) do
         for _,amount in ipairs({77,2500,1e15}) do
-            local anim={floatingTexts={},sequence={attack={cx=x,nen={tier=tier,reducedMotion=true}},
+            local anim={floatingTexts={},sequence={attack={cx=x,profile={id="high_card"},nen={tier=tier,reducedMotion=true}},
                 ui={BATTLE_CENTER_X=630,formatNumber=tostring}}}
             Feel.damageApplied(anim,0,amount)
             Feel.damageApplied(anim,0,amount)
@@ -113,4 +154,4 @@ for _,x in ipairs({454,630,806}) do
 end
 assert(rng.getState()==before,"impact motion and bursts must not consume gameplay RNG")
 print("Damage impact PASS: proportional rebound through 1e15 at 30/60/120/144 FPS, bounded burst lanes, actual damage tiers independent of all Nen tiers/target positions and reduced motion")
-print("Combat feedback PASS: five tiers through 1e15, reward intensity, 30/60/120/144 FPS resource gain/loss/reversal, delayed armor/HP trails, exact settle, overlap, bounded queue, no gameplay RNG")
+print("Combat feedback PASS: distinct decimal magnitudes through 1e30, boundaries through 1e308, escalating fire/lightning/foil with bounded geometry, resource trails, exact settle, bounded queue, no gameplay RNG")

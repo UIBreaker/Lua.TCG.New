@@ -371,6 +371,8 @@ function Feel.damageApplied(anim, hp, actualDamage)
         local text=Feedback.add(anim.floatingTexts, "damage", actualDamage, x, nen and 204 or 214, s.ui.formatNumber)
         if nen then
             text.tier=nen.reducedMotion and 1 or ({1,3,4})[nen.tier]
+            text.quietImpact=true
+            text.color=s.attack.color
             text.label=Nen.config.tierNames[nen.tier]
             text.maxLife=1.1+nen.tier*.1;text.life=text.maxLife
         end

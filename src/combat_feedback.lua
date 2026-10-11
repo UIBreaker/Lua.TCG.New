@@ -47,13 +47,34 @@ function F.new(kind, amount, x, y, format)
     elseif kind == "speed" then text = text .. " TỐC" end
     local rewardLevel=math.abs(amount)>=100 and 4 or math.abs(amount)>=25 and 3 or math.abs(amount)>=10 and 2 or 1
     local duration = kind == "damage" and (1.25 + tier * 0.16) or kind=="gold" and (1.16+rewardLevel*0.12) or 1.24
+    local apex=kind=="damage" and math.max(0,math.min(1,(math.log(math.max(1,math.abs(amount)))/math.log(10)-5)/10)) or 0
+    local label=kind=="damage" and (math.abs(amount)>=1e12 and "TUYỆT ĐỈNH" or math.abs(amount)>=1e9 and "PHÁ GIỚI" or labels[tier]) or nil
     return {kind=kind, tier=tier, amount=amount, text=text, color=color, x=x, y=y,
-        age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,
-        label=kind == "damage" and labels[tier] or nil}
+        originX=x,originY=y,lane=0,apex=apex,
+        age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,label=label}
 end
 
 function F.add(list, kind, amount, x, y, format)
     local ft = F.new(kind, amount, x, y, format)
+    if kind=="damage" then
+        -- Three readable lanes per target; a new hit replaces its oldest lane.
+        for i=#list,1,-1 do
+            local other=list[i]
+            if other.kind==kind and math.abs((other.originX or other.x)-x)<80
+                and math.abs((other.originY or other.y)-y)<80 and (other.life or 0)>0 then
+                ft.lane=((other.lane or 0)+1)%3;ft.burst=true;break
+            end
+        end
+        for i=#list,1,-1 do
+            local other=list[i]
+            if other.kind==kind and math.abs((other.originX or other.x)-x)<80
+                and math.abs((other.originY or other.y)-y)<80 then
+                if (other.lane or 0)==ft.lane then table.remove(list,i)
+                else other.crowded=true end
+            end
+        end
+        ft.x=x+({0,-30,30})[ft.lane+1];ft.y=y+ft.lane*64
+    else
     -- Separate repeated hits without changing the position of older numbers.
     for i=#list,1,-1 do
         local other = list[i]
@@ -62,6 +83,7 @@ function F.add(list, kind, amount, x, y, format)
             ft.y = other.y + 42 + (ft.tier-1)*6
             break
         end
+    end
     end
     list[#list+1] = ft
     if kind=="armor" or kind=="heal" then
@@ -78,6 +100,17 @@ function F.add(list, kind, amount, x, y, format)
     end
     while #list > 24 do table.remove(list, 1) end
     return ft
+end
+
+function F.damagePose(ft)
+    local age=math.max(0,ft.age or 0)
+    local tier=ft.tier or 1
+    local kick=math.exp(-age*13)
+    local spring=math.exp(-age*8)*math.sin(age*24)
+    local base=sizes[tier]+(ft.apex or 0)*0.10
+    return base*(1+0.12*kick+0.11*spring),base*(1-0.34*kick+0.19*spring),
+        tier>=3 and -0.055*math.exp(-age*9) or 0,
+        (1-math.exp(-age*3))*(28+tier*7)
 end
 
 function F.update(ft, dt)
@@ -127,7 +160,7 @@ local function resourceIcon(g,kind,x,y,color,alpha,negative)
     else g.setLineWidth(2);g.line(x-4,y,x+4,y);g.line(x,y-4,x,y+4) end
 end
 
-local function impactCrest(g,tier,color,alpha,age)
+local function impactCrest(g,tier,color,alpha,age,apex)
     local shock=math.exp(-age*(tier>=4 and 4.5 or 8))
     local spread=1-math.exp(-age*8)
     g.setBlendMode("add")
@@ -140,6 +173,10 @@ local function impactCrest(g,tier,color,alpha,age)
             g.setColor(color[1],color[2],color[3],alpha*shock*0.7)
             g.setLineWidth(i%3==0 and 2 or 1)
             g.line(x,y,x+math.cos(a)*(8+tier*2),y+math.sin(a)*(8+tier*2)*0.5)
+            if i%2==0 then
+                g.setColor(1,0.92,0.77,alpha*shock*0.58)
+                g.polygon("fill",x,y,x+math.cos(a)*7,y+math.sin(a)*4,x+math.cos(a+0.7)*3,y+math.sin(a+0.7)*3)
+            end
         end
     end
     if tier>=4 then
@@ -153,7 +190,25 @@ local function impactCrest(g,tier,color,alpha,age)
                 g.line(side*32,-11,side*57,-25,side*82,-11)
                 sparkle(g,side*82,-11,4,color,alpha*shock)
             end
+            if apex>0.3 then
+                local echo=math.max(0,age-0.14)
+                local tail=age>0.14 and math.exp(-echo*7) or 0
+                g.setColor(0.94,0.85,1,alpha*tail*apex*0.6);g.setLineWidth(1.2)
+                local r=82+(1-math.exp(-echo*5))*80
+                g.ellipse("line",0,20,r,12+r*0.2)
+                for _,side in ipairs({-1,1}) do
+                    g.line(side*18,-20,side*34,-34,side*50,-20)
+                    sparkle(g,side*34,-34,3+apex*2,color,alpha*tail)
+                end
+            end
         end
+    end
+    if tier>=2 then
+        local slash=math.exp(-age*16)
+        g.setColor(1,0.96,0.80,alpha*slash*0.8);g.setLineWidth(2.2)
+        g.line(-85-spread*40,37,85+spread*40,-4)
+        g.setColor(color[1],color[2],color[3],alpha*slash*0.32);g.setLineWidth(6)
+        g.line(-85-spread*40,37,85+spread*40,-4)
     end
     g.setBlendMode("alpha")
 end
@@ -163,6 +218,8 @@ function F.draw(ft, ui)
     local age, tier = ft.age or 0, ft.tier or 1
     local alpha = ft.kind and ft.alpha or math.min(1, ft.life and ft.life/0.35 or ft.alpha or 1)
     local color = ft.color or {1,1,1}
+    local crowded=ft.kind=="damage" and ft.crowded
+    if crowded then alpha=alpha*0.62 end
     g.push("all")
     local rise = ft.kind and (1-math.exp(-age*2.5))*(ft.kind=="damage" and 30+tier*8 or ft.compact and 13 or 32) or 0
     if ft.kind == "gold" then
@@ -200,23 +257,38 @@ function F.draw(ft, ui)
     font=font or ui.fonts.large
     local text = ui.sanitizeText and ui.sanitizeText(ft.text) or ft.text
     local pulse=ft.kind=="heal" and (ft.amount>0 and 0.12 or 0.25) or ft.kind=="armor" and 0.22 or 0.16
-    local scale = ft.kind=="damage" and (sizes[tier]+(0.32+tier*0.065)*math.exp(-age*9)*math.sin(age*25)-0.15*math.exp(-age*35))
-        or ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
+    local scale = ft.kind and (1+pulse*math.exp(-age*19)*math.sin(age*38)-0.06*math.exp(-age*40)) or ft.scale or 1
     if ft.compact then scale=scale*0.78 end
+    local scaleY,tilt
+    if ft.kind=="damage" then
+        scale,scaleY,tilt,rise=F.damagePose(ft)
+        if crowded then scale,scaleY=scale*0.63,scaleY*0.63 end
+        if ft.burst and not crowded then scale,scaleY=scale*0.82,scaleY*0.82 end
+    end
     local maxWidth=ft.kind=="damage" and 360 or 230
-    scale=scale*math.min(1,maxWidth/math.max(1,font:getWidth(text)*scale))
+    local fit=math.min(1,maxWidth/math.max(1,font:getWidth(text)*scale))
+    scale=scale*fit;scaleY=(scaleY or scale/fit)*fit
     local half=font:getWidth(text)*scale/2+30
     local x=ft.kind and math.max(half+8,math.min(1280-half-8,ft.x)) or ft.x
     g.translate(x,math.max(72,ft.y-rise))
-    g.scale(scale)
+    g.scale(scale,scaleY)
     if ft.kind=="damage" then
-        g.rotate(tier>=3 and -0.045*math.exp(-age*6) or 0)
-        impactCrest(g,tier,color,alpha,age)
+        g.rotate(tilt)
+        if not ft.quietImpact and not crowded then
+            impactCrest(g,ft.burst and 2 or tier,color,ft.burst and alpha*0.45 or alpha,age,ft.apex or 0)
+        end
         local tw=font:getWidth(text)
         g.setColor(0.012,0.018,0.03,alpha*(tier>=3 and 0.45 or 0.24))
-        g.rectangle("fill",-tw/2-10,3,tw+20,font:getHeight()-2,6,6)
+        local left,right,bottom=-tw/2-10,tw/2+10,font:getHeight()+1
+        g.polygon("fill",left+7,3,right-7,3,right,10,right,bottom-7,right-7,bottom,left+7,bottom,left,bottom-7,left,10)
+        g.setColor(color[1],color[2],color[3],alpha*(0.30+math.exp(-age*6)*0.4));g.setLineWidth(1)
+        for _,side in ipairs({-1,1}) do
+            local edge=side*(tw/2+10)
+            g.line(edge-side*8,3,edge,10,edge,19)
+            g.line(edge,bottom-15,edge,bottom-7,edge-side*8,bottom)
+        end
     end
-    if ft.kind == "damage" and tier >= 2 then
+    if ft.kind == "damage" and tier >= 2 and not ft.quietImpact and not crowded and not ft.burst then
         local p = math.min(1, age/0.56)
         g.setBlendMode("add")
         g.setColor(color[1],color[2],color[3],alpha*(1-p)*0.045)
@@ -249,7 +321,7 @@ function F.draw(ft, ui)
         g.setColor(color[1],color[2],color[3],alpha*0.16);g.rectangle("fill",left+2,0,20,bottom-3,3,3)
         resourceIcon(g,ft.kind,left+12,bottom/2-1,color,alpha,ft.amount<0)
     end
-    if ft.kind=="damage" and tier>=4 then
+    if ft.kind=="damage" and tier>=4 and not crowded then
         for i=2,1,-1 do
             g.push();g.scale(1+i*0.035)
             g.setColor(color[1],color[2],color[3],alpha*math.exp(-age*8)*0.14/i)
@@ -278,6 +350,11 @@ function F.draw(ft, ui)
         g.rectangle("fill",-labelW/2,labelY-1,labelW,17,4,4)
         g.setColor(color[1],color[2],color[3],alpha*0.55)
         g.setLineWidth(0.8);g.line(-labelW/2+6,labelY+16,labelW/2-6,labelY+16)
+        if ft.kind=="damage" and tier>=3 and not crowded then
+            for _,side in ipairs({-1,1}) do
+                g.line(side*(labelW/2+5),labelY+7,side*(labelW/2+19),labelY+7,side*(labelW/2+25),labelY+3)
+            end
+        end
         outlined(g,ft.label,-230,labelY,460,color,alpha*0.92)
         sparkle(g,-tw/2-11,14,3.5,color,alpha*math.exp(-age*3)*0.8)
         sparkle(g,tw/2+11,14,3.5,color,alpha*math.exp(-age*3)*0.8)

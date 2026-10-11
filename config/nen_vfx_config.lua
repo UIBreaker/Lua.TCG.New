@@ -11,13 +11,14 @@ local C={
     tierNames={"BÌNH THƯỜNG","MẠNH","CỰC MẠNH"},
     power={normal=0,strong=.70,extreme=1.80,encounterHands=2,fallbackReference=1000,maxRatio=64},
     quality={low={segments=10,particles=8,branches=1},medium={segments=16,particles=16,branches=2},high={segments=24,particles=24,branches=3}},
-    hitStop={.025,.050,.075}, camera={kick={2,5,8},recoil={8,17,26},zoom={0,.009,.018},duration=.32},
+    hitStop={.030,.052,.072}, camera={kick={2,4.5,7},recoil={10,20,29},zoom={0,.009,.016},duration=.30},
+    acceleration={enhancement=2.65,transmutation=1.95,emission=2.9,conjuration=2.55,manipulation=2.1,specialization=3.05},
     repeatAcceleration={window=9,step=.08,max=.24},
     stages={"PREPARE","ANTICIPATION","NEN_AWAKENING","CARD_TRANSFORMATION","CHARGE","RELEASE","TRAVEL","ENEMY_IMPACT","AFTERSHOCK","SETTLE"},
-    -- Base durations: .72 / 1.08 / 1.52 s, before the HP settle floor; scoring runs beforehand.
-    timing={{.035,.065,.055,.115,.060,.025,.165,.045,.080,.075},
-        {.040,.100,.075,.155,.110,.030,.245,.060,.140,.125},
-        {.050,.145,.100,.210,.170,.035,.330,.080,.215,.185}},
+    -- Short recovery; weight comes from acceleration and contact rather than long shake.
+    timing={{.035,.060,.055,.115,.055,.025,.165,.050,.075,.065},
+        {.040,.090,.075,.155,.100,.030,.235,.065,.130,.105},
+        {.050,.130,.100,.200,.155,.035,.315,.080,.195,.150}},
     hands={},order={},samples={"high_card","even_frost","tesla_369","pair","straight","eclipse_duality"},
 }
 local function profile(id,name,kind,signature,conversion,variants,ready)

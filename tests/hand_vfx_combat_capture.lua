@@ -14,22 +14,26 @@ local order={};for _,id in ipairs(F.Attacks.config.order) do order[#order+1]=id 
 if allHands then for _,h in ipairs(require("src.advanced_hands").ordered) do order[#order+1]=h.id end end
 local nenSamples=false
 local nenBasics,nenAll,nenPolish=false,false,false
+local nenJuice=false
 for _,value in ipairs(arg or {}) do if value=="--nen-samples" then nenSamples=true;repeats=10 end end
 for _,value in ipairs(arg or {}) do
     if value=="--nen-basics" then nenBasics=true end
     if value=="--nen-all" then nenAll=true;repeats=3 end
     if value=="--nen-polish" then nenPolish=true end
+    if value=="--nen-juice" then nenJuice=true end
 end
 if nenSamples then order=require("config.nen_vfx_config").samples end
 if nenAll then order=require("config.nen_vfx_config").order end
 if nenPolish then order={"high_card","straight","four_of_a_kind","even_frost","obsidian_tide","tesla_369","eclipse_duality","destiny_crown","sealed_gate","prime"} end
-local nenMode=nenSamples or nenBasics or nenAll or nenPolish
+if nenJuice then order=require("config.nen_vfx_config").samples end
+local nenMode=nenSamples or nenBasics or nenAll or nenPolish or nenJuice
 local tierCount=nenMode and 3 or 1
 local outputDir=framesOnly and "docs/vfx_review/frames/" or "docs/vfx_review/"
 if nenSamples then outputDir="docs/nen_vfx/checkpoint2/final/" end
 if nenBasics then outputDir="docs/nen_vfx/checkpoint3/" end
 if nenAll then outputDir="docs/nen_vfx/final/" end
 if nenPolish then outputDir="docs/nen_vfx/final/" end
+if nenJuice then outputDir="docs/nen_vfx/juice/combat/" end
 local captured={}
 local frameSamples,drawPeak,particlePeak={},0,0
 local function performance()
@@ -136,7 +140,8 @@ function T.update(game,cb)
             local id=s.attack.profile.id..(nenMode and "_tier"..s.attack.nen.tier or "")
             local charge=s.attack.nen and "CHARGE" or "ANTICIPATION"
             local travel=s.attack.nen and "TRAVEL" or "ATTACK"
-            if e and (e.kind==charge or e.kind==travel) and s.age>e.duration*.45 then shot(id,e.kind==charge and "anticipation" or "attack") end
+            local frameAge=e and e.duration*((nenJuice and e.kind==travel) and .75 or .45) or 0
+            if e and (e.kind==charge or e.kind==travel) and s.age>frameAge then shot(id,e.kind==charge and "anticipation" or "attack") end
             if s.impactDispatched and s.cameraAge>0.025 and s.cameraAge<0.07 then shot(id,"impact") end
             if s.impactDispatched and s.cameraAge>.11 and s.cameraAge<.18 then shot(id,"after_contact") end
         end

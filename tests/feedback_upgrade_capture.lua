@@ -72,6 +72,29 @@ function love.load()
     P.update(2,false,"shop",shop)
     assert(#P.moneyFeedback==0 and P.goldValue(game.gold)==game.gold)
     g.pop();save(canvas,"docs/combat_feedback/upgrade_gallery.png");canvas:release()
+    canvas=g.newCanvas(1280,980)
+    g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.025,0.037,0.05,1)
+    title("SÁT THƯƠNG · NÉN / BẬT / DƯ CHẤN / GIỮ SỐ",0,18,1280)
+    for column,amount in ipairs({25,2500,250000,1e15}) do
+        title(UI.formatNumber(amount),(column-1)*320,51,320)
+        for row,age in ipairs({0.025,0.14,0.38,0.90}) do
+            local ft=F.new("damage",amount,640,214,UI.formatNumber);F.update(ft,age)
+            g.push("all");g.translate((column-1)*320+160,95+(row-1)*130);g.scale(0.66);g.translate(-640,-214)
+            F.draw(ft,UI);g.pop()
+        end
+    end
+    title("ĐÁNH LIÊN TIẾP · BA HÀNG, ĐÒN MỚI NỔI BẬT",0,640,640)
+    local burst={}
+    for i=1,12 do
+        F.add(burst,"damage",250000+i*1000,320,720,UI.formatNumber)
+        for _,ft in ipairs(burst) do F.update(ft,0.055) end
+    end
+    assert(#burst==3)
+    for _,ft in ipairs(burst) do F.draw(ft,UI) end
+    title("ĐI CÙNG NEN · GIỮ SỐ RÕ VÀ NHƯỜNG HIỆU ỨNG VA CHẠM",640,640,640)
+    local quiet=F.new("damage",1e15,960,756,UI.formatNumber)
+    quiet.quietImpact=true;F.update(quiet,0.14);F.draw(quiet,UI)
+    g.pop();save(canvas,"docs/combat_feedback/damage_apex.png");canvas:release()
     print("Feedback GPU PASS: five impact tiers, both phases, armor gain/absorption/depletion over HP, real shop purchase/sale, bounded coin tail, exact wallet settle and graphics state")
     love.event.quit(0)
 end

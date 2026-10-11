@@ -39,4 +39,30 @@ for _,fps in ipairs({30,60,120,144}) do
     assert(meter.shown==0 and meter.trail==0,"armor depletion and interrupted counts settle exactly")
 end
 assert(rng.getState()==before,"feedback must not consume gameplay RNG")
+local burst={}
+for i=1,100 do
+    local hit=F.add(burst,"damage",i*1000,630,214)
+    assert(#burst<=3 and hit.y<=342 and not hit.crowded,"bursts stay on three bounded lanes with a bright newest hit")
+    local lanes={}
+    for _,ft in ipairs(burst) do
+        assert(not lanes[ft.lane],"a target cannot have two values on the same lane")
+        lanes[ft.lane]=true
+    end
+end
+for _,x in ipairs({454,806}) do for i=1,3 do F.add(burst,"damage",250,x,214) end end
+assert(#burst==9,"separate enemies keep separate damage lanes")
+for _,fps in ipairs({30,60,120,144}) do
+    for _,amount in ipairs({1,250,2500,25000,250000,1e9,1e15}) do
+        local ft=F.new("damage",amount,630,214)
+        for _=1,math.floor(fps*2.5) do
+            F.update(ft,1/fps)
+            local sx,sy,tilt,rise=F.damagePose(ft)
+            assert(sx>0 and sy>0 and sx<2 and sy<2 and math.abs(tilt)<0.06 and rise<65)
+        end
+        assert(ft.alpha==0)
+    end
+end
+assert(F.new("damage",1e9,0,0).label=="PHÁ GIỚI" and F.new("damage",1e15,0,0).label=="TUYỆT ĐỈNH")
+assert(rng.getState()==before,"impact motion and bursts must not consume gameplay RNG")
+print("Damage impact PASS: squash/rebound through 1e15 at 30/60/120/144 FPS, three bounded burst lanes per target, newest-hit emphasis and apex labels")
 print("Combat feedback PASS: five tiers through 1e15, reward intensity, 30/60/120/144 FPS resource gain/loss/reversal, delayed armor/HP trails, exact settle, overlap, bounded queue, no gameplay RNG")

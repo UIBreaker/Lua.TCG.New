@@ -41,6 +41,13 @@ function A.register(sound)
                     texture=.24*math.sin(t*tau*32)+.20*math.sin(t*tau*(140-65*k*k))+noise*.10
                     if kind=="charge" then env=env*(.35+.65*k) end
                 end
+                -- A short contact crack over a descending body, with quieter sustained energy.
+                if kind=="impact" then
+                    local punch=math.sin(tau*(76*t-75*t*t))*math.exp(-t*32)
+                    local snap=noise*math.exp(-t*145)
+                    tone=tone*.78+punch*(p.nenType=="enhancement" and .34 or .19)
+                    texture=texture*.82+snap*(p.nenType=="emission" and .36 or .22)
+                end
                 local value=math.max(-.78,math.min(.78,(tone+texture)*env));peak=math.max(peak,math.abs(value))
                 data:setSample(i,value)
             end

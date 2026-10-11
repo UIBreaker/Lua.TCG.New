@@ -3,6 +3,9 @@ local N=require("src.nen_combat")
 local UI=require("src.ui")
 local E=require("render.nen_effects")
 local count,profiles=0,0
+-- Measure retained presentation data separately from process-wide JIT trace compilation.
+local jitWasOn=jit and jit.status()
+if jit then jit.off();jit.flush() end
 collectgarbage("collect");local memoryBefore=collectgarbage("count")
 local wasOpen=F.labOpen;F.labOpen=true;F.labFilter=0
 -- Warm every profile before measuring retained heap; LuaJIT traces are a one-time cost.
@@ -52,7 +55,8 @@ end
 F.labOpen=wasOpen
 collectgarbage("collect")
 local memoryGrowth=collectgarbage("count")-memoryBefore
+if jitWasOn then jit.on() end
 assert(memoryGrowth<250,"all 27 profiles retain snapshots / particles: "..memoryGrowth.." KB")
 print("NEN all-ready: "..profiles.." actual profiles / "..profiles*3 .." variants / "..count.." sequences (10 consecutive per variant), 3 FPS and qualities, fast/skip/reduced, single contact, snapshot IDs, origins/arrival and camera settle passed")
-print(string.format("NEN mixed-profile stress: %d warm-up + %d measured sequences, collected heap growth %.1f KB (<250 KB)",count,count,memoryGrowth))
+print(string.format("NEN mixed-profile stress: %d warm-up + %d measured sequences, collected heap growth %.1f KB (<250 KB, trace compilation excluded)",count,count,memoryGrowth))
 return true

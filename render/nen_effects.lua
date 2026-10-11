@@ -51,14 +51,16 @@ local function color(g,a,alpha,mul)
     local c=a.color;g.setColor(c[1]*(mul or 1),c[2]*(mul or 1),c[3]*(mul or 1),alpha or 1)
 end
 local function stroke(g,a,alpha,width,...)
-    g.setShader();g.setBlendMode("alpha");color(g,a,alpha*.16);g.setLineWidth(width*3);g.line(...)
-    color(g,a,alpha);g.setLineWidth(width);g.line(...)
+    g.setShader();g.setBlendMode("add")
+    local c=a.color;g.setColor(c[1]*.8+.2,c[2]*.8+.2,c[3]*.8+.2,alpha*.18)
+    g.setLineWidth(width*2.5);g.line(...)
+    g.setColor(c[1]*.62+.38,c[2]*.62+.38,c[3]*.62+.38,alpha*.85)
+    g.setLineWidth(width);g.line(...)
+    g.setBlendMode("alpha")
 end
 local function fill(g,a,alpha,...)
     g.setBlendMode("alpha");g.setShader(a.nen.materialShader);color(g,a,alpha)
     g.polygon("fill",...);g.setShader()
-    local c=a.color;g.setColor(c[1]*.76+.24,c[2]*.76+.24,c[3]*.76+.24,alpha*.88)
-    g.setLineWidth(1.2);g.polygon("line",...)
 end
 local function soft(g,a,x,y,r,alpha)
     local image=require("render.lighting").radial
@@ -66,19 +68,53 @@ local function soft(g,a,x,y,r,alpha)
     g.setShader();g.setBlendMode("add");color(g,a,alpha)
     g.draw(image,x-r,y-r*.72,0,r/64,r*.72/64);g.setBlendMode("alpha")
 end
+local function glow(g,a,x,y,rx,ry,alpha,white)
+    local image=require("render.lighting").radial
+    if not image then return end
+    local c=a.color;white=white or 0
+    g.setShader();g.setBlendMode("add")
+    g.setColor(mix(c[1],1,white),mix(c[2],.98,white),mix(c[3],.92,white),alpha)
+    g.draw(image,x,y,0,rx/64,ry/64,64,64)
+    g.setBlendMode("alpha")
+end
+local function mass(g,a,x,y,rx,ry,alpha)
+    local n=a.nen;local shader=n.materialShader
+    g.setShader(shader);g.setBlendMode("alpha");color(g,a,alpha)
+    if shader then
+        n.surfaceCenter=n.surfaceCenter or {};n.surfaceRadius=n.surfaceRadius or {}
+        local sx,sy=g.transformPoint(x,y);local ex,ey=g.transformPoint(x+rx,y+ry)
+        n.surfaceCenter[1],n.surfaceCenter[2]=sx,sy
+        n.surfaceRadius[1],n.surfaceRadius[2]=math.max(.1,math.abs(ex-sx)),math.max(.1,math.abs(ey-sy))
+        shader:send("surfaceCenter",n.surfaceCenter);shader:send("surfaceRadius",n.surfaceRadius)
+        shader:send("surfaceVolume",1)
+    end
+    g.ellipse("fill",x,y,rx,ry)
+    if shader then shader:send("surfaceVolume",0)
+    else glow(g,a,x-rx*.25,y-ry*.25,rx*.7,ry*.8,alpha*.25,.25) end
+    g.setShader()
+end
 local function lance(g,a,x,y,size,alpha)
     fill(g,a,alpha,x,y-size,x-size*.15,y-size*.38,x-size*.06,y+size*.3,x+size*.06,y+size*.3,x+size*.15,y-size*.38)
     stroke(g,a,alpha,1.6,x,y-size,x,y+size*.45)
     stroke(g,a,alpha*.85,2,x-size*.24,y+size*.15,x+size*.24,y+size*.15)
+    g.setColor(.88,.95,1,alpha*.48)
+    g.polygon("fill",x,y-size,x-size*.11,y-size*.38,x,y-size*.19)
+    g.setColor(.025,.055,.085,alpha*.7)
+    g.polygon("fill",x,y-size*.19,x+size*.11,y-size*.38,x+size*.035,y+size*.27,x,y+size*.27)
 end
 local function guardian(g,a,x,y,size,alpha,side,armed)
     g.push();g.translate(x,y);g.scale(size,size)
-    -- Helmet, pauldrons, tapering torso and split cloak remain readable without bloom.
-    fill(g,a,alpha,-8,-41,-6,-56,6,-56,8,-41,0,-35)
-    fill(g,a,alpha,-17,-32,-10,-41,10,-41,17,-32,11,-9,0,8,-11,-9)
-    fill(g,a,alpha*.76,-13,-17,-24,15,-6,8,0,-8)
-    fill(g,a,alpha*.76,13,-17,24,15,6,8,0,-8)
-    stroke(g,a,alpha*.8,1,-5,-47,5,-47)
+    -- Rounded armor masses and flowing cloth, without a wireframe over every surface.
+    local sway=a.nen.reducedMotion and 0 or math.sin(a.nen.charge*4+a.nen.travel*11)*4
+    fill(g,a,alpha*.78,-12,-33,-18,-18,-23,2+sway,-19,15,-8,8,0,11,9,8,20,13-sway,24,1-sway,16,-20,12,-33)
+    mass(g,a,0,-48,8,11,alpha)
+    mass(g,a,0,-23,13,19,alpha)
+    mass(g,a,-15,-33,8,7,alpha);mass(g,a,15,-33,8,7,alpha)
+    mass(g,a,-15,-22,5,12,alpha*.9);mass(g,a,16,-22,5,12,alpha*.9)
+    mass(g,a,-6,3,4,14,alpha*.85);mass(g,a,6,3,4,14,alpha*.85)
+    g.setShader();g.setColor(.025,.04,.065,alpha*.9);g.rectangle("fill",-6,-49,12,3,1.5)
+    glow(g,a,-4,-29,8,18,alpha*.3,.45)
+    glow(g,a,0,-48,10,13,alpha*.16,.25)
     if armed then
         if side<0 then fill(g,a,alpha,-24,-33,-9,-30,-9,-7,-18,4,-28,-12)
         else lance(g,a,24,-21,50,alpha) end
@@ -88,23 +124,34 @@ end
 local function rider(g,a,x,y,size,alpha,mounted)
     g.push();g.translate(x,y);g.scale(size,size)
     if mounted then
-        local gait=a.nen.reducedMotion and 0 or math.sin(a.nen.travel*math.pi*5)*4
-        -- Original expedition steed silhouette: long chest, angular mane, trailing legs.
-        fill(g,a,alpha*.85,-24,19,-26,-8,-12,-23,2,-19,19,6,10,25,-13,30)
-        fill(g,a,alpha,8,1,5,-30,14,-50,28,-48,31,-28,21,-14)
-        stroke(g,a,alpha,4,-17,20,-23+gait,42,-8-gait,34)
-        stroke(g,a,alpha,3,8,22,16-gait,38,25+gait,25)
+        local gait=a.nen.reducedMotion and 0 or math.sin(a.nen.travel*math.pi*5)*7
+        -- Broad chest, curved neck and round joints replace angular paper legs.
+        mass(g,a,-7,9,27,16,alpha)
+        mass(g,a,13,-10,10,22,alpha)
+        mass(g,a,22,-29,11,12,alpha)
+        mass(g,a,29,-25,10,5,alpha*.85)
+        fill(g,a,alpha*.8,16,-36,17,-48,22,-39,24,-36)
+        g.setShader();color(g,a,alpha*.8);g.setLineWidth(5)
+        local back=-23+gait;local front=17-gait
+        g.line(-19,20,back,34,back-5,44);g.line(10,20,front,31,front+8,25)
+        g.circle("fill",back,34,2.5);g.circle("fill",front,31,2.5)
+        mass(g,a,-20,19,5,9,alpha*.9);mass(g,a,11,17,5,9,alpha*.9)
+        glow(g,a,27,-32,2,2,alpha,.65)
     end
     guardian(g,a,-4,-14,.8,alpha,1,true)
-    fill(g,a,alpha*.66,-11,-36,-43,-12,-28,2,-8,-3)
+    local cloth=a.nen.reducedMotion and 0 or math.sin(a.nen.charge*3+a.nen.travel*13)*5
+    fill(g,a,alpha*.8,-11,-36,-43,-12+cloth,-28,2+cloth*.6,-8,-3)
     lance(g,a,29,-28,74,alpha)
     g.pop()
 end
 local function crystal(g,a,x,y,size,angle,alpha)
     g.push();g.translate(x,y);g.rotate(angle)
     fill(g,a,alpha,0,-size,-size*.22,-size*.1,-size*.11,size*.38,0,size*.62,size*.19,size*.16,size*.22,-size*.1)
-    stroke(g,a,alpha*.9,1,0,-size,0,size*.55)
-    stroke(g,a,alpha*.65,1,-size*.2,-size*.08,0,size*.2,size*.2,-size*.08)
+    g.setColor(.8,.94,1,alpha*.40)
+    g.polygon("fill",0,-size,-size*.18,-size*.1,0,size*.18)
+    g.setColor(.02,.06,.12,alpha*.6)
+    g.polygon("fill",0,size*.18,size*.19,-size*.1,size*.14,size*.16,0,size*.62)
+    glow(g,a,0,-size*.24,size*.18,size*.55,alpha*.75,.6)
     g.pop()
 end
 local function bolt(g,a,x,y,tx,ty,alpha,width,seed,p,branching)
@@ -134,11 +181,57 @@ local function ribbon(g,a,i,p,width)
     local x,y=N.position(a,i,"TRAVEL",math.max(0,p-.28))
     for j=1,q.segments do
         local t=math.max(0,p-.28+.28*j/q.segments);local tx,ty=N.position(a,i,"TRAVEL",t)
-        stroke(g,a,.10+.52*j/q.segments,width*j/q.segments,x,y,tx,ty);x,y=tx,ty
+        local k=j/q.segments;local dx,dy=tx-x,ty-y
+        local length=math.sqrt(dx*dx+dy*dy)
+        if length>.1 then
+            local nx,ny=-dy/length,dx/length;local w=width*k*.65
+            g.setShader();g.setBlendMode("add");color(g,a,k*k*.48)
+            g.polygon("fill",x-nx*w*.65,y-ny*w*.65,tx-nx*w,ty-ny*w,tx+nx*w,ty+ny*w,x+nx*w*.65,y+ny*w*.65)
+            local c=a.color;g.setColor(c[1]*.5+.5,c[2]*.5+.5,c[3]*.5+.5,k*k*.68)
+            local inner=math.max(.35,w*.25)
+            g.polygon("fill",x-nx*inner*.65,y-ny*inner*.65,tx-nx*inner,ty-ny*inner,tx+nx*inner,ty+ny*inner,x+nx*inner*.65,y+ny*inner*.65)
+        end
+        x,y=tx,ty
+    end
+    g.setBlendMode("alpha")
+    if not a.nen.reducedMotion then
+        for j=1,3 do
+            if a.nen.particleCount>=q.particles then break end
+            local age=(p*2+j*.217+i*.113)%1
+            local t=math.max(0,p-.025-age*.23);local sx,sy=N.position(a,i,"TRAVEL",t)
+            local drift=math.sin(i*9+j*3)*age*12
+            local alpha=(1-age)^2*clamp(p*5)
+            glow(g,a,sx+drift,sy-age*10,6+age*4,6+age*4,alpha*.45,.4)
+            g.setBlendMode("add");g.setColor(.93,.98,1,alpha*.9)
+            g.ellipse("fill",sx+drift,sy-age*10,1.1+alpha,1.1+alpha)
+            g.setBlendMode("alpha");a.nen.particleCount=a.nen.particleCount+1
+        end
     end
 end
 local function ring(g,a,x,y,rx,ry,alpha,width)
-    g.setShader();g.setBlendMode("alpha");color(g,a,alpha);g.setLineWidth(width or 1.5);g.ellipse("line",x,y,math.max(.1,rx),math.max(.1,ry))
+    g.setShader();g.setBlendMode("alpha");local w=width or 1.5
+    g.setBlendMode("add");color(g,a,alpha*.24)
+    g.setLineWidth(w*2);g.ellipse("line",x,y,math.max(.1,rx),math.max(.1,ry))
+    color(g,a,alpha*.42);g.setLineWidth(w*.7);g.ellipse("line",x,y,math.max(.1,rx),math.max(.1,ry))
+    g.setBlendMode("alpha")
+end
+local function flow(g,a,x,y,tx,ty,width,alpha,clock)
+    local n=a.nen;local segments=(C.quality[a.quality] or C.quality.high).segments
+    local dx,dy=tx-x,ty-y;local length=math.max(1,math.sqrt(dx*dx+dy*dy))
+    local nx,ny=-dy/length,dx/length
+    local lx,ly,lw=x,y,width*.08
+    g.setShader(n.materialShader);g.setBlendMode("alpha");color(g,a,alpha)
+    -- Convex strips share their edges; a concave polygon would fold across the curve.
+    for j=1,segments do
+        local k=j/segments
+        local wave=math.sin(k*math.pi*2+clock)*math.sin(k*math.pi)*length*.065
+        local w=width*(.08+math.sin(k*math.pi)*.92)
+        local sx,sy=mix(x,tx,k)+nx*wave,mix(y,ty,k)+ny*wave
+        g.polygon("fill",lx-nx*lw,ly-ny*lw,sx-nx*w,sy-ny*w,sx+nx*w,sy+ny*w,lx+nx*lw,ly+ny*lw)
+        lx,ly,lw=sx,sy,w
+    end
+    g.setShader()
+    glow(g,a,mix(x,tx,.7),mix(y,ty,.7),width*3,width*5,alpha*.35,.25)
 end
 local function bind(a)
     local n=a.nen;local g=love.graphics;n.materialShader=a.quality~="low" and E.shader or nil
@@ -152,21 +245,20 @@ local function bind(a)
     n.materialShader:send("screenCenter",n.screenCenter);n.materialShader:send("pixelScale",math.max(.1,math.abs(sx-x)+math.abs(sy-y)))
     n.materialShader:send("clock",n.charge+n.travel*2+n.phaseProgress*.2)
     n.materialShader:send("material",material or 1);n.materialShader:send("charge",.4+n.charge*.6)
+    n.materialShader:send("surfaceVolume",0)
 end
 local drawings={}
 drawings.high_card=function(g,a,phase,p,alpha)
     local n=a.nen;local tier=n.tier;local x,y=N.position(a,1,phase,p)
     local scale=.65+tier*.25;soft(g,a,x,y-22,48*scale,alpha*.13)
     if tier==1 then
-        fill(g,a,alpha,x-14,y-40,x+14,y-40,x+14,y+8,x-14,y+8)
+        guardian(g,a,x,y,.75,alpha,1,false)
         lance(g,a,x,y-8,42,alpha)
     else rider(g,a,x,y,scale,alpha,tier==3) end
     if phase=="TRAVEL" then
         ribbon(g,a,1,p,tier==3 and 5 or 3)
-        if tier==3 then stroke(g,a,alpha*.65,1.2,x-17,y+32,x+9,y+45,x-7,y+63,x+14,y+82) end
     else
         ring(g,a,x,y+24,34*scale*(1-n.charge*.3),9*scale,alpha*.65,2)
-        stroke(g,a,alpha*n.charge,2,x-29,y+26,x-17,y+22,x+17,y+22,x+29,y+26)
     end
 end
 drawings.pair=function(g,a,phase,p,alpha)
@@ -181,9 +273,7 @@ drawings.pair=function(g,a,phase,p,alpha)
         end
     end
     if tier==3 then
-        local lx,ly=N.position(a,1,phase,p);local rx,ry=N.position(a,2,phase,p)
-        stroke(g,a,alpha*.55,1.5,lx,ly+15,a.cx,380,rx,ry+15)
-        ring(g,a,a.cx,380,34,10,alpha*.8,2)
+        glow(g,a,a.cx,380,34,10,alpha*.25)
     end
 end
 drawings.even_frost=function(g,a,phase,p,alpha)
@@ -246,21 +336,13 @@ drawings.tesla_369=function(g,a,phase,p,alpha)
     end
 end
 drawings.straight=function(g,a,phase,p,alpha)
-    local n=a.nen;local tier=n.tier;local previous
+    local n=a.nen;local tier=n.tier
     for i=1,N.count(a) do
         local x,y=N.position(a,i,phase,p)
-        if previous then stroke(g,a,alpha*.45,1.5,previous.x,previous.y,x,y) end
-        previous=n.snapshot.cards[a.rankOrder[i]]
         if phase=="TRAVEL" then ribbon(g,a,i,p,1.7+tier*.7) end
         if tier==1 then lance(g,a,x,y,19,alpha)
         elseif tier==2 then guardian(g,a,x,y,.58,alpha,i%2==0 and -1 or 1,true)
         else rider(g,a,x,y,.67,alpha,true) end
-    end
-    if tier>=2 then
-        local reveal=alpha*(phase=="TRAVEL" and (1-p) or smooth(n.charge))
-        stroke(g,a,reveal*.55,2,a.cx-88,444,a.cx-39,358,a.cx-24,280)
-        stroke(g,a,reveal*.55,2,a.cx+88,444,a.cx+39,358,a.cx+24,280)
-        for i=1,5 do local y=440-i*29;stroke(g,a,reveal*.6,1,a.cx-13,y+5,a.cx,y,a.cx+13,y+5) end
     end
 end
 drawings.eclipse_duality=function(g,a,phase,p,alpha)
@@ -294,12 +376,16 @@ drawings.eclipse_duality=function(g,a,phase,p,alpha)
 end
 local function banner(g,a,x,y,size,alpha,clock)
     stroke(g,a,alpha,2,x,y+size*.3,x,y-size)
-    for j=0,5 do
-        local v=j/6;local wave=math.sin(clock*5+v*4)*size*.08
+    for j=0,11 do
+        local v=j/12;local wave=math.sin(clock*5+v*4)*size*.09
+        local nextWave=math.sin(clock*5+(v+1/12)*4)*size*.09
         local yy=y-size+v*size*.72
-        fill(g,a,alpha*(1-v*.3),x,yy,x+size*(.85-v*.15),yy+wave,
-            x+size*(.85-(v+1/6)*.15),yy+size*.12+wave,x,yy+size*.12)
+        g.setShader(a.nen.materialShader);color(g,a,alpha*(1-v*.15),.78+.22*math.cos(v*5-clock*5))
+        g.polygon("fill",x,yy,x+size*(.85-v*.15),yy+wave,
+            x+size*(.85-(v+1/12)*.15),yy+size*.06+nextWave,x,yy+size*.06)
     end
+    local cx,cy=x+size*.38,y-size*.63+math.sin(clock*5+2)*size*.045
+    stroke(g,a,alpha*.85,1.4,cx,cy-size*.12,cx+size*.09,cy,cx,cy+size*.12,cx-size*.09,cy,cx,cy-size*.12)
 end
 local function pillar(g,a,x,y,size,alpha)
     fill(g,a,alpha,x-size*.25,y-size,x+size*.25,y-size,x+size*.3,y,x-size*.3,y)
@@ -324,7 +410,6 @@ drawings.three_of_a_kind=function(g,a,phase,p,alpha)
         local x,y=N.position(a,i,phase,p)
         lance(g,a,x,y,31+tier*8,alpha*(1-merge))
         if phase=="TRAVEL" then ribbon(g,a,i,p,3) end
-        if tier>=2 then local tx,ty=N.position(a,i%3+1,phase,p);stroke(g,a,alpha*.6*(1-merge),1.5,x,y,tx,ty) end
     end
     if merge>0 then local x,y=N.position(a,1,phase,p);lance(g,a,a.cx,y,91,alpha*merge);soft(g,a,a.cx,y,45,alpha*merge*.1) end
 end
@@ -332,7 +417,7 @@ drawings.flush=function(g,a,phase,p,alpha)
     local tier=a.nen.tier
     if tier==1 then
         for i=1,N.count(a) do local x,y=N.position(a,i,phase,p)
-            stroke(g,a,alpha,5,x-8,y+30,x+math.sin(p*5+i)*14,y+10,x,y-27)
+            flow(g,a,x-8,y+30,x,y-27,6,alpha,a.nen.charge*4+p*8+i)
             if phase=="TRAVEL" then ribbon(g,a,i,p,4) end end
     else
         local x,y=N.position(a,1,phase,p);local size=tier==3 and 112 or 76
@@ -362,8 +447,7 @@ drawings.four_of_a_kind=function(g,a,phase,p,alpha)
     local tier=a.nen.tier
     for i=1,4 do local x,y=N.position(a,i,phase,p)
         pillar(g,a,x,y,37+tier*12,alpha)
-        if phase=="TRAVEL" then ribbon(g,a,i,p,3+tier)
-        elseif tier>=2 then stroke(g,a,alpha*.5,1.5,x,y,a.cx,315) end
+        if phase=="TRAVEL" then ribbon(g,a,i,p,3+tier) end
     end
     if tier==3 then ring(g,a,a.cx,315,99*(1-a.nen.travel*.65),62*(1-a.nen.travel*.65),alpha*.65,3) end
 end
@@ -383,11 +467,13 @@ end
 local function star(g,a,x,y,r,alpha,rotation)
     g.push();g.translate(x,y);g.rotate(rotation or 0)
     fill(g,a,alpha,0,-r,r*.22,-r*.22,r,0,r*.22,r*.22,0,r,-r*.22,r*.22,-r,0,-r*.22,-r*.22)
+    g.setColor(.88,.97,1,alpha*.85);g.polygon("fill",0,-r*.52,r*.1,0,0,r*.52,-r*.1,0)
     g.pop()
 end
 local function sword(g,a,x,y,r,alpha,angle)
     g.push();g.translate(x,y);g.rotate(angle or 0)
     fill(g,a,alpha,0,-r,-r*.1,-r*.68,-r*.075,r*.12,r*.075,r*.12,r*.1,-r*.68)
+    g.setColor(.85,.95,1,alpha*.52);g.polygon("fill",0,-r,-r*.075,-r*.67,0,r*.10)
     stroke(g,a,alpha,2,-r*.25,0,r*.25,0);stroke(g,a,alpha,3,0,0,0,r*.35)
     ring(g,a,0,r*.35,r*.08,r*.08,alpha,1.5);g.pop()
 end
@@ -401,7 +487,7 @@ end
 local function slab(g,a,x,y,r,angle,alpha)
     g.push();g.translate(x,y);g.rotate(angle)
     fill(g,a,alpha,-r*.35,-r*.4,r*.04,-r*.67,r*.36,-r*.23,r*.28,r*.43,-r*.13,r*.61,-r*.44,r*.07)
-    stroke(g,a,alpha*.8,1.5,-r*.21,-r*.31,r*.08,-r*.04,-r*.12,r*.25,r*.07,r*.49)
+    g.setColor(.035,.045,.065,alpha*.85);g.polygon("fill",r*.04,-r*.67,r*.36,-r*.23,r*.28,r*.43,-r*.04,r*.18)
     g.pop()
 end
 local function swordAngle(a,x,y,p)
@@ -461,8 +547,7 @@ drawings.prime=function(g,a,phase,p,alpha)
         if tier>=2 then ring(g,a,x,y,20,11,alpha*.7,1.5) end
         if phase=="TRAVEL" then ribbon(g,a,i,p,2.8) end
         if tier==3 and phase~="TRAVEL" then
-            stroke(g,a,alpha*.45,1,x,y,a.cx,270)
-            stroke(g,a,alpha,2,x-23,y-13,x-23,y-23,x-13,y-23,x+13,y+23,x+23,y+23,x+23,y+13)
+            glow(g,a,x,y,25,25,alpha*.25,.4)
         end
     end
 end
@@ -498,11 +583,9 @@ drawings.obsidian_tide=function(g,a,phase,p,alpha)
         if tier==1 then slab(g,a,x,y,35,(i-3)*.24,alpha)
         elseif tier==2 then
             fill(g,a,alpha,x-57,y+8,x-44,y-20,x-27,y-9,x-10,y-41,x+8,y-19,x+26,y-49,x+40,y-18,x+57,y-9,x+45,y+18)
-            stroke(g,a,alpha*.85,2,x-37,y+4,x-12,y-21,x+14,y-7,x+34,y-25)
         else
             crystal(g,a,x,y,98,-.18,alpha)
             for j=1,3 do crystal(g,a,x-(j-2)*23,y+12*j,43,j*.16,alpha*.7) end
-            stroke(g,a,alpha,2,x-19,y-52,x+8,y-31,x-7,y,x+14,y+43)
         end
         if phase=="TRAVEL" then ribbon(g,a,i,p,3+tier*2) end
     end
@@ -511,7 +594,6 @@ drawings.four_kingdom_prism=function(g,a,phase,p,alpha)
     local tier=a.nen.tier;local cx,cy=a.cx-115,355
     local fade=alpha*(phase=="TRAVEL" and 1-p or 1)
     fill(g,a,fade,cx,cy-47,cx-45,cy+26,cx+45,cy+26)
-    stroke(g,a,fade,1.5,cx,cy-47,cx,cy+26,cx-45,cy+26)
     local original=a.color;local palette={{.95,.34,.31},{.25,.74,1},{.40,.85,.55},{.8,.5,1}}
     for i=1,4 do a.color=palette[i]
         local x,y=N.position(a,tier==2 and i or 1,phase,p)
@@ -524,18 +606,14 @@ drawings.four_kingdom_prism=function(g,a,phase,p,alpha)
     if tier==3 then local x,y=N.position(a,1,phase,p);lance(g,a,x,y,70,alpha*.9);ring(g,a,cx,cy,66,23,fade*.6,2) end
 end
 drawings.four_kingdom_expedition=function(g,a,phase,p,alpha)
-    local tier=a.nen.tier;local fade=alpha*(phase=="TRAVEL" and 1-p or 1)
+    local tier=a.nen.tier
     for i=1,4 do local x,y=N.position(a,i,phase,p)
-        if tier==1 then stroke(g,a,alpha,4,x-10,y+20,x,y,x+10,y-25)
+        if tier==1 then flow(g,a,x-10,y+20,x+10,y-25,5,alpha,a.nen.charge*3+p*5+i)
         else
             banner(g,a,x,y,45,alpha,a.nen.charge+p+i)
             if tier==3 then guardian(g,a,x-17,y+12,.52,alpha,i%2==0 and 1 or -1,true) end
         end
-        if phase=="TRAVEL" then ribbon(g,a,i,p,2+tier)
-        elseif tier==3 then
-            stroke(g,a,fade*.65,1.5,x,y+20,x+(a.cx-x)*.55,365,a.cx,270)
-            for k=1,3 do ring(g,a,mix(x,a.cx,k/4),mix(y+20,270,k/4),5,3,fade,1) end
-        end
+        if phase=="TRAVEL" then ribbon(g,a,i,p,2+tier) end
     end
 end
 drawings.destiny_crown=function(g,a,phase,p,alpha)
@@ -581,14 +659,14 @@ end
 drawings.answer_42=function(g,a,phase,p,alpha)
     local tier=a.nen.tier;local lastX,lastY
     for i=1,5 do local x,y=N.position(a,i,phase,p)
-        if lastX then stroke(g,a,alpha*.65,1.5,lastX,lastY,x,y) end
+        if lastX then flow(g,a,lastX,lastY,x,y,1.8,alpha*.4,a.nen.charge+i) end
         lastX,lastY=x,y
         ring(g,a,x,y,11+tier*2,6+tier*2,alpha,1.5)
-        stroke(g,a,alpha,1.5,x-20,y,x+20,y);stroke(g,a,alpha,1.5,x,y-18,x,y+18)
+        star(g,a,x,y,9,alpha,i*.3)
         if phase=="TRAVEL" then ribbon(g,a,i,p,2.5)
         elseif tier>=2 then
             local tx,ty=N.position(a,i%5+1,phase,p)
-            stroke(g,a,alpha*.3,1,x,y,tx,ty)
+            flow(g,a,x,y,tx,ty,1.2,alpha*.2,a.nen.charge-i)
             if tier==3 then star(g,a,x,y,9,alpha,a.nen.charge+i) end
         end
     end
@@ -605,7 +683,6 @@ drawings.sealed_gate=function(g,a,phase,p,alpha)
     gate(g,a,cx,cy,tier==3 and 82 or 45,fade,smooth((a.nen.charge-.5)/.5))
     if tier>=2 then
         for j=1,3 do local t=j*math.pi*2/3-math.pi/2;seal(g,a,cx+math.cos(t)*68,cy+math.sin(t)*48,13,fade,t) end
-        stroke(g,a,fade*.7,2,cx-63,cy+46,cx,cy-64,cx+63,cy+46,cx-63,cy+46)
     end
     for i=1,N.count(a) do local x,y=N.position(a,i,phase,p)
         sword(g,a,x,y,tier==3 and 101 or 48,alpha,phase=="TRAVEL" and swordAngle(a,x,y,p) or -.35)
@@ -630,11 +707,11 @@ drawings.five_ley_lines=function(g,a,phase,p,alpha)
     local tier=a.nen.tier;local fade=alpha*(phase=="TRAVEL" and 1-p or 1)
     for i=1,5 do local x,y=N.position(a,i,phase,p)
         local sourceX=a.cx+(i-3)*52
-        stroke(g,a,fade*.8,2,sourceX,451,sourceX+(i-3)*10,417,sourceX-12,398,a.cx,370)
+        flow(g,a,sourceX,451,a.cx,370,2+tier,fade*.65,a.nen.charge*4+i)
         if phase=="TRAVEL" then
             crystal(g,a,x,y,28+tier*13,(i-3)*.10,alpha);ribbon(g,a,i,p,3+tier)
         else
-            ring(g,a,sourceX,415,17+tier*4,5+tier*2,fade,2)
+            glow(g,a,sourceX,415,17+tier*4,5+tier*2,fade*.65,.2)
             if tier>=2 then pillar(g,a,sourceX,419,27+i*4,fade*.8) end
         end
     end
@@ -847,6 +924,58 @@ contacts.endless_cycle=function(g,a,p,alpha)
     g.setShader();g.setColor(.025,.025,.055,alpha*.75);g.circle("fill",a.cx,270,r*.32)
     if a.nen.tier==3 then stroke(g,a,alpha,2,a.cx-r*.55,276,a.cx-r*.22,268,a.cx+r*.15,274,a.cx+r*.6,264) end
 end
+local function blast(g,a,age)
+    local n=a.nen;local q=C.quality[a.quality] or C.quality.high
+    local family=n.profile.nenType;local p=clamp(age/.4)
+    local alpha=(1-p)^2;local expand=out(age/(family=="emission" and .13 or .18))
+    local size=(24+n.tier*13)*(n.reducedMotion and .75 or 1)
+    local px,py=N.position(a,1,"TRAVEL",.94)
+    local angle=math.atan2(270-py,a.cx-px)
+    local collapse=family=="specialization"
+    local fluid=family=="manipulation"
+    -- Filled, overlapping lobes give the contact volume; light stays local to the enemy.
+    glow(g,a,a.cx,270,size*(1.4+expand),size*(1.1+expand*.6),alpha*.48,.08)
+    local lobes=fluid and 4 or 6
+    for j=1,lobes do
+        local t=j*math.pi*2/lobes+angle
+        local radius=size*expand*(.34+(j%3)*.13)
+        if collapse then radius=size*(.9-expand*.38) end
+        local x=a.cx+math.cos(t)*radius;local y=270+math.sin(t)*radius*.72
+        local r=size*(.65-expand*.23)*(1-p*.45)
+        glow(g,a,x,y,r*(fluid and 1.3 or 1),r*.8,alpha*.7,.22)
+    end
+    local core=(1-clamp(age/.15))^1.6*(n.reducedMotion and .48 or 1)
+    glow(g,a,a.cx,270,size*(.58+expand*.25),size*(.48+expand*.16),core*1.25,.84)
+    glow(g,a,a.cx,270,size*1.35,size*.3,core*.65,.45)
+    if collapse then
+        g.setShader();g.setColor(.018,.022,.05,alpha*.85)
+        g.ellipse("fill",a.cx,270,size*(.24+expand*.18),size*(.18+expand*.12))
+    end
+    local count=math.min(q.particles-n.particleCount,5+n.tier*3)
+    if n.reducedMotion then count=math.min(count,4) end
+    for j=1,count do
+        local t=j*2.399+angle
+        local distance=(10+expand*size*(.65+(j%4)*.22))
+        if collapse then distance=size*(1.45-expand*.45) end
+        local drift=fluid and math.sin(p*4+j)*size*p*.3 or 0
+        local forward=family=="enhancement" and expand*size*.32 or 0
+        local x=a.cx+math.cos(t)*distance+math.cos(angle)*forward+drift
+        local y=270+math.sin(t)*distance*.7+math.sin(angle)*forward+p*p*12
+        local opacity=alpha*(.5+(j%3)*.2)
+        glow(g,a,x,y,8+n.tier,8+n.tier,opacity*.6,.3)
+        g.push();g.translate(x,y);g.rotate(t+(family=="conjuration" and p*1.5 or 0))
+        g.setShader(n.materialShader);color(g,a,opacity)
+        local length=(3+(j%3)*2+n.tier)*(1-p*.6)
+        if family=="transmutation" or family=="conjuration" then
+            g.polygon("fill",-length,0,-length*.25,-2.6,length*.7,-1,length,1,-length*.3,2.5)
+        else
+            g.ellipse("fill",0,0,length,fluid and 2.5 or 1.3)
+        end
+        g.setShader();g.setBlendMode("add");g.setColor(.96,.98,1,opacity*.75)
+        g.ellipse("fill",-length*.15,0,length*.4,.85)
+        g.pop();n.particleCount=n.particleCount+1
+    end
+end
 function E.draw(a,phase,p,impactAge)
     local n=a.nen;local g=love.graphics
     if n.cancelled then return end
@@ -854,25 +983,21 @@ function E.draw(a,phase,p,impactAge)
     local x,y=g.transformPoint(242,150);local rx,ry=g.transformPoint(1022,565)
     g.setScissor(x,y,math.max(1,rx-x),math.max(1,ry-y));g.setShader();g.setBlendMode("alpha")
     bind(a)
+    n.particleCount=0
     local active=phase=="PREPARE" or phase=="ANTICIPATION" or phase=="NEN_AWAKENING" or phase=="CARD_TRANSFORMATION" or phase=="CHARGE" or phase=="RELEASE" or phase=="TRAVEL"
     if active then
-        local alpha=smooth((n.charge-.12)/.52)*(phase=="TRAVEL" and (1-smooth((p-.8)/.2)) or 1)
-        -- Card-to-technique links persist through construction; artwork fades progressively.
+        -- Keep the leading silhouette visible until contact; only the last few frames soften.
+        local alpha=smooth((n.charge-.12)/.52)*(phase=="TRAVEL" and (1-.25*smooth((p-.94)/.06)) or 1)
+        -- Source light replaces construction lines and card-shaped wire markers.
         if n.charge>.2 and phase~="TRAVEL" then for i,c in ipairs(n.snapshot.cards) do
-            local tx,ty=N.position(a,N.cardEmitter(a,i),"CHARGE",1)
-            stroke(g,a,alpha*.38,1.5,c.x,c.y,tx,ty)
-            ring(g,a,c.x,c.y,26*(1-n.charge*.5),36*(1-n.charge*.5),alpha*.52,1.3)
+            glow(g,a,c.x,c.y,25,36,alpha*(1-n.charge)*.32,.2)
         end end
         drawings[a.profile.id](g,a,phase,p,alpha)
     end
-    n.particleCount=0
     if impactAge and impactAge<C.camera.duration+.10 then
-        local k=clamp(impactAge/(C.camera.duration+.10));local alpha=(1-k)^1.6
-        soft(g,a,a.cx,270,34+out(k)*50,alpha*.11)
-        contacts[a.profile.id](g,a,k,alpha)
-        -- Local contact flash lasts a few frames; never covers the world or sharp HUD.
-        g.setShader();g.setBlendMode("add");g.setColor(.9,.96,1,(1-k)^9*(n.reducedMotion and .13 or .68))
-        g.ellipse("fill",a.cx,270,13+n.tier*4,4+n.tier)
+        local k=clamp(impactAge/(C.camera.duration+.10));local alpha=(1-k)^1.9
+        contacts[a.profile.id](g,a,k,alpha*.28)
+        blast(g,a,impactAge)
     end
     g.pop()
 end
@@ -891,7 +1016,7 @@ function E.fragments(a,i,p,x,y)
         elseif n.profile.conversion=="rune_conversion" then
             ring(g,a,fx,fy,4,4,alpha,1);stroke(g,a,alpha,1,fx-3,fy,fx+3,fy)
         elseif n.profile.conversion=="spatial_collapse" then ring(g,a,fx,fy,6*(1-k)+1,3,alpha,1)
-        else stroke(g,a,alpha,1.2,fx,fy,fx,fy+8) end
+        else glow(g,a,fx,fy,5,8,alpha*.6,.4) end
     end
     g.pop()
 end

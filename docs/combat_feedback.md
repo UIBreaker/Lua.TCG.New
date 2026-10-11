@@ -8,7 +8,9 @@
 - 10,000–99,999: red double shockwave, a diamond crest and heavier number entrance.
 - 100,000 and above: violet halo, orbit and crest sparks, largest number and longest hold.
 
-Numbers have dark outlines, a short spring entrance, gentle rise, and a fade only at the end. Damage labels and numbers scale together. Repeated hits stagger vertically; queues are bounded. Values are formatted by the existing UI formatter, including scientific notation through 1e15. Damage uses larger native fonts on the top tiers, with fitted width and bounded horizontal placement.
+Damage numbers compress vertically on contact, rebound, then hold steady while rising. Native fonts, beveled corner marks, an ivory core and tier-colored glow keep the value sharp. Stronger impacts add slashing light, fragments and a delayed second shockwave. At 1e9 the banner becomes PHÁ GIỚI; at 1e12 it becomes TUYỆT ĐỈNH. Both the motion and the late shockwave follow elapsed time, independent of FPS.
+
+Rapid hits use three bounded lanes per target, replacing the oldest value on a reused lane. Older values shrink and dim; the latest stays bright with reduced surrounding geometry so the burst remains readable. Values use the existing UI formatter through 1e15 and fit within a bounded width. Nen's `quietImpact` still suppresses the numerical impact geometry so the combat renderer owns the physical hit.
 
 The visual pass adds tier-scaled double shockwaves, diamond sparks, brief afterimages on the top two tiers, ivory impact highlights, and dark label plates. Coins have rotating faces, shaded edges and sparkles; gains fly into the counter and spending flies outward. Armor uses a metallic gradient, segmented fill and a change-driven shine. HUD shield accents sit beside the value at half size so the number remains readable. These accents use the existing drawing primitives and no new shaders, textures or gameplay RNG.
 
@@ -30,4 +32,4 @@ lua tests/enemy_attack_presentation_smoke.lua
 & '../love-11.5-win64/lovec.exe' . --test-ux-polish
 ```
 
-Capture mode avoids player saves. It exports all five damage tiers, 1e15 damage, gold spending, recovery and armor depletion to `docs/combat_feedback/`. `upgrade_gallery.png` compares both impact phases, armor over HP and actual shop purchase/sale effects. CPU checks cover interrupted gains/losses at 30/60/120/144 FPS, exact settle, bounded lifetime and unchanged gameplay RNG.
+Capture mode avoids player saves. It exports all five damage tiers, 1e15 damage, gold spending, recovery and armor depletion to `docs/combat_feedback/`. `upgrade_gallery.png` compares both impact phases, armor over HP and actual shop purchase/sale effects. `damage_apex.png` shows four damage phases, a rapid burst and the quiet Nen overlay. CPU checks cover resource gains/losses, damage compression/rebound and target lanes at 30/60/120/144 FPS, exact settle, bounded lifetime and unchanged gameplay RNG.

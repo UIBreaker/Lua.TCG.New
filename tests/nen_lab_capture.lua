@@ -7,11 +7,13 @@ local T={}
 local case,started=0,nil
 local initialized,warmUntil=false,nil
 local captured={}
-local all,benchmark=false,false
+local all,benchmark,juice=false,false,false
 for _,option in ipairs(arg or {}) do
     if option=="--nen-all-lab" then all=true end
     if option=="--nen-benchmark" then all=true;benchmark=true end
+    if option=="--nen-juice" then all=true;juice=true end
 end
+local outputDir=juice and "docs/nen_vfx/juice/" or "docs/nen_vfx/"
 local order=all and N.config.order or N.config.samples
 local variants=#order*3
 local intervals,drawPeak,particlePeak,spikes={},0,0,{}
@@ -22,6 +24,10 @@ F.drawLab=function(ui)
     local sx,sy,sw,sh=g.getScissor();local blend,alpha=g.getBlendMode()
     local x,y=g.transformPoint(0,0)
     originalDraw(ui)
+    local attack=F.labAnim and F.labAnim.sequence.attack
+    if attack and attack.nen then
+        assert(attack.nen.particleCount<=require("config.nen_vfx_config").quality[attack.quality].particles,"Niệm particle budget exceeded")
+    end
     if benchmark and started and love.timer.getTime()-started>.12 then
         drawPeak=math.max(drawPeak,g.getStats().drawcalls or 0)
         local n=F.labAnim and F.labAnim.sequence.attack.nen
@@ -43,7 +49,7 @@ function T.update()
             F.labOpen=true
             -- Exercise the actual developer controls, restoring a known preview afterwards.
             for _,key in ipairs({"n","right","left","q","b","l","l","t","v","m","m"}) do F.labKeypressed(key,UI) end
-            F.labFilter=0;F.labTimeline=true;F.labAnchor=true
+            F.labFilter=0;F.labTimeline=true;F.labAnchor=false
             initialized=true;warmUntil=benchmark and love.timer.getTime()+1 or nil
         end
         if warmUntil and love.timer.getTime()<warmUntil then return end
@@ -56,8 +62,8 @@ function T.update()
                 table.sort(intervals);local total=0;local over=0
                 for _,v in ipairs(intervals) do total=total+v;if v>1000/60 then over=over+1 end end
                 local report=string.format("Native HIGH Lab / all %d variants / Normal+Fast / no screenshots or encoding\n%d frames after 1s Lab startup and 120ms per-case warm-up / mean %.2fms / P95 %.2fms / P99 %.2fms / peak %.2fms\nframes over 16.67ms: %d / peak draw calls %d / peak particles %d\nFrame intervals include game/UI/audio on this host, not an isolated GPU timer or a hardware guarantee.\n",variants,#intervals,total/#intervals,intervals[math.ceil(#intervals*.95)],intervals[math.ceil(#intervals*.99)],intervals[#intervals],over,drawPeak,particlePeak)
-                print(report);local file=assert(io.open("docs/nen_vfx/benchmark.txt","wb"));file:write(report);file:close()
-                local out=assert(io.open("docs/nen_vfx/benchmark_spikes.txt","wb"))
+                print(report);local file=assert(io.open(outputDir.."benchmark.txt","wb"));file:write(report);file:close()
+                local out=assert(io.open(outputDir.."benchmark_spikes.txt","wb"))
                 for _,spike in ipairs(spikes) do out:write(spike.."\n") end
                 out:close()
             end
@@ -82,10 +88,18 @@ function T.update()
             local ms=love.timer.getDelta()*1000;intervals[#intervals+1]=ms
             if ms>1000/60 then spikes[#spikes+1]=string.format("%s / tier %d / %s / %s / %.2fms",s.attack.profile.id,s.attack.nen.tier,case>variants and "FAST" or "NORMAL",e and e.kind or "DONE",ms) end
         end
-        if not benchmark and case<=variants and e and e.kind=="TRAVEL" and s.age>e.duration*.48 and not captured[case] then
-            captured[case]=true
+        local phase=juice and e and (e.kind=="CHARGE" and s.age>e.duration*.5 and "formation"
+            or e.kind=="TRAVEL" and s.age>e.duration*.82 and "attack"
+            or s.impactDispatched and s.cameraAge>=.015 and s.cameraAge<.07 and "impact"
+            or s.impactDispatched and s.cameraAge>=.11 and s.cameraAge<.18 and "aftermath") or nil
+        if not juice and e and e.kind=="TRAVEL" and s.age>e.duration*.48 then phase="attack" end
+        local key=tostring(case)..tostring(phase)
+        if not benchmark and case<=variants and phase and not captured[key] then
+            captured[key]=true
+            local path=juice and outputDir..s.attack.profile.id.."_tier"..s.attack.nen.tier.."_"..phase..".png"
+                or "docs/nen_vfx/lab/"..s.attack.profile.id.."_tier"..s.attack.nen.tier..".png"
             love.graphics.captureScreenshot(function(data)
-                local file=assert(io.open("docs/nen_vfx/lab/"..s.attack.profile.id.."_tier"..s.attack.nen.tier..".png","wb"))
+                local file=assert(io.open(path,"wb"))
                 file:write(data:encode("png"):getString());file:close()
             end)
         end

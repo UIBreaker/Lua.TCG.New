@@ -174,7 +174,7 @@ function N.position(a,i,phase,p)
     end
     local origin=n.launch[i];if origin then x0,y0=origin.x,origin.y end
     if phase=="RELEASE" then p=0 end
-    local k=clamp((p-delay)/(1-delay))^(id=="even_frost" and tier>=2 and 1.7 or 2.25)
+    local k=clamp((p-delay)/(1-delay))^(id=="even_frost" and tier>=2 and 1.7 or C.acceleration[n.profile.nenType])
     if id=="pair" and tier==2 and i==1 then k=clamp(p/.55)^2.25 end -- shield pins first; lance follows
     if id=="straight_flush" and tier==3 then k=clamp((p-.18)/.82)^4.3 end
     if id=="four_of_a_kind" and tier==3 then
@@ -220,8 +220,8 @@ function N.camera(a,age)
 end
 function N.reaction(a,age)
     local n=a.nen;local p=clamp(age/C.camera.duration);local weight=n.reducedMotion and .3 or 1
-    local impulse=math.exp(-6*p)*(1-p)*math.cos(6*p)
-    return -C.camera.recoil[n.tier]*impulse*weight,1-.06*impulse*weight,(1-p)^2
+    local impulse=math.exp(-6.5*p)*(1-p)*math.cos(7*p)
+    return -C.camera.recoil[n.tier]*impulse*weight,1-.075*impulse*weight,(1-p)^2.8
 end
 function N.cancel(a)
     if not a or not a.nen then return end

@@ -10,11 +10,11 @@ local Deities=require("src.deities")
 local Persistence=require("src.persistence")
 local seen={}
 for _,list in ipairs({X.equipment,X.seals,X.spectral,X.spells}) do
-    assert(#list==10)
+    assert(#list==(list==X.seals and 2 or 10))
     for _,d in ipairs(list) do assert(not seen[d.id]);seen[d.id]=true;assert(d.desc~="" and d.artConcept~="") end
 end
 assert(#Shop.getPackContents("arcana")==#E.POOL)
-assert(#Shop.getPackContents("seal")==26)
+assert(#Shop.getPackContents("seal")==10)
 assert(#Shop.getPackContents("spectral")==28)
 assert(#Shop.getPackContents("joker_edition")==24)
 local function fixture()
@@ -70,17 +70,12 @@ assert(E.ITEMS.itm_anvil.onCardScore(t,{t},1,ctx).extraDamagePct==0.18)
 t.rank=12;assert(E.ITEMS.itm_crown.onCardScore(t,{t,u},1,ctx).addGold==1)
 assert(E.ITEMS.itm_root.onCardScore(t,{t},1,ctx).addChips==20)
 for _,d in ipairs(X.equipment) do assert(not d.onCardScore(t,{t},0,ctx)) end
--- All seals run in scoring. Seed is permanent, capped, and preview-safe.
+-- Retired Seed upgrades remain permanent, while its stamp migrates.
 local function info(cards,id) return {type=Poker.HAND_TYPES[id or "HIGH_CARD"],scoringCards=cards,unscoredCards={},chips=10,mult=2} end
-g,t=fixture();t.disableFactionPassives=true;t.seal="seal_seed"
-local old=t.baseChips
-Scoring.calculate(info({t}),{}, {gameState=g,monster=g.monster,hand={},preview=true})
-assert(t.baseChips==old)
-for _=1,15 do Scoring.calculate(info({t}),{}, {gameState=g,monster=g.monster,hand={}}) end
-assert(t.seedChips==20 and t.baseChips==old+20 and g.persistentDeck[1].seedChips==20)
-assert(Deck.cloneCard(t).seedChips==20)
+g,t=fixture();X.sync(g,t,function(c) c.seal="seal_seed";c.seedChips=20;c.bonusBaseChips=20;c.baseChips=c.baseChips+20 end)
 local restoredSeed=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop"))
-assert(restoredSeed.persistentDeck[1].seedChips==20 and restoredSeed.persistentDeck[1].baseChips==old+20)
+assert(restoredSeed.persistentDeck[1].seal=="seal_lantern" and restoredSeed.persistentDeck[1].seedChips==20)
+assert(restoredSeed.persistentDeck[1].baseChips==t.baseChips)
 for _,item in ipairs(X.equipment) do
     g,t=fixture();g.persistentDeck[1].equipments={item}
     local restored=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop"))
@@ -89,17 +84,10 @@ end
 for _,d in ipairs(X.seals) do
     g,t=fixture();t.disableFactionPassives=true;t.seal=d.id
     g.consumables={{},{}};g.hand[2].evolutionLevel=1;g.hand[3].rank=3
-    local cards={t,g.hand[3]};if d.id=="seal_harvest" then cards={t,Deck.newCard(2,"valoria"),Deck.newCard(3,"valoria"),Deck.newCard(4,"valoria"),Deck.newCard(5,"valoria")} end
-    local r=Scoring.calculate(info(cards),{}, {gameState=g,monster=g.monster,hand={g.hand[2]}})
+    local r=Scoring.calculate(info({t,g.hand[3]}),{}, {gameState=g,monster=g.monster,hand={g.hand[2]}})
     assert(r.finalScore>=0)
     if d.id=="seal_sunder" then assert(g.monster.armor==4)
-    elseif d.id=="seal_mercy" then assert(r.healHp==6)
-    elseif d.id=="seal_reserve" then assert(r.bonusGoldAwarded==1)
-    elseif d.id=="seal_oath" then assert(r.hpCost==2 and r.addArmor==10)
-    elseif d.id=="seal_equilibrium" then assert(r.bonusChips>=30)
-    elseif d.id=="seal_harvest" then assert(r.bonusGoldAwarded==2)
-    elseif d.id=="seal_dusk" then assert(r.totalExtraDamagePct>=0.2)
-    elseif d.id=="seal_lantern" then assert(r.bonusChips>=20) end
+    elseif d.id=="seal_lantern" then assert(r.bonusChips>=16) end
 end
 -- Enchantments are saved data, trigger once per hand and preserve editions.
 for _,d in ipairs(X.spells) do
@@ -150,4 +138,4 @@ for _,kind in ipairs({"arcana","seal","spectral","joker_edition"}) do
     end
     for _,d in ipairs(Shop.getPackContents(kind)) do assert(found[d.id],"unobtainable "..d.id) end
 end
-print("PASS: 40 chest discoveries, activation, scoring, persistence and random reward coverage")
+print("PASS: retained chest discoveries, activation, scoring, persistence and random reward coverage")

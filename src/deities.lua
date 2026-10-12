@@ -89,11 +89,15 @@ function Deities.scaleEffect(deity, result)
     if not result or multiplier == 1 then return result end
 
     if result.consumableChancePct then result.consumableChancePct=math.min(100,result.consumableChancePct*multiplier) end
+    if result.discardCopies then result.discardCopies=math.floor(result.discardCopies+2*(multiplier-1)) end
+    if result.bossCopies then result.bossCopies=math.floor(result.bossCopies+2*(multiplier-1)) end
+    if result.copyActivations then result.copyActivations=math.min(128,math.floor(result.copyActivations+2*(multiplier-1))) end
 
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier
             local def=Deities.CATALOG[deity.id]
+            if def and def.doubleEvolution and key==def.stat then scaled=value*2^(2*(multiplier-1)) end
             if def and def.integerEffect and key==def.stat then scaled=math.floor(scaled) end
             if key=="addTransmutePct" then scaled=math.min(90,scaled) end
             if key=="addRedirectPct" then scaled=math.min(100,scaled) end
@@ -114,7 +118,7 @@ function Deities.scaleEffect(deity, result)
         end
     end
 
-    for _,key in ipairs({"xMult","xChips","xAura"}) do
+    for _,key in ipairs({"xMult","xChips","xAura","xSoulYield"}) do
         if type(result[key])=="number" and result[key]>1 then result[key]=1+(result[key]-1)*multiplier end
     end
     return result
@@ -125,6 +129,7 @@ Deities.CATALOG = {}
 local entries = {
     {"spirit_pebble","Cổ Thạch","hand","addChips",20,nil,"+{value} Sát thương mỗi tay."},
     {"spirit_ember","Tàn Hỏa","hand","xMult",1,nil,"×{factor} Cường hóa mỗi tay."},
+    {"spirit_twin_fang","Song Nanh Hư Không","hand","xChips",1,nil,"Mỗi tay tính điểm: ×{factor} Sát thương tại ô này."},
     {"spirit_blade","Kiếm Ảnh","card","addChips",10,nil,"Mỗi lá tính điểm: +{value} Sát thương."},
     {"spirit_drum","Trống Lôi","card","addMult",2,nil,"Mỗi lá tính điểm: +{value} Cường hóa."},
     {"spirit_pair","Song Đôi","hand","addMult",6,"pair","Đôi: +{value} Cường hóa."},
@@ -140,10 +145,11 @@ for _, row in ipairs(entries) do
     local entry={id=row[1],name=row[2],trigger=row[3],stat=row[4],values={value=row[5]},condition=row[6],
         descriptionTemplate=row[7],rarity="common",cost=4,lore="Hộ linh đồng hành cùng các lá bài."}
     entry.desc=row[7]:gsub("{value}",tostring(row[5])):gsub("{factor}",tostring(1+row[5]));entry.baseDesc=entry.desc
-    local function callback(subject)
+    local function callback(subject,context,owned)
         if entry.condition=="royal" and not (subject and subject.rank>=11 and subject.rank<=13) then return nil end
         if entry.condition and entry.condition~="royal" and not (subject and subject.type and subject.type.id==entry.condition) then return nil end
-        return {[entry.stat]=entry.stat=="xMult" and 1+entry.values.value or entry.values.value,message=entry.desc}
+        local message=entry.id=="spirit_twin_fang" and Deities.getDescription(owned or entry) or entry.desc
+        return {[entry.stat]=entry.stat:sub(1,1)=="x" and 1+entry.values.value or entry.values.value,message=message}
     end
     if entry.trigger=="card" then entry.onCardScored=callback
     elseif entry.trigger=="hand" then entry.onHandScored=callback
@@ -250,18 +256,27 @@ require("src.spn_anomalies").register(Deities)
 require("src.spn_convergence").register(Deities)
 require("src.spn_velocity").register(Deities)
 require("src.spn_provisions").register(Deities)
+require("src.spn_discard").register(Deities)
+require("src.spn_souls").register(Deities)
+require("src.spn_legacy").register(Deities)
+require("src.spn_mimic").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
     if not def then return deity.desc or "" end
     local value=def.values.value*(def.stat=="bedExplosionPct" and 1 or effectMultiplier(deity))
+    if def.doubleEvolution then value=def.values.value*2^(2*(effectMultiplier(deity)-1)) end
     if def.integerEffect then value=math.floor(value) end
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end
     if def.stat=="consumableChancePct" then value=math.min(100,value) end
+    if def.stat=="discardCopies" or def.stat=="bossCopies" then value=math.floor(def.values.value+2*(effectMultiplier(deity)-1)) end
+    if def.stat=="copyActivations" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."
+    elseif deity.id=="spirit_last_pact" then
+        text="Một lần mỗi trận: chặn đòn chí tử, còn 5 HP."
     end
     local growth=require("src.spn_convergence").describe(deity)
     if growth then text=text.."\n"..growth end
@@ -283,8 +298,8 @@ function Deities.getCount(deities)
     return count
 end
 
-function Deities.resolveDeity(deities, index)
-    return deities and deities[index] or nil
+function Deities.resolveDeity(deities, index,game)
+    return require("src.spn_mimic").resolve(deities,index,game)
 end
 
 function Deities.getStarterDeity(suit)
@@ -327,10 +342,13 @@ Deities.MAX_SLOTS = 5
 function Deities.getMaxSlots(gameState)
     local maxSlots = Deities.BASE_SLOTS + ((gameState and gameState.extraDeitySlots) or 0)
     local list = gameState and gameState.deities or gameState
-    for _, deity in pairs(type(list) == "table" and list or {}) do
+    local occupiedMax=0
+    for slot, deity in pairs(type(list) == "table" and list or {}) do
+        if type(slot)=="number" and type(deity)=="table" and deity.id then occupiedMax=math.max(occupiedMax,slot) end
         if type(deity) == "table" and deity.edition == "negative" then maxSlots = maxSlots + 1 end
     end
-    return maxSlots
+    -- Boss rewards may exceed capacity; every occupied slot stays visible and active.
+    return math.max(maxSlots,occupiedMax)
 end
 
 function Deities.addDeity(gameState, deity, preferredSlot)

@@ -20,6 +20,7 @@ local Button = require("ui.components.button")
 local Slot = require("ui.components.slot")
 local HealthBar = require("ui.components.health_bar")
 local Deck = require("src.deck")
+UI.SealEmblems = require("ui.components.seal_emblems")
 local Equipment = require("src.equipment")
 local Deities = require("src.deities")
 local CardEffects = require("src.card_effects")
@@ -416,6 +417,7 @@ local function drawPlayingMetadata(card,w,h,showDamage)
         g.setColor(1,.88,.64,alpha);g.setFont(UI.fonts.tiny)
         g.printf("ST "..tostring(card.baseChips or Deck.getChipValue(card.rank)),8,167,48,"center")
     end
+    if card.seal then UI.SealEmblems.draw(card.seal,107,58,13,alpha) end
     g.pop()
 end
 UI.drawPlayingMetadata=drawPlayingMetadata
@@ -488,13 +490,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         g.setColor(1, 1, 1, 1)
         UI.CardFrame.image(cardImage, 0, 0, w, h)
         CardEffects.endCard(cardFxActive)
-        if card.seal then
-            g.setColor(UI.COLORS.goldYellow)
-            g.circle("fill", w - 14, 34, 7)
-            g.setColor(UI.COLORS.textDark)
-            g.setFont(UI.fonts.tiny)
-            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 27, 14, "center")
-        end
         drawCardEditionRim(card, w, h, selected and UI.COLORS.cardSelectedBorder or hovered and UI.COLORS.chipsBlue)
         g.pop()
         return
@@ -522,13 +517,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         g.setColor(accent)
         g.setFont(UI.fonts.regular)
         g.print(rank, w - UI.fonts.regular:getWidth(rank) - 8, h - 24)
-        if card.seal then
-            g.setColor(UI.COLORS.goldYellow)
-            g.circle("fill", w - 14, 34, 7)
-            g.setColor(UI.COLORS.textDark)
-            g.setFont(UI.fonts.tiny)
-            g.printf(tostring(card.seal):sub(1, 1):upper(), w - 21, 27, 14, "center")
-        end
         if card.baseChips then
             g.setColor(accent)
             UI.drawRoundedRect("fill", 6, h - 26, 32, 19, 4)
@@ -741,6 +729,9 @@ end
 
 -- Deterministic faceted emblem for catalogue/shop items without raster art.
 function UI.drawItemEmblem(item, cx, cy, size, color)
+    if item and (item.sealType or item.id and Deck.SEALS[item.id]) then
+        return UI.SealEmblems.draw(item.sealType or item.id,cx,cy,size)
+    end
     local g = love.graphics
     local id = tostring((item and (item.id or item.name)) or "relic")
     local seed = 0

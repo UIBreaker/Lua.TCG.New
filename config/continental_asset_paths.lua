@@ -460,4 +460,11 @@ return {
     ["human_13"] = "assets/cards/continental/enemy/human_13.png",
     ["spirit_wayfarer"] = "assets/cards/continental/spn/spirit_wayfarer.png",
     ["spirit_first_echo"] = "assets/cards/continental/spn/spirit_first_echo.png",
+    ["spirit_last_remnant"] = "assets/cards/continental/spn/spirit_last_remnant.png",
+    ["spirit_dawn_reaper"] = "assets/cards/continental/spn/spirit_dawn_reaper.png",
+    ["spirit_soul_choir"] = "assets/cards/continental/spn/spirit_soul_choir.png",
+    ["spirit_legacy_cocoon"] = "assets/cards/continental/spn/spirit_legacy_cocoon.png",
+    ["spirit_meteor_solitude"] = "assets/cards/continental/spn/spirit_meteor_solitude.png",
+    ["spirit_twin_fang"] = "assets/cards/continental/spn/spirit_twin_fang.png",
+    ["spirit_right_echo"] = "assets/cards/continental/spn/spirit_right_echo.png",
 }

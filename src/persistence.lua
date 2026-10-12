@@ -15,6 +15,7 @@ local TRANSIENT_GAME_KEYS = {
     abilityCombat = true,
     depthCombat = true,
     spnCombat = true,
+    spnAttack = true,
     spnFeedback = true,
     spnDiscardCap = true,
     abilityHand = true,
@@ -174,6 +175,8 @@ local function restoreCard(savedCard)
     for key, value in pairs(savedCard) do
         if key ~= "equipments" then card[key] = sanitize(value) end
     end
+    card.seal=Deck.normalizeSeal(card.seal)
+    card.isAnchor=card.seal=="seal_anchor"
     card.equipments = {}
     for _, savedEquipment in ipairs(savedCard.equipments or {}) do
         local equipment = restoreEquipment(savedEquipment)
@@ -240,6 +243,25 @@ function Persistence.restoreSnapshot(snapshot)
     for _, opening in ipairs(game.rewardPacks or {}) do
         if opening.pack and opening.pack.packType == "standard" then
             for i, card in ipairs(opening.cards or {}) do opening.cards[i] = restoreCard(card) end
+        end
+    end
+    local function migrateStamp(item)
+        if not item then return end
+        local id=Deck.normalizeSeal(item.sealType or item.id)
+        local d=Deck.SEALS[id]
+        if d then
+            for _,field in ipairs({"id","sealType","sealName","name","subtitle","desc","icon","color","symbol","params"}) do item[field]=d[field] end
+            item.category="seal"
+        end
+    end
+    for _,item in ipairs(game.consumables or {}) do migrateStamp(item) end
+    for _,opening in ipairs(game.rewardPacks or {}) do
+        if opening.pack and opening.pack.packType=="seal" then
+            local seen={}
+            for i=#(opening.cards or {}),1,-1 do
+                local item=opening.cards[i];migrateStamp(item)
+                if seen[item.id] then table.remove(opening.cards,i) else seen[item.id]=true end
+            end
         end
     end
     game.masterDeck = game.persistentDeck

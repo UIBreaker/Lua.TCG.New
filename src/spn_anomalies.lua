@@ -4,10 +4,10 @@ local D
 A.entries={
     {"spirit_afterimage","Dư Ảnh Ngày Mai","addAfterimagePct",35,"Từ đòn thứ hai: đánh thêm {value}% AURA đòn trước vào mục tiêu hiện tại.","attack"},
     {"spirit_reprisal","Gương Oán","addReflectPct",60,"Sau đòn quái: phản {value}% HP thực mất về kẻ đánh; không kết liễu.","damage"},
-    {"spirit_last_pact","Giao Kèo Cuối","addReviveHp",5,"Một lần mỗi trận: tiêu toàn bộ lượt bỏ còn lại để chặn đòn chí tử, còn {value} HP. Cần ít nhất 1 lượt bỏ.","damage"},
+    {"spirit_last_pact","Giao Kèo Cuối","addReviveHp",5,"Một lần mỗi trận: chặn đòn chí tử, còn {value} HP.","damage"},
     {"spirit_soul_furnace","Lò Hồn","addFlatDamage",25,"Mỗi tay: đốt tối đa 3 Linh Hồn; mỗi hồn thêm {value} sát thương cố định vào AURA.","hand"},
     {"spirit_transmuter","Nghịch Luyện","addTransmutePct",10,"Tại ô này: chuyển {value}% Sát thương đang có sang Cường hóa (tối đa 90%).","hand"},
-    {"spirit_archive","Thư Viện Mù","addDiscards",1,"Mỗi 3 kiểu tay khác nhau: hồi {value} lượt bỏ (không vượt mức vào trận), rồi xóa bộ nhớ.","hand"},
+    {"spirit_archive","Thư Viện Mù","addDiscards",1,"Mỗi 3 kiểu tay khác nhau đánh trong trận: nhận 1 lá Tiến Hóa, rồi bắt đầu đếm lại.","hand"},
     {"spirit_borrowed_turn","Vay Khoảnh Khắc","addHands",0,"Một lần mỗi trận: chơi đúng 3 lá đều tính điểm, nhận Tốc Đánh Nhỏ áp dụng tốc đánh vĩnh viễn cho một lá.","hand"},
     {"spirit_dream_jailer","Cai Ngục Mộng","addArmor",4,"Lần đầu đánh mỗi quái: nếu quái sống, nó bỏ 1 đòn kế tiếp và bạn nhận +{value} Giáp.","attack"},
     {"spirit_abyss_feast","Nuốt Tàn Dư","addOverkillArmorPct",40,"Hạ quái bằng đòn chính: chuyển {value}% sát thương dư thành Giáp (tối đa 30).","attack"},
@@ -26,6 +26,15 @@ local function notice(game,deity,slot,text)
     game.spnFeedback=game.spnFeedback or {}
     game.spnFeedback[#game.spnFeedback+1]={deity=deity,slot=slot,text=text}
 end
+local function giveConsumable(game,reward)
+    game.consumables=game.consumables or {}
+    if #game.consumables<require("src.inventory").limit(game) then
+        game.consumables[#game.consumables+1]=reward
+    else
+        game.pendingRewardCards=game.pendingRewardCards or {}
+        game.pendingRewardCards[#game.pendingRewardCards+1]=reward
+    end
+end
 function A.takeFeedback(game)
     local result=game.spnFeedback or {};game.spnFeedback={};return result
 end
@@ -40,7 +49,7 @@ local function active(game,visit,locked)
     for slot=1,D.getMaxSlots(game) do
         local deity=game.deities and game.deities[slot]
         if deity and (not locked or not locked[slot]) and not Boss.isSlotLocked(game,"spn",slot) then
-            visit(deity,slot,peek(game,slot))
+            require("src.spn_mimic").each(game,game.deities,slot,function(effective) visit(effective,slot,peek(game,slot)) end,locked)
         end
     end
 end
@@ -62,7 +71,8 @@ local handEffects={
         for id in pairs(state.seen or {}) do seen[id]=true;count=count+1 end
         if seen[hand.type.id] then return end
         seen[hand.type.id]=true;count=count+1
-        return {nextSpnState={seen=count>=3 and {} or seen},addDiscards=count>=3 and amount or 0}
+        return {nextSpnState={seen=count>=3 and {} or seen},grantEvolution=count>=3,
+            message=count>=3 and "THƯ VIỆN · NHẬN TIẾN HÓA" or nil}
     end,
     spirit_borrowed_turn=function(hand,game,state,amount,context)
         if not state.used and #(hand.scoringCards or {})==3 and #(hand.unscoredCards or {})==0 then
@@ -90,7 +100,7 @@ function A.register(deities)
     end
 end
 -- Called only when scoring commits; callbacks and HUD previews stay read-only.
-function A.commitHand(game,slot,result)
+function A.commitHand(game,slot,result,preview)
     if result.nextSpnState then store(game,slot,result.nextSpnState) end
     if result.destroyEight and #(game.persistentDeck or {})>1 and require("src.card_abilities").destroy(game,result.destroyEight) then
         game.maxDiscards=(game.maxDiscards or 3)+1
@@ -101,12 +111,16 @@ function A.commitHand(game,slot,result)
         local reward=require("src.shop").healingItem("upper","cons_speed_small").consumable
         reward.permanentSpeed=true
         reward.desc="Chọn một lá đang trên tay: +3 tốc đánh vĩnh viễn (tối đa 999)."
-        game.consumables=game.consumables or {}
-        if #game.consumables<require("src.inventory").limit(game) then
-            game.consumables[#game.consumables+1]=reward
-        else
-            game.pendingRewardCards=game.pendingRewardCards or {}
-            game.pendingRewardCards[#game.pendingRewardCards+1]=reward
+        giveConsumable(game,reward)
+    end
+    if result.grantEvolution then
+        giveConsumable(game,require("src.run_manager").createEvolutionCard())
+    end
+    if result.guaranteeHit or result.afterstorm then
+        game.spnAttack=game.spnAttack or {afterstorms={}}
+        if result.guaranteeHit then game.spnAttack.guaranteeHit=true end
+        if result.afterstorm then
+            game.spnAttack.afterstorms[#game.spnAttack.afterstorms+1]={deity=game.deities[slot],slot=slot,cards=result.afterstormCards or {}}
         end
     end
     game.souls=math.max(0,(game.souls or 0)-(result.soulCost or 0))
@@ -116,7 +130,7 @@ function A.commitHand(game,slot,result)
     end
     if (result.addHands or 0)>0 then game.handsRemaining=(game.handsRemaining or 0)+result.addHands end
     require("src.spn_convergence").commit(game,slot,result)
-    require("src.spn_provisions").commit(game,slot,result)
+    if not preview then require("src.spn_provisions").commit(game,slot,result) end
 end
 function A.playerAttack(game,aura,hpBefore,damage,locked)
     local hits={};local target=game.monster
@@ -152,11 +166,33 @@ end
 function A.guard(game,damage)
     active(game,function(deity,slot,state)
         local hp=game.playerHp or 100
-        if deity.id=="spirit_last_pact" and not state.used and hp>0 and damage>=hp and (game.discardsRemaining or 0)>0 then
-            local keep=math.min(game.maxPlayerHp or 100,math.max(1,math.floor(value(deity))))
-            game.playerHp=math.max(hp,keep);damage=math.max(0,game.playerHp-keep)
-            game.discardsRemaining=0;store(game,slot,{used=true})
-            notice(game,deity,slot,"GIAO KÈO · CÒN "..keep.." HP")
+        if deity.id=="spirit_last_pact" and hp>0 and damage>=hp then
+            if not state.used then
+                local keep=math.min(game.maxPlayerHp or 100,5)
+                game.playerHp=math.max(hp,keep);damage=game.playerHp-keep
+                state.used=true;store(game,slot,state)
+                notice(game,deity,slot,"GIAO KÈO · CÒN "..keep.." HP")
+            elseif not state.legendaryUsed and D.getRarityTier(deity)>=5 then
+                local pool={}
+                for _,card in ipairs(game.persistentDeck or {}) do
+                    if not card.destroyed then pool[#pool+1]=card end
+                end
+                if #pool>=6 then
+                    local Rng=require("src.rng")
+                    local Abilities=require("src.card_abilities")
+                    local sync=require("src.chest_expansion").sync
+                    for i=#pool,2,-1 do local j=Rng.random(i);pool[i],pool[j]=pool[j],pool[i] end
+                    for i=1,5 do
+                        local card=pool[i]
+                        Abilities.destroy(game,card,nil,6)
+                        sync(game,card,function(copy) copy.destroyed=true;copy.destructionNotified=true end)
+                    end
+                    require("src.combat").cleanupDestroyedCards(game)
+                    state.legendaryUsed=true;store(game,slot,state)
+                    game.playerHp=game.maxPlayerHp or 100;damage=0
+                    notice(game,deity,slot,"GIAO KÈO BẬC L · HỒI ĐẦY HP · HIẾN TẾ 5 LÁ")
+                end
+            end
         end
     end)
     return damage

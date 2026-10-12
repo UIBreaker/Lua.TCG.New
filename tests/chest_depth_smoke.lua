@@ -29,7 +29,7 @@ local function score(g,cs,kind,preview,held)
 end
 local ids={}
 for _,list in ipairs({D.equipment,D.seals,D.spectral,D.spells}) do
-    assert(#list==10)
+    assert(#list==(list==D.seals and 4 or 10))
     for _,d in ipairs(list) do assert(not ids[d.id] and not X.equipment[d.id]);ids[d.id]=true;assert(X.byId[d.id]==d) end
 end
 for _,d in ipairs(D.spectral) do
@@ -78,21 +78,14 @@ g,c=fixture();c.equipments={E.ITEMS.itm_oar};score(g,{c},"PAIR");assert(score(g,
 g,c=fixture();c.equipments={E.ITEMS.itm_pendulum};score(g,{c,g.hand[2]},"PAIR");assert(score(g,{c}).addArmor>=6)
 g,c=fixture();c.equipments={E.ITEMS.itm_relay};g.hand[2].equipments={E.ITEMS.gem_fire}
 local relay=E.ITEMS.itm_relay.onCardScore(c,{g.hand[2],c},2,{gameState=g,depthHandType="pair"});assert(relay.addChips==math.floor(g.hand[2].baseChips/2))
--- All ten seals, including their preparation events.
+-- The four retained depth seals, including their preparation events.
 g,c=fixture();c.seal="seal_echoes"
 for _,suit in ipairs(Deck.SUIT_ORDER) do c.suit=suit;A.discard(g,{c}) end
-assert(score(g,{c}).xMultTotal>=1.6);assert(score(g,{c}).xMultTotal<1.6)
+assert(score(g,{c}).xMultTotal>=1.75);assert(score(g,{c}).xMultTotal<1.75)
 g,c=fixture();c.seal="seal_reclaimer";A.discard(g,{c});assert(g.discardsRemaining==4 and g.gold==28)
 A.discard(g,{c});assert(g.discardsRemaining==4 and g.gold==28)
-g,c=fixture();c.seal="seal_tutor";score(g,{c,g.hand[2]},"PAIR");assert((g.hand[2].temporaryAbilityLevels or 0)>=1 and g.persistentDeck[2].evolutionLevel==3)
 g,c=fixture();c.seal="seal_gambit";local cs={c,g.hand[2],g.hand[3],Deck.newCard(3,"elaris"),Deck.newCard(4,"vharos")}
-score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==76);score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==76)
-g,c=fixture();c.seal="seal_constellation";g.persistentDeck[2].seal=c.seal;assert(score(g,{c}).bonusChips>=8)
-g,c=fixture();c.seal="seal_pact";A.discard(g,{c});assert(g.gold==29);assert(score(g,{c}).bonusGoldAwarded==2);assert(score(g,{c}).bonusGoldAwarded==0)
-g,c=fixture();c.seal="seal_waymark";score(g,{c},"PAIR");score(g,{c},"STRAIGHT");assert(g.discardsRemaining==4);score(g,{c},"PAIR");assert(g.discardsRemaining==4)
-g,c=fixture();c.seal="seal_debt";local debt=score(g,{c});assert(g.discardsRemaining==2 and debt.addArmor>=15)
-g.discardsRemaining=0;assert(score(g,{c}).hpCost==3)
-g,c=fixture();c.seal="seal_duel";assert(score(g,{c},nil,false,{g.hand[2]}).totalExtraDamagePct>=0.12)
+score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==74);score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==74)
 g,c=fixture();c.seal="seal_threshold";assert(score(g,{c}).healHp==0);assert(score(g,{c}).healHp==0);assert(score(g,{c}).healHp==8)
 -- Spells span multiple turns; none should consume game resources in preview.
 for _,d in ipairs(D.spells) do
@@ -128,10 +121,8 @@ for _,list in ipairs({D.spectral,D.spells}) do for _,d in ipairs(list) do local 
 g,c=fixture();g.gold=0;assert(not stored(g,D.byId.spec_partition) and #g.consumables==1)
 g,c=fixture();c.equipments={E.ITEMS.itm_hourhand};local beforeHp=g.playerHp
 Combat.resolveMonsterAttack(g,"before",0);assert((g.depthCombat.attacks or 0)==1 and g.playerHp<=beforeHp)
-g,c=fixture();c.seal="seal_tutor";g.hand[2].evolutionLevel=A.config.maxEvolutionLevel
-score(g,{c,g.hand[2]},"PAIR");assert(A.level(g.hand[2])==A.config.maxEvolutionLevel)
 for _,kind in ipairs({"arcana","seal","spectral","joker_edition"}) do
     local reached={};for _=1,700 do local p=Shop.openPack({packType=kind},G.new());local same={};for _,d in ipairs(p.cards) do assert(not same[d.id]);same[d.id]=true;reached[d.id]=true end end
     for _,d in ipairs(Shop.getPackContents(kind)) do assert(reached[d.id],d.id) end
 end
-print("PASS: second 40 cards, multi-turn combinations, discard/attack hooks, costs, preview isolation, persistence, reset and chest availability")
+print("PASS: retained depth cards, multi-turn combinations, discard/attack hooks, costs, preview isolation, persistence, reset and chest availability")

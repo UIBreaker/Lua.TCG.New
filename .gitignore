@@ -30,3 +30,5 @@ __pycache__/
 /downloads/LUA-TCG-0.125.1-Android.apk
 /reward_*_stdout.log
 /reward_*_stderr.log
+
+/downloads/LUA-TCG-0.126.0-Android.apk

@@ -1194,7 +1194,7 @@ do
     end
 
     local jokers = Collection.getItems("jokers")
-    assert(#jokers == 50, "Collection must expose exactly 50 Common spirits, got: " .. #jokers)
+    assert(#jokers == 57, "Collection must expose exactly 57 Common spirits, got: " .. #jokers)
 
     local consumables = Collection.getItems("consumables")
     assert(#consumables >= 8, "Must have at least 8 Consumables/Equipment in Collection, got: " .. #consumables)
@@ -1297,7 +1297,7 @@ do
         assert(d.lore ~= nil and d.lore ~= "", "Deity must have lore flavor text: " .. tostring(d.id))
         assert(d.rarity == "common", "Every new spirit must be Common: " .. tostring(d.id))
     end
-    assert(count == 50, "Deities catalog must contain exactly 50 common spirits, got: " .. count)
+    assert(count == 57, "Deities catalog must contain exactly 57 common spirits, got: " .. count)
 
     -- D. Hộ Linh Visual Tarot & Relic Sigils Rendering
     local samplePatron = Deities.CATALOG.spirit_pebble
@@ -1835,7 +1835,7 @@ do
     log("[PASS] 76. Joker Spells (Aura, Ectoplasm, Ankh, Hex) mechanics verified 100%")
 end
 
--- 77. Test 6 Battle Seals (Ấn Huyết, Ấn Tiên Tri, Ấn Tro Tàn, Ấn Truy Nã, Ấn Neo, Ấn Thanh Tẩy)
+-- 77. Test 10 focused Battle Seals and legacy migration
 do
     -- Bounty Seal: flags bounty kill
     local cardBounty = Deck.newCard(7, "hearts")
@@ -1859,14 +1859,11 @@ do
     local scoreNormal = Scoring.calculate(evalNormal, {}, {})
     assert(scoreBlood1.totalChips == scoreNormal.totalChips + 8, "Blood seal must retrigger card base stats (+8 chips)")
 
-    -- Ashen Seal: 40 True DMG & destroys card
-    local cardAshen = Deck.newCard(9, "valoria")
-    cardAshen.seal = "seal_ashen"
-    local simMon = { hp = 100, maxHp = 100 }
-    local evalAshen = { type = Poker.HAND_TYPES.HIGH_CARD, scoringCards = { cardAshen }, unscoredCards = {} }
-    local scoreAshen = Scoring.calculate(evalAshen, {}, { monster = simMon })
-    assert(cardAshen.destroyed == true, "Ashen seal must destroy the card after play")
-    assert(simMon.hp == 60, "Ashen seal must deal 40 true damage to monster")
+    -- Retired Ashen migrates to Sunder without destroying the upgraded card.
+    local cardAshen=Deck.newCard(9,"valoria");cardAshen.seal="seal_ashen"
+    local simMon={hp=100,maxHp=100,armor=12}
+    Scoring.calculate({type=Poker.HAND_TYPES.HIGH_CARD,scoringCards={cardAshen},unscoredCards={}}, {}, {monster=simMon})
+    assert(cardAshen.seal=="seal_sunder" and not cardAshen.destroyed and simMon.armor==4)
 
     -- Seal application via Shop Pack
     local targetCard = Deck.newCard(10, "diamonds")
@@ -1880,7 +1877,7 @@ do
     local okSeal = Shop.choosePackCard(shop, 1, testGame)
     assert(okSeal == true, "Seal application must succeed")
     assert(targetCard.seal == "seal_bounty", "Target card must now have seal_bounty, got: " .. tostring(targetCard.seal))
-    log("[PASS] 77. 6 Battle Seals (Ấn Huyết, Ấn Tiên Tri, Ấn Tro Tàn, Ấn Truy Nã, Ấn Neo, Ấn Thanh Tẩy) verified 100%")
+    log("[PASS] 77. 10 focused Battle Seals and legacy migration verified 100%")
 end
 
 -- 78. Test Spectral Transformations (Cryptid, Immolate +$20, Ouija, Black Hole)
@@ -2112,7 +2109,7 @@ do
     assert(restored and restoredState == "BLIND_SELECT", "Snapshot must restore at a safe state")
     assert(restored.gold == 37 and restored.playerHp == 73, "Run resources must survive save/load")
     assert(restored.run.ante == 3 and restored.run.currentBlindIndex == 2, "Ante progress must survive save/load")
-    assert(#restored.persistentDeck == 1 and restored.persistentDeck[1].seal == "gold", "Cards and seals must survive save/load")
+    assert(#restored.persistentDeck == 1 and restored.persistentDeck[1].seal == "seal_bounty", "Cards and seals must survive save/load")
     assert(restored.persistentDeck[1].equipments[1].onCardScore ~= nil, "Equipment behavior must be rehydrated")
     assert(restored.deities[1].onHandScored ~= nil and restored.deities[1].edition == "negative", "Deity behavior and instance state must be rehydrated")
     assert(restored.monster == nil and #restored.hand == 0, "Transient combat state must not be restored")
@@ -2210,7 +2207,7 @@ do
     log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
 end
 
--- 88. Test Phase 2: exactly 50 Common spirits and 5 base slots
+-- 88. Test Phase 2: exactly 57 Common spirits and 5 base slots
 do
     local baseSlots = Deities.getMaxSlots({})
     assert(baseSlots == 5, "Deities base slots must be 5, got: " .. baseSlots)
@@ -2220,7 +2217,7 @@ do
         spiritCount = spiritCount + 1
         assert(spirit.rarity == "common", "Every spirit must be Common")
     end
-    assert(spiritCount == 50, "Catalog must contain exactly 50 spirits")
+    assert(spiritCount == 57, "Catalog must contain exactly 57 spirits")
     assert(Deities.CATALOG.spirit_pebble.onHandScored().addChips == 20, "Linh Sỏi effect")
     assert(Deities.CATALOG.spirit_ember.onHandScored().addMult == 4, "Linh Lửa effect")
     assert(Deities.CATALOG.spirit_blade.onCardScored().addChips == 8, "Linh Kiếm effect")
@@ -2231,11 +2228,11 @@ do
     assert(Deities.CATALOG.spirit_crown.onCardScored({ rank = 11 }).addChips == 15, "Linh Miện effect")
     assert(Deities.CATALOG.spirit_coin.onRoundWin().addGold == 2, "Linh Tiền effect")
 
-    local ante1Pool = Deities.getRandomShopPool({}, 50, { ante = 1 })
+    local ante1Pool = Deities.getRandomShopPool({}, 57, { ante = 1 })
     for _, d in ipairs(ante1Pool) do
         assert(d.rarity == "common", "Shop must only offer Common spirits")
     end
-    log("[PASS] 88. Exactly 50 Common spirits and 5 base slots verified 100%")
+    log("[PASS] 88. Exactly 57 Common spirits and 5 base slots verified 100%")
 end
 
 -- 89. Test Phase 3 & 4: Card Enhancements (8 Types with Tradeoffs)
@@ -2395,7 +2392,7 @@ do
     log("[PASS] 95. Card Exhaustion (Kiệt Sức) Lifecycle verified 100%")
 end
 
--- 96. Test Battle Seals Combat Lifecycle (Blood, Anchor, Prophecy, Purification)
+-- 96. Test Battle Seals Combat Lifecycle (Blood, Anchor, Purification, legacy migration)
 do
     -- Anchor seal priority deal in Combat.start
     local aDeck = {
@@ -2419,14 +2416,9 @@ do
     end
     assert(hasAnchorInHand, "Ấn Neo (Anchor Seal) card must be prioritized into opening hand")
 
-    -- Prophecy seal reveals 2 intents
-    local pCard = Deck.newCard(7, "valoria")
-    pCard.seal = "seal_prophecy"
-    local pGame = { hand = { pCard }, combatFlags = {} }
-    local pMonster = { hp = 100 }
-    local pEval = { type = Poker.HAND_TYPES.HIGH_CARD, scoringCards = { pCard }, unscoredCards = {} }
-    Scoring.calculate(pEval, {}, { monster = pMonster, combatFlags = pGame.combatFlags })
-    assert(pMonster.showNextIntent == true and pMonster.revealedIntents == 2, "Ấn Tiên Tri must reveal next 2 monster intents")
+    -- Retired Prophecy converts to Anchor for opening-hand planning.
+    local pCard=Deck.newCard(7,"valoria");pCard.seal="seal_prophecy"
+    assert(Deck.cloneCard(pCard).seal=="seal_anchor")
 
     -- Purification seal cleanses debuff on monster turn end
     local pureCard = Deck.newCard(8, "aurelia")
@@ -2439,7 +2431,7 @@ do
     local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(pureGame)
     assert(cleansed == true, "Ấn Thanh Tẩy must cleanse 1 boss debuff when held in hand")
     assert(pureGame.monster.bossDebuffCleansed == true, "Boss debuff marked cleansed")
-    log("[PASS] 96. Battle Seals Combat Lifecycle (Blood, Anchor, Prophecy, Purification) verified 100%")
+    log("[PASS] 96. Battle Seals Combat Lifecycle (Blood, Anchor, Purification, legacy migration) verified 100%")
 end
 
 -- 97. Test the tactical roles of the nine-item equipment catalog.
@@ -2522,11 +2514,11 @@ do
     assert(enhMap["enh_vanguard"] ~= nil, "enh_vanguard must exist in Collection")
     assert(enhMap["enh_rearguard"] ~= nil, "enh_rearguard must exist in Collection")
 
-    -- 3. Collection must expose exactly the 50 Common spirits from the catalog.
+    -- 3. Collection must expose exactly the 57 Common spirits from the catalog.
     local jokers = Collection.getItems("jokers")
     local jokerMap = {}
     for _, j in ipairs(jokers) do jokerMap[j.id] = j end
-    assert(#jokers == 50 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 50 Common spirits")
+    assert(#jokers == 57 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 57 Common spirits")
 
     -- 4. Every shop pack and voucher must come from the same catalog as the Collection.
     local packs = Collection.getItems("packs")

@@ -15,10 +15,6 @@ end
 local function faces(cards)
     local n=0;for _,c in ipairs(cards) do if c.rank>=11 and c.rank<=13 then n=n+1 end end;return n
 end
-local function parity(cards)
-    local n=0;for _,c in ipairs(cards) do if c.rank%2==0 then n=n+1 end end
-    return n>0 and n*2==#cards
-end
 add(X.equipment,"itm_abacus","Bàn Tính Tân Binh","Rank 2–5 tính điểm: +8 ST cho mỗi bậc thấp hơn 6.","An antique expedition abacus with four large bone beads, fossil desert.",function(c)
     if c.rank<=5 then return {addChips=8*(6-c.rank)} end
 end)
@@ -60,48 +56,16 @@ for _,d in ipairs(X.equipment) do
 end
 
 -- Seals occupy the existing single seal slot, and trigger once per scored card.
-add(X.seals,"seal_seed","Ấn Nảy Mầm","Mỗi lần tính điểm: tăng vĩnh viễn 2 ST cơ bản, tối đa +20 từ ấn này; có hiệu lực từ lần sau.","A large seed-shaped bronze stamp sprouting one green shoot from a stone tablet.",function(c,cs,i,ctx)
-    local g=game(ctx)
-    if not (ctx and ctx.preview) then
-        local n=math.min(2,20-(c.seedChips or 0))
-        if n>0 then X.sync(g,c,function(o) o.seedChips=(o.seedChips or 0)+n;o.bonusBaseChips=(o.bonusBaseChips or 0)+n;o.baseChips=(o.baseChips or 0)+n end) end
-    end
-    return {}
-end)
-add(X.seals,"seal_sunder","Ấn Phá Giáp","Khi tính điểm: phá 8 Giáp của quái mục tiêu trước khi gây Aura, không xuống dưới 0.","A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",function(c,cs,i,ctx)
-    if ctx and ctx.monster and not ctx.preview then ctx.monster.armor=math.max(0,(ctx.monster.armor or 0)-8) end
-    return {}
-end)
-add(X.seals,"seal_mercy","Ấn Khoan Dung","Quái mục tiêu còn tối đa 25% HP khi tính điểm: hồi 6 HP.","A bronze open-palm stamp sheltering a small wounded spectral creature on a forest tablet.",function(c,cs,i,ctx)
+add(X.seals,"seal_sunder","Ấn Phá Giáp","Khi tính điểm: phá 8 Giáp của quái mục tiêu trước khi gây Aura. Nếu mục tiêu đã hết Giáp: +12 ST thay thế.","A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",function(c,cs,i,ctx)
     local m=ctx and ctx.monster
-    if m and m.hp<=(m.maxHp or m.hp)*0.25 then return {healHp=6} end
+    if not m then return end
+    if (m.armor or 0)<=0 then return {addChips=12} end
+    if not ctx.preview or ctx.previewSandbox then m.armor=math.max(0,m.armor-8) end
+    return {}
 end)
-add(X.seals,"seal_reserve","Ấn Tiếp Tế","Giữ ít nhất 2 tiêu hao khi tính điểm: +1 Vàng.","A large supply-crate stamp beside two sealed expedition vials on coastal rock.",function(c,cs,i,ctx)
-    if #(game(ctx).consumables or {})>=2 then return {addGold=1} end
-end)
-add(X.seals,"seal_pilgrim","Ấn Hành Hương","Mỗi lá khác đã tiến hóa trong vùng tính điểm: +2 Cường hóa, tối đa +8.","A bronze footprint stamp crossing a trail of awakened forest monoliths.",function(c,cs)
-    local n=0;for _,o in ipairs(cs) do if o~=c and (o.evolutionLevel or 0)>0 then n=n+1 end end
-    return {addMult=math.min(8,n*2)}
-end)
-add(X.seals,"seal_oath","Ấn Tuyên Thệ","HP ít nhất 75% tối đa khi tính điểm: trả 2 HP để nhận 10 Giáp.","A large shield-and-droplet oath stamp on a glacial altar, controlled red accent.",function(c,cs,i,ctx)
-    local g=game(ctx)
-    if (g.playerHp or 0)>=(g.maxPlayerHp or 100)*0.75 then return {hpCost=2,addArmor=10} end
-end)
-add(X.seals,"seal_equilibrium","Ấn Cân Bằng","Vùng tính điểm có số lá rank chẵn và lẻ bằng nhau: +30 ST.","A large balance-scale stamp with two equal stone weights in bone-colored desert ruins.",function(c,cs)
-    if parity(cs) then return {addChips=30} end
-end)
-add(X.seals,"seal_harvest","Ấn Mùa Gặt","Đúng 5 lá tính điểm đều là rank 2–10: +2 Vàng.","A broad wheat-sheaf stamp with five clear stalks in an ancient green plain.",function(c,cs)
-    if #cs~=5 then return end
-    for _,o in ipairs(cs) do if o.rank<2 or o.rank>10 then return end end
-    return {addGold=2}
-end)
-add(X.seals,"seal_dusk","Ấn Hoàng Hôn","Khi còn tối đa 1 lượt đánh: +20% sát thương khi tính điểm.","One setting-sun bronze stamp beneath an orange twilight over continental cliffs.",function(c,cs,i,ctx)
-    local n=game(ctx).handsRemaining
-    if n and n<=1 then return {extraDamagePct=0.2} end
-end)
-add(X.seals,"seal_lantern","Ấn Hải Đăng","Mỗi lá cùng rank giữ lại trên tay: +20 ST khi tính điểm, tối đa +60.","A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",function(c,cs,i,ctx)
+add(X.seals,"seal_lantern","Ấn Hải Đăng","Mỗi lá cùng rank giữ lại trên tay: +16 ST khi tính điểm, tối đa +48.","A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",function(c,cs,i,ctx)
     local n=0;for _,o in ipairs(ctx and ctx.hand or {}) do if o.rank==c.rank then n=n+1 end end
-    return {addChips=math.min(60,n*20)}
+    return {addChips=math.min(48,n*16)}
 end)
 for _,d in ipairs(X.seals) do d.sealType=d.id;d.sealName=d.name end
 

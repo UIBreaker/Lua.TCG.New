@@ -344,7 +344,8 @@ local function buildItems(category, packFilter)
                     name = s.name or "Ấn Chiến",
                     subtitle = "ẤN CHIẾN MA PHÁP",
                     rarity = "Ấn Chiến",
-                    desc = s.desc or "Dấu ấn ma pháp ban phước cho quân bài",
+                    desc = Deck.getModifierDescription("seal",sId),
+                    sealType = sId, symbol = s.symbol,
                     icon = s.icon or "🩸",
                     color = s.color or { 0.90, 0.15, 0.15, 1 },
                 })

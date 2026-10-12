@@ -1,10 +1,10 @@
 local V={entries={
     {"spirit_galefang","Phong Nha","addChips",4,"+{value} Sát thương mỗi điểm tốc đánh trung bình của toàn bộ lá đã chơi, gồm trang bị và thưởng tốc kỹ năng."},
     {"spirit_thunderpulse","Mạch Lôi","addMult",1,"+{value} Cường hóa mỗi điểm tốc đánh trung bình của toàn bộ lá đã chơi, gồm trang bị và thưởng tốc kỹ năng."},
-    {"spirit_slow_colossus","Cự Linh Trễ Nhịp","xChips",1,"Tốc đánh trung bình thấp hơn mục tiêu: ×{factor} Sát thương tại ô SPN này. Bằng tốc không kích hoạt."},
+    {"spirit_slow_colossus","Cự Linh Trễ Nhịp","xChips",1,"Tốc đánh trung bình thấp hơn mục tiêu: ×{factor} Sát thương và đòn đánh không thể hụt."},
     {"spirit_twinbeat","Song Nhịp","xMult",1,"Chơi đúng 2 lá có tốc đánh cá nhân bằng nhau: ×{factor} Cường hóa tại ô này. Tính cả trang bị và tăng tốc cá nhân."},
-    {"spirit_afterstorm","Dư Chấn Tàn Quang","xAura",1,"Có ít nhất 3 lá đã chơi không tính điểm: ×{factor} AURA tổng, gồm sát thương cố định. Sau đó mới trả nợ AURA."},
-    {"spirit_last_sun","Mặt Trời Cuối","xAura",2,"Tay đánh cuối cùng (không còn lượt sau khi chơi), còn ít nhất 10 Giáp: đốt toàn bộ Giáp hiện có để ×{factor} AURA tổng. Sau đó mới trả nợ AURA."},
+    {"spirit_afterstorm","Dư Chấn Tàn Quang","xChips",4,"Chậm hơn mục tiêu: ×{factor} Sát thương và gây sát thương lên toàn bộ quái. Nếu đánh hụt: các lá vừa ghi điểm nhận +2 Tốc đánh vĩnh viễn."},
+    {"spirit_last_sun","Mặt Trời Cuối","xMult",4,"Lượt đánh cuối cùng: ×{factor} Cường hóa."},
 }}
 local Deck=require("src.deck")
 local function played(hand)
@@ -24,7 +24,7 @@ local effects={
     spirit_thunderpulse=function(hand,context,value) return {addMult=value*V.speed(hand,context),message="MẠCH LÔI · TỐC THÀNH CƯỜNG HÓA"} end,
     spirit_slow_colossus=function(hand,context,value)
         local target=context.monster or context.gameState and context.gameState.monster
-        if target and V.speed(hand,context)<require("src.enemy_abilities").speed(target) then return {xChips=1+value,message="TRỄ NHỊP · NHÂN SÁT THƯƠNG"} end
+        if target and V.speed(hand,context)<require("src.enemy_abilities").speed(target) then return {xChips=1+value,guaranteeHit=true,message="TRỄ NHỊP · NHÂN SÁT THƯƠNG · CHẮC TRÚNG"} end
     end,
     spirit_twinbeat=function(hand,context,value)
         local cards=played(hand)
@@ -33,16 +33,16 @@ local effects={
         end
     end,
     spirit_afterstorm=function(hand,context,value)
-        if #(hand.unscoredCards or {})>=3 then return {xAura=1+value,message="TÀN QUANG · NHÂN AURA TỔNG"} end
+        local target=context.monster or context.gameState and context.gameState.monster
+        if target and V.speed(hand,context)<require("src.enemy_abilities").speed(target) then
+            return {xChips=1+value,afterstorm=true,afterstormCards=hand.scoringCards,message="TÀN QUANG · LAN SÁT THƯƠNG"}
+        end
     end,
     spirit_last_sun=function(hand,context,value)
         local game=context.gameState or context
         local remaining=context.handsAfterPlay
         if remaining==nil then remaining=math.max(0,(game.handsRemaining or 1)-1) end
-        local armor=context.playerArmorAvailable or game.playerArmor or 0
-        if remaining==0 and armor>=10 then
-            return {xAura=1+value,armorBurn=armor,nextSpnState={},message="MẶT TRỜI CUỐI · ĐỐT GIÁP NHÂN AURA"}
-        end
+        if remaining==0 then return {xMult=1+value,message="MẶT TRỜI CUỐI · NHÂN CƯỜNG HÓA"} end
     end,
 }
 function V.register(deities)

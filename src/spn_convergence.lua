@@ -1,8 +1,8 @@
 local S={entries={
     {"spirit_primeval_product","Cổ Linh Bồi Tụ","addChips",2,"Mỗi lá đã chơi thêm 1 tầng vĩnh viễn trong chuyến đi; mỗi tầng +{value} Sát thương. Tính cả lá không ghi điểm."},
-    {"spirit_parity","Lưỡng Cực","xMult",0.04,"Mỗi tay tích 1 điện; đổi ưu thế chẵn/lẻ so với tay trước thêm 1 điện. Mỗi điện tăng hệ số Cường hóa thêm {value}. Điện giữ suốt chuyến đi; hòa chẵn/lẻ không đổi cực."},
+    {"spirit_parity","Lưỡng Cực","addMult",10,"Mỗi lần bị địch đánh mất HP: tích lũy vĩnh viễn +{value} Sát thương và +{value} Cường hóa cho lá này, không giới hạn."},
     {"spirit_extremes","Vết Nứt Vô Cực","addChips",1,"Mỗi tay thêm 5 vết nứt; mỗi HP thực mất do đòn quái thêm 1 vết. Mỗi vết thêm {value} Sát thương tính điểm; mỗi 100 vết thêm 1 Cường hóa. Giữ suốt chuyến đi."},
-    {"spirit_hour_product","Đồng Hồ Vô Tận","addMult",2,"Mỗi tay tích 1 hạt cát suốt chuyến đi. Mỗi 4 hạt: thêm 1 nhịp lực và hồi đúng 1 lượt đánh. Mỗi nhịp +{value} Cường hóa; nhịp không tiêu hao."},
+    {"spirit_hour_product","Đồng Hồ Vô Tận","addMult",2,"Mỗi lần bỏ bài: lá này tích lũy vĩnh viễn +{value} Cường hóa, không giới hạn."},
     {"spirit_number_grave","Mộ Chữ Số","addFlatDamage",6,"Chôn tối đa 15 Giáp hiện tại của mục tiêu mỗi tay; mỗi Giáp bị chôn thêm {value} sát thương cố định vào AURA. Giáp thực sự bị lấy đi."},
     {"spirit_reverse_stair","Bậc Thang Ngược","xMult",0.25,"Tại ô này, hoán đổi toàn bộ Sát thương và Cường hóa đang có, rồi ×{factor} Cường hóa. Các SPN phía sau tính trên hai trục đã đảo."},
     {"spirit_three_moons","Nhịp Sao Rơi","addHealHp",1,"Chơi 1 lá: đốt Giáp đang có, hồi {value} HP mỗi Giáp. Chơi 3 lá: +{value} sát thương cố định mỗi HP thiếu. Chơi 5 lá: đổi 1 lượt bỏ để cả bầy quái ngủ 1 đòn. Tính cả lá không ghi điểm."},
@@ -24,8 +24,10 @@ local function state(game,owned) return game.spnCombat and game.spnCombat[owned]
 local function visit(game,fn,locked)
     for slot=1,D.getMaxSlots(game) do
         local owned=game.deities and game.deities[slot]
-        if owned and S.byId[owned.id] and not (locked and locked[slot]) and not Boss.isSlotLocked(game,"spn",slot) then
-            fn(owned,slot,state(game,owned))
+        if owned and not (locked and locked[slot]) and not Boss.isSlotLocked(game,"spn",slot) then
+            require("src.spn_mimic").each(game,game.deities,slot,function(effective)
+                if S.byId[effective.id] then fn(effective,slot,state(game,effective)) end
+            end,locked)
         end
     end
 end
@@ -35,19 +37,16 @@ local effects={
         return {addChips=layers*value,nextSpnGrowth={layers=layers},fixedMessage=true,message="BỒI TỤ · "..layers.." TẦNG"}
     end,
     spirit_parity=function(hand,game,memory,value,context,growth)
-        local balance=0
-        for _,c in ipairs(played(hand)) do balance=balance+(c.rank%2==0 and 1 or -1) end
-        local pole=balance>0 and "even" or balance<0 and "odd" or growth.pole
-        local charge=(growth.charge or 0)+1+(balance~=0 and growth.pole and pole~=growth.pole and 1 or 0)
-        return {xMult=1+value*charge,nextSpnGrowth={charge=charge,pole=pole},fixedMessage=true,message="LƯỠNG CỰC · "..charge.." ĐIỆN"}
+        local hits=growth.hits or 0
+        if hits>0 then return {addChips=hits*10,addMult=hits*value,fixedMessage=true,message="LƯỠNG CỰC · "..hits.." ĐÒN"} end
     end,
     spirit_extremes=function(hand,game,memory,value,context,growth)
         local cracks=(growth.cracks or 0)+5
         return {addChips=cracks*value,addMult=math.floor(cracks/100),nextSpnGrowth={cracks=cracks},fixedMessage=true,message="VẾT NỨT · "..cracks}
     end,
     spirit_hour_product=function(hand,game,memory,value,context,growth)
-        local sand=(growth.sand or 0)+1;local beats=math.floor(sand/4)
-        return {addMult=beats*value,handRefund=sand%4==0 and 1 or 0,nextSpnGrowth={sand=sand},fixedMessage=true,message="CÁT · "..sand.." / NHỊP · "..beats}
+        local discards=growth.discards or 0
+        if discards>0 then return {addMult=discards*value,fixedMessage=true,message="ĐỒNG HỒ · "..discards.." LẦN BỎ"} end
     end,
     spirit_number_grave=function(hand,game,memory,value,context)
         local target=game.monster or {}
@@ -109,9 +108,9 @@ end
 function S.describe(owned)
     local g=owned.spnGrowth or {}
     if owned.id=="spirit_primeval_product" then return "BỒI TỤ HIỆN TẠI · "..(g.layers or 0).." TẦNG"
-    elseif owned.id=="spirit_parity" then return "ĐIỆN HIỆN TẠI · "..(g.charge or 0)
+    elseif owned.id=="spirit_parity" then return "ĐÒN ĐÃ CHỊU · "..(g.hits or 0)
     elseif owned.id=="spirit_extremes" then return "VẾT NỨT HIỆN TẠI · "..(g.cracks or 0)
-    elseif owned.id=="spirit_hour_product" then return "CÁT HIỆN TẠI · "..(g.sand or 0).." / NHỊP · "..math.floor((g.sand or 0)/4) end
+    elseif owned.id=="spirit_hour_product" then return "LẦN BỎ BÀI · "..(g.discards or 0) end
 end
 function S.migrate(owned)
     local def=S.byId[owned.id];if not def then return end
@@ -140,6 +139,17 @@ function S.enemyDamage(game,damage)
     visit(game,function(owned)
         if owned.id=="spirit_extremes" then
             owned.spnGrowth={cracks=(owned.spnGrowth and owned.spnGrowth.cracks or 0)+damage}
+            owned.desc=D.getDescription(owned)
+        elseif owned.id=="spirit_parity" then
+            owned.spnGrowth={hits=(owned.spnGrowth and owned.spnGrowth.hits or 0)+1}
+            owned.desc=D.getDescription(owned)
+        end
+    end)
+end
+function S.discard(game)
+    visit(game,function(owned)
+        if owned.id=="spirit_hour_product" then
+            owned.spnGrowth={discards=(owned.spnGrowth and owned.spnGrowth.discards or 0)+1}
             owned.desc=D.getDescription(owned)
         end
     end)

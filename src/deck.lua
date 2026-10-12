@@ -1,56 +1,49 @@
 local Rng = require("src.rng")
 local Deck = {}
 
--- 6 Combat Battle Seals (Ấn Chiến)
+-- Core battle seals; the complete ten-stamp catalog is assembled below.
 Deck.SEALS = {
     seal_blood = {
         id = "seal_blood",
         name = "Ấn Huyết",
         icon = "🩸",
         color = { 0.90, 0.15, 0.15, 1 },
-        desc = "+15 Mult, Tái kích hoạt toàn bộ chỉ số cơ bản của lá bài 1 lần duy nhất trong trận (tiêu hao 3 HP)",
-    },
-    seal_prophecy = {
-        id = "seal_prophecy",
-        name = "Ấn Tiên Tri",
-        icon = "🔮",
-        color = { 0.30, 0.60, 0.95, 1 },
-        desc = "Khi tạo Aura, nhìn thấu 2 ý định (Intent) kế tiếp của Quái vật / Boss",
-    },
-    seal_ashen = {
-        id = "seal_ashen",
-        name = "Ấn Tro Tàn",
-        icon = "🔥",
-        color = { 0.60, 0.55, 0.50, 1 },
-        desc = "Tự thiêu hủy vĩnh viễn khỏi bộ bài khi đánh, gây 40 Sát thương Chuẩn và nhận +$2 Vàng",
     },
     seal_bounty = {
         id = "seal_bounty",
         name = "Ấn Truy Nã",
         icon = "💰",
         color = { 0.95, 0.80, 0.25, 1 },
-        desc = "Nếu lá này kết liễu Quái vật, thưởng ngay +$4 Vàng tiền truy nã",
     },
     seal_anchor = {
         id = "seal_anchor",
         name = "Ấn Neo",
         icon = "⚓",
         color = { 0.20, 0.70, 0.60, 1 },
-        desc = "Ưu tiên chia vào tay khởi đầu, không thể bị bỏ bài; nhận +8 Giáp khi giữ trên tay cuối lượt",
     },
     seal_purifying = {
         id = "seal_purifying",
         name = "Ấn Thanh Tẩy",
         icon = "✨",
         color = { 0.85, 0.85, 0.95, 1 },
-        desc = "Tẩy sạch 1 hiệu ứng suy yếu (boss debuff) khi kết thúc lượt quái nếu lá bài được giữ trên tay",
     },
 }
--- Backward compatibility aliases
-Deck.SEALS.gold = Deck.SEALS.seal_bounty
-Deck.SEALS.red = Deck.SEALS.seal_blood
-Deck.SEALS.blue = Deck.SEALS.seal_prophecy
-Deck.SEALS.purple = Deck.SEALS.seal_ashen
+Deck.SEAL_ORDER = {"seal_blood","seal_anchor","seal_bounty","seal_purifying",
+    "seal_sunder","seal_lantern","seal_echoes","seal_reclaimer","seal_gambit","seal_threshold"}
+-- Convert retired stamps rather than removing upgrades from old runs.
+Deck.RETIRED_SEALS = {
+    seal_prophecy="seal_anchor",seal_ashen="seal_sunder",seal_seed="seal_lantern",
+    seal_mercy="seal_threshold",seal_reserve="seal_bounty",seal_pilgrim="seal_echoes",
+    seal_oath="seal_purifying",seal_equilibrium="seal_lantern",seal_harvest="seal_bounty",
+    seal_dusk="seal_blood",seal_tutor="seal_anchor",seal_constellation="seal_echoes",
+    seal_pact="seal_bounty",seal_waymark="seal_reclaimer",seal_debt="seal_gambit",seal_duel="seal_lantern",
+}
+local sealAliases={gold="seal_bounty",red="seal_blood",blue="seal_anchor",purple="seal_sunder",seal_deja_vu="seal_blood"}
+function Deck.normalizeSeal(id)
+    if not id then return nil end
+    local canonical=sealAliases[id] or (id:match("^seal_") and id or "seal_"..id)
+    return Deck.RETIRED_SEALS[canonical] or canonical
+end
 
 -- 10 Card Enhancements (Thuật Rèn Bài)
 Deck.ENHANCEMENTS = {
@@ -128,17 +121,14 @@ Deck.ENHANCEMENTS = {
 
 -- Runtime and descriptions share these values, including old-save aliases.
 Deck.SEALS.seal_blood.params={hpCost=3,repeats=1}
-Deck.SEALS.seal_prophecy.params={intents=2}
-Deck.SEALS.seal_ashen.params={damage=40}
 Deck.SEALS.seal_bounty.params={gold=2}
 Deck.SEALS.seal_anchor.params={}
 Deck.SEALS.seal_purifying.params={cleanses=1}
-Deck.SEALS.seal_blood.desc="Tái kích hoạt điểm cơ bản {repeats} lần, tốn {hpCost} HP; một lần mỗi trận, không lặp trang bị/giáp/hồi máu/vàng."
-Deck.SEALS.seal_prophecy.desc="Khi tính điểm hoặc được chia đầu trận: nhìn thấy {intents} ý định kế tiếp của quái."
-Deck.SEALS.seal_ashen.desc="Khi tính điểm: tiêu hủy vĩnh viễn lá này, gây {damage} sát thương chuẩn trực tiếp; không thưởng Vàng."
+Deck.SEALS.seal_blood.desc="Tái kích hoạt điểm cơ bản {repeats} lần, tốn {hpCost} HP; mỗi lá một lần mỗi trận, chỉ khi còn đủ HP để sống. Không lặp trang bị/giáp/hồi máu/vàng."
 Deck.SEALS.seal_bounty.desc="Tay tính điểm chứa lá này kết liễu quái: thưởng {gold} Vàng."
 Deck.SEALS.seal_anchor.desc="Ưu tiên chia lá này vào tay đầu trận; không tự thêm Giáp hay ngăn bỏ bài."
-Deck.SEALS.seal_purifying.desc="Khi giữ qua lượt quái: tẩy Nội Tại Boss, tối đa {cleanses} lần mỗi trận."
+Deck.SEALS.seal_purifying.params.armor=4
+Deck.SEALS.seal_purifying.desc="Giữ qua lượt quái: +{armor} Giáp mỗi lá (tối đa 12 mỗi lượt). Đồng thời tẩy Nội Tại Boss, tối đa {cleanses} lần mỗi trận."
 local enhancementParams={
     enh_armor={chips=-10,armor=8},enh_blood={mult=15,hpCost=4},
     enh_overcharged={gain=5,maxStacks=25},enh_cursed={mult=20,enrage=1},
@@ -161,13 +151,28 @@ local enhancementText={
 for id,p in pairs(enhancementParams) do Deck.ENHANCEMENTS[id].params=p;Deck.ENHANCEMENTS[id].desc=enhancementText[id] end
 for _, seal in ipairs(require("src.chest_expansion").seals) do Deck.SEALS[seal.id]=seal end
 for _, seal in ipairs(require("src.chest_depth").seals) do Deck.SEALS[seal.id]=seal end
+local sealColors={blood={0.80,0.20,0.28,1},anchor={0.23,0.72,0.67,1},bounty={0.91,0.70,0.27,1},
+    purifying={0.64,0.79,0.91,1},sunder={0.92,0.43,0.22,1},lantern={0.27,0.61,0.91,1},
+    echoes={0.65,0.45,0.90,1},reclaimer={0.70,0.75,0.39,1},gambit={0.86,0.47,0.40,1},threshold={0.32,0.75,0.46,1}}
+for _,id in ipairs(Deck.SEAL_ORDER) do
+    local d=Deck.SEALS[id];d.symbol=id:sub(6);d.color=sealColors[d.symbol]
+    d.sealType,d.sealName=id,d.name
+    d.subtitle=d.name
+end
 function Deck.getModifier(kind,id)
     local catalog=kind=="seal" and Deck.SEALS or Deck.ENHANCEMENTS
+    if kind=="seal" then id=Deck.normalizeSeal(id) end
     return catalog[id] or catalog[(kind=="seal" and "seal_" or "enh_")..tostring(id)]
 end
 function Deck.getModifierDescription(kind,id)
     local d=Deck.getModifier(kind,id);if not d then return "" end
     return d.desc:gsub("{([%w_]+)}",function(k) return tostring(d.params and d.params[k] or 0) end)
+end
+function Deck.applySeal(game,card,id)
+    id=Deck.normalizeSeal(id)
+    if not card or not Deck.SEALS[id] then return false end
+    require("src.chest_expansion").sync(game,card,function(c) c.seal=id;c.isAnchor=id=="seal_anchor" end)
+    return true
 end
 
 Deck.FACTIONS = {
@@ -587,11 +592,11 @@ function Deck.cloneCard(card)
     newC.isDualRankAce = card.isDualRankAce or false
     newC.disableFactionPassives = card.disableFactionPassives or false
     newC.starterDeckId = card.starterDeckId
-    newC.seal = card.seal
+    newC.seal = Deck.normalizeSeal(card.seal)
     newC.enhancement = card.enhancement
     newC.edition = card.edition or card.visualEffect
     newC.overchargeStacks = card.overchargeStacks or 0
-    newC.isAnchor = card.isAnchor or (card.seal == "seal_anchor" or card.seal == "anchor")
+    newC.isAnchor = newC.seal == "seal_anchor"
     newC.maxSockets = require("src.equipment").getMaxSlots(card)
     newC.unlockedSockets = newC.maxSockets
     newC.allowDuplicateEquipment = card.allowDuplicateEquipment == true

@@ -28,7 +28,7 @@ function T.run()
     local name=pass==1 and "chest_expansion_runtime.png" or "chest_depth_runtime.png"
     local f=assert(io.open("docs/"..name,"wb"));f:write(bytes);f:close()
     end
-    print("PASS: LuaJIT gameplay checks and all 80 expansion cards through real loaders and shared card frame")
+    print("PASS: LuaJIT gameplay checks and retained expansion cards through real loaders and shared card frame")
     love.event.quit(0)
 end
 return T

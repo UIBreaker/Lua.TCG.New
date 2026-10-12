@@ -96,6 +96,7 @@ love . --test-features        # Cơ chế nâng cao
 love . --test-touch           # Chạm, giữ, rê và hủy thao tác cảm ứng
 love . --test-expedition      # Hành trình, giấy phép và ảnh render
 love . --test-chest-expansion # 40 lá mới, tiêu hao, save và render
+love . --test-seals           # 10 con dấu, cân bằng, chuyển save cũ và biểu tượng trên bài
 ```
 
 Các kịch bản render mở cửa sổ game và có thể ghi lại ảnh vào `docs/`. Xem thêm [hành trình viễn chinh](docs/expedition/README.md), [khả năng và tiến hóa](docs/gameplay_systems_expansion.md), [Chợ Linh Hồn](docs/soul_shop.md), [40 lá trong rương](docs/chest_expansion.md) và [quy chuẩn art Continental](docs/CONTINENTAL_ART_BIBLE.md).

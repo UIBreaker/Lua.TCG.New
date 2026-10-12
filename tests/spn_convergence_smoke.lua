@@ -36,10 +36,13 @@ assert(score(g,h).finalScore==preview.finalScore)
 assert(g.deities[5].spnGrowth.layers==3 and effect(g,h).addChips==12)
 score(g,h);assert(g.deities[5].spnGrowth.layers==6)
 g=game("spirit_parity")
-score(g,hand({2}));assert(g.deities[5].spnGrowth.charge==1)
-score(g,hand({3}));assert(g.deities[5].spnGrowth.charge==3)
-score(g,hand({3}));assert(g.deities[5].spnGrowth.charge==4)
-score(g,hand({2,3}));assert(g.deities[5].spnGrowth.charge==5 and g.deities[5].spnGrowth.pole=="odd")
+assert(not effect(g),"parity starts without a bonus")
+Combat.resolveMonsterAttack(g);assert(g.deities[5].spnGrowth.hits==1)
+assert(effect(g).addChips==10 and effect(g).addMult==10)
+Combat.resolveMonsterAttack(g);assert(g.deities[5].spnGrowth.hits==2)
+assert(effect(g).addChips==20 and effect(g).addMult==20)
+g.playerArmor=100;Combat.resolveMonsterAttack(g)
+assert(g.deities[5].spnGrowth.hits==2,"armor-only hits do not add permanent stacks")
 g=game("spirit_extremes");score(g);assert(g.deities[5].spnGrowth.cracks==5)
 g.playerArmor=4;Combat.resolveMonsterAttack(g)
 assert(g.deities[5].spnGrowth.cracks==11,"only six actual HP lost add cracks")
@@ -51,24 +54,30 @@ assert(evolved.addChips==28.5 and evolved.message=="VẾT NỨT · 19","evolutio
 g.deities[5].spnGrowth.cracks=99
 local hundred=effect(g);assert(hundred.addChips==104 and hundred.addMult==1,"100 cracks add one Mult")
 g=game("spirit_hour_product")
-for i=1,3 do score(g);assert(g.handsRemaining==3) end
-preview=score(g,nil,true);assert(g.handsRemaining==3 and g.deities[5].spnGrowth.sand==3)
-assert(score(g).finalScore==preview.finalScore and g.handsRemaining==4 and g.deities[5].spnGrowth.sand==4)
-assert(effect(g).addMult==2)
-D.evolve(g.deities[5]);g.deities[5].spnGrowth={sand=7};score(g)
-assert(g.handsRemaining==5,"evolution refunds one whole hand, never fractional")
+assert(not effect(g))
+for i=1,3 do require("src.card_abilities").discard(g,{Deck.newCard(3,"hearts")}) end
+assert(g.deities[5].spnGrowth.discards==3 and effect(g).addMult==6)
+preview=score(g,nil,true);assert(g.deities[5].spnGrowth.discards==3)
+assert(score(g).finalScore==preview.finalScore and g.handsRemaining==3)
+D.evolve(g.deities[5]);assert(D.scaleEffect(g.deities[5],effect(g)).addMult==9)
 
 -- Persistent growth survives a new battle, reordering, evolution, copies and saves.
 local growing=0
 for _,row in ipairs(S.entries) do
     if D.CATALOG[row[1]].accumulationMechanic then
-        growing=growing+1;g=game(row[1]);score(g)
+        growing=growing+1;g=game(row[1])
+        local function grow()
+            if row[1]=="spirit_parity" then Combat.resolveMonsterAttack(g)
+            elseif row[1]=="spirit_hour_product" then require("src.card_abilities").discard(g,{Deck.newCard(3,"hearts")})
+            else score(g) end
+        end
+        grow()
         local owned=g.deities[5];local old=owned.spnGrowth
         Combat.start(g,{hp=10000,maxHp=10000,attack=10,attackSpeed=1},1)
         assert(owned.spnGrowth==old,row[1].." battle preserves growth")
         local saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
         assert(saved.deities[5].spnGrowth and S.describe(saved.deities[5])==S.describe(owned),row[1].." save")
-        g.deities[1]=owned;g.deities[5]=nil;score(g)
+        g.deities[1]=owned;g.deities[5]=nil;grow()
         assert(owned.spnGrowth~=old,row[1].." growth follows moved instance")
         assert(D.addDeity(g,D.CATALOG[row[1]],5) and not g.deities[5].spnGrowth,"fresh duplicate has independent growth")
     end
@@ -150,5 +159,5 @@ end
 g=game("spirit_primeval_product");g.deities[5].name="Tích Nguyên Sơ";g.deities[5].stat="addChips";g.deities[5].values={value=1};g.deities[5].productMechanic=true
 local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 assert(restored.deities[5].name=="Cổ Linh Bồi Tụ" and restored.deities[5].values.value==2 and not restored.deities[5].productMechanic,"old saves receive revised definitions")
-assert(#D.getRandomShopPool({},99)==50)
+assert(#D.getRandomShopPool({},99)==57)
 print("SPN rework PASS: 4 persistent growth engines, 6 rule-breaking strategies, costs, save migration, preview purity, locks, damage routing and debt")

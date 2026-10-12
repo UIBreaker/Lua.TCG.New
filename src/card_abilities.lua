@@ -217,7 +217,7 @@ function A.score(game,card)
     end
     if card.destroyed then A.destroy(game,card,ctx) end
 end
-function A.destroy(game,card,ctx)
+function A.destroy(game,card,ctx,soulMultiplier)
     if not card or card.destructionNotified then return false end
     card.destroyed=true; card.destructionNotified=true
     if card.edition=="void" or card.visualEffect=="void" then
@@ -251,7 +251,7 @@ function A.destroy(game,card,ctx)
             end
         end
     end
-    local souls = require("src.souls").award(game, card)
+    local souls = require("src.souls").award(game, card, soulMultiplier)
     A.dispatch(game,"destroyed",{card},ctx or game.abilityHand or {})
     combat(game).lastDestroyed=card
     feedback(game,card,"TIÊU HỦY · "..(card.rankName or "")..(card.suitSymbol or "")..(souls>0 and (" · +"..souls.." LH") or ""),"destroy")
@@ -264,7 +264,9 @@ function A.resolveBossDamage(game)
         local absorbed=math.min(game.playerArmor or 0,damage)
         game.playerArmor=math.max(0,(game.playerArmor or 0)-absorbed);game.playerShield=game.playerArmor
         damage=A.damageGuard(game,damage-absorbed)
-        game.playerHp=math.max(0,(game.playerHp or 100)-damage)
+        local hpBefore=game.playerHp or 100
+        game.playerHp=math.max(0,hpBefore-damage)
+        require("src.spn_anomalies").enemyAttack(game,game.monster,math.min(damage,hpBefore))
         feedback(game,nil,"BOSS · -"..damage.." HP", "boss")
     end
 end
@@ -306,10 +308,15 @@ function A.combatWin(game)
     local ctx={goldBeforeInterest=game.gold or 0}
     A.dispatch(game,"combat_win",allCards(game),ctx)
 end
-function A.discard(game,cards)
+function A.discard(game,cards,context)
+    if context and context.handsPlayedBefore==nil then
+        context.handsPlayedBefore=math.max(game.handsPlayedThisCombat or 0,combat(game).playIndex or 0)
+    end
     if #(cards or {})>0 then combat(game).tacticDiscarded=true end
+    if #(cards or {})>0 then require("src.spn_convergence").discard(game) end
     require("src.chest_depth").discard(game,cards)
     A.dispatch(game,"discard",cards,{})
+    require("src.spn_discard").discard(game,cards,context)
     local x=game.abilityHand
     if x and not x.finished then for i=#x.active,1,-1 do if contains(cards,x.active[i]) then table.remove(x.active,i) end end end
 end

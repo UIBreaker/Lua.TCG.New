@@ -1,5 +1,6 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-seals" then require("tests.seal_capture");return end
     if a=="--test-combat-tactics" then
         local failed=false
         for _,name in ipairs({"tests.combat_tactics_smoke","tests.enemy_group_smoke",
@@ -26,7 +27,7 @@ for _, a in ipairs(arg or {}) do
         io.stdout:setvbuf("no");local failed=false
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
-            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke"}) do
+            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
         end
@@ -1121,7 +1122,11 @@ local function discardSelected()
     end
     clearAllSelections()
 
-    UI.Abilities.discard(game, discardedCards)
+    UI.Abilities.discard(game, discardedCards,{playerDiscard=true,remainingBefore=game.discardsRemaining,freeDiscard=hasFreeDiscard})
+    require("src.spn_anomalies").showFeedback(game,anim)
+
+    -- A discarded sacrifice must never return through faction/seal discard routing.
+    for i=#discardedCards,1,-1 do if discardedCards[i].destroyed then table.remove(discardedCards,i) end end
 
     -- Process Grimdark Faction Passives on Discard
     game.discardBuffs = game.discardBuffs or { chips = 0, mult = 0, xMult = 1.0, bonusDamagePct = 0 }
@@ -1203,39 +1208,7 @@ local function discardSelected()
             table.insert(game.discardPile, card)
         end
 
-        -- 5. 🟣 DẤU TÍM (Purple Seal / Medium): Tạo Thẻ Phép ngẫu nhiên khi bị bỏ bài
-        if card.seal == "purple" then
-            local spellPool = {
-                { id = "spec_familiar", name = "Familiar", subtitle = "LINH THÚ", desc = "Hủy 1 lá ngẫu nhiên, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị!" },
-                { id = "spec_grim", name = "Grim", subtitle = "TỬ THẦN", desc = "Hủy 1 lá ngẫu nhiên, thêm 2 lá Át (A) có trang bị!" },
-                { id = "spec_cryptid", name = "Cryptid", subtitle = "DỊ THỂ", desc = "Nhân bản 1 lá bài đã chọn trên tay thành 2 bản sao!" },
-                { id = "spec_immolate", name = "Immolate", subtitle = "THIÊU RỤI", desc = "Hủy 5 lá, nhận ngay +$20 Tiền Vàng!" },
-                { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tất cả các thế bài tăng +1 Cấp!" },
-                { id = "spell_aura", name = "Aura", subtitle = "HÀO QUANG", desc = "Thêm Foil, Holo, hoặc Polychrome cho 1 Thần ngẫu nhiên!" },
-                { id = "seal_deja_vu", name = "Deja Vu", subtitle = "DẤU ĐỎ", desc = "Đóng Dấu Đỏ lên 1 lá bài (kích hoạt lại điểm +1 lần)!" },
-            }
-            local chosen = spellPool[Rng.random(#spellPool)]
-            game.consumables = game.consumables or {}
-            if #game.consumables < UI.Inventory.limit(game) then
-                table.insert(game.consumables, chosen)
-                table.insert(anim.floatingTexts, {
-                    text = "🟣 [DẤU TÍM] Tạo Thẻ Phép: " .. chosen.name .. " (" .. chosen.subtitle .. ")!",
-                    color = { 0.85, 0.45, 0.95, 1 },
-                    x = 640,
-                    y = 390,
-                    alpha = 2.5,
-                })
-            else
-                table.insert(anim.floatingTexts, {
-                    text = "🟣 [DẤU TÍM] Ô Tiêu Hao đã đầy!",
-                    color = { 0.85, 0.45, 0.95, 1 },
-                    x = 640,
-                    y = 390,
-                    alpha = 2.0,
-                })
-            end
-            Sound.play("round_win")
-        end
+
     end
 
     if hasFreeDiscard then
@@ -1592,12 +1565,7 @@ local function useConsumable(idx)
             Sound.play("cant_afford")
             return false
         end
-        target.seal = c.sealType
-        if game.persistentDeck then
-            for _, pc in ipairs(game.persistentDeck) do
-                if pc.id == target.id then pc.seal = c.sealType break end
-            end
-        end
+        if not Deck.applySeal(game,target,c.sealType or c.id) then return false end
         Sound.play("round_win")
         table.remove(game.consumables, idx)
         table.insert(anim.floatingTexts, {
@@ -1922,6 +1890,10 @@ local function playSelectedHand()
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
+    if not require("src.spn_legacy").canPlay(game,#playedCards) then
+        table.insert(anim.floatingTexts,{text="ĐỘC KÍCH · CHỈ ĐƯỢC ĐÁNH 1 LÁ",color=UI.COLORS.goldYellow,x=640,y=430,alpha=1.5})
+        Sound.play("cant_afford");return
+    end
     local evalForChoices = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalForChoices then return end
     if not game.abilityApproved then
@@ -2192,7 +2164,7 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
-        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" then
+        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" then
             local ok, err = pcall(function()
                 local ids,output
                 if argument=="--test-spn-anomalies-art" then
@@ -2207,6 +2179,18 @@ function love.load()
                 elseif argument=="--test-spn-provisions-art" then
                     ids={};for _,row in ipairs(require("src.spn_provisions").entries) do ids[#ids+1]=row[1] end
                     output="docs/spn_provisions_runtime.png"
+                elseif argument=="--test-spn-discard-art" then
+                    ids={"spirit_last_remnant"};output="docs/spn_discard_runtime.png"
+                elseif argument=="--test-spn-souls-art" then
+                    ids={};for _,row in ipairs(require("src.spn_souls").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_souls_runtime.png"
+                elseif argument=="--test-spn-legacy-art" then
+                    ids={};for _,row in ipairs(require("src.spn_legacy").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_legacy_runtime.png"
+                elseif argument=="--test-spn-twin-fang-art" then
+                    ids={"spirit_twin_fang"};output="docs/spn_twin_fang_runtime.png"
+                elseif argument=="--test-spn-mimic-art" then
+                    ids={"spirit_right_echo"};output="docs/spn_mimic_runtime.png"
                 end
                 require("tests.spn_art_smoke").verify(ids,output)
             end)
@@ -2485,7 +2469,10 @@ function love.update(dt)
         UI.BedExplosion.pending=false
         anim.hitStop=math.max(anim.hitStop or 0,UI.BedExplosion.config.hitStop)
     end
-    if state=="playing" then require("src.souls").awardKills(game) end
+    if state=="playing" then
+        require("src.souls").awardKills(game)
+        require("src.spn_anomalies").showFeedback(game,anim)
+    end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
     local cameraX, cameraY = 0, 0
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
@@ -2865,7 +2852,7 @@ function love.update(dt)
                         local x = hit.enemy.screenX or UI.BATTLE_CENTER_X
                         local y=214
                         local ft = Feedback.add(anim.floatingTexts, "damage", hit.damage, x, y, UI.formatNumber)
-                        ft.label = hit.deity.name .. (hit.advanced and "" or hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or " · AURA LAN")
+                        ft.label = hit.deity.name .. (hit.advanced and "" or hit.explosion and " · NỔ GIƯỜNG" or hit.portal and " · CỔNG AURA" or hit.afterstorm and " · DƯ CHẤN" or " · AURA LAN")
                         if hit.advanced then ft.compact=true;ft.quietImpact=true;ft.label="SÉT "..hitIndex;ft.maxLife=.85;ft.life=ft.maxLife end
                         hit.enemy.hitFlash = 0.24
                         CardEffects.triggerScorePulse(hit.deity)
@@ -2989,7 +2976,7 @@ function love.update(dt)
                         for di = 1, maxWinSlots do
                             local d = game.deities and game.deities[di]
                             if d then
-                                local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(game.deities, di) or d
+                                require("src.spn_mimic").each(game,game.deities,di,function(effectiveDeity)
                                 if effectiveDeity and effectiveDeity.onRoundWin then
                                     local r = effectiveDeity.onRoundWin(game, effectiveDeity)
                                     r = Deities.scaleEffect(effectiveDeity, r)
@@ -3005,6 +2992,7 @@ function love.update(dt)
                                         })
                                     end
                                 end
+                                end)
                                 if d.extinct then
                                     game.deities[di] = nil
                                 end
@@ -3067,53 +3055,6 @@ function love.update(dt)
                                     y = 330,
                                     alpha = 3.0,
                                 })
-                            end
-                        end
-
-                        -- Blue Seal (Trance): Đóng Dấu Xanh Lam tạo lá bài Hành Tinh của thế bài chiến thắng cuối cùng nếu giữ trên tay
-                        if game.hand and #game.hand > 0 and game.lastPlayedHandId then
-                            for _, c in ipairs(game.hand) do
-                                if c.seal == "blue" then
-                                    local pScaling = Poker.HAND_LEVEL_SCALING[game.lastPlayedHandId]
-                                    if pScaling and pScaling.planetId then
-                                        local planetCard = nil
-                                        for _, pc in ipairs(Poker.PLANET_CARDS) do
-                                            if pc.id == pScaling.planetId then
-                                                planetCard = pc
-                                                break
-                                            end
-                                        end
-                                        if planetCard then
-                                            game.consumables = game.consumables or {}
-                                            if #game.consumables < UI.Inventory.limit(game) then
-                                                table.insert(game.consumables, {
-                                                    id = planetCard.id,
-                                                    category = "celestial",
-                                                    name = planetCard.name,
-                                                    handId = planetCard.handId,
-                                                    desc = planetCard.desc,
-                                                    icon = planetCard.icon,
-                                                    color = planetCard.color,
-                                                })
-                                                table.insert(anim.floatingTexts, {
-                                                    text = "🔵 [DẤU LAM] Tạo lá bài " .. planetCard.name .. "!",
-                                                    color = { 0.35, 0.75, 1.0, 1 },
-                                                    x = 640,
-                                                    y = 360,
-                                                    alpha = 3.0,
-                                                })
-                                            else
-                                                table.insert(anim.floatingTexts, {
-                                                    text = "🔵 [DẤU LAM] Ô Tiêu Hao đã đầy!",
-                                                    color = { 0.8, 0.8, 0.8, 1 },
-                                                    x = 640,
-                                                    y = 360,
-                                                    alpha = 2.5,
-                                                })
-                                            end
-                                        end
-                                    end
-                                end
                             end
                         end
 
@@ -3265,7 +3206,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.125.1", 48, 185)
+    g.print("beta 0.126.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4059,7 +4000,7 @@ local function drawPlayingState()
             end
             love.graphics.translate(-dx - deitySlotW / 2, -deityY - deitySlotH / 2)
 
-            local copyTarget = d.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
+            local copyTarget = d.isCopyDeity and d.id~="spirit_right_echo" and Deities.resolveDeity and Deities.resolveDeity(game.deities, i)
             UI.drawPatronCard(d, dx, deityY, deitySlotW, deitySlotH, isHoveredCard,
                 juice.buttonPressedId == ("deity_" .. i), isDropTarget, copyTarget)
             if pendingEvolutionCard then
@@ -4187,7 +4128,7 @@ local function drawPlayingState()
         h = 58,
         font = UI.fonts.bookChapter,
         variant = "cyan",
-        disabled = anim.enemyTurn ~= nil or state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
+        disabled = anim.enemyTurn ~= nil or state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0 or not require("src.spn_legacy").canPlay(game,#selectedCards))),
         pressScale = 0.95,
     }
     if anim.playButtonPulse > 0 then
@@ -4195,7 +4136,7 @@ local function drawPlayingState()
         btnPlay.animationScale = 1 - 0.05 * (1 - pulseProgress) * math.cos(pulseProgress * math.pi * 2)
     end
     table.insert(buttons, btnPlay)
-    require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,"SPACE · ĐÁNH")
+    require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,require("src.spn_legacy").canPlay(game,2) and "SPACE · ĐÁNH" or "SPACE · ĐÁNH 1 LÁ")
 
     -- Secondary sort controls sit between the two primary actions.
     local sortBoxX = UI.BATTLE_CENTER_X - 65
@@ -4283,7 +4224,7 @@ local function drawPlayingState()
     -- 7. TOOLTIPS (Deity & Card Equipment)
     ----------------------------------------------------------------------------
     if hoveredDeityTooltip then
-        local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
+        local copyTarget = hoveredDeityTooltip.isCopyDeity and hoveredDeityTooltip.id~="spirit_right_echo" and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
         UI.descriptionCandidate = copyTarget or hoveredDeityTooltip
     end
 
@@ -5861,7 +5802,7 @@ local function drawShopState()
     end
 
     if hoveredDeityTooltip then
-        local copyTarget = hoveredDeityTooltip.isCopyDeity and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
+        local copyTarget = hoveredDeityTooltip.isCopyDeity and hoveredDeityTooltip.id~="spirit_right_echo" and Deities.resolveDeity and Deities.resolveDeity(game.deities, hoveredDeityTooltip.slotIndex or 1)
         UI.descriptionCandidate = copyTarget or hoveredDeityTooltip
     end
     drawCombatFeedback()

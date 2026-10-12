@@ -103,6 +103,7 @@ end
 function Scoring.calculate(handInfo, deities, context)
     context=context or {}
     if context.preview and not context.previewSandbox then return preview(handInfo, deities, context) end
+    for _,card in ipairs(handInfo.scoringCards or {}) do card.seal=Deck.normalizeSeal(card.seal) end
     context.basicEquipmentGold=0
     context.equipmentSeen={}
     context.equipmentGoldAwarded=0
@@ -329,13 +330,17 @@ function Scoring.calculate(handInfo, deities, context)
                 message = "🚫 " .. debuffReason
             })
         else
-            -- Battle Seal: Blood Seal (Ấn Huyết) retriggers card base stats once, costs 3 HP, max 1/combat
+            -- Blood repeats only base stats, once per owner per combat, for a nonlethal HP cost.
             if abilityGame then abilityGame.combatFlags = abilityGame.combatFlags or {} end
             local flags = context.combatFlags or (abilityGame and abilityGame.combatFlags) or context
             local cardTriggers = 1
             local isBloodSeal = (card.seal == "seal_blood" or card.seal == "blood" or card.seal == "red")
-            if isBloodSeal and not flags.bloodSealUsedThisCombat then
+            flags.bloodSealsUsed=flags.bloodSealsUsed or {}
+            local hp=abilityGame and abilityGame.playerHp or context.playerHp
+            if isBloodSeal and not job.retrigger and not flags.bloodSealsUsed[card.id]
+                and (not hp or hp>totalHpCost+Deck.SEALS.seal_blood.params.hpCost) then
                 cardTriggers = 1+Deck.SEALS.seal_blood.params.repeats
+                flags.bloodSealsUsed[card.id]=true
                 flags.bloodSealUsedThisCombat = true
                 if context then context.bloodSealUsedThisCombat = true end
             end
@@ -756,6 +761,7 @@ function Scoring.calculate(handInfo, deities, context)
                 local discovery=Expansion.byId[card.seal]
                 if discovery and not job.retrigger and (not discovery.depth or Depth.allowSeal(context,card,discovery.id)) then
                     local pc,pm,px,pd=cardEvent.addedChips,cardEvent.addedMult,xMultBonus,totalExtraDamagePct
+                    context.sealHpCommitted=totalHpCost
                     local res=discovery.effect(card,handInfo.scoringCards,idx,context)
                     applyDiscovery(res,cardEvent)
                     if res then
@@ -766,18 +772,6 @@ function Scoring.calculate(handInfo, deities, context)
                 -- Original Battle Seals (Ấn Chiến)
                 if card.seal == "seal_blood" or card.seal == "blood" or card.seal == "red" then
                     -- Ấn Huyết đã kích hoạt tái kích hoạt (retrigger) ở trên, không cộng dồn sát thương thừa
-                elseif card.seal == "seal_prophecy" or card.seal == "prophecy" or card.seal == "blue" then
-                    if context and context.monster then
-                        context.monster.showNextIntent = true
-                        context.monster.revealedIntents = Deck.SEALS.seal_prophecy.params.intents
-                        cardEvent.message = cardEvent.message .. " | 🔮 Ấn Tiên Tri (Thấu Thị Intent)"
-                    end
-                elseif card.seal == "seal_ashen" or card.seal == "ashen" or card.seal == "purple" then
-                    card.destroyed = true
-                    if context and context.monster then
-                        context.monster.hp = math.max(0, context.monster.hp - Deck.SEALS.seal_ashen.params.damage)
-                        cardEvent.message = cardEvent.message .. " | 🔥 Ấn Tro Tàn (40 ST Chuẩn & Thiêu Hủy)"
-                    end
                 elseif card.seal == "seal_bounty" or card.seal == "bounty" or card.seal == "gold" then
                     hasBountySeal = true
                     cardEvent.message = cardEvent.message .. " | 💰 Ấn Truy Nã (+$2 khi kết liễu)"
@@ -785,10 +779,7 @@ function Scoring.calculate(handInfo, deities, context)
                     card.isAnchor = true
                     cardEvent.message = cardEvent.message .. " | ⚓ Ấn Neo"
                 elseif card.seal == "seal_purifying" or card.seal == "purifying" then
-                    if context and context.removeOneDebuff then
-                        context.removeOneDebuff()
-                    end
-                    cardEvent.message = cardEvent.message .. " | ✨ Ấn Thanh Tẩy (Giải Trừ 1 Debuff)"
+                    -- This seal acts only when held through an enemy turn.
                 end
             end
 
@@ -810,7 +801,7 @@ function Scoring.calculate(handInfo, deities, context)
     for di = 1, maxDeitySlots do
                 local deity = deities and deities[di]
                 if deity and not (abilityGame and Boss.isSlotLocked(abilityGame, "spn", di)) then
-                    local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
+                    require("src.spn_mimic").each(abilityGame,deities,di,function(effectiveDeity)
                     if effectiveDeity and effectiveDeity.onCardScored then
                         local res = effectiveDeity.onCardScored(card, context, effectiveDeity, idx, handInfo.scoringCards)
                         res = Deities.scaleEffect(effectiveDeity, res)
@@ -849,6 +840,7 @@ function Scoring.calculate(handInfo, deities, context)
                             })
                         end
                     end
+                    end)
                 end
             end
 
@@ -1137,7 +1129,7 @@ end
         local deity = deities and deities[di]
         if deity and not (abilityGame and Boss.isSlotLocked(abilityGame, "spn", di)) then
             local deityAuraBefore=currentChips*currentMult
-            local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(deities, di) or deity
+            require("src.spn_mimic").each(abilityGame,deities,di,function(effectiveDeity)
             if effectiveDeity and effectiveDeity.onHandScored then
                 local res = effectiveDeity.onHandScored(handInfo, spnContext, effectiveDeity, di)
                 res = Deities.scaleEffect(effectiveDeity, res)
@@ -1164,9 +1156,9 @@ end
                     if (res.addDiscards or 0)>0 then
                         spnContext.discardsAvailable=math.min(abilityGame and (abilityGame.spnDiscardCap or abilityGame.maxDiscards or 3) or 3,spnContext.discardsAvailable+res.addDiscards)
                     end
-                    if abilityGame and not (context and context.preview)
-                        and (res.nextSpnState or res.nextSpnGrowth or res.soulCost or res.discardCost or res.addDiscards or res.addHands or res.destroyEight or res.consumableReward) then
-                        require("src.spn_anomalies").commitHand(abilityGame,di,res)
+                    if abilityGame and (not context.preview or context.previewSandbox)
+                        and (res.nextSpnState or res.nextSpnGrowth or res.soulCost or res.discardCost or res.addDiscards or res.addHands or res.destroyEight or res.consumableReward or res.guaranteeHit or res.afterstorm) then
+                        require("src.spn_anomalies").commitHand(abilityGame,di,res,context.preview)
                     end
                     flatDamageBonus=flatDamageBonus+(res.addFlatDamage or 0)-(res.auraTax or 0)
                     if res.swapAxes then
@@ -1217,6 +1209,7 @@ end
                     })
                 end
             end
+            end)
 
             -- Joker Edition Trigger (Foil +50c, Holo +10m, Polychrome x1.5m)
             if deity.edition then

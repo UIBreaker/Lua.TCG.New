@@ -43,13 +43,29 @@ Combat.resolveMonsterAttack(g);assert(g.monster.hp==940,"a lethal 500 attack onl
 
 g=game("spirit_last_pact");g.playerHp=3;g.monster.attack=500
 hit=Combat.resolveMonsterAttack(g)
-assert(g.playerHp==5 and g.discardsRemaining==0 and not hit.killedPlayer)
-g.discardsRemaining=3;hit=Combat.resolveMonsterAttack(g)
-assert(hit.killedPlayer,"once per battle, even after discard refunds")
-g.playerHp=5;g.discardsRemaining=3;g.deities[1]=g.deities[5];g.deities[5]=nil
+assert(g.playerHp==5 and g.discardsRemaining==3 and not hit.killedPlayer)
+hit=Combat.resolveMonsterAttack(g)
+assert(hit.killedPlayer,"basic pact only saves once per battle")
+g.playerHp=5;g.deities[1]=g.deities[5];g.deities[5]=nil
 assert(Combat.resolveMonsterAttack(g).killedPlayer,"reordering cannot reset a used pact")
 g=game("spirit_last_pact");g.discardsRemaining=0;g.monster.attack=500
-assert(Combat.resolveMonsterAttack(g).killedPlayer,"pact needs a discard")
+assert(not Combat.resolveMonsterAttack(g).killedPlayer and g.playerHp==5,"pact no longer spends discards")
+
+g=game("spirit_last_pact");g.monster.attack=500;g.persistentDeck={}
+for i=1,6 do g.persistentDeck[i]=Deck.newCard(i+1,"hearts") end
+for i=1,4 do D.evolve(g.deities[5]) end
+assert(D.getRarityBadge(g.deities[5])=="L")
+Combat.resolveMonsterAttack(g);assert(g.playerHp==5 and #g.persistentDeck==6)
+local soulsBefore=g.souls or 0
+hit=Combat.resolveMonsterAttack(g)
+assert(not hit.killedPlayer and g.playerHp==g.maxPlayerHp and #g.persistentDeck==1)
+assert(g.souls==soulsBefore+30,"five sacrificed cards pay six times their soul value")
+assert(Combat.resolveMonsterAttack(g).killedPlayer,"legendary rescue also triggers once")
+g=game("spirit_last_pact");g.monster.attack=500;g.persistentDeck={}
+for i=1,5 do g.persistentDeck[i]=Deck.newCard(i+1,"hearts") end
+for i=1,4 do D.evolve(g.deities[5]) end
+Combat.resolveMonsterAttack(g)
+assert(Combat.resolveMonsterAttack(g).killedPlayer and #g.persistentDeck==5,"legendary sacrifice preserves at least one card")
 
 g=game("spirit_soul_furnace");g.souls=5
 local rng=Rng.getState();local preview=score(g,nil,true)
@@ -76,16 +92,16 @@ actual=score(g,h);assert(actual.totalChips==10 and actual.totalMult==92)
 
 g=game("spirit_archive");g.discardsRemaining=0
 score(g,hand("HIGH_CARD"));score(g,hand("HIGH_CARD"));score(g,hand("PAIR"))
-assert(g.discardsRemaining==0)
+assert(#g.consumables==0)
 local state=Persistence.encode(g.spnCombat[g.deities[5]])
 preview=score(g,hand("STRAIGHT"),true)
-assert(g.discardsRemaining==0 and Persistence.encode(g.spnCombat[g.deities[5]])==state)
-score(g,hand("STRAIGHT"));assert(g.discardsRemaining==1 and not next(g.spnCombat[g.deities[5]].seen))
+assert(#g.consumables==0 and Persistence.encode(g.spnCombat[g.deities[5]])==state)
+score(g,hand("STRAIGHT"));assert(#g.consumables==1 and g.consumables[1].id=="cons_evolution")
 for _,kind in ipairs({"PAIR","STRAIGHT","HIGH_CARD"}) do score(g,hand(kind)) end
-assert(g.discardsRemaining==2,"a fresh archive cycle can refund again")
-g.discardsRemaining=3
-for _,kind in ipairs({"PAIR","STRAIGHT","HIGH_CARD"}) do score(g,hand(kind)) end
-assert(g.discardsRemaining==3,"refund capped at opening discard allowance")
+assert(#g.consumables==2,"archive grants another evolution card after a new trio")
+g.consumables={g.consumables[1],g.consumables[2],require("src.run_manager").createEvolutionCard()}
+for _,kind in ipairs({"HIGH_CARD","PAIR","STRAIGHT"}) do score(g,hand(kind)) end
+assert(#g.consumables==3 and #g.pendingRewardCards==1 and g.pendingRewardCards[1].id=="cons_evolution")
 
 g=game("spirit_borrowed_turn");h=hand("THREE_OF_A_KIND")
 h.scoringCards={Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts")}
@@ -141,5 +157,5 @@ for _,row in ipairs(A.entries) do
     Combat.start(restored,Monster.create(1,false,false,1),2)
     assert(not next(restored.spnCombat),row[1].." reset")
 end
-assert(#D.getRandomShopPool({},99)==50)
+assert(#D.getRandomShopPool({},99)==57)
 print("SPN anomalies PASS: all 10 mechanics, costs, order, enemy armor/revival, preview budgets, locks, UX snapshots, save/load and battle reset")

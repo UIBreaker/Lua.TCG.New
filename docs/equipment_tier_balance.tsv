@@ -39,7 +39,7 @@ itm_heelhook	Móc Gót Tiên Phong	1	9	14	16	0	0	0	2	0	0	0	+2 Tốc khi gắn. �
 itm_surveyhammer	Búa Thăm Dò	1	11	17	14	0	3	0	0	0	0	0	+14 ST; rank 2–6 nhận thêm 3 Giáp.
 itm_rationseal	Niêm Tiếp Tế	1	12	18	0	0	3	0	0	1	0	0	+3 Giáp. Đứng đầu vùng đúng 3 lá tính điểm: +1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
 itm_balancebrace	Nẹp Cân Bằng	1	9	14	20	0	3	0	0	0	0	0	Số rank chẵn/lẻ bằng nhau: +20 ST; nếu không: +3 Giáp.
-itm_triageclasp	Khóa Cứu Thương	2	22	33	0	0	7	5	0	0	0	0	HP tối đa 35%: hồi 5 HP; nếu không: +7 Giáp.
+itm_triageclasp	Khóa Cứu Thương	2	22	33	0	0	7	5	0	0	0	0	Khi HP còn không quá 35% tối đa: hồi 5 HP; nếu không: +7 Giáp.
 itm_windspindle	Trục Cuốn Gió	2	28	42	0	5	0	0	2	0	0	0	+2 Tốc khi gắn. Rank cao hơn lá tính điểm ngay trước: +5 Cường hóa.
 itm_shieldsuture	Kim Đan Giáp	2	22	33	0	0	10	3	0	0	0	0	Ít nhất 3 lá tính điểm: +10 Giáp; nếu không: hồi 3 HP.
 itm_tollscale	Cân Trạm Thu	2	31	47	20	0	0	0	0	1	0	0	+20 ST; đang giữ dưới 12 Vàng: thêm 1 Vàng. Vàng từ trang bị thường: tối đa 6 mỗi tay.
@@ -55,7 +55,7 @@ itm_reprisallance	Thương Phản Chấn	4	96	144	0	0	8	0	0	0	0.28	0	+8 Giáp. M
 itm_escrowseal	Ấn Tín Ký Quỹ	4	111	167	0	0	16	10	0	0	0	0	Tự trả 3 Vàng khi tính điểm: hồi 10 HP và +16 Giáp. Thiếu Vàng không kích hoạt.
 itm_crescentvise	Ê-tô Trăng Khuyết	4	111	167	72	9	0	0	0	0	0	0	Đúng 2 hoặc 4 lá tính điểm: +72 ST; nếu không: +9 Cường hóa.
 itm_worldanchor	Mỏ Neo Đại Lục	5	185	278	80	0	28	0	0	0	0	0	Chiếm 2 hốc. Đổi thế đánh so với tay trước: +28 Giáp, +80 ST; tay đầu/lặp thế: +14 Giáp, +35 ST.
-itm_phoenixcradle	Nôi Phượng Hỏa	5	173	260	90	0	0	16	0	0	0.25	0	Chiếm 2 hốc. HP tối đa 30%: hồi 16 HP, +25% sát thương; nếu không: +90 ST.
+itm_phoenixcradle	Nôi Phượng Hỏa	5	173	260	90	0	0	16	0	0	0.25	0	Chiếm 2 hốc. Khi HP còn không quá 30% tối đa: hồi 16 HP, +25% sát thương; nếu không: +90 ST.
 itm_horizonengine	Động Cơ Chân Trời	5	166	249	100	0	24	0	6	0	0	0	Chiếm 2 hốc. +6 Tốc khi gắn. Nhanh hơn quái: +100 ST; nếu không: +24 Giáp.
 itm_sovereignscale	Cân Vương Quyền	5	227	341	60	24	24	0	0	0	0	0	Chiếm 2 hốc. Tự trả 4 Vàng: +24 Cường hóa và +24 Giáp; thiếu Vàng: +60 ST.
 itm_concordharp	Hạc Cầm Bốn Xứ	5	200	300	110	18	0	0	0	0	0	0	Chiếm 2 hốc. Đủ 4 chất tính điểm: +110 ST, +18 Cường hóa; nếu không: mỗi chất +18 ST, +3 Cường hóa.

@@ -6,8 +6,8 @@ function T.verify(requestedIds,output)
     local ids={"spirit_lone","spirit_confluence","spirit_rearguard","spirit_wound","spirit_bastion","spirit_stillness","spirit_molt","spirit_pivot","spirit_mender","spirit_gleaner"}
     ids=requestedIds or ids
     local g=love.graphics
-    local cols=#ids==2 and 2 or #ids==6 and 3 or 5
-    local canvas=g.newCanvas(cols*250+30,#ids==2 and 435 or 850)
+    local cols=#ids<=2 and #ids or #ids==6 and 3 or 5
+    local canvas=g.newCanvas(cols*250+30,#ids<=2 and 435 or 850)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.04,0.05,0.08)
     for i,id in ipairs(ids) do
         local image=assert(Art.get(id),id)

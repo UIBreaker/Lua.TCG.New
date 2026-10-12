@@ -45,7 +45,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
             for di = 1, maxDeiSlots do
                 local d = gameState.deities[di]
                 if d then
-                    local effectiveDeity = Deities.resolveDeity and Deities.resolveDeity(gameState.deities, di) or d
+                    require("src.spn_mimic").each(gameState,gameState.deities,di,function(effectiveDeity)
                     if effectiveDeity and effectiveDeity.onRoundWin then
                         local r = effectiveDeity.onRoundWin(gameState, effectiveDeity)
                         r = Deities.scaleEffect(effectiveDeity, r)
@@ -59,6 +59,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
                             })
                         end
                     end
+                    end)
                 end
             end
         end

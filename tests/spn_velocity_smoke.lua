@@ -48,6 +48,8 @@ D.evolve(g.deities[5]);assert(step(score(g,h),"spirit_thunderpulse").addedMult==
 g=game("spirit_slow_colossus");h=hand({3});h.chips=100;h.mult=2;h.scoringCards={}
 local r=score(g,h);assert(r.totalChips==200 and r.totalMult==2 and r.finalScore==400 and r.bonusChips==100)
 assert(step(r,"spirit_slow_colossus").xChips==2)
+assert(g.spnAttack and g.spnAttack.guaranteeHit and not Combat.rollPlayerAttack(g).missed)
+assert(Combat.resolvePlayerAttack(g,10,{missed=true,hitChance=0.1})==10,"slow colossus overrides a miss")
 g.monster.attackSpeed=10;assert(not step(score(g,h),"spirit_slow_colossus"),"equal speed is not slower")
 g.monster.attackSpeed=15;D.evolve(g.deities[5]);assert(score(g,h).totalChips==250)
 g=game("spirit_slow_colossus");D.addDeity(g,D.CATALOG.spirit_pebble,1)
@@ -60,42 +62,46 @@ cards[2].speedBonus=1;assert(not step(score(g,h),"spirit_twinbeat"))
 cards[1].equipments={{attackSpeed=1}};assert(step(score(g,h),"spirit_twinbeat").xMult==2)
 assert(not step(score(g,hand({3})),"spirit_twinbeat"))
 
--- Total AURA multipliers include flat damage, stack as products, and spare debts.
+-- Afterstorm multiplies the damage axis and hits every other living enemy.
 g=game("spirit_afterstorm")
 h=hand({2,4,7,9},{"hearts","spades","clubs","diamonds"})
-assert(#h.unscoredCards==3)
 local baseline=Scoring.calculate(h,{},{});r=score(g,h)
-assert(r.spnAuraMultiplier==2 and r.finalScore==baseline.finalScore*2)
-g.deities[1]={id="flat_fixture",name="Flat damage fixture",onHandScored=function() return {addFlatDamage=25} end}
-r=score(g,h);assert(r.finalScore==(baseline.finalScore+25)*2)
-g.deities[1]=nil;assert(D.addDeity(g,D.CATALOG.spirit_afterstorm,1))
-assert(score(g,h).spnAuraMultiplier==4 and score(g,h).finalScore==baseline.finalScore*4)
-g.deities[1]=nil;D.evolve(g.deities[5]);assert(score(g,h).spnAuraMultiplier==2.5)
-assert(not step(score(g,hand({3,3})),"spirit_afterstorm"))
+assert(step(r,"spirit_afterstorm").xChips==5 and r.finalScore==baseline.finalScore*5)
+local other={hp=10000,maxHp=10000,attack=10,attackSpeed=15}
+g.enemies={g.monster,other}
+for i,m in ipairs(g.enemies) do m.group=g.enemies;m.groupIndex=i end
+local damage,_,hits=Combat.resolvePlayerAttack(g,r.finalScore,{missed=false,hitChance=1})
+assert(damage==r.finalScore and #hits==1 and hits[1].enemy==other and other.hp==10000-r.finalScore)
+g=game("spirit_afterstorm");local scoredCard=Deck.newCard(3,"hearts")
+g.persistentDeck={Deck.cloneCard(scoredCard)};g.hand={scoredCard}
+h=hand({3});h.scoringCards={scoredCard};h.unscoredCards={}
+r=score(g,h);Combat.resolvePlayerAttack(g,r.finalScore,{missed=true,hitChance=.1})
+assert(scoredCard.speedBonus==2 and g.persistentDeck[1].speedBonus==2,"a miss grants permanent speed to scoring cards")
+g.monster.attackSpeed=10;assert(not step(score(g,h),"spirit_afterstorm"),"equal speed does not trigger")
+g.monster.attackSpeed=15;D.evolve(g.deities[5]);assert(step(score(g,h),"spirit_afterstorm").xChips==7)
 g=game("spirit_afterstorm");D.addDeity(g,D.CATALOG.spirit_missing_orbit,1)
 g.spnCombat[g.deities[1]]={debt=20};r=score(g,h)
-assert(r.auraDebtTotal==20 and r.finalScore==baseline.finalScore*2-20,"debt is not multiplied a second time")
+assert(r.auraDebtTotal==20 and r.finalScore==(r.totalChips*r.totalMult)-20,"debt is not multiplied a second time")
 local formula=Feel.formula({result=r,ui={formatNumber=tostring}})
-assert(formula:find("AURA tổng",1,true) and formula:find("20 nợ AURA",1,true))
+assert(formula:find("20 nợ AURA",1,true))
 
+h=hand({2,4,7,9},{"hearts","spades","clubs","diamonds"})
 g=game("spirit_last_sun");g.handsRemaining=1
-local preview=score(g,h,true);assert(preview.spnAuraMultiplier==3 and g.playerArmor==20)
-assert(score(g,h).finalScore==preview.finalScore and g.playerArmor==0 and g.playerShield==0)
-assert(not step(score(g,h),"spirit_last_sun"),"no free repeat after armor is spent")
-g=game("spirit_last_sun");g.handsRemaining=1;g.playerArmor=9
-assert(not step(score(g,h),"spirit_last_sun"))
-g.playerArmor=20;g.handsRemaining=2;assert(not step(score(g,h),"spirit_last_sun"))
+local preview=score(g,h,true);assert(step(preview,"spirit_last_sun").xMult==5 and g.playerArmor==20)
+assert(score(g,h).finalScore==preview.finalScore and g.playerArmor==20)
+g.playerArmor=0;assert(step(score(g,h),"spirit_last_sun"),"last sun does not require armor")
+g.handsRemaining=2;assert(not step(score(g,h),"spirit_last_sun"))
 -- Match the actual caller's already-deducted hand count against its preview.
 g=game("spirit_last_sun");g.handsRemaining=1;preview=score(g,h,true,{handsAfterPlay=0})
 g.handsRemaining=0;r=score(g,h,nil,{handsAfterPlay=0})
-assert(r.finalScore==preview.finalScore and r.spnAuraMultiplier==3)
+assert(r.finalScore==preview.finalScore and step(r,"spirit_last_sun").xMult==5)
 g=game("spirit_last_sun");g.handsRemaining=1;D.addDeity(g,D.CATALOG.spirit_borrowed_turn,1)
 local borrowedHand=hand({3,3,3})
 local borrowedResult=score(g,borrowedHand)
-assert(step(borrowedResult,"spirit_last_sun") and g.playerArmor==0 and g.consumables[1].permanentSpeed,"speed reward leaves the last-hand condition intact")
+assert(step(borrowedResult,"spirit_last_sun") and g.playerArmor==20 and g.consumables[1].permanentSpeed,"speed reward leaves the last-hand condition intact")
 g=game("spirit_last_sun");g.handsRemaining=1;D.addDeity(g,D.CATALOG.spirit_last_sun,1)
-preview=score(g,h,true);assert(preview.spnAuraMultiplier==3)
-assert(score(g,h).spnAuraMultiplier==3,"duplicates share one armor budget")
+preview=score(g,h,true);assert(preview.finalScore==baseline.finalScore*25)
+assert(score(g,h).finalScore==preview.finalScore,"duplicate last suns both apply")
 
 for _,row in ipairs(V.entries) do
     g=game(row[1]);g.handsRemaining=1;h=hand({2,4,7,9},{"hearts","spades","clubs","diamonds"})
@@ -108,5 +114,5 @@ for _,row in ipairs(V.entries) do
     g.monster.isBoss=true;g.monster.bossState={handIndex=1,passiveUntil=0,slotLock={kind="spn",slot=5,untilHand=1}}
     assert(not step(score(g,h),row[1]),row[1].." boss lock")
 end
-assert(#D.getRandomShopPool({},99)==50)
-print("SPN velocity PASS: 6 cards, pure real speed, bonuses, equality, slot order, multiplier products, armor budgets, unscaled debts, save/load, evolution and locks")
+assert(#D.getRandomShopPool({},99)==57)
+print("SPN velocity PASS: six cards, guaranteed hit, area damage, miss speed, last hand, save/load, evolution and locks")

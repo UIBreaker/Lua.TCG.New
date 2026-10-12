@@ -84,13 +84,25 @@ function D.resolve(item,game)
         text=text.."\nHỐC TRANG BỊ · "..Equipment.getUsedSlots(item).." / "..Equipment.getMaxSlots(item)
         if item.allowDuplicateEquipment then text=text.."\nPHÁ LUẬT · Cho phép trang bị trùng; từng món kích hoạt riêng." end
         for index,eq in ipairs(item.equipments or {}) do text=text.."\nITM · "..index..". "..eq.name..": "..Equipment.getDescription(eq) end
-        if item.seal then text=text.."\nẤN · "..Deck.getModifierDescription("seal",item.seal) end
+        if item.seal then
+            local seal=Deck.getModifier("seal",item.seal)
+            text=text.."\nẤN · "..(seal and seal.name..": " or "")..Deck.getModifierDescription("seal",item.seal)
+        end
         if item.enhancement then text=text.."\nRÈN · "..Deck.getModifierDescription("enhancement",item.enhancement) end
         if game then local status=require("src.chest_depth").status(game,item);if status~="" then text=text.."\n"..status end end
         return (item.rankName or tostring(item.rank))..(item.suitSymbol or "").." · "..def.characterName.." · "..def.name,text..D.edition(item)
     end
     if Deities.CATALOG[item.id] then
         local text="SPN · "..Deities.getRarityLabel(item).."\n"..Deities.getDescription(item)..D.edition(item)
+        if item.id=="spirit_right_echo" and game then
+            for slot,owned in pairs(game.deities or {}) do
+                if owned==item then
+                    local source,count=require("src.spn_mimic").resolve(game.deities,slot,game)
+                    text=text..(source and ("\nĐANG SAO CHÉP · "..source.name.." · "..count.." lần\n"..Deities.getDescription(source)) or "\nKhông có SPN phải đang hoạt động.")
+                    break
+                end
+            end
+        end
         if game then for slot,c in pairs(game.deities or {}) do if c==item and Boss.isSlotLocked(game,"spn",slot) then text=text.."\nÔ SPN BỊ KHÓA trong tay này." end end end
         return item.name,text
     end

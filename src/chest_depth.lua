@@ -106,45 +106,17 @@ for _,d in ipairs(D.equipment) do
         local r=d.effect(c,cs,i,ctx);if r then r.message=d.name end;return r
     end
 end
-add(D.seals,"seal_echoes","Ấn Tứ Phương","Các lá mang ấn cùng ghi chất mỗi khi bị bỏ. Đủ 4 chất đã ghi chung: lá mang ấn tính điểm kế tiếp +0.6 hệ số Aura rồi xóa bộ ghi. Ký ức chỉ giữ trong trận.","A large four-direction compass stamp gathering four controlled elemental trails on coastal stone.",function(c,cs,i,ctx)
+add(D.seals,"seal_echoes","Ấn Tứ Phương","Các lá mang ấn cùng ghi chất mỗi khi bị bỏ. Đủ 4 chất đã ghi chung: lá mang ấn tính điểm kế tiếp +0.75 hệ số Aura rồi xóa bộ ghi. Ký ức chỉ giữ trong trận.","A large four-direction compass stamp gathering four controlled elemental trails on coastal stone.",function(c,cs,i,ctx)
     local g=game(ctx);local s=state(g);local n=0
     for _ in pairs(s.suitMarks or {}) do n=n+1 end
-    if n>=4 then s.suitMarks={};return {xMultBonus=0.6} end
+    if n>=4 then s.suitMarks={};return {xMultBonus=0.75} end
 end)
-add(D.seals,"seal_reclaimer","Ấn Thu Hồi","Bỏ riêng lá này: trả 2 Vàng để hoàn 1 lượt bỏ bài, tối đa một lần mỗi trận. Thiếu Vàng không trả chi phí và không hoàn lượt.","One circular return-arrow stamp reclaiming a coin from a stone slot in a desert.")
-add(D.seals,"seal_tutor","Ấn Truyền Nghề","Khi tính điểm: lá ngay sau trong vùng tính điểm nhận +1 cấp khả năng tạm thời trong trận (tối đa trần tiến hóa). Không tự nâng bản thân.","A large mentor-hand stamp passing one green flame to a smaller stone hand in an ancient forest.",function(c,cs,i,ctx)
-    local p=cs[i+1];if p and not ctx.preview then
-        local A=require("src.card_abilities");local n=math.max(0,math.min(1,A.config.maxEvolutionLevel-A.level(p)))
-        if n>0 then A.upgrade(game(ctx),p,n,true) end
+add(D.seals,"seal_reclaimer","Ấn Thu Hồi","Bỏ riêng lá này: trả 2 Vàng để hoàn 1 lượt bỏ bài, tối đa một lần mỗi trận cho toàn bộ các lá mang ấn. Thiếu Vàng không trả chi phí và không hoàn lượt.","One circular return-arrow stamp reclaiming a coin from a stone slot in a desert.")
+add(D.seals,"seal_gambit","Ấn Đổi Lượt","Tính điểm cùng đúng 5 lá: trả 6 HP để nhận +1 lượt đánh, một lần mỗi trận cho toàn bộ các lá mang ấn; chỉ trả khi còn hơn 6 HP.","A large five-spoked turnwheel stamp with a single controlled red flame over volcanic stone.",function(c,cs,i,ctx)
+    local g=game(ctx);if #cs==5 and not state(g).gambitUsed and (g.playerHp or 0)>6+(ctx.sealHpCommitted or 0) then
+        if not ctx.preview then g.playerHp=g.playerHp-6;g.handsRemaining=(g.handsRemaining or 0)+1 end
+        if not ctx.preview or ctx.depthGame then state(g).gambitUsed=true end;return {}
     end
-    if p then return {} end
-end)
-add(D.seals,"seal_gambit","Ấn Đổi Lượt","Tính điểm cùng đúng 5 lá: trả 4 HP để nhận +1 lượt đánh, một lần mỗi trận; chỉ trả khi còn hơn 4 HP.","A large five-spoked turnwheel stamp with a single controlled red flame over volcanic stone.",function(c,cs,i,ctx)
-    local g=game(ctx);if #cs==5 and value(g,c,"gambit")==0 and (g.playerHp or 0)>4 then
-        if not ctx.preview then g.playerHp=g.playerHp-4;g.handsRemaining=(g.handsRemaining or 0)+1 end
-        set(g,c,"gambit",1,ctx);return {}
-    end
-end)
-add(D.seals,"seal_constellation","Ấn Chòm Sao","Khi tính điểm: +8 ST mỗi lá khác trong bộ bài vĩnh viễn đang mang Ấn Chòm Sao, tối đa +48. Khuyến khích xây mạng lưới dấu thay vì chỉ một lá mạnh.","A large star-network stamp linking six broad stars above a violet continental night.",function(c,cs,i,ctx)
-    local n=0;for _,o in ipairs(game(ctx).persistentDeck or {}) do if o.id~=c.id and o.seal==c.seal then n=n+1 end end
-    return {addChips=math.min(48,8*n)}
-end)
-add(D.seals,"seal_pact","Ấn Gửi Vàng","Bỏ lá này: gửi 1 Vàng vào ấn (tối đa 3 Vàng mỗi trận). Khi tính điểm: nhận lại gấp đôi số đã gửi rồi xóa khoản gửi.","A large two-compartment treasury stamp enclosing a coin in a desert stone tablet.",function(c,cs,i,ctx)
-    local g=game(ctx);local n=value(g,c,"deposit");set(g,c,"deposit",0,ctx);return {addGold=2*n}
-end)
-add(D.seals,"seal_waymark","Ấn Đường Rẽ","Lá này tính điểm trong hai thế đánh khác nhau liên tiếp của chính nó: hoàn 1 lượt bỏ bài, tối đa một lần mỗi trận. Không cần đánh liên tiếp hai tay.","A large forked-road stamp with two clearly separated paths over continental cliffs.",function(c,cs,i,ctx)
-    local g=game(ctx);local s=state(g);local last=(s.cardTypes or {})[c.id]
-    local award=last and last~=ctx.depthHandType and value(g,c,"waymark")==0
-    if not ctx.preview then s.cardTypes=s.cardTypes or {};s.cardTypes[c.id]=ctx.depthHandType end
-    if award then if not ctx.preview then g.discardsRemaining=(g.discardsRemaining or 0)+1 end;set(g,c,"waymark",1,ctx);return {} end
-end)
-add(D.seals,"seal_debt","Ấn Thế Chấp","Khi tính điểm: nếu còn lượt bỏ bài, tiêu 1 lượt để nhận 15 Giáp; nếu hết lượt bỏ bài, trả 3 HP để nhận +9 Cường hóa (cần hơn 3 HP).","One heavy shield-and-chain collateral stamp balanced against a red crystal on desert stone.",function(c,cs,i,ctx)
-    local g=game(ctx)
-    if spend(g,"discardsRemaining",1,ctx) then return {addArmor=15}
-    elseif (g.playerHp or 0)>3 then return {hpCost=3,addMult=9} end
-end)
-add(D.seals,"seal_duel","Ấn Song Đấu","Chỉ một lá tính điểm và đúng một lá giữ lại: +2% sát thương mỗi bậc rank chênh giữa hai lá, tối đa 24%.","A large crossed-duelist stamp showing a long and a short sword on a glacial tablet.",function(c,cs,i,ctx)
-    local held=ctx.hand or {};if #cs==1 and #held==1 then return {extraDamagePct=math.min(0.24,0.02*math.abs(c.rank-held[1].rank))} end
 end)
 add(D.seals,"seal_threshold","Ấn Tam Nhịp","Mỗi lần lá tính điểm tích một nhịp. Cứ lần thứ ba: hồi 8 HP và xóa nhịp. Nhịp mất khi hết trận; tái kích hoạt không thêm nhịp.","A large three-step heartbeat stamp with three broad grooves in a green forest altar.",function(c,cs,i,ctx)
     local g=game(ctx);local n=value(g,c,"third")+1;set(g,c,"third",n%3,ctx)
@@ -234,9 +206,9 @@ function D.discard(g,cards)
         end
         if c.seal=="seal_echoes" then
             s.suitMarks=s.suitMarks or {};s.suitMarks[c.suit]=true
-        elseif c.seal=="seal_reclaimer" and #cards==1 and value(g,c,"reclaim")==0 and spend(g,"gold",2) then
-            g.discardsRemaining=(g.discardsRemaining or 0)+1;set(g,c,"reclaim",1)
-        elseif c.seal=="seal_pact" and value(g,c,"deposit")<3 and spend(g,"gold",1) then set(g,c,"deposit",value(g,c,"deposit")+1) end
+        elseif c.seal=="seal_reclaimer" and #cards==1 and not s.reclaimerUsed and spend(g,"gold",2) then
+            g.discardsRemaining=(g.discardsRemaining or 0)+1;s.reclaimerUsed=true
+        end
     end
     local distinct={};for _,c in ipairs(cards) do distinct[c.rank]=true end
     local n=0;for _ in pairs(distinct) do n=n+1 end
@@ -257,8 +229,9 @@ function D.status(g,c)
         elseif eq.id=="itm_ledger" then line("Đầu tư lâu dài",c.depthInvestment or 0,5) end
     end
     if c.seal=="seal_threshold" then line("Nhịp hồi phục",value(g,c,"third"),3)
-    elseif c.seal=="seal_pact" then line("Vàng đã gửi",value(g,c,"deposit"),3)
-    elseif c.seal=="seal_echoes" then local n=0;for _ in pairs(state(g).suitMarks or {}) do n=n+1 end;line("Chất đã ghi chung",n,4) end
+    elseif c.seal=="seal_echoes" then local n=0;for _ in pairs(state(g).suitMarks or {}) do n=n+1 end;line("Chất đã ghi chung",n,4)
+    elseif c.seal=="seal_gambit" then lines[#lines+1]=state(g).gambitUsed and "Đổi lượt: đã dùng trong trận" or "Đổi lượt: còn 1 lần trong trận"
+    elseif c.seal=="seal_reclaimer" then lines[#lines+1]=state(g).reclaimerUsed and "Thu hồi: đã dùng trong trận" or "Thu hồi: còn 1 lần trong trận" end
     return table.concat(lines,"\n")
 end
 function D.apply(g,d,c)

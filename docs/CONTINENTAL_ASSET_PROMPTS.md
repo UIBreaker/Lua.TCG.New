@@ -4841,3 +4841,104 @@ Prompt: Use case: stylized-concept. Create ONE production SPN game card illustra
 Output: `assets/cards/continental/spn/spirit_first_echo.png`
 
 Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c33df400-8a44-4f34-9c0e-e10fb4735048.png`
+
+## 2026-10-12 — Last discard SPN
+
+### spn / spirit_last_remnant — Dư Ảnh Cuối
+
+Ability: Lượt bỏ cuối cùng: nếu chủ động bỏ đúng 1 lá và tiêu lượt bỏ, tạo 1 bản sao vĩnh viễn của lá đó vào cọc bỏ. Mỗi cấp tiến hóa thêm 1 bản sao, giữ nâng cấp.
+
+Concept: A spectral phoenix of silver ash catches one falling expedition knight silhouette and draws its identical twin out of the final fading ember; an ending becomes a new permanent echo.
+
+Prompt: Use case: stylized-concept. Create ONE production game SPN illustration, full-bleed vertical 2:3 PNG, 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one strong main supernatural silhouette, clear at 64px, atmospheric lost ruins on a mysterious continent. Subject: a single silver-ash phoenix apparition with broad curved wings hovering over a broken glacial stone arch at dusk. Between its sweeping wings, one small falling spectral silhouette of a Western expedition knight with cloak and simple helmet is being replicated into one identical rising silver echo from the final fading ember. The two matching knight silhouettes are small secondary forms, the phoenix is the dominant focus. Visual metaphor for making a permanent copy of exactly one discarded warrior at the last opportunity; final ember glows restrained antique gold, cold blue-gray cliffs and silver ash palette. Quiet background, controlled rim light, large readable shapes, no dense particle noise or blown-out whites. No playing card rectangles, no text, letters, numbers, suits, borders, card frame, badges, logo, watermark or UI. No East Asian ornament, calligraphy or architecture.
+
+Output: `assets/cards/continental/spn/spirit_last_remnant.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-e48becb3-b252-4dae-9467-b0190e461567.png`
+
+
+## Runtime seal emblems — 2026-10-12
+
+The active ten-stamp catalog and current abilities are documented in `SEAL_SYSTEM.md` and `asset_manifest.json`. Original generation prompts remain historical records. Retired seal paintings are retained as source art and excluded from gameplay reward catalogs.
+
+Overlay design brief: distinct broad engraved silhouettes on antique bronze and dark biome enamel; controlled upper-left bevel light, readable at 64 px, no letters or emoji. Blood: droplet and repeat arrow. Anchor: maritime anchor. Bounty: crowned coin. Purifying: star inside shield. Sunder: split shield. Lantern: lighthouse with beams. Echoes: four-point compass. Reclaimer: return arrow around coin. Gambit: five-spoke turnwheel. Threshold: three heartbeat grooves. These symbols are runtime vectors in `ui/components/seal_emblems.lua`, attached below the speed pennant through the shared playing-card metadata renderer. Existing full-bleed Continental paintings are reused.
+
+## 2026-10-12 — Soul strategy SPNs
+
+### spn / spirit_dawn_reaper — Gặt Hồn Bình Minh
+
+Ability: Trước lần đánh đầu tiên của trận, chủ động bỏ đúng 1 lá: tiêu hủy vĩnh viễn lá đó, nhận ×3 giá trị linh hồn của lá. Tiến hóa tăng hệ số lên ×4, ×5… Giữ ít nhất 1 lá.
+
+Concept: An otherworldly dawn reaper dissolves one discarded expedition warrior into ash and draws three clear soul flames from its fading silhouette.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one strong main supernatural silhouette, atmospheric mysterious continent and lost western ruins. Quiet backdrop, broad readable shapes at 64px, restrained magic and rim light. No text, letters, numbers, playing cards, borders, card frames, badges, logos, watermark or UI. No East Asian architecture, calligraphy or dense micro ornament, no blown-out white glow. Subject: one tall spectral reaper made of pale blue dawn fog with a large simple crescent blade, standing on a weathered coastal cliff at sunrise. Beneath one outstretched ghostly hand a single small discarded Western expedition warrior silhouette crumbles permanently into silver ash; exactly three distinct softly glowing antique-gold soul flames rise from that silhouette toward the reaper. Reaper is the dominant subject, warrior is a small secondary form. Ocean navy and pale dawn blue with controlled warm gold highlights, distant monumental ruined arch, quiet mist. Communicate opening sacrifice and triple soul yield, not duplication. Final image edit: Edit this existing Continental SPN reaper illustration. Remove ONLY the lowest of the four glowing golden soul orbs, the orb closest to the disintegrating warrior, and its associated distinct round halo. Reconstruct the surrounding dawn mist and ash seamlessly. Leave exactly THREE distinct golden soul orbs rising toward the reaper's hand. Preserve the reaper, weapon, warrior, architecture, full-bleed portrait 2:3 composition, painterly realism, colors and lighting exactly; no added text or borders.
+
+Output: `assets/cards/continental/spn/spirit_dawn_reaper.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-9e9de22d-27e4-4746-9da3-91476858cca0.png`
+
+### spn / spirit_soul_choir — Dàn Đồng Ca Linh Hồn
+
+Ability: Mỗi tay tính điểm: +1 Cường hóa cho mỗi linh hồn đang giữ tại ô SPN này; không tiêu linh hồn. Tiến hóa tăng Cường hóa mỗi hồn theo hệ SPN.
+
+Concept: A single spectral conductor gathers held souls into a luminous mantle, their choir visibly strengthening its aura without consuming them.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one strong main supernatural silhouette, atmospheric mysterious continent and lost western ruins. Quiet backdrop, broad readable shapes at 64px, restrained magic and rim light. No text, letters, numbers, playing cards, borders, card frames, badges, logos, watermark or UI. No East Asian architecture, calligraphy or dense micro ornament, no blown-out white glow. Subject: a single majestic supernatural conductor with an empty dark face and flowing forest-green spectral mantle, hovering before a broad mossy Western cathedral ruin on the continent. Several large calm emerald soul lights with faint faces are held within its translucent mantle; one raised hand draws their harmonious light into a compact antique-gold aura around its chest. The souls remain clearly intact, expressing power from the souls currently held rather than consuming them. Strong one-entity silhouette, simple flowing shapes, quiet dark forest and distant green cliffs, restrained emerald and antique gold lighting. Avoid musical text, sheet music, ornate instruments, dense particles.
+
+Output: `assets/cards/continental/spn/spirit_soul_choir.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-e4e6cb21-bcd2-4643-85cb-f811ea0d806f.png`
+
+## 2026-10-12 — Boss inheritance and solo meteor SPNs
+
+### spn / spirit_legacy_cocoon — Kén Kế Thừa
+
+Ability: Khi hạ Boss: tự tiêu hủy, tạo 1 bản sao của 1 SPN khác đang sở hữu ngẫu nhiên, giữ nâng cấp; vượt giới hạn ô. Mỗi cấp tiến hóa thêm 1 bản sao.
+
+Concept: A living spectral chrysalis dissolves itself after a colossal crowned tyrant has fallen, giving birth to the echo of another guardian.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed portrait 2:3 PNG, 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one clear supernatural main silhouette, broad readable forms at 64px, restrained magic and atmospheric depth. Lost Western ruins on the mysterious continent. No text, numbers, letters, playing cards, border, card frame, badge, logo, watermark or UI. No East Asian roofs, motifs or calligraphy; no dense ornament, no blown-out white glow. Subject: one large living otherworldly chrysalis suspended above a shattered ancient crown on a dark glacial battlefield. The chrysalis is translucent blue-violet spirit membrane, not a physical relic or a chest, and its outer shell dissolves gracefully into silver mist while a clear spectral guardian silhouette emerges from it as an inherited echo. At bottom a quiet giant fallen crown and broad broken claw silhouette imply a defeated boss; no second full monster. One main chrysalis-and-emerging-spirit focus, glacial blue and restrained violet with antique gold crown, quiet weathered Western arch and icy cliffs far behind. Show self-sacrifice and copying a guardian through rebirth; no ornate egg decorations.
+
+Output: `assets/cards/continental/spn/spirit_legacy_cocoon.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c71b7461-9177-434e-9691-7a1aeb2206c3.png`
+
+### spn / spirit_meteor_solitude — Độc Kích Thiên Thạch
+
+Ability: Khi đang hoạt động, chỉ được đánh 1 lá mỗi tay. Tay đúng 1 lá: +1000 Sát thương. Mỗi cấp tiến hóa nhân đôi lượng Sát thương cộng thêm.
+
+Concept: A single colossal meteor spirit concentrates all of its force into one falling ember over a volcanic continent, expressing one-card-only overwhelming damage.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed portrait 2:3 PNG, 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one clear supernatural main silhouette, broad readable forms at 64px, restrained magic and atmospheric depth. Lost Western ruins on the mysterious continent. No text, numbers, letters, playing cards, border, card frame, badge, logo, watermark or UI. No East Asian roofs, motifs or calligraphy; no dense ornament, no blown-out white glow. Subject: one colossal supernatural meteor guardian formed from black volcanic stone and molten orange light, descending in a clear spearhead silhouette over a volcanic plateau. Its entire power converges through one central blazing fist into exactly one massive falling ember that cleaves a deep straight impact fissure in the ground. One focused strike, no swarm of meteors, no many projectiles or duplicate characters. Lava orange and charcoal palette, quiet distant continental cliffs and lost Western stone arches, strong controlled orange rim light, readable monumental forms, dramatic force with restrained luminous center rather than white saturation. Convey enormous single-card damage and escalating evolutionary power.
+
+Output: `assets/cards/continental/spn/spirit_meteor_solitude.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-1e14f0ad-6c16-44c5-b0bf-4ee6fd1ae59d.png`
+
+## 2026-10-12 — Unconditional damage multiplier
+
+### spn / spirit_twin_fang — Song Nanh Hư Không
+
+Ability: Mỗi tay tính điểm: ×2 Sát thương tại ô này, không cần điều kiện. Tiến hóa tăng hệ số ×2 → ×2,5 → ×3…
+
+Concept: One spectral saber-toothed panther of the violet void channels one strike through two massive matched fangs, expressing an unconditional doubling of the damage axis.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed portrait 2:3 PNG, 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one clear supernatural main silhouette, readable broad forms at 64px, restrained magic, quiet atmospheric lost Western ruins and continental cliffs. Main subject: one enormous spectral saber-toothed panther formed of dark violet smoke and translucent obsidian, rising above a ruined void canyon. Its snarling face and exactly two large matched curved ivory fangs dominate the center; a single contained golden energy stream meets the mouth and emerges in two thick parallel violet-gold strike trails, conveying doubled damage. Panther is one entity, not duplicate animals. Deep void violet and charcoal with controlled antique-gold accent, simple far arches, no dense particle noise, no blown-out whites. No text, letters, numbers, playing cards, suits, borders, card frame, badges, logos or watermark. No East Asian motifs, palace roofs, calligraphy or dense ornament.
+
+Output: `assets/cards/continental/spn/spirit_twin_fang.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-714bf5d3-9d50-46d8-bcc6-73b2df1b7c5f.png`
+
+## 2026-10-12 — Right-neighbor ability echo
+
+### spn / spirit_right_echo — Vọng Linh Hữu Ảnh
+
+Ability: Sao chép khả năng của SPN ngay bên phải, kích hoạt 1 lần tại ô này theo điều kiện và cấp của nguồn. Mỗi cấp tiến hóa thêm 1 lần kích hoạt.
+
+Concept: One hollow silver apparition facing right pulls a violet guardian-shaped reflection from its right side into its own chest, conveying directional ability echo rather than duplicating an item.
+
+Prompt: Use case: stylized-concept. ONE production SPN game card illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one primary supernatural silhouette, readable at 64px, quiet lost Western ruins and cold continental cliffs. Subject: a hollow faceless silver spectral mimic occupying the central-left, its head and reaching palm clearly turned toward the RIGHT. At the right edge a compact violet guardian-shaped magical reflection flows leftward from its original silhouette into the mimic's empty translucent chest, where the same silhouette begins to glow. One main mimic entity, the source is a small subordinate spectral reflection, not a second detailed character. A restrained silver-blue and violet palette with antique gold light inside the chest, large calm forms and controlled rim light, simple weathered western arches behind. Convey copying the neighboring right spirit's power and echoing its activation. No tangible mirror furniture, potion or item still life. No text, letters, numbers, playing cards, borders, card frame, badges, logo or watermark. No East Asian architecture or calligraphy, no dense ornament or blown-out glow.
+
+Output: `assets/cards/continental/spn/spirit_right_echo.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-bb7b75ad-867b-4a21-a304-d53b60184d07.png`

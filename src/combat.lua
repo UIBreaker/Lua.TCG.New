@@ -18,6 +18,7 @@ local function accuracy(attackerSpeed,targetSpeed)
     return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
 end
 function Combat.rollPlayerAttack(game)
+    if game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
 end
 
@@ -42,9 +43,13 @@ function Combat.bedExplosions(game,aura,locked)
             local deity=game.deities and game.deities[slot]
             local isLocked=locked and locked[slot]
             if not locked then isLocked=Boss.isSlotLocked(game,"spn",slot) end
-            local result=deity and deity.onAttack and not isLocked and deity.onAttack()
-            if result and (result.bedExplosionPct or 0)>0 then
-                bedExplosions[#bedExplosions+1]={deity=deity,slot=slot,amount=math.floor(math.max(0,aura)*result.bedExplosionPct/100)}
+            if deity and not isLocked then
+                require("src.spn_mimic").each(game,game.deities,slot,function(effective)
+                    local result=effective.onAttack and effective.onAttack()
+                    if result and (result.bedExplosionPct or 0)>0 then
+                        bedExplosions[#bedExplosions+1]={deity=deity,slot=slot,amount=math.floor(math.max(0,aura)*result.bedExplosionPct/100)}
+                    end
+                end,locked)
             end
         end
     end
@@ -55,7 +60,18 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     local Monster = require("src.monster")
     local target = game.monster
     roll=roll or Combat.rollPlayerAttack(game)
+    local attackEffects=game.spnAttack or {}
+    game.spnAttack=nil
+    if attackEffects.guaranteeHit then roll={hitChance=1,missed=false} end
     if roll.missed then
+        local sync=require("src.chest_expansion").sync
+        for _,source in ipairs(attackEffects.afterstorms or {}) do
+            for _,card in ipairs(source.cards) do
+                sync(game,card,function(copy) Deck.applyAttackSpeedBonus(copy,2) end)
+            end
+            game.spnFeedback=game.spnFeedback or {}
+            game.spnFeedback[#game.spnFeedback+1]={deity=source.deity,slot=source.slot,text="ĐÁNH HỤT · +2 TỐC VĨNH VIỄN"}
+        end
         require("src.advanced_hands").resolve(game,false)
         return 0,false,{},roll
     end
@@ -69,6 +85,14 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     for _,hit in ipairs(portalHits) do hit.damage=Monster.takeDamage(hit.enemy,hit.raw) end
     local splashHits = Anomalies.playerAttack(game,aura,hpBefore,damage,locked)
     for _,hit in ipairs(portalHits) do splashHits[#splashHits+1]=hit end
+    for _,source in ipairs(attackEffects.afterstorms or {}) do
+        for _,enemy in ipairs(Group.members(game)) do
+            if enemy~=target and enemy.hp>0 then
+                local actual=Monster.takeDamage(enemy,aura)
+                splashHits[#splashHits+1]={enemy=enemy,damage=actual,deity=source.deity,slotIndex=source.slot,afterstorm=true}
+            end
+        end
+    end
     for _,explosion in ipairs(bedExplosions) do
         for _,enemy in ipairs(Group.members(game)) do
             if enemy.hp>0 then
@@ -78,7 +102,7 @@ function Combat.resolvePlayerAttack(game, aura,roll)
         end
     end
     for slot = 1, Deities.getMaxSlots(game) do
-        local deity = game.deities and game.deities[slot]
+        require("src.spn_mimic").each(game,game.deities,slot,function(deity)
         if deity and deity.onAttack and not locked[slot] then
             local neighbors = {}
             local members = Group.members(game)
@@ -101,6 +125,7 @@ function Combat.resolvePlayerAttack(game, aura,roll)
                 end
             end
         end
+        end,locked)
     end
     for _,hit in ipairs(require("src.advanced_hands").resolve(game)) do splashHits[#splashHits+1]=hit end
     require("src.soul_relics").reap(game)
@@ -261,6 +286,7 @@ function Combat.start(game, monster, round)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}
+    game.spnAttack=nil
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
@@ -290,7 +316,7 @@ function Combat.start(game, monster, round)
     end
     local maxSlots = Deities.getMaxSlots(game)
     for slot = 1, maxSlots do
-        local deity = game.deities and game.deities[slot]
+        require("src.spn_mimic").each(game,game.deities,slot,function(deity)
         if deity and deity.onRoundStart then
             local result = Deities.scaleEffect(deity, deity.onRoundStart(game))
             game.playerArmor = math.min(Abilities.config.armorCap, game.playerArmor + (result and result.addArmor or 0))
@@ -298,6 +324,7 @@ function Combat.start(game, monster, round)
             game.discardsRemaining = game.discardsRemaining + (result and result.addDiscards or 0)
             game.handsRemaining = game.handsRemaining + (result and result.addHands or 0)
         end
+        end)
     end
     game.turnHandLimit = game.handsRemaining
     game.spnDiscardCap=game.discardsRemaining
@@ -367,14 +394,6 @@ function Combat.start(game, monster, round)
         table.insert(game.hand, card)
     end
 
-    -- Prophecy Seal (Ấn Tiên Tri): If any card in opening hand has Prophecy Seal, reveal 2 next intents
-    for _, c in ipairs(game.hand) do
-        if c.seal == "seal_prophecy" or c.seal == "prophecy" or c.seal == "blue" then
-            monster.showNextIntent = true
-            monster.revealedIntents = 2
-        end
-    end
-
     if isFaction(game, "vharos") or isFaction(game, "spades") or isFaction(game, "iron_axiom") or game.sortMode == "rank" then
         Deck.sortByRank(game.hand)
     else
@@ -391,16 +410,22 @@ function Combat.onMonsterTurnEnd(game)
         if m.hp>0 and m.actionTurns~=nil then EnemyAbilities.plan(game,m) end
     end
     game.combatFlags = game.combatFlags or {}
-    if not game.combatFlags.purifyingSealUsed then
-        for _, c in ipairs(game.hand) do
-            if c.seal == "seal_purifying" or c.seal == "purifying" then
-                game.combatFlags.purifyingSealUsed = true
-                if game.monster and game.monster.bossData then
-                    game.monster.bossDebuffCleansed = true
-                end
-                return true, "Ấn Thanh Tẩy đã giải trừ 1 hiệu ứng áp chế!"
+    local armor,cleansed=0,false
+    for _,c in ipairs(game.hand) do
+        if Deck.normalizeSeal(c.seal)=="seal_purifying" and not c.destroyed and not c.faceDown then
+            armor=math.min(12,armor+Deck.SEALS.seal_purifying.params.armor)
+            local m=game.monster
+            if not game.combatFlags.purifyingSealUsed and m and (m.hp or 1)>0
+                and m.bossData and not m.bossDebuffCleansed then
+                game.combatFlags.purifyingSealUsed=true
+                m.bossDebuffCleansed=true;cleansed=true
             end
         end
+    end
+    if armor>0 then
+        game.playerArmor=math.min(Abilities.config.armorCap,(game.playerArmor or 0)+armor)
+        game.playerShield=game.playerArmor
+        return true,"Ấn Thanh Tẩy: +"..armor.." Giáp"..(cleansed and ", giải trừ nội tại Boss!" or "!")
     end
     return false
 end

@@ -118,14 +118,8 @@ Shop.JOKER_SPELLS = {
     { id = "spell_hex", name = "Hex", subtitle = "LỜI NGUYỀN", desc = "Thêm Polychrome (x1.5 Mult) cho 1 Hộ Linh ngẫu nhiên và hủy toàn bộ Hộ Linh còn lại!", icon = "🔮", color = { 0.85, 0.25, 0.45, 1 } },
 }
 
-Shop.SEAL_CARDS = {
-    { id = "seal_blood", sealType = "seal_blood", sealName = "Ấn Huyết", name = "Ấn Huyết (Blood)", subtitle = "ẤN HUYẾT", desc = "+50% Sát thương khi máu người chơi < 50%!", icon = "🩸", color = { 0.90, 0.15, 0.15, 1 } },
-    { id = "seal_prophecy", sealType = "seal_prophecy", sealName = "Ấn Tiên Tri", name = "Ấn Tiên Tri (Prophecy)", subtitle = "ẤN TIÊN TRI", desc = "Khi tạo Aura, nhìn thấy Intent tiếp theo của Boss!", icon = "🔮", color = { 0.30, 0.60, 0.95, 1 } },
-    { id = "seal_ashen", sealType = "seal_ashen", sealName = "Ấn Tro Tàn", name = "Ấn Tro Tàn (Ashen)", subtitle = "ẤN TRO TÀN", desc = "Tự thiêu hủy lá này sau khi đánh, gây 40 Sát thương Chuẩn vào Quái!", icon = "🔥", color = { 0.60, 0.55, 0.50, 1 } },
-    { id = "seal_bounty", sealType = "seal_bounty", sealName = "Ấn Truy Nã", name = "Ấn Truy Nã (Bounty)", subtitle = "ẤN TRUY NÃ", desc = "Nếu lá này kết liễu Quái, thưởng ngay +$2 Vàng!", icon = "💰", color = { 0.95, 0.80, 0.25, 1 } },
-    { id = "seal_anchor", sealType = "seal_anchor", sealName = "Ấn Neo", name = "Ấn Neo (Anchor)", subtitle = "ẤN NEO", desc = "Lá này luôn nằm trên tay khi bắt đầu lượt (không bị xáo vào cọc)!", icon = "⚓", color = { 0.20, 0.70, 0.60, 1 } },
-    { id = "seal_purifying", sealType = "seal_purifying", sealName = "Ấn Thanh Tẩy", name = "Ấn Thanh Tẩy (Purifying)", subtitle = "ẤN THANH TẨY", desc = "Xóa bỏ 1 trạng thái bất lợi trên bản thân khi kích hoạt!", icon = "✨", color = { 0.85, 0.85, 0.95, 1 } },
-}
+Shop.SEAL_CARDS = {}
+for _,id in ipairs(Deck.SEAL_ORDER) do Shop.SEAL_CARDS[#Shop.SEAL_CARDS+1]=Deck.SEALS[id] end
 
 Shop.SPECTRAL_CARDS = {
     { id = "spec_familiar", name = "Familiar", subtitle = "LINH THÚ", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị vào bộ bài!", icon = "🦉", color = { 0.65, 0.45, 0.85, 1 } },
@@ -159,7 +153,7 @@ Shop.CONSUMABLE_RULES={
     planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
     planet_black_hole={params={levels=2},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
 }
-for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SEAL_CARDS,"seals"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
+for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
     local cards={}
     for _,module in ipairs({"src.chest_expansion","src.chest_depth"}) do
         for _,card in ipairs(require(module)[entry[2]]) do cards[#cards+1]=card end
@@ -1032,15 +1026,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             Sound.play("cant_afford")
             return false, "Không tìm thấy lá bài để đóng dấu!"
         end
-        targetCard.seal = card.sealType
-        if gameState.persistentDeck then
-            for _, pc in ipairs(gameState.persistentDeck) do
-                if pc.id == targetCard.id then
-                    pc.seal = card.sealType
-                    break
-                end
-            end
-        end
+        if not Deck.applySeal(gameState,targetCard,card.sealType or card.id) then return false,"Con dấu không hợp lệ." end
         Sound.play("shop_buy")
         shop.currentPackOpening = nil
         return true, "Đã đóng ấn [" .. (card.sealName or card.subtitle or card.name) .. "] lên lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"

@@ -35,6 +35,7 @@ function Souls.awardKills(game, victory)
             if not enemy.soulKillAwarded then
                 enemy.soulKillAwarded = enemy.isBoss and 4 or 1
                 added = added + enemy.soulKillAwarded
+                if enemy.isBoss and (enemy.hp or 1)<=0 then require("src.spn_legacy").bossDefeated(game,enemy) end
             end
             total = total + enemy.soulKillAwarded
         end

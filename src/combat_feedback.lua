@@ -104,8 +104,10 @@ end
 function F.prepareFire()
     if F.firePrepared or not (love and love.graphics) then return end
     F.firePrepared=true
-    local ok,shader=pcall(love.graphics.newShader,"shaders/damage_fire.glsl")
-    if ok then F.fireShader=shader else F.fireError=tostring(shader) end
+    local ok,shader,quad=pcall(function()
+        return love.graphics.newShader("shaders/damage_fire.glsl"),love.graphics.newMesh(4,"fan","stream")
+    end)
+    if ok then F.fireShader,F.fireQuad=shader,quad else F.fireError=tostring(shader) end
 end
 
 function F.new(kind, amount, x, y, format)
@@ -285,6 +287,33 @@ local function electricStroke(g,points,alpha,branch,strength,color)
     g.line(points)
 end
 
+local function flameRim(g,ft,width,height,intensity)
+    local power=ft.power
+    local age=ft.reducedMotion and 0 or ft.age or 0
+    local count=math.min(24,14+power.degree*2)
+    for i=1,count do
+        local angle=i*math.pi*2/count
+        local cx,cy=math.cos(angle),math.sin(angle)
+        local x=(cx<0 and -1 or 1)*math.abs(cx)^.4*(width/2+2)
+        local y=height*.5+(cy<0 and -1 or 1)*math.abs(cy)^.6*height*.34
+        local flicker=.55+.30*math.sin(age*power.speed*9+i*2.4+power.signature)
+            +.15*math.sin(age*power.speed*17+i*4.1)
+        local length=power.reach*flicker
+        local dx,dy=cx*.65,cy<0 and cy*1.2 or cy*.6
+        local bend=math.sin(age*7+i)*2
+        local tipX,tipY=x+dx*length+bend,y+dy*length
+        local base=2+math.min(3,power.energy*3)
+        g.setColor(power.accent[1],power.accent[2],power.accent[3],intensity*.12)
+        g.ellipse("fill",x+dx*length*.3,y+dy*length*.3,base*2,length*.55+2)
+        g.setColor(1,.25,.035,intensity*.65)
+        g.polygon("fill",x-cy*base,y+cx*base,x+dx*length*.55-cy*base*.6,y+dy*length*.55+cx*base*.6,
+            tipX,tipY,x+dx*length*.55+cy*base*.6,y+dy*length*.55-cx*base*.6,x+cy*base,y-cx*base)
+        g.setColor(1,.78,.28,intensity*.85)
+        g.polygon("fill",x-cy*base*.5,y+cx*base*.5,x+dx*length*.6+bend*.4,y+dy*length*.6,
+            x+cy*base*.5,y-cx*base*.5)
+    end
+end
+
 local function damageAura(g,ft,width,height,alpha)
     local tier=ft.tier or 1
     if ft.crowded then return end
@@ -303,13 +332,10 @@ local function damageAura(g,ft,width,height,alpha)
     end
     g.setBlendMode("add")
     if F.fireShader then
-        local cx,cy=g.transformPoint(0,height*0.5)
-        local px,py=g.transformPoint(1,height*0.5)
         F.fireShader:send("clock",age*power.speed)
         F.fireShader:send("seed",math.abs(ft.amount or 0)%991*0.017)
-        F.fireShader:send("center",{cx,cy})
+        F.fireShader:send("center",{0,height*.5})
         F.fireShader:send("halfSize",{width/2+1,height*0.34})
-        F.fireShader:send("pixelScale",math.sqrt((px-cx)^2+(py-cy)^2))
         F.fireShader:send("reach",reach)
         F.fireShader:send("energy",power.energy)
         F.fireShader:send("accent",accent)
@@ -317,17 +343,17 @@ local function damageAura(g,ft,width,height,alpha)
         F.fireShader:send("chroma",power.degree<4 and 0 or math.min(.72,.20+(power.degree-4)*.045))
         g.setShader(F.fireShader);g.setColor(1,1,1,intensity*0.80)
         local pad=reach+10
-        g.rectangle("fill",-width/2-pad,-pad,width+pad*2,height+pad*2)
+        -- A mesh retains local vertices; immediate rectangles bake the current transform.
+        local left,right=-width/2-pad,width/2+pad
+        F.fireQuad:setVertex(1,left,-pad,0,0,1,1,1,1)
+        F.fireQuad:setVertex(2,right,-pad,1,0,1,1,1,1)
+        F.fireQuad:setVertex(3,right,height+pad,1,1,1,1,1,1)
+        F.fireQuad:setVertex(4,left,height+pad,0,1,1,1,1,1)
+        g.draw(F.fireQuad)
         g.setShader()
-    else
-        -- Keep a soft ember rim readable on devices without procedural shaders.
-        for i=1,12 do
-            local a=i*math.pi/6
-            local tongue=.7+.3*math.sin(a*3+age*power.speed*5+power.signature)
-            g.setColor(accent[1],accent[2],accent[3],intensity*0.14)
-            g.ellipse("fill",math.cos(a)*(width/2+3),height*0.5+math.sin(a)*height*0.4,reach*.5*tongue,reach*.6*tongue)
-        end
     end
+    -- A visible native flame layer survives shaders that compile but render incorrectly on a phone.
+    if power.mobile or not F.fireShader then flameRim(g,ft,width,height,intensity*(F.fireShader and .45 or .85)) end
     if tier>=3 then
         for i=1,power.embers do
             local p=(age*0.7*power.speed+i*0.618)%1

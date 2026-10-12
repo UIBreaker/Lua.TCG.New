@@ -18,10 +18,10 @@ function love.load()
     end
     require("tests.combat_feedback_smoke")
     love.graphics.newShader=newShader
-    assert(validated==2,"both fire and holographic shaders must be checked for OpenGL ES")
     assert(F.fireShader,"procedural fire did not compile: "..tostring(F.fireError))
     assert(F.foilShader,"holographic shader did not compile: "..tostring(F.foilError))
-    local foil,fire=F.foilShader,F.fireShader
+    assert(validated==2,"both fire and holographic shaders must be checked for OpenGL ES")
+    local foil,fire,fireQuad=F.foilShader,F.fireShader,F.fireQuad
     UI.initFonts()
     local g=love.graphics
     local canvas=g.newCanvas(1280,1000)
@@ -41,6 +41,7 @@ function love.load()
             assert(font==g.getFont() and blend==g.getBlendMode() and shader==g.getShader(),"floating text leaks graphics state")
             assert(F.foilShader==foil,"holographic shader must be reused")
             assert(F.fireShader==fire,"combustion shader must be reused")
+            assert(F.fireQuad==fireQuad,"local flame mesh must be reused")
             local nr,ng,nb,na=g.getColor();assert(r==nr and gg==ng and b==nb and a==na)
             g.pop()
         end
@@ -147,6 +148,26 @@ function love.load()
     magnitudeComparison(0.38,"docs/combat_feedback/damage_magnitudes.png")
     local Touch=require("src.touch_input")
     local lowPower=Touch.lowPower
+    -- Compile success alone does not prove that a shader actually draws visible flames.
+    for mode=1,3 do
+        Touch.lowPower=mode>1
+        if mode==3 then F.fireShader=nil else F.fireShader=fire end
+        for _,amount in ipairs({100,250,1000,7700,9999}) do
+            local sample=g.newCanvas(256,180)
+            g.push("all");g.setCanvas(sample);g.origin();g.clear(.025,.037,.05,1)
+            local ft=F.new("damage",amount,128,90,UI.formatNumber);ft.label=nil;F.update(ft,.28)
+            g.translate(128,90);g.scale(.85,.72);g.rotate(.03);g.translate(-128,-90)
+            F.draw(ft,UI);g.pop()
+            local pixels=sample:newImageData();local warm=0
+            for y=0,179 do for x=0,255 do
+                local r,green=pixels:getPixel(x,y)
+                if r>.30 and green<r*.72 then warm=warm+1 end
+            end end
+            assert(warm>50,"missing visible fire at "..amount.." in render mode "..mode..": "..warm)
+            pixels:release();sample:release()
+        end
+    end
+    F.fireShader=fire
     Touch.lowPower=true
     magnitudeComparison(0.38,"docs/combat_feedback/damage_magnitudes_mobile.png")
     -- A phone-sized canvas also exercises the fallback with fire/foil unavailable.
@@ -164,6 +185,19 @@ function love.load()
         end
     end
     g.pop();save(phone,"docs/combat_feedback/damage_mobile.png");phone:release()
+    phone=g.newCanvas(960,460)
+    g.push("all");g.setCanvas(phone);g.origin();g.clear(.025,.037,.05,1)
+    title("LỬA MOBILE 0.125.1 · 100 ĐẾN 9.999 SÁT THƯƠNG",0,18,960)
+    for row=0,1 do
+        if row==0 then F.fireShader=fire else F.fireShader=nil end
+        for i,amount in ipairs({100,250,1000,9999}) do
+            local ft=F.new("damage",amount,640,214,UI.formatNumber);F.update(ft,.38)
+            g.push("all");g.translate((i-1)*240+120,116+row*195);g.scale(.72);g.translate(-640,-214)
+            F.draw(ft,UI);g.pop()
+        end
+        title(row==0 and "SHADER VÀ LỬA HÌNH HỌC" or "KHÔNG SHADER · VẪN CÓ LỬA",0,183+row*195,960)
+    end
+    g.pop();save(phone,"docs/combat_feedback/damage_mobile_fire_fix.png");phone:release()
     F.fireShader,F.foilShader=fire,foil;Touch.lowPower=lowPower
     for _,argument in ipairs(arg or {}) do
         if argument=="--feedback-motion" then
@@ -179,5 +213,6 @@ function love.load()
     print("Feedback GPU PASS: five impact tiers, both phases, armor gain/absorption/depletion over HP, real shop purchase/sale, bounded coin tail, exact wallet settle and graphics state")
     print("Magnitude GPU PASS: all 16 orders from units through a million billion, shared fire/foil shaders")
     print("Mobile feedback GPU PASS: all magnitude signatures, phone-sized canvas, shader fallback and OpenGL ES fire/foil validation")
+    print("Visible fire PASS: 15 transformed pixel checks at 100/250/1000/7700/9999 across desktop, mobile and no shader")
     love.event.quit(0)
 end

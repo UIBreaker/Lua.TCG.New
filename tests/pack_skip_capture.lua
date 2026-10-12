@@ -18,6 +18,7 @@ function Test.update(game, callbacks, click)
             assert(Deck.getAttackSpeed(rank) == (rank == 14 and 11 or math.min(rank, 10)))
         end
         callbacks.startNewGame("red_deck")
+        game.consumables={}
         callbacks.openShop()
         game.gold = 1000
         initialDeckCount = #game.persistentDeck

@@ -5,13 +5,16 @@ local Lighting=require("render.lighting")
 local Visual=require("config.visual_config")
 local I={profiles=Profiles}
 local C=Theme.colors
-local medicineBays={1,2,3,5,6,7,8,4}
 
-function I.position(mode,item,index)
+function I.position(mode,item,index,page)
     local profile=Profiles[mode]
     if not profile then return end
     local bay=item.bay or index
-    if mode=="medicine" then bay=medicineBays[bay] or bay end
+    if mode=="medicine" then
+        local current=page or 1
+        if math.ceil(bay/8)~=current then return end
+        bay=bay-(current-1)*8
+    end
     local row=math.floor((bay-1)/profile.columns)
     local col=(bay-1)%profile.columns
     local w,h,y=106,159,row==0 and 157 or 435
@@ -98,7 +101,7 @@ local function sidebar(shop,game,profile)
     text("Chọn món → xác nhận mua",46,613,204,nil,profile.accent,"center")
 end
 
-local function displayCase(profile,row)
+local function displayCase(profile,row,tactical)
     local g=love.graphics;local m=profile.material
     local x,y,w,h=292,row==1 and 86 or 372,966,row==1 and 277 or 270
     g.setColor(.006,.009,.015,.32);UI.drawRoundedRect("fill",x+3,y+5,w,h,6)
@@ -106,20 +109,32 @@ local function displayCase(profile,row)
     g.setColor(profile.accent[1],profile.accent[2],profile.accent[3],.25);g.setLineWidth(1)
     UI.drawRoundedRect("line",x+2,y+2,w-4,h-4,5)
     plate(x+12,y+8,w-24,34,profile)
-    text(profile.rows[row],x+27,y+17,360,UI.fonts.small,profile.accent)
-    text(profile.notes[row],x+390,y+18,w-417,nil,C.muted,"right")
+    text((tactical and profile.tacticalRows or profile.rows)[row],x+27,y+17,360,UI.fonts.small,profile.accent)
+    text((tactical and profile.tacticalNotes or profile.notes)[row],x+390,y+18,w-417,nil,C.muted,"right")
 end
 
-function I.draw(shop,game,time)
+function I.draw(shop,game,time,buttons)
     local profile=Profiles[shop.mode]
     if not profile then return end
     local g=love.graphics;g.push("all")
     sidebar(shop,game,profile)
-    displayCase(profile,1);displayCase(profile,2)
+    local page=shop.page or 1
+    local tactical=shop.mode=="medicine" and page==2
+    displayCase(profile,1,tactical);displayCase(profile,2,tactical)
+    if shop.mode=="medicine" then
+        for index,label in ipairs({"HỒI PHỤC", "CHIẾN THUẬT"}) do
+            local b={id="medicine_page_"..index,text=label,x=28+(index-1)*123,y=385,w=119,h=36,
+                font=UI.fonts.tiny,color=page==index and C.green or C.inset}
+            UI.drawButton(b,false);if buttons then buttons[#buttons+1]=b end
+        end
+        text("NGĂN "..page.." / 2",28,432,242,nil,profile.accent,"center")
+    end
     local occupied={}
-    for _,item in ipairs(shop.items) do occupied[item.bay]=true end
+    for _,item in ipairs(shop.items) do
+        if I.position(shop.mode,item,nil,page) then occupied[item.bay-(shop.mode=="medicine" and (page-1)*8 or 0)]=true end
+    end
     for bay=1,profile.columns*2 do
-        local x,y,w,h=I.position(shop.mode,{bay=bay},bay)
+        local x,y,w,h=I.position(shop.mode,{bay=bay+(shop.mode=="medicine" and (page-1)*8 or 0)},nil,page)
         local cx,foot=x+w/2,y+h+4
         if shop.mode=="spn" then
             g.setColor(.035,.048,.087,.85);g.ellipse("fill",cx,foot+9,93,14)
@@ -158,8 +173,8 @@ function I.drawWorld(shop,time)
         g.setBlendMode("add")
         Lighting.glow(146,335,165,profile.accent,.065)
         for _,item in ipairs(shop.items) do
-            local x,y,w,h=I.position(shop.mode,item)
-            Lighting.glow(x+w/2,y+h*.6,w*1.1,item.color or profile.accent,Visual.shop.spotlight*.5)
+            local x,y,w,h=I.position(shop.mode,item,nil,shop.page)
+            if x then Lighting.glow(x+w/2,y+h*.6,w*1.1,item.color or profile.accent,Visual.shop.spotlight*.5) end
         end
     end
     g.pop()

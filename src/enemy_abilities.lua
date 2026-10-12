@@ -30,7 +30,9 @@ function A.start(m)
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
 end
 function A.speed(m)
-    return math.min(999,(m.attackSpeed or 1)+(((m.combatBuffs or {}).speed or {}).value or 0))
+    local buffs=m.combatBuffs or {}
+    local speed=math.min(999,(m.attackSpeed or 1)+((buffs.speed or {}).value or 0))
+    return buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
 end
 function A.attack(m)
     return (m.attack or 12)+(((m.combatBuffs or {}).damage or {}).value or 0)
@@ -158,7 +160,9 @@ function A.handEnd(game)
     local poison=game.enemyPoison or 0
     if poison>0 then
         local damage=require("src.card_abilities").damageGuard(game,poison)
-        game.playerHp=math.max(0,(game.playerHp or 100)-damage)
+        local hpBefore=game.playerHp or 100
+        game.playerHp=math.max(0,hpBefore-damage)
+        require("src.potions").payBlood(game,hpBefore)
         game.enemyPoison=math.max(0,poison-1)
         game.enemyFeedback="ĐỘC • -"..damage.." HP"
     end

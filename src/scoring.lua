@@ -359,16 +359,22 @@ function Scoring.calculate(handInfo, deities, context)
                     })
                 end
                 local cardChips = card.baseChips or (Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0))
+                local potionChips,potionMult=require("src.potions").cardBonus(abilityGame or context and context.gameState,card)
+                cardChips=cardChips+potionChips
                 bonusChips = bonusChips + cardChips
+                bonusMult=bonusMult+potionMult
 
                 local cardEvent = {
                     type = "card_scored",
                     card = card,
                     cardIndex = idx,
                     addedChips = cardChips,
-                    addedMult = 0,
+                    addedMult = potionMult,
                     message = (card.roleIcon or "") .. " " .. card.rankName .. (card.suitSymbol or "") .. " +" .. cardChips .. " Chips"
                 }
+                if potionChips>0 or potionMult>0 then
+                    cardEvent.message=cardEvent.message.." · THUỐC +"..potionChips.." ST / +"..potionMult.." CƯỜNG HÓA"
+                end
 
             if cTrig == 1 then
             if abilityHand then

@@ -406,6 +406,7 @@ function RunManager.deliverEvolutionRewards(run, gameState)
 end
 
 function RunManager.completeCurrentBlind(run, gameState)
+    if gameState then require("src.spn_basics").finish(gameState) end
     local blind = RunManager.getCurrentBlind(run)
     local rewardEarned = false
     if blind then

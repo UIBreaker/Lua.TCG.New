@@ -58,7 +58,7 @@ function T.update(game,cb)
                     end
                 end
             end
-            assert(count==#cb.getShopData().items,"Every offer needs a visible hitbox")
+            assert(count==(mode=="medicine" and 7 or #cb.getShopData().items),"Every offer in this cabinet needs a visible hitbox")
             shot(mode)
         elseif phase==2 then
             T.item=cb.getShopData().items[1];T.gold=game.gold;T.count=#cb.getShopData().items

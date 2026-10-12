@@ -9,9 +9,9 @@ local Display = {}
 local C = Theme.colors
 local categories = {
     deity = "SPN", equipment = "TRANG BỊ · ITM",
-    card = "QUÂN BÀI", hand_expansion = "MỞ RỘNG TAY", heal = "DƯỢC LIỆU", armor_potion="DƯỢC GIÁP", destroy="TIÊU HỦY · LINH HỒN",speed_single="TỐC ĐÁNH",bed="NGHỈ NGƠI · BẪY GIƯỜNG",
+    card = "QUÂN BÀI", hand_expansion = "MỞ RỘNG TAY", heal = "DƯỢC LIỆU", armor_potion="DƯỢC GIÁP", destroy="TIÊU HỦY · LINH HỒN",speed_single="TỐC ĐÁNH",bed="NGHỈ NGƠI · BẪY GIƯỜNG",combat_potion="THUỐC CHIẾN THUẬT",
 }
-local retailOrder = { deity = 1, equipment = 2, card = 3, hand_expansion = 4, heal = 5, armor_potion=5,destroy=5,speed_single=5,bed=5 }
+local retailOrder = { deity = 1, equipment = 2, card = 3, hand_expansion = 4, heal = 5, armor_potion=5,destroy=5,speed_single=5,bed=5,combat_potion=5 }
 local voucherGlyphs = { v_discount = "◇", v_interest = "$", v_hand_plus = "♠" }
 
 local function text(value, x, y, width, font, color, align)
@@ -143,9 +143,9 @@ local function privilege(item, x, y, w, h, hovered, affordable)
         x, y + 158, w, UI.fonts.small, affordable and C.gold or C.red, "center")
 end
 privilege = UI.CardPhysics.wrap(privilege, nil, 6)
-local function position(item,index,packIndex,mode)
+local function position(item,index,packIndex,mode,page)
     if item.section=="stall" then
-        return Interiors.position(mode,item,index)
+        return Interiors.position(mode,item,index,page)
     end
     if item.section=="basic" then return 734+(item.bay-1)*132,153,118,176 end
     if item.section=="discount" then return 946+(item.bay-1)*164,443,118,176 end
@@ -281,11 +281,11 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         return soulShop(shop,game,buttons,mx,my,time)
     end
     if shop.mode and shop.mode~="large" then
-        Interiors.draw(shop,game,time)
+        Interiors.draw(shop,game,time,buttons)
         UI.Polish.ensureShop(shop)
         local hoveredItem
         for index,item in ipairs(UI.Polish.items(shop) or {}) do
-            local x,y,w,h=position(item,index,0,shop.mode)
+            local x,y,w,h=position(item,index,0,shop.mode,shop.page)
             if x then
                 local hovered=mx>=x and mx<=x+w and my>=y-25 and my<=y+h+25
                 local affordable=(game.gold or 0)>=item.cost

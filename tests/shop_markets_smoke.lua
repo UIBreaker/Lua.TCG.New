@@ -11,6 +11,7 @@ Rng.seed(4271)
 local game=G.new();game.run=Run.newRun("red_deck");game.gold=10000
 local shop=Shop.new()
 local types,rarities,equipment,consumables={},{},{},{}
+local spnOffers,highSpnOffers=0,0
 local retail=Shop.getRetailConsumables()
 local expected={}
 for _,item in ipairs(retail) do
@@ -25,7 +26,7 @@ for _=1,600 do
     types[game.shopMode]=true
     assert(game.shopMode~="large" and game.shopMode~="soul")
     Shop.refresh(shop,game)
-    assert(shop.mode==game.shopMode and not shop.soulMode and #shop.items<=8)
+    assert(shop.mode==game.shopMode and not shop.soulMode and #shop.items<=(shop.mode=="medicine" and 15 or 8))
     if shop.mode=="small" then
         local cats={}
         for _,item in ipairs(shop.items) do cats[item.category]=true end
@@ -47,7 +48,13 @@ for _=1,600 do
         local seen={}
         for _,item in ipairs(shop.items) do
             assert(item.category=="deity" and not seen[item.id] and item.deity.rarity==item.rarity)
-            seen[item.id]=true;rarities[item.rarity]=true
+            assert(Shop.SPN_RARITY_WEIGHTS[item.rarity] and Shop.SPN_RARITY_WEIGHTS[item.rarity]>0)
+            seen[item.id]=true;rarities[item.rarity]=(rarities[item.rarity] or 0)+1
+            spnOffers=spnOffers+1
+            if item.rarity=="epic" or item.rarity=="legendary" or item.rarity=="mythic"
+                or item.rarity=="transcendent" or item.rarity=="unique" then
+                highSpnOffers=highSpnOffers+1
+            end
         end
     elseif shop.mode=="medicine" then
         assert(#shop.items==#Shop.POTIONS)
@@ -58,7 +65,8 @@ for _=1,600 do
     end
 end
 for _,mode in ipairs(Shop.AFTER_COMBAT_MARKETS) do assert(types[mode],mode) end
-for _,rarity in ipairs(require("src.deities").RARITIES) do assert(rarities[rarity.id],rarity.id) end
+assert(spnOffers>0 and rarities.common/spnOffers>0.5)
+assert(rarities.uncommon and rarities.rare and highSpnOffers>0 and highSpnOffers/spnOffers<0.15)
 for id in pairs(expected) do assert(consumables[id],"Missing retail card: "..id) end
 for id,eq in pairs(E.ITEMS) do if not eq.soulOnly then assert(equipment[id],"Missing equipment: "..id) end end
 
@@ -104,4 +112,4 @@ assert(state=="shop" and loaded.shopMode=="large")
 assert(Shop.leave(shop,game)=="advance")
 Run.advanceBlind(game.run,game)
 assert(game.run.ante==ante+1 and game.run.currentBlindIndex==1)
-print("Shop markets smoke PASS: 6 random shops, complete retail/equipment pools, 8 SPN rarities, purchases, potion/bed use, rerolls, saves, soul -> large -> next fight")
+print("Shop markets smoke PASS: 6 random shops, complete retail/equipment pools, weighted SPN rarities, purchases, potion/bed use, rerolls, saves, soul -> large -> next fight")

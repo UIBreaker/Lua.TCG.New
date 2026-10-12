@@ -260,6 +260,7 @@ require("src.spn_discard").register(Deities)
 require("src.spn_souls").register(Deities)
 require("src.spn_legacy").register(Deities)
 require("src.spn_mimic").register(Deities)
+require("src.spn_basics").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -272,7 +273,7 @@ function Deities.getDescription(deity)
     if def.stat=="consumableChancePct" then value=math.min(100,value) end
     if def.stat=="discardCopies" or def.stat=="bossCopies" then value=math.floor(def.values.value+2*(effectMultiplier(deity)-1)) end
     if def.stat=="copyActivations" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
-    local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)))
+    local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)):gsub("{double}",formatEffectNumber(value*2)))
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then

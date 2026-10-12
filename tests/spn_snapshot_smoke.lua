@@ -32,5 +32,5 @@ for id,def in pairs(D.CATALOG) do
     assert(P.snapshot(restored)[saved][def.stat]==after[deity][def.stat],id.." existing saves")
     count=count+1
 end
-assert(count==57)
-print("SPN snapshot PASS: all 57 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load")
+assert(count==61)
+print("SPN snapshot PASS: all 61 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load")

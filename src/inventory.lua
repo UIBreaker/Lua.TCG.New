@@ -38,10 +38,13 @@ function Inventory.useBed(game,index,target)
         for _,enemy in ipairs(require("src.enemy_group").members(game)) do if enemy==target then present=true end end
         if not present or target.hp<=0 or target.hasBed then return false end
         target.hasBed=true
+        require("src.potions").emit(game,"rest","ĐÃ ĐẶT GIƯỜNG · HỒI SỨC",nil,target)
     else
         local maximum=game.maxPlayerHp or 100
         if (game.playerHp or maximum)>=maximum then return false end
+        local before=game.playerHp or maximum
         game.playerHp=maximum
+        require("src.potions").emit(game,"rest","NGHỈ NGƠI · HỒI +"..(maximum-before).." HP",maximum-before)
     end
     table.remove(game.consumables,index)
     return true
@@ -57,12 +60,15 @@ function Inventory.useUtility(game,index)
     elseif card.category=="heal" then
         local maximum=game.maxPlayerHp or 100
         if (game.playerHp or maximum)>=maximum then return false end
-        game.playerHp=math.min(maximum,(game.playerHp or maximum)+(card.healAmt or 25))
+        local before=game.playerHp or maximum
+        game.playerHp=math.min(maximum,before+(card.healAmt or 25))
+        require("src.potions").emit(game,"heal","HỒI +"..(game.playerHp-before).." HP",game.playerHp-before)
     elseif card.category=="armor_potion" then
         local cap=require("config.card_ability_data").armorCap
         local armor=game.playerArmor or game.playerShield or 0
         if armor>=cap then return false end
         game.playerArmor=math.min(cap,armor+(card.armorAmt or 8));game.playerShield=game.playerArmor
+        require("src.potions").emit(game,"armor","GIÁP +"..(game.playerArmor-armor),game.playerArmor-armor)
     else return nil end
     table.remove(game.consumables,index)
     return true

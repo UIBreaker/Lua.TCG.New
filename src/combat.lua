@@ -18,12 +18,13 @@ local function accuracy(attackerSpeed,targetSpeed)
     return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
 end
 function Combat.rollPlayerAttack(game)
-    if game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
+    if (game.potionCombat or {}).accuracy or game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
 end
 
 function Combat.beginEnemyTurn(game,speed)
     game.enemyActed={};game.enemyActionPhases={}
+    game.spnBasicArmorGranted=nil
     for _,m in ipairs(Group.members(game)) do
         game.enemyActionPhases[m]=EnemyAbilities.speed(m)>(speed or game.lastPlayerAttackSpeed or 0) and "before" or "after"
     end
@@ -57,11 +58,17 @@ function Combat.bedExplosions(game,aura,locked)
 end
 
 function Combat.resolvePlayerAttack(game, aura,roll)
+    require("src.spn_basics").armor(game,false)
     local Monster = require("src.monster")
     local target = game.monster
     roll=roll or Combat.rollPlayerAttack(game)
     local attackEffects=game.spnAttack or {}
     game.spnAttack=nil
+    if (game.potionCombat or {}).accuracy then
+        roll={hitChance=1,missed=false}
+        game.potionCombat.accuracy=nil
+        require("src.potions").emit(game,"accuracy","ĐÁNH TRÚNG 100%",nil,target)
+    end
     if attackEffects.guaranteeHit then roll={hitChance=1,missed=false} end
     if roll.missed then
         local sync=require("src.chest_expansion").sync
@@ -144,6 +151,7 @@ function Combat.getOutcome(game)
 end
 
 function Combat.getAverageAttackSpeed(cards,game,handInfo)
+    if game then require("src.spn_basics").bind(game,cards or {}) end
     local total, count = 0, 0
     for _, card in ipairs(cards or {}) do
         total = total + Deck.peekCardAttackSpeed(card)
@@ -172,6 +180,13 @@ local function resolveOneAttack(game,playerSpeed)
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
     local support=EnemyAbilities.support(game,monster)
     if support then return support end
+    if EnemyAbilities.speed(monster)>(playerSpeed or game.lastPlayerAttackSpeed or 0) then
+        require("src.spn_basics").armor(game,true)
+    end
+    if (game.potionCombat or {}).evasion then
+        require("src.potions").emit(game,"evasion","NÉ ĐÒN ĐỊCH · 0 ST",nil,monster)
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=0,action="attack"}
+    end
     local roll=accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
     if roll.missed then
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
@@ -199,6 +214,7 @@ local function resolveOneAttack(game,playerSpeed)
     EnemyAbilities.afterAttack(game,monster,damage)
     require("src.chest_depth").enemyAttack(game,math.min(damage,hpBeforeDamage),absorbed)
     Anomalies.enemyAttack(game,monster,math.min(damage,hpBeforeDamage))
+    require("src.potions").payBlood(game,hpBeforeDamage)
 
     for _, card in ipairs(game.hand or {}) do
         if card.enhancement == "enh_escort" or card.enhancement == "escort" then
@@ -267,6 +283,7 @@ function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
         drawnCount = drawnCount + 1
         if prepareDraw then prepareDraw(card, drawnCount) end
         table.insert(game.hand, card)
+        require("src.spn_basics").bind(game,{card})
     end
     if Boss.passiveEnabled(game.monster) and (Boss.key(game.monster)=="faceless" or Boss.key(game.monster)=="the_fish") then
         for _,c in ipairs(game.hand) do c.faceDown=true end
@@ -282,11 +299,13 @@ function Combat.start(game, monster, round)
     assert(game and monster, "Combat.start requires game state and monster")
     game.round = round or 1
     game.monster = monster
+    require("src.spn_basics").start(game)
     game.enemies=Group.build(monster)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}
     game.spnAttack=nil
+    game.potionCombat={};game.potionFeedback={};game.potionVictoryPending=nil
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
@@ -433,6 +452,7 @@ end
 -- End of turn lifecycle: recovers exhausted cards and checks persistent states
 function Combat.onPlayerTurnEnd(game)
     if not game or not game.hand then return end
+    require("src.potions").endTurn(game)
     for _, c in ipairs(game.hand) do
         if not c.destroyed and require("src.card_effects").getEffectName(c)=="gilded" then
             game.gold=(game.gold or 0)+3

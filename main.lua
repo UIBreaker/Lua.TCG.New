@@ -27,7 +27,7 @@ for _, a in ipairs(arg or {}) do
         io.stdout:setvbuf("no");local failed=false
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
-            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke"}) do
+            "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
         end
@@ -138,6 +138,9 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-journey-routing" then isCaptureMode = true end
     if a == "--test-soul-shop" then isCaptureMode = true end
     if a == "--test-shop-markets" then isCaptureMode = true end
+    if a == "--test-potions" then isCaptureMode = true end
+    if a == "--test-starter-supplies" then isCaptureMode = true end
+    if a == "--capture-potion-vfx" then isCaptureMode = true end
     if a == "--test-bed-explosion" then isCaptureMode = true end
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
@@ -863,6 +866,11 @@ local function startNewGame(chosenDeck)
     anim.pendingStoredEquipment=nil
     if not isCaptureMode then Persistence.deleteRun() end
     GameState.resetRun(game, chosenDeck or "red_deck")
+    game.consumables = {
+        Shop.healingItem("upper", "healing_potion").consumable,
+        Shop.healingItem("upper", "armor_potion_small").consumable,
+        Shop.healingItem("upper", "cons_speed_small").consumable,
+    }
     Feedback.clearVfx()
     juice.lastGold, juice.lastHp, juice.lastArmor = game.gold or 0, game.playerHp or 100, game.playerArmor or 0
     juice.meters = nil
@@ -1259,6 +1267,43 @@ local function useConsumable(idx)
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", idx) then return false end
+    if c.category=="combat_potion" then
+        if state~="playing" or anim.enemyTurn or anim.active or UI.AbilityUI.current or DeathVFX.busy() then return false end
+        local function applyPotion(target)
+            local index
+            for i,held in ipairs(game.consumables) do if held==c then index=i;break end end
+            if not index then return false end
+            local used,message=require("src.potions").use(game,index,target,anim.prepareDrawAnimation)
+            if used then
+                local x,y,w,h=getConsumableSlotRect(index,state)
+                local events=game.potionFeedback or {};local event=events[#events]
+                if event then event.sourceX=x+w/2;event.sourceY=y+h/2 end
+                Sound.play(c.id=="cons_armor_break" and "damage_heavy" or "round_win")
+                saveRunAtSafePoint()
+            elseif message then
+                table.insert(anim.floatingTexts,{text=message,color=c.color,x=640,y=350,alpha=2})
+            end
+            return used
+        end
+        if c.id=="cons_armor_break" or c.id=="cons_slow" then
+            local slow=c.id=="cons_slow"
+            local options={}
+            for i,enemy in ipairs(EnemyGroup.members(game)) do
+                local armor=math.max(0,enemy.armor or 0)+math.max(0,enemy.creatureArmor or 0)
+                local speed=require("src.enemy_abilities").speed(enemy)
+                if enemy.hp>0 and (slow and speed>1 and not (enemy.combatBuffs or {}).slow or not slow and armor>0) then
+                    options[#options+1]={target=enemy,label=slow and ("Địch "..i.." · Tốc "..speed.." → "..math.max(1,math.floor(speed*.5)))
+                        or ("Địch "..i.." · "..armor.." giáp → "..(armor*.25).." ST")}
+                end
+            end
+            if #options==0 then return applyPotion(game.monster) end
+            UI.AbilityUI.openChoices(game,{{card=c,title=slow and "THUỐC GIẢM TỐC · CHỌN ĐỊCH" or "THUỐC PHÁ GIÁP · CHỌN ĐỊCH",description=c.desc,options=options,declineLabel="GIỮ LẠI THUỐC"}},function(decisions)
+                if decisions[1] then applyPotion(decisions[1].target) end
+            end)
+            return true
+        end
+        return applyPotion()
+    end
     if c.category=="socket_expansion" or c.category=="rule_break" then
         if state~="shop" and (state~="playing" or anim.enemyTurn or anim.active or UI.AbilityUI.current) then return false end
         local x,y,w,h=getConsumableSlotRect(idx,state)
@@ -1825,6 +1870,7 @@ local function applyPendingSpeedAt(mx, my)
                 end
             end
             local usedCard = table.remove(game.consumables, rewardIndex)
+            require("src.potions").emit(game,"speed","TỐC ĐÁNH +"..speed,speed,nil,{card})
             UI.Abilities.consumableUsed(game)
             pendingSpeedCard = nil
             local cx, cy = getConsumableSlotRect(rewardIndex, "playing")
@@ -1877,6 +1923,7 @@ local function startEnemyAttack(phase, speed, done, played)
         end
     end, function()
         if (game.playerHp or 0) <= 0 then
+            require("src.spn_basics").finish(game)
             beginPlayerDefeat(played)
             Persistence.deleteRun()
         else done() end
@@ -2147,6 +2194,157 @@ end
 -- SHADERS & CANVAS PIPELINE
 --------------------------------------------------------------------------------
 
+UI.finishCombatVictory=function()
+    game.potionCombat={};game.potionVictoryPending=nil
+    require("src.souls").awardKills(game)
+    UI.Abilities.combatWin(game)
+    -- Combat Victory: purge destroyed cards from persistent deck & restore base ranks
+    Combat.cleanupDestroyedCards(game)
+    if game.persistentDeck then
+        Deck.restoreDeck(game.persistentDeck)
+        game.masterDeck = game.persistentDeck
+        game.deck = {}
+        game.discardPile = {}
+        game.hand = {}
+        clearAllSelections()
+    end
+
+    if game.run then
+        local curBlind = RunManager.getCurrentBlind(game.run)
+        local evolutionReward = RunManager.completeCurrentBlind(game.run, game)
+        if evolutionReward then
+            table.insert(anim.floatingTexts, {
+                text = "Hoàn tất vòng ải " .. tostring(game.run.ante) .. " · Chọn một trong ba phần thưởng",
+                color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
+            })
+        end
+        local breakdown = RewardSystem.calculate(curBlind, game, false)
+        local rewardResult = RewardSystem.begin(breakdown, game)
+        cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
+        state = "CASH_OUT"
+        lastActiveState = "CASH_OUT"
+        saveRunAtSafePoint()
+        Sound.play("round_win")
+    elseif game.monster.isBoss then
+        -- Boss defeated: 2 Deities appear, pick 1 of 2!
+        game.bossDeityDraft = Deities.getBossDraftPool(game.deities, 2)
+        state = "boss_deity"
+        Sound.play("round_win")
+    elseif game.monster.isElite then
+        -- Elite monster defeated: complete node and open bonus treasure chest!
+        if game.currentNodeId and game.map then
+            Map.onNodeCompleted(game.map, game.currentNodeId)
+        end
+        generateBossChestRewards()
+        socketingReturnState = "map"
+        state = "chest"
+        Sound.play("round_win")
+    else
+        if game.currentNodeId and game.map then Map.onNodeCompleted(game.map, game.currentNodeId) end
+        state = "map"
+        Sound.play("round_win")
+    end
+end
+
+UI.applyCombatWinRewards=function(scoreResult)
+    local baseReward = game.monster.isBoss and 15 or (game.monster.isElite and 10 or 4)
+    local unusedHandsBonus = game.handsRemaining * 1
+    local deityBonus = 0
+    local maxWinSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 10
+    for di = 1, maxWinSlots do
+        local d = game.deities and game.deities[di]
+        if d then
+            require("src.spn_mimic").each(game,game.deities,di,function(effectiveDeity)
+            if effectiveDeity and effectiveDeity.onRoundWin then
+                local r = effectiveDeity.onRoundWin(game, effectiveDeity)
+                r = Deities.scaleEffect(effectiveDeity, r)
+                if r and r.addGold then deityBonus = deityBonus + r.addGold end
+                if r and r.message then
+                    local msg = d.isCopyDeity and (d.name .. " (Sao chép): " .. r.message) or r.message
+                    table.insert(anim.floatingTexts, {
+                        text = msg,
+                        color = UI.COLORS.goldYellow,
+                        x = 640,
+                        y = 190 - (di * 22),
+                        alpha = 2.8,
+                    })
+                end
+            end
+            end)
+            if d.extinct then
+                game.deities[di] = nil
+            end
+        end
+    end
+
+    -- Tiền Lãi (Interest): Cứ mỗi $5 vàng tích trữ trong túi, sau trận được nhận thêm $1 tiền lãi (mặc định tối đa $3, voucher nâng lên $5)
+    local maxInt = game.maxInterest or 3
+    if game.vouchers and (game.vouchers["v_interest"] or game.vouchers["seed_money"]) then
+        maxInt = math.max(maxInt, 5)
+    end
+    local interestBonus = math.min(maxInt, math.floor(game.gold / 5))
+    if interestBonus > 0 then
+        table.insert(anim.floatingTexts, {
+            text = "[Tiền Lãi] +$" .. interestBonus .. " Vàng!",
+            color = UI.COLORS.goldYellow,
+            x = 640,
+            y = 430,
+            alpha = 1.8,
+            compact = true,
+        })
+    end
+
+    game.lastRoundDeityRewards = { bonusGold = deityBonus, details = deityDetails or {} }
+    if scoreResult and scoreResult.hasBountySeal and not game.bountySealClaimedThisCombat then
+        game.bountySealClaimedThisCombat = true
+        deityBonus = deityBonus + Deck.SEALS.seal_bounty.params.gold
+        table.insert(anim.floatingTexts, {
+            text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +"..Deck.SEALS.seal_bounty.params.gold.." Vàng!",
+            color = UI.COLORS.goldYellow,
+            x = 640,
+            y = 140,
+            alpha = 2.8,
+        })
+    end
+    anim.earnedGold = baseReward + unusedHandsBonus + deityBonus + interestBonus
+
+    -- Valoria Passive: +25% Gold on monster defeat
+    if game.selectedFaction == "valoria" or game.selectedSuit == "valoria" then
+        local valBonus = math.max(1, math.floor(anim.earnedGold * 0.25))
+        anim.earnedGold = anim.earnedGold + valBonus
+        table.insert(anim.floatingTexts, {
+            text = "[Hậu Cần Valoria] +" .. valBonus .. " Vàng (+25%)!",
+            color = UI.COLORS.goldYellow,
+            x = 640,
+            y = 280,
+            alpha = 2.5,
+        })
+    end
+
+    -- Elaris Passive: Lộc Biếc Đâm Chồi (Win within half of max hands upgrades a card)
+    if (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and game.handsRemaining >= math.ceil(game.maxHands / 2) then
+        if game.persistentDeck and #game.persistentDeck > 0 then
+            local targetCard = game.persistentDeck[Rng.random(#game.persistentDeck)]
+            Deck.upgradeCard(targetCard)
+            table.insert(anim.floatingTexts, {
+                text = "[Lộc Biếc] Tôi luyện thành công lá " .. targetCard.rankName .. " " .. (targetCard.suitSymbol or "") .. " (+1 Rank)!",
+                color = { 0.2, 0.85, 0.4, 1 },
+                x = 640,
+                y = 330,
+                alpha = 3.0,
+            })
+        end
+    end
+
+    -- Increment encounter count for next monster (starts at 10 HP, +50% each encounter indefinitely)
+    game.monsterEncounterCount = (game.monsterEncounterCount or 1) + 1
+
+    if not game.run then
+        game.gold = game.gold + anim.earnedGold
+    end
+    Sound.play("round_win")
+end
+
 local function initShadersAndCanvas()
     if love.graphics and love.graphics.newCanvas then
         local ok, canvas = pcall(love.graphics.newCanvas, RENDER_WIDTH, RENDER_HEIGHT)
@@ -2164,7 +2362,7 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
-        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" then
+        if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" or argument=="--test-spn-basics-art" then
             local ok, err = pcall(function()
                 local ids,output
                 if argument=="--test-spn-anomalies-art" then
@@ -2191,6 +2389,9 @@ function love.load()
                     ids={"spirit_twin_fang"};output="docs/spn_twin_fang_runtime.png"
                 elseif argument=="--test-spn-mimic-art" then
                     ids={"spirit_right_echo"};output="docs/spn_mimic_runtime.png"
+                elseif argument=="--test-spn-basics-art" then
+                    ids={};for _,row in ipairs(require("src.spn_basics").entries) do ids[#ids+1]=row[1] end
+                    output="docs/spn_basics_runtime.png"
                 end
                 require("tests.spn_art_smoke").verify(ids,output)
             end)
@@ -2422,6 +2623,7 @@ Sound.updateGame = function(dt)
 end
 
 function love.update(dt)
+    require("ui.potion_effects").update(game,dt,settings.reducedMotion,state)
     require("ui.enemy_formation").update(game,dt)
     if not isCollectionOpen then Collection.prepareCacheStep() end
     if isCollectionOpen and require("ui.collection_book").update(dt) then
@@ -2474,6 +2676,10 @@ function love.update(dt)
         require("src.spn_anomalies").showFeedback(game,anim)
     end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
+    if state=="playing" and game.potionVictoryPending and not DeathVFX.busy() and Combat.getOutcome(game)=="victory" then
+        UI.applyCombatWinRewards(nil)
+        UI.finishCombatVictory()
+    end
     local cameraX, cameraY = 0, 0
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
     local bedCameraX,bedCameraY=UI.BedExplosion.camera()
@@ -2969,102 +3175,7 @@ function love.update(dt)
                     end
 
                     if defeated then
-                        local baseReward = game.monster.isBoss and 15 or (game.monster.isElite and 10 or 4)
-                        local unusedHandsBonus = game.handsRemaining * 1
-                        local deityBonus = 0
-                        local maxWinSlots = Deities.getMaxSlots and Deities.getMaxSlots(game) or 10
-                        for di = 1, maxWinSlots do
-                            local d = game.deities and game.deities[di]
-                            if d then
-                                require("src.spn_mimic").each(game,game.deities,di,function(effectiveDeity)
-                                if effectiveDeity and effectiveDeity.onRoundWin then
-                                    local r = effectiveDeity.onRoundWin(game, effectiveDeity)
-                                    r = Deities.scaleEffect(effectiveDeity, r)
-                                    if r and r.addGold then deityBonus = deityBonus + r.addGold end
-                                    if r and r.message then
-                                        local msg = d.isCopyDeity and (d.name .. " (Sao chép): " .. r.message) or r.message
-                                        table.insert(anim.floatingTexts, {
-                                            text = msg,
-                                            color = UI.COLORS.goldYellow,
-                                            x = 640,
-                                            y = 190 - (di * 22),
-                                            alpha = 2.8,
-                                        })
-                                    end
-                                end
-                                end)
-                                if d.extinct then
-                                    game.deities[di] = nil
-                                end
-                            end
-                        end
-
-                        -- Tiền Lãi (Interest): Cứ mỗi $5 vàng tích trữ trong túi, sau trận được nhận thêm $1 tiền lãi (mặc định tối đa $3, voucher nâng lên $5)
-                        local maxInt = game.maxInterest or 3
-                        if game.vouchers and (game.vouchers["v_interest"] or game.vouchers["seed_money"]) then
-                            maxInt = math.max(maxInt, 5)
-                        end
-                        local interestBonus = math.min(maxInt, math.floor(game.gold / 5))
-                        if interestBonus > 0 then
-                            table.insert(anim.floatingTexts, {
-                                text = "[Tiền Lãi] +$" .. interestBonus .. " Vàng!",
-                                color = UI.COLORS.goldYellow,
-                                x = 640,
-                                y = 430,
-                                alpha = 1.8,
-                                compact = true,
-                            })
-                        end
-
-                        game.lastRoundDeityRewards = { bonusGold = deityBonus, details = deityDetails or {} }
-                        if scoreResult and scoreResult.hasBountySeal and not game.bountySealClaimedThisCombat then
-                            game.bountySealClaimedThisCombat = true
-                            deityBonus = deityBonus + Deck.SEALS.seal_bounty.params.gold
-                            table.insert(anim.floatingTexts, {
-                                text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +"..Deck.SEALS.seal_bounty.params.gold.." Vàng!",
-                                color = UI.COLORS.goldYellow,
-                                x = 640,
-                                y = 140,
-                                alpha = 2.8,
-                            })
-                        end
-                        anim.earnedGold = baseReward + unusedHandsBonus + deityBonus + interestBonus
-
-                        -- Valoria Passive: +25% Gold on monster defeat
-                        if game.selectedFaction == "valoria" or game.selectedSuit == "valoria" then
-                            local valBonus = math.max(1, math.floor(anim.earnedGold * 0.25))
-                            anim.earnedGold = anim.earnedGold + valBonus
-                            table.insert(anim.floatingTexts, {
-                                text = "[Hậu Cần Valoria] +" .. valBonus .. " Vàng (+25%)!",
-                                color = UI.COLORS.goldYellow,
-                                x = 640,
-                                y = 280,
-                                alpha = 2.5,
-                            })
-                        end
-
-                        -- Elaris Passive: Lộc Biếc Đâm Chồi (Win within half of max hands upgrades a card)
-                        if (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and game.handsRemaining >= math.ceil(game.maxHands / 2) then
-                            if game.persistentDeck and #game.persistentDeck > 0 then
-                                local targetCard = game.persistentDeck[Rng.random(#game.persistentDeck)]
-                                Deck.upgradeCard(targetCard)
-                                table.insert(anim.floatingTexts, {
-                                    text = "[Lộc Biếc] Tôi luyện thành công lá " .. targetCard.rankName .. " " .. (targetCard.suitSymbol or "") .. " (+1 Rank)!",
-                                    color = { 0.2, 0.85, 0.4, 1 },
-                                    x = 640,
-                                    y = 330,
-                                    alpha = 3.0,
-                                })
-                            end
-                        end
-
-                        -- Increment encounter count for next monster (starts at 10 HP, +50% each encounter indefinitely)
-                        game.monsterEncounterCount = (game.monsterEncounterCount or 1) + 1
-
-                        if not game.run then
-                            game.gold = game.gold + anim.earnedGold
-                        end
-                        Sound.play("round_win")
+                        UI.applyCombatWinRewards(scoreResult)
                     else
                         if UI.BossAbilities.afterScore(game,anim.evalResult and anim.evalResult.scoringCards) then
                             table.insert(anim.floatingTexts,{text="[THE ARM] Lá tính điểm -1 Rank lâu dài!",color={0.85,0.35,0.35,1},x=640,y=400,alpha=2.5})
@@ -3088,6 +3199,7 @@ function love.update(dt)
                     -- Resolve from live HP/hand state so stale animation flags can
                     -- never turn a defeated monster into a game over.
                     local combatOutcome = Combat.getOutcome(game)
+                    if combatOutcome~="continue" then require("src.spn_basics").finish(game) end
                     anim.monsterDefeated = combatOutcome == "victory"
                     anim.playerKilled = combatOutcome == "defeat" and game.playerHp ~= nil and game.playerHp <= 0
 
@@ -3105,56 +3217,7 @@ function love.update(dt)
                     anim.playedCards = {}
 
                     if anim.monsterDefeated then
-                        UI.Abilities.combatWin(game)
-                        -- Combat Victory: purge destroyed cards from persistent deck & restore base ranks
-                        Combat.cleanupDestroyedCards(game)
-                        if game.persistentDeck then
-                            Deck.restoreDeck(game.persistentDeck)
-                            game.masterDeck = game.persistentDeck
-                            game.deck = {}
-                            game.discardPile = {}
-                            game.hand = {}
-                            clearAllSelections()
-                        end
-
-                        if game.run then
-                            local curBlind = RunManager.getCurrentBlind(game.run)
-                            local evolutionReward = RunManager.completeCurrentBlind(game.run, game)
-                            if evolutionReward then
-                                table.insert(anim.floatingTexts, {
-                                    text = "Hoàn tất vòng ải " .. tostring(game.run.ante) .. " · Chọn một trong ba phần thưởng",
-                                    color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
-                                })
-                            end
-                            local breakdown = RewardSystem.calculate(curBlind, game, false)
-                            local rewardResult = RewardSystem.begin(breakdown, game)
-                            cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
-                            state = "CASH_OUT"
-                            lastActiveState = "CASH_OUT"
-                            saveRunAtSafePoint()
-                            Sound.play("round_win")
-                        elseif game.monster.isBoss then
-                            -- Boss defeated: 2 Deities appear, pick 1 of 2!
-                            game.bossDeityDraft = Deities.getBossDraftPool(game.deities, 2)
-                            state = "boss_deity"
-                            Sound.play("round_win")
-                        elseif game.monster.isElite then
-                            -- Elite monster defeated: complete node and open bonus treasure chest!
-                            if game.currentNodeId and game.map then
-                                Map.onNodeCompleted(game.map, game.currentNodeId)
-                            end
-                            generateBossChestRewards()
-                            socketingReturnState = "map"
-                            state = "chest"
-                            Sound.play("round_win")
-                        else
-                            -- Normal monster defeated: complete node and return to map!
-                            if game.currentNodeId and game.map then
-                                Map.onNodeCompleted(game.map, game.currentNodeId)
-                            end
-                            state = "map"
-                            Sound.play("round_win")
-                        end
+                        UI.finishCombatVictory()
                     else
                         -- Preserve per-hand lifecycle effects; turn recycling itself
                         -- only happens when the player explicitly ends the turn.
@@ -3206,7 +3269,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.126.0", 48, 185)
+    g.print("beta 0.127.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3840,6 +3903,7 @@ local function drawBattleInfoPanel(m, eval)
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
         scoring = scoring, enemyName = (m and m.name) or "Không rõ",
+        guaranteedHit=(game.potionCombat or {}).accuracy, guaranteedDodge=(game.potionCombat or {}).evasion,
         auraIntensity = scoring and anim.sequence.intensity or 0,
         phase = scoring and anim.sequence.events[anim.sequence.index] and anim.sequence.events[anim.sequence.index].kind,
         scoreProgress = scoring and math.min(1,(anim.sequence.index-1+(anim.sequence.age/
@@ -6387,6 +6451,7 @@ function love.draw()
         UI.Description.draw(UI, descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
     UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+    require("ui.potion_effects").draw(UI,game,state)
     UI.Description.finishFrame()
     Renderer.drawTransition()
     Renderer.drawDebug(UI.fonts.tiny)
@@ -6727,6 +6792,9 @@ local function handleShopMousepressed(mx, my, button)
             elseif btn.id == "reroll" then
                 UI.Polish.reroll(shopData, game)
                 return true
+            elseif btn.id=="medicine_page_1" or btn.id=="medicine_page_2" then
+                shopData.page=tonumber(btn.id:match("(%d)$"))
+                UI.Polish.clearFocus();Sound.play("card_deal");return true
             elseif btn.id == "open_backpack" then
                 UI.Backpack.show();Sound.play("card_deal");return true
             elseif btn.id == "open_shop_transfer" then

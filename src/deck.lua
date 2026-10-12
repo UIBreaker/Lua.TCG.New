@@ -343,12 +343,14 @@ function Deck.getAttackSpeed(rank)
     return math.max(1,14-rank) -- Low ranks win initiative; high ranks hit harder.
 end
 
-function Deck.peekCardAttackSpeed(card)
+function Deck.peekCardAttackSpeed(card,game)
     if not card then return 1 end
     local base = Deck.getAttackSpeed(card.rank)
     local equipmentSpeed=0
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
-    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed))
+    local basics=require("src.spn_basics")
+    local spiritSpeed=basics.speed(game or basics.cardGames[card])
+    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed+spiritSpeed))
 end
 
 function Deck.getCardAttackSpeed(card)

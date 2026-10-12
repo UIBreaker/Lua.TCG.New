@@ -61,6 +61,27 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-starter-supplies" then
+            local ok,err=pcall(require("tests.starter_supplies_capture").update,gameRef,callbacks)
+            if not ok then print("STARTER SUPPLIES FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-potion-vfx" then
+            local ok,err=pcall(require("tests.potion_vfx_capture").update,gameRef,callbacks)
+            if not ok then print("POTION VFX FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-potions" then
+            local ok,err=pcall(require("tests.potions_capture").update,gameRef,callbacks)
+            if not ok then print("POTIONS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-shop-markets" then
             local ok,err=pcall(require("tests.shop_markets_capture").update,gameRef,callbacks)
             if not ok then print("SHOP MARKETS UI FAIL: "..tostring(err));love.event.quit(1) end

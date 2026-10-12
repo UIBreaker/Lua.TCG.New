@@ -6158,11 +6158,11 @@
       "id": "cons_speed_large",
       "group": "speed",
       "name": "Tốc Đánh Lớn",
-      "ability": "Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run.",
-      "concept": "One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.",
-      "prompt": "Use case: stylized-concept. ONE production card art, PNG 1024x1536 portrait 2:3 full bleed. Match Continental cinematic Western dark fantasy expedition, painterly realism, medium detail, clean strong silhouette, quiet atmospheric depth, one primary subject readable at 64px. No text, typography, numbers, badges, card frame, border, logo or watermark. No East Asian architecture, calligraphy, dragons, dense ornament, particle noise or blown out glow. Identity: Tốc Đánh Lớn. Actual effect: Chọn một lá trên tay: +10 tốc đánh vĩnh viễn trong run. Subject/concept: One massive weathered silver turbine-like expedition chronometer suspended above a coastal canyon, a clear three bladed silhouette and broad sweeping horizontal cyan afterimages racing past it. Strong directional wind and enormous quiet cliff background. Different shape and composition from a small hourglass, one main artifact, controlled bright edges.",
-      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a106e2-0248-7463-a69b-c4965cbd4343\\exec-79c2462a-6e5c-4fa7-b364-2fdc7c0dde3e.png",
-      "file": "assets/cards/continental/speed/cons_speed_large.png",
+      "ability": "Chọn một lá đang trên tay: +10 tốc đánh trong trận hiện tại, không tăng vĩnh viễn.",
+      "concept": "A tall aerodynamic cyan glass potion bottle with a silver stopper and a single long diagonal silver fin wrapping the neck, filled with luminous blue liquid and horizontal wind trails INSIDE THE BOTTLE, resting on a windswept rocky ocean cliff. Distant western ruins, deep ocean navy and cyan. Clearly a drinkable capped potion flask, NOT a propeller, fan, rotor, hourglass or weapon. The potion increases one card's attack speed by 10.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A tall aerodynamic cyan glass potion bottle with a silver stopper and a single long diagonal silver fin wrapping the neck, filled with luminous blue liquid and horizontal wind trails INSIDE THE BOTTLE, resting on a windswept rocky ocean cliff. Distant western ruins, deep ocean navy and cyan. Clearly a drinkable capped potion flask, NOT a propeller, fan, rotor, hourglass or weapon. The potion increases one card's attack speed by 10.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-8137fe01-ef95-4d5f-a05f-8edd75987987.png",
+      "file": "assets/cards/continental/speed/cons_speed_large_potion.png",
       "source": "src/shop.lua",
       "rarity": "Tiêu hao",
       "status": "generated",
@@ -6170,7 +6170,11 @@
         1024,
         1536
       ],
-      "mode": "built-in image_gen"
+      "mode": "built-in image_gen",
+      "sha256": "a8ce1dad00a7119f1f91c117a605cdd1e3bd60e45aace9b2bfa088f14ad007b6",
+      "previous_paths": [
+        "assets/cards/continental/speed/cons_speed_large.png"
+      ]
     },
     {
       "id": "cons_bed",
@@ -10109,11 +10113,255 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-bb7b75ad-867b-4a21-a304-d53b60184d07.png",
         "prompt": "Use case: stylized-concept. ONE production SPN game card illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design, cinematic Western dark-fantasy expedition, painterly realism, medium detail, one primary supernatural silhouette, readable at 64px, quiet lost Western ruins and cold continental cliffs. Subject: a hollow faceless silver spectral mimic occupying the central-left, its head and reaching palm clearly turned toward the RIGHT. At the right edge a compact violet guardian-shaped magical reflection flows leftward from its original silhouette into the mimic's empty translucent chest, where the same silhouette begins to glow. One main mimic entity, the source is a small subordinate spectral reflection, not a second detailed character. A restrained silver-blue and violet palette with antique gold light inside the chest, large calm forms and controlled rim light, simple weathered western arches behind. Convey copying the neighboring right spirit's power and echoing its activation. No tangible mirror furniture, potion or item still life. No text, letters, numbers, playing cards, borders, card frame, badges, logo or watermark. No East Asian architecture or calligraphy, no dense ornament or blown-out glow."
       }
+    },
+    {
+      "id": "spirit_life_bloom",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay tính điểm: hồi 2 HP mỗi quân còn cầm trên tay.",
+      "source": "src/spn_basics.lua",
+      "name": "Mạch Sinh",
+      "concept": "A single benevolent spectral doe made of translucent emerald sap and broad living branches stands above a still forest spring. A contained warm red heart glows in its chest; several broad green ribbons gently flow from its chest outward to heal unseen companions. Forest green, shadowed ancient western arches, warm restrained red heart accent. Strong recognizable graceful doe silhouette, life restoration rather than soul collection.",
+      "file": "assets/cards/continental/spn/spirit_life_bloom.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. A single benevolent spectral doe made of translucent emerald sap and broad living branches stands above a still forest spring. A contained warm red heart glows in its chest; several broad green ribbons gently flow from its chest outward to heal unseen companions. Forest green, shadowed ancient western arches, warm restrained red heart accent. Strong recognizable graceful doe silhouette, life restoration rather than soul collection.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_life_bloom",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-3c22f0b8-79e6-430d-88fd-60f043987835.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. A single benevolent spectral doe made of translucent emerald sap and broad living branches stands above a still forest spring. A contained warm red heart glows in its chest; several broad green ribbons gently flow from its chest outward to heal unseen companions. Forest green, shadowed ancient western arches, warm restrained red heart accent. Strong recognizable graceful doe silhouette, life restoration rather than soul collection."
+      }
+    },
+    {
+      "id": "spirit_coin_wisp",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay tính điểm: +2 Vàng mỗi lá đã chơi, gồm lá không ghi điểm.",
+      "source": "src/spn_basics.lua",
+      "name": "Linh Kim",
+      "concept": "One floating supernatural figure composed of a broad spiral of weathered antique-gold coins, with a hollow hooded silhouette and one clear open palm from which two large luminous coins fall. Lost western caravan ruins on a quiet bone-gold desert cliff. Antique gold and muted bone ivory, restrained glow, tangible coins subordinate to the single supernatural spirit. Convey earning gold for every action.",
+      "file": "assets/cards/continental/spn/spirit_coin_wisp.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One floating supernatural figure composed of a broad spiral of weathered antique-gold coins, with a hollow hooded silhouette and one clear open palm from which two large luminous coins fall. Lost western caravan ruins on a quiet bone-gold desert cliff. Antique gold and muted bone ivory, restrained glow, tangible coins subordinate to the single supernatural spirit. Convey earning gold for every action.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_coin_wisp",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-4d439a86-fc63-4f4a-8308-616fdbb2b2a9.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One floating supernatural figure composed of a broad spiral of weathered antique-gold coins, with a hollow hooded silhouette and one clear open palm from which two large luminous coins fall. Lost western caravan ruins on a quiet bone-gold desert cliff. Antique gold and muted bone ivory, restrained glow, tangible coins subordinate to the single supernatural spirit. Convey earning gold for every action."
+      }
+    },
+    {
+      "id": "spirit_fleet_wind",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "+2 Tốc đánh cho mọi lá đang cầm; thưởng tồn tại trong đòn vừa chơi.",
+      "source": "src/spn_basics.lua",
+      "name": "Linh Phong",
+      "concept": "One tall slender wind apparition formed of translucent silver-blue air, with a clear streamlined winged silhouette and outstretched arms sweeping several broad horizontal currents across the scene. Glacial cliffs and simple ruined western bridge, deep cold blue, cyan and silver. Controlled directional wind trails convey a steady speed blessing for all companions; not a wolf or weapon.",
+      "file": "assets/cards/continental/spn/spirit_fleet_wind.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One tall slender wind apparition formed of translucent silver-blue air, with a clear streamlined winged silhouette and outstretched arms sweeping several broad horizontal currents across the scene. Glacial cliffs and simple ruined western bridge, deep cold blue, cyan and silver. Controlled directional wind trails convey a steady speed blessing for all companions; not a wolf or weapon.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_fleet_wind",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-38bb27d4-8f6e-4ab2-8f52-04924454a719.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One tall slender wind apparition formed of translucent silver-blue air, with a clear streamlined winged silhouette and outstretched arms sweeping several broad horizontal currents across the scene. Glacial cliffs and simple ruined western bridge, deep cold blue, cyan and silver. Controlled directional wind trails convey a steady speed blessing for all companions; not a wolf or weapon."
+      }
+    },
+    {
+      "id": "spirit_guardian_shell",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi lượt: +5 Giáp trước đòn của bạn, hoặc +10 trước đòn địch nếu địch đánh trước.",
+      "source": "src/spn_basics.lua",
+      "name": "Linh Giáp",
+      "concept": "One immense spectral armored tortoise rises protectively from a cold coastal cliff, its shell forming a single broad translucent shield dome with simple large antique-gold plates. A dark incoming spear meets the outer dome before it can reach the sheltered space below. Deep ocean navy, silver-blue and restrained antique-gold accent, broad sturdy readable tortoise silhouette, western ruined watchtower distant. Show protection established before an incoming strike.",
+      "file": "assets/cards/continental/spn/spirit_guardian_shell.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One immense spectral armored tortoise rises protectively from a cold coastal cliff, its shell forming a single broad translucent shield dome with simple large antique-gold plates. A dark incoming spear meets the outer dome before it can reach the sheltered space below. Deep ocean navy, silver-blue and restrained antique-gold accent, broad sturdy readable tortoise silhouette, western ruined watchtower distant. Show protection established before an incoming strike.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_guardian_shell",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-e943b276-737f-4f83-a57e-006aea4bedf9.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural silhouette with broad shapes readable at 64px, quiet continental ruins, controlled rim light and restrained glow. No text, letters, numbers, cards, suits, border, frame, badge, logos or watermark; no East Asian architecture or calligraphy, no dense micro-ornament or particle noise. One immense spectral armored tortoise rises protectively from a cold coastal cliff, its shell forming a single broad translucent shield dome with simple large antique-gold plates. A dark incoming spear meets the outer dome before it can reach the sheltered space below. Deep ocean navy, silver-blue and restrained antique-gold accent, broad sturdy readable tortoise silhouette, western ruined watchtower distant. Show protection established before an incoming strike."
+      }
+    },
+    {
+      "id": "cons_accuracy",
+      "name": "Thuốc Chính Xác",
+      "group": "utility",
+      "concept": "A slender clear amber potion vial with a faceted lens-shaped rounded chamber, silver cap and one physical arrowhead clasp at its neck. A sharply focused needle of golden light suspended inside its liquid points toward a distant ruined western watchtower in clear desert air. Tangible flask on weathered expedition stone, bone gold palette. Its potion makes the next played hand hit with 100 percent accuracy; no written percentage and no symbols.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A slender clear amber potion vial with a faceted lens-shaped rounded chamber, silver cap and one physical arrowhead clasp at its neck. A sharply focused needle of golden light suspended inside its liquid points toward a distant ruined western watchtower in clear desert air. Tangible flask on weathered expedition stone, bone gold palette. Its potion makes the next played hand hit with 100 percent accuracy; no written percentage and no symbols.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-7d0f29f3-395b-4327-91cf-0e4a7de751db.png",
+      "file": "assets/cards/continental/utility/cons_accuracy.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "5423dc45e027d8a3fb2c17abad7d042123d53f35b6e2fa205c68ecdd3be01805",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Tay bài kế tiếp đánh trúng 100%, bất kể tốc đánh. Hết hiệu lực sau lượt kế tiếp; bỏ bài không làm mất hiệu lực."
+    },
+    {
+      "id": "cons_evasion",
+      "name": "Thuốc Né Tránh",
+      "group": "utility",
+      "concept": "A flattened oval violet potion flask with silver rim and a narrow leather strap on a misty continental coast stone. Pale liquid separates into two drifting veils inside the flask, while a single ghosted silhouette of the same flask slips sideways behind it, communicating evasion and a brief afterimage. Quiet deep navy coast, slate violet, restrained mist. It lets the explorer evade enemy attacks for one turn. No person or creature.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A flattened oval violet potion flask with silver rim and a narrow leather strap on a misty continental coast stone. Pale liquid separates into two drifting veils inside the flask, while a single ghosted silhouette of the same flask slips sideways behind it, communicating evasion and a brief afterimage. Quiet deep navy coast, slate violet, restrained mist. It lets the explorer evade enemy attacks for one turn. No person or creature.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-9cbcf99b-7c21-4679-8716-7cf9d41c5bda.png",
+      "file": "assets/cards/continental/utility/cons_evasion.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "d0a83f1f98f00f38369f4225eed8daa1c9e7f88a710ba5a77ccacac50124b720",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Né mọi đòn tấn công của địch trong lượt kế tiếp, kể cả nhiều địch đánh trước và sau tay bài. Không chặn độc hoặc chi phí tự mất máu."
+    },
+    {
+      "id": "cons_armor_break",
+      "name": "Thuốc Phá Giáp",
+      "group": "utility",
+      "concept": "A stout throwable ochre acid potion flask with a cork and simple iron protective collar, sitting on a broken steel cuirass plate at a ruined western fortress. A thin stream of corrosive amber liquid has eaten a clear jagged hole through the plate, whose split edges glow faintly copper orange. One prominent bottle and a simple readable damaged plate, charcoal steel and antique amber. It removes all enemy armor and deals damage equal to one quarter of removed armor.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A stout throwable ochre acid potion flask with a cork and simple iron protective collar, sitting on a broken steel cuirass plate at a ruined western fortress. A thin stream of corrosive amber liquid has eaten a clear jagged hole through the plate, whose split edges glow faintly copper orange. One prominent bottle and a simple readable damaged plate, charcoal steel and antique amber. It removes all enemy armor and deals damage equal to one quarter of removed armor.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-340f5079-b84e-4c99-b599-3f24bca42cef.png",
+      "file": "assets/cards/continental/utility/cons_armor_break.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "d112e8596a6e8f55dfb4ed0279768570a91a35ed8bc6d3ad7e7ae164a226ae99",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Chọn một địch: phá toàn bộ giáp, không giới hạn lượng giáp; gây sát thương chuẩn bằng 25% tổng giáp vừa phá. Không có giáp thì không mất thuốc."
+    },
+    {
+      "id": "cons_damage",
+      "name": "Thuốc Sát Thương",
+      "group": "utility",
+      "concept": "A broad angular crimson potion bottle with a dark iron neck clasp shaped like one sword crossguard, filled with a strong red liquid that contains a bright diagonal ember. Sitting on volcanic continent black stone with distant orange lava fissures and western expedition ruins. One main bottle, clear powerful silhouette, restrained red orange rim light. It gives every held playing card plus 20 damage for one turn. No loose weapon and no card images.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A broad angular crimson potion bottle with a dark iron neck clasp shaped like one sword crossguard, filled with a strong red liquid that contains a bright diagonal ember. Sitting on volcanic continent black stone with distant orange lava fissures and western expedition ruins. One main bottle, clear powerful silhouette, restrained red orange rim light. It gives every held playing card plus 20 damage for one turn. No loose weapon and no card images.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-9cf4cae0-4519-4825-8717-b08b0d8fe71e.png",
+      "file": "assets/cards/continental/utility/cons_damage.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "d8529fa2f6f8953d183697c8abad25d27fe3daad19f6d3bac6909ef4f3381103",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Mỗi lá hiện đang trên tay nhận +20 Sát thương khi tính điểm trong lượt kế tiếp. Không tăng vĩnh viễn; hết lượt là hết hiệu lực."
+    },
+    {
+      "id": "cons_empower",
+      "name": "Thuốc Cường Hóa",
+      "group": "utility",
+      "concept": "A hexagonal deep blue potion bottle with a bronze stopper, a physical rising spiral rib around its glass, and a single growing white-gold crystal suspended in rich azure liquid. Resting on cold western ruin stone overlooking vast frozen continental peaks, contained silver light ascending inside the bottle. Strong geometrical silhouette and calm glacial palette, distinct from a healing vial. It gives every held card plus 5 empowerment for one turn.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A hexagonal deep blue potion bottle with a bronze stopper, a physical rising spiral rib around its glass, and a single growing white-gold crystal suspended in rich azure liquid. Resting on cold western ruin stone overlooking vast frozen continental peaks, contained silver light ascending inside the bottle. Strong geometrical silhouette and calm glacial palette, distinct from a healing vial. It gives every held card plus 5 empowerment for one turn.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-08e4f459-c128-4b8e-b31b-a01c6c4a278a.png",
+      "file": "assets/cards/continental/utility/cons_empower.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "99e77743bbc0aaa54290a5e6ad8d72d0145a270081406342e78bcf931e5e8a11",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Mỗi lá hiện đang trên tay nhận +5 Cường hóa khi tính điểm trong lượt kế tiếp. Không tăng vĩnh viễn; hết lượt là hết hiệu lực."
+    },
+    {
+      "id": "cons_gold_blood",
+      "name": "Thuốc Máu Vàng",
+      "group": "utility",
+      "concept": "A round thick crimson glass potion bottle in a simple old gold metal cradle, with one prominent red droplet turning into a small antique gold coin inside the liquid. Resting on sunlit fossil desert caravan stone, distant eroded western arches. Burgundy liquid and muted antique gold, warm controlled cinematic highlights, no blown-out glow. A tangible alchemical elixir converts each point of actual HP lost to enemy damage into one gold coin for the current combat. No text, no currency glyph.",
+      "prompt": "Use case: stylized-concept. ONE production fantasy game consumable card illustration, portrait 2:3 PNG, full bleed with NO borders, frames, text, labels, letters, numbers, ranks, suit icons, interface or watermark. Match Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, one main tangible potion flask with strong clear silhouette, readable at 64px. Flask occupies most of lower middle, quieter atmospheric mysterious-continent background. Antique bronze or silver fittings, physically believable glass and liquid, restrained glow, controlled highlights, rich biome palette. No Eastern fantasy motifs, no crowded tiny ornament, no collage. A round thick crimson glass potion bottle in a simple old gold metal cradle, with one prominent red droplet turning into a small antique gold coin inside the liquid. Resting on sunlit fossil desert caravan stone, distant eroded western arches. Burgundy liquid and muted antique gold, warm controlled cinematic highlights, no blown-out glow. A tangible alchemical elixir converts each point of actual HP lost to enemy damage into one gold coin for the current combat. No text, no currency glyph.",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-4bdb8d0e-52b2-4a68-a48c-c244cfb7670f.png",
+      "file": "assets/cards/continental/utility/cons_gold_blood.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "199eed6433574b857116c077d10d287f0d05409c499e696df3ef7d2693b43bf9",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao",
+      "ability": "Trong trận này: mỗi 1 HP thực mất do địch gây ra nhận 1 Vàng. Giáp hấp thụ, tự mất máu và sát thương vượt HP còn lại không tạo vàng. Không cộng dồn."
+    },
+    {
+      "id": "cons_draw",
+      "name": "Thuốc Rút Bài",
+      "group": "utility",
+      "ability": "Uống để rút ngay 5 lá lên tay, vượt giới hạn tay; có thể xáo cọc bỏ khi kho hết.",
+      "concept": "A broad sapphire glass potion flask with an antique bronze stopper on a western coastal expedition stone. Inside its luminous teal liquid are exactly five small blank ivory shards shaped like playing cards, rising outwards in a clear elegant fan toward the neck, joined by a silver-blue spiral. No drawn ranks, suits, letters or decorated card borders. One unmistakable drinkable bottle containing the motif of drawing five cards. Calm deep ocean navy backdrop with faraway western ruins and restrained turquoise reflections.",
+      "prompt": "Use case: stylized-concept. ONE production consumable potion card illustration, portrait 2:3 PNG, full bleed with NO text, typography, ranks, suits, frame, border, labels, interface or watermark. Continental Relic Card Design: cinematic Western dark fantasy expedition, painterly realism, medium detail, one tangible potion bottle dominates lower foreground, strong readable silhouette at small size, antique metal fittings, controlled magical glow, quiet mysterious-continent landscape background, no East Asian motifs or dense tiny filigree. A broad sapphire glass potion flask with an antique bronze stopper on a western coastal expedition stone. Inside its luminous teal liquid are exactly five small blank ivory shards shaped like playing cards, rising outwards in a clear elegant fan toward the neck, joined by a silver-blue spiral. No drawn ranks, suits, letters or decorated card borders. One unmistakable drinkable bottle containing the motif of drawing five cards. Calm deep ocean navy backdrop with faraway western ruins and restrained turquoise reflections.",
+      "file": "assets/cards/continental/utility/cons_draw.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-082d1afb-cda0-4e84-b52a-d83997e78ead.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "6bdc130c050e139455e628cd4363be48d5cfbdc050311f736caefc2527e10436",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao"
+    },
+    {
+      "id": "cons_slow",
+      "name": "Thuốc Giảm Tốc",
+      "group": "utility",
+      "ability": "Ném vào một địch: giảm 50% tốc đánh trong 2 hành động của địch, tối thiểu tốc 1; không cộng dồn.",
+      "concept": "A squat throwable smoky indigo glass potion flask with a steel cork collar on frost-covered ruins of the mysterious continent. Thick purple-blue liquid traps a single silver feather nearly motionless in a frozen spiral, with heavy suspended crystalline frost along the flask base. A few large glacial crystals on the stone imply slowing and binding, distinct from the tall cyan speed flask. Clear bottle silhouette, cold blue-violet palette, silver highlights, no hourglass, no clock face, no numbers.",
+      "prompt": "Use case: stylized-concept. ONE production consumable potion card illustration, portrait 2:3 PNG, full bleed with NO text, typography, ranks, suits, frame, border, labels, interface or watermark. Continental Relic Card Design: cinematic Western dark fantasy expedition, painterly realism, medium detail, one tangible potion bottle dominates lower foreground, strong readable silhouette at small size, antique metal fittings, controlled magical glow, quiet mysterious-continent landscape background, no East Asian motifs or dense tiny filigree. A squat throwable smoky indigo glass potion flask with a steel cork collar on frost-covered ruins of the mysterious continent. Thick purple-blue liquid traps a single silver feather nearly motionless in a frozen spiral, with heavy suspended crystalline frost along the flask base. A few large glacial crystals on the stone imply slowing and binding, distinct from the tall cyan speed flask. Clear bottle silhouette, cold blue-violet palette, silver highlights, no hourglass, no clock face, no numbers.",
+      "file": "assets/cards/continental/utility/cons_slow.png",
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-47f1c09c-b674-4f71-abb1-09d0a476aa1d.png",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "9d9da71a0e1d2c59bed9e32e52759483a9a4a6c596508a5227dce6363c6eff77",
+      "source": "src/potions.lua",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "rarity": "Tiêu hao"
     }
   ],
   "completion": {
-    "generated": 412,
-    "total": 412,
+    "generated": 416,
+    "total": 416,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

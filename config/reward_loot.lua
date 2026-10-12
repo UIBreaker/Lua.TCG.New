@@ -11,7 +11,7 @@ local C = {
     pity = {enabled = false, after = 6, extraPackWeight = 5},
     -- One independent supply roll per won encounter; bosses have better odds.
     supplies = {normalChance = 0.60, bossChance = 1, entries = {
-        {id = "healing_potion_small", weight = 25}, {id = "healing_potion_large", weight = 10},
+        {id = "healing_potion", weight = 25}, {id = "healing_potion_large", weight = 10},
         {id = "armor_potion_small", weight = 20}, {id = "armor_potion_large", weight = 10},
         {id = "cons_speed_small", weight = 20}, {id = "cons_speed_large", weight = 10},
         {id = "soul_reaper", weight = 5},

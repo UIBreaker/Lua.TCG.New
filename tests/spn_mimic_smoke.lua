@@ -98,5 +98,5 @@ for id in pairs(D.CATALOG) do
     assert(g.deities[1]==physical and not physical.mimicGrowth and Rng.getState()==rng,id.." preview purity")
     score(g);assert(g.deities[1]==physical,id.." physical identity")
 end
-assert(#D.getRandomShopPool({},99)==57)
+assert(#D.getRandomShopPool({},99)==61)
 print("SPN mimic PASS: adjacent/right chains, evolution/source strength, card/hand/start/win/attack/discard/boss events, costs/chance, independent saved growth, locks, bounded aliases and pure previews across all SPNs")

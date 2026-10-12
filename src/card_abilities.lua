@@ -146,11 +146,13 @@ function A.handSize(game,base)
     return math.max(1,(base or game.maxHandSize or 3)+bonus)
 end
 function A.handStart(game)
+    require("src.spn_basics").bind(game)
     -- Hand start is after drawing/sorting, never every frame or every discard.
     A.dispatch(game,"hand_start",game.hand or {},{full=#(game.hand or {})>=A.handSize(game)})
     Boss.handStart(game)
 end
 function A.beginHand(game, handInfo, played, decisions)
+    require("src.spn_basics").bind(game,played)
     local ctx={game=game,handInfo=handInfo,scoring=handInfo.scoringCards,played=played,
         active={},full=#(game.hand or {})>=A.handSize(game),play=combat(game).playIndex+1,
         queue={},cursor=0,repeats={},triggerCount=0,feedback={},spnSeen={},spnCount=0,
@@ -267,6 +269,7 @@ function A.resolveBossDamage(game)
         local hpBefore=game.playerHp or 100
         game.playerHp=math.max(0,hpBefore-damage)
         require("src.spn_anomalies").enemyAttack(game,game.monster,math.min(damage,hpBefore))
+        require("src.potions").payBlood(game,hpBefore)
         feedback(game,nil,"BOSS · -"..damage.." HP", "boss")
     end
 end

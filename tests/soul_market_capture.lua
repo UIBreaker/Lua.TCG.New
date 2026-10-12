@@ -37,6 +37,7 @@ function T.update(game,cb)
     end
     if stage==0 then
         cb.startNewGame("red_deck");D.addCardToDeck(game,D.newCard(9,"elaris"));D.addCardToDeck(game,D.newCard(6,"aurelia"))
+        game.consumables={}
         game.shopMode="soul";game.souls=150;game.playerHp=79;game.gold=20
         game.soulShopStock={"soul_crown","soul_reaper_contract","soul_silence_anchor","soul_evolution_quill","soul_bastion"}
         cb.openShop()

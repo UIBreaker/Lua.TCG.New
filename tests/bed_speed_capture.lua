@@ -24,7 +24,7 @@ function T.update(g,cb)
     if now<deadline then return end
     if stage=="start" then
         started=now;require("tests.bed_speed_smoke")
-        cb.startNewGame("red_deck");g.gold=100;g.playerHp=20;g.maxPlayerHp=150;cb.openShop()
+        cb.startNewGame("red_deck");g.consumables={};g.gold=100;g.playerHp=20;g.maxPlayerHp=150;cb.openShop()
         local stock=cb.getShopData()
         for i,item in ipairs(stock.items) do if item.consumable then stock.items[i]=Shop.healingItem("upper","cons_bed");break end end
         nextStage("shop",1.5)

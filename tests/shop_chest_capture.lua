@@ -14,7 +14,7 @@ function love.errorhandler(message) print(debug.traceback(message,2));return fun
 function T.update(game,cb)
     age=age+love.timer.getDelta();assert(age<12,"shop chest timeout at "..stage)
     if stage==0 then
-        cb.startNewGame("red_deck");cb.openShop();love.mouse.setPosition(4,4)
+        cb.startNewGame("red_deck");game.consumables={};cb.openShop();love.mouse.setPosition(4,4)
         cb.openPack({packType="spectral",name="RƯƠNG BIẾN ĐỔI"},true);stage=1;age=0
     elseif stage==1 then
         if shots[index] and age>shots[index][1] then

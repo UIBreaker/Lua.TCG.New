@@ -21,6 +21,7 @@ function T.update(game,cb)
     if stage==0 then
         if case==1 then require("tests.chest_reveal_smoke") end
         cb.startNewGame("red_deck")
+        game.consumables={}
         love.mouse.setPosition(4,4)
         local E=require("src.equipment");local card=require("src.deck").newCard(11,"hearts")
         rewards={{type="card",card=card,title="HIỆP SĨ",desc="Quân tiếp viện",color=card.color},

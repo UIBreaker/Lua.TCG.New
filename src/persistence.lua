@@ -18,6 +18,7 @@ local TRANSIENT_GAME_KEYS = {
     spnAttack = true,
     spnFeedback = true,
     spnDiscardCap = true,
+    spnBasicArmorGranted = true,
     abilityHand = true,
     advancedHand = true,
     advancedCombat = true,
@@ -27,6 +28,9 @@ local TRANSIENT_GAME_KEYS = {
     enemies = true,
     enemyPoison = true,
     enemyFeedback = true,
+    potionCombat = true,
+    potionFeedback = true,
+    potionVictoryPending = true,
     enemyActed = true,
     enemyActionPhases = true,
     deck = true,
@@ -216,6 +220,9 @@ function Persistence.makeSnapshot(game, activeState)
         end
     end
     savedGame.run = snapshotRun(game and game.run)
+    for slot,owned in pairs(savedGame.deities or {}) do
+        if owned.battleSupport then savedGame.deities[slot]=nil end
+    end
     return {
         version = Persistence.SAVE_VERSION,
         rngState = Rng.getState(),

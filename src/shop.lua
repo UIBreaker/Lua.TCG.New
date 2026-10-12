@@ -15,7 +15,7 @@ Shop.MARKETS = {
     consumable = {name="SHOP TIÊU HAO", note="Thẻ lẻ từ mọi rương tiêu hao · Giá cao hơn giá rương 20%, làm tròn lên", color={.74,.48,.94,1}},
     equipment = {name="SHOP TRANG BỊ", note="4 nguyên liệu cơ bản + 4 trang bị lớn · Mua để cất vào balo", color={.95,.73,.35,1}},
     spn = {name="SHOP SPN", note="Chỉ bán SPN · Ngẫu nhiên đủ 8 bậc từ Thường đến Độc Nhất", color={.53,.75,.98,1}},
-    medicine = {name="SHOP THUỐC", note="Hồi máu · Giáp · Giường · Tốc đánh — cất vào ô tiêu hao", color={.38,.88,.57,1}},
+    medicine = {name="SHOP THUỐC", note="Hồi phục, giáp, tốc đánh và 8 thuốc chiến thuật · Hai ngăn thuốc", color={.38,.88,.57,1}},
     cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
     large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
     soul = {name="CHỢ LINH HỒN"},
@@ -413,7 +413,7 @@ local function marketStock(shop, gameState)
     elseif mode == "spn" then
         for _, definition in ipairs(Deities.getRandomShopPool(gameState.deities, 6)) do
             local d = cloneDeity(definition)
-            local rarity = Deities.RARITIES[Rng.random(#Deities.RARITIES)]
+            local rarity = rollSpnRarity()
             Deities.setRarity(d, rarity.id)
             d.cost=math.ceil((tonumber(d.cost) or 4)*Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity.id])
             shop.items[#shop.items+1]={id=d.id, category="deity", deity=d, name=d.name,
@@ -440,7 +440,10 @@ local function marketStock(shop, gameState)
     else
         return false
     end
-    for i,item in ipairs(shop.items) do item.section="stall";item.bay=i end
+    local medicineBays={1,2,5,6,7,8,3,9,10,11,13,14,15,12,16}
+    for i,item in ipairs(shop.items) do
+        item.section="stall";item.bay=mode=="medicine" and medicineBays[i] or i
+    end
     finishStock(shop,gameState)
     return true
 end
@@ -457,6 +460,7 @@ end
 
 function Shop.refresh(shop, gameState)
     shop.items = {}
+    shop.page=1
     shop.mode = Shop.marketMode(gameState.shopMode)
     shop.soulMode = gameState.shopMode == "soul"
     if shop.soulMode then
@@ -1325,7 +1329,6 @@ end
 
 Shop.POTIONS={
     {id="healing_potion",name="Bình Máu",cost=4,healAmt=25},
-    {id="healing_potion_small",name="Bình Máu Nhỏ",cost=2,healAmt=15},
     {id="healing_potion_large",name="Bình Máu Lớn",cost=7,healAmt=60},
     {id="armor_potion_small",name="Bình Giáp Nhỏ",cost=3,armorAmt=8},
     {id="armor_potion_large",name="Bình Giáp Lớn",cost=6,armorAmt=20},
@@ -1333,13 +1336,20 @@ Shop.POTIONS={
     {id="cons_speed_large",name="Tốc Đánh Lớn",cost=8,speed=10,category="speed_single"},
     {id="cons_bed",name="Cái Giường",cost=9,category="bed",desc="Tiêu hao: hồi 100% HP tối đa. Trong trận, chọn bản thân (bỏ một lượt để ngủ) hoặc một quái để đặt giường. Quái nhận sát thương mà sống sẽ dùng giường hồi đầy HP."},
 }
+for _,def in ipairs(require("src.potions").definitions) do Shop.POTIONS[#Shop.POTIONS+1]=def end
 function Shop.healingItem(section,id)
     local def=Shop.POTIONS[1]
     for _,potion in ipairs(Shop.POTIONS) do if potion.id==id then def=potion;break end end
     local item={id=def.id,section=section,category=def.category or (def.healAmt and "heal" or "armor_potion"),cost=def.cost,name=def.name,
-        color=def.healAmt and {0.35,0.9,0.6,1} or {.4,.7,1,1},
+        color=def.color or (def.healAmt and {0.35,0.9,0.6,1} or {.4,.7,1,1}),
         desc=def.desc or (def.speed and Shop.getConsumableDescription(def)) or (def.healAmt and ("Tiêu hao một lần: hồi "..def.healAmt.." HP, không vượt sinh lực tối đa.")
             or ("Tiêu hao một lần: tăng "..def.armorAmt.." giáp hiện tại, tối đa "..require("config.card_ability_data").armorCap.." giáp. Dùng trong trận để giữ giáp."))}
+    item.subtitle=def.healAmt and ("HỒI "..def.healAmt.." HP") or def.armorAmt and ("+"..def.armorAmt.." GIÁP")
+        or def.speed and ("+"..def.speed.." TỐC · 1 TRẬN")
+        or ({accuracy="TRÚNG 100% · 1 LƯỢT",evasion="NÉ ĐÒN · 1 LƯỢT",armor_break="PHÁ TOÀN BỘ GIÁP",
+            damage="+20 ST / LÁ · 1 LƯỢT",empower="+5 CH / LÁ · 1 LƯỢT",gold_blood="1 HP = 1 VÀNG",
+            draw="RÚT NGAY 5 LÁ",slow="-50% TỐC · 2 HÀNH ĐỘNG"})[def.kind]
+        or "HỒI ĐẦY HP · NGỦ"
     item.consumable={id=item.id,category=item.category,name=item.name,desc=item.desc,color=item.color,healAmt=def.healAmt,armorAmt=def.armorAmt}
     return item
 end
@@ -1459,6 +1469,7 @@ end
 function Shop.sellDeity(gameState, deityIndex)
     local d = gameState.deities and gameState.deities[deityIndex]
     if not d then return false end
+    if d.battleSupport then return false end
     local sellPrice = Shop.getSacrificePrice(d, "deity", gameState)
     gameState.gold = (gameState.gold or 0) + sellPrice
     gameState.deities[deityIndex] = nil

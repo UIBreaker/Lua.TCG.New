@@ -304,7 +304,7 @@ function P.snapshot(game)
     return snap
 end
 local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
-    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",
+    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",
     xMult="HỆ SỐ CƯỜNG HÓA",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",

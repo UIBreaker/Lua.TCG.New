@@ -121,7 +121,7 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  Core.text("Tốc bạn "..speed.."  /  Địch "..tostring(es or "—"),x+21,y+338,w-42,f.detail,Theme.colors.muted,"center")
  if ps then
   local combat=require("src.combat")
-  Core.text(string.format("Trúng: bạn %.0f%% / địch %.0f%%",combat.getHitChance(ps,es)*100,combat.getHitChance(es,ps)*100),
+  Core.text(string.format("Trúng: bạn %.0f%% / địch %.0f%%",data.guaranteedHit and 100 or combat.getHitChance(ps,es)*100,data.guaranteedDodge and 0 or combat.getHitChance(es,ps)*100),
    x+21,y+356,w-42,f.detail,Theme.colors.cyan,"center")
  end
  Chrome.rule(x+16,y+378,w-32)

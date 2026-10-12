@@ -150,7 +150,7 @@ function Modal.draw(UI,mx,my)
         if d then local a,b=A.params(c),A.params(c,d,A.level(c)+1);for k,v in pairs(a) do if b[k]~=v then changes[#changes+1]=(paramLabels[k] or k)..": "..v.." → "..b[k] end end;table.sort(changes) end
         love.graphics.printf("TRƯỚC: "..before.."\nSAU: "..after.."\n"..table.concat(changes," · "),105,486,1040)
         button("confirm","XÁC NHẬN TIẾN HÓA",760,602,290,46)
-    elseif choice then button("decline","KHÔNG DÙNG KHẢ NĂNG",480,602,315,46) end
+    elseif choice then button("decline",choice.declineLabel or "KHÔNG DÙNG KHẢ NĂNG",480,602,315,46) end
     button("cancel","HỦY / ESC",100,602,180,46)
     if m.page>1 then button("prev","←",1100,230,60,50) end
     if m.page*pageSize<count then button("next","→",1100,300,60,50) end

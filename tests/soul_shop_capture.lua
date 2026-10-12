@@ -27,6 +27,7 @@ function T.update(g,cb)
         require("tests.soul_relics_smoke")
         require("tests.spectral_persistence_smoke")
         cb.startNewGame("red_deck")
+        g.consumables={}
         require("src.deck").addCardToDeck(g,require("src.deck").newCard(9,"valoria"))
         require("src.deck").addCardToDeck(g,require("src.deck").newCard(7,"valoria"))
         local card=g.persistentDeck[1]

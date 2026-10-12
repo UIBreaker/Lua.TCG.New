@@ -28,7 +28,7 @@ local effects={
     end,
     spirit_twinbeat=function(hand,context,value)
         local cards=played(hand)
-        if #cards==2 and math.abs(Deck.peekCardAttackSpeed(cards[1])-Deck.peekCardAttackSpeed(cards[2]))<0.000001 then
+        if #cards==2 and math.abs(Deck.peekCardAttackSpeed(cards[1],context.gameState)-Deck.peekCardAttackSpeed(cards[2],context.gameState))<0.000001 then
             return {xMult=1+value,message="ĐỒNG TỐC · NHÂN CƯỜNG HÓA"}
         end
     end,

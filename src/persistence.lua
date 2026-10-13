@@ -225,6 +225,8 @@ function Persistence.makeSnapshot(game, activeState)
             or (activeState == "CASH_OUT" and game.pendingVictoryReward and "CASH_OUT")
             or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
             or (activeState == "shop" and "shop")
+            or (activeState == "barter" and game.barterEvent and "barter")
+            or (activeState == "void" and game.voidEvent and "void")
             or "BLIND_SELECT",
         game = savedGame,
     }

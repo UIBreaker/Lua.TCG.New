@@ -61,6 +61,27 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-debug-ui" or value=="--test-debug-input" then
+            local ok,err=xpcall(function() require("tests.debug_ui_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("DEBUG UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-void-gacha" then
+            local ok,err=pcall(require("tests.void_gacha_capture").update,gameRef,callbacks)
+            if not ok then print("VOID UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-barter" then
+            local ok,err=pcall(require("tests.barter_capture").update,gameRef,callbacks)
+            if not ok then print("BARTER UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-blood-shop" then
             local ok,err=pcall(require("tests.blood_shop_capture").update,gameRef,callbacks)
             if not ok then print("BLOOD SHOP UI FAIL: "..tostring(err));love.event.quit(1) end

@@ -1,5 +1,30 @@
 # Prompts and concepts
 
+## 2026-10-13 — Utility / void_gold
+
+Name: Vàng từ The Void
+
+Concept: Túi tiền viễn chinh và đồng vàng cổ trên phiến obsidian giữa vũ trụ.
+
+Prompt: Create ONE production game currency card illustration, portrait 2:3 PNG 1024x1536, full-bleed art only. Continental Relic Card Design, cinematic painterly Western dark-fantasy expedition, medium detail, strong large silhouette readable as a small reward card. Identity: GOLD received from the Void. One substantial weathered dark leather expedition coin pouch spilling a small deliberate mound of thick antique GOLD coins onto one worn dark obsidian slab floating in deep outer space. One luminous principal upright gold coin in the foreground catches a restrained warm amber rim light; a simple non-letter abstract compass embossing is fine but no symbols resembling digits. Coins clearly look like valuable physical metal rather than a magical ball. Rich antique gold, dark navy and subtle violet cosmic nebula behind, warm metallic highlights with controlled glow, coherent premium treasure painting, one main grouped subject. Full-bleed edge-to-edge composition; pouch and pile occupy lower two thirds, a quiet atmospheric purple abyss above. No text, letters, numbers, ranks, suits, price labels, currency amounts, UI, badges, border, card frame, logos or watermark. No East Asian motifs, excessive filigree, overly busy particle confetti or blown-out white light. This illustration is a reusable gold reward artwork; quantity will be drawn by the game.
+
+Output: `assets/cards/continental/utility/void_gold.png` — 1024×1536 PNG, full bleed, runtime shared card frame and quantity label.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-5d840e56-90de-405a-9a63-1dfdfae65a8d.png`
+
+## 2026-10-13 — Utility / void_souls
+
+Name: Linh hồn từ The Void
+
+Concept: Tinh thể thạch anh tím giữ các dòng linh hồn lam trong giá đồng cổ.
+
+Prompt: Create ONE production game currency reward illustration, portrait 2:3 PNG 1024x1536, full-bleed art only. Continental Relic Card Design, cinematic painterly Western dark fantasy expedition, medium detail and one clear grouped silhouette legible as a small card. Identity: SOULS gathered from the Void. One large faceted amethyst soul crystal suspended above a weathered antique bronze ritual cradle resting on one floating obsidian slab in deep outer space. Inside the crystal, several ghostly pale cyan wisps curl like captured breath, restrained violet and cyan luminosity. The central soul crystal is the unmistakable principal subject, occupies most of the middle and lower canvas. Rich violet and deep navy, luminous crystal facets, subtle distant starfield and nebula, faint circular astral current around the crystal. Premium treasure painting coherent with Western Continental fantasy. Beautiful controlled glow, dark contrast, tangible bronze cradle, one coherent artifact rather than a collection of objects. No human faces, no skeleton, no text, letters, numbers, ranks, suits, labels, badges, border, card frame, UI, logos or watermark. No East Asian motifs, no excessive tiny ornaments or blown-out white light. Quantity will be drawn by the game.
+
+Output: `assets/cards/continental/utility/void_souls.png` — 1024×1536 PNG, full bleed, runtime shared card frame and quantity label.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-ca55afc2-4f68-49d6-b4ad-7b885a6356ab.png`
+
+
 
 ## spn / spirit_ward — Băng Vệ
 
@@ -5305,3 +5330,39 @@ Prompt: Create a single game SPN card artwork, portrait 1024 x 1536, 2:3 full bl
 Output: `assets/cards/continental/spn/spirit_golden_tithe.png`
 
 Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-f75aab74-0450-4691-9ace-fd942fff8214.png`
+
+## 2026-10-13 — Mysterious Expedition Barterer
+
+### event / mysterious_expeditioner — Người Viễn Chinh Bí Ẩn
+
+Concept: Physical expedition traveler in charcoal navy hood, scarf and gloves, face completely concealed; backpack, rolled blanket and one offered bronze relic. Transparent cutout overlays the current stage's combat background.
+
+Prompt: Create ONE production game NPC sprite on a truly transparent background, portrait 2:3 PNG, full body completely visible including boots and hood, generous transparent margin. A mysterious HUMAN EXPEDITION BARTERER from a cinematic Western dark-fantasy mysterious continent, painterly realistic materials matching Continental Relic art. Standing relaxed three-quarter view facing slightly right toward the player, offering a small weathered bronze relic in one gloved hand at waist height, other hand resting on leather expedition satchel. Tall wrapped charcoal navy hooded cloak, layered rugged dark leather travel clothes, scarf completely covering lower face, deep shadow inside hood completely hides eyes and entire face. NO visible skin, eyes, mouth or facial features. Clearly physical human expedition traveler, not a ghost, not an assassin posing for battle. A sensible bulky expedition backpack and rolled blanket, restrained antique brass buckles, weathered gloves and sturdy boots, two small relic pouches suggest a fellow explorer who trades what he found. Strong clean human silhouette readable at game scale, medium detail, subtle warm antique gold rim light from upper left and cool slate-blue edge light, controlled tiny teal highlight on relic only. Character occupies most image vertically, neutral pose, not holding weapons, no attack gesture. No environment, floor, scenery, fog cloud, shadow rectangle, white background, text, letters, ranks, suits, badge, card border, logos, watermark, East Asian motifs, excessive tiny filigree or particle noise. Actual alpha transparency around entire figure, isolated cutout.
+
+Output: `assets/scene/events/mysterious_expeditioner.png` — 1024×1536 PNG, alpha transparency.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-dfffb361-ce8e-4397-9233-191b2db7a0fc.png`
+
+## 2026-10-13 — The Void Gacha Sanctuary
+
+### scene / the_void — The Void
+
+Concept: Ancient bronze astral mechanism on the left of a suspended Gothic sanctuary, fractured continental towers, purple-black eclipse, polished obsidian floor; calm center-right supports three featured banner cards and reveal VFX.
+
+Prompt: Create ONE finished production RPG game environment background, landscape 16:9 PNG, 2048x1152, full bleed. The VOID, a merciless extradimensional wish-and-chance sanctuary in the Continental cinematic Western dark-fantasy expedition universe. Vast ancient European cathedral ruins suspended over a bottomless cosmic abyss; distant fractured western towers and massive floating basalt stairways recede into a violet-black eclipse. A dramatic giant antique-bronze and obsidian astral mechanism on the LEFT THIRD, three broad concentric incomplete rings around a small controlled violet stellar core above a dark stone wishing altar. It looks impossibly ancient, expensive and indifferent to humanity, NOT a modern casino, not a vending machine. Controlled antique gold edging, deep midnight navy, void purple, sparse star light, subtle cold blue rim light. Tall interrupted gothic pillars at the outer margins frame the sanctuary, physical polished obsidian floor foreground reflecting thin violet streaks. Painterly cinematic realism, premium high-end fantasy concept art, beautiful coherent large silhouettes, medium detail, atmospheric depth. Main readable ring mechanism remains in left 22% and middle height; central/right 75% is calm dark open void space and distant architecture, intended to support a game overlay with three large reward-banner cards and summon results without visual noise. Bottom 12% stays quiet and dark for controls, upper title band likewise calm. Beautiful devastating scale and restrained magic, no blown-out white highlights or tiny particle clutter. NO text, letters, numbers, ranks, poker suits, card frames, cards, banners with writing, price tags, UI, logo, watermark, modern casino motifs, slot machine screen, East Asian palaces or ornament, people or monsters. This is a complete authored landscape background, no interface baked into it.
+
+Output: `assets/scene/events/the_void.png` — 1672×941 PNG (16:9).
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-6bee1768-baf2-4dfe-ad1e-acdc3c47752e.png`
+
+## 2026-10-13 — The Void: Open Outer Space Revision
+
+User direction: background must feel like being outside in outer space. Replaces the Gothic sanctuary as the active Void scene; prior PNG is retained.
+
+Concept: Open deep outer space: dark ringed planet on the left, enormous planetary limb, purple/cyan nebulae, sparse distant stars and small asteroids; no architecture or ground. Calm central/right starfield supports the gacha UI.
+
+Prompt: Create ONE finished production game environment background, landscape 16:9 PNG 2048x1152, full bleed. THE VOID must feel like being suspended directly OUTSIDE IN OUTER SPACE. Immense open cosmic vacuum extending edge to edge, midnight navy and deep violet, layered purple and cold cyan nebulae, sparse sharply separated stars, immense planetary scale and atmospheric depth. Strong focal scene on LEFT THIRD: a dramatic dark eclipsed planet or black-hole sphere with a thin restrained luminous violet accretion ring tilted through space, broad softly luminous interstellar gas spiraling around it. A second huge dark planet curved limb intrudes from the far left lower edge with subtle blue rim lighting, small distant moon high along the margins, a few small dark asteroid silhouettes imply scale without clutter. View is floating weightlessly in the cosmic abyss, with no ground or horizon, ceiling or walls. Keep central/right 75 percent predominantly quiet very deep navy starfield with subdued nebula wisps, darker than the focal left-side nebula, so a fantasy game's three reward banner cards and white interface text can be placed over it clearly. Upper strip and bottom strip must remain calm, dark and open. Painterly cinematic realism, luxury Western dark-fantasy cosmic atmosphere matching Continental relic game art through the antique violet/eclipse color language and controlled magic, medium detail, beautiful broad forms, no noisy bright speckle wallpaper, no blown-out whites. The entire background must convincingly read as deep outer space at first glance. STRICTLY NO buildings, cathedral, gothic arches, pillars, stone platform, stairways, floor, landscape terrain, throne, machinery, wheels or physical temple. No people, monsters, playing cards, card frames, lettering, text, price tags, ranks, suits, UI, symbols, logos or watermarks. This is a complete outer-space background illustration, not an interface mockup.
+
+Output: `assets/scene/events/the_void_space.png` — 1672×941 PNG (16:9).
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-cce21bd4-04b8-4292-bc59-cae8a323bbd3.png`

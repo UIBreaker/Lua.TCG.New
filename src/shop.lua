@@ -1522,6 +1522,7 @@ end
 function Shop.enterAfterCombat(gameState)
     gameState.bloodShopNotice=nil
     local blood=Blood.roll(gameState)
+    if require("src.barter").roll(gameState) then gameState.pendingBarter=true end
     if Shop.enterSoulShop(gameState) then gameState.pendingBloodShop=blood or gameState.pendingBloodShop
     else gameState.shopMode=blood or Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)] end
     gameState.soulDestroyActive=false
@@ -1542,6 +1543,10 @@ function Shop.leave(shop, gameState)
         Shop.resetReroll(shop);Shop.refresh(shop,gameState);return "shop"
     end
     gameState.shopMode="normal";gameState.bloodShopNotice=nil
+    if gameState.pendingBarter then
+        gameState.pendingBarter=nil;require("src.barter").create(gameState)
+        return "barter"
+    end
     return "advance"
 end
 

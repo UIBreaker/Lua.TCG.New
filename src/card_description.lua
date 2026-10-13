@@ -44,13 +44,13 @@ function D.edition(card)
     local definition=Effects.getDefinition(Effects.getEffectName(card))
     if not definition then return "" end
     local description=definition.shopText
-    if card.editionPower==5 or card.bloodPower==5 then
+    if card.editionPower==5 or require("src.blood_shop").powerOf(card)>1 then
         local score=Effects.getScoreBonus(card)
         if score then
             local parts={};if (score.damage or 0)>0 then parts[#parts+1]="+"..score.damage.." Sát thương" end
             if (score.mult or 0)>0 then parts[#parts+1]="+"..score.mult.." Cường hóa" end
             if (score.auraMultiplier or 1)>1 then parts[#parts+1]="×"..score.auraMultiplier.." Aura" end
-            description=table.concat(parts," · ").." · HUYẾT LUYỆN ×5"
+            description=table.concat(parts," · ").." · "..(card.voidPower and "THE VOID ×"..card.voidPower or "HUYẾT LUYỆN ×5")
         end
     end
     return "\nẤN BẢN · "..definition.shopLabel.."\n"..description
@@ -84,7 +84,7 @@ function D.resolve(item,game)
             text=text.."\nVai trò Q: +"..(.1*power).." hệ số; +"..(15*count*power).." ST và +"..(2*count*power).." Cường hóa từ "..count.." trang bị hiện tại (+"..(15*power).." ST / +"..(2*power).." Cường hóa mỗi món)."
         elseif item.rank==13 then text=text.."\nVai trò K: +"..(25*power).." ST và +"..(5*power).." Cường hóa."
         elseif item.rank==14 then text=text.."\nVai trò A: +"..(15*power).." ST." end
-        if power>1 then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
+        if power>1 then text=text.."\n"..(item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Chỉ số hiệu quả gấp "..power.."." end
         local state=item.abilityState or {}
         if state.tacticCharge then text=text.."\nTích hiện tại: "..state.tacticCharge end
         if state.hearts then text=text.."\nTâm hiện tại: "..state.hearts.." / "..(A.params(item).maxStacks or 0) end

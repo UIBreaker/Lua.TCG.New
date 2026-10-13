@@ -300,6 +300,7 @@ function Deities.getDescription(deity)
     local spell=require("src.chest_expansion").byId[deity.enchantment]
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end
     if deity.bloodPower then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
+    if deity.voidPower then text=text.."\nTHE VOID ×"..deity.voidPower.." · Chỉ số hiệu quả gấp "..deity.voidPower.."." end
     return text
 end
 for _, row in ipairs(tacticalEntries) do
@@ -363,7 +364,7 @@ function Deities.getMaxSlots(gameState)
     local occupiedMax=0
     for slot, deity in pairs(type(list) == "table" and list or {}) do
         if type(slot)=="number" and type(deity)=="table" and deity.id then occupiedMax=math.max(occupiedMax,slot) end
-        if type(deity) == "table" and deity.edition == "negative" then maxSlots = maxSlots + ((deity.editionPower==5 or deity.bloodPower==5) and 5 or 1) end
+        if type(deity) == "table" and deity.edition == "negative" then maxSlots=maxSlots+math.max(deity.editionPower==5 and 5 or 1,require("src.blood_shop").powerOf(deity)) end
     end
     -- Boss rewards may exceed capacity; every occupied slot stays visible and active.
     return math.max(maxSlots,occupiedMax)

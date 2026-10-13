@@ -207,6 +207,8 @@ function RewardSystem.begin(breakdown, game, context)
     local result = {breakdown = breakdown, tableId = tableId, loot = {}, bonusGold = 0, claimed = false}
     if not breakdown.wasSkipped then
         result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier)
+        local ticket=require("src.void_gacha").ticketReward(boss)
+        if ticket then result.loot[#result.loot+1]=ticket end
         if not context.lootTableId and Rng.random() < (boss and Config.supplies.bossChance or Config.supplies.normalChance) then
             result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries), game, "TIẾP TẾ", 0)
         end
@@ -235,6 +237,8 @@ function RewardSystem.begin(breakdown, game, context)
         end
         if reward.type == "GOLD" then
             result.bonusGold = result.bonusGold + reward.amount
+        elseif reward.type=="VOID_TICKET" then
+            game.voidTickets=(game.voidTickets or 0)+reward.amount
         elseif reward.type == "PLAYING_CARD" then
             Deck.addCardToDeck(game, reward.card)
         elseif reward.type == "CONSUMABLE" then
@@ -885,6 +889,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             art = chestArt
         elseif revealed and progress >= 0.5 then
             if reward.packType then art = UI.getPackImage(reward.packType)
+            elseif reward.type=="VOID_TICKET" then art=UI.getVoucherImage("v_welcome")
             elseif reward.card and reward.type == "PLAYING_CARD" then
                 UI.drawCardFace(reward.card, -46, -69, 92, 138, false)
             elseif reward.card then
@@ -939,7 +944,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             g.printf(reward.exchangedGold and "ĐÃ ĐỔI +" .. reward.exchangedGold or slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 209, slotW - 8, "center")
             if inside(mx, my, sx, sy, slotW, slotH) then
                 if reward.type == "PLAYING_CARD" then UI.descriptionCandidate = reward.card
-                else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
+                else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.desc or reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
             end
         end
     end

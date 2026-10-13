@@ -50,7 +50,7 @@ function L.move(game,kind,source,index,destination,inCombat)
     if destination==index and source=="equipped" then return false,"Lá đã ở ô này." end
     if source=="reserve" and not destination then return false,"Kéo lên một ô trang bị." end
     local limit=L.limit(game,kind)
-    if kind=="spn" and source=="reserve" and item.edition=="negative" then limit=limit+((item.editionPower==5 or item.bloodPower==5) and 5 or 1) end
+    if kind=="spn" and source=="reserve" and item.edition=="negative" then limit=limit+math.max(item.editionPower==5 and 5 or 1,require("src.blood_shop").powerOf(item)) end
     if destination and (destination<1 or destination>limit or destination~=math.floor(destination)) then return false,"Ô trang bị không hợp lệ." end
     if inCombat then
         if (game.handsRemaining or 0)<=0 then return false,"Hết lượt đánh. Kết thúc lượt trước khi đổi đồ." end

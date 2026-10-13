@@ -108,7 +108,13 @@ assert(game.run.ante==ante and game.run.currentBlindIndex==index and game.gold==
 assert(#shop.items>8 and not shop.soulMode)
 loaded,state=P.restoreSnapshot(P.makeSnapshot(game,"shop"))
 assert(state=="shop" and loaded.shopMode=="large")
-assert(Shop.leave(shop,game)=="advance")
+local pendingBarter=game.pendingBarter
+local destination=Shop.leave(shop,game)
+if destination=="shop" then
+    assert(require("src.blood_shop").isMode(game.shopMode));destination=Shop.leave(shop,game)
+end
+assert(destination==(pendingBarter and "barter" or "advance"))
+if pendingBarter then assert(game.barterEvent and game.run.ante==ante);game.barterEvent=nil end
 Run.advanceBlind(game.run,game)
 assert(game.run.ante==ante+1 and game.run.currentBlindIndex==1)
 print("Shop markets smoke PASS: 6 random shops, complete retail/equipment pools, weighted SPN rarities, purchases, potion/bed use, rerolls, saves, soul -> large -> next fight")

@@ -495,4 +495,6 @@ return {
     ["cons_gold_blood"] = "assets/cards/continental/utility/cons_gold_blood.png",
     ["cons_draw"] = "assets/cards/continental/utility/cons_draw.png",
     ["cons_slow"] = "assets/cards/continental/utility/cons_slow.png",
+    ["void_gold"] = "assets/cards/continental/utility/void_gold.png",
+    ["void_souls"] = "assets/cards/continental/utility/void_souls.png",
 }

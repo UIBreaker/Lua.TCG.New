@@ -153,12 +153,16 @@ function Equipment.getDescription(item)
     if require("src.blood_shop").powerOf(item)>1 then
         local def=Equipment.ITEMS[item.id]
         if def and def.descriptionTemplate then
-            local p=require("src.blood_shop").params(def.params,5)
+            local power=require("src.blood_shop").powerOf(item)
+            local p=require("src.blood_shop").params(def.params,power)
             return def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
                 return string.format("%g",k=="thresholdPercent" and (p.threshold or 0)*100 or p[k] or 0)
-            end).."\nHUYẾT LUYỆN ×5 · Điều kiện và số ô giữ nguyên."
+            end).."\n"..(item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Điều kiện và số ô giữ nguyên."
         end
-        return require("src.blood_shop").describe(Equipment.getDescription(def),5):gsub("tối đa 6 mỗi tay","tối đa 30 mỗi tay")
+        local power=require("src.blood_shop").powerOf(item)
+        local text=require("src.blood_shop").describe(Equipment.getDescription(def),power):gsub("tối đa 6 mỗi tay","tối đa "..6*power.." mỗi tay")
+        if item.voidPower then text=text:gsub("HUYẾT LUYỆN ×5","THE VOID ×"..power):gsub("gấp 5","gấp "..power) end
+        return text
     end
     local def=Equipment.ITEMS[item.id];if not def then return item.desc or "" end
     local description=def.desc or ""
@@ -291,6 +295,7 @@ function Equipment.instance(id,saved)
     local copy={};for k,v in pairs(def) do copy[k]=v end
     copy.acquisitionCost=saved and (saved.acquisitionCost or saved.investment) or nil
     copy.bloodPower=saved and saved.bloodPower or nil
+    copy.voidPower=saved and saved.voidPower or nil
     local power=require("src.blood_shop").powerOf(copy)
     if power>1 then
         copy.params=require("src.blood_shop").params(def.params or {},power)

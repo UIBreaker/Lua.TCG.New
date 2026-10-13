@@ -83,7 +83,7 @@ function B.item(entry)
  local d=require("src.equipment").ITEMS[B.entryId(entry)]
  if not d then return nil end
  if type(entry)~="table" then return d end
- return require("src.equipment").instance(d.id,{investment=entry.investment or 0,bloodPower=entry.bloodPower})
+ return require("src.equipment").instance(d.id,{investment=entry.investment or 0,bloodPower=entry.bloodPower,voidPower=entry.voidPower})
 end
 function B.investment(entry)
  if type(entry)=="table" then return entry.investment or 0 end
@@ -92,7 +92,7 @@ end
 function B.resale(entry) return math.floor(B.investment(entry)/3) end
 function B.store(game,item,cost)
  game.backpackEquipment=game.backpackEquipment or {}
- game.backpackEquipment[#game.backpackEquipment+1]={id=item.id,investment=math.max(0,cost or 0),bloodPower=item.bloodPower}
+ game.backpackEquipment[#game.backpackEquipment+1]={id=item.id,investment=math.max(0,cost or 0),bloodPower=item.bloodPower,voidPower=item.voidPower}
 end
 function B.count(game,id)
  local n=0;for _,v in ipairs(game.backpackEquipment or {}) do if B.entryId(v)==id then n=n+1 end end;return n
@@ -107,9 +107,9 @@ function B.craft(game,recipe)
  local valid=false;for _,r in ipairs(B.recipes) do if r==recipe then valid=true end end
  if not valid then return false,"Công thức không hợp lệ." end
  local ok,msg=B.canCraft(game,recipe);if not ok then return false,msg end
- local investment=recipe.fee;local power
- for _,id in ipairs(recipe.ingredients) do for i,v in ipairs(game.backpackEquipment) do if B.entryId(v)==id then investment=investment+B.investment(v);if type(v)=="table" and v.bloodPower then power=v.bloodPower end;table.remove(game.backpackEquipment,i);break end end end
- game.gold=game.gold-recipe.fee;B.store(game,require("src.equipment").instance(recipe.id,{bloodPower=power}),investment)
+ local investment=recipe.fee;local power,voidPower
+ for _,id in ipairs(recipe.ingredients) do for i,v in ipairs(game.backpackEquipment) do if B.entryId(v)==id then investment=investment+B.investment(v);if type(v)=="table" then if v.bloodPower then power=v.bloodPower end;if v.voidPower then voidPower=math.max(voidPower or 1,v.voidPower) end end;table.remove(game.backpackEquipment,i);break end end end
+ game.gold=game.gold-recipe.fee;B.store(game,require("src.equipment").instance(recipe.id,{bloodPower=power,voidPower=voidPower}),investment)
  return true,"Đã ghép "..require("src.equipment").ITEMS[recipe.id].name.."."
 end
 function B.attach(game,index,card)

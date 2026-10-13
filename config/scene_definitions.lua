@@ -46,6 +46,13 @@ D.bossPresets = {echo_knight="ICE",taxman="DESERT",gem_devourer="MYSTIC",executi
 function D.resolve(state, monster)
     local name = D.states[state] or "archive"
     local definition = D.scenes[name]
+    if state=="void" then
+        return "void",{base="theVoid",backgroundPath=require("config.void_gacha").background,brightness=.9,preset="VOID",layers={D.layers[1],D.layers[6]}},D.presets.VOID
+    end
+    if state=="barter" and monster and monster.stage then
+        local area=require("src.expedition").area(monster.areaStage or monster.stage,monster.regionId)
+        return "barter",{base=area.background,brightness=.88,preset=area.preset,layers={D.layers[1],D.layers[5],D.layers[6]}},D.presets[area.preset]
+    end
     if name=="shop" then
         local scenes=require("config.shop_visuals").scenes
         local interior=scenes[monster and monster.shopMode] or scenes.large

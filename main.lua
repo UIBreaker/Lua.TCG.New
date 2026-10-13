@@ -1,5 +1,10 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-debug-tools" then
+        local ok,err=xpcall(function() require("tests.debug_tools_smoke") end,debug.traceback)
+        if not ok then print(err) end
+        os.exit(ok and 0 or 1)
+    end
     if a=="--test-seals" then require("tests.seal_capture");return end
     if a=="--test-combat-tactics" then
         local failed=false
@@ -142,6 +147,8 @@ for _, a in ipairs(arg or {}) do
         return
     end
     if a == "--test-animation" then isCaptureMode = true end
+    if a == "--test-debug-ui" then isCaptureMode = true end
+    if a == "--test-debug-input" then isCaptureMode = true end
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
     if a == "--test-journey-routing" then isCaptureMode = true end
@@ -150,6 +157,14 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-seal-descriptions" then isCaptureMode = true end
     if a == "--test-expanded-inventory" then isCaptureMode = true end
     if a == "--test-blood-shop" then isCaptureMode = true end
+    if a == "--test-barter" then
+        isCaptureMode = true
+        function love.errorhandler(message) print("BARTER UI ERROR: "..tostring(message));return function() return 1 end end
+    end
+    if a=="--test-void-gacha" then
+        isCaptureMode=true
+        function love.errorhandler(message) print("VOID UI ERROR: "..tostring(message));return function() return 1 end end
+    end
     if a == "--test-potions" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
@@ -263,6 +278,7 @@ local debugCategory = "jokers"
 local debugItemPage = 1
 local debugTargetCardIndex = 1
 local debugMessage = nil
+UI.Debug = { screenPage = 1, replaceInput = false }
 local lastActiveState = "map"
 local hasRunStarted = false
 
@@ -2714,6 +2730,12 @@ Sound.updateGame = function(dt)
 end
 
 function love.update(dt)
+    if isDebugOpen then
+        Touch.update(dt)
+        UI.components.Button.update(dt)
+        updateCaptureMode()
+        return
+    end
     require("ui.potion_effects").update(game,dt,settings.reducedMotion,state)
     require("ui.enemy_formation").update(game,dt)
     if not isCollectionOpen then Collection.prepareCacheStep() end
@@ -2776,7 +2798,7 @@ function love.update(dt)
     local bedCameraX,bedCameraY=UI.BedExplosion.camera()
     cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
-        game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory") and {stage=game.run and game.run.ante or 1,regionId=game.run and game.run.regionId,areaStage=game.run and game.run.areaStage,shopMode=game.shopMode} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
+        game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory" or state=="barter") and {stage=game.run and game.run.ante or 1,regionId=game.run and game.run.regionId,areaStage=game.run and game.run.areaStage,shopMode=game.shopMode} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
     Sound.updateGame(dt)
     if state == "defeating" then
         if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
@@ -2791,6 +2813,7 @@ function love.update(dt)
     Feedback.updateVfx(dt)
     UI.Polish.update(dt, settings.fastScoring, state, shopData)
     UI.Description.update(dt)
+    if state=="void" and require("ui.void_gacha").update(dt,game) then saveRunAtSafePoint() end
     UI.AbilityUI.update(dt)
     if UI.AbilityUI.current then updateCaptureMode(); return end
     UI.ScoringFeel.updateLab(dt)
@@ -3360,7 +3383,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.129.0", 48, 185)
+    g.print("beta 0.130.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -5880,7 +5903,7 @@ local function drawShopState(beginLayer)
     drawCombatFeedback()
 end
 
-local DEBUG_CATEGORIES = { "jokers", "consumables", "vouchers", "enhancements", "seals", "editions", "packs", "other", "tags", "blinds", "decks" }
+local DEBUG_CATEGORIES = { "jokers", "playing_cards", "equipment", "consumables", "vouchers", "enhancements", "seals", "editions", "packs", "other", "blinds", "decks" }
 local DEBUG_SCREENS = {
     { id = "menu", text = "MENU" }, { id = "BLIND_SELECT", text = "CHỌN BLIND" },
     { id = "small", text = "ĐẤU TIỂU YÊU" }, { id = "big", text = "ĐẤU ĐẠI QUÁI" },
@@ -5891,7 +5914,11 @@ local DEBUG_SCREENS = {
     { id = "socketing", text = "KHẢM TRANG BỊ" }, { id = "CASH_OUT", text = "TRẢ THƯỞNG" },
     { id = "scoring", text = "TÍNH AURA" },
     { id = "gameover", text = "THUA CUỘC" }, { id = "victory", text = "CHIẾN THẮNG" },
+    { id = "barter", text = "ĐỔI HÀNG" }, { id = "void", text = "THE VOID" },
 }
+for _, mode in ipairs({"small", "consumable", "equipment", "spn", "medicine", "cards", "large", "soul", "blood_small", "blood_large"}) do
+    DEBUG_SCREENS[#DEBUG_SCREENS + 1] = {id = "shop_" .. mode, text = Shop.MARKETS[mode].name}
+end
 
 local function drawDebugModal()
     local mx, my = toVirtual(love.mouse.getPosition())
@@ -5927,22 +5954,40 @@ local function drawDebugModal()
         add("debug_add_gold", "CỘNG SỐ VÀNG", 800, 280, 220, 52, UI.COLORS.goldYellow)
         love.graphics.setColor(UI.COLORS.textMuted)
         love.graphics.printf("Chế độ Debug chỉ nên dùng để kiểm thử. Tiến trình sau khi chỉnh sửa vẫn có thể được lưu.", 110, 390, 950, "left")
+        add("debug_add_souls", "+100 LINH HỒN", 110, 450, 280, 48)
+        add("debug_heal", "HỒI ĐẦY HP", 420, 450, 280, 48)
+        add("debug_add_tickets", "+10 VÉ VOID", 730, 450, 280, 48)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf("HP: " .. game.playerHp .. "/" .. game.maxPlayerHp .. "   •   Linh hồn: " .. (game.souls or 0) .. "   •   Vé Void: " .. (game.voidTickets or 0), 110, 520, 950, "left")
     elseif debugTab == "teleport" then
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(UI.COLORS.textLight)
         love.graphics.print("Ante muốn tới (1–999):", 90, 169)
         add("debug_focus_ante", (debugInputFocus == "ante" and "▸ " or "") .. debugAnteInput, 300, 156, 135, 38)
         add("debug_set_ante", "ÁP DỤNG ANTE", 455, 156, 170, 38, UI.COLORS.btnPlay)
-        love.graphics.print("Chọn màn — trận đấu sẽ được khởi tạo đúng với Ante và loại Blind:", 90, 218)
-        for i, screen in ipairs(DEBUG_SCREENS) do
-            local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+        local region = require("src.expedition").region(tonumber(debugAnteInput), UI.Debug.region)
+        add("debug_region_next", "VÙNG: " .. region.short .. " ›", 650, 156, 540, 38)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.print("Chọn màn để khởi tạo dữ liệu. F7: mở/đóng Debug • Enter: áp dụng ô nhập.", 90, 218)
+        local totalPages = math.ceil(#DEBUG_SCREENS / 16)
+        UI.Debug.screenPage = math.max(1, math.min(UI.Debug.screenPage, totalPages))
+        for slot = 1, 16 do
+            local screen = DEBUG_SCREENS[(UI.Debug.screenPage - 1) * 16 + slot]
+            if screen then
+            local col, row = (slot - 1) % 4, math.floor((slot - 1) / 4)
             add("debug_screen_" .. screen.id, screen.text, 90 + col * 270, 255 + row * 78, 240, 55,
                 UI.COLORS.btnNormal)
+            end
         end
+        add("debug_screens_prev", "‹", 400, 604, 48, 36)
+        add("debug_screens_next", "›", 714, 604, 48, 36)
+        love.graphics.setColor(UI.COLORS.textLight)
+        love.graphics.printf("Màn " .. UI.Debug.screenPage .. "/" .. totalPages, 462, 612, 238, "center")
     else
         love.graphics.setFont(UI.fonts.tiny)
         love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.print("Chọn mục để nhận/dùng ngay. Hiệu ứng trên bài áp dụng cho lá đích bên dưới.", 80, 151)
+        love.graphics.print(debugCategory == "decks" and "BỘ BÀI: bấm VÁN MỚI sẽ thay thế ván hiện tại bằng bộ khởi đầu đã chọn."
+            or "SPN/tiêu hao cất vào balo; trang bị mở màn khảm. Hiệu ứng áp dụng ngay lên lá đích.", 80, 151)
         for i, catId in ipairs(DEBUG_CATEGORIES) do
             local cat = Collection.getCategoryById(catId)
             local col, row = (i - 1) % 6, math.floor((i - 1) / 6)
@@ -5966,7 +6011,7 @@ local function drawDebugModal()
             local item = items[itemIndex]
             if item then
                 local col, row = (slot - 1) % 2, math.floor((slot - 1) / 2)
-                add("debug_grant_" .. itemIndex, item.name, 80 + col * 570, 318 + row * 46, 540, 38,
+                add("debug_grant_" .. itemIndex, (debugCategory == "decks" and "VÁN MỚI · " or "") .. item.name, 80 + col * 570, 318 + row * 46, 540, 38,
                     UI.COLORS.btnNormal, UI.fonts.small)
             end
         end
@@ -6270,7 +6315,7 @@ function love.draw()
     UI.descriptionCandidate = nil
     UI.descriptionGame = game
     local packOpening = state == "shop" and shopData and shopData.currentPackOpening and not UI.Polish.busy()
-    local topLayer = UI.AbilityUI.current and 13 or isUiGalleryOpen and 12 or isDebugOpen and 11
+    local topLayer = isDebugOpen and 11 or UI.AbilityUI.current and 13 or isUiGalleryOpen and 12
         or isCollectionOpen and 10 or isSettingsOpen and 9 or isPauseMenuOpen and 8
         or inspectCardModal and 7 or isHandbookOpen and 6 or isDeckViewerOpen and 5
         or UI.ExpandedInventory.open and state == "playing" and 4
@@ -6355,6 +6400,12 @@ function love.draw()
         end
     elseif state == "event" then
         drawEventState()
+    elseif state=="barter" then
+        buttons={}
+        require("ui.barter").draw(game,buttons,toVirtual(love.mouse.getPosition()))
+    elseif state=="void" then
+        buttons={}
+        require("ui.void_gacha").draw(game,buttons,toVirtual(love.mouse.getPosition()))
     elseif state == "boss_deity" then
         drawBossDeityDraftState()
     elseif state == "chest" then
@@ -6460,8 +6511,7 @@ function love.draw()
         Gallery.draw(UI.fonts, galleryMx, galleryMy)
     end
 
-    UI.CardPhysics.drawLab(UI, CardEffects)
-    UI.ScoringFeel.drawLab(UI)
+    if not isDebugOpen then UI.CardPhysics.drawLab(UI, CardEffects); UI.ScoringFeel.drawLab(UI) end
     if state == "scoring" and not UI.ScoringFeel.labOpen then UI.ScoringFeel.drawDebug(anim, UI) end
     UI.CardPhysics.endFrame()
     UI.CardPhysics.drawDebug()
@@ -6486,8 +6536,10 @@ function love.draw()
         and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
         UI.Description.draw(UI, descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
-    if UI.AbilityUI.current then beginLayer(13) end
-    UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+    if not isDebugOpen then
+        if UI.AbilityUI.current then beginLayer(13) end
+        UI.AbilityUI.draw(UI, UI.virtualMouseX or 0, UI.virtualMouseY or 0)
+    end
     require("ui.potion_effects").draw(UI,game,state)
     UI.Description.finishFrame()
     UI.drawPointerBlocked = false
@@ -6643,6 +6695,19 @@ local function handlePlayingMousepressed(mx, my, button)
     end
 
     return false
+end
+
+function UI.continueAfterMarket()
+    if game.run then
+        local continues,reason=RunManager.advanceBlind(game.run,game)
+        if not continues and reason=="victory" then state="victory";Sound.play("round_win")
+        else game.currentBlind=RunManager.getCurrentBlind(game.run);state="BLIND_SELECT";Sound.play("card_deal") end
+        lastActiveState=state;saveRunAtSafePoint()
+    else
+        if game.currentNodeId and game.map then Map.onNodeCompleted(game.map,game.currentNodeId) end
+        state="map";Sound.play("card_deal")
+    end
+    return true
 end
 
 local function handleShopMousepressed(mx, my, button)
@@ -6861,34 +6926,16 @@ local function handleShopMousepressed(mx, my, button)
                 Sound.play("ui_click")
                 return true
             elseif btn.id == "leave_shop" or btn.id == "next_round" then
-                if Shop.leave(shopData,game)=="shop" then
+                local destination=Shop.leave(shopData,game)
+                if destination=="shop" or destination=="barter" then
+                    state=destination
                     UI.Polish.clearFocus()
-                    lastActiveState="shop"
+                    lastActiveState=state
                     saveRunAtSafePoint()
                     Sound.play("card_deal")
                     return true
                 end
-                if game.run then
-                    local continues, reason = RunManager.advanceBlind(game.run, game)
-                    if not continues and reason == "victory" then
-                        state = "victory"
-                        lastActiveState = "victory"
-                        Sound.play("round_win")
-                    else
-                        game.currentBlind = RunManager.getCurrentBlind(game.run)
-                        state = "BLIND_SELECT"
-                        lastActiveState = "BLIND_SELECT"
-                        Sound.play("card_deal")
-                    end
-                    saveRunAtSafePoint()
-                    return true
-                end
-                if game.currentNodeId and game.map then
-                    Map.onNodeCompleted(game.map, game.currentNodeId)
-                end
-                state = "map"
-                Sound.play("card_deal")
-                return true
+                return UI.continueAfterMarket()
             end
         end
     end
@@ -6896,162 +6943,280 @@ local function handleShopMousepressed(mx, my, button)
     return false
 end
 
-local function debugTeleport(screenId)
-    if not hasRunStarted and screenId ~= "menu" then startNewGame("red_deck") end
-    local blindIndex = screenId == "big" and 2 or (screenId == "boss" and 3 or 1)
-    local ok, message = DebugTools.setAnte(game, debugAnteInput, blindIndex)
-    if not ok then debugMessage = message return end
-    pendingCombatNode = nil
-    isShopTransferOpen = false
-    isDeckViewerOpen = false
-    inspectCardModal = nil
-    isDebugOpen = false
-    isSettingsOpen = false
-    isPauseMenuOpen = false
+function UI.Debug.open()
+    debugAnteInput = tostring(game.run and game.run.ante or 1)
+    UI.Debug.region = game.run and game.run.regionId or "human"
+    debugInputFocus, debugMessage = nil, nil
+    UI.Debug.replaceInput = false
+    isDebugOpen, isSettingsOpen = true, false
+    isUiGalleryOpen = false
+    isCollectionOpen, isDeckViewerOpen, isHandbookOpen, inspectCardModal = false, false, false, nil
+    UI.ExpandedInventory.close()
+    UI.Backpack.close()
+end
+
+function UI.Debug.close()
+    isDebugOpen, isSettingsOpen = false, true
+    debugInputFocus = nil
+    love.keyboard.setTextInput(false)
+end
+
+function UI.Debug.clearScene()
+    UI.ScoringFeel.cancel(anim)
+    anim.active, anim.enemyTurn, anim.sequence, anim.scoringData = false, nil, nil, nil
+    anim.pendingBedScore, anim.pendingStoredEquipment = nil, nil
+    anim.hitStop, anim.exitStarted, anim.exitProgress = 0, false, 0
+    anim.cardTransform, anim.energyBolts, anim.floatingTexts = {}, {}, {}
+    anim.chestReveal = {state = nil, timer = 0}
+    anim.consumableUseCooldown, anim.energyVolleyPending = 0, 0
+    UI.BedExplosion.clear()
+    DeathVFX.reset()
+    Feedback.clearVfx()
+    UI.Polish.clearFocus()
+    UI.Polish.job, UI.Polish.message, UI.Polish.goldMeter = nil, nil, nil
+    UI.Polish.applications, UI.Polish.moneyFeedback = {}, {}
+    UI.Description.reset()
+    UI.AbilityUI.current = nil
+    UI.ScoringFeel.labOpen = false
+    if UI.CardPhysics.isLabOpen() then UI.CardPhysics.keypressed("escape") end
+    UI.Backpack.close()
+    UI.ExpandedInventory.close()
+    UI.CardPhysics.release()
+    handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
+    shopDrag.active, shopDrag.isDragging = false, false
+    pendingCombatNode, pendingEquipment, pendingEvolutionCard, pendingSpeedCard, pendingEditionCard = nil, nil, nil, nil, nil
+    cashOutAnim, shopFx = nil, {}
+    monsterMotion.attack, monsterMotion.hit = 0, 0
+    isShopTransferOpen, isDeckViewerOpen, isHandbookOpen, isCollectionOpen = false, false, false, false
+    inspectCardModal, transferSourceCard, transferSourceEqIndex = nil, nil, nil
+    socketingPage = 1
+    shopData = Shop.new()
+    DebugTools.clearScene(game)
+    love.keyboard.setTextInput(false)
+end
+
+local function debugTeleport(screenId, bossId)
+    local known = false
+    for _, screen in ipairs(DEBUG_SCREENS) do if screen.id == screenId then known = true; break end end
+    if not known then debugMessage = "Màn Debug không hợp lệ."; return false end
+    if screenId == "menu" then
+        UI.Debug.clearScene()
+        if game.run then DebugTools.setAnte(game, game.run.ante, game.run.currentBlindIndex, game.run.regionId) end
+        state, menuMode = "menu", "title"
+        if hasRunStarted then lastActiveState = "BLIND_SELECT" end
+        isDebugOpen, isSettingsOpen, isPauseMenuOpen = false, false, false
+        return true
+    end
+    local blindIndex = screenId == "big" and 2 or
+        ((screenId == "boss" or screenId == "victory" or screenId == "boss_deity" or screenId == "chest" or screenId == "barter" or screenId == "void") and 3 or 1)
+    local ok, message = DebugTools.validateAnte(debugAnteInput, blindIndex, UI.Debug.region)
+    if not ok then debugMessage = message; return false end
+    if screenId == "void" and tonumber(debugAnteInput) % 10 ~= 0 then
+        debugMessage = "The Void xuất hiện sau Boss ở ải chia hết cho 10. Nhập 10, 20, 30…"; return false
+    end
+    if not hasRunStarted then startNewGame("red_deck") end
+    UI.Debug.clearScene()
+    DebugTools.setAnte(game, debugAnteInput, blindIndex, UI.Debug.region)
+    debugInputFocus = nil
+    isDebugOpen, isSettingsOpen, isPauseMenuOpen = false, false, false
+    if screenId ~= "gameover" and game.playerHp <= 0 then game.playerHp = game.maxPlayerHp end
+    local blind = RunManager.getCurrentBlind(game.run)
+    if bossId and RunManager.BOSS_DEBUFFS[bossId] then
+        blind.debuff = RunManager.BOSS_DEBUFFS[bossId]
+        blind.name = blind.debuff.name
+    end
     if screenId == "small" or screenId == "big" or screenId == "boss" then
-        startBlindCombat(RunManager.getCurrentBlind(game.run))
-    elseif screenId == "shop" then
-        Shop.enterAfterCombat(game)
-        Shop.resetReroll(shopData)
+        startBlindCombat(blind)
+    elseif screenId == "shop" or screenId:match("^shop_") then
+        -- A debug market follows a completed encounter, so Leave can advance.
+        blind.status = "completed"
+        game.shopMode = screenId == "shop" and "small" or screenId:sub(6)
+        if game.shopMode == "soul" then game.pendingSoulShop = true; Shop.enterSoulShop(game) end
         Shop.refresh(shopData, game)
         state = "shop"
-    elseif screenId == "rest" then
-        restStateData = { chosenAction = nil, selectedCard = nil, message = nil }
-        state = "rest"
-    elseif screenId == "treasure" then
-        generateTreasureRewards()
-        state = "treasure"
-    elseif screenId == "event" then
-        game.currentEvent = Events.getRandomEvent(game)
-        game.eventOutcomeText = nil
-        state = "event"
-    elseif screenId == "boss_deity" then
-        game.bossDeityDraft = Deities.getBossDraftPool(require("src.loadout").ownedDeities(game), 2)
-        state = "boss_deity"
-    elseif screenId == "chest" then
-        generateBossChestRewards()
-        socketingReturnState = "shop"
-        state = "chest"
-    elseif screenId == "map" then
+    elseif screenId == "rest" or screenId == "treasure" or screenId == "event" or screenId == "boss_deity" or screenId == "chest" or screenId == "map" then
         game.map = Map.generate(game.act or 1)
-        state = "map"
+        if screenId == "rest" then restStateData = {chosenAction = nil, selectedCard = nil, message = nil}
+        elseif screenId == "treasure" then generateTreasureRewards()
+        elseif screenId == "event" then game.currentEvent = Events.getRandomEvent(game)
+        elseif screenId == "boss_deity" then game.bossDeityDraft = Deities.getBossDraftPool({}, 2)
+        elseif screenId == "chest" then generateBossChestRewards(); socketingReturnState = "map" end
+        state = screenId
     elseif screenId == "socketing" then
+        blind.status = "completed"
+        game.shopMode = "small"
+        Shop.refresh(shopData, game)
         pendingEquipment = Equipment.ITEMS[Equipment.POOL[1]]
-        socketingReturnState = "shop"
-        state = "socketing"
+        game.pendingRewardEquipment = pendingEquipment
+        game.pendingShopEquipment = true
+        socketingReturnState, state = "shop", "socketing"
     elseif screenId == "CASH_OUT" then
-        local blind = RunManager.getCurrentBlind(game.run)
+        game.handsRemaining = game.maxHands
         local breakdown = RewardSystem.calculate(blind, game, false)
-        local evolutionReward = RunManager.completeCurrentBlind(game.run, game)
-        if evolutionReward then
-            table.insert(anim.floatingTexts, {
-                text = "Hoàn tất vòng ải " .. tostring(game.run.ante) .. " · Chọn một trong ba phần thưởng",
-                color = { 0.82, 0.70, 1, 1 }, x = 640, y = 205, alpha = 2.6,
-            })
-        end
-        local rewardResult = RewardSystem.begin(breakdown, game)
-        cashOutAnim = RewardSystem.newAnimation(breakdown, rewardResult)
+        RunManager.completeCurrentBlind(game.run, game)
+        local result = RewardSystem.begin(breakdown, game)
+        cashOutAnim = RewardSystem.newAnimation(breakdown, result)
         state = "CASH_OUT"
     elseif screenId == "scoring" then
-        startBlindCombat(RunManager.getCurrentBlind(game.run))
+        startBlindCombat(blind)
         toggleCardSelection(1)
         playSelectedHand()
-    else
+    elseif screenId == "victory" then
+        game.run.areaStage = 20
+        blind.areaStage = 20
+        RunManager.completeCurrentBlind(game.run, game)
+        game.run.travelPermit, game.run.victory = true, true
+        state = "victory"
+    elseif screenId == "barter" or screenId == "void" then
+        blind.status = "completed"
+        if screenId == "barter" then require("src.barter").create(game)
+        else
+            game.shopMode = "small"
+            Shop.refresh(shopData, game)
+            local key = game.run.ante .. ":" .. game.run.regionId
+            game.voidVisited = game.voidVisited or {}; game.voidVisited[key] = nil
+            assert(require("src.void_gacha").enterIfDue(game))
+        end
         state = screenId
-    end
-    if state ~= "menu" then lastActiveState = state end
+    elseif screenId == "gameover" then
+        game.playerHp = 0
+        state = "gameover"
+    else state = screenId end
+    lastActiveState = state
     saveRunAtSafePoint()
     Sound.play("card_deal")
+    return true
+end
+
+function UI.Debug.activate(id)
+    if id == "debug_close" then UI.Debug.close()
+    elseif id:sub(1, 10) == "debug_tab_" then
+        debugTab = id:sub(11)
+        debugInputFocus, debugMessage = nil, nil
+        love.keyboard.setTextInput(false)
+    elseif id == "debug_focus_gold" or id == "debug_focus_ante" then
+        debugInputFocus = id == "debug_focus_gold" and "gold" or "ante"
+        UI.Debug.replaceInput = true
+        UI.Debug.pendingTextDigit = nil
+        love.keyboard.setTextInput(true)
+    elseif id == "debug_set_gold" or id == "debug_add_gold" then
+        local action = id == "debug_set_gold" and DebugTools.setGold or DebugTools.addGold
+        local ok, message = action({gold = game.gold}, debugGoldInput)
+        if ok then
+            if not hasRunStarted then startNewGame("red_deck"); isDebugOpen = true end
+            ok, message = action(game, debugGoldInput)
+        end
+        debugMessage = message
+        if ok then saveRunAtSafePoint() end
+    elseif id == "debug_add_souls" or id == "debug_heal" or id == "debug_add_tickets" then
+        if not hasRunStarted then startNewGame("red_deck"); isDebugOpen = true end
+        if id == "debug_add_souls" then game.souls = math.min(9007199254740991, (game.souls or 0) + 100); debugMessage = "Đã cộng 100 linh hồn."
+        elseif id == "debug_add_tickets" then game.voidTickets = (game.voidTickets or 0) + 10; debugMessage = "Đã cộng 10 vé Void."
+        else game.playerHp = game.maxPlayerHp; debugMessage = "Đã hồi đầy HP." end
+        saveRunAtSafePoint()
+    elseif id == "debug_set_ante" then debugTeleport("BLIND_SELECT")
+    elseif id == "debug_region_next" then
+        local regions = require("src.expedition").regions
+        local current = require("src.expedition").region(tonumber(debugAnteInput), UI.Debug.region).id
+        for i, region in ipairs(regions) do
+            if region.id == current then UI.Debug.region = regions[i % #regions + 1].id; break end
+        end
+    elseif id == "debug_screens_prev" then UI.Debug.screenPage = math.max(1, UI.Debug.screenPage - 1)
+    elseif id == "debug_screens_next" then UI.Debug.screenPage = math.min(math.ceil(#DEBUG_SCREENS / 16), UI.Debug.screenPage + 1)
+    elseif id:sub(1, 13) == "debug_screen_" then debugTeleport(id:sub(14))
+    elseif id:sub(1, 15) == "debug_category_" then
+        debugCategory, debugItemPage, debugMessage = id:sub(16), 1, nil
+    elseif id == "debug_target_prev" then debugTargetCardIndex = math.max(1, debugTargetCardIndex - 1)
+    elseif id == "debug_target_next" then debugTargetCardIndex = math.max(1, math.min(#getAllDeckCards(), debugTargetCardIndex + 1))
+    elseif id == "debug_items_prev" then debugItemPage = math.max(1, debugItemPage - 1)
+    elseif id == "debug_items_next" then debugItemPage = math.min(math.max(1, math.ceil(#Collection.getItems(debugCategory) / 12)), debugItemPage + 1)
+    elseif id:sub(1, 12) == "debug_grant_" then
+        local item = Collection.getItems(debugCategory)[tonumber(id:sub(13))]
+        if not item then debugMessage = "Chưa chọn vật phẩm."; return end
+        if not hasRunStarted then startNewGame("red_deck"); isDebugOpen = true end
+        local target = getAllDeckCards()[debugTargetCardIndex]
+        local ok, result, payload = DebugTools.grantCollectionItem(game, shopData, debugCategory, item, target)
+        debugMessage = result
+        if ok and (result == "socketing" or result == "pack") then
+            debugAnteInput = tostring(game.run.ante)
+            UI.Debug.region = game.run.regionId
+        end
+        if ok and result == "deck" then
+            UI.Debug.clearScene()
+            startNewGame(payload)
+            isDebugOpen = false
+        elseif ok and result == "socketing" and payload then
+            if not debugTeleport("shop") then return end
+            pendingEquipment, game.pendingRewardEquipment = payload, payload
+            game.pendingShopEquipment = true
+            socketingReturnState, state, lastActiveState = "shop", "socketing", "socketing"
+            saveRunAtSafePoint()
+        elseif ok and result == "pack" then
+            if not debugTeleport("shop") then return end
+            shopData.currentPackOpening = Shop.openPack({packType = payload or item.packType, name = item.name}, game)
+            saveRunAtSafePoint()
+        elseif ok and result == "blind" then
+            local screen = payload == "blind_small" and "small" or (payload == "blind_big" and "big" or "boss")
+            debugTeleport(screen, payload)
+        elseif ok then saveRunAtSafePoint() end
+    end
+    Sound.play("ui_click")
 end
 
 local function handleDebugMousepressed(mx, my, button)
     if button ~= 1 then return true end
     for _, btn in ipairs(buttons) do
-        if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-            local id = btn.id
-            if id == "debug_close" then
-                isDebugOpen = false
-                isSettingsOpen = true
-            elseif id:sub(1, 10) == "debug_tab_" then
-                debugTab = id:sub(11)
-                debugInputFocus = nil
-                debugMessage = nil
-            elseif id == "debug_focus_gold" then
-                if debugInputFocus ~= "gold" then debugGoldInput = "" end
-                debugInputFocus = "gold"
-            elseif id == "debug_set_gold" or id == "debug_add_gold" then
-                local ok, message = id == "debug_set_gold" and DebugTools.setGold(game, debugGoldInput)
-                    or DebugTools.addGold(game, debugGoldInput)
-                debugMessage = message
-                if ok then saveRunAtSafePoint() end
-            elseif id == "debug_focus_ante" then
-                if debugInputFocus ~= "ante" then debugAnteInput = "" end
-                debugInputFocus = "ante"
-            elseif id == "debug_set_ante" then
-                if not hasRunStarted then startNewGame("red_deck") end
-                local ok, message = DebugTools.setAnte(game, debugAnteInput, 1)
-                debugMessage = message
-                if ok then
-                    state = "BLIND_SELECT"
-                    lastActiveState = state
-                    saveRunAtSafePoint()
-                end
-            elseif id:sub(1, 13) == "debug_screen_" then
-                debugTeleport(id:sub(14))
-            elseif id:sub(1, 15) == "debug_category_" then
-                debugCategory = id:sub(16)
-                debugItemPage = 1
-                debugMessage = nil
-            elseif id == "debug_target_prev" then
-                debugTargetCardIndex = math.max(1, debugTargetCardIndex - 1)
-            elseif id == "debug_target_next" then
-                debugTargetCardIndex = math.min(#getAllDeckCards(), debugTargetCardIndex + 1)
-            elseif id == "debug_items_prev" then
-                debugItemPage = math.max(1, debugItemPage - 1)
-            elseif id == "debug_items_next" then
-                debugItemPage = debugItemPage + 1
-            elseif id:sub(1, 12) == "debug_grant_" then
-                if not hasRunStarted then startNewGame("red_deck") end
-                local item = Collection.getItems(debugCategory)[tonumber(id:sub(13))]
-                local target = getAllDeckCards()[debugTargetCardIndex]
-                local ok, result, payload = DebugTools.grantCollectionItem(game, shopData, debugCategory, item, target)
-                debugMessage = result
-                if ok and result == "socketing" and payload then
-                    pendingEquipment = payload
-                    socketingReturnState = state == "menu" and "map" or state
-                    if socketingReturnState ~= "shop" and socketingReturnState ~= "map" then socketingReturnState = "shop" end
-                    state = "socketing"
-                    isDebugOpen = false
-                    isSettingsOpen = false
-                    isPauseMenuOpen = false
-                elseif ok and result == "pack" then
-                    Shop.resetReroll(shopData)
-                    Shop.refresh(shopData, game)
-                    shopData.currentPackOpening = Shop.openPack({ packType = payload or item.packType, name = item.name }, game)
-                    state = "shop"
-                    isDebugOpen = false
-                    isSettingsOpen = false
-                    isPauseMenuOpen = false
-                elseif ok and result == "blind" then
-                    local targetScreen = payload == "blind_small" and "small" or (payload == "blind_big" and "big" or "boss")
-                    debugTeleport(targetScreen)
-                    if targetScreen == "boss" and RunManager.BOSS_DEBUFFS[payload] then
-                        local blind = RunManager.getCurrentBlind(game.run)
-                        blind.debuff = RunManager.BOSS_DEBUFFS[payload]
-                        blind.name = blind.debuff.name
-                        startBlindCombat(blind)
-                    end
-                elseif ok then
-                    saveRunAtSafePoint()
-                end
-            end
-            Sound.play("ui_click")
+        if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+            UI.Debug.activate(btn.id)
             return true
         end
     end
+    debugInputFocus = nil
     return true
 end
 
+function UI.Debug.text(text, fromKey)
+    if not debugInputFocus then return end
+    -- SDL can emit both keypressed and textinput for the same physical digit.
+    if not fromKey and text == UI.Debug.pendingTextDigit then
+        UI.Debug.pendingTextDigit = nil
+        return
+    end
+    UI.Debug.pendingTextDigit = nil
+    local digits = text:gsub("%D", "")
+    if digits == "" then return end
+    if debugInputFocus == "gold" then
+        debugGoldInput = ((UI.Debug.replaceInput and "" or debugGoldInput) .. digits):sub(1, 16)
+    elseif debugInputFocus == "ante" then
+        debugAnteInput = ((UI.Debug.replaceInput and "" or debugAnteInput) .. digits):sub(1, 3)
+    end
+    UI.Debug.replaceInput = false
+    if fromKey then UI.Debug.pendingTextDigit = digits end
+end
+
+function UI.Debug.key(key, scancode)
+    local ctrl = love.keyboard.isDown("lctrl", "rctrl", "lgui", "rgui")
+    local keypad = key:match("^kp(%d)$") or (scancode or ""):match("^kp(%d)$")
+    local digit = keypad or key:match("^%d$")
+    if debugInputFocus and digit and not ctrl and not love.keyboard.isDown("lalt", "ralt") then
+        UI.Debug.text(digit, true)
+        return
+    end
+    UI.Debug.pendingTextDigit = nil
+    if key == "escape" or key == "f7" then UI.Debug.close()
+    elseif key == "backspace" then
+        if debugInputFocus == "gold" then debugGoldInput = UI.Debug.replaceInput and "" or debugGoldInput:sub(1, -2)
+        elseif debugInputFocus == "ante" then debugAnteInput = UI.Debug.replaceInput and "" or debugAnteInput:sub(1, -2) end
+        UI.Debug.replaceInput = false
+    elseif (key == "a" and (love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl"))) then UI.Debug.replaceInput = true
+    elseif key == "v" and (love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl")) then
+        love.textinput(love.system.getClipboardText())
+    elseif key == "return" or key == "kpenter" then
+        if debugInputFocus == "gold" then UI.Debug.activate("debug_set_gold")
+        elseif debugInputFocus == "ante" then UI.Debug.activate("debug_set_ante") end
+    elseif key == "left" or key == "pageup" then UI.Debug.activate(debugTab == "teleport" and "debug_screens_prev" or "debug_items_prev")
+    elseif key == "right" or key == "pagedown" then UI.Debug.activate(debugTab == "teleport" and "debug_screens_next" or "debug_items_next") end
+end
 local function handleModalsMousepressed(mx, my, button)
     if isDebugOpen then return handleDebugMousepressed(mx, my, button) end
     -- 0. Settings Modal Handling
@@ -7123,10 +7288,7 @@ local function handleModalsMousepressed(mx, my, button)
                         Sound.play("ui_click")
                         return true
                     elseif btn.id == "setting_debug_open" and settings.debugEnabled then
-                        debugAnteInput = tostring(game.run and game.run.ante or 1)
-                        debugMessage = nil
-                        isDebugOpen = true
-                        isSettingsOpen = false
+                        UI.Debug.open()
                         Sound.play("ui_click")
                         return true
                     elseif btn.id == "setting_gallery" then
@@ -7574,6 +7736,10 @@ UI.ExpandedInventory.callbacks={
 function love.mousepressed(x, y, button, istouch)
     if istouch then return end
     Touch.mouseInput()
+    if isDebugOpen then
+        local mx, my = toVirtual(x, y)
+        return handleDebugMousepressed(mx, my, button)
+    end
     if anim.enemyTurn then return end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
@@ -7942,12 +8108,12 @@ function love.mousepressed(x, y, button, istouch)
                             Shop.resetReroll(shopData)
                             Shop.enterAfterCombat(game)
                             Shop.refresh(shopData, game)
-                            state = "shop"
+                            state = require("src.void_gacha").enterIfDue(game) and "void" or "shop"
                             cashOutAnim.state = "EXIT"
                             game.pendingVictoryReward = nil
                             RewardSystem.openNextPack(game, shopData)
                             saveRunAtSafePoint()
-                            lastActiveState = "shop"
+                            lastActiveState = state
                             Sound.play("card_deal")
                             return
                         end
@@ -7957,6 +8123,26 @@ function love.mousepressed(x, y, button, istouch)
         end
         return
 
+    elseif state=="void" then
+        if button~=1 then return end
+        for _,btn in ipairs(buttons) do
+            if not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local result=require("ui.void_gacha").press(game,btn)
+                if result=="leave" then game.voidEvent=nil;state="shop";lastActiveState=state;RewardSystem.openNextPack(game,shopData) end
+                if result then saveRunAtSafePoint();Sound.play("card_deal") end
+                return
+            end
+        end
+    elseif state=="barter" then
+        if button~=1 then return end
+        for _,btn in ipairs(buttons) do
+            if not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local result=require("ui.barter").press(game,btn)
+                if result=="leave" then game.barterEvent=nil;UI.continueAfterMarket()
+                elseif result then Sound.play(result=="accepted" and "shop_buy" or "card_deal");saveRunAtSafePoint() end
+                return
+            end
+        end
     elseif state == "event" then
         for _, btn in ipairs(buttons) do
             if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
@@ -8242,7 +8428,9 @@ function love.mousepressed(x, y, button, istouch)
     end
 end
 
-function love.keypressed(key)
+function love.keypressed(key, scancode)
+    if isDebugOpen then UI.Debug.key(key, scancode); return end
+    if key == "f7" and settings.debugEnabled then UI.Debug.open(); return end
     if UI.ExpandedInventory.open and not inspectCardModal then
         if key=="escape" then
             if UI.ExpandedInventory.moving then UI.ExpandedInventory.moving=nil
@@ -8323,19 +8511,6 @@ function love.keypressed(key)
     end
     if key == CardEffects.debugToggleKey then
         CardEffects.toggleDebug()
-        return
-    end
-    if isDebugOpen then
-        if key == "escape" then
-            isDebugOpen = false
-            isSettingsOpen = true
-        elseif key == "backspace" and debugInputFocus == "gold" then
-            debugGoldInput = debugGoldInput:sub(1, -2)
-        elseif key == "backspace" and debugInputFocus == "ante" then
-            debugAnteInput = debugAnteInput:sub(1, -2)
-        elseif key == "return" or key == "kpenter" then
-            debugInputFocus = nil
-        end
         return
     end
     -- Global Fullscreen Toggle
@@ -8467,12 +8642,12 @@ function love.keypressed(key)
                 Shop.resetReroll(shopData)
                 Shop.enterAfterCombat(game)
                 Shop.refresh(shopData, game)
-                state = "shop"
+                state = require("src.void_gacha").enterIfDue(game) and "void" or "shop"
                 cashOutAnim.state = "EXIT"
                 game.pendingVictoryReward = nil
                 RewardSystem.openNextPack(game, shopData)
                 saveRunAtSafePoint()
-                lastActiveState = "shop"
+                lastActiveState = state
                 Sound.play("card_deal")
             end
         elseif game.pendingRoundRewardChoice and key >= "1" and key <= "3" and cashOutAnim and cashOutAnim.finished then
@@ -8488,18 +8663,23 @@ function love.keypressed(key)
     end
 end
 
+function love.keyreleased(key, scancode)
+    if isDebugOpen then UI.Debug.pendingTextDigit = nil end
+end
+
 function love.textinput(text)
-    if UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen and UI.Backpack.textinput(text) then return end
-    if not isDebugOpen or not debugInputFocus then return end
-    local digits = text:gsub("%D", "")
-    if debugInputFocus == "gold" then
-        debugGoldInput = (debugGoldInput .. digits):sub(1, 16)
-    elseif debugInputFocus == "ante" then
-        debugAnteInput = (debugAnteInput .. digits):sub(1, 3)
+    if not isDebugOpen then
+        if UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen then UI.Backpack.textinput(text) end
+        return
     end
+    UI.Debug.text(text)
 end
 
 function love.wheelmoved(x, y)
+    if isDebugOpen then
+        if y ~= 0 then UI.Debug.key(y > 0 and "pageup" or "pagedown") end
+        return
+    end
     if inspectCardModal then
         local mx,my=toVirtual(love.mouse.getPosition())
         require("ui.card_inspector").wheel(y,mx,my);return

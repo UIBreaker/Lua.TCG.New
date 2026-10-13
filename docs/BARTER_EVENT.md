@@ -1,0 +1,11 @@
+# Gặp người viễn chinh bí ẩn
+
+Sau khi hoàn tất trận thứ ba của mỗi ải chẵn (2, 4, 6…), kiểm tra một lần với tỷ lệ 30%. Kết quả và các đề nghị được lưu cùng run; tải lại không tạo thêm cuộc gặp hay đổi lại đề nghị. Sự kiện diễn ra khi rời shop của ải đó, trước khi sang ải mới. Sau boss có Chợ Linh Hồn, luồng là Chợ Linh Hồn → Shop Lớn → Gặp người viễn chinh → ải tiếp. Không gặp thì vẫn tiếp tục bình thường, không cộng/trừ HP hoặc vàng.
+
+Nền lấy đúng ảnh, biome và độ sáng combat của ải hiện tại, cả ở lục địa con người, bốn vương quốc và lục địa bí ẩn. Chỉ thêm PNG nhân vật viễn chinh có alpha trong `assets/scene/events/mysterious_expeditioner.png`: áo choàng kín, mũ trùm, khăn và găng che toàn bộ mặt/da, mang balo và đưa di vật. Không tạo hay thay nền combat.
+
+Hai đề nghị: đổi SPN hoặc trang bị. Người viễn chinh nêu đúng món cần và lý do liên quan đến công dụng (sinh lực/giáp, tốc đánh, tiếp tế hoặc thế đánh). Ưu tiên yêu cầu món đang có và đưa lại món chưa sở hữu với công dụng khác. Trang bị đối ứng giữ loại cơ bản/di vật linh hồn, tầng ghép và giá catalog trong khoảng 80–125% món yêu cầu. SPN đối ứng giữ bậc nền, tiến hóa, ấn bản, phù phép và Huyết Luyện của chính bản người chơi chọn; trang bị giữ Huyết Luyện và vốn đầu tư. Tích lũy riêng của SPN cũ thuộc SPN đó, không chuyển sang thực thể mới. Mô tả hai món và vị trí món đưa đều hiển thị trước khi xác nhận.
+
+Có thể chọn món trong balo, SPN đang trang bị hoặc trang bị đang khảm. Chỉ món có đúng ID yêu cầu mới đổi được; danh sách hành trang có phân trang 6 món, món không khớp bị khóa. Đề nghị trao đổi chỉ mở bước xác nhận, chưa lấy đồ. Xác nhận mới thực hiện một lần đổi 1 ↔ 1, đưa món mới vào balo; nếu món cũ đang dùng, nó rời ô/khảm tương ứng. Vàng, HP, các đồ khác giữ nguyên. Có thể hủy xác nhận hoặc từ chối toàn bộ cuộc gặp miễn phí. Một cuộc gặp cho phép tối đa một giao dịch, có biên nhận cho cả hai bên.
+
+Kiểm tra logic: `lua tests/barter_smoke.lua`. Kiểm tra game: `lovec.exe . --test-barter` (không ghi save/settings); chụp gặp gỡ, xem trước SPN, xác nhận/hủy, trang bị trang 2, hoàn tất và nền vương quốc Bích. Bao gồm lưu/đọc trước và sau giao dịch, chống đổi lặp, đồ đang dùng, bảo toàn ×5/vốn đầu tư và luồng shop → sự kiện → ải tiếp.

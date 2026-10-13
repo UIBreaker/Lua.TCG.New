@@ -97,9 +97,13 @@ love . --test-touch           # Chạm, giữ, rê và hủy thao tác cảm ứ
 love . --test-expedition      # Hành trình, giấy phép và ảnh render
 love . --test-chest-expansion # 40 lá mới, tiêu hao, save và render
 love . --test-seals           # 10 con dấu, cân bằng, chuyển save cũ và biểu tượng trên bài
+love . --test-debug-tools     # Tài nguyên, catalog, vùng/ải/trận và đồng bộ bài
+love . --test-debug-ui        # Bấm bảng Debug, đi qua 29 màn và kiểm tra luồng thoát
 ```
 
 Các kịch bản render mở cửa sổ game và có thể ghi lại ảnh vào `docs/`. Xem thêm [hành trình viễn chinh](docs/expedition/README.md), [khả năng và tiến hóa](docs/gameplay_systems_expansion.md), [Chợ Linh Hồn](docs/soul_shop.md), [40 lá trong rương](docs/chest_expansion.md) và [quy chuẩn art Continental](docs/CONTINENTAL_ART_BIBLE.md).
+
+Bật Debug trong Cài đặt rồi nhấn **F7** để mở nhanh. Xem [hướng dẫn bảng Debug](docs/DEBUG_TOOLS.md).
 
 ## 📁 Cấu trúc dự án
 

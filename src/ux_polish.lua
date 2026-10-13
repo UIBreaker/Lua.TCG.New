@@ -64,16 +64,17 @@ function P.button(game)
     if f.kind=="card" then price=Shop.getDestructionRewards(game,f.item).souls end
     if f.kind=="card_sale" then price=Shop.getCardSellPrice(f.item) end
     local soul=f.kind=="stock" and f.item.currency=="souls"
-    local disabled=f.kind=="stock" and (soul and (game.souls or 0) or (game.gold or 0))<price
+    local blood=f.kind=="stock" and f.item.currency=="blood"
+    local disabled=f.kind=="stock" and not Shop.canAfford(f.item,game)
         or (f.kind=="card" or f.kind=="card_sale") and #(game.persistentDeck or {})<=1
     local r=f.rect
     local backpackSale=f.kind=="card_sale" and f.index~=nil
     local loadoutSale=require("ui.backpack").open and (f.kind=="reserve_deity" or f.kind=="reserve_consumable" or f.kind=="deity" or f.kind=="consumable")
     return {id="polish_confirm",x=loadoutSale and 960 or backpackSale and 243 or math.max(12,math.min(1118,r.x+r.w/2-74)),
         y=loadoutSale and 627 or backpackSale and 641 or math.max(70,math.min(634,r.y+r.h+12)),w=loadoutSale and 278 or backpackSale and 225 or 148,h=loadoutSale and 33 or backpackSale and 38 or 34,
-        text=disabled and (f.kind=="stock" and (soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ")
+        text=disabled and (f.kind=="stock" and (blood and "CẦN THÊM MÁU" or soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ")
             or (f.kind=="card" and ("HỦY · +"..price.." LH")
-            or ((f.kind=="stock" and (soul and "MUA · " or "MUA — $") or "BÁN — $")..price..(soul and " LH" or ""))),disabled=disabled}
+            or ((f.kind=="stock" and ((soul or blood) and "MUA · " or "MUA — $") or "BÁN — $")..price..(blood and " HP" or soul and " LH" or ""))),disabled=disabled}
 end
 local function ownedValid(f,game)
     if f.kind=="reserve_deity" then return (game.backpackDeities or {})[f.index]==f.item end
@@ -87,8 +88,9 @@ function P.confirm(shop,game,done)
     local b=P.button(game);if not b then P.clearFocus();return false end
     if b.disabled then Sound.play("cant_afford");return false end
     local soulTransaction=f.kind=="card" or f.kind=="stock" and f.item.currency=="souls"
+    local bloodTransaction=f.kind=="stock" and f.item.currency=="blood"
     local goldBefore=game.gold or 0
-    local before=soulTransaction and (game.souls or 0) or (game.gold or 0)
+    local before=bloodTransaction and (game.playerHp or 0) or soulTransaction and (game.souls or 0) or (game.gold or 0)
     local ok,action,equipment
     local items={};for i,item in ipairs(shop.items or {}) do items[i]=item end
     if f.kind=="stock" then
@@ -106,6 +108,7 @@ function P.confirm(shop,game,done)
         elseif f.kind=="consumable" then ok,action=Shop.sellConsumable(game,f.index) end
     end
     if not ok then P.message=type(action)=="string" and action or "Không thể giao dịch.";P.messageAge=0;P.messageIsNotice=nil;return false,action end
+    if bloodTransaction then P.message="HUYẾT ƯỚC · -"..f.item.cost.." HP · CÒN "..game.playerHp.." HP";P.messageAge=0;P.messageIsNotice=true end
     if f.item.packType=="hand_styles_advanced" then P.message=action;P.messageAge=0;P.messageIsNotice=true end
     local kind=f.kind=="stock" and "buy" or "sell"
     local target={x=Config.deck.x,y=Config.deck.y}
@@ -118,8 +121,8 @@ function P.confirm(shop,game,done)
     end
     if kind=="buy" and (f.item.backpack or target and target.x<0) then target={x=846,y=674} end
     P.job={kind=kind,age=0,duration=Config[kind],item=f.item,rect=f.rect,target=target,button=b,
-        items=kind=="buy" and items or nil,delta=(soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
-        soul=soulTransaction,acquired=acquired,gold=gold,
+        items=kind=="buy" and items or nil,delta=(bloodTransaction and game.playerHp or soulTransaction and (game.souls or 0) or (game.gold or 0))-before,
+        soul=soulTransaction,blood=bloodTransaction,acquired=acquired,gold=gold,
         done=function() if done then done(action,equipment) end end}
     if (game.gold or 0)~=goldBefore then
         if not P.goldMeter or P.goldMeter.value~=goldBefore then P.goldMeter=Feedback.updateMeter(nil,goldBefore,0) end
@@ -140,9 +143,11 @@ function P.confirm(shop,game,done)
 end
 function P.reroll(shop,game)
     if P.busy() then return false end
+    local hp=game.playerHp
     local refresh
     local ok,msg=Shop.reroll(shop,game,function() refresh=true end)
     if not ok then return false,msg end
+    if shop.bloodMode then P.message="ĐỔI HÀNG · -"..(hp-game.playerHp).." HP · CÒN "..game.playerHp.." HP";P.messageAge=0;P.messageIsNotice=true end
     P.clearFocus()
     local items={};for i,item in ipairs(shop.items or {}) do items[i]=item end
     local factor=Config.reroll/0.78
@@ -303,7 +308,7 @@ function P.snapshot(game)
     return snap
 end
 local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
-    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",repeatsPerLevel="HỆ SỐ KÍCH HOẠT",uqChancePct="UQ (%)",
+    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",repeatsPerLevel="HỆ SỐ KÍCH HOẠT",uqChancePct="UQ (%)",addArmorToHpPct="GIÁP THÀNH MÁU (%)",addTwoRepeats="TÁI KÍCH HOẠT LÁ 2",
     xMult="HỆ SỐ CƯỜNG HÓA",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",
@@ -375,7 +380,7 @@ function P.draw(UI,game,buttons,mx,my)
     end
     local job=P.job
     if job and job.kind~="flip" then
-        local tint=job.soul and {0.73,0.48,1} or {1,0.77,0.25}
+        local tint=job.blood and {1,.28,.37} or job.soul and {0.73,0.48,1} or {1,0.77,0.25}
         if job.button and job.age<job.duration*0.22 then
             local b=job.button;b.color=UI.COLORS.btnConfirm;b.font=UI.fonts.tiny
             b.animationScale=1-0.06*math.sin(clamp(job.age/(job.duration*0.22))*math.pi)
@@ -454,7 +459,7 @@ function P.draw(UI,game,buttons,mx,my)
     if P.message then
         if P.messageIsNotice then
             g.setColor(.025,.04,.055,.96);UI.drawRoundedRect("fill",340,612,600,64,8)
-            g.setColor(.95,.72,.22,1);UI.drawRoundedRect("line",340,612,600,64,8)
+            g.setColor(require("src.blood_shop").isMode(game.shopMode) and {1,.32,.40,1} or {.95,.72,.22,1});UI.drawRoundedRect("line",340,612,600,64,8)
         else g.setColor(1,.5,.4,1) end
         g.setFont(UI.fonts.small);g.printf(P.message,350,634,580,"center")
     end

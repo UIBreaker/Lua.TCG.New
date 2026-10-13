@@ -43,7 +43,17 @@ D.glossary = {
 function D.edition(card)
     local definition=Effects.getDefinition(Effects.getEffectName(card))
     if not definition then return "" end
-    return "\nẤN BẢN · "..definition.shopLabel.."\n"..definition.shopText
+    local description=definition.shopText
+    if card.editionPower==5 or card.bloodPower==5 then
+        local score=Effects.getScoreBonus(card)
+        if score then
+            local parts={};if (score.damage or 0)>0 then parts[#parts+1]="+"..score.damage.." Sát thương" end
+            if (score.mult or 0)>0 then parts[#parts+1]="+"..score.mult.." Cường hóa" end
+            if (score.auraMultiplier or 1)>1 then parts[#parts+1]="×"..score.auraMultiplier.." Aura" end
+            description=table.concat(parts," · ").." · HUYẾT LUYỆN ×5"
+        end
+    end
+    return "\nẤN BẢN · "..definition.shopLabel.."\n"..description
 end
 function D.resolve(item,game)
     if not item then return "", "" end
@@ -67,12 +77,14 @@ function D.resolve(item,game)
         local mark=require("src.spn_pacts").cardMark(game,item);if mark then text=text.."\n"..mark end
         local potionDamage,potionMult=require("src.potions").cardBonus(game,item)
         if potionDamage>0 or potionMult>0 then text=text.."\nTHUỐC · +"..potionDamage.." ST / +"..potionMult.." Cường hóa · hết lượt là hết hiệu lực." end
-        if item.rank==11 then text=text.."\nVai trò J: +15 ST và +2 Cường hóa mỗi lá 2–10 được chơi."
+        local power=require("src.blood_shop").powerOf(item)
+        if item.rank==11 then text=text.."\nVai trò J: +"..(15*power).." ST và +"..(2*power).." Cường hóa mỗi lá 2–10 được chơi."
         elseif item.rank==12 then
             local count=#(item.equipments or {})
-            text=text.."\nVai trò Q: +0.1 hệ số; +"..(15*count).." ST và +"..(2*count).." Cường hóa từ "..count.." trang bị hiện tại (+15 ST / +2 Cường hóa mỗi món)."
-        elseif item.rank==13 then text=text.."\nVai trò K: +25 ST và +5 Cường hóa."
-        elseif item.rank==14 then text=text.."\nVai trò A: +15 ST." end
+            text=text.."\nVai trò Q: +"..(.1*power).." hệ số; +"..(15*count*power).." ST và +"..(2*count*power).." Cường hóa từ "..count.." trang bị hiện tại (+"..(15*power).." ST / +"..(2*power).." Cường hóa mỗi món)."
+        elseif item.rank==13 then text=text.."\nVai trò K: +"..(25*power).." ST và +"..(5*power).." Cường hóa."
+        elseif item.rank==14 then text=text.."\nVai trò A: +"..(15*power).." ST." end
+        if power>1 then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
         local state=item.abilityState or {}
         if state.tacticCharge then text=text.."\nTích hiện tại: "..state.tacticCharge end
         if state.hearts then text=text.."\nTâm hiện tại: "..state.hearts.." / "..(A.params(item).maxStacks or 0) end
@@ -89,7 +101,7 @@ function D.resolve(item,game)
         for index,eq in ipairs(item.equipments or {}) do text=text.."\nITM · "..index..". "..eq.name..": "..Equipment.getDescription(eq) end
         if item.seal then
             local seal=Deck.getModifier("seal",item.seal)
-            text=text.."\nẤN · "..(seal and seal.name..": " or "")..Deck.getModifierDescription("seal",item.seal)
+            text=text.."\nẤN · "..(seal and seal.name..": " or "")..require("src.blood_shop").describe(Deck.getModifierDescription("seal",item.seal),item.sealPower or 1)
         end
         if item.enhancement then text=text.."\nRÈN · "..Deck.getModifierDescription("enhancement",item.enhancement) end
         if game then local status=require("src.chest_depth").status(game,item);if status~="" then text=text.."\n"..status end end
@@ -126,14 +138,14 @@ function D.resolve(item,game)
         return item.name,text
     end
     if item.category=="evolution" or item.id=="cons_evolution" then
-        return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +1 cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
+        return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +"..require("src.blood_shop").powerOf(item).." cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
     end
-    if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition}) end
+    if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition,editionPower=item.bloodPower}) end
     if item.packType then return item.name,item.desc or "" end
     local consumable=require("src.shop").getConsumableDescription(item)
     if consumable then return item.name,consumable end
     if item.category=="heal" then return item.name,"Trang bị vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
-    local voucher=require("src.shop").voucherDescription(item.voucherId or item.id)
+    local voucher=require("src.shop").voucherDescription(item.voucherId or item.id,item)
     if voucher then return item.name,voucher end
     return item.name or item.title or "Thẻ bài",item.desc or item.description or ""
 end

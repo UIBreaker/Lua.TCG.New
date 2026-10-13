@@ -84,10 +84,11 @@ end
 for _,d in ipairs(X.seals) do
     g,t=fixture();t.disableFactionPassives=true;t.seal=d.id
     g.consumables={{},{}};g.hand[2].evolutionLevel=1;g.hand[3].rank=3
+    if d.id=="seal_lantern" then g.hand[2].suit=t.suit end
     local r=Scoring.calculate(info({t,g.hand[3]}),{}, {gameState=g,monster=g.monster,hand={g.hand[2]}})
     assert(r.finalScore>=0)
-    if d.id=="seal_sunder" then assert(g.monster.armor==4)
-    elseif d.id=="seal_lantern" then assert(r.bonusChips>=16) end
+    if d.id=="seal_sunder" then assert(g.monster.armor==0 and r.flatDamageBonus==10)
+    elseif d.id=="seal_lantern" then assert(r.bonusMult>=16) end
 end
 -- Enchantments are saved data, trigger once per hand and preserve editions.
 for _,d in ipairs(X.spells) do

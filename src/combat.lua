@@ -354,12 +354,10 @@ function Combat.start(game, monster, round)
         game.storedSlaughterChips = 0
     end
 
+    game.bountySealClaimedThisCombat=false
     game.combatFlags = {
-        bloodSealUsed = false,
-        bloodSealUsedThisCombat = false,
         vitalityGemUsed = false,
         holyRelicTriggered = false,
-        purifyingSealUsed = false,
     }
 
     if not game.persistentDeck or #game.persistentDeck == 0 then
@@ -395,7 +393,8 @@ function Combat.start(game, monster, round)
     Abilities.start(game)
     local maxHandSize = isFaction(game, "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
     local dealOrder = 0
-    while #game.hand < Abilities.handSize(game, maxHandSize) and #game.deck > 0 do
+    local openingSize=math.max(#anchors,Abilities.handSize(game,maxHandSize))
+    while #game.hand < openingSize and #game.deck > 0 do
         local card = table.remove(game.deck)
         dealOrder = dealOrder + 1
         card.selected = false
@@ -420,32 +419,15 @@ function Combat.start(game, monster, round)
         Deck.sortBySuit(game.hand)
     end
     Abilities.handStart(game)
+    require("src.spn_foundations").openingSpeed(game)
     return { slaughterChips = slaughterChips }
 end
 
--- Purification Seal (Ấn Thanh Tẩy): Cleanses 1 debuff when held in hand during monster action
+-- Enemy plans advance here; held seals resolve once in the scoring calculation.
 function Combat.onMonsterTurnEnd(game)
     if not game or not game.hand then return false end
     for _,m in ipairs(Group.members(game)) do
         if m.hp>0 and m.actionTurns~=nil then EnemyAbilities.plan(game,m) end
-    end
-    game.combatFlags = game.combatFlags or {}
-    local armor,cleansed=0,false
-    for _,c in ipairs(game.hand) do
-        if Deck.normalizeSeal(c.seal)=="seal_purifying" and not c.destroyed and not c.faceDown then
-            armor=math.min(12,armor+Deck.SEALS.seal_purifying.params.armor)
-            local m=game.monster
-            if not game.combatFlags.purifyingSealUsed and m and (m.hp or 1)>0
-                and m.bossData and not m.bossDebuffCleansed then
-                game.combatFlags.purifyingSealUsed=true
-                m.bossDebuffCleansed=true;cleansed=true
-            end
-        end
-    end
-    if armor>0 then
-        game.playerArmor=math.min(Abilities.config.armorCap,(game.playerArmor or 0)+armor)
-        game.playerShield=game.playerArmor
-        return true,"Ấn Thanh Tẩy: +"..armor.." Giáp"..(cleansed and ", giải trừ nội tại Boss!" or "!")
     end
     return false
 end

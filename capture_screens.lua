@@ -61,6 +61,20 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-blood-shop" then
+            local ok,err=pcall(require("tests.blood_shop_capture").update,gameRef,callbacks)
+            if not ok then print("BLOOD SHOP UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-spn-vitality-ui" then
+            local ok,err=pcall(require("tests.spn_vitality_capture").update,gameRef,callbacks)
+            if not ok then print("SPN VITALITY UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-spn-pacts-ui" then
             local ok,err=pcall(require("tests.spn_pacts_capture").update,gameRef,callbacks)
             if not ok then print("SPN PACTS UI FAIL: "..tostring(err));love.event.quit(1) end

@@ -72,12 +72,15 @@ function P.queueRepeats(game,cards,queue)
     if not game then return end
     local cap=require("config.card_ability_data").maxTriggersPerHand
     active(game,function(source)
-        if source.id=="spirit_awakened_echo" then
-            local coefficient=D.scaleEffect(source,{repeatsPerLevel=1}).repeatsPerLevel
+        if source.id=="spirit_awakened_echo" or source.id=="spirit_second_wave" then
+            local coefficient=source.id=="spirit_awakened_echo"
+                and D.scaleEffect(source,{repeatsPerLevel=1}).repeatsPerLevel
+                or D.scaleEffect(source,{addTwoRepeats=1}).addTwoRepeats
             for index,card in ipairs(cards or {}) do
                 local level=math.max(0,math.floor(tonumber(card.evolutionLevel) or 0))
+                local repeats=source.id=="spirit_awakened_echo" and math.max(0,level*coefficient-1) or (card.rank==2 and coefficient or 0)
                 if not card.destroyed and not card.exhausted then
-                    for i=1,math.max(0,level*coefficient-1) do
+                    for i=1,repeats do
                         if #queue>=cap then break end
                         -- This SPN queues once per hand; repeated jobs never queue more copies.
                         queue[#queue+1]={card=card,index=index,depth=1,retrigger=true,effectiveness=1}
@@ -98,9 +101,10 @@ function P.bloodEnabled(game)
     return false
 end
 function P.canDiscard(game)
-    return (game.discardsRemaining or 0)>0 or (game.playerHp or 0)>20 and P.bloodEnabled(game)
+    return require("src.deck").freeSealDiscard(game) or (game.discardsRemaining or 0)>0 or (game.playerHp or 0)>20 and P.bloodEnabled(game)
 end
 function P.payDiscard(game)
+    if require("src.deck").freeSealDiscard(game) then return false end
     if (game.discardsRemaining or 0)>0 then return false end
     if not P.canDiscard(game) then return nil end
     local _,slot,physical=P.bloodEnabled(game)

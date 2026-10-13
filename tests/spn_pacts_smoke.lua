@@ -119,5 +119,6 @@ assert(g.playerHp==80 and g.deities[1].id=="spirit_right_echo" and D.getRarityBa
     and D.getRarityBadge(g.deities[2])=="UQ","one HP payment, promotion uses physical copier/source")
 local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 assert(restored.deities[1].id=="spirit_right_echo" and D.getRarityBadge(restored.deities[1])=="UQ")
-assert(#D.getRandomShopPool({},99)==68)
+local catalogCount=0;for _ in pairs(D.CATALOG) do catalogCount=catalogCount+1 end
+assert(#D.getRandomShopPool({},catalogCount)==catalogCount)
 print("SPN pacts PASS: unique physical battle targets/marks/reset, exact single/triple conditions, full level repeats/evolution/caps, nonlethal blood payment, exact evolving odds/UQ, locks/reserves/mimic/preview/save")

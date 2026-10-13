@@ -150,6 +150,16 @@ local templates = {
 }
 for id,p in pairs(values) do Equipment.ITEMS[id].params=p;Equipment.ITEMS[id].descriptionTemplate=templates[id] end
 function Equipment.getDescription(item)
+    if require("src.blood_shop").powerOf(item)>1 then
+        local def=Equipment.ITEMS[item.id]
+        if def and def.descriptionTemplate then
+            local p=require("src.blood_shop").params(def.params,5)
+            return def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
+                return string.format("%g",k=="thresholdPercent" and (p.threshold or 0)*100 or p[k] or 0)
+            end).."\nHUYẾT LUYỆN ×5 · Điều kiện và số ô giữ nguyên."
+        end
+        return require("src.blood_shop").describe(Equipment.getDescription(def),5):gsub("tối đa 6 mỗi tay","tối đa 30 mỗi tay")
+    end
     local def=Equipment.ITEMS[item.id];if not def then return item.desc or "" end
     local description=def.desc or ""
     if def.descriptionTemplate then description=def.descriptionTemplate:gsub("{([%w_]+)}",function(k)
@@ -259,7 +269,7 @@ for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
             local seen=ctx.equipmentSeen[c]
             if not seen then seen={};ctx.equipmentSeen[c]=seen end
             local key=ctx.equipmentIndex or item
-            if seen[key] then return nil end;seen[key]=true
+            if seen[key] and not ctx.equipmentRetrigger then return nil end;seen[key]=true
         end
         local r=effect(c,cs,index,ctx)
         if r then
@@ -267,7 +277,7 @@ for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
             if r.addGold and ctx then
                 -- Basics already reserve the shared allowance inside their effect.
                 if not item.basic and not item.crafted then
-                    r.addGold=math.min(r.addGold,math.max(0,6-(ctx.basicEquipmentGold or 0)))
+                    r.addGold=math.min(r.addGold,math.max(0,6*(ctx.bloodEquipmentPower or 1)-(ctx.basicEquipmentGold or 0)))
                     ctx.basicEquipmentGold=(ctx.basicEquipmentGold or 0)+r.addGold
                 end
             end
@@ -276,4 +286,33 @@ for id,item in pairs(Equipment.ITEMS) do if not item.soulOnly then
         return r
     end end
 end end
+function Equipment.instance(id,saved)
+    local def=Equipment.ITEMS[id];if not def then return nil end
+    local copy={};for k,v in pairs(def) do copy[k]=v end
+    copy.acquisitionCost=saved and (saved.acquisitionCost or saved.investment) or nil
+    copy.bloodPower=saved and saved.bloodPower or nil
+    local power=require("src.blood_shop").powerOf(copy)
+    if power>1 then
+        copy.params=require("src.blood_shop").params(def.params or {},power)
+        if def.statSummary then copy.statSummary=def.statSummary:gsub("(%+)(%d+%.?%d*)",function(sign,n) return sign..string.format("%g",tonumber(n)*power) end) end
+        copy.attackSpeed=(def.attackSpeed or 0)*power
+        copy.desc=Equipment.getDescription(copy)
+        if def.onCardScore then copy.onCardScore=function(c,cs,index,ctx)
+            if ctx then ctx.bloodEquipmentPower=math.max(ctx.bloodEquipmentPower or 1,power) end
+            local result=def.onCardScore(c,cs,index,ctx)
+            local scaled=require("src.blood_shop").effect(result,power)
+            if ctx and result and result.addGold then
+                scaled.addGold=math.min(scaled.addGold,result.addGold+math.max(0,6*power-(ctx.basicEquipmentGold or 0)))
+                ctx.basicEquipmentGold=(ctx.basicEquipmentGold or 0)+scaled.addGold-result.addGold
+            end
+            return scaled
+        end end
+        if def.onHandEvaluate then copy.onHandEvaluate=function(...)
+            local buffs=def.onHandEvaluate(...);local scaled={}
+            for i,buff in pairs(buffs or {}) do scaled[i]=require("src.blood_shop").effect(buff,power) end
+            return scaled
+        end end
+    end
+    return copy
+end
 return Equipment

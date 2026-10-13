@@ -56,16 +56,16 @@ for _,d in ipairs(X.equipment) do
 end
 
 -- Seals occupy the existing single seal slot, and trigger once per scored card.
-add(X.seals,"seal_sunder","Ấn Phá Giáp","Khi tính điểm: phá 8 Giáp của quái mục tiêu trước khi gây Aura. Nếu mục tiêu đã hết Giáp: +12 ST thay thế.","A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",function(c,cs,i,ctx)
+add(X.seals,"seal_sunder","Ấn Phá Giáp","Khi tính điểm: phá toàn bộ Giáp của đối thủ mục tiêu, thêm sát thương bằng 10% HP tối đa của mục tiêu.","A heavy wedge-shaped stamp cracking an iron shield imprint in volcanic stone.",function(c,cs,i,ctx)
     local m=ctx and ctx.monster
     if not m then return end
-    if (m.armor or 0)<=0 then return {addChips=12} end
-    if not ctx.preview or ctx.previewSandbox then m.armor=math.max(0,m.armor-8) end
-    return {}
+    if not ctx.preview or ctx.previewSandbox then m.armor=0 end
+    return {addFlatDamage=math.floor((m.maxHp or m.hp or 0)*0.10)}
 end)
-add(X.seals,"seal_lantern","Ấn Hải Đăng","Mỗi lá cùng rank giữ lại trên tay: +16 ST khi tính điểm, tối đa +48.","A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",function(c,cs,i,ctx)
-    local n=0;for _,o in ipairs(ctx and ctx.hand or {}) do if o.rank==c.rank then n=n+1 end end
-    return {addChips=math.min(48,n*16)}
+add(X.seals,"seal_lantern","Ấn Hải Đăng","Khi tính điểm: +16 Cường hóa mỗi lá cùng chất còn giữ trên tay, không giới hạn số lá.","A lighthouse-shaped stamp casting three broad beams into a deep navy sea.",function(c,cs,i,ctx)
+    local Deck=require("src.deck");local suit=(Deck.SUITS[c.suit] or {}).id or c.suit
+    local n=0;for _,o in ipairs(ctx.hand or {}) do if ((Deck.SUITS[o.suit] or {}).id or o.suit)==suit then n=n+1 end end
+    return {addMult=n*16}
 end)
 for _,d in ipairs(X.seals) do d.sealType=d.id;d.sealName=d.name end
 

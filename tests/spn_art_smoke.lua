@@ -7,7 +7,7 @@ function T.verify(requestedIds,output)
     ids=requestedIds or ids
     local g=love.graphics
     local cols=#ids<=4 and #ids or #ids==6 and 3 or 5
-    local canvas=g.newCanvas(cols*250+30,#ids<=4 and 435 or 850)
+    local canvas=g.newCanvas(cols*250+30,math.ceil(#ids/cols)*415+20)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.04,0.05,0.08)
     for i,id in ipairs(ids) do
         local image=assert(Art.get(id),id)

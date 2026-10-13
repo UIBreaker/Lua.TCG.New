@@ -1,9 +1,9 @@
 local UI=require("src.ui")
 local Deck=require("src.deck")
 local Emblems=UI.SealEmblems
-local briefs={blood="Tái kích hoạt · 3 HP / lá / trận",anchor="Bài chủ lực vào tay mở đầu",bounty="Kết liễu quái · +2 Vàng / tay",
-    purifying="Giữ bài · +4 Giáp và tẩy Boss",sunder="Phá 8 Giáp · hết Giáp: +12 ST",lantern="Giữ cùng rank · +16 ST / lá",
-    echoes="Bỏ đủ 4 chất · +0.75 hệ số Aura",reclaimer="Bỏ riêng · 2 Vàng đổi lượt bỏ",gambit="5 lá tính điểm · 6 HP đổi lượt",threshold="3 lần tính điểm · hồi 8 HP"}
+local briefs={blood="Trang bị thêm 2 lần · 3 HP cả tay",anchor="Luôn trên tay khi bắt đầu trận",bounty="Thắng trận · +3 Vàng mỗi lá",
+    purifying="Giữ bài · Giáp = 10% HP tối đa",sunder="Xóa Giáp · +10% HP tối đa địch",lantern="Cùng chất giữ lại · +16 Cường hóa",
+    echoes="Giữ bài · ×2 Cường hóa mỗi lá",reclaimer="Bỏ bài · +4 Vàng mỗi lá",gambit="Bỏ các lá mang ấn · miễn lượt",threshold="Tính điểm 3 lần · hồi 3 HP / lá"}
 function love.errorhandler(message) print(debug.traceback(message,2));return function() return 1 end end
 local function save(canvas,path)
     local data=canvas:newImageData();local f=assert(io.open(path,"wb"));f:write(data:encode("png"):getString());f:close();data:release()
@@ -40,7 +40,7 @@ function love.load()
         UI.drawCard(card,x+194,y+225,64,96)
         g.setColor(0.94,0.89,0.77,1);g.setFont(UI.fonts.small);g.printf(briefs[d.symbol],x+14,y+340,274,"center")
         g.setColor(UI.COLORS.textMuted);g.setFont(UI.fonts.tiny)
-        local note=(d.symbol=="gambit" or d.symbol=="reclaimer") and "Giới hạn chung: một lần mỗi trận" or "Hình riêng, đọc rõ cả khi thu nhỏ"
+        local note=(d.symbol=="purifying" or d.symbol=="echoes") and "Chỉ giữ trên tay · Đánh ra không tính" or "Cộng dồn theo các lá mang dấu"
         g.printf(note,x+14,y+390,274,"center")
     end
     g.pop();save(canvas,"docs/seal_emblems_runtime.png");canvas:release()

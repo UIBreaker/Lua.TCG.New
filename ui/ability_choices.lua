@@ -45,7 +45,12 @@ function Modal.confirm()
     local UI=require("src.ui");local before=UI.Polish.snapshot(m.game)
     local success
     if m.mode=="card_upgrade" then success=require("src.inventory").useCardUpgrade(m.game,index,c)
-    else success=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c) end
+    else
+        for _=1,require("src.blood_shop").powerOf(m.consumable) do
+            local ok=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c)
+            success=success or ok
+        end
+    end
     if not success then return false end
     if m.mode~="card_upgrade" then table.remove(m.game.consumables,index);A.consumableUsed(m.game) end
     UI.Polish.changed(UI,m.game,before,m.consumable,m.sourceRect)
@@ -144,10 +149,12 @@ function Modal.draw(UI,mx,my)
         love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(0.86,0.76,1,1)
         local before=d and A.description(c) or Deities.getDescription(c)
         local after
-        if d then after=A.description(c,A.level(c)+1)
-        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+1;after=Deities.getDescription(copy) end
+        local gain=require("src.blood_shop").powerOf(m.consumable)
+        local nextLevel=d and math.min(A.config.maxEvolutionLevel,A.level(c)+gain) or A.level(c)+gain
+        if d then after=A.description(c,nextLevel)
+        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+gain;after=Deities.getDescription(copy) end
         local changes={}
-        if d then local a,b=A.params(c),A.params(c,d,A.level(c)+1);for k,v in pairs(a) do if b[k]~=v then changes[#changes+1]=(paramLabels[k] or k)..": "..v.." → "..b[k] end end;table.sort(changes) end
+        if d then local a,b=A.params(c),A.params(c,d,nextLevel);for k,v in pairs(a) do if b[k]~=v then changes[#changes+1]=(paramLabels[k] or k)..": "..v.." → "..b[k] end end;table.sort(changes) end
         love.graphics.printf("TRƯỚC: "..before.."\nSAU: "..after.."\n"..table.concat(changes," · "),105,486,1040)
         button("confirm","XÁC NHẬN TIẾN HÓA",760,602,290,46)
     elseif choice then button("decline",choice.declineLabel or "KHÔNG DÙNG KHẢ NĂNG",480,602,315,46) end

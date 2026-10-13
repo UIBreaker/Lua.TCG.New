@@ -86,7 +86,7 @@ end
 
 function Deities.scaleEffect(deity, result)
     local multiplier = effectMultiplier(deity)
-    if not result or multiplier == 1 then return result end
+    if not result or multiplier==1 then return require("src.blood_shop").effect(result,require("src.blood_shop").powerOf(deity)) end
 
     if result.consumableChancePct then result.consumableChancePct=math.min(100,result.consumableChancePct*multiplier) end
     if result.discardCopies then result.discardCopies=math.floor(result.discardCopies+2*(multiplier-1)) end
@@ -124,7 +124,7 @@ function Deities.scaleEffect(deity, result)
     for _,key in ipairs({"xMult","xChips","xAura","xSoulYield"}) do
         if type(result[key])=="number" and result[key]>1 then result[key]=1+(result[key]-1)*multiplier end
     end
-    return result
+    return require("src.blood_shop").effect(result,require("src.blood_shop").powerOf(deity))
 end
 
 -- Numeric values are shared by callbacks and descriptions.
@@ -266,6 +266,9 @@ require("src.spn_mimic").register(Deities)
 require("src.spn_basics").register(Deities)
 require("src.spn_turns").register(Deities)
 require("src.spn_pacts").register(Deities)
+require("src.spn_vitality").register(Deities)
+require("src.spn_foundations").register(Deities)
+require("src.spn_growth").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -281,9 +284,14 @@ function Deities.getDescription(deity)
     if def.stat=="copyActivations" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     if def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     if def.stat=="uqChancePct" then value=math.min(100,value) end
-    local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)):gsub("{double}",formatEffectNumber(value*2)))
+    value=value*require("src.blood_shop").powerOf(deity)
+    if def.stat=="addTransmutePct" then value=math.min(90,value) end
+    if def.stat=="addRedirectPct" then value=math.min(100,value) end
+    if def.stat=="copyActivations" or def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(value)) end
+    if def.stat=="consumableChancePct" or def.stat=="uqChancePct" then value=math.min(100,value) end
+    local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(require("src.blood_shop").powerOf(deity) + value)):gsub("{double}",formatEffectNumber(value*2)):gsub("{scale}",formatEffectNumber(effectMultiplier(deity)*require("src.blood_shop").powerOf(deity))))
     if deity.id=="spirit_hell_sleep" then
-        text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."
+        text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)*require("src.blood_shop").powerOf(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then
         text="Một lần mỗi trận: chặn đòn chí tử, còn 5 HP."
     end
@@ -291,6 +299,7 @@ function Deities.getDescription(deity)
     if growth then text=text.."\n"..growth end
     local spell=require("src.chest_expansion").byId[deity.enchantment]
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end
+    if deity.bloodPower then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
     return text
 end
 for _, row in ipairs(tacticalEntries) do
@@ -354,7 +363,7 @@ function Deities.getMaxSlots(gameState)
     local occupiedMax=0
     for slot, deity in pairs(type(list) == "table" and list or {}) do
         if type(slot)=="number" and type(deity)=="table" and deity.id then occupiedMax=math.max(occupiedMax,slot) end
-        if type(deity) == "table" and deity.edition == "negative" then maxSlots = maxSlots + 1 end
+        if type(deity) == "table" and deity.edition == "negative" then maxSlots = maxSlots + ((deity.editionPower==5 or deity.bloodPower==5) and 5 or 1) end
     end
     -- Boss rewards may exceed capacity; every occupied slot stays visible and active.
     return math.max(maxSlots,occupiedMax)

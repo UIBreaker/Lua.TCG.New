@@ -25,6 +25,14 @@ for _, a in ipairs(arg or {}) do
     if a == "--capture-continental52" then require("tests.continental52_capture");return end
     if a == "--test-continental52-regressions" then
         io.stdout:setvbuf("no");local failed=false
+        local vitalityOk,vitalityErr=pcall(require,"tests.spn_vitality_smoke")
+        if not vitalityOk then failed=true;print("tests.spn_vitality_smoke FAIL: "..tostring(vitalityErr)) end
+        local forgeOk,forgeErr=pcall(require,"tests.spn_discard_forge_smoke")
+        if not forgeOk then failed=true;print("tests.spn_discard_forge_smoke FAIL: "..tostring(forgeErr)) end
+        local foundationOk,foundationErr=pcall(require,"tests.spn_foundations_smoke")
+        if not foundationOk then failed=true;print("tests.spn_foundations_smoke FAIL: "..tostring(foundationErr)) end
+        local growthOk,growthErr=pcall(require,"tests.spn_growth_smoke")
+        if not growthOk then failed=true;print("tests.spn_growth_smoke FAIL: "..tostring(growthErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -141,11 +149,13 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-shop-markets" then isCaptureMode = true end
     if a == "--test-seal-descriptions" then isCaptureMode = true end
     if a == "--test-expanded-inventory" then isCaptureMode = true end
+    if a == "--test-blood-shop" then isCaptureMode = true end
     if a == "--test-potions" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
     if a == "--test-spn-pacts-ui" then isCaptureMode = true end
+    if a == "--test-spn-vitality-ui" then isCaptureMode = true end
     if a == "--test-card-inspector" then isCaptureMode = true end
     if a == "--test-modal-hover" then isCaptureMode = true end
     if a == "--test-inventory-rail" then isCaptureMode = true end
@@ -1126,7 +1136,7 @@ local function discardSelected()
     screenShake = math.max(screenShake or 0, 2.5)
 
     -- Check if any discarded card has Free Feather equipment
-    local hasFreeDiscard = false
+    local hasFreeDiscard = Deck.freeSealDiscard(game)
     for _, idx in ipairs(game.selectedIndices) do
         local c = game.hand[idx]
         if c and c.equipments then
@@ -1139,7 +1149,8 @@ local function discardSelected()
         end
     end
 
-    local bloodPaid=require("src.spn_pacts").payDiscard(game)
+    local bloodPaid=false
+    if not hasFreeDiscard then bloodPaid=require("src.spn_pacts").payDiscard(game) end
     if bloodPaid==nil then return end
     if bloodPaid then hasFreeDiscard=false end
     table.sort(game.selectedIndices, function(a, b) return a > b end)
@@ -1242,7 +1253,7 @@ local function discardSelected()
 
     if hasFreeDiscard then
         table.insert(anim.floatingTexts, {
-            text = "MIỄN PHÍ ĐỔI BÀI (LÔNG VŨ)!",
+            text = "BỎ BÀI MIỄN PHÍ!",
             color = UI.COLORS.goldYellow,
             x = 640,
             y = 520,
@@ -1314,7 +1325,7 @@ local function useConsumable(idx)
                 local speed=require("src.enemy_abilities").speed(enemy)
                 if enemy.hp>0 and (slow and speed>1 and not (enemy.combatBuffs or {}).slow or not slow and armor>0) then
                     options[#options+1]={target=enemy,label=slow and ("Địch "..i.." · Tốc "..speed.." → "..math.max(1,math.floor(speed*.5)))
-                        or ("Địch "..i.." · "..armor.." giáp → "..(armor*.25).." ST")}
+                        or ("Địch "..i.." · "..armor.." giáp → "..(armor*.25*require("src.blood_shop").powerOf(c)).." ST")}
                 end
             end
             if #options==0 then return applyPotion(game.monster) end
@@ -1373,7 +1384,7 @@ local function useConsumable(idx)
     if expansion.byId[c.id] and (c.id:match("^spec_") or c.id:match("^spell_")) then
         local target=game.hand and game.hand[(game.selectedIndices or {})[1] or 1]
             or (game.persistentDeck or {})[1]
-        local ok,message=expansion.apply(game,c,target)
+        local ok,message=require("src.blood_shop").applyConsumable(game,c,target,expansion.apply)
         table.insert(anim.floatingTexts,{text=message,color=c.color or UI.COLORS.goldYellow,x=640,y=350,alpha=3})
         if ok then
             table.remove(game.consumables,idx)
@@ -1382,7 +1393,7 @@ local function useConsumable(idx)
         return ok
     end
     if c.id == "cons_vitality" then
-        local bonus=c.hpBonus or 20
+        local bonus=(c.hpBonus or 20)*require("src.blood_shop").powerOf(c)
         game.maxPlayerHp=(game.maxPlayerHp or 100)+bonus
         game.playerHp=math.min(game.maxPlayerHp,(game.playerHp or 100)+bonus)
         table.remove(game.consumables,idx)
@@ -1631,7 +1642,7 @@ local function useConsumable(idx)
             Sound.play("cant_afford")
             return false
         end
-        if not Deck.applySeal(game,target,c.sealType or c.id) then return false end
+        if not Deck.applySeal(game,target,c.sealType or c.id,c.bloodPower) then return false end
         Sound.play("round_win")
         table.remove(game.consumables, idx)
         table.insert(anim.floatingTexts, {
@@ -1821,7 +1832,7 @@ local function applyPendingEditionAt(mx, my, currentState)
         local x, y, w, h = getDeitySlotRect(i, currentState)
         local deity = game.deities and game.deities[i]
         if deity and mx >= x and mx <= x + w and my >= y and my <= y + h then
-            if not Shop.applyEdition(deity, pendingEditionCard.edition) then
+            if not Shop.applyEdition(deity, pendingEditionCard.edition,pendingEditionCard.bloodPower) then
                 table.insert(anim.floatingTexts,{text="ẤN BẢN NÀY CẦN LÁ BÀI CÓ BẬC VÀ CHẤT",color=UI.COLORS.goldYellow,x=640,y=310,alpha=2.2})
                 Sound.play("cant_afford");return true
             end
@@ -1845,12 +1856,12 @@ local function applyPendingEditionAt(mx, my, currentState)
                 for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
                     for _, copy in ipairs(pile) do
                         if copy and (copy == card or (card.id and copy.id == card.id)) then
-                            Shop.applyEdition(copy, pendingEditionCard.edition)
+                            Shop.applyEdition(copy, pendingEditionCard.edition,pendingEditionCard.bloodPower)
                             applied = true
                         end
                     end
                 end
-                if not applied then Shop.applyEdition(card, pendingEditionCard.edition) end
+                if not applied then Shop.applyEdition(card, pendingEditionCard.edition,pendingEditionCard.bloodPower) end
                 local used = table.remove(game.consumables, consumableIndex)
             UI.Abilities.consumableUsed(game)
                 pendingEditionCard = nil
@@ -2245,6 +2256,7 @@ UI.finishCombatVictory=function()
     game.potionCombat={};game.potionVictoryPending=nil
     require("src.souls").awardKills(game)
     UI.Abilities.combatWin(game)
+    require("src.spn_anomalies").showFeedback(game,anim)
     -- Combat Victory: purge destroyed cards from persistent deck & restore base ranks
     Combat.cleanupDestroyedCards(game)
     if game.persistentDeck then
@@ -2344,9 +2356,9 @@ UI.applyCombatWinRewards=function(scoreResult)
     game.lastRoundDeityRewards = { bonusGold = deityBonus, details = deityDetails or {} }
     if scoreResult and scoreResult.hasBountySeal and not game.bountySealClaimedThisCombat then
         game.bountySealClaimedThisCombat = true
-        deityBonus = deityBonus + Deck.SEALS.seal_bounty.params.gold
+        deityBonus = deityBonus + (scoreResult.bountySealGold or 0)
         table.insert(anim.floatingTexts, {
-            text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +"..Deck.SEALS.seal_bounty.params.gold.." Vàng!",
+            text = "💰 [ẤN TRUY NÃ] Kết liễu quái: +"..(scoreResult.bountySealGold or 0).." Vàng!",
             color = UI.COLORS.goldYellow,
             x = 640,
             y = 140,
@@ -2409,6 +2421,32 @@ function love.load()
     Rng.seed(os.time())
     UI.initFonts()
     for _, argument in ipairs(arg or {}) do
+        if argument=="--test-spn-foundations-art" then
+            local ok,err=pcall(function()
+                local ids={};for _,row in ipairs(require("src.spn_foundations").entries) do ids[#ids+1]=row[1] end
+                require("tests.spn_art_smoke").verify(ids,"docs/spn_foundations_runtime.png")
+            end)
+            if not ok then print("SPN FOUNDATIONS ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
+        if argument=="--test-spn-discard-forge-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_discard_forge"},"docs/spn_discard_forge_runtime.png") end)
+            if not ok then print("SPN DISCARD FORGE ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
+        if argument=="--test-spn-vitality-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_armor_vitality"},"docs/spn_vitality_runtime.png") end)
+            if not ok then print("SPN VITALITY ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
+        if argument=="--test-spn-growth-art" then
+            local ok,err=pcall(function()
+                local ids={};for _,row in ipairs(require("src.spn_growth").entries) do ids[#ids+1]=row[1] end
+                require("tests.spn_art_smoke").verify(ids,"docs/spn_growth_runtime.png")
+            end)
+            if not ok then print("SPN GROWTH ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
         if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" or argument=="--test-spn-basics-art" or argument=="--test-spn-turns-art" or argument=="--test-spn-pacts-art" then
             local ok, err = pcall(function()
                 local ids,output
@@ -3177,7 +3215,7 @@ function love.update(dt)
                                         sc.rank = sc.rank + 1
                                         sc.baseRank = sc.rank
                                         sc.rankName = Deck.RANK_NAMES[sc.rank] or tostring(sc.rank)
-                                        sc.baseChips = Deck.getChipValue(sc.rank)
+                                        sc.baseChips = Deck.getChipValue(sc.rank) + (sc.bonusBaseChips or 0)
                                         table.insert(anim.floatingTexts, {
                                             text = "🧬 TIẾN HÓA: " .. sc.rankName .. "♣ lên Rank " .. sc.rank .. " vĩnh viễn!",
                                             color = { 0.2, 0.95, 0.4, 1 },
@@ -3208,6 +3246,7 @@ function love.update(dt)
                                                 pc.rankName = Deck.RANK_NAMES[pc.baseRank] or tostring(pc.baseRank)
                                                 pc.baseChips = Deck.getChipValue(pc.baseRank) + (sc.bonusBaseChips or 0)
                                                 pc.bonusBaseChips = sc.bonusBaseChips or 0
+                                                pc.spnPermanentDamage = sc.spnPermanentDamage
                                                 pc.bonusMult = sc.bonusMult or 0
                                                 pc.isPrimalDrone = sc.isPrimalDrone
                                                 pc.roleTitle = sc.roleTitle
@@ -3321,7 +3360,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.128.0", 48, 185)
+    g.print("beta 0.129.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -5729,11 +5768,16 @@ local function drawShopState(beginLayer)
     love.graphics.setFont(UI.fonts.small)
     love.graphics.push()
     love.graphics.translate(325,35);love.graphics.scale(UI.Polish.goldPulse());love.graphics.translate(-325,-35)
-    love.graphics.print(shopData.soulMode and (tostring(game.souls or 0).." LINH HỒN")
+    if shopData.bloodMode then love.graphics.setColor(UI.COLORS.hpRed) end
+    love.graphics.print(shopData.bloodMode and ("♥ "..tostring(game.playerHp).." HP") or shopData.soulMode and (tostring(game.souls or 0).." LINH HỒN")
         or ("◉ " .. tostring(UI.Polish.goldValue(game.gold)) .. "   •   "..tostring(game.souls or 0).." LH"), 310, 28)
     love.graphics.pop()
     love.graphics.setColor(UI.COLORS.textLight)
     love.graphics.print("Ải " .. tostring((game.run and game.run.ante) or game.act or 1) .. "   •   Sinh lực " .. tostring(game.playerHp or 0) .. "/" .. tostring(game.maxPlayerHp or 100), 530, 28)
+    if game.bloodShopNotice then
+        love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(UI.COLORS.hpGreen)
+        love.graphics.printf("KHÔNG GẶP SHOP MÁU\n+3 MÁU TỐI ĐA",880,19,210,"center")
+    end
 
     local shopX, shopY, shopW, shopH = 20, 76, 1240, 560
     if shopData.soulMode or shopData.mode=="large" then
@@ -5760,10 +5804,10 @@ local function drawShopState(beginLayer)
 
     -- 2. [Gieo Lại] Button
     local rCost = Shop.getRerollCost(shopData, game)
-    local canReroll = (shopData.soulMode and (game.souls or 0) or (game.gold or 0)) >= rCost
+    local canReroll = Shop.canAfford({cost=rCost,currency=shopData.bloodMode and "blood" or shopData.soulMode and "souls" or nil},game)
     local btnReroll = {
         id = "reroll",
-        text = shopData.soulMode and ("ĐỔI HÀNG · "..rCost.." LH") or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
+        text = shopData.bloodMode and ("ĐỔI HÀNG · "..rCost.." HP") or shopData.soulMode and ("ĐỔI HÀNG · "..rCost.." LH") or (rCost == 0 and "ĐỔI HÀNG · MIỄN PHÍ" or ("ĐỔI HÀNG  ◉" .. rCost)),
         x = 180,
         y = 653,
         w = 164,
@@ -6792,7 +6836,7 @@ local function handleShopMousepressed(mx, my, button)
             elseif btn.id == "reroll" then
                 UI.Polish.reroll(shopData, game)
                 return true
-            elseif btn.id=="medicine_page_1" or btn.id=="medicine_page_2" then
+            elseif btn.id=="medicine_page_1" or btn.id=="medicine_page_2" or btn.id=="blood_page_1" or btn.id=="blood_page_2" then
                 shopData.page=tonumber(btn.id:match("(%d)$"))
                 UI.Polish.clearFocus();Sound.play("card_deal");return true
             elseif btn.id == "open_backpack" then
@@ -7485,12 +7529,12 @@ UI.Backpack.handle=function(mx,my,button)
             local storedIndex
             for i,item in ipairs(game.consumables or {}) do if item==pendingEditionCard then storedIndex=i;break end end
             if not storedIndex then pendingEditionCard=nil;UI.Backpack.message="Thẻ Ấn Bản không còn trong balo.";return true end
-            if not Shop.applyEdition(c,pendingEditionCard.edition) then
+            if not Shop.applyEdition(c,pendingEditionCard.edition,pendingEditionCard.bloodPower) then
                 UI.Backpack.message="Ấn Bản này cần lá bài có bậc và chất.";return true
             end
             if c.rank then
                 for _,pile in ipairs({game.hand or {},game.deck or {},game.discardPile or {}}) do
-                    for _,copy in ipairs(pile) do if copy.id==c.id then Shop.applyEdition(copy,pendingEditionCard.edition) end end
+                    for _,copy in ipairs(pile) do if copy.id==c.id then Shop.applyEdition(copy,pendingEditionCard.edition,pendingEditionCard.bloodPower) end end
                 end
             end
             table.remove(game.consumables,storedIndex)

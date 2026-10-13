@@ -77,6 +77,7 @@ function CardEffects.setEffect(card, name)
     if name ~= nil and not effectName then return false end
     if effectName and not card.rank and not Config.effects[effectName].score then return false end
     card.edition = effectName
+    card.editionPower=nil
     card.visualEffect = nil
     if effectName then
         stateFor(card, Config.effects[effectName])
@@ -98,7 +99,11 @@ end
 function CardEffects.getScoreBonus(card)
     local effectName = CardEffects.getEffectName(card)
     local definition = effectName and Config.effects[effectName]
-    return definition and definition.score or nil
+    local score=definition and definition.score or nil
+    if score and (card.editionPower==5 or card.bloodPower==5) then
+        local boosted={};for k,v in pairs(score) do boosted[k]=type(v)=="number" and (k~="auraMultiplier" or v>1) and v*5 or v end;return boosted
+    end
+    return score
 end
 
 function CardEffects.getBeamColor(card)

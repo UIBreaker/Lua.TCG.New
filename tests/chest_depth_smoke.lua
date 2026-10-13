@@ -78,15 +78,16 @@ g,c=fixture();c.equipments={E.ITEMS.itm_oar};score(g,{c},"PAIR");assert(score(g,
 g,c=fixture();c.equipments={E.ITEMS.itm_pendulum};score(g,{c,g.hand[2]},"PAIR");assert(score(g,{c}).addArmor>=6)
 g,c=fixture();c.equipments={E.ITEMS.itm_relay};g.hand[2].equipments={E.ITEMS.gem_fire}
 local relay=E.ITEMS.itm_relay.onCardScore(c,{g.hand[2],c},2,{gameState=g,depthHandType="pair"});assert(relay.addChips==math.floor(g.hand[2].baseChips/2))
--- The four retained depth seals, including their preparation events.
+-- New depth seals separate held effects, discard rewards and triple scoring.
 g,c=fixture();c.seal="seal_echoes"
-for _,suit in ipairs(Deck.SUIT_ORDER) do c.suit=suit;A.discard(g,{c}) end
-assert(score(g,{c}).xMultTotal>=1.75);assert(score(g,{c}).xMultTotal<1.75)
-g,c=fixture();c.seal="seal_reclaimer";A.discard(g,{c});assert(g.discardsRemaining==4 and g.gold==28)
-A.discard(g,{c});assert(g.discardsRemaining==4 and g.gold==28)
-g,c=fixture();c.seal="seal_gambit";local cs={c,g.hand[2],g.hand[3],Deck.newCard(3,"elaris"),Deck.newCard(4,"vharos")}
-score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==74);score(g,cs,"FLUSH");assert(g.handsRemaining==4 and g.playerHp==74)
-g,c=fixture();c.seal="seal_threshold";assert(score(g,{c}).healHp==0);assert(score(g,{c}).healHp==0);assert(score(g,{c}).healHp==8)
+assert(score(g,{g.hand[2]},nil,false,{c}).totalMult>=4)
+assert(score(g,{c},nil,false,{}).xMultTotal<2)
+g,c=fixture();c.seal="seal_reclaimer";A.discard(g,{c});assert(g.discardsRemaining==3 and g.gold==34)
+A.discard(g,{c});assert(g.discardsRemaining==3 and g.gold==38)
+g,c=fixture();c.seal="seal_gambit"
+assert(Deck.freeSealDiscard(g,{c}) and not Deck.freeSealDiscard(g,{c,g.hand[2]}))
+g,c=fixture();c.seal="seal_threshold";assert(score(g,{c}).healHp==3)
+assert(score(g,{c}).healHp==3)
 -- Spells span multiple turns; none should consume game resources in preview.
 for _,d in ipairs(D.spells) do
     local g,c=fixture();assert(X.apply(g,d,c));local before=P.encode({g.depthCombat,g.gold,g.playerHp,g.handsRemaining,g.discardsRemaining,g.handLevels})
@@ -101,7 +102,7 @@ g,c=fixture();X.apply(g,D.byId.spell_escrow,c);D.enemyAttack(g,16,0);assert(scor
 g,c=fixture();X.apply(g,D.byId.spell_switchcraft,c);score(g,{c},"PAIR");assert(score(g,{c},"STRAIGHT").xMultTotal>=1.45)
 g,c=fixture();X.apply(g,D.byId.spell_recycle,c);score(g,{c});score(g,{c});assert(g.discardsRemaining==4)
 g,c=fixture();X.apply(g,D.byId.spell_retinue,c);assert(score(g,{c}).bonusMult>=2)
-g,c=fixture();X.apply(g,D.byId.spell_metronome,c);score(g,{c,g.hand[2]},"PAIR");score(g,g.hand,"STRAIGHT",false,{g.hand[2]});assert((g.hand[2].temporaryAbilityLevels or 0)>=1)
+g,c=fixture();X.apply(g,D.byId.spell_metronome,c);score(g,{c,g.hand[2]},"PAIR");score(g,{c,g.hand[3],Deck.newCard(4,"aurelia")},"STRAIGHT",false,{g.hand[2]});assert((g.hand[2].temporaryAbilityLevels or 0)>=1)
 g,c=fixture();X.apply(g,D.byId.spell_caravan,c);for _=1,3 do D.enemyAttack(g,1,0) end;assert(score(g,{c}).healHp==10);assert(score(g,{c}).healHp==0)
 g,c=fixture();X.apply(g,D.byId.spell_magnet,c);local bonus=c.speedBonus;A.discard(g,{Deck.newCard(2,"valoria"),Deck.newCard(3,"valoria"),Deck.newCard(4,"valoria")});assert(c.speedBonus==bonus+2 and g.persistentDeck[1].speedBonus==0)
 g,c=fixture();X.apply(g,D.byId.spell_reprisal,c);D.enemyAttack(g,0,10);assert(score(g,{c}).bonusChips>=40)

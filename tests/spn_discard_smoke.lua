@@ -67,5 +67,5 @@ local saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop"
 assert(#saved.persistentDeck==4 and saved.deities[5].evolutionLevel==2 and saved.deities[5].onDiscard)
 assert(saved.persistentDeck[2].evolutionLevel==3 and saved.persistentDeck[2].edition=="foil" and saved.persistentDeck[2].equipments[1].id==canonical.equipments[1].id)
 local nextCard=Deck.newCard(2,"hearts");for _,copy in ipairs(saved.persistentDeck) do assert(nextCard.id>copy.id) end
-assert(#D.getRandomShopPool({},99)==68)
+assert(#D.getRandomShopPool({},99)==77)
 print("SPN discard PASS: paid final single discard, per-level copies, canonical upgrades, unique IDs, isolated equipment, no forced/free/preview copies, boss locks and save/load")

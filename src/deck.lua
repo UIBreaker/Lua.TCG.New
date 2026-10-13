@@ -23,8 +23,8 @@ Deck.SEALS = {
     },
     seal_purifying = {
         id = "seal_purifying",
-        name = "Ấn Thanh Tẩy",
-        icon = "✨",
+        name = "Ấn Giáp",
+        icon = "🛡️",
         color = { 0.85, 0.85, 0.95, 1 },
     },
 }
@@ -120,15 +120,14 @@ Deck.ENHANCEMENTS = {
 }
 
 -- Runtime and descriptions share these values, including old-save aliases.
-Deck.SEALS.seal_blood.params={hpCost=3,repeats=1}
-Deck.SEALS.seal_bounty.params={gold=2}
+Deck.SEALS.seal_blood.params={hpCost=3,repeats=2}
+Deck.SEALS.seal_bounty.params={gold=3}
 Deck.SEALS.seal_anchor.params={}
-Deck.SEALS.seal_purifying.params={cleanses=1}
-Deck.SEALS.seal_blood.desc="Tái kích hoạt điểm cơ bản {repeats} lần, tốn {hpCost} HP; mỗi lá một lần mỗi trận, chỉ khi còn đủ HP để sống. Không lặp trang bị/giáp/hồi máu/vàng."
-Deck.SEALS.seal_bounty.desc="Tay tính điểm chứa lá này kết liễu quái: thưởng {gold} Vàng."
-Deck.SEALS.seal_anchor.desc="Ưu tiên chia lá này vào tay đầu trận; không tự thêm Giáp hay ngăn bỏ bài."
-Deck.SEALS.seal_purifying.params.armor=4
-Deck.SEALS.seal_purifying.desc="Giữ qua lượt quái: +{armor} Giáp mỗi lá (tối đa 12 mỗi lượt). Đồng thời tẩy Nội Tại Boss, tối đa {cleanses} lần mỗi trận."
+Deck.SEALS.seal_purifying.params={armorPct=10}
+Deck.SEALS.seal_blood.desc="Khi chơi: trang bị của mỗi lá mang ấn tái kích hoạt thêm {repeats} lần. Cả tay bài chỉ trả tổng cộng {hpCost} HP, không trả theo số lá."
+Deck.SEALS.seal_bounty.desc="Tay bài kết liễu địch cuối cùng để kết thúc trận: +{gold} Vàng mỗi lá mang ấn đã đánh ra, kể cả lá không tính điểm."
+Deck.SEALS.seal_anchor.desc="Luôn có trên tay khi bắt đầu trận, kể cả khi số lá mang ấn vượt kích thước tay."
+Deck.SEALS.seal_purifying.desc="Mỗi tay đánh: mỗi lá mang ấn còn giữ trên tay cho Giáp bằng {armorPct}% HP tối đa của người chơi. Lá đã đánh ra không kích hoạt, kể cả không tính điểm."
 local enhancementParams={
     enh_armor={chips=-10,armor=8},enh_blood={mult=15,hpCost=4},
     enh_overcharged={gain=5,maxStacks=25},enh_cursed={mult=20,enrage=1},
@@ -168,10 +167,30 @@ function Deck.getModifierDescription(kind,id)
     local d=Deck.getModifier(kind,id);if not d then return "" end
     return d.desc:gsub("{([%w_]+)}",function(k) return tostring(d.params and d.params[k] or 0) end)
 end
-function Deck.applySeal(game,card,id)
+function Deck.heldCards(handInfo,context)
+    local played,seen,out={},{},{}
+    for _,list in ipairs({handInfo.scoringCards or {},handInfo.unscoredCards or {}}) do
+        for _,c in ipairs(list) do played[c.id or c]=true end
+    end
+    local hand=context.hand or context.unplayedCards or context.gameState and context.gameState.hand or {}
+    for _,c in ipairs(hand) do
+        local key=c.id or c
+        if not played[key] and not seen[key] and not c.destroyed then seen[key]=true;out[#out+1]=c end
+    end
+    return out
+end
+function Deck.freeSealDiscard(game,cards)
+    if not cards then
+        cards={};for _,i in ipairs(game.selectedIndices or {}) do if game.hand and game.hand[i] then cards[#cards+1]=game.hand[i] end end
+    end
+    if #cards==0 then return false end
+    for _,c in ipairs(cards) do if c.destroyed or Deck.normalizeSeal(c.seal)~="seal_gambit" then return false end end
+    return true
+end
+function Deck.applySeal(game,card,id,power)
     id=Deck.normalizeSeal(id)
     if not card or not Deck.SEALS[id] then return false end
-    require("src.chest_expansion").sync(game,card,function(c) c.seal=id;c.isAnchor=id=="seal_anchor" end)
+    require("src.chest_expansion").sync(game,card,function(c) c.seal=id;c.sealPower=power;c.isAnchor=id=="seal_anchor" end)
     return true
 end
 
@@ -345,7 +364,7 @@ end
 
 function Deck.peekCardAttackSpeed(card,game)
     if not card then return 1 end
-    local base = Deck.getAttackSpeed(card.rank)
+    local base = Deck.getAttackSpeed(card.rank)*require("src.blood_shop").powerOf(card)
     local equipmentSpeed=0
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
     local basics=require("src.spn_basics")
@@ -473,13 +492,13 @@ function Deck.degradeCard(card)
     if card.rank > 2 then
         card.rank = card.rank - 1
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
-        card.baseChips = Deck.getChipValue(card.rank)
+        card.baseChips = Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0)
         Deck.getCardAttackSpeed(card)
         return "degraded"
     elseif card.rank == 2 then
         card.rank = 1
         card.rankName = "A"
-        card.baseChips = Deck.getChipValue(1)
+        card.baseChips = Deck.getChipValue(1) + (card.bonusBaseChips or 0)
         Deck.getCardAttackSpeed(card)
         return "degraded"
     elseif card.rank == 1 then
@@ -499,7 +518,7 @@ function Deck.upgradeCard(card)
     card.baseRank = bRank
     card.rank = bRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
-    card.baseChips = Deck.getChipValue(card.rank)
+    card.baseChips = Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0)
     Deck.getCardAttackSpeed(card)
     return card
 end
@@ -517,7 +536,8 @@ function Deck.restoreDeck(deck)
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
         Deck.getCardAttackSpeed(card)
         if card.isPrimalDrone then
-            card.baseChips = 50
+            -- The legacy drone bonus already includes its intrinsic +50 transformation.
+            card.baseChips = 50 + (card.spnPermanentDamage or 0)
             card.baseMult = 5
             card.roleTitle = "Chân Rết Nguyên Thủy"
             card.roleIcon = "🐛"
@@ -579,6 +599,7 @@ function Deck.cloneCard(card)
     Deck.getCardAttackSpeed(newC)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
+    newC.spnPermanentDamage = card.spnPermanentDamage
     newC.seedChips = card.seedChips or 0
     newC.depthInvestment = card.depthInvestment or 0
     newC.role = card.role or newC.role
@@ -685,7 +706,7 @@ function Deck.addCardToDeck(gameState, card)
     card.baseRank = card.baseRank or card.rank
     card.rank = card.baseRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
-    card.baseChips = card.isPrimalDrone and 50 or Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0)
+    card.baseChips = card.isPrimalDrone and (50+(card.spnPermanentDamage or 0)) or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0)
     Deck.getCardAttackSpeed(card)
     local role = Deck.getCardRole(card.rank)
     card.role = role.id

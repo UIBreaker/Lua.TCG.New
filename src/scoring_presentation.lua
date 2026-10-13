@@ -155,7 +155,7 @@ local function trigger(anim, st)
     link(s, st.addedChips or 0, "ST", x, popupY, 70, 229, C.color.damage)
     link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 229, C.color.enhance)
     link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 148, 329, C.color.aura)
-    if st.type=="equipment_trigger" then
+    if st.type=="equipment_trigger" or st.type=="seal_trigger" then
         local rows={{st.addArmor,"GIÁP",{0.4,0.75,1,1}},{st.healHp,"HP",{0.4,0.95,0.6,1}},{st.addGold,"VÀNG",C.color.aura}}
         local offset=0
         for resourceIndex,row in ipairs(rows) do

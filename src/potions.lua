@@ -19,6 +19,15 @@ P.definitions={
 }
 P.byId={}
 for _,def in ipairs(P.definitions) do def.category="combat_potion";P.byId[def.id]=def end
+function P.describe(item)
+    local def=P.byId[item.id];if not def then return nil end
+    if require("src.blood_shop").powerOf(item)==1 then return def.desc end
+    local text={accuracy="Tay bài đánh trúng 100% trong 5 lượt kế tiếp.",evasion="Né đòn địch trong 5 lượt kế tiếp; không chặn độc hoặc tự mất máu.",
+        armor_break="Phá toàn bộ giáp một địch, gây sát thương chuẩn bằng 125% số giáp vừa phá.",damage="Mỗi lá hiện trên tay nhận +100 Sát thương trong lượt kế tiếp.",
+        empower="Mỗi lá hiện trên tay nhận +25 Cường hóa trong lượt kế tiếp.",gold_blood="Trong trận: mỗi 1 HP thực mất do địch gây ra nhận 5 Vàng. Chi phí mua hàng không tạo vàng.",
+        draw="Rút ngay 25 lá; kho hết thì xáo cọc bỏ. Không vượt số bài còn lại.",slow="Giảm 50% tốc đánh một địch trong 10 hành động, tối thiểu tốc 1."}
+    return text[def.kind].."\nHUYẾT LUYỆN ×5"
+end
 
 function P.emit(game,kind,label,value,target,cards)
     game.potionFeedback=game.potionFeedback or {}
@@ -29,6 +38,11 @@ function P.use(game,index,target,prepareDraw)
     local card=game.consumables and game.consumables[index]
     local def=card and P.byId[card.id]
     if not def then return false,"Không phải thuốc chiến thuật." end
+    local power=require("src.blood_shop").powerOf(card)
+    if power>1 then
+        local copy={};for k,v in pairs(def) do copy[k]=v end;def=copy
+        if def.amount and def.kind~="slow" then def.amount=def.amount*power end
+    end
     if not game.monster or (game.playerHp or 0)<=0 or require("src.enemy_group").alive(require("src.enemy_group").members(game))==0 then
         return false,"Chỉ dùng thuốc chiến thuật trong trận."
     end
@@ -61,9 +75,9 @@ function P.use(game,index,target,prepareDraw)
         if target.combatBuffs.slow then return false,"Địch đang bị giảm tốc." end
         local before=require("src.enemy_abilities").speed(target)
         if before<=1 then return false,"Tốc đánh địch đã ở mức thấp nhất." end
-        target.combatBuffs.slow={value=def.amount,turns=2}
+        target.combatBuffs.slow={value=def.amount,turns=2*power}
         local after=require("src.enemy_abilities").speed(target)
-        P.emit(game,"slow","GIẢM TỐC "..before.." → "..after.." · 2 HÀNH ĐỘNG",before-after,target)
+        P.emit(game,"slow","GIẢM TỐC "..before.." → "..after.." · "..(2*power).." HÀNH ĐỘNG",before-after,target)
     elseif def.kind=="armor_break" then
         target=target or game.monster
         local present=false
@@ -71,7 +85,7 @@ function P.use(game,index,target,prepareDraw)
         local armor=math.max(0,target.armor or 0)+math.max(0,target.creatureArmor or 0)
         if not present or target.hp<=0 or armor<=0 then return false,"Chọn địch còn sống và có giáp." end
         target.armor=0;target.creatureArmor=0
-        local damage=require("src.monster").takeDamage(target,armor*.25,true)
+        local damage=require("src.monster").takeDamage(target,armor*.25*power,true)
         P.emit(game,"armor_break","PHÁ "..armor.." GIÁP · "..damage.." ST",damage,target)
         game.potionVictoryPending=require("src.combat").getOutcome(game)=="victory"
     elseif def.kind=="damage" or def.kind=="empower" then
@@ -86,8 +100,10 @@ function P.use(game,index,target,prepareDraw)
     else
         if state[def.kind] then return false,"Thuốc này đang có hiệu lực." end
         state[def.kind]=true
-        P.emit(game,def.kind,def.kind=="accuracy" and "CHÍNH XÁC 100% · 1 LƯỢT"
-            or def.kind=="evasion" and "NÉ TRÁNH · 1 LƯỢT" or "MÁU VÀNG · 1 HP = 1 VÀNG")
+        if def.kind=="accuracy" or def.kind=="evasion" then state[def.kind.."Turns"]=power
+        elseif def.kind=="gold_blood" then state.goldBloodPower=power end
+        P.emit(game,def.kind,def.kind=="accuracy" and ("CHÍNH XÁC 100% · "..power.." LƯỢT")
+            or def.kind=="evasion" and ("NÉ TRÁNH · "..power.." LƯỢT") or ("MÁU VÀNG · 1 HP = "..power.." VÀNG"))
     end
     game.potionCombat=state
     table.remove(game.consumables,index)
@@ -104,8 +120,9 @@ function P.payBlood(game,hpBefore)
     if not (game.potionCombat or {}).gold_blood then return 0 end
     local lost=math.max(0,hpBefore-(game.playerHp or 0))
     if lost>0 then
-        game.gold=(game.gold or 0)+lost
-        P.emit(game,"gold_blood","MÁU VÀNG · +"..lost.." VÀNG",lost)
+        local gain=lost*(game.potionCombat.goldBloodPower or 1)
+        game.gold=(game.gold or 0)+gain
+        P.emit(game,"gold_blood","MÁU VÀNG · +"..gain.." VÀNG",gain)
     end
     return lost
 end
@@ -113,6 +130,9 @@ end
 function P.endTurn(game)
     local s=game.potionCombat
     if not s then return end
-    s.accuracy=nil;s.evasion=nil;s.damageCards=nil;s.multCards=nil
+    for _,kind in ipairs({"accuracy","evasion"}) do
+        if s[kind] then s[kind.."Turns"]=(s[kind.."Turns"] or 1)-1;if s[kind.."Turns"]<=0 then s[kind]=nil;s[kind.."Turns"]=nil end end
+    end
+    s.damageCards=nil;s.multCards=nil
 end
 return P

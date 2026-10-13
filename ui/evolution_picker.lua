@@ -69,14 +69,17 @@ function Picker.draw(UI,m,mx,my)
         local d=A.definition(c);local name=c.name or ((c.rankName or tostring(c.rank))..(c.suitSymbol or ""))
         text(UI,name,848,210,324,"medium")
         local maximum=require("src.equipment").getMaxSlots(c)
-        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..(maximum+1).." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..((c.evolutionLevel or 0)+1)) or "Nâng bậc Hộ Linh",848,245,324,"small",violet)
+        local gain=require("src.blood_shop").powerOf(m.consumable)
+        local nextSockets=math.min(require("src.equipment").SOCKET_CAP,maximum+gain)
+        local nextLevel=d and math.min(A.config.maxEvolutionLevel,(c.evolutionLevel or 0)+gain) or (c.evolutionLevel or 0)+gain
+        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..nextSockets.." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..nextLevel) or ("Nâng thêm "..gain.." bậc Hộ Linh"),848,245,324,"small",violet)
         local before=d and A.description(c) or Deities.getDescription(c)
         local after
         if upgrade then
             before="Trang bị: "..require("src.equipment").getUsedSlots(c).." / "..maximum.." hốc đang dùng.\n"..(c.allowDuplicateEquipment and "Có thể gắn trang bị trùng loại." or "Mỗi loại trang bị chỉ được gắn một món.")
-            after=sockets and ("Thêm 1 hốc trang bị vĩnh viễn: "..(maximum+1).." hốc. Tối đa 8 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
-        elseif d then after=A.description(c,A.level(c)+1)
-        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+1;after=Deities.getDescription(copy) end
+            after=sockets and ("Thêm tối đa "..gain.." hốc trang bị vĩnh viễn: "..nextSockets.." hốc. Tối đa 8 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
+        elseif d then after=A.description(c,nextLevel+(c.temporaryAbilityLevels or 0))
+        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=nextLevel;after=Deities.getDescription(copy) end
         text(UI,"HIỆN TẠI",848,291,324,"tiny",muted)
         description(UI,before,848,315,324,95,muted)
         g.setColor(0.24,0.26,0.34,1);g.line(848,422,1172,422)

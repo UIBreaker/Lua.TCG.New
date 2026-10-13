@@ -17,7 +17,7 @@ function Panel.draw(UI,Bag,game,buttons,mx,my)
     L.init(game);Bag.game=game;Bag.loadoutSlots={}
     local g=love.graphics;local limit=L.limit(game,Bag.tab)
     local selected=Bag.selectedSource=="reserve" and (game.backpackDeities or {})[Bag.selected]
-    if Bag.tab=="spn" and selected and selected.edition=="negative" then limit=limit+1 end
+    if Bag.tab=="spn" and selected and selected.edition=="negative" then limit=limit+((selected.editionPower==5 or selected.bloodPower==5) and 5 or 1) end
     local offset=math.max(0,math.min(Bag.loadoutOffset or 0,math.max(0,limit-6)))
     Bag.loadoutOffset=offset
     Style.panel(235,117,692,141,UI.COLORS.goldYellow)

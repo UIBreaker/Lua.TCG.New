@@ -17,6 +17,7 @@ local function set(g,c,id,n,ctx)
 end
 local function once(ctx,c,id)
     if not ctx then return false end
+    if ctx.equipmentRetrigger and ctx.equipmentIndex then return true end
     local g=game(ctx);local s=ctx.preview and ctx or state(g)
     s.depthSeen=s.depthSeen or {};local k=key(c,id,ctx)
     if s.depthSeen[k] then return false end;s.depthSeen[k]=true;return true
@@ -106,23 +107,10 @@ for _,d in ipairs(D.equipment) do
         local r=d.effect(c,cs,i,ctx);if r then r.message=d.name end;return r
     end
 end
-add(D.seals,"seal_echoes","Ấn Tứ Phương","Các lá mang ấn cùng ghi chất mỗi khi bị bỏ. Đủ 4 chất đã ghi chung: lá mang ấn tính điểm kế tiếp +0.75 hệ số Aura rồi xóa bộ ghi. Ký ức chỉ giữ trong trận.","A large four-direction compass stamp gathering four controlled elemental trails on coastal stone.",function(c,cs,i,ctx)
-    local g=game(ctx);local s=state(g);local n=0
-    for _ in pairs(s.suitMarks or {}) do n=n+1 end
-    if n>=4 then s.suitMarks={};return {xMultBonus=0.75} end
-end)
-add(D.seals,"seal_reclaimer","Ấn Thu Hồi","Bỏ riêng lá này: trả 2 Vàng để hoàn 1 lượt bỏ bài, tối đa một lần mỗi trận cho toàn bộ các lá mang ấn. Thiếu Vàng không trả chi phí và không hoàn lượt.","One circular return-arrow stamp reclaiming a coin from a stone slot in a desert.")
-add(D.seals,"seal_gambit","Ấn Đổi Lượt","Tính điểm cùng đúng 5 lá: trả 6 HP để nhận +1 lượt đánh, một lần mỗi trận cho toàn bộ các lá mang ấn; chỉ trả khi còn hơn 6 HP.","A large five-spoked turnwheel stamp with a single controlled red flame over volcanic stone.",function(c,cs,i,ctx)
-    local g=game(ctx);if #cs==5 and not state(g).gambitUsed and (g.playerHp or 0)>6+(ctx.sealHpCommitted or 0) then
-        if not ctx.preview then g.playerHp=g.playerHp-6;g.handsRemaining=(g.handsRemaining or 0)+1 end
-        if not ctx.preview or ctx.depthGame then state(g).gambitUsed=true end;return {}
-    end
-end)
-add(D.seals,"seal_threshold","Ấn Tam Nhịp","Mỗi lần lá tính điểm tích một nhịp. Cứ lần thứ ba: hồi 8 HP và xóa nhịp. Nhịp mất khi hết trận; tái kích hoạt không thêm nhịp.","A large three-step heartbeat stamp with three broad grooves in a green forest altar.",function(c,cs,i,ctx)
-    local g=game(ctx);local n=value(g,c,"third")+1;set(g,c,"third",n%3,ctx)
-    if n>=3 then return {healHp=8} end
-    return {}
-end)
+add(D.seals,"seal_echoes","Ấn Tứ Phương","Mỗi lá mang ấn còn giữ trên tay nhân đôi Cường hóa của tay đánh. Lá đã đánh ra không kích hoạt.","A large four-direction compass stamp gathering four controlled elemental trails on coastal stone.")
+add(D.seals,"seal_reclaimer","Ấn Thu Hồi","Bỏ lá mang ấn: +4 Vàng mỗi lá, không cần bỏ riêng và không giới hạn số lần trong trận.","One circular return-arrow stamp reclaiming a coin from a stone slot in a desert.")
+add(D.seals,"seal_gambit","Ấn Đổi Lượt","Bỏ bài chỉ gồm các lá mang ấn: không mất lượt bỏ bài và vẫn được dùng khi đã hết lượt bỏ. Bỏ kèm lá khác vẫn mất một lượt.","A large five-spoked turnwheel stamp with a single controlled red flame over volcanic stone.")
+add(D.seals,"seal_threshold","Ấn Tam Nhịp","Mỗi lá mang ấn được tính điểm tổng cộng 3 lần (hai lần thêm), hồi 3 HP mỗi lá. Không yêu cầu tích nhịp qua nhiều tay.","A large three-step heartbeat stamp with three broad grooves in a green forest altar.",function() return {healHp=3} end)
 for _,d in ipairs(D.seals) do d.sealType=d.id;d.sealName=d.name;d.effect=d.effect or function() end end
 
 local function spellState(g,id) return (state(g).spellValues or {})[id] or {} end
@@ -194,7 +182,7 @@ add(D.spectral,"spec_sieve","Sàng Mệnh","Chọn một lá: tiêu hủy tối 
 add(D.spectral,"spec_traverse","Mượn Đường","Chọn một lá: nhận rank của lá thấp rank nhất khác trên tay và chất của lá cao rank nhất khác trên tay. Hòa rank chọn trái nhất; trả 2 Vàng, giữ mọi nâng cấp.","A spectral traveler crossing a low forest bridge and a high glacial arch through one violet doorway.")
 add(D.spectral,"spec_rebirth","Tái Sinh Đối Ảnh","Tiêu hủy lá chọn, tạo lá mới cùng chất với rank 16 trừ rank cũ và tiến hóa +1 cấp (tối đa trần). Lá mới mất toàn bộ trang bị, dấu, cường hóa, ấn bản và tốc thưởng; ID mới.","One supernatural ash silhouette dissolving while its inverted green reflection awakens as a new traveler.")
 
-function D.discard(g,cards)
+function D.discard(g,cards,context)
     g.depthCombat=g.depthCombat or {values={}};local s=state(g)
     s.discarded=(s.discarded or 0)+#cards
     for k in pairs(s.values or {}) do if k:match(":quiet$") then s.values[k]=0 end end
@@ -204,17 +192,15 @@ function D.discard(g,cards)
             if eq.id=="itm_capacitor" then set(g,c,"charge",math.min(3,value(g,c,"charge",ctx)+1),ctx)
             elseif eq.id=="itm_bloodvial" and value(g,c,"drops",ctx)<3 and (g.playerHp or 0)>2 then g.playerHp=g.playerHp-2;set(g,c,"drops",value(g,c,"drops",ctx)+1,ctx) end
         end
-        if c.seal=="seal_echoes" then
-            s.suitMarks=s.suitMarks or {};s.suitMarks[c.suit]=true
-        elseif c.seal=="seal_reclaimer" and #cards==1 and not s.reclaimerUsed and spend(g,"gold",2) then
-            g.discardsRemaining=(g.discardsRemaining or 0)+1;s.reclaimerUsed=true
+        if require("src.deck").normalizeSeal(c.seal)=="seal_reclaimer" and not (context and context.preview) then
+            g.gold=(g.gold or 0)+4*(c.sealPower or 1)
         end
     end
     local distinct={};for _,c in ipairs(cards) do distinct[c.rank]=true end
     local n=0;for _ in pairs(distinct) do n=n+1 end
     if #cards==3 and n==3 then
         for _,spn in pairs(g.deities or {}) do if spn.enchantment=="spell_magnet" then
-            for _,c in ipairs(g.hand or {}) do require("src.deck").applyAttackSpeedBonus(c,2) end
+            for _,c in ipairs(g.hand or {}) do require("src.deck").applyAttackSpeedBonus(c,2*(spn.enchantmentPower or 1)) end
         end end
     end
 end
@@ -228,10 +214,6 @@ function D.status(g,c)
         elseif eq.id=="itm_bell" then line("Nhịp tĩnh"..suffix,value(g,c,"quiet",ctx),4)
         elseif eq.id=="itm_ledger" then line("Đầu tư lâu dài",c.depthInvestment or 0,5) end
     end
-    if c.seal=="seal_threshold" then line("Nhịp hồi phục",value(g,c,"third"),3)
-    elseif c.seal=="seal_echoes" then local n=0;for _ in pairs(state(g).suitMarks or {}) do n=n+1 end;line("Chất đã ghi chung",n,4)
-    elseif c.seal=="seal_gambit" then lines[#lines+1]=state(g).gambitUsed and "Đổi lượt: đã dùng trong trận" or "Đổi lượt: còn 1 lần trong trận"
-    elseif c.seal=="seal_reclaimer" then lines[#lines+1]=state(g).reclaimerUsed and "Thu hồi: đã dùng trong trận" or "Thu hồi: còn 1 lần trong trận" end
     return table.concat(lines,"\n")
 end
 function D.apply(g,d,c)

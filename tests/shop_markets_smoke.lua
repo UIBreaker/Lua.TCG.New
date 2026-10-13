@@ -21,7 +21,7 @@ for _,item in ipairs(retail) do
     for _,def in ipairs(Shop.PACK_CATALOG) do if def.packType==item.sourcePack then pack=def end end
     assert(item.cost==math.ceil(pack.cost*1.2))
 end
-for _=1,600 do
+for _=1,3000 do
     Shop.enterAfterCombat(game)
     types[game.shopMode]=true
     assert(game.shopMode~="large" and game.shopMode~="soul")

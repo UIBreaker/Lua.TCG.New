@@ -34,6 +34,12 @@ V.profiles = {
         help="Nâng cấp được giữ khi mua. Trang bị đi kèm chỉ là đồ cơ bản."},
 }
 V.scenes = {}
+for _,size in ipairs({"small","large"}) do
+    V.profiles["blood_"..size]={brand=size=="large" and "ĐẠI ĐIỆN HUYẾT ƯỚC" or "QUẦY HUYẾT ƯỚC",motto="Sức mạnh có giá bằng sinh lực.",
+        rows={"DI VẬT HUYẾT LUYỆN", "KHẾ ƯỚC & TIẾP TẾ"},notes={"SPN · Trang bị · Quân bài · Thuốc", "Đặc quyền · Rương · Thẻ lẻ · Tay bài"},
+        material={.25,.065,.09},accent={.95,.34,.43,1},preset="VOLCANIC",columns=4,
+        help="Mọi món Huyết Luyện ×5. Trả bằng HP, giữ ít nhất 1 HP. Đổi hàng cũng mất máu."}
+end
 for mode,profile in pairs(V.profiles) do
     profile.background="assets/scene/shops/"..mode..".png"
     V.scenes[mode]={base="shop_"..mode,backgroundPath=profile.background,

@@ -9,6 +9,10 @@ function love.load(args)
         "tests.spn_convergence_smoke", "tests.spn_velocity_smoke", "tests.spn_provisions_smoke", "tests.spn_discard_smoke", "tests.spn_souls_smoke", "tests.spn_legacy_smoke", "tests.spn_twin_fang_smoke", "tests.spn_mimic_smoke", "tests.spn_basics_smoke", "tests.spn_turns_smoke",
         "tests.continental52_smoke", "tests.editions_smoke", "tests.scoring_presentation_smoke",
         "tests.spn_pacts_smoke",
+        "tests.spn_vitality_smoke",
+        "tests.spn_discard_forge_smoke",
+        "tests.spn_foundations_smoke",
+        "tests.spn_growth_smoke",
     }
     local failed = 0
     for _, name in ipairs(suites) do

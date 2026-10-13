@@ -36,6 +36,7 @@ local function panel(x, y, w, h, title, note, accent)
 end
 
 local function price(item, x, y, w, affordable)
+    if item.currency=="blood" then w=math.max(w,76) end
     if item.sale then
         love.graphics.setColor(0.10,0.075,0.035,.98)
         UI.drawRoundedRect("fill",x-10,y,w+20,23,5)
@@ -46,8 +47,9 @@ local function price(item, x, y, w, affordable)
         return
     end
     love.graphics.setColor(affordable and { 0.20, 0.16, 0.09, 1 } or C.inset)
-    UI.drawRoundedRect("fill", x + (w - 54) / 2, y, 54, 21, 5)
-    text(item.currency=="souls" and (item.cost.." LH") or ("$"..item.cost), x, y + 2, w, UI.fonts.small, affordable and C.gold or C.red, "center")
+    local badge=item.currency=="blood" and w or 54
+    UI.drawRoundedRect("fill", x + (w - badge) / 2, y, badge, 21, 5)
+    text(item.currency=="blood" and (item.cost.." HP") or item.currency=="souls" and (item.cost.." LH") or ("$"..item.cost), x, y + 2, w, UI.fonts.small, item.currency=="blood" and C.red or affordable and C.gold or C.red, "center")
 end
 
 -- Code-drawn seal/ticket: no names or stats are painted over artwork.
@@ -288,7 +290,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
             local x,y,w,h=position(item,index,0,shop.mode,shop.page)
             if x then
                 local hovered=mx>=x and mx<=x+w and my>=y-25 and my<=y+h+25
-                local affordable=(game.gold or 0)>=item.cost
+                local affordable=Shop.canAfford(item,game)
                 UI.Polish.surface(item,index,hovered,x,y,w,h,function()
                     art(item,x,y,w,h,hovered,mx,my)
                 end)

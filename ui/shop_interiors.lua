@@ -10,7 +10,8 @@ function I.position(mode,item,index,page)
     local profile=Profiles[mode]
     if not profile then return end
     local bay=item.bay or index
-    if mode=="medicine" then
+    local paged=mode=="medicine" or mode=="blood_large"
+    if paged then
         local current=page or 1
         if math.ceil(bay/8)~=current then return end
         bay=bay-(current-1)*8
@@ -77,12 +78,19 @@ local function sidebar(shop,game,profile)
     emblem(shop.mode,149,125,profile.accent)
     text(profile.brand,40,161,218,UI.fonts.small,profile.accent,"center")
     text(profile.motto,48,194,202,nil,C.text,"center")
+    if game.bloodShopNotice then
+        plate(28,268,242,78,profile)
+        text(game.bloodShopNotice,42,286,214,UI.fonts.small,C.green,"center")
+    end
 
     plate(28,461,242,181,profile)
     text("SỔ QUẦY",46,475,206,UI.fonts.small,profile.accent)
     text("Hàng còn lại",46,503,145,nil,C.muted)
     text(tostring(#shop.items).." món",191,503,59,nil,C.text,"right")
-    if shop.mode=="spn" then
+    if shop.bloodMode then
+        text("Máu có thể trả",46,528,154,nil,C.muted)
+        text(tostring(math.max(0,(game.playerHp or 0)-1)).." HP",196,528,54,nil,profile.accent,"right")
+    elseif shop.mode=="spn" then
         local D=require("src.deities")
         text("SPN trong balo",46,528,150,nil,C.muted)
         text(tostring(#(game.backpackDeities or {})),196,528,54,nil,C.text,"right")
@@ -121,7 +129,13 @@ function I.draw(shop,game,time,buttons)
     local page=shop.page or 1
     local tactical=shop.mode=="medicine" and page==2
     displayCase(profile,1,tactical);displayCase(profile,2,tactical)
-    if shop.mode=="medicine" then
+    if shop.mode=="blood_large" then
+        for i,label in ipairs({"QUẦY I","QUẦY II"}) do
+            local b={id="blood_page_"..i,text=label,x=28+(i-1)*123,y=385,w=119,h=36,font=UI.fonts.tiny,color=page==i and C.red or C.inset}
+            UI.drawButton(b,false);if buttons then buttons[#buttons+1]=b end
+        end
+        text("HUYẾT LUYỆN ×5 · "..page.." / 2",28,432,242,nil,profile.accent,"center")
+    elseif shop.mode=="medicine" then
         for index,label in ipairs({"HỒI PHỤC", "CHIẾN THUẬT"}) do
             local b={id="medicine_page_"..index,text=label,x=28+(index-1)*123,y=385,w=119,h=36,
                 font=UI.fonts.tiny,color=page==index and C.green or C.inset}
@@ -131,10 +145,10 @@ function I.draw(shop,game,time,buttons)
     end
     local occupied={}
     for _,item in ipairs(shop.items) do
-        if I.position(shop.mode,item,nil,page) then occupied[item.bay-(shop.mode=="medicine" and (page-1)*8 or 0)]=true end
+        if I.position(shop.mode,item,nil,page) then occupied[item.bay-((shop.mode=="medicine" or shop.mode=="blood_large") and (page-1)*8 or 0)]=true end
     end
     for bay=1,profile.columns*2 do
-        local x,y,w,h=I.position(shop.mode,{bay=bay+(shop.mode=="medicine" and (page-1)*8 or 0)},nil,page)
+        local x,y,w,h=I.position(shop.mode,{bay=bay+((shop.mode=="medicine" or shop.mode=="blood_large") and (page-1)*8 or 0)},nil,page)
         local cx,foot=x+w/2,y+h+4
         if shop.mode=="spn" then
             g.setColor(.035,.048,.087,.85);g.ellipse("fill",cx,foot+9,93,14)
@@ -159,7 +173,7 @@ function I.label(item,x,y,w,h)
     g.setFont(font);g.setColor(C.text)
     g.translate(x+w/2-width/2,y+h+9);g.scale(scale)
     g.printf(item.name or "",0,0,width/scale,"center");g.pop()
-    local caption=item.deity and require("src.deities").getRarityLabel(item.deity)
+    local caption=item.bloodPower and "HUYẾT LUYỆN ×5 · HP" or item.deity and require("src.deities").getRarityLabel(item.deity)
         or item.equipment and (item.equipment.basic and "NGUYÊN LIỆU CƠ BẢN" or "TRANG BỊ LỚN")
         or item.subtitle or "TIÊU HAO"
     text(caption,x+w/2-104,y+h+28,208,nil,item.color or C.muted,"center")

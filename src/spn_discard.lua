@@ -2,6 +2,9 @@ local Deck=require("src.deck")
 local Boss=require("src.boss_abilities")
 local S={}
 local D
+function S.baseDamage(card)
+    return math.max(0,card.baseChips or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0))
+end
 local function clone(value,seen)
     if type(value)~="table" then return value end
     seen=seen or {};if seen[value] then return seen[value] end
@@ -22,6 +25,24 @@ function S.register(deities)
         end
     end
     D.CATALOG[entry.id]=entry
+    local forge={id="spirit_discard_forge",name="Hộ Linh Tái Rèn",stat="addArmor",values={value=5},integerEffect=true,
+        rarity="common",cost=4,trigger="discard",lore="Dị linh thu nhận những lưỡi kiếm bị bỏ lại, cân bằng sức công phá thành lớp giáp mới.",
+        descriptionTemplate="Bỏ đúng 1 lá bất kỳ: +{value} Giáp. Bỏ từ 2 lá cùng lúc: nhận Giáp bằng trung bình ST cơ bản hiện trên các lá ×{scale}. Làm tròn xuống; chỉ tính bỏ bài chủ động."}
+    forge.onDiscard=function(cards,context)
+        if not context or not context.playerDiscard or context.preview or #cards==0 then return end
+        local armor=5
+        if #cards>1 then
+            local total=0
+            for _,card in ipairs(cards) do
+                local before=context.discardBaseDamage and context.discardBaseDamage[card.id or card]
+                total=total+(before or S.baseDamage(card))
+            end
+            armor=total/#cards
+        end
+        return {addArmor=armor,floorArmor=true,message="TÁI RÈN · GIÁP TỪ BỎ BÀI",fixedMessage=true}
+    end
+    forge.desc=forge.descriptionTemplate:gsub("{value}","5"):gsub("{scale}","1");forge.baseDesc=forge.desc
+    D.CATALOG[forge.id]=forge
 end
 function S.discard(game,cards,context)
     local created={}
@@ -34,10 +55,11 @@ function S.discard(game,cards,context)
         if effective and effective.onDiscard and not Boss.isSlotLocked(game,"spn",slot) then
             local result=D.scaleEffect(effective,effective.onDiscard(cards,context,effective,slot))
             if result and result.addArmor then
+                if result.floorArmor then result.addArmor=math.floor(result.addArmor) end
                 game.playerArmor=math.min(require("config.card_ability_data").armorCap,(game.playerArmor or game.playerShield or 0)+result.addArmor)
                 game.playerShield=game.playerArmor
                 game.spnFeedback=game.spnFeedback or {}
-                game.spnFeedback[#game.spnFeedback+1]={deity=owned,slot=slot,text="ĐỦ BA MỤC TIÊU · +"..result.addArmor.." GIÁP"}
+                game.spnFeedback[#game.spnFeedback+1]={deity=owned,slot=slot,text=(result.message or "ĐỦ BA MỤC TIÊU").." · +"..result.addArmor.." GIÁP"}
             elseif result and result.xSoulYield then
                 require("src.spn_souls").harvest(game,cards[1],owned,slot,result.xSoulYield)
             elseif result and result.discardCopies then

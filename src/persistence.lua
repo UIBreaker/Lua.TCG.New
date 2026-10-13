@@ -168,10 +168,8 @@ end
 local function restoreEquipment(savedEquipment)
     if not savedEquipment or not savedEquipment.id then return nil end
     local definition=Equipment.ITEMS[savedEquipment.id]
-    if not definition or savedEquipment.acquisitionCost==nil then return definition end
-    local copy={};for k,v in pairs(definition) do copy[k]=v end
-    copy.acquisitionCost=math.max(0,tonumber(savedEquipment.acquisitionCost) or 0)
-    return copy
+    if not definition then return nil end
+    return Equipment.instance(savedEquipment.id,savedEquipment)
 end
 
 local function restoreCard(savedCard)

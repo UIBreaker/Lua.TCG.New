@@ -21,7 +21,7 @@ function Inventory.useCardUpgrade(game,index,target)
     end
     local allowed,reason=Inventory.canUpgradeCard(consumable,canonical)
     if not allowed then return false,reason end
-    local sockets=require("src.equipment").getMaxSlots(canonical)+1
+    local sockets=math.min(require("src.equipment").SOCKET_CAP,require("src.equipment").getMaxSlots(canonical)+require("src.blood_shop").powerOf(consumable))
     require("src.chest_expansion").sync(game,canonical,function(card)
         if consumable.category=="socket_expansion" then card.maxSockets=sockets;card.unlockedSockets=sockets
         else card.allowDuplicateEquipment=true end
@@ -54,8 +54,8 @@ function Inventory.useUtility(game,index)
     local card=game.consumables and game.consumables[index]
     if not card then return nil end
     if card.category=="slot_expansion" then
-        if card.slotType=="spn" then game.extraDeitySlots=(game.extraDeitySlots or 0)+1
-        elseif card.slotType=="consumable" then game.maxConsumables=Inventory.limit(game)+1
+        if card.slotType=="spn" then game.extraDeitySlots=(game.extraDeitySlots or 0)+require("src.blood_shop").powerOf(card)
+        elseif card.slotType=="consumable" then game.maxConsumables=Inventory.limit(game)+require("src.blood_shop").powerOf(card)
         else return false end
     elseif card.category=="heal" then
         local maximum=game.maxPlayerHp or 100

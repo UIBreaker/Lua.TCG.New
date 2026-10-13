@@ -24,7 +24,8 @@ function shapes.bounty()
 end
 function shapes.purifying()
     love.graphics.polygon("line",-8,-7,0,-9,8,-7,7,2,0,9,-7,2)
-    polygon(0,-6,1.8,-1,6,0,1.8,2,0,6,-1.8,2,-6,0,-1.8,-1)
+    polygon(-5,-5,0,-6,5,-5,4,1,0,6,-4,1)
+    line(0,-4,0,3)
 end
 function shapes.sunder()
     polygon(-8,-8,0,-9,-3,-2,0,1,-4,7,-7,3)

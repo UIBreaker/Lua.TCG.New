@@ -18,7 +18,7 @@ function A.params(card, def, level)
         local gain=type(r)=="number" and r*level or type(r)=="table" and math.floor(level/r.every)*r.amount or 0
         p[k]=v+gain*((card.edition=="ancient" or card.visualEffect=="ancient") and 3 or 1)
     end
-    return p
+    return require("src.blood_shop").params(p,require("src.blood_shop").powerOf(card))
 end
 local effectParams={armor=true,heal=true,speed=true,bonus=true,charge=true,returnArmor=true,healPercent=true,gold=true,gain=true,maxStacks=true,
     capacity=true,draw=true,levels=true,repeats=true,returns=true,duration=true,hands=true,
@@ -311,14 +311,21 @@ function A.combatWin(game)
     A.roundEnd(game)
     local ctx={goldBeforeInterest=game.gold or 0}
     A.dispatch(game,"combat_win",allCards(game),ctx)
+    require("src.spn_vitality").finish(game)
 end
 function A.discard(game,cards,context)
+    if context and context.playerDiscard and not context.preview then
+        context.discardBaseDamage={}
+        for _,card in ipairs(cards or {}) do
+            context.discardBaseDamage[card.id or card]=require("src.spn_discard").baseDamage(card)
+        end
+    end
     if context and context.handsPlayedBefore==nil then
         context.handsPlayedBefore=math.max(game.handsPlayedThisCombat or 0,combat(game).playIndex or 0)
     end
     if #(cards or {})>0 then combat(game).tacticDiscarded=true end
     if #(cards or {})>0 then require("src.spn_convergence").discard(game) end
-    require("src.chest_depth").discard(game,cards)
+    require("src.chest_depth").discard(game,cards,context)
     A.dispatch(game,"discard",cards,{})
     require("src.spn_discard").discard(game,cards,context)
     if context and context.bloodPaid and context.playerDiscard and not context.preview and #(cards or {})>0 then

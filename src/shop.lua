@@ -7,6 +7,7 @@ local Deities = require("src.deities")
 local Rng = require("src.rng")
 local CardEffects = require("src.card_effects")
 local Souls = require("src.souls")
+local Blood = require("src.blood_shop")
 
 local Shop = {}
 
@@ -19,12 +20,24 @@ Shop.MARKETS = {
     cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
     large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
     soul = {name="CHỢ LINH HỒN"},
+    blood_small = {name="SHOP MÁU NHỎ",note="8 món Huyết Luyện ×5 · Mua và đổi hàng bằng HP",color={.93,.28,.35,1}},
+    blood_large = {name="SHOP MÁU LỚN",note="16 món Huyết Luyện ×5 · Mua và đổi hàng bằng HP",color={.93,.28,.35,1}},
 }
 Shop.AFTER_COMBAT_MARKETS = {"small", "consumable", "equipment", "spn", "medicine", "cards"}
 
 function Shop.marketMode(mode)
     -- "normal" is retained for old callers that preview the original shop.
     return Shop.MARKETS[mode] and mode or "large"
+end
+function Shop.canAfford(item,game)
+    local cost=tonumber(item.cost)
+    if not cost or cost<0 or cost~=cost or cost==math.huge then return false end
+    if item.currency=="blood" then return (game.playerHp or 0)-cost>=1 end
+    return (item.currency=="souls" and (game.souls or 0) or (game.gold or 0))>=cost
+end
+function Shop.payItem(item,game)
+    if item.currency=="blood" then game.playerHp=game.playerHp-item.cost
+    else game.gold=(game.gold or 0)-item.cost end
 end
 local function basicHandsUnlocked(gameState)
     for _, hand in ipairs(Poker.HAND_TYPES_ORDERED) do
@@ -79,10 +92,11 @@ local voucherText={
     v_vitality="HP tối đa +{hp}; hồi ngay {hp} HP khi mua.",
     v_second_chance="Thêm {discards} lượt bỏ bài mỗi trận và nhận ngay khi mua.",
 }
-function Shop.voucherParams(id) return voucherParams[id] or {} end
-function Shop.voucherDescription(id)
+function Shop.voucherParams(id,game) return Blood.params(voucherParams[id] or {},Blood.powerOf(game and game.vouchers and game.vouchers[id])) end
+function Shop.voucherDescription(id,item)
     local template=voucherText[id];if not template then return nil end
-    return template:gsub("{([%w_]+)}",function(k) return tostring(Shop.voucherParams(id)[k] or 0) end)
+    local p=Blood.params(voucherParams[id] or {},Blood.powerOf(item))
+    return template:gsub("{([%w_]+)}",function(k) return tostring(p[k] or 0) end)
 end
 for _,v in ipairs(Shop.VOUCHERS) do v.params=Shop.voucherParams(v.id);v.desc=Shop.voucherDescription(v.id) end
 
@@ -166,9 +180,19 @@ end
 Shop.PACK_CATALOG[4].desc="Mở 3 phép từ 24 phù phép SPN; chọn 1 để dùng hoặc cất. Phù phép mới áp dụng lên SPN đầu tiên."
 function Shop.getConsumableParams(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
-    return rule and rule.params or {}
+    return Blood.params(rule and rule.params or {},Blood.powerOf(item),true)
 end
 function Shop.getConsumableDescription(item)
+    if Blood.powerOf(item)>1 then
+        if item.category=="combat_potion" then return require("src.potions").describe(item) end
+        if item.healAmt then return "Hồi "..item.healAmt.." HP, không vượt HP tối đa.\nHUYẾT LUYỆN ×5" end
+        if item.armorAmt then return "+"..item.armorAmt.." Giáp, không vượt giới hạn Giáp.\nHUYẾT LUYỆN ×5" end
+        if item.category=="slot_expansion" then return "Thêm 5 ô "..(item.slotType=="spn" and "SPN" or "tiêu hao").." vĩnh viễn.\nHUYẾT LUYỆN ×5" end
+        if item.category=="socket_expansion" then return "Mở thêm tối đa 5 hốc trang bị cho quân bài, không vượt 8 hốc.\nHUYẾT LUYỆN ×5" end
+        if item.id=="cons_vitality" then return "Tăng "..((item.hpBonus or 20)*5).." HP tối đa và hồi lượng HP tương ứng.\nHUYẾT LUYỆN ×5" end
+        local base=Blood.clone(item);base.bloodPower=nil
+        return Blood.describe(Shop.getConsumableDescription(base) or item.desc or "",5)
+    end
     if item.sealType or item.category=="seal" then
         local seal=Deck.getModifier("seal",item.sealType or item.id)
         if seal then return "Đóng lên lá được chọn (hoặc lá đầu tay/bộ bài nếu chưa chọn).\n"..Deck.getModifierDescription("seal",seal.id) end
@@ -278,6 +302,7 @@ function Shop.resetReroll(shop)
 end
 
 function Shop.getRerollCost(shop, gameState)
+    if Blood.isMode(shop.mode) then return (shop.mode=="blood_large" and 30 or 20)+10*(shop.rerollCount or 0) end
     if shop.soulMode then return 5 + 2 * (gameState.soulRerollCount or 0) end
     if (gameState.freeRerolls or 0) > 0
         or (gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed) then
@@ -288,11 +313,12 @@ end
 
 -- Reprice existing stock as well as future rerolls, without stacking discounts.
 function Shop.applyVoucherStock(shop, gameState)
+    if Blood.isMode(shop.mode) then return end
     local owned = gameState.vouchers or {}
     for _, item in ipairs(shop.items or {}) do
         if item.category == "pack" then
             item.baseCost = item.baseCost or item.cost
-            item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and Shop.voucherParams("v_pack_discount").discount or 0))
+            item.cost = math.max(1, item.baseCost - (owned.v_pack_discount and Shop.voucherParams("v_pack_discount",gameState).discount or 0))
         end
     end
 end
@@ -409,7 +435,37 @@ end
 
 local function marketStock(shop, gameState)
     local mode = shop.mode
-    if mode == "consumable" then
+    if Blood.isMode(mode) then
+        local retail=Shop.getRetailConsumables()
+        for _,support in ipairs(Shop.SOUL_SUPPORT) do
+            local c=require("src.run_manager")[support.factory]()
+            retail[#retail+1]={id=c.id,category=c.category,consumable=c,name=c.name,desc=c.desc,cost=support.cost,color=c.color}
+        end
+        retail[#retail+1]=Shop.destructionItem("stall")
+        local gear={};for id in pairs(Equipment.ITEMS) do gear[#gear+1]=id end;table.sort(gear)
+        local vouchers={};for _,v in ipairs(Shop.VOUCHERS) do if not (gameState.vouchers or {})[v.id] then vouchers[#vouchers+1]=v end end
+        local packs={};for _,p in ipairs(Shop.PACK_CATALOG) do if p.packType~="hand_styles_advanced" or basicHandsUnlocked(gameState) then packs[#packs+1]=p end end
+        local count=mode=="blood_large" and Blood.largeCount or Blood.smallCount
+        for i=1,count do
+            local kind=(i-1)%8+1;local offer
+            if kind==1 then
+                local d=Deities.getRandomShopPool(Loadout.ownedDeities(gameState),1)[1]
+                if d then d=cloneDeity(d);Deities.setRarity(d,rollSpnRarity().id)
+                    offer={id=d.id,category="deity",deity=d,name=d.name,cost=math.ceil((d.cost or 4)*(Shop.SPN_RARITY_PRICE_MULTIPLIERS[d.rarity] or 1)),color=d.color} end
+            elseif kind==2 then offer=equipmentOffer(Equipment.ITEMS[gear[Rng.random(#gear)]])
+            elseif kind==3 then offer=Shop.playingCardOffer(randomStandardCard())
+            elseif kind==4 then offer=Shop.healingItem("stall",Shop.POTIONS[Rng.random(#Shop.POTIONS)].id)
+            elseif kind==5 and #vouchers>0 then
+                local v=table.remove(vouchers,Rng.random(#vouchers))
+                offer={id=v.id,category="voucher",voucherId=v.id,name=v.name,desc=v.desc,cost=v.cost,color=v.color}
+            elseif kind==6 then
+                offer=cloneDeity(packs[Rng.random(#packs)]);offer.category="pack"
+            elseif kind==7 then offer=retail[Rng.random(#retail)]
+            elseif kind==8 then offer={id="hand_expansion",category="hand_expansion",name="Túi Bài Huyết Luyện",cost=7,desc="Tăng kích thước tay bài thêm 5 lá.",color={.94,.32,.40,1}} end
+            offer=offer or equipmentOffer(Equipment.ITEMS[gear[Rng.random(#gear)]])
+            shop.items[i]=Blood.offer(offer)
+        end
+    elseif mode == "consumable" then
         local pool = shuffle(Shop.getRetailConsumables())
         for i=1,math.min(8,#pool) do shop.items[i]=pool[i] end
     elseif mode == "equipment" then
@@ -476,6 +532,7 @@ function Shop.refresh(shop, gameState)
     shop.page=1
     shop.mode = Shop.marketMode(gameState.shopMode)
     shop.soulMode = gameState.shopMode == "soul"
+    shop.bloodMode = Blood.isMode(shop.mode)
     if shop.soulMode then
         if not gameState.soulShopStock then Shop.rollSoulStock(gameState) end
         shop.soulStock=gameState.soulShopStock
@@ -684,8 +741,8 @@ function Shop.refresh(shop, gameState)
     finishStock(shop,gameState)
 end
 
-function Shop.applyEdition(card, edition)
-    return CardEffects.setEffect(card, edition)
+function Shop.applyEdition(card, edition,power)
+    local ok=CardEffects.setEffect(card, edition);if ok then card.editionPower=power end;return ok
 end
 
 function Shop.buyItem(shop, itemIndex, gameState)
@@ -712,13 +769,14 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return false, "Bạn đã sở hữu đặc quyền này!"
     end
 
-    if (gameState.gold or 0) < item.cost then
+    if item.currency=="blood" and not Blood.isMode(shop.mode) then return false,"Vật phẩm này chỉ đổi tại Shop Máu." end
+    if not Shop.canAfford(item,gameState) then
         Sound.play("cant_afford")
-        return false, "Không đủ tiền vàng!"
+        return false, item.currency=="blood" and "Cần đủ HP và giữ ít nhất 1 HP sau giao dịch." or "Không đủ tiền vàng!"
     end
 
     if item.consumable then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         Loadout.storeConsumable(gameState,item.consumable)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -726,7 +784,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
     end
 
     if item.category == "deity" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         Loadout.storeDeity(gameState, item.deity)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -734,26 +792,26 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     elseif item.category == "hand_expansion" then
         local curH = gameState.maxHandSize or 3
-        gameState.gold = gameState.gold - item.cost
-        gameState.maxHandSize = curH + 1
+        Shop.payItem(item,gameState)
+        gameState.maxHandSize = curH + Blood.powerOf(item)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         return true, "Đã mở rộng kích thước tay bài lên tối đa " .. gameState.maxHandSize .. " lá!"
 
     elseif item.category == "book" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         gameState.unlockedHands[item.handId] = true
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         return true, "Đã mở khóa bí tịch: " .. item.name .. "!"
 
     elseif item.category == "voucher" then
-        local p=Shop.voucherParams(item.voucherId)
-        gameState.gold = gameState.gold - item.cost
+        local p=Blood.params(voucherParams[item.voucherId] or {},Blood.powerOf(item))
+        Shop.payItem(item,gameState)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         gameState.vouchers = gameState.vouchers or {}
-        gameState.vouchers[item.voucherId] = true
+        gameState.vouchers[item.voucherId] = item.bloodPower and {bloodPower=item.bloodPower} or true
         if item.voucherId == "v_discount" then
             shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 2) - p.discount)
             shop.rerollCost = math.max(1, shop.rerollCost - p.discount)
@@ -776,25 +834,25 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return true, "Đã kích hoạt đặc quyền: " .. item.name .. "!"
 
     elseif item.category == "equipment" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         local eq = item.equipment
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         if item.backpack then
-            require("src.basic_equipment").store(gameState,eq,item.cost)
+            require("src.basic_equipment").store(gameState,eq,item.currency=="blood" and 0 or item.cost)
             return true,"Đã cất "..eq.name.." vào balo."
         end
         return true, "open_socketing", eq
 
     elseif item.category == "card" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         Deck.addCardToDeck(gameState, item.card)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         return true, "Đã thêm lá " .. item.card.rankName .. item.card.suitSymbol .. " vào bộ bài!"
 
     elseif item.category == "pack" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         local pack = item
         table.remove(shop.items, itemIndex)
         Sound.play("pack_open")
@@ -807,7 +865,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
             Sound.play("cant_afford")
             return false, "Sinh lực đang đầy!"
         end
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         local healVal = item.healAmt or 25
         gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100) + healVal)
         table.remove(shop.items, itemIndex)
@@ -815,7 +873,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return true, "Đã hồi phục +" .. healVal .. " HP sinh lực!"
 
     elseif item.category == "consumable" then
-        gameState.gold = gameState.gold - item.cost
+        Shop.payItem(item,gameState)
         if item.apply then item.apply(gameState) end
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -908,6 +966,7 @@ function Shop.openPack(packItem, gameState)
         for i=1,3 do candidates[i]=editions[i] end
     end
 
+    if Blood.powerOf(packItem)>1 then for i,card in ipairs(candidates) do candidates[i]=Blood.reward(card) end end
     return {
         pack = packItem,
         cards = candidates,
@@ -972,7 +1031,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             end
             local chosen = deityList[Rng.random(#deityList)]
             local edPool = { "foil", "holo", "polychrome" }
-            chosen.deity.edition = edPool[Rng.random(#edPool)]
+            chosen.deity.edition = edPool[Rng.random(#edPool)];chosen.deity.editionPower=card.bloodPower
             Sound.play("round_win")
             shop.currentPackOpening = nil
             return true, "Aura: Thần [" .. chosen.deity.name .. "] nhận hiệu ứng " .. chosen.deity.edition:upper() .. "!"
@@ -983,7 +1042,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
                 return false, "Không có Hộ Linh nào!"
             end
             local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "negative"
+            chosen.deity.edition = "negative";chosen.deity.editionPower=card.bloodPower
             gameState.maxHandSize = math.max(1, (gameState.maxHandSize or 3) - 1)
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
@@ -1012,7 +1071,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
                 return false, "Không có Hộ Linh nào!"
             end
             local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "polychrome"
+            chosen.deity.edition = "polychrome";chosen.deity.editionPower=card.bloodPower
             local kept = chosen.deity
             for _, entry in ipairs(deityList) do
                 if entry.deity ~= kept then require("src.souls").award(gameState,entry.deity) end
@@ -1029,7 +1088,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             Sound.play("cant_afford")
             return false, "Không tìm thấy lá bài để đóng dấu!"
         end
-        if not Deck.applySeal(gameState,targetCard,card.sealType or card.id) then return false,"Con dấu không hợp lệ." end
+        if not Deck.applySeal(gameState,targetCard,card.sealType or card.id,card.bloodPower) then return false,"Con dấu không hợp lệ." end
         Sound.play("shop_buy")
         shop.currentPackOpening = nil
         return true, "Đã đóng ấn [" .. (card.sealName or card.subtitle or card.name) .. "] lên lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
@@ -1049,8 +1108,8 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
                 destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
             local ranks = { 11, 12, 13 }
-            for i = 1, 3 do
-                local r = ranks[i]
+            for i = 1, Shop.getConsumableParams(card).count do
+                local r = ranks[(i-1)%3+1]
                 local nc = Deck.newCard(r, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
                 Deck.addCardToDeck(gameState, nc)
@@ -1063,7 +1122,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             if gameState.hand and #gameState.hand > 0 then
                 destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
-            for i = 1, 2 do
+            for i = 1, Shop.getConsumableParams(card).count do
                 local nc = Deck.newCard(14, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
                 Deck.addCardToDeck(gameState, nc)
@@ -1076,7 +1135,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             if gameState.hand and #gameState.hand > 0 then
                 destroyCard(gameState.hand[Rng.random(#gameState.hand)])
             end
-            for i = 1, 4 do
+            for i = 1, Shop.getConsumableParams(card).count do
                 local r = Rng.random(2, 10)
                 local nc = Deck.newCard(r, userFaction)
                 nc.equipments = { Equipment.getRandomEquipment() }
@@ -1108,7 +1167,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
                 destroyCard(gameState.hand[1])
                 destroyed = destroyed + 1
             end
-            gameState.gold = (gameState.gold or 0) + 20
+            gameState.gold = (gameState.gold or 0) + Shop.getConsumableParams(card).gold
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
             return true, "Immolate: Thiêu rụi " .. destroyed .. " lá, nhận ngay +$20 Tiền Vàng!"
@@ -1142,7 +1201,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         elseif card.id == "spec_black_hole" then
             gameState.handLevels = gameState.handLevels or {}
             for _, ht in pairs(Poker.HAND_TYPES) do
-                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 1
+                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + Blood.powerOf(card)
             end
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
@@ -1155,19 +1214,19 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             local allHands = {}
             for _, ht in pairs(Poker.HAND_TYPES) do table.insert(allHands, ht) end
             local h = allHands[Rng.random(#allHands)]
-            gameState.handLevels[h.id] = (gameState.handLevels[h.id] or 1) + 3
+            gameState.handLevels[h.id] = (gameState.handLevels[h.id] or 1) + 3*Blood.powerOf(card)
             Sound.play("round_win")
             shop.currentPackOpening = nil
             return true, "Siêu Tân Tinh: Nâng cấp " .. h.vnName .. " lên +3 Cấp (Cấp " .. gameState.handLevels[h.id] .. ")!"
         elseif card.handId == "all" or card.id == "planet_black_hole" or card.id == "black_hole" then
             for _, ht in pairs(Poker.HAND_TYPES) do
-                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 2
+                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 2*Blood.powerOf(card)
             end
             Sound.play("xmult_boom")
             shop.currentPackOpening = nil
             return true, "Hố Đen: Nâng cấp TẤT CẢ các thế bài Poker lên +2 Cấp độ!"
         elseif card.handId then
-            gameState.handLevels[card.handId] = (gameState.handLevels[card.handId] or 1) + 2
+            gameState.handLevels[card.handId] = (gameState.handLevels[card.handId] or 1) + 2*Blood.powerOf(card)
             local hType = nil
             for _, ht in pairs(Poker.HAND_TYPES) do if ht.id == card.handId then hType = ht break end end
             local vName = hType and hType.vnName or card.name
@@ -1182,7 +1241,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         local handId = card.handId
         if not handId then return false, "Bí Tịch không hợp lệ!" end
         if gameState.unlockedHands[handId] then
-            gameState.handLevels[handId] = (gameState.handLevels[handId] or 1) + 1
+            gameState.handLevels[handId] = (gameState.handLevels[handId] or 1) + Blood.powerOf(card)
             shop.currentPackOpening = nil
             Sound.play("round_win")
             return true, "Thế đánh " .. (card.handName or card.name) .. " tăng lên Cấp " .. gameState.handLevels[handId] .. "!"
@@ -1200,10 +1259,10 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             Sound.play("cant_afford")
             return false, "Hãy chọn một lá bài trước, hoặc cất Ấn Bản vào balo."
         end
-        Shop.applyEdition(targetCard, card.edition)
+        Shop.applyEdition(targetCard, card.edition,card.bloodPower)
         for _, pile in ipairs({ gameState.persistentDeck or {}, gameState.hand or {}, gameState.deck or {}, gameState.discardPile or {} }) do
             for _, copy in ipairs(pile) do
-                if copy and targetCard.id and copy.id == targetCard.id then Shop.applyEdition(copy, card.edition) end
+                if copy and targetCard.id and copy.id == targetCard.id then Shop.applyEdition(copy, card.edition,card.bloodPower) end
             end
         end
         shop.currentPackOpening = nil
@@ -1288,6 +1347,13 @@ end
 
 function Shop.reroll(shop, gameState, refresh)
     local refreshShop = refresh or Shop.refresh
+    if Blood.isMode(shop.mode) then
+        local cost=Shop.getRerollCost(shop,gameState)
+        if not Shop.canAfford({cost=cost,currency="blood"},gameState) then return false,"Đổi hàng cần "..cost.." HP và phải giữ lại 1 HP." end
+        gameState.playerHp=gameState.playerHp-cost
+        shop.rerollCount=(shop.rerollCount or 0)+1
+        refreshShop(shop,gameState);Sound.play("shop_reroll");return true
+    end
     if shop.soulMode then
         local cost=Shop.getRerollCost(shop,gameState)
         if (gameState.souls or 0)<cost then return false,"Không đủ linh hồn để đổi hàng!" end
@@ -1325,7 +1391,7 @@ function Shop.reroll(shop, gameState, refresh)
 end
 
 function Shop.getSacrificePrice(item, kind, gameState)
-    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and Shop.voucherParams("v_altar").gold or 0
+    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and Shop.voucherParams("v_altar",gameState).gold or 0
     if kind == "deity" then
         return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
     elseif kind == "consumable" then
@@ -1436,7 +1502,7 @@ end
 function Shop.getDestructionRewards(gameState, card)
     local soulMarket=gameState.shopMode=="soul"
     local heal=soulMarket and 10 or 0
-    if gameState.vouchers and gameState.vouchers.v_apothecary then heal=heal+Shop.voucherParams("v_apothecary").heal end
+    if gameState.vouchers and gameState.vouchers.v_apothecary then heal=heal+Shop.voucherParams("v_apothecary",gameState).heal end
     return {souls=Souls.value(card)*(soulMarket and 2 or 1), multiplier=soulMarket and 2 or 1,
         heal=heal, gold=soulMarket and 5 or 0}
 end
@@ -1454,9 +1520,10 @@ function Shop.enterSoulShop(gameState)
 end
 
 function Shop.enterAfterCombat(gameState)
-    if not Shop.enterSoulShop(gameState) then
-        gameState.shopMode=Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)]
-    end
+    gameState.bloodShopNotice=nil
+    local blood=Blood.roll(gameState)
+    if Shop.enterSoulShop(gameState) then gameState.pendingBloodShop=blood or gameState.pendingBloodShop
+    else gameState.shopMode=blood or Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)] end
     gameState.soulDestroyActive=false
     gameState.soulDestroyConsumable=nil
 end
@@ -1470,7 +1537,11 @@ function Shop.leave(shop, gameState)
         Shop.refresh(shop,gameState)
         return "shop"
     end
-    gameState.shopMode="normal"
+    if gameState.shopMode=="large" and gameState.pendingBloodShop then
+        gameState.shopMode=gameState.pendingBloodShop;gameState.pendingBloodShop=nil
+        Shop.resetReroll(shop);Shop.refresh(shop,gameState);return "shop"
+    end
+    gameState.shopMode="normal";gameState.bloodShopNotice=nil
     return "advance"
 end
 

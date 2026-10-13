@@ -5157,3 +5157,151 @@ Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-b
 Output: `assets/cards/continental/spn/spirit_blood_bargain.png`
 
 Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-00e96c31-668d-4d0a-8f61-18c9980486a9.png`
+
+
+## 2026-10-13 — Armor becoming lasting life
+
+### spn / spirit_armor_vitality — Giáp Hóa Sinh
+
+Ability: Khi thắng trận: tiêu toàn bộ giáp còn lại, chuyển 100% thành máu tối đa vĩnh viễn và hồi lượng máu tương ứng. Tiến hóa tăng tỷ lệ.
+
+Concept: One spectral knight transforms its dissolving antique-gold armor into large emerald life ribbons that feed a living heart inside its translucent chest.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, restrained magic and controlled rim light. Subject: one faceless spectral knight stands in quiet ancient western forest ruins; its broad weathered antique-gold breastplate and shoulder plates are dissolving from solid metal into a few large green-gold ribbons that flow INTO a glowing living emerald heart within its translucent chest. The armor is visibly becoming lasting life, not a defensive shield being cast. A few broad armor fragments remain on its body, heart remains contained and readable, no duplicate characters, no red blood, no ornate jewelry. Antique gold metal palette with emerald life accent against dark mossy western arches and continental forest cliffs. No text, letters, digits, ranks, suits, badges, borders, frame, logo or watermark; no East Asian motifs or calligraphy, no dense filigree, particle noise or blown-out white glow.
+
+Output: `assets/cards/continental/spn/spirit_armor_vitality.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-4497c8b7-1c82-4533-8756-3f1cfe14fdc7.png`
+
+
+## 2026-10-13 — Discard strength reforged as armor
+
+### spn / spirit_discard_forge — Hộ Linh Tái Rèn
+
+Ability: Bỏ đúng 1 lá: +5 Giáp. Bỏ nhiều lá cùng lúc: Giáp bằng trung bình ST cơ bản của tất cả các lá vừa bỏ, làm tròn xuống. Tiến hóa tăng hiệu quả.
+
+Concept: One antique-gold spectral armorer merges energy from three differently sized discarded blade fragments into a single evenly formed steel-blue shield.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural primary silhouette, broad forms readable at 64px, restrained glow and controlled rim light. One faceless antique-gold spectral armorer apparition extends both hands over a SINGLE broad newly forming silver-blue shield. Three large discarded broken blade fragments of noticeably different sizes float above its hands; three restrained streams from the fragments combine into one even-strength band of blue-gold energy forming the shield. The armorer is an otherworldly spirit, no tangible workshop, no human craftsman; fragments are subordinate to the spirit and shield. Quiet weathered western battlement on an ocean continental cliff, antique gold and steel-blue with navy shadow. Convey converting discarded attack strength into averaged protection, not copying a trio of required crystals. No text, letters, numbers, ranks, suits, cards, badges, borders, frame, logo or watermark; no East Asian motifs/calligraphy, dense filigree, tiny particles or blown-out white glow.
+
+Output: `assets/cards/continental/spn/spirit_discard_forge.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-735a56a6-1157-43f6-8d61-e138285914d5.png`
+
+
+## 2026-10-13 — Five foundations and rank-two echoes
+
+### spn / spirit_soft_chant — Hồn Vũ
+
+Ability: Mỗi tay tính điểm: +5 Cường hóa; tiến hóa tăng chỉ số.
+
+Concept: One graceful floating violet spirit of song, an abstract faceless robed apparition, cups a small steady antique-gold flame before its chest; five broad calm golden resonance ripples surround the flame. Quiet violet continental valley with eroded western arches. Deep violet with restrained antique gold, gentle concentrated strengthening rather than explosive damage.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE supernatural primary silhouette, broad readable forms at 64px, controlled rim light and restrained glow, quiet mysterious-continent western ruins. No text, letters, numbers, ranks, suits, playing cards, badges, border, frame, logo or watermark; no East Asian motifs/calligraphy, dense tiny ornaments or noisy particles. One graceful floating violet spirit of song, an abstract faceless robed apparition, cups a small steady antique-gold flame before its chest; five broad calm golden resonance ripples surround the flame. Quiet violet continental valley with eroded western arches. Deep violet with restrained antique gold, gentle concentrated strengthening rather than explosive damage.
+
+Output: `assets/cards/continental/spn/spirit_soft_chant.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-63d40412-9b0a-426c-91a8-5d2445e10ac4.png`
+
+### spn / spirit_stone_fist — Thạch Quyền
+
+Ability: Mỗi tay tính điểm: +20 Sát thương; tiến hóa tăng chỉ số.
+
+Concept: One enormous spectral bear forepaw formed of floating weathered sandstone slabs emerges from bone-gold desert mist, striking downward to release one broad restrained orange impact wave. The apparition has a clear massive fist silhouette, no human boxer, no duplicate limbs. Quiet fossil continental cliffs and far western ruined watchtower, bone sandstone and antique gold with controlled warm impact.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE supernatural primary silhouette, broad readable forms at 64px, controlled rim light and restrained glow, quiet mysterious-continent western ruins. No text, letters, numbers, ranks, suits, playing cards, badges, border, frame, logo or watermark; no East Asian motifs/calligraphy, dense tiny ornaments or noisy particles. One enormous spectral bear forepaw formed of floating weathered sandstone slabs emerges from bone-gold desert mist, striking downward to release one broad restrained orange impact wave. The apparition has a clear massive fist silhouette, no human boxer, no duplicate limbs. Quiet fossil continental cliffs and far western ruined watchtower, bone sandstone and antique gold with controlled warm impact.
+
+Output: `assets/cards/continental/spn/spirit_stone_fist.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-e33343c5-e86a-49ce-a801-407a196ce1b6.png`
+
+### spn / spirit_lightning_choice — Lôi Chỉ
+
+Ability: Một lần đầu trận: +20 Tốc đánh tạm trong trận cho một quân ngẫu nhiên trên tay; tiến hóa tăng tốc được cho.
+
+Concept: One slender cold-blue lightning apparition extends a SINGLE luminous finger; one narrow controlled cyan lightning stream accelerates one small blank silver shard forward with a long clean horizontal wind trail. Quiet icy western bridge over continental sea cliffs, glacial blue and silver, one main spirit; clearly targeted speed blessing for one recipient, no multiple shards or energy net.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE supernatural primary silhouette, broad readable forms at 64px, controlled rim light and restrained glow, quiet mysterious-continent western ruins. No text, letters, numbers, ranks, suits, playing cards, badges, border, frame, logo or watermark; no East Asian motifs/calligraphy, dense tiny ornaments or noisy particles. One slender cold-blue lightning apparition extends a SINGLE luminous finger; one narrow controlled cyan lightning stream accelerates one small blank silver shard forward with a long clean horizontal wind trail. Quiet icy western bridge over continental sea cliffs, glacial blue and silver, one main spirit; clearly targeted speed blessing for one recipient, no multiple shards or energy net.
+
+Output: `assets/cards/continental/spn/spirit_lightning_choice.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-72a892fd-0bf9-45d0-8c32-29da19524e0c.png`
+
+### spn / spirit_twin_oath — Song Hồn Đồng Ước
+
+Ability: Khi chơi Đôi: +10 Cường hóa; đôi cùng chất thay bằng +20, không cộng hai thưởng. Tiến hóa tăng cả hai mức.
+
+Concept: One supernatural guardian with two symmetrical silver half-faces joined into a single head and unified robed body holds two identical green spectral flames, one in each hand; both matching flames merge into a contained antique-gold light at its chest. Quiet emerald western forest ruins, silver and green with warm gold accent, one unified apparition rather than two characters. Convey a matched pair strengthened by matching essence.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE supernatural primary silhouette, broad readable forms at 64px, controlled rim light and restrained glow, quiet mysterious-continent western ruins. No text, letters, numbers, ranks, suits, playing cards, badges, border, frame, logo or watermark; no East Asian motifs/calligraphy, dense tiny ornaments or noisy particles. One supernatural guardian with two symmetrical silver half-faces joined into a single head and unified robed body holds two identical green spectral flames, one in each hand; both matching flames merge into a contained antique-gold light at its chest. Quiet emerald western forest ruins, silver and green with warm gold accent, one unified apparition rather than two characters. Convey a matched pair strengthened by matching essence.
+
+Output: `assets/cards/continental/spn/spirit_twin_oath.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-d4488c7b-8db8-4c14-b579-ee23f61451c4.png`
+
+### spn / spirit_second_wave — Dư Ảnh Nhị Khúc
+
+Ability: Các quân rank 2 ghi điểm kích hoạt tổng cộng 2 lần, gồm lần gốc; mỗi cấp SPN thêm một lần.
+
+Concept: One large spectral lunar moth made of translucent silver-blue mist floats above cold continental ruins. Its broad symmetrical wings emit exactly TWO thick separated parallel bands of antique-gold light, echoing the same pulse twice into the foreground. One moth only, strong wing silhouette, navy night and glacial silver with restrained gold accents, quiet eroded western arches, no digits or card symbols.
+
+Prompt: Use case: stylized-concept. ONE production SPN game illustration, full-bleed portrait 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE supernatural primary silhouette, broad readable forms at 64px, controlled rim light and restrained glow, quiet mysterious-continent western ruins. No text, letters, numbers, ranks, suits, playing cards, badges, border, frame, logo or watermark; no East Asian motifs/calligraphy, dense tiny ornaments or noisy particles. One large spectral lunar moth made of translucent silver-blue mist floats above cold continental ruins. Its broad symmetrical wings emit exactly TWO thick separated parallel bands of antique-gold light, echoing the same pulse twice into the foreground. One moth only, strong wing silhouette, navy night and glacial silver with restrained gold accents, quiet eroded western arches, no digits or card symbols.
+
+Output: `assets/cards/continental/spn/spirit_second_wave.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-dfb917a0-9a3c-4871-9cc0-a41677ce2610.png`
+
+## 2026-10-13 — Dedicated Blood Shop Interiors
+
+Hai nội thất độc lập, giữ phong cách Continental, tranh 16:9 không chữ hoặc UI. Quầy nhỏ gần gũi trong hầm đá; quầy lớn là đại điện Gothic với vòm cao. Vùng quầy trung tâm/phải giữ tối và thoáng để hàng bán và giá HP dễ đọc.
+
+### shop / blood_small — Quầy Huyết Ước
+
+Concept: Intimate coastal stone crypt boutique; bronze vitality balance, ruby life-essence, walnut counters, blank contracts and crimson glass.
+
+Prompt: Create ONE finished production game environment background, landscape 16:9, 2048x1152 PNG, full bleed. Cinematic painterly Western dark-fantasy expedition, same world as a mysterious continent with ancient European stone ruins, antique bronze relics, restrained magical lighting and large readable shapes. Scene: SMALL BLOOD PACT SHOP, an intimate illicit sanctuary boutique tucked into the vaulted stone crypt of a western coastal fortress. View from a customer standing at a broad dark walnut counter. On the LEFT THIRD, the striking signature object is a large antique bronze balance scale with one bowl containing a contained ruby-red life-essence crystal and the other bowl holding one antique metal relic; a dim crimson glow implies trading vitality for powerful artifacts. Small glass life-essence flasks, sealed blank parchment contracts, two weathered chests, a red velvet drape and warm candle lanterns surround this counter in tasteful small clusters. Low ribbed stone arch, close ceiling, distant narrow doorway and subtle ocean-blue moonlight contrast the warm bronze/crimson light. Rich convincing materials, physically plausible furniture, carefully composed depth, premium polished RPG shop interior, mysterious but welcoming enough to browse. RIGHT TWO THIRDS: broad quiet recessed dark wood and stone shelving bays with unoccupied display surfaces and an uncluttered wide counter, deliberately calm and moderately dark so game merchandise cards and white text will overlay clearly. The strong glowing scale must remain below the upper title strip and in the left third, not in the center of the stock area. Keep the bottom 10% a calm dark counter surface. Clear ruby/oxblood identity, antique gold, dark walnut, slate navy shadows. Controlled rim light and restrained glow, medium detail, no blown-out white highlights, no noisy sparks. No people, no weapons attacking, no gore or body parts, no blood splashes. No text, lettering, digits, price tags, UI, poker cards, card borders, watermarks or logos. No East Asian architecture or ornament. This must be a complete beautiful believable interior painting, not a UI mockup.
+
+Output: `assets/scene/shops/blood_small.png` — 1672×941 PNG
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-6a71475d-1c2c-46c8-9c50-33b326bdd2de.png`
+
+### shop / blood_large — Đại Điện Huyết Ước
+
+Concept: Monumental Gothic trading cathedral; obsidian counters, tall basalt vaults, bronze-cradled ruby altar, crimson velvet, cold coastal light.
+
+Prompt: Create ONE finished production game environment background, landscape 16:9, 2048x1152 PNG, full bleed. Cinematic painterly Western dark-fantasy expedition, mysterious continental world, exceptionally polished premium RPG environment art. Scene: LARGE BLOOD PACT EMPORIUM, a magnificent underground western Gothic trading cathedral built of obsidian and ancient basalt, exceptionally tall ribbed vaults, deep monumental pointed arches, stone balconies, antique bronze fittings and broad crimson velvet banners without writing. This must feel much larger, wealthier and architecturally distinct from an intimate small shop. Three-quarter customer-eye view from a wide polished black marble sales counter. LEFT THIRD: a grand elevated antique bronze reliquary altar holds one brilliant but controlled RUBY CRYSTAL surrounded by a single elegant bronze circular cradle, with deep red life-essence suspended inside the crystal. Oversized heavy bronze balance scales, two compact dark artifact chests and a few fine crimson-glass bottles on the nearer trading table communicate spending vitality on exceptional relics. No anatomical heart or body parts. Sweeping stairway and cold ocean-blue light through distant lancet windows suggest this secret institution is housed below a continental fortress. Right two thirds have beautiful quiet empty recessed display alcoves framed by tall dark columns and long stone trading counters; enough moderately dark uncluttered space to overlay two rows of four large merchandise cards and white labels. Maintain visible vertical grandeur and room depth; don't fill the whole room with tiny objects. Several restrained warm lanterns and chandeliers high on the sides, carefully controlled ruby glow on bronze edges, shadowed dark navy stone, antique gold and oxblood velvet. Keep bottom 10% a dark calm marble foreground surface; upper title strip calm. Give the altar its strongest recognizable silhouette between x 8%-25% and y 32%-60%, not the center of the main stock display. Broad readable shapes, medium detail, atmospheric depth, painterly realistic materials, clear proportions. NO people, text, letters, numbers, price tags, UI, playing cards, frames, border, logo, watermark, East Asian architecture, gore, splashes, crowded tiny ornament, noisy particles or blown-out light. A complete authored fantasy interior painting, no interface drawn into the image.
+
+Output: `assets/scene/shops/blood_large.png` — 1672×941 PNG
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-a88c40c7-f40a-49fd-8204-23ce7089210f.png`
+
+
+## Seal balance and Armor emblem — 2026-10-13
+
+The ten current abilities are recorded in `SEAL_SYSTEM.md` and the active seal rows of `asset_manifest.json`. Historical image-generation prompts remain unchanged. Display name `Ấn Thanh Tẩy` becomes `Ấn Giáp`, retaining `seal_purifying` for save and artwork compatibility. Its runtime vector is now an engraved solid shield on cold silver-blue enamel, replacing the cleansing star. Blood repeats equipment twice extra for 3 HP per hand; Anchor guarantees every stamped opening card; Bounty grants 3 gold per played stamped card on battle-ending victory; Armor grants 10% player maximum HP as held armor; Sunder removes all target armor and adds 10% target maximum HP damage; Lantern grants 16 Mult per held same-suit card; Echoes doubles held-hand Mult; Reclaimer grants 4 gold per discarded stamp; Gambit makes all-stamped discards free; Threshold scores three times and heals 3 HP per owner. Existing full-bleed Continental paintings are reused, with the distinct stamps attached by the shared runtime renderer.
+
+## SPN permanent damage and stored gold - 2026-10-13
+
+### Dư Hồn Chiến Tích (`spirit_battle_memory`)
+
+Ability: Mỗi quân ghi điểm tăng vĩnh viễn 4 sát thương cơ bản, một lần mỗi quân trong mỗi tay; tiến hóa tăng lượng nhận.
+
+Concept: A spectral veteran imprinting a permanent ember scar onto a hovering blade fragment.
+
+Prompt: Create a single game SPN card artwork, portrait 1024 x 1536, 2:3 full bleed. Cinematic painterly Western dark-fantasy expedition on a mysterious ancient continent, medium detail, clear dominant silhouette readable at small size. No text, letters, numbers, suit marks, badge, card frame, border, UI, Eastern architecture or calligraphy. The supernatural entity must visibly express this mechanic: Mỗi quân ghi điểm tăng vĩnh viễn 4 sát thương cơ bản, một lần mỗi quân trong mỗi tay; tiến hóa tăng lượng nhận. Concept: A spectral veteran imprinting a permanent ember scar onto a hovering blade fragment. One translucent battle-scarred knight ghost in weathered armor, visibly pressing a small controlled molten-orange ember into a large hovering broken sword blade. Old ember scars remain in the blade, symbolizing accumulated permanent battle memory. Volcanic black cliffs in a quiet background, navy smoke, restrained orange rim light. The ghost is the primary subject, blade secondary, no small runic text.
+
+Output: `assets/cards/continental/spn/spirit_battle_memory.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-5bf60613-4c6a-48c4-b590-b375bdb24a5d.png`
+
+### Kim Hồn Tụ Lực (`spirit_golden_tithe`)
+
+Ability: +10 sát thương mỗi tay cho mỗi nhóm đủ 5 vàng đang giữ, không tiêu vàng; tiến hóa tăng sát thương mỗi nhóm.
+
+Concept: An antique-gold spectral colossus drawing strength from five large coin-like golden stones circling its chest.
+
+Prompt: Create a single game SPN card artwork, portrait 1024 x 1536, 2:3 full bleed. Cinematic painterly Western dark-fantasy expedition on a mysterious ancient continent, medium detail, clear dominant silhouette readable at small size. No text, letters, numbers, suit marks, badge, card frame, border, UI, Eastern architecture or calligraphy. The supernatural entity must visibly express this mechanic: +10 sát thương mỗi tay cho mỗi nhóm đủ 5 vàng đang giữ, không tiêu vàng; tiến hóa tăng sát thương mỗi nhóm. Concept: An antique-gold spectral colossus drawing strength from five large coin-like golden stones circling its chest. One broad spectral guardian formed from antique-gold mist and weathered gold stone, five very large coin-shaped stones slowly orbiting a glowing chest core. Coin faces have no numbers or letters. Power gathers from stored wealth, nothing is being spent. Desert canyon dusk, bone sandstone, shadow navy, antique-gold palette and restrained warm glow. Monumental coherent silhouette, no dense jewelry or tiny coins.
+
+Output: `assets/cards/continental/spn/spirit_golden_tithe.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-f75aab74-0450-4691-9ace-fd942fff8214.png`

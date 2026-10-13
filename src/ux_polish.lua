@@ -1,4 +1,3 @@
-local Inventory = require("src.inventory")
 -- Transient presentation only. Shop remains the authority for prices and mutations.
 local Shop = require("src.shop")
 local Sound = require("src.sound")
@@ -60,21 +59,25 @@ end
 function P.button(game)
     local f=P.focus;if not f or P.busy() then return end
     if f.kind=="card" and not game.soulDestroyActive then return end
-    local price=f.kind=="stock" and f.item.cost or Shop.getSacrificePrice(f.item,f.kind,game)
+    if f.kind=="card_sale" and game.shopMode~="cards" then return end
+    local price=f.kind=="stock" and f.item.cost or Shop.getSacrificePrice(f.item,({reserve_deity="deity",reserve_consumable="consumable"})[f.kind] or f.kind,game)
     if f.kind=="card" then price=Shop.getDestructionRewards(game,f.item).souls end
+    if f.kind=="card_sale" then price=Shop.getCardSellPrice(f.item) end
     local soul=f.kind=="stock" and f.item.currency=="souls"
-    local full=f.kind=="stock" and f.item.consumable and #(game.consumables or {})>=Inventory.limit(game)
     local disabled=f.kind=="stock" and (soul and (game.souls or 0) or (game.gold or 0))<price
-        or f.kind=="card" and #(game.persistentDeck or {})<=1
-        or full
+        or (f.kind=="card" or f.kind=="card_sale") and #(game.persistentDeck or {})<=1
     local r=f.rect
-    return {id="polish_confirm",x=math.max(12,math.min(1118,r.x+r.w/2-74)),
-        y=math.max(70,math.min(634,r.y+r.h+12)),w=148,h=34,
-        text=disabled and (full and "Ô TIÊU HAO ĐẦY" or (f.kind=="stock" and (soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ"))
+    local backpackSale=f.kind=="card_sale" and f.index~=nil
+    local loadoutSale=require("ui.backpack").open and (f.kind=="reserve_deity" or f.kind=="reserve_consumable" or f.kind=="deity" or f.kind=="consumable")
+    return {id="polish_confirm",x=loadoutSale and 960 or backpackSale and 243 or math.max(12,math.min(1118,r.x+r.w/2-74)),
+        y=loadoutSale and 627 or backpackSale and 641 or math.max(70,math.min(634,r.y+r.h+12)),w=loadoutSale and 278 or backpackSale and 225 or 148,h=loadoutSale and 33 or backpackSale and 38 or 34,
+        text=disabled and (f.kind=="stock" and (soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ")
             or (f.kind=="card" and ("HỦY · +"..price.." LH")
             or ((f.kind=="stock" and (soul and "MUA · " or "MUA — $") or "BÁN — $")..price..(soul and " LH" or ""))),disabled=disabled}
 end
 local function ownedValid(f,game)
+    if f.kind=="reserve_deity" then return (game.backpackDeities or {})[f.index]==f.item end
+    if f.kind=="reserve_consumable" then return (game.backpackConsumables or {})[f.index]==f.item end
     if f.kind=="deity" then return game.deities and game.deities[f.index]==f.item end
     if f.kind=="consumable" then return game.consumables and game.consumables[f.index]==f.item end
     for _,card in ipairs(game.persistentDeck or {}) do if card==f.item then return true end end
@@ -86,7 +89,6 @@ function P.confirm(shop,game,done)
     local soulTransaction=f.kind=="card" or f.kind=="stock" and f.item.currency=="souls"
     local goldBefore=game.gold or 0
     local before=soulTransaction and (game.souls or 0) or (game.gold or 0)
-    local occupied={};for slot,d in pairs(game.deities or {}) do occupied[slot]=d end
     local ok,action,equipment
     local items={};for i,item in ipairs(shop.items or {}) do items[i]=item end
     if f.kind=="stock" then
@@ -98,6 +100,8 @@ function P.confirm(shop,game,done)
             if ok and rewards.multiplier==2 then
                 P.message="HIẾN TẾ ×2 · +"..rewards.souls.." LH · +"..rewards.heal.." HP · +"..rewards.gold.." VÀNG";P.messageAge=0
             end
+        elseif f.kind=="reserve_deity" or f.kind=="reserve_consumable" then ok,action=Shop.sellStoredItem(game,f.kind,f.index)
+        elseif f.kind=="card_sale" then ok,action=Shop.sellCard(game,f.item)
         elseif f.kind=="deity" then ok,action=Shop.sellDeity(game,f.index)
         elseif f.kind=="consumable" then ok,action=Shop.sellConsumable(game,f.index) end
     end
@@ -108,14 +112,9 @@ function P.confirm(shop,game,done)
     local acquired
     local gold=P.goldPosition or Config.gold
     if kind=="sell" then target=gold
-    elseif f.item.deity then
-        for slot,d in pairs(game.deities or {}) do if d~=occupied[slot] then
-            acquired=d;require("ui.inventory_rail").reveal("spn",slot,game)
-            local x,y,w,h=require("src.ui").getDeitySlotRect(slot,"shop");target={x=x+w/2,y=y+h/2};break end end
-    elseif f.item.consumable then
-        acquired=f.item.consumable
-        require("ui.inventory_rail").reveal("consumable",#game.consumables,game)
-        local x,y,w,h=require("src.ui").getConsumableSlotRect(#game.consumables,"shop");target={x=x+w/2,y=y+h/2}
+    elseif f.item.deity or f.item.consumable then
+        acquired=f.item.consumable or (game.backpackDeities or {})[#(game.backpackDeities or {})]
+        target={x=846,y=674}
     end
     if kind=="buy" and (f.item.backpack or target and target.x<0) then target={x=846,y=674} end
     P.job={kind=kind,age=0,duration=Config[kind],item=f.item,rect=f.rect,target=target,button=b,
@@ -304,7 +303,7 @@ function P.snapshot(game)
     return snap
 end
 local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
-    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",
+    rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",repeatsPerLevel="HỆ SỐ KÍCH HOẠT",uqChancePct="UQ (%)",
     xMult="HỆ SỐ CƯỜNG HÓA",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",

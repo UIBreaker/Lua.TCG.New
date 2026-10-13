@@ -1,48 +1,24 @@
-local Rail={offsets={spn=0,consumable=0}}
-function Rail.canSwipe(game,state,x,y)
-    if state~="playing" then return false end
-    local layout=require("ui.layout").battle
-    local spn,cons=layout.spm,layout.consumables
-    for kind,rect in pairs({spn=spn,consumable=cons}) do
-        local _,_,total=Rail.range(kind,game)
-        if total>(kind=="spn" and 6 or 3) and x>=rect[1] and x<=rect[1]+rect[3] and y>=rect[2] and y<=rect[2]+rect[4] then return true end
-    end
-    return false
-end
+local Rail={}
 function Rail.range(kind,game)
     local total=kind=="spn" and require("src.deities").getMaxSlots(game) or require("src.inventory").limit(game)
-    local visible=kind=="spn" and 6 or 3
-    Rail.offsets[kind]=math.max(0,math.min(Rail.offsets[kind],total-visible))
-    local first=Rail.offsets[kind]+1
-    return first,math.min(total,first+visible-1),total
+    return 1,total,total
 end
 function Rail.localIndex(kind,index,game)
-    local first,last=Rail.range(kind,game)
+    local first,last,total=Rail.range(kind,game)
     if index<first or index>last then return nil end
-    return index-first+1,last-first+1
+    return index,total
 end
-function Rail.reveal(kind,index,game)
-    local first,last=Rail.range(kind,game)
-    if index<first then Rail.offsets[kind]=index-1
-    elseif index>last then Rail.offsets[kind]=index-(kind=="spn" and 6 or 3) end
-end
-function Rail.scroll(game,state,mx,my,dy)
-    if dy==0 or state=="shop" then return false end
-    local layout=require("ui.layout").battle
-    local spn,cons=layout.spm,layout.consumables
-    for kind,rect in pairs({spn=spn,consumable=cons}) do
-        if mx>=rect[1] and mx<=rect[1]+rect[3] and my>=rect[2] and my<=rect[2]+rect[4] then
-            local _,_,total=Rail.range(kind,game)
-            local visible=kind=="spn" and 6 or 3
-            Rail.offsets[kind]=math.max(0,math.min(total-visible,Rail.offsets[kind]-(dy>0 and visible or -visible)))
-            return true
-        end
-    end
-    return false
+function Rail.rect(kind,index,game)
+    local localIndex,total=Rail.localIndex(kind,index,game)
+    if not localIndex then return -10000,-10000,1,1 end
+    local Layout=require("ui.layout")
+    return Layout.fanCardRect(kind=="spn" and Layout.battle.spm or Layout.battle.consumables,localIndex,total)
 end
 function Rail.hint(kind,game)
-    local first,last,total=Rail.range(kind,game)
-    if total>(kind=="spn" and 6 or 3) then return first.."–"..last.."/"..total.." ↕" end
-    return ""
+    local count=kind=="spn" and require("src.deities").getCount(game.deities) or #(game.consumables or {})
+    return "Hiện "..count.." lá"
 end
+-- The full fan is always visible; scrolling is reserved for the expanded view.
+function Rail.canSwipe() return false end
+function Rail.scroll() return false end
 return Rail

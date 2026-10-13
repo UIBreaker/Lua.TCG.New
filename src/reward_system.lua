@@ -1,4 +1,3 @@
-local Inventory = require("src.inventory")
 local UI = require("src.ui")
 local Sound = require("src.sound")
 local Deities = require("src.deities")
@@ -146,9 +145,6 @@ local function createReward(id, game, source, depth)
         reward.card = Deck.newCard(Rng.random(2, 14), Deck.SUIT_ORDER[Rng.random(#Deck.SUIT_ORDER)])
         reward.name = reward.card.rankName .. reward.card.suitSymbol
     elseif reward.packType then
-        if reward.packType == "buffoon" and Deities.getCount(game.deities or {}) >= Deities.getMaxSlots(game) then
-            return fallback(reward, "Không còn ô SPN trống")
-        end
         local pack
         for _, item in ipairs(Shop.PACK_CATALOG) do
             if item.packType == reward.packType then pack = copy(item); break end
@@ -170,7 +166,6 @@ local function createReward(id, game, source, depth)
             reward.card = options[Rng.random(#options)]
         end
         reward.name = reward.card.name
-        if #(game.consumables or {}) >= Inventory.limit(game) then return fallback(reward, "Ô tiêu hao đã đầy") end
     elseif reward.type == "CHEST" then
         if depth >= 2 then return fallback(reward, "Giới hạn rương lồng nhau") end
         reward.children = rollTable(reward.tableId, game, "RƯƠNG", depth + 1)
@@ -229,14 +224,21 @@ function RewardSystem.begin(breakdown, game, context)
     local hadPack = false
     game.rewardPacks = game.rewardPacks or {}
     game.consumables = game.consumables or {}
+    game.rewardClaimSerial = (game.rewardClaimSerial or 0) + 1
+    local receiptIndex = 0
     visit(result.loot, function(reward)
-        if reward.type == "CONSUMABLE" and #game.consumables >= Inventory.limit(game) then fallback(reward, "Ô tiêu hao đã đầy") end
+        if reward.card or reward.opening then
+            receiptIndex = receiptIndex + 1
+            reward.receipt = "victory:" .. game.rewardClaimSerial .. ":" .. receiptIndex
+            if reward.card then reward.card.victoryRewardReceipt = reward.receipt end
+            if reward.opening then reward.opening.victoryRewardReceipt = reward.receipt end
+        end
         if reward.type == "GOLD" then
             result.bonusGold = result.bonusGold + reward.amount
         elseif reward.type == "PLAYING_CARD" then
             Deck.addCardToDeck(game, reward.card)
         elseif reward.type == "CONSUMABLE" then
-            table.insert(game.consumables, reward.card)
+            require("src.loadout").storeConsumable(game,reward.card)
         elseif reward.opening then
             table.insert(game.rewardPacks, reward.opening)
             hadPack = true
@@ -256,12 +258,6 @@ function RewardSystem.openNextPack(game, shop)
     if shop.currentPackOpening then return false end
     local opening = game.rewardPacks and game.rewardPacks[1]
     if not opening then return false end
-    if opening.pack.packType == "buffoon" and Deities.getCount(game.deities or {}) >= Deities.getMaxSlots(game) then
-        game.gold = (game.gold or 0) + Config.fallbackGold
-        table.remove(game.rewardPacks, 1)
-        Sound.play("reward_gold_total")
-        return true, "SPN đã đầy: +$" .. Config.fallbackGold .. " vàng bù"
-    end
     if opening.pack.packType == "buffoon" then
         for _, card in ipairs(opening.cards) do
             for k, v in pairs(Deities.CATALOG[card.id] or {}) do
@@ -281,6 +277,81 @@ function RewardSystem.completePack(game, shop, opening)
         return true
     end
     return false
+end
+
+local function exchangeTargets(game, result)
+    local targets, used = {}, {}
+    if not game or not result or result.bulkExchanged then return targets end
+    visit(result.loot, function(reward)
+        if reward.exchangedGold or reward.type == "GOLD" then return end
+        local piles = reward.opening and {"rewardPacks"} or reward.type == "PLAYING_CARD"
+            and {"persistentDeck"} or reward.type == "CONSUMABLE" and {"backpackConsumables", "consumables"} or {}
+        for _, key in ipairs(piles) do
+            local pile = game[key] or {}
+            for i = #pile, 1, -1 do
+                local item = pile[i]
+                local matches = reward.receipt and item.victoryRewardReceipt == reward.receipt
+                if not reward.receipt then
+                    if reward.opening then
+                        matches = item == reward.opening or (item.pack and item.pack.packType == reward.opening.pack.packType)
+                        if matches then
+                            for j, card in ipairs(reward.opening.cards or {}) do
+                                if not item.cards or not item.cards[j] or item.cards[j].id ~= card.id then matches = false; break end
+                            end
+                        end
+                    else matches = reward.card and item.id == reward.card.id end
+                end
+                if matches and not used[item] and not (reward.opening and item.exchangedGold) then
+                    used[item] = true
+                    targets[#targets + 1] = {reward = reward, item = item, pile = pile,
+                        gold = reward.opening and Shop.getPackExchangeGold(item) or Shop.getChestExchangeGold({{card = item}})}
+                    return
+                end
+            end
+        end
+    end)
+    return targets
+end
+
+function RewardSystem.getBulkExchangeGold(game, result)
+    local gold = 0
+    for _, target in ipairs(exchangeTargets(game, result)) do gold = gold + target.gold end
+    return gold
+end
+
+function RewardSystem.exchangeAll(game, result)
+    if not game or game.pendingVictoryReward ~= result then return false, 0 end
+    local targets = exchangeTargets(game, result)
+    if #targets == 0 then return false, 0 end
+    local gold = 0
+    for _, target in ipairs(targets) do
+        for i = #target.pile, 1, -1 do
+            if target.pile[i] == target.item then table.remove(target.pile, i); break end
+        end
+        if target.reward.type == "PLAYING_CARD" then
+            for _, key in ipairs({"masterDeck", "deck", "hand", "discardPile"}) do
+                local pile = game[key] or {}
+                for i = #pile, 1, -1 do if pile[i].id == target.item.id then table.remove(pile, i) end end
+            end
+        elseif target.reward.opening then target.item.exchangedGold = target.gold end
+        target.reward.exchangedGold = target.gold
+        gold = gold + target.gold
+    end
+    for _, reward in ipairs(result.loot) do
+        if reward.children then
+            local converted, all = 0, true
+            for _, child in ipairs(reward.children) do
+                converted = converted + (child.exchangedGold or 0)
+                if child.type ~= "GOLD" and not child.exchangedGold then all = false end
+            end
+            if all and converted > 0 then reward.exchangedGold = converted end
+        end
+    end
+    game.gold = (game.gold or 0) + gold
+    result.bulkExchanged, result.exchangeGold = true, gold
+    result.earnedGold = result.earnedGold + gold
+    Sound.play("sell")
+    return true, gold
 end
 
 local function setState(anim, state)
@@ -303,12 +374,14 @@ function RewardSystem.newAnimation(breakdown, result)
         local parentIndex = #slots
         for _, child in ipairs(reward.children or {}) do slots[#slots + 1] = {reward = child, parent = reward, parentIndex = parentIndex} end
     end
-    return {breakdown = breakdown, result = result, lines = lines, slots = slots, coins = {},
+    local anim = {breakdown = breakdown, result = result, lines = lines, slots = slots, coins = {},
         state = "ENTER", timer = 0, phaseTime = 0, revealedCount = 0, revealedLoot = 0,
         displayTotal = 0, walletTotal = breakdown.currentGold, totalRevealed = false,
         pulse = 0, finished = false, buttonActive = false, visualSeed = 17, coinsSpawned = 0,
         sparks = {}, flares = {}, goldFlare = 0,
         soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0, lootPage = 1}
+    if result.bulkExchanged then RewardSystem.finishImmediately(anim) end
+    return anim
 end
 
 -- Local presentation RNG: effects cannot advance the saved gameplay generator.
@@ -546,7 +619,7 @@ local function inside(mx, my, x, y, w, h)
     return mx >= x and mx <= x + w and my >= y and my <= y + h
 end
 
-function RewardSystem.draw(anim, width, height, mx, my, buttons)
+function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     if not anim then return end
     local g = love.graphics
     local w, h = 1160, 680
@@ -706,7 +779,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     if inside(mx, my, rightX, y + 240, rightW, 50) then
         UI.descriptionCandidate = {hoverKey = anim.result, name = "LINH HỒN CHIẾN THẮNG", desc = "Mỗi quái thường: 1 linh hồn. Boss: 4 linh hồn.\nTrận này: " .. (anim.result.earnedSouls or 0) .. " linh hồn.\nDùng tại Chợ Linh Hồn; bỏ qua ải không nhận linh hồn.", color = soulColor}
     elseif inside(mx, my, rightX, y + 114, rightW, 116) then
-        UI.descriptionCandidate = {hoverKey = anim, name = "TỔNG XU NHẬN ĐƯỢC", desc = "Thưởng bảo đảm: " .. anim.breakdown.totalGold .. " xu\nVàng thưởng từ chiến lợi phẩm: " .. anim.result.bonusGold .. " xu\nTổng cộng: " .. anim.result.earnedGold .. " xu. Tiền được cộng một lần; số dư bên dưới bao gồm tiền đang có.", color = gold}
+        UI.descriptionCandidate = {hoverKey = anim, name = "TỔNG XU NHẬN ĐƯỢC", desc = "Thưởng bảo đảm: " .. anim.breakdown.totalGold .. " xu\nVàng thưởng từ chiến lợi phẩm: " .. anim.result.bonusGold .. " xu\nQuy đổi nhanh: " .. (anim.result.exchangeGold or 0) .. " xu\nTổng cộng: " .. anim.result.earnedGold .. " xu. Tiền được cộng một lần; số dư bên dưới bao gồm tiền đang có.", color = gold}
     end
     for _, c in ipairs(anim.coins) do
         if c.age >= 0 then
@@ -862,7 +935,8 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
             g.printf(reward.type == "GOLD" and "+" .. reward.amount .. " XU VÀNG" or UI.truncateUtf8(reward.name, 38), sx + 8, sy + 170, slotW - 16, "center")
             g.setFont(UI.fonts.tiny); g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], 0.12)
             UI.drawRoundedRect("fill", sx + slotW / 2 - 40, sy + 207, 80, 18, 5)
-            g.setColor(rarity.color); g.printf(slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 209, slotW - 8, "center")
+            g.setColor(reward.exchangedGold and gold or rarity.color)
+            g.printf(reward.exchangedGold and "ĐÃ ĐỔI +" .. reward.exchangedGold or slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 209, slotW - 8, "center")
             if inside(mx, my, sx, sy, slotW, slotH) then
                 if reward.type == "PLAYING_CARD" then UI.descriptionCandidate = reward.card
                 else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
@@ -897,6 +971,16 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
         end
     end
     g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + h - 88, x + w - 32, y + h - 88)
+    local exchangeGold = RewardSystem.getBulkExchangeGold(game, anim.result)
+    local exchange = {id="cashout_exchange_all",text=anim.result.bulkExchanged and "ĐÃ QUY ĐỔI +"..anim.result.exchangeGold.." VÀNG"
+        or "QUY ĐỔI NHANH TẤT CẢ  +"..exchangeGold,x=x+w-716,y=y+h-66,w=342,h=46,
+        variant="gold",font=UI.fonts.small,disabled=exchangeGold==0}
+    if buttons then buttons[#buttons+1]=exchange end
+    UI.drawButton(exchange,not exchange.disabled and inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h))
+    if inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h) then
+        UI.descriptionCandidate={hoverKey=anim.result,name="QUY ĐỔI NHANH TẤT CẢ",
+            desc="Đổi toàn bộ rương/gói, quân bài và thẻ tiêu hao vừa nhận ở mọi trang thành vàng.\nChỉ đổi chiến lợi phẩm của trận này; vàng và linh hồn đã nhận được giữ nguyên.",color=gold}
+    end
     local btn = {id = "cashout_continue", text = anim.finished and "ĐẾN CỬA HÀNG  →" or "NHẬN NHANH PHẦN THƯỞNG", x = x + w - 362, y = y + h - 66, w = 330, h = 46,
         color = gold, font = UI.fonts.regular, variant = "gold"}
     if buttons then buttons[#buttons + 1] = btn end
@@ -906,7 +990,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons)
     g.setColor(1, 0.91, 0.66, 0.8); UI.drawRoundedRect("line", btn.x, btn.y, btn.w, btn.h, 8)
     g.setFont(btn.font); g.setColor(0.13, 0.10, 0.055); g.printf(btn.text, btn.x, btn.y + 13, btn.w, "center")
     g.setFont(UI.fonts.small); g.setColor(UI.COLORS.textLight)
-    g.print(anim.finished and "Phần thưởng đã được cất vào hành trang" or "Xu và vật phẩm đang được thu thập", x + 32, y + h - 64)
+    g.print(anim.result.bulkExchanged and "Đã thu vàng từ chiến lợi phẩm" or anim.finished and "Phần thưởng đã sẵn sàng" or "Đang thu thập phần thưởng", x + 32, y + h - 64)
     g.setFont(UI.fonts.tiny); g.setColor(muted)
     g.print(anim.finished and "ENTER / SPACE  ·  Tiếp tục hành trình" or "ENTER / SPACE / CLICK  ·  Nhận ngay", x + 32, y + h - 40)
     g.pop()

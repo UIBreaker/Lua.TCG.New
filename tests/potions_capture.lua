@@ -70,7 +70,7 @@ function T.update(game,cb)
         end
     elseif step==3 then click(UI.Polish.button(game))
     elseif step==4 then
-        assert(#cb.getShopData().items==14 and game.consumables[1].id=="cons_accuracy")
+        assert(#cb.getShopData().items==14 and game.backpackConsumables[1].id=="cons_accuracy" and #game.consumables==0)
         if shelfCount(cb)==8 then deadline=love.timer.getTime()+.1;return end
         assert(shelfCount(cb)==7 and cb.getShopData().page==2)
         click(button(cb,"medicine_page_1"))

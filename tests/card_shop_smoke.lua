@@ -96,4 +96,36 @@ for _,card in ipairs(loaded.persistentDeck) do
 end
 assert(count==52)
 Shop.refresh(shop,loaded);assert(shop.mode=="cards" and #shop.items==8)
+-- Resale is restricted to the card shop and removes the owned instance from every battle pile.
+local seller=Game.new();seller.run=require("src.run_manager").newRun("red_deck")
+local sold,kept=Deck.newCard(13,"valoria"),Deck.newCard(2,"elaris")
+sold.evolutionLevel=2;Effects.setEffect(sold,"ancient")
+sold.equipments={Equipment.ITEMS.gem_fire}
+seller.persistentDeck={sold,kept};seller.masterDeck=seller.persistentDeck
+seller.hand={Deck.cloneCard(sold),Deck.cloneCard(kept)};seller.hand[2].selected=true
+seller.deck={Deck.cloneCard(sold)};seller.discardPile={Deck.cloneCard(sold)}
+seller.gold=10;seller.souls=23;seller.playerHp=41
+seller.consumables={Shop.destructionItem().consumable}
+seller.soulDestroyActive=true;seller.soulDestroyConsumable=seller.consumables[1]
+seller.vouchers={v_apothecary=true,v_altar=true}
+for _,mode in ipairs({"normal","small","consumable","equipment","spn","medicine","large","soul"}) do
+    seller.shopMode=mode
+    assert(not Shop.sellCard(seller,sold) and seller.gold==10 and #seller.persistentDeck==2)
+end
+assert(not Shop.sellCard())
+seller.shopMode="cards"
+local price=math.floor((4+12+8+Equipment.ITEMS.gem_fire.cost)/2)
+assert(Shop.getCardSellPrice(sold)==price and Shop.getCardSellPrice(kept)==2)
+local forged=Deck.cloneCard(sold);forged.evolutionLevel=100;forged.equipments={{cost=99999}}
+local ok,paid=Shop.sellCard(seller,forged)
+assert(ok and paid==price and seller.gold==10+price,"Use the owned card's value, not caller-supplied upgrades")
+assert(#seller.persistentDeck==1 and seller.persistentDeck[1]==kept and seller.masterDeck==seller.persistentDeck)
+assert(#seller.hand==1 and #seller.deck==0 and #seller.discardPile==0 and seller.selectedIndices[1]==1)
+assert(seller.souls==23 and seller.playerHp==41 and #seller.consumables==1 and seller.soulDestroyActive)
+assert(not sold.soulAwarded and not sold.destroyed and not (seller.soulDestroyedIds or {})[tostring(sold.id)])
+assert(not Shop.sellCard(seller,sold) and not Shop.sellCard(seller,kept) and seller.gold==10+price)
+local restored,restoredState=Persistence.restoreSnapshot(Persistence.makeSnapshot(seller,"shop"))
+assert(restoredState=="shop" and restored.shopMode=="cards" and restored.gold==seller.gold)
+assert(#restored.persistentDeck==1 and restored.persistentDeck[1].id==kept.id)
+print("Card resale PASS: card shop only, upgrade/equipment/edition value, canonical ownership, all-pile removal, no soul/heal/reaper rewards, stale/last-card guards and save retention")
 print("Card shop PASS: all 52 cards, levels 0/1/2, all 12 basic items ONLY, all 9 editions, combined upgrades, prices, failed/successful purchases, clone and save retention")

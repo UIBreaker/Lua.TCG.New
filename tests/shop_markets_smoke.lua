@@ -70,15 +70,14 @@ assert(rarities.uncommon and rarities.rare and highSpnOffers>0 and highSpnOffers
 for id in pairs(expected) do assert(consumables[id],"Missing retail card: "..id) end
 for id,eq in pairs(E.ITEMS) do if not eq.soulOnly then assert(equipment[id],"Missing equipment: "..id) end end
 
--- Capacity failures keep both stock and money; individual purchases store the real card.
+-- Full battle slots do not block purchasing into the backpack.
 game.shopMode="consumable";Shop.refresh(shop,game)
 local card,cost=shop.items[1].consumable,shop.items[1].cost
 game.consumables={{},{},{}};local gold=game.gold
-assert(not Shop.buyItem(shop,1,game) and game.gold==gold and #shop.items==8)
-game.consumables={};assert(Shop.buyItem(shop,1,game))
-assert(game.consumables[1]==card and game.gold==gold-cost and #shop.items==7)
+assert(Shop.buyItem(shop,1,game) and #game.consumables==3)
+assert(game.backpackConsumables[1]==card and game.gold==gold-cost and #shop.items==7)
 local loaded,state=P.restoreSnapshot(P.makeSnapshot(game,"shop"))
-assert(state=="shop" and loaded.shopMode=="consumable" and loaded.consumables[1].id==card.id)
+assert(state=="shop" and loaded.shopMode=="consumable" and loaded.backpackConsumables[1].id==card.id)
 for _,mode in ipairs(Shop.AFTER_COMBAT_MARKETS) do
     game.shopMode=mode;Shop.resetReroll(shop);Shop.refresh(shop,game)
     local before=game.gold
@@ -91,11 +90,11 @@ local offer=shop.items[5];assert(Shop.buyItem(shop,5,game))
 assert(game.backpackEquipment[#game.backpackEquipment].id==offer.equipment.id)
 game.shopMode="spn";Shop.refresh(shop,game)
 local spn=shop.items[1].deity;assert(Shop.buyItem(shop,1,game))
-assert(game.deities[1].id==spn.id and game.deities[1].rarity==spn.rarity)
+assert(game.backpackDeities[1].id==spn.id and game.backpackDeities[1].rarity==spn.rarity and not game.deities[1])
 game.shopMode="medicine";Shop.refresh(shop,game)
-game.consumables={};game.playerHp=20
-assert(Shop.buyItem(shop,1,game) and Inventory.useUtility(game,1) and game.playerHp==45)
-for i,item in ipairs(shop.items) do if item.id=="cons_bed" then assert(Shop.buyItem(shop,i,game));break end end
+game.consumables={};game.backpackConsumables={};game.playerHp=20
+assert(Shop.buyItem(shop,1,game) and require("src.loadout").move(game,"consumable","reserve",1,1,false) and Inventory.useUtility(game,1) and game.playerHp==45)
+for i,item in ipairs(shop.items) do if item.id=="cons_bed" then assert(Shop.buyItem(shop,i,game) and require("src.loadout").move(game,"consumable","reserve",1,1,false));break end end
 assert(Inventory.useBed(game,1) and game.playerHp==game.maxPlayerHp)
 
 -- A boss pays out once. Leaving the soul shop does not advance its completed fight.

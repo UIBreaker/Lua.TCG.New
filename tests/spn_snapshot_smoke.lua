@@ -21,7 +21,10 @@ for id,def in pairs(D.CATALOG) do
     if def.stat=="consumableChancePct" then expected=math.min(100,def.values.value*1.5) end
     if def.stat=="discardCopies" or def.stat=="bossCopies" then expected=def.values.value+1 end
     if def.doubleEvolution then expected=def.values.value*2 end
+    if def.turnGrowth then expected=def.values.value+1 end
     if def.stat=="copyActivations" then expected=def.values.value+1 end
+    if def.stat=="repeatsPerLevel" then expected=def.values.value+1 end
+    if def.stat=="uqChancePct" then expected=math.min(100,def.values.value*1.5) end
     assert(math.abs(after[deity][def.stat]-expected)<0.00001,id.." scaling")
     P.applications={}
     P.changed(UI,game,before,{id="cons_evolution"},{x=0,y=0,w=64,h=88})
@@ -32,5 +35,5 @@ for id,def in pairs(D.CATALOG) do
     assert(P.snapshot(restored)[saved][def.stat]==after[deity][def.stat],id.." existing saves")
     count=count+1
 end
-assert(count==61)
-print("SPN snapshot PASS: all 61 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load")
+assert(count==68)
+print("SPN snapshot PASS: all 68 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load")

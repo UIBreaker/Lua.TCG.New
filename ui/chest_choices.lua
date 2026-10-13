@@ -80,5 +80,12 @@ function Choices.draw(rewards,timer,title,mx,my,buttons,full,packType)
         end
     end
     if full then g.setFont(UI.fonts.tiny);g.setColor(0.82,0.58,0.42,1);g.printf("Ô GIỮ LẠI ĐÃ ĐẦY (3/3)",0,644,1280,"center") end
+    if not packType and timer >= Choices.finished() then
+        local gold = require("src.shop").getChestExchangeGold(rewards)
+        local btn={id="exchange_chest",text="QUY ĐỔI RA VÀNG  +"..gold,x=450,y=674,w=380,h=34,
+            font=UI.fonts.small,color=UI.COLORS.goldYellow,variant="gold"}
+        buttons[#buttons+1]=btn
+        UI.drawButton(btn,mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
+    end
 end
 return Choices

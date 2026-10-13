@@ -175,6 +175,7 @@ function A.beginHand(game, handInfo, played, decisions)
     local repeatCount=combat(game).pendingRepeat or 0
     combat(game).pendingRepeat=0
     if repeatCount>0 then A.repeatCard(game,ctx.scoring[1],repeatCount,ctx) end
+    require("src.spn_pacts").queueRepeats(game,ctx.scoring,ctx.queue)
     return ctx
 end
 function A.repeatCard(game,card,count,ctx,effectiveness)
@@ -320,6 +321,9 @@ function A.discard(game,cards,context)
     require("src.chest_depth").discard(game,cards)
     A.dispatch(game,"discard",cards,{})
     require("src.spn_discard").discard(game,cards,context)
+    if context and context.bloodPaid and context.playerDiscard and not context.preview and #(cards or {})>0 then
+        require("src.spn_pacts").bloodReward(game)
+    end
     local x=game.abilityHand
     if x and not x.finished then for i=#x.active,1,-1 do if contains(cards,x.active[i]) then table.remove(x.active,i) end end end
 end

@@ -26,15 +26,21 @@ end
 function S.discard(game,cards,context)
     local created={}
     if not context or not context.playerDiscard or context.preview then return created end
+    context.gameState=game
     D=D or require("src.deities")
     for slot=1,D.getMaxSlots(game) do
         local owned=game.deities and game.deities[slot]
         require("src.spn_mimic").each(game,game.deities,slot,function(effective)
         if effective and effective.onDiscard and not Boss.isSlotLocked(game,"spn",slot) then
             local result=D.scaleEffect(effective,effective.onDiscard(cards,context,effective,slot))
-            if result and result.xSoulYield then
+            if result and result.addArmor then
+                game.playerArmor=math.min(require("config.card_ability_data").armorCap,(game.playerArmor or game.playerShield or 0)+result.addArmor)
+                game.playerShield=game.playerArmor
+                game.spnFeedback=game.spnFeedback or {}
+                game.spnFeedback[#game.spnFeedback+1]={deity=owned,slot=slot,text="ĐỦ BA MỤC TIÊU · +"..result.addArmor.." GIÁP"}
+            elseif result and result.xSoulYield then
                 require("src.spn_souls").harvest(game,cards[1],owned,slot,result.xSoulYield)
-            elseif result then
+            elseif result and result.discardCopies then
                 local source=cards[1]
                 for _,card in ipairs(game.persistentDeck or {}) do if card.id==source.id then source=card;break end end
                 if not source.destroyed then

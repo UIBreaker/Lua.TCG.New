@@ -35,7 +35,7 @@ function Test.update(game,callbacks)
         game.playerHp=100;game.consumables={Run.createEvolutionCard()}
         nextStage("open_evolution")
     elseif stage=="open_evolution" then
-        local x,y,w,h=Layout.fanCardRect(Layout.battle.consumables,1,3)
+        local x,y,w,h=require("ui.inventory_rail").rect("consumable",1,game)
         click(x+w/2,y+h/2,2)
         assert(UI.AbilityUI.current and UI.AbilityUI.current.mode=="evolution","right click must open evolution")
         nextStage("select_evolution")

@@ -57,18 +57,17 @@ function DebugTools.grantCollectionItem(game, shop, category, item, targetCard)
     local id = item.id
     if category == "jokers" then
         local deity = Deities.CATALOG[id]
-        if not deity or not Deities.addDeity(game, deity) then return false, "Không còn ô Hộ Linh trống." end
+        if not deity then return false,"Không tìm thấy SPN." end
+        require("src.loadout").storeDeity(game,deity)
         return true, "Đã nhận Hộ Linh: " .. item.name
     elseif category == "equipment" then
         local equipment = Equipment.ITEMS[id]
         if not equipment then return false, "Không tìm thấy trang bị." end
         return true, "socketing", equipment
     elseif category == "consumables" then
-        game.consumables = game.consumables or {}
-        if #game.consumables >= require("src.inventory").limit(game) then return false, "Không còn ô tiêu hao trống." end
         local card = {}
         for key, value in pairs(item.consumable or item) do card[key] = value end
-        game.consumables[#game.consumables+1] = card
+        require("src.loadout").storeConsumable(game,card)
         return true, "Đã nhận " .. item.name
     elseif category == "vouchers" then
         shop.items = shop.items or {}
@@ -98,7 +97,7 @@ function DebugTools.grantCollectionItem(game, shop, category, item, targetCard)
             Deck.addCardToDeck(game, card)
             return true, "Đã nhận quân bài " .. item.name
         elseif packType == "buffoon" then
-            if not Deities.addDeity(game, reward) then return false, "Không còn ô Hộ Linh trống." end
+            require("src.loadout").storeDeity(game,reward)
             return true, "Đã nhận " .. item.name
         elseif packType == "arcana" then
             return true, "socketing", Equipment.ITEMS[reward.id]

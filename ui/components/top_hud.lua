@@ -35,11 +35,12 @@ function HUD.draw(data,fonts,mx,my,pressed)
  C.text("LƯỢT BỎ",670,21,71,f,T.colors.muted,"center")
  C.text(data.discards or 0,670,35,71,stat,T.colors.text,"center")
  local specs={
+  {id="open_backpack",text="BALO",x=765,y=15,w=88,h=45,variant="gold",font=small},
   {id="open_handbook",text="SỔ TAY",x=860,y=15,w=116,h=45,variant="cyan",font=fonts.bookChapter or small},
   {id="open_deck_viewer",text="BỘ BÀI",x=984,y=15,w=123,h=45,variant="gold",font=fonts.bookChapter or small},
   {id=data.resolving and "open_pause_menu" or "open_settings",text="TÙY CHỌN",x=1115,y=15,w=145,h=45,variant="purple",font=fonts.bookChapter or small},
  }
- for i,b in ipairs(specs) do if i<3 then b.disabled=data.resolving end;Chrome.button({fonts={small=small,tiny=f}},b,mx or -100,my or -100,pressed) end
+ for i,b in ipairs(specs) do if i<4 then b.disabled=data.resolving end;Chrome.button({fonts={small=small,tiny=f}},b,mx or -100,my or -100,pressed) end
  g.pop();return specs
 end
 return HUD

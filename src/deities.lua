@@ -92,12 +92,15 @@ function Deities.scaleEffect(deity, result)
     if result.discardCopies then result.discardCopies=math.floor(result.discardCopies+2*(multiplier-1)) end
     if result.bossCopies then result.bossCopies=math.floor(result.bossCopies+2*(multiplier-1)) end
     if result.copyActivations then result.copyActivations=math.min(128,math.floor(result.copyActivations+2*(multiplier-1))) end
+    if result.repeatsPerLevel then result.repeatsPerLevel=math.min(128,math.floor(result.repeatsPerLevel+2*(multiplier-1))) end
+    if result.uqChancePct then result.uqChancePct=math.min(100,result.uqChancePct*multiplier) end
 
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier
             local def=Deities.CATALOG[deity.id]
             if def and def.doubleEvolution and key==def.stat then scaled=value*2^(2*(multiplier-1)) end
+            if def and def.turnGrowth and key==def.stat then scaled=value+2*(multiplier-1) end
             if def and def.integerEffect and key==def.stat then scaled=math.floor(scaled) end
             if key=="addTransmutePct" then scaled=math.min(90,scaled) end
             if key=="addRedirectPct" then scaled=math.min(100,scaled) end
@@ -261,18 +264,23 @@ require("src.spn_souls").register(Deities)
 require("src.spn_legacy").register(Deities)
 require("src.spn_mimic").register(Deities)
 require("src.spn_basics").register(Deities)
+require("src.spn_turns").register(Deities)
+require("src.spn_pacts").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
     if not def then return deity.desc or "" end
     local value=def.values.value*(def.stat=="bedExplosionPct" and 1 or effectMultiplier(deity))
     if def.doubleEvolution then value=def.values.value*2^(2*(effectMultiplier(deity)-1)) end
+    if def.turnGrowth then value=def.values.value+2*(effectMultiplier(deity)-1) end
     if def.integerEffect then value=math.floor(value) end
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end
     if def.stat=="consumableChancePct" then value=math.min(100,value) end
     if def.stat=="discardCopies" or def.stat=="bossCopies" then value=math.floor(def.values.value+2*(effectMultiplier(deity)-1)) end
     if def.stat=="copyActivations" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
+    if def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
+    if def.stat=="uqChancePct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(1 + value)):gsub("{double}",formatEffectNumber(value*2)))
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)).." Cường hóa khi tính điểm."

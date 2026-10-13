@@ -318,7 +318,7 @@ end
 
 -- Late selection/evolution rims reuse the final face matrix, including renderer tilt.
 function Physics.drawAttached(card, draw)
-    if current or not root or love.graphics.getCanvas()~=canvas then return false end
+    if depth>0 or current or not root or love.graphics.getCanvas()~=canvas then return false end
     local s=Physics.getState(card)
     if not s or s.frame~=frame or not s.a then return false end
     local g=love.graphics

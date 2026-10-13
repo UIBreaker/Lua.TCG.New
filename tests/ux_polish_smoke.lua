@@ -61,13 +61,14 @@ buyStock({category="heal",healAmt=25,cost=4});assert(game.playerHp==26)
 local capacity=game.maxHandSize
 buyStock({category="hand_expansion",cost=12});assert(game.maxHandSize==capacity+1)
 local d={};for k,v in pairs(Deities.CATALOG.spirit_pebble) do d[k]=v end
-buyStock({category="deity",deity=d,cost=4});assert(game.deities[1].id==d.id)
-P.focusItem(game.deities[1],"deity",1,rect);local gold=game.gold
-assert(P.confirm(shop,game));assert(game.gold>gold and not game.deities[1]);settle()
+buyStock({category="deity",deity=d,cost=4});assert(game.backpackDeities[1].id==d.id and not game.deities[1])
+P.focusItem(game.backpackDeities[1],"reserve_deity",1,rect);local gold=game.gold
+assert(P.confirm(shop,game));assert(game.gold>gold and #game.backpackDeities==0);settle()
 local c={id="test",cost=4,name="test",category="edition",edition="foil"};game.consumables={c}
 P.focusItem(c,"consumable",1,rect);assert(P.confirm(shop,game));settle();assert(#game.consumables==0)
 local eq=Equipment.ITEMS.gem_fire
 local action=buyStock({category="equipment",equipment=eq,cost=4});assert(action[1]=="open_socketing" and action[2]==eq)
+for _,hand in ipairs(require("src.poker").HAND_TYPES_ORDERED) do game.unlockedHands[hand.id]=true end
 for _,pack in ipairs(catalog) do
     buyStock({category="pack",packType=pack.packType,name=pack.name,cost=pack.cost})
     assert(shop.currentPackOpening and shop.currentPackOpening.pack.packType==pack.packType)
@@ -75,7 +76,8 @@ end
 game.deities={};for slot=1,Deities.getMaxSlots(game) do game.deities[slot]=d end
 shop=Shop.new();shop.items={{category="deity",deity=d,cost=4}};P.ensureShop(shop)
 P.focusItem(shop.items[1],"stock",1,rect);gold=game.gold
-assert(not P.confirm(shop,game) and game.gold==gold and #shop.items==1,"full SPN slots preserve transaction")
+assert(P.confirm(shop,game) and game.gold==gold-4 and #shop.items==0 and #game.backpackDeities==1,"full SPN slots still allow backpack purchase")
+settle();gold=game.gold
 P.clearFocus();game.freeRerolls=1;gold=game.gold
 assert(P.reroll(shop,game) and game.gold==gold and game.freeRerolls==0);settle(true)
 game.vouchers.v_welcome=true;shop.welcomeRerollUsed=false
@@ -89,4 +91,4 @@ assert(P.confirm(Shop.new(),ritual) and ritual.gold==15)
 assert(#P.moneyFeedback==1 and P.moneyFeedback[1].amount==5,"gold awarded alongside souls gets its own gold feedback")
 P.update(2,false,"shop");assert(#P.moneyFeedback==0 and P.goldValue(ritual.gold)==ritual.gold)
 print("UX polish smoke PASS: click/confirm, cancel, affordability, minimum deck, single charge, wallet count/coin flight/expiration, hidden swap, spam lock, Fast")
-print("UX stock coverage PASS: heal, expansion, SPN sale/capacity, consumable sale, equipment destination, all 9 packs")
+print("UX stock coverage PASS: heal, expansion, reserved SPN sale/full-slots purchase, consumable sale, equipment destination and every pack")

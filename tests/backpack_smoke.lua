@@ -90,4 +90,5 @@ recipeDoc:write("id\tname\ttier\tingredients\tfee\tcraft_cost\tshop_cost\treason
 for _,r in ipairs(B.recipes) do local names={};for _,id in ipairs(r.ingredients) do names[#names+1]=E.ITEMS[id].name end;recipeDoc:write(table.concat({r.id,E.ITEMS[r.id].name,r.tier,table.concat(names," + "),r.fee,r.craftCost,E.ITEMS[r.id].cost,r.reason},"\t"),"\n") end
 recipeDoc:close()
 print("Backpack PASS: 12 basics, all 60 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
+require("tests.backpack_qol_smoke")
 return true

@@ -113,5 +113,5 @@ Rng.random=originalRandom
 g=game({"spirit_wayfarer","spirit_first_echo"});g.consumables={source}
 local state=Rng.getState();for i=1,5 do score(g,true) end
 assert(Rng.getState()==state and #g.consumables==1,"repeated previews preserve the real RNG stream")
-assert(#D.getRandomShopPool({},99)==61)
+assert(#D.getRandomShopPool({},99)==68)
 print("SPN provisions PASS: evolving chance thresholds/cap, all consumable families, pure previews, independent upgraded copies, slot order/capacity, retriggers, boss locks and old/new saves")

@@ -98,9 +98,9 @@ function B.count(game,id)
  local n=0;for _,v in ipairs(game.backpackEquipment or {}) do if B.entryId(v)==id then n=n+1 end end;return n
 end
 function B.canCraft(game,recipe)
- if (game.gold or 0)<recipe.fee then return false,"Thiếu vàng trả công ghép." end
+ if (game.gold or 0)<recipe.fee then return false,"Còn thiếu "..(recipe.fee-(game.gold or 0)).." vàng công ghép." end
  local need={};for _,id in ipairs(recipe.ingredients) do need[id]=(need[id] or 0)+1 end
- for id,n in pairs(need) do if B.count(game,id)<n then return false,"Thiếu nguyên liệu trong balo." end end
+ for _,id in ipairs(recipe.ingredients) do local n=need[id];local owned=B.count(game,id);if owned<n then return false,"Cần "..require("src.equipment").ITEMS[id].name.." ("..owned.."/"..n..")" end end
  return true
 end
 function B.craft(game,recipe)

@@ -98,7 +98,7 @@ assert(r.finalScore==preview.finalScore and step(r,"spirit_last_sun").xMult==5)
 g=game("spirit_last_sun");g.handsRemaining=1;D.addDeity(g,D.CATALOG.spirit_borrowed_turn,1)
 local borrowedHand=hand({3,3,3})
 local borrowedResult=score(g,borrowedHand)
-assert(step(borrowedResult,"spirit_last_sun") and g.playerArmor==20 and g.consumables[1].permanentSpeed,"speed reward leaves the last-hand condition intact")
+assert(step(borrowedResult,"spirit_last_sun") and g.playerArmor==20 and g.backpackConsumables[1].permanentSpeed,"speed reward stored in backpack leaves the last-hand condition intact")
 g=game("spirit_last_sun");g.handsRemaining=1;D.addDeity(g,D.CATALOG.spirit_last_sun,1)
 preview=score(g,h,true);assert(preview.finalScore==baseline.finalScore*25)
 assert(score(g,h).finalScore==preview.finalScore,"duplicate last suns both apply")
@@ -114,5 +114,5 @@ for _,row in ipairs(V.entries) do
     g.monster.isBoss=true;g.monster.bossState={handIndex=1,passiveUntil=0,slotLock={kind="spn",slot=5,untilHand=1}}
     assert(not step(score(g,h),row[1]),row[1].." boss lock")
 end
-assert(#D.getRandomShopPool({},99)==61)
+assert(#D.getRandomShopPool({},99)==68)
 print("SPN velocity PASS: six cards, guaranteed hit, area damage, miss speed, last hand, save/load, evolution and locks")

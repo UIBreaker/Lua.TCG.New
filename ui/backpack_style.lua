@@ -19,6 +19,9 @@ local function wash(g,x,y,w,h,top,bottom)
 end
 function S.background(time)
  local g=love.graphics
+ local screenW,screenH=g.getDimensions()
+ if S.canvas and (S.screenW~=screenW or S.screenH~=screenH) then S.canvas:release();S.canvas=nil end
+ S.screenW,S.screenH=screenW,screenH
  if not S.canvas then
   local previous=g.getCanvas();S.canvas=g.newCanvas(1280,720);g.push("all");g.setCanvas(S.canvas);g.origin();g.setShader();g.setScissor();g.clear()
   wash(g,0,0,1280,720,{.075,.115,.123},{.018,.035,.044})

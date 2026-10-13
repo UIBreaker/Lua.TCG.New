@@ -41,11 +41,11 @@ for _, id in ipairs({"gold_bonus", "playing_card", "card_pack", "spn_pack", "itm
     Rng.seed(17)
     g = game()
     local result = forced(g, id)
-    local gold, cards, packs, consumables = g.gold, #g.persistentDeck, #g.rewardPacks, #g.consumables
+    local gold, cards, packs, consumables = g.gold, #g.persistentDeck, #g.rewardPacks, #(g.backpackConsumables or {})
     assert(result.claimed and result.loot[1].id == id)
     assert(g.gold == 10 + result.earnedGold)
     assert(Reward.begin(breakdown, g) == result)
-    assert(g.gold == gold and #g.persistentDeck == cards and #g.rewardPacks == packs and #g.consumables == consumables)
+    assert(g.gold == gold and #g.persistentDeck == cards and #g.rewardPacks == packs and #(g.backpackConsumables or {}) == consumables)
     if id == "playing_card" then assert(cards == 2) end
     if C.definitions[id].packType then assert(packs == 1 and #g.rewardPacks[1].cards > 0) end
     if id == "consumable" or id == "evolution" then assert(consumables == 1) end
@@ -94,7 +94,9 @@ for _, id in ipairs({"gold_bonus", "playing_card", "card_pack", "spn_pack", "itm
             for k, v in pairs(Deities.CATALOG[card.id]) do if type(v) == "function" then assert(card[k] == v) end end
         end
         local opening = shop.currentPackOpening
-        Shop.skipPack(shop)
+        local exchangeGold = Shop.getPackExchangeGold(opening)
+        local beforeGold = restored.gold
+        assert(Shop.skipPack(shop, restored) and restored.gold == beforeGold + exchangeGold)
         assert(Reward.completePack(restored, shop, opening) and #restored.rewardPacks == packs - 1)
         assert(not Reward.completePack(restored, shop, opening), "repeated completion cannot consume another pack")
     end
@@ -102,10 +104,10 @@ end
 
 g = game(); g.consumables = {{}, {}, {}}
 local full = forced(g, "consumable")
-assert(full.loot[1].type == "GOLD" and full.bonusGold == C.fallbackGold)
+assert(full.loot[1].type == "CONSUMABLE" and #g.backpackConsumables==1 and #g.consumables==3)
 g = game()
 for i = 1, Deities.getMaxSlots(g) do g.deities[i] = Deities.CATALOG.spirit_blade end
-assert(forced(g, "spn_pack").loot[1].type == "GOLD")
+assert(forced(g, "spn_pack").loot[1].opening and #g.rewardPacks==1)
 for bossId, tableId in pairs(C.bossOverrides) do
     g = game()
     g.monster = {bossData = {id = bossId}}
@@ -142,9 +144,12 @@ local resumed, resumeState = Persistence.restoreSnapshot(savedShop)
 assert(resumeState == "shop" and #resumed.rewardPacks == 1)
 for i = 1, Deities.getMaxSlots(resumed) do resumed.deities[i] = Deities.CATALOG.spirit_blade end
 local beforeFallback = resumed.gold
-local converted, reason = Reward.openNextPack(resumed, Shop.new())
-assert(converted and reason and #resumed.rewardPacks == 0 and resumed.gold == beforeFallback + C.fallbackGold)
-assert(not Reward.openNextPack(resumed, Shop.new()) and resumed.gold == beforeFallback + C.fallbackGold)
+local spnShop=Shop.new()
+assert(Reward.openNextPack(resumed,spnShop) and #resumed.rewardPacks==1 and resumed.gold==beforeFallback)
+local spnOpening=spnShop.currentPackOpening
+assert(Shop.choosePackCard(spnShop,1,resumed) and #resumed.backpackDeities==1)
+assert(Reward.completePack(resumed,spnShop,spnOpening) and #resumed.rewardPacks==0)
+assert(not Reward.openNextPack(resumed,spnShop) and resumed.gold==beforeFallback)
 local savedCap = C.maxCoins
 C.maxCoins = 1
 local capped = Reward.newAnimation(large.breakdown, large)
@@ -169,13 +174,13 @@ end
 for _, entry in ipairs(C.supplies.entries) do
     local supplyGame = game()
     local reward = forced(supplyGame, entry.id)
-    local card = supplyGame.consumables[1]
+    local card = supplyGame.backpackConsumables[1]
     assert(card and card.id == entry.id and reward.loot[1].type == "CONSUMABLE")
-    if entry.id:match("healing") then assert(card.healAmt == (entry.id:match("large") and 60 or 15)) end
+    if entry.id:match("healing") then assert(card.healAmt == (entry.id:match("large") and 60 or 25)) end
     if entry.id:match("armor") then assert(card.armorAmt == (entry.id:match("large") and 20 or 8)) end
     if entry.id:match("speed") then assert(Shop.getConsumableParams(card).speed == (entry.id:match("large") and 10 or 3)) end
     local full = game(); for i=1,require("src.inventory").limit(full) do full.consumables[i]=Run.createSpeedSingleCard() end
-    assert(forced(full,entry.id).loot[1].type=="GOLD", "full inventory must convert supplies")
+    assert(forced(full,entry.id).loot[1].type=="CONSUMABLE" and #full.backpackConsumables==1, "full battle slots must not discard supplies")
 end
 local Souls = require("src.souls")
 for _, count in ipairs({1,2,3}) do

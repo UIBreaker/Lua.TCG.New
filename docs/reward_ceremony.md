@@ -1,5 +1,21 @@
 # Reward ceremony
 
+## One-click conversion on the ceremony
+
+`QUY ĐỔI NHANH TẤT CẢ +N` sits beside the shop button. One click settles the presentation and converts all available loot from this victory across every page: queued packs, direct playing cards and consumables. It stays on CASH_OUT with updated gold and `ĐÃ ĐỔI +N` receipts, then Continue enters the shop without reopening converted packs. A disabled receipt replaces the conversion action after use.
+
+`RewardSystem.exchangeAll` matches per-victory receipt tokens on granted cards/consumables and queued openings, so older owned inventory is preserved even when it has the same item ID. Older pending saves without tokens match their appended rewards by card ID or pack candidates. Chest containers have no extra payout; only their actual contents are valued. Existing gold and souls stay unchanged apart from the exchange credit. Pack values use `Shop.getPackExchangeGold`, direct cards/consumables use `Shop.getChestExchangeGold` for one item. `result.exchangeGold` and `bulkExchanged` persist the receipt; restored ceremonies immediately display the settled total.
+
+`tests/reward_bulk_exchange_smoke.lua` checks owned inventory, current/legacy save round trips, missing grants, all reward types, nested chests and repeated conversion. The LÖVE ceremony capture clicks from the second loot page, double-clicks, checks that all eight packs are removed, enters shop, and converts two direct cards with one click during the reveal. Screenshot: `shot_reward_bulk_exchanged.png`.
+
+## Declining an opened chest
+
+Opened packs show `QUY ĐỔI RA VÀNG +N` in place of the old skip label. The same action appears on legacy treasure/boss choice screens after their reveal. Choosing conversion declines the entire set of alternatives; selecting or keeping a candidate continues to grant only that candidate.
+
+`Shop.getPackExchangeGold` returns half the paid pack price, rounded down with a minimum of 1. A free victory pack uses the matching catalog price instead of its zero purchase price. `Shop.getChestExchangeGold` uses half the highest single candidate price (playing cards default to 4), not the sum of mutually exclusive alternatives. `Shop.skipPack(shop, game)` credits that gold and stores `opening.exchangedGold`; `Shop.exchangeChest` marks the choice list resolved. Both prevent repeated payouts. The main input handler removes converted victory packs from their saved queue and saves the gold immediately. Existing card/equipment claims are unaffected.
+
+Verified by `tests/reward_exchange_smoke.lua` and `--test-pack-skip`: every catalog pack, paid/free/discounted prices, queue/save/reload, repeated clicks, legacy treasure/boss conversion and visible gold labels. Screenshots: `docs/chest_exchange_pack.png`, `docs/chest_exchange_treasure.png`.
+
 ## Soul harvest and supplies
 
 Every defeated ordinary enemy grants 1 soul immediately, so a defeated squad of 1/2/3 grants 1/2/3. Each boss grants 4. `Souls.awardKills` marks individual enemies to prevent repeated payouts. The ceremony reports the encounter total through `earnedSouls` and `soulsBefore`, with curved teal wisps converging on a crystal and an animated balance. Skipped encounters grant none; saved CASH_OUT results and fast-forward only replay the presentation.

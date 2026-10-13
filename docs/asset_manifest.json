@@ -10357,11 +10357,172 @@
       "status": "generated",
       "mode": "built-in image_gen",
       "rarity": "Tiêu hao"
+    },
+    {
+      "id": "spirit_second_choice",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Vào trận: +1 lượt bỏ bài. Mỗi cấp tiến hóa thêm 1 lượt.",
+      "source": "src/spn_turns.lua",
+      "name": "Gió Đổi Vận",
+      "concept": "One spectral raven of silver-blue wind sweeps away a broken dark branching trail with one broad wing, revealing a clear second path around a cold coastal ruin. Clear raven silhouette, several large feather-shaped air strokes, navy sea and cold silver blue. Convey a new choice and another chance to discard an unwanted path, not permanent speed.",
+      "file": "assets/cards/continental/spn/spirit_second_choice.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One spectral raven of silver-blue wind sweeps away a broken dark branching trail with one broad wing, revealing a clear second path around a cold coastal ruin. Clear raven silhouette, several large feather-shaped air strokes, navy sea and cold silver blue. Convey a new choice and another chance to discard an unwanted path, not permanent speed.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_second_choice",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-6abff735-eb6b-4b56-8001-56e82ce90d27.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One spectral raven of silver-blue wind sweeps away a broken dark branching trail with one broad wing, revealing a clear second path around a cold coastal ruin. Clear raven silhouette, several large feather-shaped air strokes, navy sea and cold silver blue. Convey a new choice and another chance to discard an unwanted path, not permanent speed."
+      }
+    },
+    {
+      "id": "spirit_extra_strike",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Vào trận: +1 lượt đánh. Mỗi cấp tiến hóa thêm 1 lượt.",
+      "source": "src/spn_turns.lua",
+      "name": "Dư Âm Chiến Ý",
+      "concept": "One colossal orange ember apparition shaped like a western armored warrior raises a single luminous spear while a broad fading echo of its previous thrust trails behind, conveying an additional attack opportunity. Quiet volcanic continental cliffs and eroded western watchtower, charcoal and restrained lava orange, one strong humanoid silhouette with broad armor shapes, no dense ornaments.",
+      "file": "assets/cards/continental/spn/spirit_extra_strike.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One colossal orange ember apparition shaped like a western armored warrior raises a single luminous spear while a broad fading echo of its previous thrust trails behind, conveying an additional attack opportunity. Quiet volcanic continental cliffs and eroded western watchtower, charcoal and restrained lava orange, one strong humanoid silhouette with broad armor shapes, no dense ornaments.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_extra_strike",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-6dd668d6-1871-4b65-983d-51da6da81307.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One colossal orange ember apparition shaped like a western armored warrior raises a single luminous spear while a broad fading echo of its previous thrust trails behind, conveying an additional attack opportunity. Quiet volcanic continental cliffs and eroded western watchtower, charcoal and restrained lava orange, one strong humanoid silhouette with broad armor shapes, no dense ornaments."
+      }
+    },
+    {
+      "id": "spirit_legend_council",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi SPN đúng bậc L đang trang bị: nhân 2.5 Cường hóa, nhân liên tiếp.",
+      "source": "src/spn_turns.lua",
+      "name": "Hội Đồng Huyền Thoại",
+      "concept": "One regal faceless spectral monarch formed of dark violet mist floats above an ancient western stone dais, wearing a simple broad antique-gold crown. Three smaller empty spectral crowns around it send thick restrained golden streams into its chest; the monarch becomes visibly empowered by the gathered legendary presences. One central entity, subordinate crowns rather than extra characters. Quiet void-violet continental canyon with broken western arches, antique gold and violet, regal clear silhouette, no letters or symbols on crowns.",
+      "file": "assets/cards/continental/spn/spirit_legend_council.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One regal faceless spectral monarch formed of dark violet mist floats above an ancient western stone dais, wearing a simple broad antique-gold crown. Three smaller empty spectral crowns around it send thick restrained golden streams into its chest; the monarch becomes visibly empowered by the gathered legendary presences. One central entity, subordinate crowns rather than extra characters. Quiet void-violet continental canyon with broken western arches, antique gold and violet, regal clear silhouette, no letters or symbols on crowns.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_legend_council",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-04cd23d1-f8b6-412b-96e2-4862b919a144.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN card illustration, full-bleed portrait PNG 2:3 1024x1536. Continental Relic Card Design, cinematic Western dark fantasy expedition, painterly realism, medium detail, one clear supernatural primary silhouette, broad readable shapes at 64px, restrained magic and controlled rim light. Quiet mysterious continental ruins, no East Asian motifs or calligraphy, no tiny dense ornament. No text, letters, numbers, ranks, suits, playing cards, badges, frame, border, logo or watermark. One regal faceless spectral monarch formed of dark violet mist floats above an ancient western stone dais, wearing a simple broad antique-gold crown. Three smaller empty spectral crowns around it send thick restrained golden streams into its chest; the monarch becomes visibly empowered by the gathered legendary presences. One central entity, subordinate crowns rather than extra characters. Quiet void-violet continental canyon with broken western arches, antique gold and violet, regal clear silhouette, no letters or symbols on crowns."
+      }
+    },
+    {
+      "id": "spirit_fated_mark",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Chơi đúng một quân bài được chỉ định ngẫu nhiên từ bộ bài đầu trận: ×10 Cường hóa.",
+      "source": "src/spn_pacts.lua",
+      "name": "Ấn Mệnh",
+      "concept": "One tall faceless violet oracle apparition points to a SINGLE floating blank ivory rectangular shard surrounded by a thick antique-gold circular mark. All power converges into that one chosen shard, no other shards. Quiet void canyon and eroded western arch, deep violet with restrained antique gold; clear simple pointing silhouette, no actual playing card details.",
+      "file": "assets/cards/continental/spn/spirit_fated_mark.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One tall faceless violet oracle apparition points to a SINGLE floating blank ivory rectangular shard surrounded by a thick antique-gold circular mark. All power converges into that one chosen shard, no other shards. Quiet void canyon and eroded western arch, deep violet with restrained antique gold; clear simple pointing silhouette, no actual playing card details.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_fated_mark",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-9594e321-4c23-43af-81e1-8f7cd3fb6c90.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One tall faceless violet oracle apparition points to a SINGLE floating blank ivory rectangular shard surrounded by a thick antique-gold circular mark. All power converges into that one chosen shard, no other shards. Quiet void canyon and eroded western arch, deep violet with restrained antique gold; clear simple pointing silhouette, no actual playing card details."
+      }
+    },
+    {
+      "id": "spirit_threefold_ward",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Bỏ đúng ba quân bài được chỉ định ngẫu nhiên từ bộ bài đầu trận: +40 Giáp.",
+      "source": "src/spn_pacts.lua",
+      "name": "Tam Vật Hộ Mệnh",
+      "concept": "One massive glacial-blue guardian apparition holds exactly THREE broad faceted pale-blue soul shards, arranged in a simple triangle, merging into one broad protective shield dome below its arms. Cold continental cliffs and ruined western gate, glacial blue with silver highlights; broad sturdy silhouette. Three subordinate shards, one main guardian, protection earned by the complete trio.",
+      "file": "assets/cards/continental/spn/spirit_threefold_ward.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One massive glacial-blue guardian apparition holds exactly THREE broad faceted pale-blue soul shards, arranged in a simple triangle, merging into one broad protective shield dome below its arms. Cold continental cliffs and ruined western gate, glacial blue with silver highlights; broad sturdy silhouette. Three subordinate shards, one main guardian, protection earned by the complete trio.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_threefold_ward",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-5aa8ed1f-aa3a-4a1e-a506-9b689bc83e3b.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One massive glacial-blue guardian apparition holds exactly THREE broad faceted pale-blue soul shards, arranged in a simple triangle, merging into one broad protective shield dome below its arms. Cold continental cliffs and ruined western gate, glacial blue with silver highlights; broad sturdy silhouette. Three subordinate shards, one main guardian, protection earned by the complete trio."
+      }
+    },
+    {
+      "id": "spirit_awakened_echo",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Quân bài ghi điểm kích hoạt tổng số lần bằng cấp tiến hóa của nó; cấp 8 tổng 8 lần. SPN nâng cấp tăng hệ số số lần.",
+      "source": "src/spn_pacts.lua",
+      "name": "Vọng Âm Tiến Hóa",
+      "concept": "One luminous emerald spectral stag with broad upward-growing branching antlers stands on an ancient forest dais; a single golden pulse from its chest repeats as eight broad separated translucent arcs sweeping outward and upward behind the stag. One main animal, echo arcs rather than duplicate animals, convey greater awakening creating repeated power. Forest green and white gold, restrained glow, quiet western ruins.",
+      "file": "assets/cards/continental/spn/spirit_awakened_echo.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One luminous emerald spectral stag with broad upward-growing branching antlers stands on an ancient forest dais; a single golden pulse from its chest repeats as eight broad separated translucent arcs sweeping outward and upward behind the stag. One main animal, echo arcs rather than duplicate animals, convey greater awakening creating repeated power. Forest green and white gold, restrained glow, quiet western ruins.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_awakened_echo",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-75b9de45-4952-4e3c-a6ee-f73bfde0ca04.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One luminous emerald spectral stag with broad upward-growing branching antlers stands on an ancient forest dais; a single golden pulse from its chest repeats as eight broad separated translucent arcs sweeping outward and upward behind the stag. One main animal, echo arcs rather than duplicate animals, convey greater awakening creating repeated power. Forest green and white gold, restrained glow, quiet western ruins."
+      }
+    },
+    {
+      "id": "spirit_blood_bargain",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Hết lượt bỏ bài: trả 20 HP để bỏ bài; 0.5% nâng một SPN đang trang bị lên đúng UQ. Tiến hóa tăng xác suất.",
+      "source": "src/spn_pacts.lua",
+      "name": "Huyết Khế Đổi Vận",
+      "concept": "One ominous crimson spectral pact entity, a faceless western hooded apparition formed of dark red mist, extends a clawed palm releasing a thick single blood-red stream into a quiet ancient stone basin; far above the palm a small empty antique-gold crown begins a restrained rare white-gold awakening. One supernatural entity, blood stream as clear cost and the small awakening as unlikely ascension. Charcoal western ruin, controlled crimson and antique gold; no gore, no wounded people, no text.",
+      "file": "assets/cards/continental/spn/spirit_blood_bargain.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One ominous crimson spectral pact entity, a faceless western hooded apparition formed of dark red mist, extends a clawed palm releasing a thick single blood-red stream into a quiet ancient stone basin; far above the palm a small empty antique-gold crown begins a restrained rare white-gold awakening. One supernatural entity, blood stream as clear cost and the small awakening as unlikely ascension. Charcoal western ruin, controlled crimson and antique gold; no gore, no wounded people, no text.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_blood_bargain",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-00e96c31-668d-4d0a-8f61-18c9980486a9.png",
+        "prompt": "Use case: stylized-concept. ONE production SPN game illustration, full-bleed vertical 2:3 PNG 1024x1536. Continental Relic Card Design: cinematic Western dark-fantasy expedition, painterly realism, medium detail, ONE clear supernatural main silhouette readable at 64px, broad shapes, quiet mysterious-continent western ruins, restrained magic and controlled rim light. No text, letters, digits, ranks, suits, badges, border, frame, watermark or logo; no East Asian motifs/calligraphy, no dense tiny ornament or particle noise. One ominous crimson spectral pact entity, a faceless western hooded apparition formed of dark red mist, extends a clawed palm releasing a thick single blood-red stream into a quiet ancient stone basin; far above the palm a small empty antique-gold crown begins a restrained rare white-gold awakening. One supernatural entity, blood stream as clear cost and the small awakening as unlikely ascension. Charcoal western ruin, controlled crimson and antique gold; no gore, no wounded people, no text."
+      }
     }
   ],
   "completion": {
-    "generated": 416,
-    "total": 416,
+    "generated": 431,
+    "total": 431,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

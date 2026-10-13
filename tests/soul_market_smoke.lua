@@ -36,6 +36,7 @@ assert(#Shop.SOUL_SUPPORT==8 and #shop.items==14)
 for _,id in ipairs({"cons_socket","cons_rulebreak"}) do
     local index;for i,item in ipairs(shop.items) do if item.id==id then index=i end end
     assert(Shop.buyItem(shop,index,g))
+    assert(require("src.loadout").move(g,"consumable","reserve",1,1,false))
     assert(I.useCardUpgrade(g,1,g.hand[1]))
 end
 assert(g.souls==0 and #g.consumables==0)

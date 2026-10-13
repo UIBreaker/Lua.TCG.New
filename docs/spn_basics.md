@@ -7,7 +7,7 @@
 | Linh Phong | +2 Tốc đánh cho tất cả lá đang cầm | +3 | +4 |
 | Linh Giáp | +5 Giáp trước đòn bạn, hoặc +10 trước đòn địch đánh trước | 7.5 / 15 | 10 / 20 |
 
-Mỗi trận tự nhận đúng một bản cấp gốc ngẫu nhiên trong bốn SPN. Bản hỗ trợ có nhãn trong tooltip, không thể bán, biến mất khi trận kết thúc; các bản sở hữu thông thường vẫn giữ nguyên. Nếu đầy ô, bản hỗ trợ dùng ô bổ sung và không thay thế SPN đang có. Save không lưu bản hỗ trợ.
+Bốn SPN được bán trong shop như các SPN thông thường, có thể mua, bán và tiến hóa. Mua mới cất vào kho balo, kể cả khi ô chiến đấu đầy; kéo lên ô trang bị mới có hiệu lực. Lá và cấp tiến hóa được giữ qua các trận và lưu/tải game. Không tự cấp SPN khi bắt đầu trận. Sắp xếp trong shop miễn phí; đổi trang bị trong trận mất 1 lượt đánh và cho địch hành động.
 
 Linh Giáp chỉ nhận một lần trong mỗi lượt giao chiến, dù có nhiều kẻ địch; giáp áp dụng trước tính hấp thụ sát thương. Linh Phong là thưởng khi SPN hoạt động, cộng cùng trang bị và kỹ năng; không thay đổi tốc đánh vĩnh viễn. Boss khóa ô sẽ chặn các hiệu ứng; Vọng Linh Hữu Ảnh sao chép được cả bốn khả năng theo cấp nguồn.
 

@@ -69,20 +69,4 @@ function B.armor(game,enemyFirst)
     end
     game.spnBasicArmorGranted=true
 end
-function B.finish(game)
-    for slot,owned in pairs(game.deities or {}) do
-        if owned.battleSupport then game.deities[slot]=nil end
-    end
-end
-function B.start(game)
-    B.finish(game)
-    D=D or require("src.deities")
-    game.deities=game.deities or {}
-    local id=B.entries[require("src.rng").random(#B.entries)][1]
-    local slot=1;while game.deities[slot] do slot=slot+1 end
-    local owned={};for key,value in pairs(D.CATALOG[id]) do owned[key]=value end
-    owned.battleSupport=true;game.deities[slot]=owned
-    game.spnBasicArmorGranted=nil
-    return owned,slot
-end
 return B

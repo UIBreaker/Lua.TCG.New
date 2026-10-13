@@ -1,4 +1,4 @@
-local Inventory = require("src.inventory")
+local Loadout = require("src.loadout")
 local Equipment = require("src.equipment")
 local Poker = require("src.poker")
 local Sound = require("src.sound")
@@ -169,6 +169,10 @@ function Shop.getConsumableParams(item)
     return rule and rule.params or {}
 end
 function Shop.getConsumableDescription(item)
+    if item.sealType or item.category=="seal" then
+        local seal=Deck.getModifier("seal",item.sealType or item.id)
+        if seal then return "Đóng lên lá được chọn (hoặc lá đầu tay/bộ bài nếu chưa chọn).\n"..Deck.getModifierDescription("seal",seal.id) end
+    end
     if item.handId and Poker.SKILL_BOOKS[item.handId] and require("src.advanced_hands").byId[item.handId] and item.id and item.id:find("book_",1,true) then return Poker.SKILL_BOOKS[item.handId].desc end
     if item.permanentSpeed then return item.desc end
     if item.id=="spell_aura" then
@@ -357,22 +361,31 @@ end
 
 Shop.CARD_SHOP_PRICES = {base=4, evolution=6, edition=8}
 
-function Shop.playingCardOffer(card)
+local function playingCardValue(card)
     local prices=Shop.CARD_SHOP_PRICES
+    local value=prices.base+(card.evolutionLevel or 0)*prices.evolution
+    for _,eq in ipairs(card.equipments or {}) do value=value+(eq.cost or 0) end
+    if CardEffects.getDefinition(CardEffects.getEffectName(card)) then value=value+prices.edition end
+    return value
+end
+
+function Shop.getCardSellPrice(card)
+    return math.max(1,math.floor(playingCardValue(card)/2))
+end
+
+function Shop.playingCardOffer(card)
     local level=card.evolutionLevel or 0
-    local cost=prices.base+level*prices.evolution
+    local cost=playingCardValue(card)
     local labels={}
     local desc={"Thêm lá "..card.rankName..card.suitSymbol.." vào bộ bài, giữ nguyên mọi nâng cấp.",
         "Tiến hóa cấp "..level.." · "..require("src.card_abilities").description(card)}
     if level>0 then labels[#labels+1]="TIẾN HÓA "..level end
     for _,eq in ipairs(card.equipments or {}) do
-        cost=cost+eq.cost
         labels[#labels+1]="ĐỒ CƠ BẢN"
         desc[#desc+1]="Trang bị cơ bản đã gắn: "..eq.name.." — "..Equipment.getDescription(eq)
     end
     local edition=CardEffects.getDefinition(CardEffects.getEffectName(card))
     if edition then
-        cost=cost+prices.edition
         labels[#labels+1]="ẤN BẢN"
         desc[#desc+1]=edition.shopLabel.." — "..edition.shopText
     end
@@ -411,7 +424,7 @@ local function marketStock(shop, gameState)
         table.sort(pool);shuffle(pool)
         for i=1,math.min(4,#pool) do shop.items[#shop.items+1]=equipmentOffer(Equipment.ITEMS[pool[i]]) end
     elseif mode == "spn" then
-        for _, definition in ipairs(Deities.getRandomShopPool(gameState.deities, 6)) do
+        for _, definition in ipairs(Deities.getRandomShopPool(Loadout.ownedDeities(gameState), 6)) do
             local d = cloneDeity(definition)
             local rarity = rollSpnRarity()
             Deities.setRarity(d, rarity.id)
@@ -494,7 +507,7 @@ function Shop.refresh(shop, gameState)
     -- 1. UPPER SECTION CARDS (Thần Hộ Mệnh, Trang Bị Khảm, Quân Bài Tuyển Mộ)
     ----------------------------------------------------------------------------
     -- A. Thần Hộ Mệnh (Deity / Joker equivalent)
-    local availableDeities = Deities.getRandomShopPool(gameState.deities, 1)
+    local availableDeities = Deities.getRandomShopPool(Loadout.ownedDeities(gameState), 1)
     if #availableDeities > 0 then
         local d = cloneDeity(availableDeities[1])
         local rarity = rollSpnRarity()
@@ -686,16 +699,14 @@ function Shop.buyItem(shop, itemIndex, gameState)
             return false, "Không đủ linh hồn!"
         end
         if item.category ~= "equipment" and not item.consumable then return false, "Không thể đổi vật phẩm này." end
-        if item.consumable and #(gameState.consumables or {}) >= Inventory.limit(gameState) then return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)." end
         gameState.souls = gameState.souls - item.cost
         gameState.soulShopPurchased = gameState.soulShopPurchased or {}
         gameState.soulShopPurchased[item.id] = true
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         if item.category == "equipment" then return true, "open_socketing", item.equipment end
-        gameState.consumables = gameState.consumables or {}
-        table.insert(gameState.consumables, item.consumable)
-        return true, "Đã cất "..item.name.." vào ô tiêu hao. Chuột phải để dùng."
+        Loadout.storeConsumable(gameState,item.consumable)
+        return true, "Đã cất "..item.name.." vào balo. Kéo lên ô trang bị để mang vào trận."
     end
     if item.category == "voucher" and gameState.vouchers and gameState.vouchers[item.voucherId] then
         return false, "Bạn đã sở hữu đặc quyền này!"
@@ -707,26 +718,19 @@ function Shop.buyItem(shop, itemIndex, gameState)
     end
 
     if item.consumable then
-        gameState.consumables = gameState.consumables or {}
-        if #gameState.consumables >= Inventory.limit(gameState) then return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)." end
         gameState.gold = gameState.gold - item.cost
-        table.insert(gameState.consumables, item.consumable)
+        Loadout.storeConsumable(gameState,item.consumable)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
-        return true, "Đã cất "..item.name.." vào ô tiêu hao. Chuột phải để dùng."
+        return true, "Đã cất "..item.name.." vào balo. Kéo lên ô trang bị để mang vào trận."
     end
 
     if item.category == "deity" then
-        local maxSlots = Deities.getMaxSlots(gameState)
-        if Deities.getCount(gameState.deities) >= maxSlots then
-            Sound.play("cant_afford")
-            return false, "Đã đầy " .. maxSlots .. " Hộ Linh! Hãy bán bớt một Hộ Linh trước khi mua mới."
-        end
         gameState.gold = gameState.gold - item.cost
-        Deities.addDeity(gameState, item.deity)
+        Loadout.storeDeity(gameState, item.deity)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
-        return true, "Đã chiêu mộ: " .. item.deity.name .. "!"
+        return true, "Đã cất SPN " .. item.deity.name .. " vào balo."
 
     elseif item.category == "hand_expansion" then
         local curH = gameState.maxHandSize or 3
@@ -825,7 +829,7 @@ function Shop.openPack(packItem, gameState)
     local candidates = {}
 
     if packItem.packType == "buffoon" then
-        for _, deity in ipairs(Deities.getRandomShopPool(gameState.deities, 3)) do
+        for _, deity in ipairs(Deities.getRandomShopPool(Loadout.ownedDeities(gameState), 3)) do
             local reward = cloneDeity(deity)
             CardEffects.rollCard(reward)
             candidates[#candidates + 1] = reward
@@ -937,12 +941,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
     end
 
     if pack.packType == "buffoon" then
-        local maxSlots = Deities.getMaxSlots(gameState)
-        if Deities.getCount(gameState.deities) >= maxSlots then
-            Sound.play("cant_afford")
-            return false, "Đã đầy " .. maxSlots .. " Hộ Linh!"
-        end
-        Deities.addDeity(gameState, card)
+        Loadout.storeDeity(gameState, card)
         Sound.play("shop_buy")
         shop.currentPackOpening = nil
         return true, "Đã chiêu mộ: " .. card.name .. "!"
@@ -1199,7 +1198,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
             and gameState.hand[gameState.selectedIndices[1]]
         if not targetCard then
             Sound.play("cant_afford")
-            return false, "Hãy chọn một lá bài trước, hoặc cất Ấn Bản vào ô tiêu hao."
+            return false, "Hãy chọn một lá bài trước, hoặc cất Ấn Bản vào balo."
         end
         Shop.applyEdition(targetCard, card.edition)
         for _, pile in ipairs({ gameState.persistentDeck or {}, gameState.hand or {}, gameState.deck or {}, gameState.discardPile or {} }) do
@@ -1231,28 +1230,60 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
     }
     local cat = validPacks[pack.packType]
     if not cat then
-        return false, "Chỉ có thể cất giữ Thẻ Phép, Hành Tinh và Ấn Bản vào Ô Tiêu Hao!"
-    end
-
-    gameState.consumables = gameState.consumables or {}
-    if #gameState.consumables >= Inventory.limit(gameState) then
-        Sound.play("cant_afford")
-        return false, "Ô tiêu hao đã đầy ("..Inventory.limit(gameState).." ô)!"
+        return false, "Chỉ có thể cất giữ Thẻ Phép, Hành Tinh và Ấn Bản vào balo!"
     end
 
     local storedCard = {}
     for k, v in pairs(card) do storedCard[k] = v end
     storedCard.category = cat
 
-    table.insert(gameState.consumables, storedCard)
+    Loadout.storeConsumable(gameState,storedCard)
     Sound.play("shop_buy")
     shop.currentPackOpening = nil
-    return true, "Đã cất [" .. (storedCard.name or "Thẻ Phép") .. "] vào Ô Tiêu Hao!"
+    return true, "Đã cất [" .. (storedCard.name or "Thẻ Phép") .. "] vào balo!"
 end
 
-function Shop.skipPack(shop)
+function Shop.getPackExchangeGold(opening)
+    local pack = opening and opening.pack
+    if not pack then return 0 end
+    local price
+    for _, entry in ipairs(Shop.PACK_CATALOG) do
+        if entry.packType == pack.packType then price = entry.cost; break end
+    end
+    return math.max(1, math.floor(((pack.rewardPack and price) or pack.cost or price or 4) / 2))
+end
+
+function Shop.getChestExchangeGold(rewards)
+    local price = 0
+    for _, reward in ipairs(rewards or {}) do
+        local item = reward.card or reward.item
+        if item then price = math.max(price, item.cost or 4) end
+    end
+    return price > 0 and math.max(1, math.floor(price / 2)) or 0
+end
+
+function Shop.exchangeChest(rewards, gameState)
+    if not rewards or rewards.resolved or #rewards == 0 then return false, 0 end
+    local gold = Shop.getChestExchangeGold(rewards)
+    rewards.resolved = true
+    gameState.gold = (gameState.gold or 0) + gold
+    Sound.play("sell")
+    return true, gold
+end
+
+-- The opening stores its receipt so a queued/saved reward cannot pay twice.
+function Shop.skipPack(shop, gameState)
+    local opening = shop.currentPackOpening
+    if not opening or not gameState then return false, 0 end
+    local gold = 0
+    if not opening.exchangedGold then
+        gold = Shop.getPackExchangeGold(opening)
+        opening.exchangedGold = gold
+        gameState.gold = (gameState.gold or 0) + gold
+    end
     shop.currentPackOpening = nil
-    Sound.play("ui_click")
+    Sound.play("sell")
+    return true, gold
 end
 
 function Shop.reroll(shop, gameState, refresh)
@@ -1315,8 +1346,41 @@ function Shop.sellConsumable(gameState, consumableIndex)
     return true, price
 end
 
-function Shop.sellCard()
-    return false, "Không thể bán quân bài. Hãy kích hoạt Lá Tiêu Hủy trong shop."
+function Shop.sellStoredItem(gameState,kind,index)
+    local list=gameState[kind=="reserve_deity" and "backpackDeities" or "backpackConsumables"]
+    local item=list and list[index]
+    if not item then return false,"Món đồ không còn trong balo." end
+    local price=Shop.getSacrificePrice(item,kind=="reserve_deity" and "deity" or "consumable",gameState)
+    table.remove(list,index);gameState.gold=(gameState.gold or 0)+price
+    Sound.play("sell");return true,price
+end
+
+function Shop.sellCard(gameState, targetCard)
+    if not gameState or gameState.shopMode~="cards" then
+        return false, "Chỉ Shop quân bài thu mua quân bài."
+    end
+    local deck=gameState.persistentDeck or {}
+    local targetId=type(targetCard)=="table" and targetCard.id or targetCard
+    local index
+    for i,card in ipairs(deck) do
+        if card==targetCard or (targetId~=nil and card.id==targetId) then index=i;targetCard=card;break end
+    end
+    if not index then return false, "Lá bài không còn trong bộ bài." end
+    if #deck<=1 then return false, "Bộ bài phải còn ít nhất 1 lá." end
+    local price=Shop.getCardSellPrice(targetCard)
+    table.remove(deck,index)
+    for _,name in ipairs({"hand","deck","discardPile"}) do
+        local pile=gameState[name] or {}
+        for i=#pile,1,-1 do
+            if pile[i]==targetCard or (targetCard.id~=nil and pile[i].id==targetCard.id) then table.remove(pile,i) end
+        end
+    end
+    gameState.masterDeck=deck
+    gameState.selectedIndices={}
+    for i,card in ipairs(gameState.hand or {}) do if card.selected then table.insert(gameState.selectedIndices,i) end end
+    gameState.gold=(gameState.gold or 0)+price
+    Sound.play("sell")
+    return true,price
 end
 
 function Shop.destructionItem(section)
@@ -1469,7 +1533,6 @@ end
 function Shop.sellDeity(gameState, deityIndex)
     local d = gameState.deities and gameState.deities[deityIndex]
     if not d then return false end
-    if d.battleSupport then return false end
     local sellPrice = Shop.getSacrificePrice(d, "deity", gameState)
     gameState.gold = (gameState.gold or 0) + sellPrice
     gameState.deities[deityIndex] = nil

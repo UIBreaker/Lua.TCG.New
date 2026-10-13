@@ -10,7 +10,13 @@ local supplyIndex = 1
 local function nextStage(name, delay) stage = name; deadline = love.timer.getTime() + (delay or 0.15) end
 local function shot(name)
     love.graphics.captureScreenshot(function(data)
-        local f = assert(io.open(name, "wb")); f:write(data:encode("png"):getString()); f:close()
+        local f = io.open(name, "wb")
+        if f then f:write(data:encode("png"):getString()); f:close()
+        else
+            love.filesystem.createDirectory("reward_capture")
+            assert(love.filesystem.write("reward_capture/"..name,data:encode("png")))
+            print("Capture: "..love.filesystem.getSaveDirectory().."/reward_capture/"..name)
+        end
     end)
 end
 local function clickButton(callbacks, id)
@@ -95,8 +101,10 @@ function Test.update(game, callbacks)
         assert(not game.pendingRewardEquipment and #game.rewardPacks == 3)
         nextStage("skip_pack", 1.2)
     elseif stage == "skip_pack" then
+        local exchangeGold = require("src.shop").getPackExchangeGold(callbacks.getShopData().currentPackOpening)
         clickButton(callbacks, "skip_pack")
-        assert(#game.rewardPacks == 2 and game.gold == gold)
+        assert(#game.rewardPacks == 2 and game.gold == gold + exchangeGold)
+        gold = game.gold
         nextStage("fast")
     elseif stage == "fast" then
         game.rewardPacks = {}
@@ -119,11 +127,11 @@ function Test.update(game, callbacks)
         nextStage("supply_start")
     elseif stage == "supply_start" then
         local id=C.supplies.entries[supplyIndex].id
-        game.consumables={}
+        game.consumables={};game.backpackConsumables={}
         C.tables.capture.entries={{id=id,weight=1}}
         callbacks.openReward("capture")
-        assert(game.consumables[1].id==id)
-        assert(require("src.consumable_art").get(game.consumables[1]), "supply must have Continental artwork: "..id)
+        assert(game.backpackConsumables[1].id==id)
+        assert(require("src.consumable_art").get(game.backpackConsumables[1]), "supply must have Continental artwork: "..id)
         love.keypressed("space")
         nextStage("supply_shot",0.2)
     elseif stage == "supply_shot" then
@@ -155,9 +163,42 @@ function Test.update(game, callbacks)
         clickButton(callbacks,"cashout_prev")
         assert(callbacks.getRewardAnimation().lootPage==1 and game.gold==gold)
         assert(require("src.rng").getState()==originalRng, "paging must not reroll rewards")
+        nextStage("bulk_exchange")
+    elseif stage == "bulk_exchange" then
+        love.keypressed("right")
+        assert(callbacks.getRewardAnimation().lootPage==2)
+        nextStage("bulk_click",0.2)
+    elseif stage == "bulk_click" then
+        local expected=Reward.getBulkExchangeGold(game,callbacks.getRewardAnimation().result)
+        assert(expected==16)
+        clickButton(callbacks,"cashout_exchange_all")
+        clickButton(callbacks,"cashout_exchange_all")
+        local anim,state=callbacks.getRewardAnimation()
+        assert(state=="CASH_OUT" and anim.finished and game.gold==gold+expected and #game.rewardPacks==0)
+        assert(anim.displayTotal==anim.result.earnedGold and anim.walletTotal==game.gold)
+        assert(require("src.rng").getState()==originalRng)
+        gold=game.gold
+        nextStage("bulk_shot",0.3)
+    elseif stage == "bulk_shot" then
+        shot("shot_reward_bulk_exchanged.png")
+        nextStage("bulk_continue")
+    elseif stage == "bulk_continue" then
+        love.keypressed("return")
+        assert(select(2,callbacks.getRewardAnimation())=="shop" and not callbacks.getShopData().currentPackOpening)
+        assert(#game.rewardPacks==0)
+        C.tables.capture={rolls={2,2},entries={{id="playing_card",weight=1}}}
+        before=#game.persistentDeck
+        callbacks.openReward("capture")
+        gold=game.gold
+        assert(#game.persistentDeck==before+2)
+        nextStage("bulk_cards",0.1)
+    elseif stage == "bulk_cards" then
+        assert(not callbacks.getRewardAnimation().finished)
+        clickButton(callbacks,"cashout_exchange_all")
+        assert(callbacks.getRewardAnimation().finished and #game.persistentDeck==before and game.gold==gold+4)
         nextStage("done")
     elseif stage == "done" then
-        print("LÖVE reward ceremony passed: boss +10, six gold sources, soul harvest, seven supply artworks, 12 loot slots, mouse/keyboard paging, audio, saved pack handoff, ITM socket, skip, direct card, fast-forward; " .. frames .. " frames")
+        print("LÖVE reward ceremony passed: boss +10, soul harvest, seven supplies, 12 loot slots, paging, pack/socket handoff, single and bulk exchange, double-click protection, one-click cards during reveal; " .. frames .. " frames")
         stage = "done"; love.event.quit(0)
     end
 end

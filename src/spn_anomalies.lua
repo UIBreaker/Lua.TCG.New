@@ -27,13 +27,7 @@ local function notice(game,deity,slot,text)
     game.spnFeedback[#game.spnFeedback+1]={deity=deity,slot=slot,text=text}
 end
 local function giveConsumable(game,reward)
-    game.consumables=game.consumables or {}
-    if #game.consumables<require("src.inventory").limit(game) then
-        game.consumables[#game.consumables+1]=reward
-    else
-        game.pendingRewardCards=game.pendingRewardCards or {}
-        game.pendingRewardCards[#game.pendingRewardCards+1]=reward
-    end
+    require("src.loadout").storeConsumable(game,reward)
 end
 function A.takeFeedback(game)
     local result=game.spnFeedback or {};game.spnFeedback={};return result

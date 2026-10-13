@@ -121,8 +121,9 @@ function H.table(game,UI)
  C.text("ĐÃ BỎ",1044,542,80,UI.fonts.tiny,T.colors.muted,"center")
  H.title(#game.discardPile,1044,565,80,UI.fonts.medium,T.colors.text,"center")
  C.text("Còn / Tổng",1140,514,115,UI.fonts.tiny,T.colors.muted,"center")
+ local dx,dy,dw,dh=unpack(require("ui.layout").battle.deck)
  local mx,my=UI.virtualMouseX or -1,UI.virtualMouseY or -1
- if mx>=1140 and mx<=1255 and my>=535 and my<=695 then
+ if mx>=dx and mx<=dx+dw and my>=dy and my<=dy+dh then
   C.text("Nhấn để xem bộ bài",1044,653,80,UI.fonts.tiny,T.colors.goldDim,"center")
  end
  g.pop()

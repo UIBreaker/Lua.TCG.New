@@ -276,6 +276,7 @@ function Scoring.calculate(handInfo, deities, context)
     local afterChoicesApplied = false
     local previewQueue={}
     for i,c in ipairs(handInfo.scoringCards) do previewQueue[#previewQueue+1]={card=c,index=i} end
+    if not abilityHand then require("src.spn_pacts").queueRepeats(abilityGame or context.gameState,handInfo.scoringCards,previewQueue) end
     local echoSeen={}
     while true do
         local job
@@ -933,7 +934,8 @@ function Scoring.calculate(handInfo, deities, context)
                 localEditionAura=localEditionAura+gain
                 cardEvent.localAuraBonus=gain
             end
-            if not abilityHand and CardEffects.getEffectName(card)=="echo" and not echoSeen[card] then
+            if not abilityHand and CardEffects.getEffectName(card)=="echo" and not echoSeen[card]
+                and #previewQueue<Abilities.config.maxTriggersPerHand then
                 echoSeen[card]=true
                 previewQueue[#previewQueue+1]={card=card,index=idx,retrigger=true,effectiveness=1}
             end
@@ -1122,6 +1124,8 @@ end
     local spnContext={}
     for key,value in pairs(context or {}) do spnContext[key]=value end
     spnContext.gameState=Depth.game(context)
+    -- Count physical equipped rarities before a mimic temporarily substitutes its source.
+    spnContext.legendarySpnCount=require("src.spn_turns").legendCount(deities)
     spnContext.soulsAvailable=abilityGame and abilityGame.souls or context and context.souls or 0
     spnContext.handsAvailable=abilityGame and abilityGame.handsRemaining or context and context.handsRemaining or 0
     spnContext.handsAfterPlay=context.handsAfterPlay
@@ -1146,7 +1150,7 @@ end
                     end
                     local addedChips = res.addChips or 0
                     local addedMult = res.addMult or 0
-                    local cardXMult = res.xMult or 1.0
+                    local cardXMult = (res.xMult or 1.0)^(res.xMultRepeats or 1)
                     local chipFactor = res.xChips or 1
                     spnAuraMultiplier=spnAuraMultiplier*(res.xAura or 1)
                     auraDebtTotal=auraDebtTotal+(res.auraTax or 0)

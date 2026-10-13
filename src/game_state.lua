@@ -48,6 +48,8 @@ function GameState.resetRun(game, faction)
     for _, h in ipairs(require("src.advanced_hands").ordered) do game.handLevels[h.id]=1 end
     game.consumables = {}
     game.backpackEquipment = {}
+    game.backpackConsumables = {}
+    game.backpackDeities = {}
     game.maxConsumables = 3
     game.extraDeitySlots = 0
     game.pendingEvolutionCards = 0

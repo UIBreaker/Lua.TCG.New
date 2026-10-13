@@ -46,7 +46,7 @@ assert(Shop.destroyCard(game,game.persistentDeck[1]) and game.playerHp==48)
 shop.items[#shop.items+1]=Shop.healingItem("upper")
 local hp=game.playerHp
 assert(Shop.buyItem(shop,#shop.items,game) and game.playerHp==hp)
-assert(game.consumables[1].id=="healing_potion" and game.consumables[1].healAmt==25)
+assert(game.backpackConsumables[1].id=="healing_potion" and game.backpackConsumables[1].healAmt==25)
 buy("v_vitality")
 assert(game.maxPlayerHp == 120 and game.playerHp == 68)
 buy("v_second_chance")

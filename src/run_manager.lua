@@ -1,4 +1,3 @@
-local Inventory = require("src.inventory")
 local Monster = require("src.monster")
 
 local RunManager = {}
@@ -368,13 +367,7 @@ function RunManager.chooseRoundReward(gameState, index)
     local offer = gameState and gameState.pendingRoundRewardChoice
     local reward = offer and offer.options and offer.options[index]
     if not reward then return false end
-    gameState.consumables = gameState.consumables or {}
-    if #gameState.consumables < Inventory.limit(gameState) then
-        table.insert(gameState.consumables, reward)
-    else
-        gameState.pendingRewardCards = gameState.pendingRewardCards or {}
-        table.insert(gameState.pendingRewardCards, reward)
-    end
+    require("src.loadout").storeConsumable(gameState,reward)
     gameState.pendingRoundRewardChoice = nil
     return true, reward
 end
@@ -392,21 +385,20 @@ function RunManager.deliverEvolutionRewards(run, gameState)
     end
 
     local delivered = 0
-    while gameState.pendingEvolutionCards > 0 and #gameState.consumables < Inventory.limit(gameState) do
-        table.insert(gameState.consumables, RunManager.createEvolutionCard())
+    while gameState.pendingEvolutionCards > 0 do
+        require("src.loadout").storeConsumable(gameState,RunManager.createEvolutionCard())
         gameState.pendingEvolutionCards = gameState.pendingEvolutionCards - 1
         delivered = delivered + 1
     end
     gameState.pendingRewardCards = gameState.pendingRewardCards or {}
-    while #gameState.pendingRewardCards > 0 and #gameState.consumables < Inventory.limit(gameState) do
-        table.insert(gameState.consumables, table.remove(gameState.pendingRewardCards, 1))
+    while #gameState.pendingRewardCards > 0 do
+        require("src.loadout").storeConsumable(gameState,table.remove(gameState.pendingRewardCards, 1))
         delivered = delivered + 1
     end
     return delivered
 end
 
 function RunManager.completeCurrentBlind(run, gameState)
-    if gameState then require("src.spn_basics").finish(gameState) end
     local blind = RunManager.getCurrentBlind(run)
     local rewardEarned = false
     if blind then

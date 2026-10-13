@@ -132,7 +132,7 @@ for _ = 1, 600 do
     end
     assert(upperCount == 5, "upper shop must stock SPN, ITM, one card, hand expansion, and destruction")
     assert(upperCategories.deity and upperCategories.equipment and upperCategories.card
-        and upperCategories.hand_expansion and upperCategories.destroy,
+        and upperCategories.hand_expansion and (upperCategories.destroy or upperCategories.heal or upperCategories.armor_potion or upperCategories.speed_single or upperCategories.combat_potion or upperCategories.bed),
         "upper retail row is missing a requested shop category")
     assert(voucherSeen and not bookTicketSeen,
         "lower voucher slot should contain a permanent voucher, not a hand-style ticket")
@@ -168,7 +168,7 @@ assert(applied and target.edition == editionOpening.cards[1].edition and persist
     "choosing an edition must update the selected card and its saved deck copy")
 editionPackShop.currentPackOpening = editionOpening
 shopState.consumables = {}
-assert(Shop.keepPackCard(editionPackShop, 2, shopState) and shopState.consumables[1].category == "edition",
+assert(Shop.keepPackCard(editionPackShop, 2, shopState) and shopState.backpackConsumables[1].category == "edition",
     "edition chest rewards must be storable as targeted consumables")
 
 print("Card effects smoke test passed")

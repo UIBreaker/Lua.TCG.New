@@ -220,9 +220,6 @@ function Persistence.makeSnapshot(game, activeState)
         end
     end
     savedGame.run = snapshotRun(game and game.run)
-    for slot,owned in pairs(savedGame.deities or {}) do
-        if owned.battleSupport then savedGame.deities[slot]=nil end
-    end
     return {
         version = Persistence.SAVE_VERSION,
         rngState = Rng.getState(),
@@ -262,6 +259,7 @@ function Persistence.restoreSnapshot(snapshot)
         end
     end
     for _,item in ipairs(game.consumables or {}) do migrateStamp(item) end
+    for _,item in ipairs(game.backpackConsumables or {}) do migrateStamp(item) end
     for _,opening in ipairs(game.rewardPacks or {}) do
         if opening.pack and opening.pack.packType=="seal" then
             local seen={}
@@ -277,6 +275,15 @@ function Persistence.restoreSnapshot(snapshot)
         local deity = restoreDeity(savedDeity)
         if deity then game.deities[slot] = deity end
     end
+    game.backpackDeities={}
+    for _,savedDeity in ipairs(snapshot.game.backpackDeities or {}) do
+        local deity=restoreDeity(savedDeity)
+        if deity then game.backpackDeities[#game.backpackDeities+1]=deity end
+    end
+    for _,list in ipairs({game.consumables or {},game.backpackConsumables or {}}) do
+        for _,item in ipairs(list) do if item.card then item.card=restoreCard(item.card) end end
+    end
+    require("src.loadout").init(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
     -- Rebuilding the run may consume random values; restore the exact saved
     -- gameplay RNG state afterwards so future outcomes remain reproducible.

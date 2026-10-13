@@ -61,6 +61,63 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-spn-pacts-ui" then
+            local ok,err=pcall(require("tests.spn_pacts_capture").update,gameRef,callbacks)
+            if not ok then print("SPN PACTS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-inventory-rail" then return require("tests.inventory_rail_capture").update(gameRef,callbacks) end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-backpack-qol" then
+            local ok,err=pcall(require("tests.backpack_qol_capture").update,gameRef,callbacks)
+            if not ok then print("BACKPACK QOL FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _, value in ipairs(arg or {}) do
+        if value == "--test-modal-hover" then
+            return require("tests.modal_hover_capture").update(gameRef, callbacks)
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-expanded-inventory" then
+            local ok,err=pcall(require("tests.expanded_inventory_capture").update,gameRef,callbacks)
+            if not ok then print("EXPANDED INVENTORY FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-seal-descriptions" then
+            local ok,err=pcall(require("tests.seal_shop_capture").update,gameRef,callbacks)
+            if not ok then print("SEAL DESCRIPTIONS FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-card-inspector" then
+            local ok,err=pcall(require("tests.card_inspector_capture").update,gameRef,callbacks)
+            if not ok then print("CARD INSPECTOR FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-battle-backpack" then
+            local ok,err=pcall(require("tests.battle_backpack_capture").update,gameRef,callbacks)
+            if not ok then print("BATTLE BACKPACK FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-card-shop-sale" then
+            local ok,err=pcall(require("tests.card_shop_sale_capture").update,gameRef,callbacks)
+            if not ok then print("CARD SHOP SALE FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-starter-supplies" then
             local ok,err=pcall(require("tests.starter_supplies_capture").update,gameRef,callbacks)
             if not ok then print("STARTER SUPPLIES FAIL: "..tostring(err));love.event.quit(1) end

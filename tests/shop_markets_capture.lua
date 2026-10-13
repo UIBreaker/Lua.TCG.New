@@ -30,7 +30,7 @@ function T.update(game,cb)
         local mode=Shop.AFTER_COMBAT_MARKETS[math.ceil(step/5)]
         local phase=(step-1)%5
         if phase==0 then
-            game.shopMode=mode;game.consumables={};game.deities={};UI.Polish.clearFocus();cb.openShop()
+            game.shopMode=mode;game.consumables={};game.deities={};game.backpackConsumables={};game.backpackDeities={};UI.Polish.clearFocus();cb.openShop()
             assert(cb.getShopData().mode==mode)
             if mode=="cards" then
                 local card=cb.getShopData().items[1].card
@@ -70,8 +70,8 @@ function T.update(game,cb)
                 local previous=assert(T.rects[b.stockItem])
                 assert(b.x==previous.x and b.y==previous.y,"Buying one item must not move other display stands")
             end end
-            if T.item.consumable then assert(game.consumables[1].id==T.item.id)
-            elseif T.item.deity then assert(game.deities[1].id==T.item.deity.id)
+            if T.item.consumable then assert(game.backpackConsumables[1].id==T.item.id and #game.consumables==0)
+            elseif T.item.deity then assert(game.backpackDeities[1].id==T.item.deity.id and not game.deities[1])
             elseif T.item.equipment then assert(game.backpackEquipment[#game.backpackEquipment].id==T.item.equipment.id) end
             if T.item.card then
                 local bought=game.persistentDeck[#game.persistentDeck]

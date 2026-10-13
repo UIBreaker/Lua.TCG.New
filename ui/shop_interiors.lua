@@ -84,8 +84,8 @@ local function sidebar(shop,game,profile)
     text(tostring(#shop.items).." món",191,503,59,nil,C.text,"right")
     if shop.mode=="spn" then
         local D=require("src.deities")
-        text("SPN đang sở hữu",46,528,150,nil,C.muted)
-        text(D.getCount(game.deities).." / "..D.getMaxSlots(game),196,528,54,nil,C.text,"right")
+        text("SPN trong balo",46,528,150,nil,C.muted)
+        text(tostring(#(game.backpackDeities or {})),196,528,54,nil,C.text,"right")
     elseif shop.mode=="equipment" then
         text("Trang bị trong balo",46,528,154,nil,C.muted)
         text(tostring(#(game.backpackEquipment or {})),206,528,44,nil,C.text,"right")
@@ -93,8 +93,8 @@ local function sidebar(shop,game,profile)
         text("Quân bài trong bộ",46,528,154,nil,C.muted)
         text(tostring(#(game.persistentDeck or {})),206,528,44,nil,C.text,"right")
     else
-        text("Ô tiêu hao",46,528,150,nil,C.muted)
-        text(#(game.consumables or {}).." / "..require("src.inventory").limit(game),196,528,54,nil,C.text,"right")
+        text("Tiêu hao trong balo",46,528,150,nil,C.muted)
+        text(tostring(#(game.backpackConsumables or {})),196,528,54,nil,C.text,"right")
     end
     g.setColor(profile.accent[1],profile.accent[2],profile.accent[3],.25);g.line(46,553,252,553)
     text(profile.help,46,566,204,nil,C.muted)

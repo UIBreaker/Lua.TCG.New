@@ -1,0 +1,81 @@
+local L={}
+local Inventory=require("src.inventory")
+local function storageKey(kind) return kind=="spn" and "backpackDeities" or "backpackConsumables" end
+function L.init(game)
+    game.backpackDeities=game.backpackDeities or {}
+    game.backpackConsumables=game.backpackConsumables or {}
+    game.deities=game.deities or {};game.consumables=game.consumables or {}
+    local used={}
+    for _,item in ipairs(game.consumables) do
+        local slot=item.loadoutSlot
+        if type(slot)~="number" or slot~=math.floor(slot) or slot<1 or slot>Inventory.limit(game) or used[slot] then item.loadoutSlot=nil
+        else used[slot]=true end
+    end
+    for _,item in ipairs(game.consumables) do if not item.loadoutSlot then
+        for slot=1,Inventory.limit(game) do if not used[slot] then item.loadoutSlot=slot;used[slot]=true;break end end
+    end end
+end
+function L.storeConsumable(game,item)
+    L.init(game);item.loadoutSlot=nil
+    game.backpackConsumables[#game.backpackConsumables+1]=item
+end
+function L.storeDeity(game,deity)
+    L.init(game)
+    local instance={};for k,v in pairs(deity) do instance[k]=v end
+    game.backpackDeities[#game.backpackDeities+1]=instance
+    return instance
+end
+function L.ownedDeities(game)
+    local list={}
+    for _,d in pairs(game.deities or {}) do list[#list+1]=d end
+    for _,d in ipairs(game.backpackDeities or {}) do list[#list+1]=d end
+    return list
+end
+function L.limit(game,kind)
+    return kind=="spn" and require("src.deities").getMaxSlots(game) or Inventory.limit(game)
+end
+function L.equipped(game,kind,slot)
+    L.init(game)
+    if kind=="spn" then return game.deities[slot],slot end
+    for i,item in ipairs(game.consumables) do if item.loadoutSlot==slot then return item,i end end
+end
+function L.move(game,kind,source,index,destination,inCombat)
+    if kind~="spn" and kind~="consumable" then return false,"Chọn SPN hoặc thẻ tiêu hao." end
+    L.init(game)
+    local reserve=game[storageKey(kind)]
+    local item,activeIndex
+    if source=="equipped" then item,activeIndex=L.equipped(game,kind,index)
+    elseif source=="reserve" then item=reserve[index] end
+    if not item then return false,"Món đồ không còn ở vị trí này." end
+    if destination==index and source=="equipped" then return false,"Lá đã ở ô này." end
+    if source=="reserve" and not destination then return false,"Kéo lên một ô trang bị." end
+    local limit=L.limit(game,kind)
+    if kind=="spn" and source=="reserve" and item.edition=="negative" then limit=limit+1 end
+    if destination and (destination<1 or destination>limit or destination~=math.floor(destination)) then return false,"Ô trang bị không hợp lệ." end
+    if inCombat then
+        if (game.handsRemaining or 0)<=0 then return false,"Hết lượt đánh. Kết thúc lượt trước khi đổi đồ." end
+        local Boss=require("src.boss_abilities")
+        if source=="equipped" and Boss.isSlotLocked(game,kind,index)
+            or destination and Boss.isSlotLocked(game,kind,destination) then return false,"Ô này đang bị boss khóa." end
+    end
+    local other,otherIndex
+    if destination then other,otherIndex=L.equipped(game,kind,destination) end
+    if kind=="spn" then
+        if source=="equipped" then game.deities[index]=other else table.remove(reserve,index) end
+        if destination then game.deities[destination]=item end
+    else
+        if source=="equipped" then
+            if destination then item.loadoutSlot=destination;if other then other.loadoutSlot=index end
+            else table.remove(game.consumables,activeIndex) end
+        else
+            if not other and #game.consumables>=Inventory.limit(game) then return false,"Ô tiêu hao đã đầy." end
+            table.remove(reserve,index);item.loadoutSlot=destination
+            if other then game.consumables[otherIndex]=item else game.consumables[#game.consumables+1]=item end
+        end
+    end
+    if not destination then item.loadoutSlot=nil;reserve[#reserve+1]=item
+    elseif source=="reserve" and other then other.loadoutSlot=nil;reserve[#reserve+1]=other end
+    if kind=="spn" and inCombat and destination then require("src.spn_pacts").prepare(game) end
+    return true,destination and "Đã đổi ô trang bị." or "Đã cất lại vào balo."
+end
+return L

@@ -49,7 +49,8 @@ function T.update(game,cb)
     elseif stage==2 then
         capture("soul_market_purchase",function() click(UI.Polish.button(game)) end);return
     elseif stage==3 then
-        assert(game.souls==118 and #game.consumables==1)
+        assert(game.souls==118 and #game.backpackConsumables==1)
+        assert(require("src.loadout").move(game,"consumable","reserve",1,1,false))
         UI.Backpack.show();UI.Backpack.tab="consumable"
     elseif stage==4 then
         local x,y,w,h=UI.Backpack.rect("consumable",1,game);pointer(x+w/2,y+h/2,2)
@@ -68,7 +69,7 @@ function T.update(game,cb)
         assert(game.persistentDeck[1].maxSockets==5 and #game.consumables==0)
         UI.Polish.clearFocus();buy(cb,"cons_rulebreak")
     elseif stage==11 then click(UI.Polish.button(game))
-    elseif stage==12 then UI.Backpack.show();UI.Backpack.tab="consumable"
+    elseif stage==12 then assert(require("src.loadout").move(game,"consumable","reserve",1,1,false));UI.Backpack.show();UI.Backpack.tab="consumable"
     elseif stage==13 then
         local x,y,w,h=UI.Backpack.rect("consumable",1,game);pointer(x+w/2,y+h/2,2)
     elseif stage==14 then choose()

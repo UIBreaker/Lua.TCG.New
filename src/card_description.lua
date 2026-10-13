@@ -64,6 +64,7 @@ function D.resolve(item,game)
         text=text.."\nVàng hoặc Tốc vượt giới hạn tạo 2 Giáp mỗi đơn vị, vẫn chịu giới hạn Giáp."
         if level<A.config.maxEvolutionLevel then text=text.."\nKẾ TIẾP: "..A.description(item,A.level(item)+1) end
         text=text.."\nCơ bản: "..(item.baseChips or Deck.getChipValue(item.rank)).." ST · Tốc đánh "..Deck.getCardAttackSpeed(item)
+        local mark=require("src.spn_pacts").cardMark(game,item);if mark then text=text.."\n"..mark end
         local potionDamage,potionMult=require("src.potions").cardBonus(game,item)
         if potionDamage>0 or potionMult>0 then text=text.."\nTHUỐC · +"..potionDamage.." ST / +"..potionMult.." Cường hóa · hết lượt là hết hiệu lực." end
         if item.rank==11 then text=text.."\nVai trò J: +15 ST và +2 Cường hóa mỗi lá 2–10 được chơi."
@@ -96,7 +97,7 @@ function D.resolve(item,game)
     end
     if Deities.CATALOG[item.id] then
         local text="SPN · "..Deities.getRarityLabel(item).."\n"..Deities.getDescription(item)..D.edition(item)
-        if item.battleSupport then text=text.."\nHỖ TRỢ TRẬN · Biến mất khi hết trận; không thể bán. Tiến hóa chỉ giữ trong trận này." end
+        local targets=require("src.spn_pacts").describe(game,item);if targets then text=text.."\n"..targets end
         if item.id=="spirit_right_echo" and game then
             for slot,owned in pairs(game.deities or {}) do
                 if owned==item then
@@ -127,12 +128,11 @@ function D.resolve(item,game)
     if item.category=="evolution" or item.id=="cons_evolution" then
         return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +1 cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
     end
-    if item.sealType and Deck.SEALS[item.sealType] then return item.name,"Đóng lên lá được chọn (hoặc lá đầu tay/bộ bài nếu chưa chọn).\n"..Deck.getModifierDescription("seal",item.sealType) end
     if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition}) end
     if item.packType then return item.name,item.desc or "" end
     local consumable=require("src.shop").getConsumableDescription(item)
     if consumable then return item.name,consumable end
-    if item.category=="heal" then return item.name,"Mua vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
+    if item.category=="heal" then return item.name,"Trang bị vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
     local voucher=require("src.shop").voucherDescription(item.voucherId or item.id)
     if voucher then return item.name,voucher end
     return item.name or item.title or "Thẻ bài",item.desc or item.description or ""

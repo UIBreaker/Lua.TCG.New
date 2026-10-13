@@ -68,31 +68,38 @@ g.playerArmor=998;g.spnBasicArmorGranted=nil;B.armor(g,true);assert(g.playerArmo
 g=game("spirit_guardian_shell");g.monster.isBoss=true
 g.monster.bossState={handIndex=1,slotLock={kind="spn",slot=1,untilHand=1}};B.armor(g,true);assert(g.playerArmor==0)
 
--- One random battle-only companion, including full/sparse slot inventories.
-g=game();for i=1,5 do assert(D.addDeity(g,D.CATALOG.spirit_pebble,i)) end
-local originals={};for i=1,5 do originals[i]=g.deities[i] end
-local seen={};Rng.seed(73)
-for i=1,24 do
-    local owned,slot=B.start(g);seen[owned.id]=true
-    assert(slot==6 and owned.battleSupport and D.getCount(g.deities)==6 and D.getMaxSlots(g)==6)
-    assert(owned~=D.CATALOG[owned.id] and owned.evolutionLevel==nil)
-    for s=1,5 do assert(g.deities[s]==originals[s]) end
-    D.evolve(owned)
-    local snapshot=Persistence.makeSnapshot(g,"shop")
-    assert(not snapshot.game.deities[6] and g.deities[6]==owned)
-    assert(not require("src.shop").sellDeity(g,6))
+-- Ordinary shop ownership: buy/sell, persistent evolution, and no automatic grants.
+local Shop=require("src.shop")
+local pool={};for _,entry in ipairs(D.getRandomShopPool({},99)) do pool[entry.id]=true end
+for _,row in ipairs(B.entries) do
+    assert(pool[row[1]],"basic SPN belongs to the ordinary shop pool")
+    g=game();g.gold=100
+    local item={category="deity",deity=D.CATALOG[row[1]],cost=4}
+    local shop={items={item}}
+    assert(Shop.buyItem(shop,1,g) and g.gold==96 and #shop.items==0)
+    assert(not g.deities[1] and #g.backpackDeities==1)
+    assert(require("src.loadout").move(g,"spn","reserve",1,1,false))
+    local owned=g.deities[1];assert(owned.id==row[1] and not owned.battleSupport)
+    assert(D.evolve(owned));g.persistentDeck={card(3),card(6),card(8)}
+    for round=1,2 do
+        Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},round)
+        assert(D.getCount(g.deities)==1 and g.deities[1]==owned and owned.evolutionLevel==1)
+    end
+    local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
+    assert(restored.deities[1].id==row[1] and restored.deities[1].evolutionLevel==1)
+    local before=restored.gold
+    assert(Shop.sellDeity(restored,1) and not restored.deities[1] and restored.gold>before)
 end
-local count=0;for _ in pairs(seen) do count=count+1 end;assert(count==4)
-B.finish(g);assert(D.getCount(g.deities)==5 and D.getMaxSlots(g)==5)
-g=game("spirit_legacy_cocoon");g.deities[2]={}
-for k,v in pairs(D.CATALOG.spirit_coin_wisp) do g.deities[2][k]=v end
-g.deities[2].battleSupport=true;g.monster.isBoss=true;g.monster.hp=0
-assert(require("src.spn_legacy").bossDefeated(g,g.monster)==1)
-B.finish(g);assert(g.deities[1] and not g.deities[1].battleSupport and not g.deities[2],"earned copies remain permanent")
 g=game();g.persistentDeck={card(3),card(6),card(8)}
 Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},1)
-assert(D.getCount(g.deities)==1 and g.deities[1].battleSupport and #g.hand>0)
+assert(D.getCount(g.deities)==0 and #g.hand>0,"starting battle does not grant any SPN")
 for _,c in ipairs(g.hand) do assert(B.cardGames[c]==g and c.spnSpeedGame==nil) end
-Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},2);assert(D.getCount(g.deities)==1)
-assert(#D.getRandomShopPool({},99)==61)
-print("SPN basics PASS: held heal, all-played gold, dynamic/evolved/copied speed, pre-hit armor, locks/caps, one temporary starter, overflow and save safety")
+Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},2);assert(D.getCount(g.deities)==0)
+for i=1,5 do assert(D.addDeity(g,D.CATALOG.spirit_pebble,i)) end
+g.gold=100
+local fullShop={items={{category="deity",deity=D.CATALOG.spirit_coin_wisp,cost=4}}}
+assert(Shop.buyItem(fullShop,1,g) and g.gold==96 and #fullShop.items==0 and g.backpackDeities[1].id=="spirit_coin_wisp")
+Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},3)
+assert(D.getCount(g.deities)==5 and D.getMaxSlots(g)==5,"battle adds no overflow slot")
+assert(#D.getRandomShopPool({},99)==68)
+print("SPN basics PASS: held heal, all-played gold, dynamic/evolved/copied speed, pre-hit armor, locks/caps, normal shop buy/sell, persistent evolution, no automatic grants and save safety")

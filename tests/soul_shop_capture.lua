@@ -17,7 +17,15 @@ local function shot(name)
     end)
 end
 local function confirm(game)
+    local focus=UI.Polish.focus
     local b=assert(UI.Polish.button(game));pointer(b.x+b.w/2,b.y+b.h/2,true)
+    if focus and focus.kind=="stock" and focus.item.consumable then
+        -- Fixture equips support cards; the battle-backpack test covers the real drag flow.
+        local L=require("src.loadout")
+        for slot=1,require("src.inventory").limit(game) do if not L.equipped(game,"consumable",slot) then
+            assert(L.move(game,"consumable","reserve",#game.backpackConsumables,slot,false));break
+        end end
+    end
 end
 function T.update(g,cb)
     if love.timer.getTime()<deadline then return end
@@ -170,7 +178,7 @@ function T.update(g,cb)
     elseif stage=="scroll_inventory" then
         g.consumables[4]=Shop.healingItem(nil,"armor_potion_large").consumable
         pointer(1100,420,false);love.wheelmoved(0,-1)
-        assert(require("ui.inventory_rail").localIndex("consumable",4,g)==3)
+        assert(require("ui.inventory_rail").localIndex("consumable",4,g)==4)
         nextStage("use_fourth",0.6)
     elseif stage=="use_fourth" then
         local x,y,w,h=UI.getConsumableSlotRect(4,"shop")

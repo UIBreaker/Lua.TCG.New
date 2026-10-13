@@ -70,7 +70,7 @@ function L.bossDefeated(game,enemy)
             game.deities[cocoon.slot]=nil
             if game.spnCombat then game.spnCombat[cocoon.owned]=nil end
             for i=1,count do
-                local copy=clone(source);copy.battleSupport=nil;copy.desc=D.getDescription(copy)
+                local copy=clone(source);copy.desc=D.getDescription(copy)
                 local slot=cocoon.slot
                 if i>1 then slot=1;while game.deities[slot] do slot=slot+1 end end
                 -- This reward bypasses the ordinary shop capacity check.

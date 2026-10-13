@@ -299,7 +299,7 @@ function Combat.start(game, monster, round)
     assert(game and monster, "Combat.start requires game state and monster")
     game.round = round or 1
     game.monster = monster
-    require("src.spn_basics").start(game)
+    game.spnBasicArmorGranted=nil
     game.enemies=Group.build(monster)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
@@ -391,6 +391,7 @@ function Combat.start(game, monster, round)
         for _, c in ipairs(anchors) do table.insert(game.deck, c) end -- popped first from the end
     end
 
+    require("src.spn_pacts").prepare(game)
     Abilities.start(game)
     local maxHandSize = isFaction(game, "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
     local dealOrder = 0

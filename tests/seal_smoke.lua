@@ -22,6 +22,22 @@ end
 assert(#Shop.SEAL_CARDS==10 and #Shop.getPackContents("seal")==10)
 local catalog=require("src.collection").getItems("seals")
 assert(#catalog==10)
+local Description=require("src.card_description")
+local sealOffers=0
+for _,offer in ipairs(Shop.getRetailConsumables()) do
+    if offer.category=="seal" then
+        sealOffers=sealOffers+1
+        local effect=Deck.getModifierDescription("seal",offer.id)
+        for _,item in ipairs({offer,offer.consumable,Deck.SEALS[offer.id]}) do
+            local title,body=Description.resolve(item)
+            assert(title==offer.name and body:find(effect,1,true),offer.id.." missing seal effect")
+            assert(not body:find("{",1,true),offer.id.." unresolved seal parameters")
+            assert(#require("ui.components.card_description").model(item,title,body).rows>=2)
+        end
+        assert(offer.desc==offer.consumable.desc and offer.desc:find(effect,1,true))
+    end
+end
+assert(sealOffers==10)
 local seen={}
 for _,id in ipairs(Deck.SEAL_ORDER) do
     local d=assert(Deck.SEALS[id]);assert(not seen[d.symbol]);seen[d.symbol]=true

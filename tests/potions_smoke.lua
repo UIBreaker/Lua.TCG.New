@@ -118,9 +118,9 @@ for _,item in ipairs(shop.items) do assert(item.id~="healing_potion_small");if i
 assert(heals==2)
 for _,def in ipairs(Potions.definitions) do
     for i,item in ipairs(shop.items) do if item.id==def.id then
-        g.consumables={};assert(Shop.buyItem(shop,i,g))
+        g.consumables={};g.backpackConsumables={};assert(Shop.buyItem(shop,i,g))
         local loaded=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop"))
-        assert(loaded.consumables[1].id==def.id and loaded.consumables[1].desc==def.desc and loaded.shopMode=="medicine")
+        assert(loaded.backpackConsumables[1].id==def.id and loaded.backpackConsumables[1].desc==def.desc and #loaded.consumables==0 and loaded.shopMode=="medicine")
         break
     end end
 end

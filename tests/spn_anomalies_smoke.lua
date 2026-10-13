@@ -92,31 +92,31 @@ actual=score(g,h);assert(actual.totalChips==10 and actual.totalMult==92)
 
 g=game("spirit_archive");g.discardsRemaining=0
 score(g,hand("HIGH_CARD"));score(g,hand("HIGH_CARD"));score(g,hand("PAIR"))
-assert(#g.consumables==0)
+assert(#g.backpackConsumables==0)
 local state=Persistence.encode(g.spnCombat[g.deities[5]])
 preview=score(g,hand("STRAIGHT"),true)
-assert(#g.consumables==0 and Persistence.encode(g.spnCombat[g.deities[5]])==state)
-score(g,hand("STRAIGHT"));assert(#g.consumables==1 and g.consumables[1].id=="cons_evolution")
+assert(#g.backpackConsumables==0 and Persistence.encode(g.spnCombat[g.deities[5]])==state)
+score(g,hand("STRAIGHT"));assert(#g.backpackConsumables==1 and g.backpackConsumables[1].id=="cons_evolution")
 for _,kind in ipairs({"PAIR","STRAIGHT","HIGH_CARD"}) do score(g,hand(kind)) end
-assert(#g.consumables==2,"archive grants another evolution card after a new trio")
-g.consumables={g.consumables[1],g.consumables[2],require("src.run_manager").createEvolutionCard()}
+assert(#g.backpackConsumables==2,"archive grants another evolution card after a new trio")
+g.consumables={require("src.run_manager").createEvolutionCard(),require("src.run_manager").createEvolutionCard(),require("src.run_manager").createEvolutionCard()}
 for _,kind in ipairs({"HIGH_CARD","PAIR","STRAIGHT"}) do score(g,hand(kind)) end
-assert(#g.consumables==3 and #g.pendingRewardCards==1 and g.pendingRewardCards[1].id=="cons_evolution")
+assert(#g.consumables==3 and #g.backpackConsumables==3 and g.backpackConsumables[3].id=="cons_evolution")
 
 g=game("spirit_borrowed_turn");h=hand("THREE_OF_A_KIND")
 h.scoringCards={Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts"),Deck.newCard(3,"hearts")}
 for _,c in ipairs(h.scoringCards) do c.disableFactionPassives=true end
-preview=score(g,h,true);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.consumables==0 and not next(g.spnCombat))
-score(g,h);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.consumables==1)
-assert(g.consumables[1].id=="cons_speed_small" and g.consumables[1].permanentSpeed)
-score(g,h);assert(#g.consumables==1,"one permanent speed card per fight")
+preview=score(g,h,true);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.backpackConsumables==0 and not next(g.spnCombat))
+score(g,h);assert(g.handsRemaining==2 and g.discardsRemaining==3 and #g.backpackConsumables==1)
+assert(g.backpackConsumables[1].id=="cons_speed_small" and g.backpackConsumables[1].permanentSpeed)
+score(g,h);assert(#g.backpackConsumables==1,"one permanent speed card per fight")
 g=game("spirit_borrowed_turn");g.consumables={
     require("src.shop").healingItem("upper","cons_bed").consumable,
     require("src.shop").healingItem("upper","cons_bed").consumable,
     require("src.shop").healingItem("upper","cons_bed").consumable}
-score(g,h);assert(#g.consumables==3 and #g.pendingRewardCards==1 and g.pendingRewardCards[1].permanentSpeed)
+score(g,h);assert(#g.consumables==3 and #g.backpackConsumables==1 and g.backpackConsumables[1].permanentSpeed)
 table.remove(g.consumables)
-assert(require("src.run_manager").deliverEvolutionRewards(nil,g)==1 and g.consumables[3].permanentSpeed)
+assert(require("src.loadout").move(g,"consumable","reserve",1,3,false) and g.consumables[3].permanentSpeed)
 
 g=game("spirit_dream_jailer")
 Combat.resolvePlayerAttack(g,10);assert(g.monster.spnSleep==1 and g.playerArmor==4)
@@ -157,5 +157,5 @@ for _,row in ipairs(A.entries) do
     Combat.start(restored,Monster.create(1,false,false,1),2)
     assert(not next(restored.spnCombat),row[1].." reset")
 end
-assert(#D.getRandomShopPool({},99)==61)
+assert(#D.getRandomShopPool({},99)==68)
 print("SPN anomalies PASS: all 10 mechanics, costs, order, enemy armor/revival, preview budgets, locks, UX snapshots, save/load and battle reset")

@@ -4,19 +4,25 @@ Mỗi lượt chơi mới được cấp sẵn vào 3 ô tiêu hao: 1 Bình Máu
 
 Sau mỗi trận thường, chọn ngẫu nhiên một trong sáu cửa hàng, mỗi loại có xác suất 1/6 (khoảng 16,67%). Sau boss, giữ chợ linh hồn hiện có. Rời chợ linh hồn sẽ vào shop lớn; chỉ rời shop lớn mới tăng ải. Việc chuyển giữa hai shop không cấp lại thưởng, không thu phí và không làm đổi HP, vàng hay linh hồn.
 
+Balo mở được khi đang đến lượt người chơi trong trận bằng nút **BALO** hoặc phím **I**. Ngăn Tiêu hao/SPN có hàng **Trang bị · Mang vào trận** ở trên và kho balo riêng bên dưới. Kéo đồ từ kho lên ô để trang bị; kéo xuống kho để cất lại, hoặc kéo lên ô đã có đồ để thay thế. Chỉ đồ đã trang bị mới xuất hiện/có hiệu lực trong chiến đấu. Chuột phải tiêu hao đã trang bị để dùng; chuột phải đồ trong kho chỉ xem thông tin.
+
+Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho balo, kể cả khi các ô chiến đấu đã đầy. Kho không giới hạn theo số ô trang bị. Xem hoặc đóng balo không mất lượt; mỗi lần trang bị/cất/đổi vị trí hợp lệ trong trận trừ **1 lượt đánh** và cho các địch còn sống hành động. Sau đó balo đóng để hiện phản ứng của địch. Kéo sai chỗ/ô bị khóa/hết lượt không mất đồ hay lượt. Sắp xếp trong shop miễn phí. Ba bình khởi đầu vẫn được trang bị sẵn. Save cũ giữ nguyên đồ đang trang bị; save mới giữ cả kho và vị trí, tiến hóa, ấn bản, kỹ năng SPN. Ghép/gắn trang bị vào quân bài và bán hàng thực hiện tại shop.
+
 | Loại | Hàng trên kệ |
 | --- | --- |
 | Shop nhỏ | Tối đa 8 món: SPN, trang bị, quân bài, mở rộng tay, thuốc/tiêu hủy, đặc quyền, một rương ngẫu nhiên và một thẻ tiêu hao lẻ. Hết đặc quyền chưa sở hữu thì còn 7 món. |
-| Shop tiêu hao | 8 thẻ lẻ, không trùng: Phép SPN, Ấn Chiến, Phổ, Hành Tinh, Ấn Bản. Toàn bộ thẻ trong các rương này đều có thể xuất hiện. Giá mỗi thẻ bằng giá rương gốc × 1,2, làm tròn lên. Mua vào ô tiêu hao, giữ nguyên khả năng của thẻ trong rương. |
+| Shop tiêu hao | 8 thẻ lẻ, không trùng: Phép SPN, Ấn Chiến, Phổ, Hành Tinh, Ấn Bản. Toàn bộ thẻ trong các rương này đều có thể xuất hiện. Giá mỗi thẻ bằng giá rương gốc × 1,2, làm tròn lên. Mua vào kho balo, giữ nguyên khả năng của thẻ trong rương. |
 | Shop trang bị | 4 nguyên liệu cơ bản, mỗi nhóm HP/giáp/tốc/vàng một món; 4 trang bị lớn ngẫu nhiên, không trùng. Kho gồm toàn bộ trang bị thường, kể cả đồ ghép; di vật chỉ đổi bằng linh hồn vẫn ở chợ linh hồn. Mua vào balo. |
 | Shop SPN | Tối đa 6 SPN chưa sở hữu, không trùng. Mỗi lá chọn bậc theo tỷ lệ: Thường 61,4%, Không Thường 20%, Hiếm 10%, Sử Thi 5%, Huyền Thoại 2%, Thần Thoại 1%, Siêu Việt 0,5%, Độc Nhất 0,1%; giá theo hệ số bậc hiện có. |
-| Shop thuốc | Đủ 15 món trong hai ngăn: 7 đồ hồi phục/giáp/tốc/giường và 8 thuốc chiến thuật. Chỉ còn bình hồi 25 và 60 HP; bình nhỏ không còn xuất hiện trong shop hoặc thưởng tiếp tế. Mua vào ô tiêu hao. |
+| Shop thuốc | Đủ 15 món trong hai ngăn: 7 đồ hồi phục/giáp/tốc/giường và 8 thuốc chiến thuật. Chỉ còn bình hồi 25 và 60 HP; bình nhỏ không còn xuất hiện trong shop hoặc thưởng tiếp tế. Mua vào kho balo. |
 | Shop quân bài | 8 lá không trùng bậc/chất trên cùng kệ, lấy đều từ đủ 52 lá (2–A của Cơ/Rô/Chuồn/Bích). Có thể là bản thường hoặc kèm tiến hóa cấp 1–2, một trang bị **cơ bản** đã gắn, một trong 9 ấn bản. Các nâng cấp có thể đi cùng nhau; không có đồ lớn, đồ ghép hay di vật linh hồn. Mua thẳng vào bộ bài, giữ nguyên thuộc tính. |
 | Shop lớn | Giữ các quầy cũ: hàng tuyển chọn, nguyên liệu cơ bản, đặc quyền, rương, giảm giá. Chỉ mở sau chợ linh hồn trong luồng chơi. |
 
 Đổi hàng giữ nguyên loại cửa hàng, dùng chi phí/voucher hiện có. Lưu game giữ loại shop đang mở; save cũ có shop `normal` được tiếp tục ở shop nhỏ. Nút thoát chợ linh hồn ghi rõ **SHOP LỚN →**.
 
 Shop quân bài: mỗi lá có 50% không tiến hóa, 35% cấp 1, 15% cấp 2. Trang bị cơ bản có xác suất 35%, chọn đều giữa 12 nguyên liệu; ấn bản có xác suất 30%, chọn đều giữa 9 loại. Ba lần chọn độc lập. Giá = 4 vàng + 6 mỗi cấp tiến hóa + giá trang bị cơ bản + 8 nếu có ấn bản. Nhãn quầy ghi loại nâng cấp, rê chuột xem khả năng và trang bị thực tế. Lá bài mua được giữ tiến hóa, trang bị, ấn bản khi nhân bản bộ bài và lưu/khôi phục game.
+
+Shop quân bài có cơ chế thu mua ẩn: mở Balo → Bộ bài (hoặc màn xem bộ bài), nhấp lá đang sở hữu để hiện nút **BÁN** rồi xác nhận. Giá thu mua = 50% giá trị lá, làm tròn xuống: 4 vàng gốc + 6 mỗi cấp tiến hóa + giá trang bị đang gắn + 8 nếu có ấn bản. Trang bị bán cùng lá; tháo vào balo trước nếu muốn giữ lại. Bán chỉ nhận vàng, không nhận linh hồn/hồi máu hay dùng Lá Tiêu Hủy. Giữ ít nhất một lá; mọi shop khác đều khóa chức năng này. Kiểm tra giao dịch, hủy chọn, hiệu ứng vàng và khóa theo shop bằng `lovec.exe . --test-card-shop-sale`.
 
 ## Thuốc chiến thuật
 
@@ -53,6 +59,9 @@ Mỗi shop nhỏ có một phòng riêng, tạo bằng built-in imagegen, giữ 
 Biển tiệm treo và sổ quầy nằm bên trái, chừa phần giữa để thấy đạo cụ nội thất. Nhãn tên, bậc và giá nằm trên quầy, giữ yên khi lá bài nghiêng hoặc được nhấc lên. Kệ giữ nguyên vị trí sau giao dịch; chỗ hết hàng được để trống. Khung lá bài vẫn dùng chung `ui/components/card_frame.lua`.
 
 ## Kiểm tra
+
+- `lua tests/loadout_smoke.lua`: mua khi ô chiến đấu đầy, trang bị/hoán đổi/cất, vị trí tiêu hao, SPN trong kho không kích hoạt, ô bị khóa/hết lượt, tiến hóa/ấn bản/callback SPN và save cũ/mới.
+- `lovec.exe . --test-battle-backpack`: mở/đóng bằng nút và phím I; kéo thả thật để thay tiêu hao, trang bị SPN và cất lại; trừ đúng 1 lượt, phản ứng địch, chặn thao tác khi địch hành động/hết lượt, kéo sai không mất lượt, sắp xếp trong shop miễn phí. Không ghi save/settings; ảnh `backpack_battle_consumables.png`, `backpack_battle_spn.png`.
 
 - `lua tests/potions_smoke.lua`: tám cơ chế, rút đủ 5 vượt tay đầy, xáo cọc bỏ, hết kho, chuẩn bị animation, giữ chọn bài; giảm tốc đúng mục tiêu/thời hạn/thứ tự; các hiệu ứng cũ; kho 15 món; thuốc có trong shop nhỏ/lớn; lưu/khôi phục và reset.
 - `lovec.exe . --test-potions`: hai ngăn thuốc, mua thật, không dùng thuốc trong shop, VFX 8 thuốc, chọn/hủy mục tiêu, rút 5 ngay từ tay đầy, giảm tốc đúng địch; hồi quy né cả nhóm/hết buff, máu vàng, cash-out và thắng bằng tay bài. Kiểm tra giảm chuyển động và RNG không bị VFX làm thay đổi. Không ghi save/settings của người chơi. Ảnh `docs/potion_*.png`.

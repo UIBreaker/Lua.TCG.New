@@ -26,9 +26,9 @@ end
 assert(seen.healing_potion and seen.soul_reaper,"utility slot must roll both cards")
 shop.items={Shop.destructionItem("upper")}
 g.consumables={{},{},{}}
-assert(not Shop.buyItem(shop,1,g) and g.gold==6 and #shop.items==1)
+assert(Shop.buyItem(shop,1,g) and g.gold==2 and #g.backpackConsumables==1 and #g.consumables==3)
 g.consumables={}
-assert(Shop.buyItem(shop,1,g) and g.gold==2 and #g.consumables==1 and not g.soulDestroyActive)
+assert(require("src.loadout").move(g,"consumable","reserve",1,1,false) and not g.soulDestroyActive)
 assert(Shop.activateDestruction(g,g.consumables[1]))
 assert(Shop.destroyCard(g,a) and g.souls==31 and g.gold==2 and #g.consumables==0)
 assert(#g.persistentDeck==2 and #g.hand==0 and #g.deck==1 and #g.discardPile==1)
@@ -95,25 +95,21 @@ for _,definition in ipairs(Shop.SOUL_SUPPORT) do
     assert(index)
     support.consumables={{},{},{}}
     local souls,count=support.souls,#offers.items
-    assert(not Shop.buyItem(offers,index,support) and support.souls==souls and #offers.items==count)
-    support.consumables={}
     assert(Shop.buyItem(offers,index,support))
-    assert(support.consumables[1].id==definition.id and support.souls==souls-definition.cost)
+    assert(#support.consumables==3 and #offers.items==count-1 and support.backpackConsumables[#support.backpackConsumables].id==definition.id and support.souls==souls-definition.cost)
 end
 local saved=P.restoreSnapshot(P.makeSnapshot(support,"shop"))
-Shop.refresh(offers,saved);assert(#offers.items==6 and saved.consumables[1].id=="cons_rulebreak")
+Shop.refresh(offers,saved);assert(#offers.items==6 and saved.backpackConsumables[#saved.backpackConsumables].id=="cons_rulebreak")
 local utilityShop=Shop.new();local utilityGame=G.new();utilityGame.shopMode="soul";utilityGame.souls=10
 Shop.refresh(utilityShop,utilityGame)
 local utilityIndex
 for i,item in ipairs(utilityShop.items) do if item.id=="soul_reaper" then utilityIndex=i end end
 utilityGame.consumables={{},{},{}}
-assert(not Shop.buyItem(utilityShop,utilityIndex,utilityGame) and utilityGame.souls==10)
-utilityGame.consumables={}
-assert(Shop.buyItem(utilityShop,utilityIndex,utilityGame) and utilityGame.souls==6 and not utilityGame.soulDestroyActive)
+assert(Shop.buyItem(utilityShop,utilityIndex,utilityGame) and utilityGame.souls==6 and #utilityGame.consumables==3 and #utilityGame.backpackConsumables==1 and not utilityGame.soulDestroyActive)
 local utilitySaved=P.restoreSnapshot(P.makeSnapshot(utilityGame,"shop"))
 Shop.refresh(utilityShop,utilitySaved)
 for _,item in ipairs(utilityShop.items) do assert(item.id~="soul_reaper") end
-assert(utilitySaved.consumables[1].id=="soul_reaper")
+assert(utilitySaved.backpackConsumables[1].id=="soul_reaper")
 local previous={};for _,id in ipairs(utilitySaved.soulShopStock) do previous[id]=true end
 local utilityGold=utilitySaved.gold
 utilitySaved.freeRerolls=2;utilitySaved.vouchers={v_welcome=true}

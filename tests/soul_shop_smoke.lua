@@ -47,14 +47,14 @@ g.souls=0;local gold=g.gold
 assert(not Shop.buyItem(shop,1,g) and #shop.items==14 and g.gold==gold)
 g.souls=100
 local ok,action,eq=Shop.buyItem(shop,1,g)
-assert(ok and action=="open_socketing" and eq.id=="soul_worldblade" and g.souls==68 and g.gold==gold)
+assert(ok and action=="open_socketing" and eq.id=="soul_worldblade" and g.souls==4 and g.gold==gold)
 assert(E.attach(c,eq))
 assert(not E.attach(c,eq))
 Shop.refresh(shop,g);assert(#shop.items==13)
 -- Transaction and unassigned equipment survive a save/reload without duplicate stock.
 g.pendingRewardEquipment=E.ITEMS.soul_crown;g.pendingShopEquipment=true
 local loaded,state=P.restoreSnapshot(P.makeSnapshot(g,"socketing"))
-assert(state=="socketing" and loaded.souls==68 and loaded.shopMode=="soul")
+assert(state=="socketing" and loaded.souls==4 and loaded.shopMode=="soul")
 assert(loaded.pendingRewardEquipment.onCardScore and loaded.persistentDeck[1].equipments[1].onCardScore)
 Shop.refresh(shop,loaded);assert(#shop.items==13)
 -- Check all five relics through actual scoring, not only catalog callbacks.
@@ -87,7 +87,7 @@ g.persistentDeck={lone};Combat.cleanupDestroyedCards(g);assert(g.souls==24)
 local replay=P.restoreSnapshot(P.makeSnapshot(g,"shop"))
 assert(require("src.souls").award(replay,Deck.cloneCard(lost))==0 and replay.souls==24)
 -- All three support cards buy with souls, preserve stock on capacity failure and reload.
-local support=G.new();support.shopMode="soul";support.souls=200
+local support=G.new();support.shopMode="soul";support.souls=450
 local offers=Shop.new();Shop.refresh(offers,support)
 for _,definition in ipairs(Shop.SOUL_SUPPORT) do
     local index
@@ -96,11 +96,11 @@ for _,definition in ipairs(Shop.SOUL_SUPPORT) do
     support.consumables={{},{},{}}
     local souls,count=support.souls,#offers.items
     assert(Shop.buyItem(offers,index,support))
-    assert(#support.consumables==3 and #offers.items==count-1 and support.backpackConsumables[#support.backpackConsumables].id==definition.id and support.souls==souls-definition.cost)
+    assert(#support.consumables==3 and #offers.items==count-1 and support.backpackConsumables[#support.backpackConsumables].id==definition.id and support.souls==souls-math.ceil(definition.cost*Shop.PRICE_MULTIPLIER))
 end
 local saved=P.restoreSnapshot(P.makeSnapshot(support,"shop"))
 Shop.refresh(offers,saved);assert(#offers.items==6 and saved.backpackConsumables[#saved.backpackConsumables].id=="cons_rulebreak")
-local utilityShop=Shop.new();local utilityGame=G.new();utilityGame.shopMode="soul";utilityGame.souls=10
+local utilityShop=Shop.new();local utilityGame=G.new();utilityGame.shopMode="soul";utilityGame.souls=18
 Shop.refresh(utilityShop,utilityGame)
 local utilityIndex
 for i,item in ipairs(utilityShop.items) do if item.id=="soul_reaper" then utilityIndex=i end end

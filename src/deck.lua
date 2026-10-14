@@ -537,7 +537,7 @@ function Deck.restoreDeck(deck)
         Deck.getCardAttackSpeed(card)
         if card.isPrimalDrone then
             -- The legacy drone bonus already includes its intrinsic +50 transformation.
-            card.baseChips = 50 + (card.spnPermanentDamage or 0)
+            card.baseChips = 50 + (card.spnPermanentDamage or 0) + (card.potionPermanentDamage or 0)
             card.baseMult = 5
             card.roleTitle = "Chân Rết Nguyên Thủy"
             card.roleIcon = "🐛"
@@ -603,6 +603,8 @@ function Deck.cloneCard(card)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
     newC.spnPermanentDamage = card.spnPermanentDamage
+    newC.potionPermanentDamage = card.potionPermanentDamage
+    newC.potionPermanentMult = card.potionPermanentMult
     newC.seedChips = card.seedChips or 0
     newC.depthInvestment = card.depthInvestment or 0
     newC.role = card.role or newC.role
@@ -710,7 +712,7 @@ function Deck.addCardToDeck(gameState, card)
     card.baseRank = card.baseRank or card.rank
     card.rank = card.baseRank
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
-    card.baseChips = card.isPrimalDrone and (50+(card.spnPermanentDamage or 0)) or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0)
+    card.baseChips = card.isPrimalDrone and (50+(card.spnPermanentDamage or 0)+(card.potionPermanentDamage or 0)) or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0)
     Deck.getCardAttackSpeed(card)
     local role = Deck.getCardRole(card.rank)
     card.role = role.id

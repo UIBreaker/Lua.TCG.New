@@ -138,7 +138,7 @@ for _ = 1, 600 do
         "lower voucher slot should contain a permanent voucher, not a hand-style ticket")
     assert(handChestSeen and randomChests == 3, "lower shop must stock the hand-style chest and three random chests")
     local rarityMultiplier = spnItem and Shop.SPN_RARITY_PRICE_MULTIPLIERS[spnItem.deity.rarity]
-    local expectedSpnPrice = spnItem and math.ceil(Deities.CATALOG[spnItem.deity.id].cost * rarityMultiplier)
+    local expectedSpnPrice = spnItem and math.ceil(math.ceil(Deities.CATALOG[spnItem.deity.id].cost * rarityMultiplier)*Shop.PRICE_MULTIPLIER)
     assert(spnItem and spnItem.cost == expectedSpnPrice,
         "SPN stock must retain its rarity-scaled shop price")
 end

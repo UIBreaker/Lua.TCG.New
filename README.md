@@ -41,6 +41,8 @@ Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/d�
 
 ## ✨ Tính năng hiện có
 
+- **Kho đồ địch (bản thử):** mỗi đối thủ có trang bị phần trăm, con dấu, SPN và ấn bản theo ải/vai trò. Balo có thuốc hoặc trang bị dự trữ; dùng/đổi đồ tốn hành động được báo trước. Nhấn **biểu tượng balo cạnh tên địch** để xem cách đối phó. Xem [quy tắc và cân bằng](docs/ENEMY_LOADOUTS.md).
+
 - **Khởi đầu nhỏ, xây bộ bài dần:** Bộ Bài Đỏ bắt đầu với **một quân bài ngẫu nhiên** trong bộ chuẩn 52 lá. Mua thêm quân bài, mở rộng tay bài và chọn nâng cấp theo chiến thuật.
 - **9 thế bài Poker:** Mậu thầu, Đôi, Hai đôi, Sám cô, Sảnh, Thùng, Cù lũ, Tứ quý và Thùng phá sảnh. Khởi đầu mở Mậu thầu; Bí Tịch mở khóa thế bài, Hành Tinh tăng cấp thế bài. Có biến thể Sảnh 3 lá.
 - **Tính điểm thành sát thương:** Kết hợp Chips (Sát thương), Mult (Cường hóa), XMult và các hiệu ứng Aura, sát thương bổ sung, Giáp, hồi máu hoặc Vàng. Thứ tự quân bài và SPN ảnh hưởng combo.

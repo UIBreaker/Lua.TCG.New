@@ -66,7 +66,7 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     game.spnAttack=nil
     if (game.potionCombat or {}).accuracy then
         roll={hitChance=1,missed=false}
-        game.potionCombat.accuracy=nil
+        if (game.potionCombat.accuracyTurns or 1)<=1 then game.potionCombat.accuracy=nil;game.potionCombat.accuracyTurns=nil end
         require("src.potions").emit(game,"accuracy","ĐÁNH TRÚNG 100%",nil,target)
     end
     if attackEffects.guaranteeHit then roll={hitChance=1,missed=false} end
@@ -178,6 +178,8 @@ local function resolveOneAttack(game,playerSpeed)
     end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
+    local inventoryAction=require("src.enemy_loadout").action(monster)
+    if inventoryAction then return inventoryAction end
     local support=EnemyAbilities.support(game,monster)
     if support then return support end
     if EnemyAbilities.speed(monster)>(playerSpeed or game.lastPlayerAttackSpeed or 0) then
@@ -192,14 +194,15 @@ local function resolveOneAttack(game,playerSpeed)
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
     end
     local baseAttack = (monster.attack or 12)
-    local attack = EnemyAbilities.attack(monster) + EnemyAbilities.attackBonus(game,monster)
+    local attack = EnemyAbilities.attack(monster) + EnemyAbilities.attackBonus(game,monster)+require("src.enemy_loadout").attackBonus(monster)
     local bossState = Boss.state(monster)
     if bossState and Boss.passiveEnabled(monster) then attack=attack+(bossState.excess or 0)*Boss.config.gateAttackPerCard end
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
         and (game.playerHp or 100)<(game.maxPlayerHp or 100)*Boss.config.executionThreshold
     if execution then attack=attack*Boss.config.executionMultiplier end
     local armor = execution and 0 or (game.playerArmor or game.playerShield or 0)
-    local absorbed = math.min(armor, attack)
+    local pierce=attack*require("src.enemy_loadout").pierce(monster)
+    local absorbed = math.min(armor, attack-pierce)
     armor = math.floor((armor - absorbed) * 0.5)
     local damage = attack - absorbed
 
@@ -209,6 +212,7 @@ local function resolveOneAttack(game,playerSpeed)
     game.playerShield = game.playerArmor
     local hpBeforeDamage=game.playerHp or 100
     game.playerHp = math.max(0, hpBeforeDamage - damage)
+    require("src.enemy_loadout").afterHit(monster,math.min(damage,hpBeforeDamage),attack)
     monster.attack = math.floor(baseAttack * 1.08 + 0.5)
     monster.armor = math.floor((monster.armor or 0) * 1.05 + 2)
     EnemyAbilities.afterAttack(game,monster,damage)
@@ -246,6 +250,7 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
             local attack=resolveOneAttack(game,playerSpeed)
             if attack then
                 game.enemyActed[m]=true
+                require("src.enemy_loadout").afterAction(m,attack.action,attack.blocked)
                 EnemyAbilities.finishAction(game,m)
                 if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
                 result.attack=result.attack+attack.attack;result.absorbed=result.absorbed+attack.absorbed
@@ -310,6 +315,7 @@ function Combat.start(game, monster, round)
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
+        require("src.enemy_loadout").start(m)
     end
     for _,m in ipairs(game.enemies) do EnemyAbilities.plan(game,m) end
     game.maxSelectableCards = nil

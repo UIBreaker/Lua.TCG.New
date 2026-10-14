@@ -60,6 +60,7 @@ function D.resolve(item,game)
     if item.card then return D.resolve(item.card,game) end
     if item.deity then return D.resolve(item.deity,game) end
     if item.equipment then return D.resolve(item.equipment,game) end
+    if item.consumable then return D.resolve(item.consumable,game) end
     if item.item then return D.resolve(item.item,game) end
     if item.deityId and Deities.CATALOG[item.deityId] then return D.resolve(Deities.CATALOG[item.deityId],game) end
     local def=A.definition(item)
@@ -76,7 +77,9 @@ function D.resolve(item,game)
         text=text.."\nCơ bản: "..(item.baseChips or Deck.getChipValue(item.rank)).." ST · Tốc đánh "..Deck.getCardAttackSpeed(item)
         local mark=require("src.spn_pacts").cardMark(game,item);if mark then text=text.."\n"..mark end
         local potionDamage,potionMult=require("src.potions").cardBonus(game,item)
+        potionMult=potionMult-(item.potionPermanentMult or 0)
         if potionDamage>0 or potionMult>0 then text=text.."\nTHUỐC · +"..potionDamage.." ST / +"..potionMult.." Cường hóa · hết lượt là hết hiệu lực." end
+        if (item.potionPermanentDamage or 0)>0 or (item.potionPermanentMult or 0)>0 then text=text.."\nDƯỢC HỒN · +"..(item.potionPermanentDamage or 0).." ST / +"..(item.potionPermanentMult or 0).." Cường hóa VĨNH VIỄN." end
         local power=require("src.blood_shop").powerOf(item)
         if item.rank==11 then text=text.."\nVai trò J: +"..(15*power).." ST và +"..(2*power).." Cường hóa mỗi lá 2–10 được chơi."
         elseif item.rank==12 then
@@ -142,7 +145,7 @@ function D.resolve(item,game)
     end
     if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition,editionPower=item.bloodPower}) end
     if item.packType then return item.name,item.desc or "" end
-    local consumable=require("src.shop").getConsumableDescription(item)
+    local consumable=require("src.shop").getConsumableDescription(item,game)
     if consumable then return item.name,consumable end
     if item.category=="heal" then return item.name,"Trang bị vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
     local voucher=require("src.shop").voucherDescription(item.voucherId or item.id,item)

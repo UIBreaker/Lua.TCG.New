@@ -11,18 +11,25 @@ local function fresh()
     g.persistentDeck={Deck.newCard(4,"hearts")};g.gold=27
     g.run=Run.newRun(g.selectedFaction);return g
 end
-local function completeRegion(g)
-    for stage=1,20 do
-        assert(g.run.areaStage==stage)
-        for i=1,3 do
-            Run.completeCurrentBlind(g.run,g)
-            local wins=g.run.stats.blindsWon
-            Run.completeCurrentBlind(g.run,g);assert(g.run.stats.blindsWon==wins)
-            local ok,why=Run.advanceBlind(g.run,g)
-            assert(stage==20 and i==3 and not ok and why=="victory" or (stage<20 or i<3) and ok)
-        end
+local function finishStage(g)
+    for _=1,3 do
+        Run.completeCurrentBlind(g.run,g);local wins=g.run.stats.blindsWon
+        Run.completeCurrentBlind(g.run,g);assert(g.run.stats.blindsWon==wins)
+        assert(Run.advanceBlind(g.run,g))
     end
-    assert(g.run.victory and g.run.travelPermit)
+end
+local function completeRegion(g)
+    for stage=1,20 do assert(g.run.areaStage==stage);finishStage(g) end
+    assert(g.run.difficultyCap and not g.run.victory and E.hasTravelPermit(g))
+end
+local function travel(g,destination,screen)
+    for _,source in ipairs({"backpackConsumables","consumables"}) do
+        for i,item in ipairs(g[source] or {}) do if item.id=="cons_travel_permit" then
+            assert(Run.beginTravel(g,source,i,screen or "BLIND_SELECT"))
+            return Run.resolveTravel(g.run,g,destination)
+        end end
+    end
+    return false
 end
 local checked=0
 for _,r in ipairs(E.regions) do
@@ -50,65 +57,74 @@ for _,r in ipairs(E.regions) do
     end
 end
 local g=fresh()
-assert(not Run.resolveTravel(g.run,g,"sell") and g.gold==27)
+assert(not Run.resolveTravel(g.run,g,"sell"))
 completeRegion(g)
-assert(E.recognitionCount(g)==0 and not E.canEnter(g,"unknown"))
-local permits=#g.backpackConsumables
-assert(not Run.resolveTravel(g.run,g,"unknown") and #g.backpackConsumables==permits and g.run.ante==20)
-local saved=Persistence.makeSnapshot(g,"victory")
-local restored,state=Persistence.restoreSnapshot(saved)
-assert(state=="victory" and restored.run.regionId=="human" and restored.run.areaStage==20 and restored.run.travelPermit)
-local deck=g.persistentDeck;local hp=g.playerHp;local items=g.consumables
-assert(not Run.resolveTravel(g.run,g,"bad_destination") and g.run.travelPermit and g.gold==27)
-assert(Run.resolveTravel(g.run,g,"sell") and g.gold==1027)
-assert(g.run.regionId=="human" and g.run.ante==21 and g.run.areaStage==1 and not g.run.travelPermit and not g.run.victory)
-assert(g.persistentDeck==deck and g.consumables==items and g.playerHp==hp)
-assert(not Run.resolveTravel(g.run,g,"sell") and not Run.resolveTravel(g.run,g,"hearts") and g.gold==1027)
-saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
-restored,state=Persistence.restoreSnapshot(saved)
-assert(state=="BLIND_SELECT" and not restored.run.travelPermit and restored.run.regionId=="human")
-assert(not Run.resolveTravel(restored.run,restored,"sell") and restored.gold==1027)
+assert(g.run.ante==21 and g.run.areaStage==20 and g.run.difficultyCap==20 and #g.backpackConsumables==1)
+assert(E.recognitionCount(g)==0 and not travel(g,"unknown"))
+assert(#g.backpackConsumables==1 and g.run.ante==21)
+assert(Run.resolveTravel(g.run,g,"stay") and not g.travelRequest and #g.backpackConsumables==1)
+assert(travel(g,"hearts") and g.run.ante==21 and g.run.areaStage==1 and not g.run.difficultyCap and #g.backpackConsumables==0)
 completeRegion(g)
-assert(Run.resolveTravel(g.run,g,"hearts") and g.run.areaStage==1 and g.run.ante==41 and g.gold==1027)
-for _,id in ipairs({"diamonds","clubs","spades","human","unknown"}) do
-    completeRegion(g)
-    assert(Run.resolveTravel(g.run,g,id) and g.run.regionId==id and g.run.areaStage==1 and not g.run.travelPermit)
-    saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
-    restored,state=Persistence.restoreSnapshot(saved)
-    assert(restored.run.regionId==id and restored.run.areaStage==1 and restored.run.ante==g.run.ante)
+assert(g.run.ante==41 and g.run.difficultyCap==40 and g.regionRecognitions.hearts)
+local reserved=#g.backpackConsumables;local documents=#g.pendingJourneyRewards
+local baseline=Run.generateAnteBlinds(40,g.selectedFaction,"hearts",20,40)
+local Loadout=require("src.enemy_loadout")
+for _=1,15 do
+    for i,blind in ipairs(g.run.blinds) do
+        local m=Run.createBlindMonster(blind,g,true);local b=Run.createBlindMonster(baseline[i],g,true)
+        assert(blind.ante==g.run.ante and blind.difficultyAnte==40 and blind.hp==baseline[i].hp)
+        assert(m.attack==b.attack and m.encounterCount==b.encounterCount and m.cardRank==b.cardRank)
+        assert(blind.debuff and blind.debuff.id==baseline[i].debuff.id or not blind.debuff)
+        assert(#Group.build(m)==#Group.build(b) and Persistence.encode(Loadout.profile(m))==Persistence.encode(Loadout.profile(b)))
+        assert(Persistence.encode(Loadout.generate(m))==Persistence.encode(Loadout.generate(b)))
+        require("src.rng").seed(91);local speed=Run.createBlindMonster(blind,g).attackSpeed
+        require("src.rng").seed(91);assert(speed==Run.createBlindMonster(baseline[i],g).attackSpeed)
+    end
+    finishStage(g)
 end
--- Mysterious continent stays endless rather than issuing a human travel permit.
-assert(E.recognitionCount(g)==4 and E.canEnter(g,"unknown"))
-assert(g.run.regionStagesWon.hearts==20 and g.run.regionStagesWon.spades==20)
-for stage=1,25 do
-    for i=1,3 do Run.completeCurrentBlind(g.run,g);assert(Run.advanceBlind(g.run,g)) end
-end
-assert(g.run.regionId=="unknown" and g.run.areaStage==26 and not g.run.victory and not g.run.travelPermit)
--- Old saves keep cards and progress, without inventing a spendable permit.
-saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
-saved.game.run.regionId=nil;saved.game.run.areaStage=nil;saved.game.run.ante=26;saved.game.run.travelPermit=true
-restored=Persistence.restoreSnapshot(saved)
-assert(restored.run.regionId=="human" and restored.run.areaStage==6 and not restored.run.travelPermit and #restored.persistentDeck==1)
-local Shop=require("src.shop");local Loadout=require("src.loadout");local Reward=require("src.reward_system")
-g=fresh();g.shopMode="consumable";g.gold=1999
+assert(g.run.ante==56 and g.run.areaStage==20 and g.run.difficultyCap==40)
+assert(#g.backpackConsumables==reserved and #g.pendingJourneyRewards==documents and g.run.regionStagesWon.hearts==20)
+local saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
+local restored,state=Persistence.restoreSnapshot(assert(Persistence.decode(Persistence.encode(saved))))
+assert(state=="BLIND_SELECT" and restored.run.ante==56 and restored.run.difficultyCap==40 and restored.run.blinds[1].hp==baseline[1].hp)
+local gold=g.gold;assert(travel(g,"sell") and g.gold==gold+1000 and g.run.ante==56 and g.run.difficultyCap==40)
+assert(not E.hasTravelPermit(g));restored=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"BLIND_SELECT"))
+assert(not E.hasTravelPermit(restored),"Spent permit must never respawn on reload")
+local Shop=require("src.shop")
+g.shopMode="consumable";g.gold=5999
 local shop=Shop.new();Shop.refresh(shop,g)
-local permitIndex;for i,item in ipairs(shop.items) do if item.id=="cons_travel_permit" then permitIndex=i;assert(item.cost==2000 and item.consumable) end end
-assert(permitIndex and not Shop.buyItem(shop,permitIndex,g) and #g.backpackConsumables==0)
-g.gold=2000;assert(Shop.buyItem(shop,permitIndex,g) and g.gold==0 and #g.backpackConsumables==1)
-assert(not Run.beginTravel(g,"backpackConsumables",1,"playing"))
-assert(Run.beginTravel(g,"backpackConsumables",1,"shop"))
-assert(not Run.resolveTravel(g.run,g,"unknown") and #g.backpackConsumables==1)
-saved=Persistence.makeSnapshot(g,"travel");restored,state=Persistence.restoreSnapshot(saved)
-assert(state=="travel" and restored.travelRequest and #restored.backpackConsumables==1)
-local ok,back=Run.resolveTravel(restored.run,restored,"cancel");assert(ok and back=="shop" and #restored.backpackConsumables==1)
-assert(Run.resolveTravel(g.run,g,"hearts") and g.run.ante==1 and g.run.areaStage==1 and #g.backpackConsumables==0)
-completeRegion(g);assert(g.run.ante==20 and g.regionRecognitions.hearts and E.recognitionCount(g)==1)
-local receipt=Reward.begin(Reward.calculate(Run.getCurrentBlind(g.run),g),g,{lootTableId="normal_enemy"})
-local recognized=false;for _,r in ipairs(receipt.loot) do if r.id=="recognition_hearts" then recognized=true end end
-assert(recognized and g.pendingJourneyRewards==nil)
-Reward.exchangeAll(g,receipt);assert(g.regionRecognitions.hearts)
-assert(Run.resolveTravel(g.run,g,"diamonds") and g.run.ante==21 and g.run.areaStage==1)
-Loadout.storeConsumable(g,E.travelPermit());assert(Run.beginTravel(g,"backpackConsumables",#g.backpackConsumables,"BLIND_SELECT"))
-assert(Run.resolveTravel(g.run,g,"hearts") and g.run.ante==21 and g.run.areaStage==1)
-assert(g.regionRecognitions.hearts and g.run.regionStagesWon.hearts==20)
-print("Journey routing passed: "..checked.." opponents, global stage 20 -> 21, four permanent recognitions, locked unknown, 2000-gold permit purchase, cancellation, consumption, ceremony, return progress and save migration")
+local index;for i,item in ipairs(shop.items) do if item.id=="cons_travel_permit" then index=i;assert(item.cost==6000) end end
+assert(index and not Shop.buyItem(shop,index,g));g.gold=6000;assert(Shop.buyItem(shop,index,g) and g.gold==0)
+assert(travel(g,"diamonds") and g.run.ante==56 and not g.run.difficultyCap and g.run.blinds[1].difficultyAnte==56)
+for _,id in ipairs({"diamonds","clubs","spades"}) do
+    assert(g.run.regionId==id);completeRegion(g)
+    assert(g.regionRecognitions[id] and g.run.difficultyCap==g.run.ante-1)
+    if id~="spades" then assert(travel(g,id=="diamonds" and "clubs" or "spades")) end
+end
+assert(E.unlimitedTravel(g) and E.recognitionCount(g)==4)
+reserved=#g.backpackConsumables
+for _,id in ipairs({"unknown","hearts","diamonds","unknown"}) do
+    local ante=g.run.ante;assert(travel(g,id))
+    assert(g.run.ante==ante and not g.run.difficultyCap and #g.backpackConsumables==reserved and g.run.blinds[1].difficultyAnte==ante)
+end
+for _=1,25 do finishStage(g);assert(not g.run.difficultyCap) end
+assert(g.run.regionId=="unknown" and #g.backpackConsumables==reserved)
+local monster=Run.createBlindMonster(g.run.blinds[1],g);g.monster=monster
+assert(Run.beginTravel(g,"backpackConsumables",1,"playing"))
+local ok,back=Run.resolveTravel(g.run,g,"stay");assert(ok and back=="playing" and g.monster==monster and #g.backpackConsumables==reserved)
+assert(Run.beginTravel(g,"backpackConsumables",1,"playing"))
+restored,state=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"travel"))
+assert(state=="travel" and restored.travelRequest.returnState=="BLIND_SELECT")
+assert(Run.resolveTravel(g.run,g,"clubs") and not g.monster and #g.backpackConsumables==reserved)
+local Reward=require("src.reward_system")
+local ceremony=fresh();ceremony.run.regionId="hearts";completeRegion(ceremony)
+local result=Reward.begin(Reward.calculate({type="boss",baseReward=5},ceremony),ceremony,{lootTableId="normal_enemy"})
+local found=false;for _,r in ipairs(result.loot) do if r.id=="recognition_hearts" then found=true end end;assert(found)
+Reward.exchangeAll(ceremony,result);assert(ceremony.regionRecognitions.hearts and E.hasTravelPermit(ceremony))
+local legacy=fresh();legacy.run.ante=40;legacy.run.regionId="hearts";legacy.run.areaStage=20;legacy.run.currentBlindIndex=3
+legacy.run.blinds=Run.generateAnteBlinds(40,legacy.selectedFaction,"hearts",20);legacy.run.blinds[3].status="completed"
+legacy.run.travelPermit=true;legacy.run.victory=true
+saved=Persistence.makeSnapshot(legacy,"victory");saved.game.run.travelRulesVersion=nil
+restored,state=Persistence.restoreSnapshot(saved)
+assert(state=="BLIND_SELECT" and restored.run.ante==41 and restored.run.difficultyCap==40 and E.hasTravelPermit(restored) and restored.regionRecognitions.hearts)
+print("Journey PASS: "..checked.." opponents, earned permit stored, stay 41-56 at difficulty 40 (HP/attack/speed/squad/boss/gear), no repeat gifts, resumed scaling after travel, four recognitions/unlimited reuse, combat cancel/travel, purchases and legacy saves")

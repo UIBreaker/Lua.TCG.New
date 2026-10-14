@@ -25,13 +25,18 @@ function ProgressBar.draw(x, y, w, h, value, maxValue, options)
                 end
             end
         else
-            Core.color(accent, 0.82)
-            g.rectangle("fill", x + 3, y + 3, (w - 6) * ratio, h - 6, 2, 2)
+            if options.emphasis then
+                Core.gradient(x+3,y+3,(w-6)*ratio,h-6,{.97,.32,.35,1},{.39,.045,.085,1},2)
+            else
+                Core.color(accent, 0.82)
+                g.rectangle("fill", x + 3, y + 3, (w - 6) * ratio, h - 6, 2, 2)
+            end
         end
         Core.color(Theme.colors.text, 0.12)
         g.rectangle("fill", x + 3, y + 3, (w - 6) * ratio, math.max(1, (h - 6) / 3), 2, 2)
     end
-    Core.color(accent, 0.66)
+    Core.color(accent, options.emphasis and 1 or 0.66)
+    if options.emphasis then g.setLineWidth(1.5) end
     g.rectangle("line", x + 1, y + 1, w - 2, h - 2, Theme.radius.small)
     if options.shield then
         local flash=math.max(0,math.min(1,options.pulse or 0))

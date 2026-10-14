@@ -15,6 +15,7 @@
 - Hỗ trợ thay thế lượt đánh, không gây sát thương lên người chơi và không thể đánh hụt. Hiệu ứng hỗ trợ chỉ áp dụng khi đến nhịp tiếp xúc, sau thời gian chuẩn bị.
 - Chốt thứ tự nhanh/chậm ở đầu mỗi tay: mỗi địch sống chỉ hành động một lần, kể cả buff tốc tăng/hết hạn giữa tay. Buff vẫn tác động ngay lên chính xác và sát thương.
 - HUD mỗi địch hiện chỉ số sau buff, loại chiêu và người nhận; bảng mục tiêu hiện ý định chi tiết và tỉ lệ trúng của hai phía khi chọn bài. Hụt hiện thông báo riêng, không rung/kick/hit flash của đòn trúng.
+- Địch có kho đồ riêng theo ải/vai trò, gồm trang bị phần trăm, ấn bản, dấu và SPN. Đồ dự trữ phải tốn một hành động đã báo trước để dùng/đổi. Xem [quy tắc kho đồ địch](ENEMY_LOADOUTS.md); buff cơ bản bên trên được tăng hiệu lực khi người thi triển có Tàn Hỏa.
 
 Kiểm tra logic: `lovec.exe . --test-combat-tactics`.
 Kiểm tra game/UI, xuất ảnh `docs/combat_tactics_*.png`: `lovec.exe . --capture-combat-tactics` (chế độ capture cách ly save người chơi).

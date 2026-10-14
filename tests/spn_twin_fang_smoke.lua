@@ -37,5 +37,5 @@ g=game();g.monster.isBoss=true;g.monster.bossState={handIndex=1,passiveUntil=0,s
 assert(not factor(score(g,{3})),"Boss lock disables the effect")
 g=game();D.evolve(g.deities[5]);local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 restored.monster=g.monster;assert(restored.deities[5].onHandScored and factor(score(restored,{3}))==2.5)
-assert(#D.getRandomShopPool({},99)==78)
+assert(#D.getRandomShopPool({},99)==80)
 print("SPN twin fang PASS: unconditional damage axis, all hand sizes, evolution, order/products, pure preview/RNG, locks and save/load")

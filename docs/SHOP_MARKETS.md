@@ -4,6 +4,8 @@ Mỗi lượt chơi mới được cấp sẵn vào 3 ô tiêu hao: 1 Bình Máu
 
 Sau mỗi trận thường, chọn ngẫu nhiên một trong sáu cửa hàng, mỗi loại có xác suất 1/6 (khoảng 16,67%). Sau boss, giữ chợ linh hồn hiện có. Rời chợ linh hồn sẽ vào shop lớn; chỉ rời shop lớn mới tăng ải. Việc chuyển giữa hai shop không cấp lại thưởng, không thu phí và không làm đổi HP, vàng hay linh hồn.
 
+Giá mua mọi món ở tất cả shop (kể cả Shop Linh Hồn và Shop Máu) tăng thêm 200% so với giá gốc, tức giá mới bằng giá gốc × 3, làm tròn lên theo đơn vị Vàng/Linh Hồn/HP. Món miễn phí vẫn miễn phí; giảm giá rương theo đặc quyền được trừ sau khi tăng giá. Phí đổi hàng và tiền bán lại giữ quy tắc riêng.
+
 Balo mở được khi đang đến lượt người chơi trong trận bằng nút **BALO** hoặc phím **I**. Ngăn Tiêu hao/SPN có hàng **Trang bị · Mang vào trận** ở trên và kho balo riêng bên dưới. Kéo đồ từ kho lên ô để trang bị; kéo xuống kho để cất lại, hoặc kéo lên ô đã có đồ để thay thế. Chỉ đồ đã trang bị mới xuất hiện/có hiệu lực trong chiến đấu. Chuột phải tiêu hao đã trang bị để dùng; chuột phải đồ trong kho chỉ xem thông tin.
 
 Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho balo, kể cả khi các ô chiến đấu đã đầy. Kho không giới hạn theo số ô trang bị. Xem hoặc đóng balo không mất lượt; mỗi lần trang bị/cất/đổi vị trí hợp lệ trong trận trừ **1 lượt đánh** và cho các địch còn sống hành động. Sau đó balo đóng để hiện phản ứng của địch. Kéo sai chỗ/ô bị khóa/hết lượt không mất đồ hay lượt. Sắp xếp trong shop miễn phí. Ba bình khởi đầu vẫn được trang bị sẵn. Save cũ giữ nguyên đồ đang trang bị; save mới giữ cả kho và vị trí, tiến hóa, ấn bản, kỹ năng SPN. Ghép/gắn trang bị vào quân bài và bán hàng thực hiện tại shop.
@@ -11,7 +13,7 @@ Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho ba
 | Loại | Hàng trên kệ |
 | --- | --- |
 | Shop nhỏ | Tối đa 8 món: SPN, trang bị, quân bài, mở rộng tay, thuốc/tiêu hủy, đặc quyền, một rương ngẫu nhiên và một thẻ tiêu hao lẻ. Hết đặc quyền chưa sở hữu thì còn 7 món. |
-| Shop tiêu hao | 8 thẻ lẻ, không trùng: Phép SPN, Ấn Chiến, Phổ, Hành Tinh, Ấn Bản. Toàn bộ thẻ trong các rương này đều có thể xuất hiện. Giá mỗi thẻ bằng giá rương gốc × 1,2, làm tròn lên. Mua vào kho balo, giữ nguyên khả năng của thẻ trong rương. |
+| Shop tiêu hao | 8 thẻ lẻ, không trùng: Phép SPN, Ấn Chiến, Phổ, Hành Tinh, Ấn Bản. Toàn bộ thẻ trong các rương này đều có thể xuất hiện. Giá gốc thông thường bằng giá rương × 1,2, làm tròn lên; một số phép có giá gốc riêng. Giá bán bằng giá gốc của thẻ × 3. Mua vào kho balo, giữ nguyên khả năng của thẻ trong rương. |
 | Shop trang bị | 4 nguyên liệu cơ bản, mỗi nhóm HP/giáp/tốc/vàng một món; 4 trang bị lớn ngẫu nhiên, không trùng. Kho gồm toàn bộ trang bị thường, kể cả đồ ghép; di vật chỉ đổi bằng linh hồn vẫn ở chợ linh hồn. Mua vào balo. |
 | Shop SPN | Tối đa 6 SPN chưa sở hữu, không trùng. Mỗi lá chọn bậc theo tỷ lệ: Thường 61,4%, Không Thường 20%, Hiếm 10%, Sử Thi 5%, Huyền Thoại 2%, Thần Thoại 1%, Siêu Việt 0,5%, Độc Nhất 0,1%; giá theo hệ số bậc hiện có. |
 | Shop thuốc | Đủ 15 món trong hai ngăn: 7 đồ hồi phục/giáp/tốc/giường và 8 thuốc chiến thuật. Chỉ còn bình hồi 25 và 60 HP; bình nhỏ không còn xuất hiện trong shop hoặc thưởng tiếp tế. Mua vào kho balo. |
@@ -20,7 +22,7 @@ Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho ba
 
 Đổi hàng giữ nguyên loại cửa hàng, dùng chi phí/voucher hiện có. Lưu game giữ loại shop đang mở; save cũ có shop `normal` được tiếp tục ở shop nhỏ. Nút thoát chợ linh hồn ghi rõ **SHOP LỚN →**.
 
-Shop quân bài: mỗi lá có 50% không tiến hóa, 35% cấp 1, 15% cấp 2. Trang bị cơ bản có xác suất 35%, chọn đều giữa 12 nguyên liệu; ấn bản có xác suất 30%, chọn đều giữa 9 loại. Ba lần chọn độc lập. Giá = 4 vàng + 6 mỗi cấp tiến hóa + giá trang bị cơ bản + 8 nếu có ấn bản. Nhãn quầy ghi loại nâng cấp, rê chuột xem khả năng và trang bị thực tế. Lá bài mua được giữ tiến hóa, trang bị, ấn bản khi nhân bản bộ bài và lưu/khôi phục game.
+Shop quân bài: mỗi lá có 50% không tiến hóa, 35% cấp 1, 15% cấp 2. Trang bị cơ bản có xác suất 35%, chọn đều giữa 12 nguyên liệu; ấn bản có xác suất 30%, chọn đều giữa 9 loại. Ba lần chọn độc lập. Giá gốc = 4 vàng + 6 mỗi cấp tiến hóa + giá trang bị cơ bản + 8 nếu có ấn bản; giá bán bằng giá gốc × 3. Nhãn quầy ghi loại nâng cấp, rê chuột xem khả năng và trang bị thực tế. Lá bài mua được giữ tiến hóa, trang bị, ấn bản khi nhân bản bộ bài và lưu/khôi phục game.
 
 Shop quân bài có cơ chế thu mua ẩn: mở Balo → Bộ bài (hoặc màn xem bộ bài), nhấp lá đang sở hữu để hiện nút **BÁN** rồi xác nhận. Giá thu mua = 50% giá trị lá, làm tròn xuống: 4 vàng gốc + 6 mỗi cấp tiến hóa + giá trang bị đang gắn + 8 nếu có ấn bản. Trang bị bán cùng lá; tháo vào balo trước nếu muốn giữ lại. Bán chỉ nhận vàng, không nhận linh hồn/hồi máu hay dùng Lá Tiêu Hủy. Giữ ít nhất một lá; mọi shop khác đều khóa chức năng này. Kiểm tra giao dịch, hủy chọn, hiệu ứng vàng và khóa theo shop bằng `lovec.exe . --test-card-shop-sale`.
 
@@ -30,14 +32,14 @@ Cả tám loại đều bán ngẫu nhiên trong quầy thuốc của shop nhỏ
 
 | Thuốc | Giá | Tác dụng |
 | --- | --- | --- |
-| Chính Xác | 6 | Tay bài tiếp theo đánh trúng 100%, không phụ thuộc tốc. |
-| Né Tránh | 7 | Né mọi đòn đánh trong lượt tiếp theo, xuyên suốt cả pha địch đánh trước và sau, kể cả nhóm 3 địch; độc và tự mất máu vẫn có tác dụng. |
-| Phá Giáp | 8 | Chọn địch còn giáp; xóa cả giáp thường và giáp sinh vật, gây sát thương chuẩn bằng đúng 25% lượng giáp bị phá, không giới hạn lượng giáp, không làm tròn mất sát thương nhỏ. Có thể kết liễu và nhận thưởng thắng trận bình thường. |
-| Sát Thương | 6 | +20 ST mỗi lá hiện đang trên tay, hết lượt tiếp theo là hết hiệu lực. |
-| Cường Hóa | 7 | +5 Cường hóa mỗi lá hiện đang trên tay, hết lượt tiếp theo là hết hiệu lực. |
-| Máu Vàng | 9 | Trong trận này: 1 HP thực mất do địch (kể cả độc/nội tại boss) = 1 Vàng. Không trả vàng từ giáp hấp thụ, tự trả HP hoặc sát thương vượt HP còn lại; không cộng dồn. |
-| Rút Bài | 8 | Rút ngay 5 lá, kể cả tay đã đầy. Kho hết thì xáo cọc bỏ bài; tổng bài còn ít hơn 5 thì lấy số còn lại. Hết bài hoàn toàn thì giữ thuốc. Không tăng kích thước tay vĩnh viễn và không đổi các lá đang chọn. |
-| Giảm Tốc | 7 | Ném vào một địch còn sống, giảm 50% tổng tốc hiện tại (kể cả buff), tối thiểu 1, trong 2 hành động của địch. Không cộng dồn; địch đang chậm hoặc tốc 1 thì không mất thuốc. Thứ tự hành động và xác suất trúng dùng tốc đã giảm. Hết thời hạn thì tự trở về tốc gốc/buff còn lại. |
+| Chính Xác | 18 | Tay bài tiếp theo đánh trúng 100%, không phụ thuộc tốc. |
+| Né Tránh | 21 | Né mọi đòn đánh trong lượt tiếp theo, xuyên suốt cả pha địch đánh trước và sau, kể cả nhóm 3 địch; độc và tự mất máu vẫn có tác dụng. |
+| Phá Giáp | 24 | Chọn địch còn giáp; xóa cả giáp thường và giáp sinh vật, gây sát thương chuẩn bằng đúng 25% lượng giáp bị phá, không giới hạn lượng giáp, không làm tròn mất sát thương nhỏ. Có thể kết liễu và nhận thưởng thắng trận bình thường. |
+| Sát Thương | 18 | +20 ST mỗi lá hiện đang trên tay, hết lượt tiếp theo là hết hiệu lực. |
+| Cường Hóa | 21 | +5 Cường hóa mỗi lá hiện đang trên tay, hết lượt tiếp theo là hết hiệu lực. |
+| Máu Vàng | 27 | Trong trận này: 1 HP thực mất do địch (kể cả độc/nội tại boss) = 1 Vàng. Không trả vàng từ giáp hấp thụ, tự trả HP hoặc sát thương vượt HP còn lại; không cộng dồn. |
+| Rút Bài | 24 | Rút ngay 5 lá, kể cả tay đã đầy. Kho hết thì xáo cọc bỏ bài; tổng bài còn ít hơn 5 thì lấy số còn lại. Hết bài hoàn toàn thì giữ thuốc. Không tăng kích thước tay vĩnh viễn và không đổi các lá đang chọn. |
+| Giảm Tốc | 21 | Ném vào một địch còn sống, giảm 50% tổng tốc hiện tại (kể cả buff), tối thiểu 1, trong 2 hành động của địch. Không cộng dồn; địch đang chậm hoặc tốc 1 thì không mất thuốc. Thứ tự hành động và xác suất trúng dùng tốc đã giảm. Hết thời hạn thì tự trở về tốc gốc/buff còn lại. |
 
 Thuốc chính xác và né tránh không cộng dồn, giữ thuốc nếu hiệu lực đang có. Bỏ bài không làm mất buff; kết thúc lượt mới hết các buff một lượt. Thuốc ST/CH theo ID của các lá đã có trên tay lúc uống; không đổi chỉ số gốc, không lan sang lá mới rút hay bộ bài vĩnh viễn. Buff và hàng đợi hiệu ứng không được lưu vào save hoặc mang sang trận khác; thuốc chưa dùng vẫn được lưu như các tiêu hao khác. Save cũ có bình nhỏ vẫn dùng được.
 

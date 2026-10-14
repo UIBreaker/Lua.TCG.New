@@ -35,7 +35,7 @@ for _=1,3000 do
         assert(#shop.items==8)
     elseif shop.mode=="consumable" then
         assert(#shop.items==8)
-        assert(shop.items[8].id=="cons_travel_permit" and shop.items[8].cost==2000)
+        assert(shop.items[8].id=="cons_travel_permit" and shop.items[8].cost==6000)
         for _,item in ipairs(shop.items) do assert(item.consumable and expected[item.id]);consumables[item.id]=true end
     elseif shop.mode=="equipment" then
         assert(#shop.items==8)

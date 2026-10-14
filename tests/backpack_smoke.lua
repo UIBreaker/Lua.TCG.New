@@ -91,4 +91,5 @@ for _,r in ipairs(B.recipes) do local names={};for _,id in ipairs(r.ingredients)
 recipeDoc:close()
 print("Backpack PASS: 12 basics, all 60 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
 require("tests.backpack_qol_smoke")
+require("tests.consumable_stacks_smoke")
 return true

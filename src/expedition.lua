@@ -38,6 +38,13 @@ end
 function E.recognitionCount(game)
     local n=0;for _,id in ipairs(E.recognitionIds) do if (game.regionRecognitions or {})[id] then n=n+1 end end;return n
 end
+function E.unlimitedTravel(game) return E.recognitionCount(game)==#E.recognitionIds end
+function E.hasTravelPermit(game)
+    for _,list in ipairs({game.backpackConsumables or {},game.consumables or {}}) do
+        for _,item in ipairs(list) do if item.id=="cons_travel_permit" then return true end end
+    end
+    return false
+end
 function E.canEnter(game,id)
     local r=E.byId[id];if not r or id=="voyage" then return false,"Điểm đến không hợp lệ." end
     for _,required in ipairs(r.requiresRecognitions or {}) do
@@ -48,7 +55,7 @@ end
 function E.travelPermit()
     return {id="cons_travel_permit",category="travel_permit",type="TRAVEL_PERMIT",name="Giấy Phép Di Chuyển",
         rarity="rare",cost=2000,color={.53,.78,.94,1},
-        desc="Dùng giữa các trận để chọn khu vực đến; mỗi lần di chuyển tiêu hao một giấy phép. Lục địa bí ẩn yêu cầu đủ 4 công nhận Cơ, Rô, Chuồn, Bích. Có thể bán lấy 1.000 vàng tại màn hình chọn điểm đến."}
+        desc="Chọn khu vực để rời đi lúc cần, kể cả khi đang chiến đấu và không có hành động đang xử lý. Mỗi chuyến tiêu hao một giấy phép; đủ 4 công nhận Cơ, Rô, Chuồn, Bích thì dùng không giới hạn, không mất lá. Bí ẩn yêu cầu đủ 4 công nhận. Ở lại giữ nguyên giấy phép và giữ độ khó tại mốc đã chinh phục. Có thể bán lấy 1.000 vàng."}
 end
 E.humanNames={"Tân Binh Lữ Hành","Trinh Sát Biên Cương","Xạ Thủ Thạch Kiều","Vệ Binh Khiên Thép","Dược Sư Dã Chiến","Kiếm Sĩ Lãng Du","Công Binh Hội Thợ","Lão Binh Thành Cổ","Thống Lĩnh Thương Đoàn","Đội Trưởng Độc Lập","Nữ Công Tước Hội Đồng","Đại Thủ Lĩnh Nhân Loại"}
 E.kingdoms = {

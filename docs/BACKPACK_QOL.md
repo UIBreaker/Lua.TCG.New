@@ -1,5 +1,9 @@
 # Balo: thao tác và tra cứu
 
+Kho tiêu hao gộp các lá giống nhau thành chồng tối đa 99 lá, hiển thị ×số lượng ngay trên lá. Từ lá thứ 100 tạo chồng mới. Hiệu lực khác nhau được giữ riêng. Lấy ra trang bị hoặc bán chỉ trừ một lá; cất lại tự gộp. Ô mang vào trận vẫn chứa từng lá. Số lượng của save cũ và dấu nhận thưởng của từng lá được giữ nguyên. Số ở ngăn Tiêu hao là tổng số lá trong kho.
+
+Kiểm tra chồng: `tests/consumable_stacks_smoke.lua` (mốc 99/100/199/1.000, phiên bản khác hiệu lực, lấy/cất/bán từng lá, save cũ); `--capture-shop --capture-consumable-stacks` (hiển thị, thay đồ, dùng/bán thật, save và 960×540).
+
 - Tìm theo tên, nhân vật, khả năng và chỉ số; không cần gõ dấu, có thể nhập nhiều từ.
 - Sắp xếp theo thứ tự kho, tên A–Z hoặc tầng/bậc giảm dần. Bàn ghép có ưu tiên công thức ghép được.
 - Lọc trang bị cơ bản/đồ lớn, quân bài có/chưa có trang bị, hoặc công thức đủ nguyên liệu và vàng.

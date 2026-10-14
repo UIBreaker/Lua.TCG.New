@@ -8,12 +8,13 @@ function G.count(stage,isBoss,isElite)
 end
 function G.build(primary)
     local stage=primary.stage
-    local count=G.count(stage,primary.isBoss,primary.isElite)
+    local count=G.count(primary.difficultyAnte or stage,primary.isBoss,primary.isElite)
     local enemies={primary}
-    local totalHp,totalAttack=math.max(1,primary.maxHp or primary.hp or 1),math.max(1,primary.attack or 12)
+    local base=primary.enemyInventory and primary.enemyEncounterBase
+    local totalHp,totalAttack=math.max(1,base and base.hp or primary.maxHp or primary.hp or 1),math.max(1,base and base.attack or primary.attack or 12)
     for i=2,count do
         local m={}
-        for k,v in pairs(primary) do if k~="group" then m[k]=v end end
+        for k,v in pairs(primary) do if k~="group" and k~="enemyInventory" then m[k]=v end end
         m.intent={type="attack",value=primary.attack,label=primary.intent.label}
         m.bossData=nil;m.isBoss=false
         m.formationOffset=i-1
@@ -24,6 +25,7 @@ function G.build(primary)
     -- Split the existing encounter budget: a squad is not three full bosses.
     local remainingHp,remainingAttack=totalHp,totalAttack
     for i,m in ipairs(enemies) do
+        m.enemyInventory=nil;m.enemyEncounterBase={hp=totalHp,attack=totalAttack}
         m.hp=i==count and remainingHp or math.max(1,math.floor(totalHp/count))
         m.maxHp=m.hp;m.damageLagHp=m.hp;remainingHp=remainingHp-m.hp
         m.attack=i==count and math.max(1,remainingAttack) or math.max(1,math.floor(totalAttack/count))

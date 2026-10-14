@@ -1,4 +1,4 @@
-local L={}
+local L={CONSUMABLE_STACK_LIMIT=99}
 local Inventory=require("src.inventory")
 local function storageKey(kind) return kind=="spn" and "backpackDeities" or "backpackConsumables" end
 function L.init(game)
@@ -18,6 +18,35 @@ end
 function L.storeConsumable(game,item)
     L.init(game);item.loadoutSlot=nil
     game.backpackConsumables[#game.backpackConsumables+1]=item
+end
+-- Group the reserve view without losing per-card reward receipts or old save data.
+local stackIgnored={loadoutSlot=true,victoryRewardReceipt=true,slotIndex=true,alpha=true,hovered=true}
+local function sameValue(a,b,seen,root)
+    if a==b then return true end
+    if type(a)~=type(b) or type(a)~="table" then return false end
+    seen=seen or {};if seen[a]==b then return true end;seen[a]=b
+    for key,value in pairs(a) do
+        if not (root and stackIgnored[key]) and not sameValue(value,b[key],seen,false) then return false end
+    end
+    for key in pairs(b) do if not (root and stackIgnored[key]) and a[key]==nil then return false end end
+    return true
+end
+function L.consumableStacks(game)
+    local stacks,byId={},{}
+    for index,item in ipairs(game.backpackConsumables or {}) do
+        local bucket=item.id and byId[item.id] or {};local stack,bucketIndex
+        for i,candidate in ipairs(bucket) do
+            if sameValue(item,candidate.item,nil,true) then stack=candidate;bucketIndex=i;break end
+        end
+        if stack then
+            stack.count=stack.count+1
+            if stack.count==L.CONSUMABLE_STACK_LIMIT then table.remove(bucket,bucketIndex) end
+        else
+            stack={item=item,index=index,count=1};stacks[#stacks+1]=stack
+            if item.id then byId[item.id]=bucket;bucket[#bucket+1]=stack end
+        end
+    end
+    return stacks
 end
 function L.storeDeity(game,deity)
     L.init(game)
@@ -69,6 +98,11 @@ function L.move(game,kind,source,index,destination,inCombat)
             else table.remove(game.consumables,activeIndex) end
         else
             if not other and #game.consumables>=Inventory.limit(game) then return false,"Ô tiêu hao đã đầy." end
+            -- Legacy rewards may reuse one table for multiple copies; slots need distinct instances.
+            local shared=false
+            for i,v in ipairs(reserve) do if i~=index and v==item then shared=true;break end end
+            for _,v in ipairs(game.consumables) do if v==item then shared=true;break end end
+            if shared then local copy={};for k,v in pairs(item) do copy[k]=v end;item=copy end
             table.remove(reserve,index);item.loadoutSlot=destination
             if other then game.consumables[otherIndex]=item else game.consumables[#game.consumables+1]=item end
         end

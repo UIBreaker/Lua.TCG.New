@@ -10997,7 +10997,7 @@
       "id": "cons_travel_permit",
       "group": "utility",
       "name": "Giấy Phép Di Chuyển",
-      "ability": "Tiêu hao một giấy phép để di chuyển giữa các trận, giá shop tiêu hao 2.000 vàng; khu vực có điều kiện phải đáp ứng trước.",
+      "ability": "Dùng một lần để di chuyển, giá shop tiêu hao 2.000 vàng; đủ 4 công nhận thì dùng vô hạn không mất lá. Ở lại giữ giấy phép và độ khó đã chinh phục. Có thể rời trận khi không có hành động đang xử lý; khu vực có điều kiện phải đáp ứng trước.",
       "concept": "A consumable expedition TRAVEL PERMIT permitting travel between continents. One open thick folded ivory parchment passport and navigation route map prominently on a dark leather folio at a weathered coastal departure desk. A large antique bronze compass authorization seal attached to the document with a deep blue ribbon, a single engraved arrow-way motif rather than lettering. One small ship sails through a huge eroded Western sea arch in the quiet distance. Clear primary document silhouette, warm antique gold and ocean navy, tasteful daylight, map shows broad mountains and sailing routes pictorially but NO lettering or numbers. The document itself is the main subject, no people, no stamps shaped like poker suits. Beautiful tangible useful travel document matching Continental expedition cards.",
       "file": "assets/cards/continental/utility/travel_permit.png",
       "source": "src/expedition.lua",
@@ -11011,6 +11011,52 @@
       "generation": {
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-7b79bb92-1b22-446d-9840-507e9f63f922.png",
         "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "spirit_potion_resonance",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Nhân đôi hiệu quả thuốc; tiến hóa lên ×2,5, ×3…",
+      "source": "src/spn_alchemy.lua",
+      "name": "Dược Linh Cộng Hưởng",
+      "concept": "A two-headed spectral stag amplifies one floating potion into two coherent bands of living healing energy.",
+      "file": "assets/cards/continental/spn/spirit_potion_resonance.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Nhân đôi hiệu quả thuốc; tiến hóa lên ×2,5, ×3…. Concept: A two-headed spectral stag amplifies one floating potion into two coherent bands of living healing energy.. One majestic spectral stag with TWO clearly readable heads growing from a single broad torso, formed from pale cyan mist and antique-gold light. It leans over one large hovering amber potion flask, its two antler crowns channeling two thick parallel magical currents from the flask. Supernatural entity dominates. Quiet cold-blue ancient western monastery ruins in a pine forest, controlled warm amber light, no crowded small bottles. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_potion_resonance",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-0ab1a8c5-1bf0-425b-b6f7-9b8dd9054cad.png",
+        "prompt": "Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Nhân đôi hiệu quả thuốc; tiến hóa lên ×2,5, ×3…. Concept: A two-headed spectral stag amplifies one floating potion into two coherent bands of living healing energy.. One majestic spectral stag with TWO clearly readable heads growing from a single broad torso, formed from pale cyan mist and antique-gold light. It leans over one large hovering amber potion flask, its two antler crowns channeling two thick parallel magical currents from the flask. Supernatural entity dominates. Quiet cold-blue ancient western monastery ruins in a pine forest, controlled warm amber light, no crowded small bottles. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background."
+      }
+    },
+    {
+      "id": "spirit_potion_eternity",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Thuốc tăng sát thương, cường hóa hoặc tốc đánh tạm cho quân bài có 10% cơ hội biến phần tăng đó thành vĩnh viễn; tiến hóa tăng tỷ lệ.",
+      "source": "src/spn_alchemy.lua",
+      "name": "Dược Hồn Bất Diệt",
+      "concept": "A spectral phoenix locks a fleeting potion vapor into a permanent crystalline ember.",
+      "file": "assets/cards/continental/spn/spirit_potion_eternity.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Thuốc tăng sát thương, cường hóa hoặc tốc đánh tạm cho quân bài có 10% cơ hội biến phần tăng đó thành vĩnh viễn; tiến hóa tăng tỷ lệ.. Concept: A spectral phoenix locks a fleeting potion vapor into a permanent crystalline ember.. One translucent phoenix spirit with broad clear wings of antique-gold and deep violet vapor, curling around one large levitating faceted crystalline blade fragment. A thin ribbon of green potion vapor flows from a small empty flask below into the fragment, visibly crystallizing into one permanent emerald vein. Phoenix dominates, blade secondary. Quiet ancient western stone altar on dark continental cliffs, navy dusk, emerald and antique-gold accent. No fire explosion, no crowded decoration. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_potion_eternity",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-2f00d720-380a-4e4a-93cb-969e42a852ea.png",
+        "prompt": "Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Thuốc tăng sát thương, cường hóa hoặc tốc đánh tạm cho quân bài có 10% cơ hội biến phần tăng đó thành vĩnh viễn; tiến hóa tăng tỷ lệ.. Concept: A spectral phoenix locks a fleeting potion vapor into a permanent crystalline ember.. One translucent phoenix spirit with broad clear wings of antique-gold and deep violet vapor, curling around one large levitating faceted crystalline blade fragment. A thin ribbon of green potion vapor flows from a small empty flask below into the fragment, visibly crystallizing into one permanent emerald vein. Phoenix dominates, blade secondary. Quiet ancient western stone altar on dark continental cliffs, navy dusk, emerald and antique-gold accent. No fire explosion, no crowded decoration. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background."
       }
     }
   ],
@@ -11099,8 +11145,8 @@
     }
   ],
   "completion": {
-    "generated": 449,
-    "total": 449,
+    "generated": 451,
+    "total": 451,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

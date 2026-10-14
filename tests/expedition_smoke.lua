@@ -43,17 +43,17 @@ for stage=1,20 do
         Run.completeCurrentBlind(run,g)
         assert(run.stats.blindsWon==wins,"victory reward cannot duplicate")
         local ok,why=Run.advanceBlind(run,g)
-        if stage==20 and fight==3 then assert(not ok and why=="victory" and run.travelPermit)
-        else assert(ok and not run.victory) end
+        assert(ok and not run.victory)
     end
 end
 assert(run.stats.blindsWon==60)
-local saved=Persistence.makeSnapshot(g,"victory")
+local saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
 local restored,state=Persistence.restoreSnapshot(saved)
-assert(restored.run.travelPermit and restored.run.maxAnte==20 and state=="victory")
+assert(restored.run.travelPermit and restored.run.maxAnte==20 and state=="BLIND_SELECT" and restored.run.ante==21 and restored.run.difficultyCap==20)
+assert(Run.beginTravel(g,"backpackConsumables",1,"BLIND_SELECT"))
 assert(not Run.resolveTravel(run,g,"unknown") and run.travelPermit)
 g.regionRecognitions={hearts=true,diamonds=true,clubs=true,spades=true}
-assert(Run.resolveTravel(run,g,"unknown") and run.ante==21 and not run.travelPermit)
+assert(Run.resolveTravel(run,g,"unknown") and run.ante==21 and run.travelPermit)
 run.ante=40;run.areaStage=20;run.currentBlindIndex=3;run.blinds=Run.generateAnteBlinds(40,nil,"unknown",20)
 Run.completeCurrentBlind(run,g);assert(Run.advanceBlind(run,g) and run.ante==41)
 for _,b in ipairs(run.blinds) do

@@ -21,7 +21,7 @@ function P.draw(game,UI,mx,my)
     if permitArt then g.setColor(1,1,1);UI.CardFrame.image(permitArt,44,39,72,108);UI.drawCardBorder(44,39,72,108,nil,nil,permit) end
     text("GIẤY PHÉP DI CHUYỂN",138,38,970,"large",gold)
     text((run.victory and "ĐÃ HOÀN THÀNH 20 ẢI • " or "ẢI "..run.ante.." • ")..current.name,138,82,1090,"medium",current.color)
-    text("Chọn điểm đến · Chỉ tiêu hao khi xác nhận · Công nhận "..E.recognitionCount(game).."/4",138,120,1090,"small",muted)
+    text((E.unlimitedTravel(game) and "GIẤY PHÉP VÔ HẠN · Di chuyển không mất lá" or "Dùng một lần · Ở lại giữ nguyên giấy phép").." · Công nhận "..E.recognitionCount(game).."/4",138,120,1090,"small",E.unlimitedTravel(game) and {.45,.9,.68} or muted)
     local slot=0
     for _,region in ipairs(E.regions) do
         if region.id~=current.id then
@@ -57,8 +57,9 @@ function P.draw(game,UI,mx,my)
         if mx>=x and mx<=x+212 and my>=569 and my<=626 then UI.descriptionCandidate=card end
     end
     text(E.recognitionCount(game).." / 4 CÔNG NHẬN",976,581,260,"small",gold,"center")
-    button("travel_sell","BÁN • +1.000 VÀNG",44,642,320,38,{.44,.33,.15,1})
-    text("VÀNG "..(game.gold or 0).." • "..(run.stats.blindsWon or 0).." TRẬN THẮNG",395,654,545,"small",muted)
+    button("travel_stay","Ở LẠI · GIỮ GIẤY PHÉP",44,642,320,38,{.16,.37,.29,1})
+    button("travel_sell","BÁN • +1.000 VÀNG",380,642,260,38,{.44,.33,.15,1})
+    text("VÀNG "..(game.gold or 0),667,654,270,"small",muted)
     button(game.travelRequest and "travel_cancel" or "victory_menu",game.travelRequest and "GIỮ GIẤY PHÉP · QUAY LẠI" or "VỀ MÀN HÌNH CHÍNH",958,642,278,38,{.21,.26,.30,1})
     g.pop();return buttons
 end

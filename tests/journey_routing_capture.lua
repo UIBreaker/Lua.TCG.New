@@ -20,7 +20,8 @@ end
 local function permit(game,cb)
     game.run.regionId="human";Debug.setAnte(game,20,3)
     Run.completeCurrentBlind(game.run,game);Run.advanceBlind(game.run,game)
-    assert(game.run.travelPermit and game.run.victory);cb.setCaptureState("victory")
+    assert(game.run.travelPermit and game.run.difficultyCap);cb.setCaptureState("BLIND_SELECT")
+    assert(require("src.ui").openTravelPermit("backpackConsumables",#game.backpackConsumables))
 end
 function T.update(game,cb)
     if love.timer.getTime()<deadline then return end
@@ -57,8 +58,8 @@ function T.update(game,cb)
         else shot("route_battle_"..item.region.."_"..item.stage) end
     elseif step==n+1 then permit(game,cb)
     elseif step==n+2 then shot("route_permit")
-    elseif step==n+3 then T.gold=game.gold;T.deck=game.persistentDeck;click(200,660)
-        assert(game.gold==T.gold+1000 and not game.run.travelPermit and game.run.regionId=="human" and game.run.areaStage==1 and game.persistentDeck==T.deck,"sale button must consume one permit and retain deck")
+    elseif step==n+3 then T.gold=game.gold;T.deck=game.persistentDeck;click(510,660)
+        assert(game.gold==T.gold+1000 and game.run.regionId=="human" and game.run.areaStage==20 and game.persistentDeck==T.deck,"sale button must retain conquered region and deck")
     elseif step==n+4 then shot("route_after_sale")
     elseif step==n+5 then permit(game,cb)
     elseif step==n+6 then click(140,500)
@@ -67,7 +68,7 @@ function T.update(game,cb)
     elseif step==n+8 then permit(game,cb)
         game.regionRecognitions={hearts=true,diamonds=true,clubs=true,spades=true}
     elseif step==n+9 then click(1140,500)
-        assert(game.run.regionId=="unknown" and not game.run.travelPermit and game.run.areaStage==1,"direct mysterious continent travel")
+        assert(game.run.regionId=="unknown" and game.run.travelPermit and game.run.areaStage==1,"unlimited mysterious continent travel")
     elseif step==n+10 then shot("route_after_unknown")
     else print("Journey UI passed: 20 unique backgrounds, 12 rank-only portraits, 21 regional fights, sell +1000, direct kingdom and mysterious travel");love.event.quit();return end
     step=step+1;deadline=love.timer.getTime()+.55

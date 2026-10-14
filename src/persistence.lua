@@ -124,6 +124,9 @@ local function snapshotRun(run)
         endless = run.endless,
         travelPermit = run.travelPermit,
         regionStagesWon = sanitize(run.regionStagesWon),
+        difficultyCap = run.difficultyCap,
+        regionStartAnte = run.regionStartAnte,
+        travelRulesVersion = 2,
         shopsVisitedInAnte = run.shopsVisitedInAnte,
         stats = sanitize(run.stats),
         blinds = {},
@@ -151,10 +154,16 @@ local function restoreRun(saved, faction)
     run.endless = saved.endless == true or run.ante > 20
     run.travelPermit = saved.travelPermit == true and (saved.regionId~=nil or run.ante<=20)
     run.regionStagesWon=sanitize(saved.regionStagesWon) or {}
+    run.regionStartAnte=tonumber(saved.regionStartAnte) or run.ante-run.areaStage+1
+    if run.regionId~="unknown" then
+        local cap=tonumber(saved.difficultyCap)
+        if cap and cap>=1 then run.difficultyCap=math.min(run.ante,math.floor(cap)) end
+        if saved.travelRulesVersion~=2 and run.victory and run.areaStage==20 then run.difficultyCap=run.ante end
+    end
     if run.areaStage<20 or run.regionId=="unknown" then run.victory=false end
     run.shopsVisitedInAnte = tonumber(saved.shopsVisitedInAnte) or 0
     run.stats = sanitize(saved.stats) or run.stats
-    run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction,run.regionId,run.areaStage)
+    run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction,run.regionId,run.areaStage,run.difficultyCap)
     for i, blind in ipairs(run.blinds) do
         local savedBlind = saved.blinds and saved.blinds[i]
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
@@ -315,12 +324,15 @@ function Persistence.restoreSnapshot(snapshot)
         if deity then game.backpackDeities[#game.backpackDeities+1]=deity end
     end
     for _,list in ipairs({game.consumables or {},game.backpackConsumables or {}}) do
-        for _,item in ipairs(list) do if item.card then item.card=restoreCard(item.card) end end
+        for _,item in ipairs(list) do
+            if item.card then item.card=restoreCard(item.card) end
+            if item.id=="cons_travel_permit" then item.desc=require("src.expedition").travelPermit().desc end
+        end
     end
     require("src.loadout").init(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
     game.regionRecognitions=game.regionRecognitions or {}
-    if game.run.travelPermit then
+    if game.run.travelPermit and snapshot.game.run.travelRulesVersion~=2 then
         local found=false
         for _,list in ipairs({game.backpackConsumables or {},game.consumables or {}}) do
             for _,item in ipairs(list) do if item.id=="cons_travel_permit" then found=true end end
@@ -342,6 +354,12 @@ function Persistence.restoreSnapshot(snapshot)
     game.currentNodeId = nil
     Deck.restoreDeck(game.persistentDeck)
     local restoredState = snapshot.activeState or "BLIND_SELECT"
+    if restoredState=="travel" and game.travelRequest and game.travelRequest.returnState=="playing" then
+        game.travelRequest.returnState="BLIND_SELECT"
+    end
+    if restoredState=="victory" and game.run.victory and game.run.difficultyCap then
+        RunManager.advanceBlind(game.run,game);restoredState="BLIND_SELECT"
+    end
     game.souls = math.max(0, tonumber(game.souls) or 0)
     local markets=require("src.shop").MARKETS
     game.shopMode = markets[game.shopMode] and game.shopMode or "small"

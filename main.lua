@@ -1,5 +1,9 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-enemy-loadouts" then
+        local ok,err=xpcall(function() require("tests.enemy_loadouts_smoke") end,debug.traceback)
+        if not ok then print(err) end;os.exit(ok and 0 or 1)
+    end
     if a=="--test-spectral" then require("tests.spectral_capture");return end
     if a=="--test-enchantments" then require("tests.spn_enchantments_capture");return end
     if a=="--test-debug-tools" then
@@ -42,6 +46,8 @@ for _, a in ipairs(arg or {}) do
         if not growthOk then failed=true;print("tests.spn_growth_smoke FAIL: "..tostring(growthErr)) end
         local bountyOk,bountyErr=pcall(require,"tests.spn_bounty_smoke")
         if not bountyOk then failed=true;print("tests.spn_bounty_smoke FAIL: "..tostring(bountyErr)) end
+        local alchemyOk,alchemyErr=pcall(require,"tests.spn_alchemy_smoke")
+        if not alchemyOk then failed=true;print("tests.spn_alchemy_smoke FAIL: "..tostring(alchemyErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -171,6 +177,7 @@ for _, a in ipairs(arg or {}) do
         function love.errorhandler(message) print("VOID UI ERROR: "..tostring(message));return function() return 1 end end
     end
     if a == "--test-potions" then isCaptureMode = true end
+    if a == "--test-spn-alchemy-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -184,6 +191,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
     if a == "--capture-combat-tactics" then isCaptureMode = true end
+    if a == "--capture-enemy-loadouts" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
     if a == "--test-shop-chest" then isCaptureMode = true end
@@ -1345,9 +1353,10 @@ local function useConsumable(idx)
             for i,enemy in ipairs(EnemyGroup.members(game)) do
                 local armor=math.max(0,enemy.armor or 0)+math.max(0,enemy.creatureArmor or 0)
                 local speed=require("src.enemy_abilities").speed(enemy)
+                local potion,boost=require("src.potions").effective(game,c)
                 if enemy.hp>0 and (slow and speed>1 and not (enemy.combatBuffs or {}).slow or not slow and armor>0) then
-                    options[#options+1]={target=enemy,label=slow and ("Địch "..i.." · Tốc "..speed.." → "..math.max(1,math.floor(speed*.5)))
-                        or ("Địch "..i.." · "..armor.." giáp → "..(armor*.25*require("src.blood_shop").powerOf(c)).." ST")}
+                    options[#options+1]={target=enemy,label=slow and ("Địch "..i.." · Tốc "..speed.." → "..math.max(1,math.floor(speed*(1-potion.amount))))
+                        or ("Địch "..i.." · "..armor.." giáp → "..(armor*.25*boost).." ST")}
                 end
             end
             if #options==0 then return applyPotion(game.monster) end
@@ -1486,7 +1495,7 @@ local function useConsumable(idx)
         end
         pendingSpeedCard = c
         table.insert(anim.floatingTexts, {
-            text = "CHỌN LÁ BÀI TRÊN TAY ĐỂ TĂNG +"..p.speed.." TỐC ĐÁNH · ESC ĐỂ HỦY",
+            text = "CHỌN LÁ BÀI TRÊN TAY ĐỂ TĂNG +"..(p.speed*require("src.spn_alchemy").multiplier(game,c)).." TỐC ĐÁNH · ESC ĐỂ HỦY",
             color = { 0.48, 0.78, 1, 1 }, x = 640, y = 310, alpha = 2.4,
         })
         Sound.play("card_select")
@@ -1741,20 +1750,8 @@ local function applyPendingSpeedAt(mx, my)
             end
             if not rewardIndex then pendingSpeedCard = nil; return true end
 
-            local speed = Shop.getConsumableParams(pendingSpeedCard).speed
-            if (pendingSpeedCard.id == "cons_speed_small" or pendingSpeedCard.id == "cons_speed_large") and not pendingSpeedCard.permanentSpeed then
-                Deck.applyTemporaryAttackSpeedBonus(card, speed)
-            else
-                for _, pile in ipairs({ game.persistentDeck or {}, game.hand or {}, game.deck or {}, game.discardPile or {} }) do
-                    for _, copy in ipairs(pile or {}) do
-                        if copy and (copy == card or (card.id and copy.id == card.id)) then
-                            Deck.applyAttackSpeedBonus(copy, speed)
-                        end
-                    end
-                end
-            end
+            if not require("src.potions").applySpeed(game,pendingSpeedCard,card) then return true end
             local usedCard = table.remove(game.consumables, rewardIndex)
-            require("src.potions").emit(game,"speed","TỐC ĐÁNH +"..speed,speed,nil,{card})
             UI.Abilities.consumableUsed(game)
             pendingSpeedCard = nil
             local cx, cy = getConsumableSlotRect(rewardIndex, "playing")
@@ -1776,6 +1773,7 @@ local function startEnemyAttack(phase, speed, done, played)
                 hit.value,target.screenX or UI.BATTLE_CENTER_X,184,UI.formatNumber)
             ft.label=hit.label
             if hit.action=="damage" then ft.text="+"..hit.value.." ST";ft.color={1,.65,.35} end
+            if hit.action=="equip" then ft.text="ĐỔI TRANG BỊ";ft.color={1,.85,.5} end
             Sound.play("spn_trigger",.85)
             return
         elseif hit.missed then
@@ -2305,6 +2303,11 @@ function love.load()
                 require("tests.spn_bounty_capture").verify()
             end)
             if not ok then print("SPN BOUNTY ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
+        if argument=="--test-spn-alchemy-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_potion_resonance","spirit_potion_eternity"},"docs/spn_alchemy_runtime.png") end)
+            if not ok then print("SPN ALCHEMY ART FAIL: "..tostring(err)) end
             os.exit(ok and 0 or 1)
         end
         if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" or argument=="--test-spn-basics-art" or argument=="--test-spn-turns-art" or argument=="--test-spn-pacts-art" then
@@ -3227,7 +3230,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.131.0", 48, 185)
+    g.print("beta 0.132.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -5404,6 +5407,7 @@ end
 
 local function drawCardInspectorModal(card)
     if not card then return end
+    if card.enemyInventory then require("ui.enemy_inventory").draw(UI,card,buttons);return end
     local mx,my=toVirtual(love.mouse.getPosition())
     require("ui.card_inspector").draw(UI,card,game,buttons,mx,my)
 end
@@ -6274,7 +6278,7 @@ function love.draw()
     if state == "chest" or state == "treasure" then drawChestReveal() end
     UI.CardPhysics.resume()
 
-    if (state=="shop" or state=="playing") and UI.Backpack.open then
+    if (state=="shop" or state=="playing" or state=="BLIND_SELECT") and UI.Backpack.open then
         beginLayer(3)
         local bx,by=toVirtual(love.mouse.getPosition())
         UI.Backpack.draw(UI,game,buttons,bx,by,drawConsumableSlot,state)
@@ -6341,7 +6345,7 @@ function love.draw()
     end
 
     -- Floating juice notifications
-    if state ~= "CASH_OUT" and state ~= "defeating" and state ~= "gameover" and juice.floatingTexts and #juice.floatingTexts > 0 then
+    if not inspectCardModal and state ~= "CASH_OUT" and state ~= "defeating" and state ~= "gameover" and juice.floatingTexts and #juice.floatingTexts > 0 then
         for _, ft in ipairs(juice.floatingTexts) do
             Feedback.draw(ft, UI)
         end
@@ -6424,6 +6428,10 @@ end
 
 local function handlePlayingMousepressed(mx, my, button)
     if button ~= 1 then return false end
+    if not anim.enemyTurn and not anim.active then
+        local enemy=EnemyFormation.inventoryAt(game,mx,my)
+        if enemy then inspectCardModal=enemy;Sound.play("ui_click");return true end
+    end
     if button==1 and EnemyFormation.press(game,mx,my) then Sound.play("ui_click");return true end
     if pendingSpeedCard and button == 1 then
         applyPendingSpeedAt(mx, my)
@@ -7399,6 +7407,10 @@ local function handleModalsMousepressed(mx, my, button)
 
     -- 2. Right-Click (button == 2) on any card opens Card Inspector Modal
     if button == 2 then
+        if state=="playing" and not isDeckViewerOpen and not UI.Backpack.open and not anim.enemyTurn and not anim.active then
+            local enemy=EnemyFormation.inventoryAt(game,mx,my,true)
+            if enemy then inspectCardModal=enemy;Sound.play("ui_click");return true end
+        end
         if (state == "playing" or state == "shop") and not isDeckViewerOpen
             and not (shopData and shopData.currentPackOpening) then
             local count = UI.Inventory.limit(game)
@@ -7528,6 +7540,9 @@ local function handleModalsMousepressed(mx, my, button)
 end
 
 UI.openTravelPermit=function(source,index)
+    if state=="playing" and (anim.enemyTurn or anim.active or UI.AbilityUI.current or DeathVFX.busy()) then
+        UI.Backpack.message="Chờ hành động đang diễn ra kết thúc để di chuyển.";return false
+    end
     local ok,message=RunManager.beginTravel(game,source,index,state)
     if not ok then UI.Backpack.message=message;return false end
     state="travel";lastActiveState=state;saveRunAtSafePoint();return true
@@ -7642,7 +7657,7 @@ function love.mousepressed(x, y, button, istouch)
         end
         UI.Polish.clearFocus()
     end
-    if (state=="shop" or state=="playing") and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
+    if (state=="shop" or state=="playing" or state=="BLIND_SELECT") and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
         for _,b in ipairs(buttons) do
             if button==1 and b.id=="open_pause_menu" and mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
                 handleModalsMousepressed(mx,my,button);return
@@ -7801,6 +7816,8 @@ function love.mousepressed(x, y, button, istouch)
                         startBlindCombat(blind)
                         return
                     end
+                elseif btn.id=="open_backpack" then
+                    UI.Backpack.show();Sound.play("card_deal");return
                 elseif btn.id == "open_handbook" then
                     isHandbookOpen = true
                     Sound.play("ui_click")
@@ -8345,6 +8362,10 @@ function love.keypressed(key, scancode)
     end
     if anim.enemyTurn and key ~= "escape" then return end
     if inspectCardModal then
+        if inspectCardModal.enemyInventory then
+            if key=="escape" then inspectCardModal=nil;Sound.play("card_deal") end
+            return
+        end
         local mx,my=toVirtual(love.mouse.getPosition())
         if require("ui.card_inspector").key(key,mx,my) then return end
     end
@@ -8353,7 +8374,7 @@ function love.keypressed(key, scancode)
     if state == "shop" and UI.Polish.busy() then return end
     if UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen and UI.Backpack.key(key) then return end
     if key=="escape" and UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen then UI.Backpack.close();pendingEditionCard=nil;return end
-    if key=="i" and (state=="playing" or state=="shop") and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not UI.AbilityUI.current and not anim.active then
+    if key=="i" and (state=="playing" or state=="shop" or state=="BLIND_SELECT") and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not UI.AbilityUI.current and not anim.active then
         if UI.Backpack.open then UI.Backpack.close() else UI.Backpack.show() end;return
     end
     if UI.Backpack.open and not inspectCardModal then return end

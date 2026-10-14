@@ -168,18 +168,19 @@ function RunManager.calculateBlindHp(ante, blindType)
 end
 
 -- Generate 3 blinds for a given Ante
-function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage)
+function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage, difficultyAnte)
     local a = math.max(1, ante or 1)
+    local difficulty=math.min(a,math.max(1,difficultyAnte or a))
 
-    local smallHp = RunManager.calculateBlindHp(a, "small")
-    local bigHp = RunManager.calculateBlindHp(a, "big")
-    local bossHp = RunManager.calculateBlindHp(a, "boss")
+    local smallHp = RunManager.calculateBlindHp(difficulty, "small")
+    local bigHp = RunManager.calculateBlindHp(difficulty, "big")
+    local bossHp = RunManager.calculateBlindHp(difficulty, "boss")
 
     -- Choose a Boss Debuff
-    local bKey = RunManager.BOSS_KEYS[((a - 1) % #RunManager.BOSS_KEYS) + 1]
+    local bKey = RunManager.BOSS_KEYS[((difficulty - 1) % #RunManager.BOSS_KEYS) + 1]
     local bossDebuff = RunManager.BOSS_DEBUFFS[bKey] or RunManager.BOSS_DEBUFFS.the_needle
 
-    bossDebuff = Expedition.bossData(a, Monster.DISRUPTIVE_BOSSES, bossDebuff,regionId)
+    bossDebuff = Expedition.bossData(difficulty, Monster.DISRUPTIVE_BOSSES, bossDebuff,regionId)
 
     local blinds = {
         {
@@ -231,6 +232,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage
             blind.cardSuit, blind.cardRank, blind.kingdom = identity.cardSuit, identity.cardRank, identity.kingdom
         end
         blind.stage, blind.regionId,blind.areaStage = a, identity.regionId,identity.areaStage
+        blind.difficultyAnte=difficulty
     end
     blinds[1].status = "current"
     return blinds
@@ -246,6 +248,7 @@ function RunManager.newRun(starterFaction)
         areaStage = 1,
         travelPermit = false,
         regionStagesWon = {},
+        regionStartAnte = 1,
         maxAnte = RunManager.MAX_ANTE,
         currentBlindIndex = 1, -- 1: Small, 2: Big, 3: Boss
         blinds = RunManager.generateAnteBlinds(1, starterFaction,"human",1),
@@ -270,10 +273,11 @@ end
 function RunManager.createBlindMonster(blind, gameState, preview)
     local isBoss = (blind.type == "boss")
     local isElite = (blind.type == "big")
-    local encounterCount = (blind.ante - 1) * 3 + blind.index
+    local encounterCount = ((blind.difficultyAnte or blind.ante) - 1) * 3 + blind.index
     local atk = Monster.getAttackByEncounter(encounterCount, isBoss, isElite)
     local m = {
         round = blind.ante,
+        difficultyAnte = blind.difficultyAnte or blind.ante,
         encounterCount = encounterCount,
         isBoss = isBoss,
         isElite = isElite,
@@ -407,12 +411,13 @@ function RunManager.completeCurrentBlind(run, gameState)
         blind.status = "completed"
         run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
         local completedAnte = blind.ante or run.ante
-        if blind.type=="boss" then
+        if blind.type=="boss" and not run.difficultyCap then
             run.regionStagesWon=run.regionStagesWon or {}
             local id=run.regionId or "human"
             run.regionStagesWon[id]=(run.regionStagesWon[id] or (run.areaStage or completedAnte)-1)+1
         end
-        if (run.areaStage or completedAnte)==20 and blind.type=="boss" and run.regionId~="unknown" then
+        if (run.areaStage or completedAnte)==20 and blind.type=="boss" and run.regionId~="unknown" and not run.difficultyCap then
+            run.difficultyCap=completedAnte
             run.travelPermit=true
             if gameState then
                 local permit=Expedition.travelPermit();require("src.loadout").storeConsumable(gameState,permit)
@@ -444,7 +449,7 @@ function RunManager.completeCurrentBlind(run, gameState)
 end
 
 -- Advance to the next Blind directly or after leaving the Shop
--- A local stage-20 boss opens permit choices; the mysterious continent is endless.
+-- Conquering a region grants documents; staying advances the counter at fixed difficulty.
 function RunManager.advanceBlind(run, gameState)
     if not run then return false end
     local current = RunManager.getCurrentBlind(run)
@@ -457,24 +462,21 @@ function RunManager.advanceBlind(run, gameState)
         return true, "next_blind"
     else
         -- Finished Boss Blind of the current Ante
-        if (run.areaStage or run.ante)>=20 and run.regionId~="unknown" and (run.regionId or not run.endless) then
-            run.victory = true
-            return false, "victory"
-        else
-            run.ante = run.ante + 1
-            run.areaStage = (run.areaStage or run.ante-1)+1
-            run.currentBlindIndex = 1
-            run.shopsVisitedInAnte = 0
-            run.blinds = RunManager.generateAnteBlinds(run.ante, gameState and gameState.selectedFaction,run.regionId,run.areaStage)
-            return true, "next_ante"
-        end
+        run.ante = run.ante + 1
+        if not run.difficultyCap then run.areaStage = (run.areaStage or run.ante-1)+1 end
+        run.victory=false
+        run.currentBlindIndex = 1
+        run.shopsVisitedInAnte = 0
+        run.blinds = RunManager.generateAnteBlinds(run.ante, gameState and gameState.selectedFaction,run.regionId,run.areaStage,run.difficultyCap)
+        return true, "next_ante"
     end
 end
 
 function RunManager.beginTravel(game,source,index,returnState)
     local item=game[source] and game[source][index]
     if not game.run or not item or item.id~="cons_travel_permit" then return false,"Không có giấy phép." end
-    if returnState~="shop" and returnState~="BLIND_SELECT" and returnState~="victory" then return false,"Chỉ dùng giấy phép giữa các trận." end
+    if returnState~="shop" and returnState~="BLIND_SELECT" and returnState~="victory" and returnState~="playing" then return false,"Chưa thể dùng giấy phép ở màn hình này." end
+    if returnState=="playing" and (game.playerHp or 0)<=0 then return false,"Đoàn viễn chinh đã bị hạ." end
     game.travelRequest={source=source,index=index,returnState=returnState}
     return true
 end
@@ -486,8 +488,14 @@ function RunManager.resolveTravel(run,gameState,action)
     if not request and not earned then return false,"missing_permit" end
     local current=RunManager.getCurrentBlind(run)
     if earned and (not current or current.type~="boss" or current.status~="completed") then return false,"incomplete" end
-    if action=="cancel" and request then gameState.travelRequest=nil;return true,request.returnState end
+    if (action=="cancel" or action=="stay") and request then gameState.travelRequest=nil;return true,request.returnState end
+    if action=="stay" and earned then
+        run.difficultyCap=run.difficultyCap or run.ante
+        RunManager.advanceBlind(run,gameState)
+        return true,"BLIND_SELECT"
+    end
     local destination=action=="sell" and (run.regionId or "human") or action
+    if action~="sell" and destination==run.regionId then return false,"Chọn một vùng đất khác để di chuyển." end
     local allowed,message=Expedition.canEnter(gameState,destination)
     if action~="sell" and not allowed then return false,message end
     if not Expedition.byId[destination] or destination=="voyage" then return false,"invalid_destination" end
@@ -499,7 +507,7 @@ function RunManager.resolveTravel(run,gameState,action)
         end
     end
     if request and (not gameState[source] or not gameState[source][index] or gameState[source][index].id~="cons_travel_permit") then return false,"missing_permit" end
-    if source then table.remove(gameState[source],index) end
+    if source and (action=="sell" or not Expedition.unlimitedTravel(gameState)) then table.remove(gameState[source],index) end
     if action=="sell" then
         gameState.gold=(gameState.gold or 0)+1000
         run.stats.totalGoldEarned=(run.stats.totalGoldEarned or 0)+1000
@@ -508,14 +516,21 @@ function RunManager.resolveTravel(run,gameState,action)
         run.stats.journeys=(run.stats.journeys or 0)+1
     end
     gameState.travelRequest=nil
-    if request and action=="sell" and not earned then return true,request.returnState end
+    if action=="sell" then
+        run.travelPermit=Expedition.hasTravelPermit(gameState)
+        if request then return true,request.returnState end
+        RunManager.advanceBlind(run,gameState)
+        return true,"BLIND_SELECT"
+    end
     local nextStage=current and current.type=="boss" and current.status=="completed"
-    run.travelPermit=false;run.victory=false;run.endless=true
+    run.travelPermit=Expedition.hasTravelPermit(gameState);run.victory=false;run.endless=true;run.difficultyCap=nil
     run.regionId=destination;run.areaStage=((run.regionStagesWon or {})[destination] or 0)%20+1
     if destination=="unknown" then run.areaStage=((run.regionStagesWon or {})[destination] or 0)+1 end
     if nextStage then run.ante=run.ante+1 end
+    run.regionStartAnte=run.ante-run.areaStage+1
     run.currentBlindIndex=1;run.shopsVisitedInAnte=0
     run.blinds=RunManager.generateAnteBlinds(run.ante,gameState.selectedFaction,destination,run.areaStage)
+    gameState.currentBlind=run.blinds[1]
     gameState.monster=nil;gameState.enemies=nil
     return true,"BLIND_SELECT"
 end

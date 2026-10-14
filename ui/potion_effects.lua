@@ -220,7 +220,7 @@ function F.draw(UI,game,activeState)
     local state=game.potionCombat or {};local labels={}
     for _,d in ipairs(Potions.definitions) do
         if state[d.kind] or d.kind=="damage" and state.damageCards or d.kind=="empower" and state.multCards then
-            labels[#labels+1]=d.kind=="accuracy" and "TRÚNG 100%" or d.kind=="evasion" and "NÉ 1 LƯỢT"
+            labels[#labels+1]=d.kind=="accuracy" and ("TRÚNG 100% · "..(state.accuracyTurns or 1).." LƯỢT") or d.kind=="evasion" and ("NÉ "..(state.evasionTurns or 1).." LƯỢT")
                 or d.kind=="damage" and "TĂNG ST / LÁ" or d.kind=="empower" and "TĂNG CH / LÁ" or "MÁU → VÀNG"
         end
     end

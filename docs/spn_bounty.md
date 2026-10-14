@@ -10,9 +10,9 @@ SPN `spirit_victory_bounty`, bán trong shop như bình thường, có thể ti�
 
 Lượt rút thêm dùng bảng thưởng của trận: trận thường 2–3 lượt thành 3–4; boss 3–4 thành 4–5 ở cấp 0. Mỗi lượt thêm có thể là quân bài, vàng, gói, tiêu hao hoặc rương theo bảng đó và được nhận thật vào bộ bài, dự trữ hoặc hàng đợi gói. Rương có thể chứa nhiều món nên số món cuối cùng còn cao hơn số lượt rút. Tiếp tế và vé Void dùng luồng trao riêng hiện có.
 
-Quà **Hiếm / Sử Thi / Huyền Thoại** trong bảng của lễ, nội dung rương thưởng và tiếp tế được tăng trọng số. Các gói SPN, rương ITM, rương bạc/hoàng kim, tiêu hao tiến hóa và Thu Hoạch Linh Hồn hưởng ưu tiên theo bậc quà đã định nghĩa. Bậc quà được xét ở bảng lễ; hiệu ứng không tự nâng cấp từng quân bên trong gói.
+Quà **Hiếm / Sử Thi / Huyền Thoại** trong bảng của lễ, nội dung rương thưởng và tiếp tế được tăng trọng số. Rương ITM, rương bạc/hoàng kim, tiêu hao tiến hóa và Thu Hoạch Linh Hồn hưởng ưu tiên theo bậc quà đã định nghĩa. Bậc quà được xét ở bảng lễ; hiệu ứng không tự nâng cấp từng quân bên trong gói.
 
-Trọng số ×2 không đồng nghĩa xác suất cuối cùng luôn ×2. Với bảng trận thường hiện tại, tổng trọng số quà Hiếm trở lên là 10, các quà khác là 90: tỷ lệ mỗi lượt chuyển từ 10% sang 20/(90+20) ≈ **18,18%**. Bảng boss chuyển từ 45% sang 90/(55+90) ≈ **62,07%**. Đây là tỷ lệ của lượt rút chính, chưa tính quà trong rương và tiếp tế.
+Trọng số ×2 không đồng nghĩa xác suất cuối cùng luôn ×2. Với bảng trận thường hiện tại, tổng trọng số quà Hiếm trở lên là 5, các quà khác là 90: tỷ lệ mỗi lượt chuyển từ 5/95 ≈ **5,26%** sang 10/(90+10) = **10%**. Bảng boss chuyển từ 30/85 ≈ **35,29%** sang 60/(55+60) ≈ **52,17%**. Đây là tỷ lệ của lượt rút chính, chưa tính quà trong rương và tiếp tế.
 
 Hiệu ứng tiến hóa, bậc hiếm cao, nhiều bản và Vọng Linh cộng các lượt thêm và phần trọng số tăng. Huyết Luyện/Void dùng hệ thống nhân hiệu quả hiện có. Tổng giới hạn mỗi lễ: +32 lượt và +2000% trọng số. Rương kế thừa ưu tiên độ hiếm nhưng không nhận thêm lượt rút để tránh nhân số lượng qua rương lồng nhau.
 

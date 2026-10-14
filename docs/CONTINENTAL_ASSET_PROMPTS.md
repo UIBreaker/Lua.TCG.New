@@ -52,7 +52,7 @@ Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-776
 
 Concept: A consumable expedition TRAVEL PERMIT permitting travel between continents. One open thick folded ivory parchment passport and navigation route map prominently on a dark leather folio at a weathered coastal departure desk. A large antique bronze compass authorization seal attached to the document with a deep blue ribbon, a single engraved arrow-way motif rather than lettering. One small ship sails through a huge eroded Western sea arch in the quiet distance. Clear primary document silhouette, warm antique gold and ocean navy, tasteful daylight, map shows broad mountains and sailing routes pictorially but NO lettering or numbers. The document itself is the main subject, no people, no stamps shaped like poker suits. Beautiful tangible useful travel document matching Continental expedition cards.
 
-Ability: Tiêu hao một giấy phép để di chuyển giữa các trận, giá shop tiêu hao 2.000 vàng; khu vực có điều kiện phải đáp ứng trước.
+Ability (updated rules): Một lần di chuyển; đủ 4 công nhận thì dùng vô hạn không mất lá. Giữ giấy phép trong balo để rời đi khi muốn; ở lại vùng đã chinh phục giữ độ khó. Giá shop tiêu hao 2.000 vàng; điều kiện điểm đến vẫn được kiểm tra.
 
 Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. A consumable expedition TRAVEL PERMIT permitting travel between continents. One open thick folded ivory parchment passport and navigation route map prominently on a dark leather folio at a weathered coastal departure desk. A large antique bronze compass authorization seal attached to the document with a deep blue ribbon, a single engraved arrow-way motif rather than lettering. One small ship sails through a huge eroded Western sea arch in the quiet distance. Clear primary document silhouette, warm antique gold and ocean navy, tasteful daylight, map shows broad mountains and sailing routes pictorially but NO lettering or numbers. The document itself is the main subject, no people, no stamps shaped like poker suits. Beautiful tangible useful travel document matching Continental expedition cards.
 
@@ -5476,3 +5476,29 @@ Các prompt ở trên là lịch sử tạo ảnh; mô tả hiệu ứng mới l
 - **Hố Đen** (`spec_black_hole`): Tăng +1 cấp tất cả thế đánh Poker, gồm thế nâng cao. Giữ trạng thái mở khóa; không thêm chi phí phụ.
 
 21 lá còn lại đã nghỉ hoạt động; asset được giữ để bảo toàn lịch sử. Save cũ đổi lá theo `S.retired`; không đưa lá nghỉ hoạt động vào rương, shop hoặc bộ sưu tập.
+
+## SPN potion resonance and permanence - 2026-10-14
+
+### Dược Linh Cộng Hưởng (`spirit_potion_resonance`)
+
+Ability: Nhân đôi hiệu quả thuốc; tiến hóa lên ×2,5, ×3…
+
+Concept: A two-headed spectral stag amplifies one floating potion into two coherent bands of living healing energy.
+
+Prompt: Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Nhân đôi hiệu quả thuốc; tiến hóa lên ×2,5, ×3…. Concept: A two-headed spectral stag amplifies one floating potion into two coherent bands of living healing energy.. One majestic spectral stag with TWO clearly readable heads growing from a single broad torso, formed from pale cyan mist and antique-gold light. It leans over one large hovering amber potion flask, its two antler crowns channeling two thick parallel magical currents from the flask. Supernatural entity dominates. Quiet cold-blue ancient western monastery ruins in a pine forest, controlled warm amber light, no crowded small bottles. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background.
+
+Output: `assets/cards/continental/spn/spirit_potion_resonance.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-0ab1a8c5-1bf0-425b-b6f7-9b8dd9054cad.png`
+
+### Dược Hồn Bất Diệt (`spirit_potion_eternity`)
+
+Ability: Thuốc tăng sát thương, cường hóa hoặc tốc đánh tạm cho quân bài có 10% cơ hội biến phần tăng đó thành vĩnh viễn; tiến hóa tăng tỷ lệ.
+
+Concept: A spectral phoenix locks a fleeting potion vapor into a permanent crystalline ember.
+
+Prompt: Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full bleed, no text or card frame. Cinematic painterly Western dark-fantasy expedition in the Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail, easy to read at 64px, restrained glow and cinematic rim lighting. Exact mechanic: Thuốc tăng sát thương, cường hóa hoặc tốc đánh tạm cho quân bài có 10% cơ hội biến phần tăng đó thành vĩnh viễn; tiến hóa tăng tỷ lệ.. Concept: A spectral phoenix locks a fleeting potion vapor into a permanent crystalline ember.. One translucent phoenix spirit with broad clear wings of antique-gold and deep violet vapor, curling around one large levitating faceted crystalline blade fragment. A thin ribbon of green potion vapor flows from a small empty flask below into the fragment, visibly crystallizing into one permanent emerald vein. Phoenix dominates, blade secondary. Quiet ancient western stone altar on dark continental cliffs, navy dusk, emerald and antique-gold accent. No fire explosion, no crowded decoration. No lettering, symbols with writing, numbers, rank, suit, badge, border, UI, watermark, logos, East Asian roofs or fantasy ornament, dense fine decoration, particle noise or blown-out highlights. Match established Continental fantasy paintings; quiet atmospheric background.
+
+Output: `assets/cards/continental/spn/spirit_potion_eternity.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-2f00d720-380a-4e4a-93cb-969e42a852ea.png`

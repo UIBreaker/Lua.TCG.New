@@ -22,7 +22,7 @@ function Bag.list(game)
  local list={}
  if Bag.tab=="spn" then
   for i,c in ipairs(game.backpackDeities or {}) do list[#list+1]={item=c,index=i} end
- elseif Bag.tab=="consumable" then for i,c in ipairs(game.backpackConsumables or {}) do list[#list+1]={item=c,index=i} end
+ elseif Bag.tab=="consumable" then list=Loadout.consumableStacks(game)
  elseif Bag.tab=="equipment" then for i,entry in ipairs(game.backpackEquipment or {}) do local item=B.item(entry);if item then list[#list+1]={item=item,index=i,entry=entry} end end
  elseif Bag.tab=="cards" then for i,c in ipairs(game.persistentDeck or {}) do list[#list+1]={item=c,index=i} end
  elseif Bag.tab=="journey" then
@@ -94,7 +94,7 @@ end
 local function panel(UI,x,y,w,h)
  Style.panel(x,y,w,h)
 end
-local function details(UI,game,item,entry,buttons,mx,my)
+local function details(UI,game,item,entry,buttons,mx,my,quantity)
  local g=love.graphics;local accent=item and (item.color or UI.COLORS.goldYellow) or UI.COLORS.goldYellow
  Style.panel(942,135,314,544,accent,true)
  Style.glow(997,246,88,accent,.13)
@@ -114,6 +114,7 @@ local function details(UI,game,item,entry,buttons,mx,my)
  if item.rank then
   for i=1,E.getMaxSlots(item) do local x=1072+(i-1)*19;g.setColor(i<=E.getUsedSlots(item) and UI.COLORS.goldYellow or {.30,.37,.40,1});g.polygon(i<=E.getUsedSlots(item) and "fill" or "line",x,306,x+4,310,x,314,x-4,310) end
  end
+ if Bag.tab=="consumable" and Bag.selectedSource~="equipped" and quantity then label(UI,"CHỒNG "..quantity.." / 99 · LẤY TỪNG LÁ",961,312,278,"tiny",UI.COLORS.goldYellow) end
  g.setColor(.58,.44,.26,.3);g.line(961,328,1238,328)
  if item.rank then
   wrapped(UI,require("src.card_abilities").description(item) or description,961,343,278,3,UI.COLORS.textLight)
@@ -219,7 +220,7 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable,context)
   button(UI,buttons,"bag_prev","←",813,headingY-5,43,24,mx,my,Bag.page<=1)
   button(UI,buttons,"bag_next","→",883,headingY-5,43,24,mx,my,Bag.page>=Bag.pages)
   label(UI,Bag.page.."/"..Bag.pages,853,headingY+1,33,"tiny",UI.COLORS.textMuted,"center")
-  local detail,entry
+  local detail,entry,detailCount
   for slot=(Bag.page-1)*Bag.pageSize+1,math.min(#list,Bag.page*Bag.pageSize) do
    local v=list[slot];local r=Bag.cellRect(slot);local x,y,w,h=r.x,r.y,r.w,r.h;local item=v.item
    local hover=inside(mx,my,r);local selected=Bag.selected==v.index and Bag.selectedSource~="equipped"
@@ -237,20 +238,24 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable,context)
    elseif Bag.tab=="consumable" or Bag.tab=="journey" then UI.Polish.renderItem(UI,item,x,y,w,h)
    elseif Bag.tab=="cards" then if not UI.Polish.hiddenOwned(item) then UI.drawCard(item,x,y,w,h,hover) end
    else local img=UI.getEquipmentImage(item.id);g.setColor(1,1,1);if img then UI.CardFrame.image(img,x,y,w,h) end;UI.drawCardBorder(x,y,w,h,hover and UI.COLORS.goldYellow,nil,item);Bag.stats(UI,item,x,y,w,h) end
+   if Bag.tab=="consumable" then
+    g.setColor(.015,.03,.04,.96);g.rectangle("fill",x+w-37,y+h-23,35,21,4,4)
+    label(UI,"×"..v.count,x+w-37,y+h-19,35,"tiny",UI.COLORS.goldYellow,"center")
+   end
    local def=Bag.tab=="cards" and require("src.card_abilities").definition(item)
    wrapped(UI,def and (def.characterName:match("^(.-) ·") or def.characterName) or item.name or ((item.rankName or "")..(item.suitSymbol or "")),x-4,y+h+5,w+8,loadoutTab and 1 or 2,item.color,"tiny")
    if Bag.tab=="cards" then label(UI,(item.rankName or "")..(item.suitSymbol or "").." · "..E.getUsedSlots(item).."/"..E.getMaxSlots(item).." HỐC"..(item.allowDuplicateEquipment and " · PL" or ""),x-5,y+h+25,w+10,"tiny",UI.COLORS.goldYellow,"center") end
-   r.item=item;r.index=v.index;r.source="reserve";Bag.cells[#Bag.cells+1]=r
-   if selected then detail=item;entry=v.entry end
-   if not Bag.selected and hover then detail=item;entry=v.entry end
+   r.item=item;r.index=v.index;r.source="reserve";r.count=v.count;Bag.cells[#Bag.cells+1]=r
+   if selected then detail=item;entry=v.entry;detailCount=v.count end
+   if not Bag.selected and hover then detail=item;entry=v.entry;detailCount=v.count end
   end
   if loadoutTab and Bag.selectedSource=="equipped" then detail=Loadout.equipped(game,Bag.tab,Bag.selected);entry=nil end
-  if not detail and #list>0 then local v=list[(Bag.page-1)*Bag.pageSize+1];detail=v.item;entry=v.entry end
-  details(UI,game,detail,entry,buttons,mx,my)
+  if not detail and #list>0 then local v=list[(Bag.page-1)*Bag.pageSize+1];detail=v.item;entry=v.entry;detailCount=v.count end
+  details(UI,game,detail,entry,buttons,mx,my,detailCount)
   if #list==0 then Bag.icon(532,loadoutTab and 350 or 272,91,115);label(UI,"KHÔNG CÓ MỤC PHÙ HỢP",279,loadoutTab and 490 or 420,591,"small",UI.COLORS.goldYellow,"center");wrapped(UI,Bag.pending and "Không tìm thấy lá gắn được. Chuyển bộ lọc sang MỌI LÁ để kiểm tra hốc hoặc hủy bằng Esc." or "Thử xóa tìm kiếm hoặc đổi bộ lọc. Đồ mua và thu hồi được cất trong ngăn tương ứng.",347,loadoutTab and 526 or 456,454,4,UI.COLORS.textMuted,"small") end
   if loadoutTab and Bag.selected then
-   if Bag.tab=="consumable" and Bag.selectedSource~="equipped" and detail and detail.category=="travel_permit" then button(UI,buttons,"bag_use_permit","CHỌN ĐIỂM ĐẾN",594,641,330,38,mx,my,Bag.combat) end
-   button(UI,buttons,"bag_loadout_action",Bag.selectedSource=="equipped" and "CẤT VÀO BALO" or "TRANG BỊ VÀO Ô TRỐNG",243,641,337,38,mx,my,Bag.combat and (game.handsRemaining or 0)<=0)
+   if Bag.tab=="consumable" and Bag.selectedSource~="equipped" and detail and detail.category=="travel_permit" then button(UI,buttons,"bag_use_permit","CHỌN ĐIỂM ĐẾN",594,641,330,38,mx,my) end
+   button(UI,buttons,"bag_loadout_action",Bag.selectedSource=="equipped" and "CẤT VÀO BALO" or Bag.tab=="consumable" and "LẤY 1 LÁ VÀO Ô TRANG BỊ" or "TRANG BỊ VÀO Ô TRỐNG",243,641,337,38,mx,my,Bag.combat and (game.handsRemaining or 0)<=0)
    if Bag.tab=="consumable" and Bag.selectedSource=="equipped" then button(UI,buttons,"bag_use","DÙNG VẬT PHẨM",594,641,330,38,mx,my) end
   elseif Bag.tab=="equipment" and Bag.selected and (game.backpackEquipment or {})[Bag.selected] and not Bag.combat then
    button(UI,buttons,"bag_equip","GẮN VÀO LÁ BÀI",243,641,337,38,mx,my)

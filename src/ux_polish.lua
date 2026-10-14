@@ -74,7 +74,7 @@ function P.button(game)
         y=loadoutSale and 627 or backpackSale and 641 or math.max(70,math.min(634,r.y+r.h+12)),w=loadoutSale and 278 or backpackSale and 225 or 148,h=loadoutSale and 33 or backpackSale and 38 or 34,
         text=disabled and (f.kind=="stock" and (blood and "CẦN THÊM MÁU" or soul and "THIẾU LINH HỒN" or "KHÔNG ĐỦ VÀNG") or "GIỮ ÍT NHẤT 1 LÁ")
             or (f.kind=="card" and ("HỦY · +"..price.." LH")
-            or ((f.kind=="stock" and ((soul or blood) and "MUA · " or "MUA — $") or "BÁN — $")..price..(blood and " HP" or soul and " LH" or ""))),disabled=disabled}
+            or ((f.kind=="stock" and ((soul or blood) and "MUA · " or "MUA — $") or f.kind=="reserve_consumable" and "BÁN 1 LÁ — $" or "BÁN — $")..price..(blood and " HP" or soul and " LH" or ""))),disabled=disabled}
 end
 local function ownedValid(f,game)
     if f.kind=="reserve_deity" then return (game.backpackDeities or {})[f.index]==f.item end
@@ -309,7 +309,7 @@ function P.snapshot(game)
 end
 local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
     rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",repeatsPerLevel="HỆ SỐ KÍCH HOẠT",uqChancePct="UQ (%)",addArmorToHpPct="GIÁP THÀNH MÁU (%)",addTwoRepeats="TÁI KÍCH HOẠT LÁ 2",
-    xMult="HỆ SỐ CƯỜNG HÓA",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
+    xMult="HỆ SỐ CƯỜNG HÓA",xPotionPower="HIỆU QUẢ THUỐC",addPotionChancePct="THUỐC VĨNH VIỄN (%)",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",
     addHands="LƯỢT ĐÁNH",addRewardRolls="LƯỢT RÚT THƯỞNG",addOverkillArmorPct="TÀN DƯ (%)",bedExplosionPct="VỤ NỔ (%)",

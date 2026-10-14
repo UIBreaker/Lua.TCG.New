@@ -27,15 +27,16 @@ end
 function A.start(m)
     m.enemyActions=0;m.reassembled=false
     m.actionTurns=0;m.combatBuffs={}
+    m.creatureArmor=0;m.creatureArmorMax=0
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
 end
 function A.speed(m)
     local buffs=m.combatBuffs or {}
-    local speed=math.min(999,(m.attackSpeed or 1)+((buffs.speed or {}).value or 0))
+    local speed=math.min(999,require("src.enemy_loadout").speed(m)+((buffs.speed or {}).value or 0))
     return buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
 end
 function A.attack(m)
-    return (m.attack or 12)+(((m.combatBuffs or {}).damage or {}).value or 0)
+    return require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0)
 end
 
 local actionNames={armor="Gia cố",speed="Tăng tốc",damage="Cường hóa",heal="Hồi máu"}
@@ -52,14 +53,15 @@ local function recipient(game,m,kind,allies)
     end
     return best or m
 end
-function A.buffAmount(target,kind)
-    if kind=="armor" then return math.max(1,math.floor(target.maxHp*.25)) end
-    if kind=="heal" then return math.max(1,math.floor(target.maxHp*.20)) end
+function A.buffAmount(target,kind,caster)
+    local power=caster and require("src.enemy_loadout").supportMultiplier(caster) or 1
+    if kind=="armor" then return math.max(1,math.floor(target.maxHp*.25*power)) end
+    if kind=="heal" then return math.max(1,math.floor(target.maxHp*.20*power)) end
     -- Recasting an active buff refreshes its snapshot instead of multiplying itself.
     local active=(target.combatBuffs or {})[kind]
-    local value=active and active.value or math.max(1,math.floor((kind=="speed" and A.speed(target) or A.attack(target))*.25))
+    local value=active and active.value or math.max(1,math.floor((kind=="speed" and A.speed(target) or A.attack(target))*.25*power))
     if kind=="speed" then
-        return math.max(0,math.min(999-(target.attackSpeed or 1),value))
+        return math.max(0,math.min(999-require("src.enemy_loadout").speed(target),value))
     end
     return value
 end
@@ -69,18 +71,26 @@ end
 
 function A.plan(game,m,turn)
     turn=turn or (m.actionTurns or 0)+1
+    local Loadout=require("src.enemy_loadout")
+    local reserve=Loadout.plan(m)
+    if reserve then m.intent=reserve;return reserve end
     if turn%2==1 then
-        m.intent={type="attack",value=A.attack(m)+A.attackBonus(game,m),label="Tấn công "..(A.attack(m)+A.attackBonus(game,m)).." ST"}
+        local echo=Loadout.attackBonus(m)
+        local value=A.attack(m)+A.attackBonus(game,m)+echo
+        m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")}
     else
         local support=math.floor(turn/2)
         local kind=({"armor","speed","damage"})[(support+(m.groupIndex or 1)-2)%3+1]
+        if m.enemyInventory and support%2==1 then
+            kind=({["Đấu sĩ"]="damage",["Hộ vệ"]="armor",["Quân y"]="speed"})[m.enemyInventory.role] or kind
+        end
         local wounded=recipient(game,m,"heal")
         local target
         if wounded.hp/wounded.maxHp<=.65 then kind="heal";target=wounded
         else target=(support+(m.groupIndex or 1))%2==0 and m or recipient(game,m,kind,true) end
         if kind=="speed" and A.speed(target)>=999
             or kind=="armor" and (target.creatureArmor or 0)>=armorCap(target) then kind="damage" end
-        local value=A.buffAmount(target,kind)
+        local value=A.buffAmount(target,kind,m)
         local to=target==m and "bản thân" or "đồng đội #"..(target.groupIndex or 1)
         m.intent={type=kind,value=value,targetIndex=target.groupIndex or 1,
             label=actionNames[kind].." "..to.." +"..value.." "..actionStats[kind]
@@ -97,7 +107,7 @@ function A.support(game,m)
         if (ally.groupIndex or 1)==intent.targetIndex and ally.hp>0 then target=ally;break end
     end
     if not target or kind=="heal" and target.hp>=target.maxHp then target=recipient(game,m,kind) end
-    local value=A.buffAmount(target,kind)
+    local value=A.buffAmount(target,kind,m)
     if kind=="heal" then
         value=math.min(value,target.maxHp-target.hp);target.hp=target.hp+value
     elseif kind=="armor" then
@@ -107,7 +117,6 @@ function A.support(game,m)
         target.creatureArmorMax=math.max(target.creatureArmorMax or 0,target.creatureArmor)
     else
         target.combatBuffs=target.combatBuffs or {}
-        if kind=="speed" then value=math.min(value,999-(target.attackSpeed or 1)) end
         -- Refresh rather than stack; a self buff also survives the current action's tick.
         target.combatBuffs[kind]={value=value,turns=2+(target==m and 1 or 0)}
     end

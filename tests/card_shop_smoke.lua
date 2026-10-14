@@ -38,7 +38,7 @@ for _=1,240 do
             editions[card.edition]=true;expected=expected+8
             assert(item.desc:find(Effects.getDefinition(card.edition).shopText,1,true))
         end
-        assert(item.cost==expected and item.desc:find(Abilities.description(card),1,true))
+        assert(item.cost==math.ceil(expected*Shop.PRICE_MULTIPLIER) and item.desc:find(Abilities.description(card),1,true))
         plain=plain or (card.evolutionLevel==0 and #card.equipments==0 and not card.edition)
         combined=combined or (card.evolutionLevel==2 and #card.equipments==1 and card.edition~=nil)
     end

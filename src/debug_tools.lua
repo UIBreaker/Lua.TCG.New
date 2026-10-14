@@ -49,9 +49,11 @@ function DebugTools.setAnte(game, value, blindIndex, regionId)
     game.run.maxAnte = math.max(RunManager.MAX_ANTE, ante)
     game.run.endless = ante > RunManager.MAX_ANTE
     game.run.travelPermit = false
+    game.run.difficultyCap=nil
     local E=require("src.expedition")
     game.run.regionId=regionId or game.run.regionId or E.region(ante).id
     game.run.areaStage=game.run.regionId=="unknown" and ante or ((ante-1)%20)+1
+    game.run.regionStartAnte=ante-game.run.areaStage+1
     game.run.victory = false
     game.run.currentBlindIndex = index
     game.run.shopsVisitedInAnte = 0

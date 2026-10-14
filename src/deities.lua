@@ -104,6 +104,7 @@ function Deities.scaleEffect(deity, result)
             if def and def.integerEffect and key==def.stat then scaled=math.floor(scaled) end
             if key=="addTransmutePct" then scaled=math.min(90,scaled) end
             if key=="addRedirectPct" then scaled=math.min(100,scaled) end
+            if key=="addPotionChancePct" then scaled=math.min(100,scaled) end
             result[key] = scaled
 
             local message = not result.fixedMessage and result.message
@@ -121,7 +122,7 @@ function Deities.scaleEffect(deity, result)
         end
     end
 
-    for _,key in ipairs({"xMult","xChips","xAura","xSoulYield"}) do
+    for _,key in ipairs({"xMult","xChips","xAura","xSoulYield","xPotionPower"}) do
         if type(result[key])=="number" and result[key]>1 then result[key]=1+(result[key]-1)*multiplier end
     end
     return require("src.blood_shop").effect(result,require("src.blood_shop").powerOf(deity))
@@ -270,6 +271,7 @@ require("src.spn_vitality").register(Deities)
 require("src.spn_foundations").register(Deities)
 require("src.spn_growth").register(Deities)
 require("src.spn_bounty").register(Deities)
+require("src.spn_alchemy").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -285,11 +287,13 @@ function Deities.getDescription(deity)
     if def.stat=="copyActivations" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     if def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     if def.stat=="uqChancePct" then value=math.min(100,value) end
+    if def.stat=="addPotionChancePct" then value=math.min(100,value) end
     value=value*require("src.blood_shop").powerOf(deity)
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end
     if def.stat=="copyActivations" or def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(value)) end
     if def.stat=="consumableChancePct" or def.stat=="uqChancePct" then value=math.min(100,value) end
+    if def.stat=="addPotionChancePct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(require("src.blood_shop").powerOf(deity) + value)):gsub("{double}",formatEffectNumber(value*2)):gsub("{scale}",formatEffectNumber(effectMultiplier(deity)*require("src.blood_shop").powerOf(deity))))
     if deity.id=="spirit_victory_bounty" then text=require("src.spn_bounty").description(deity) end
     if deity.id=="spirit_hell_sleep" then

@@ -67,7 +67,12 @@ function S.panel(x,y,w,h,c,selected,opacity)
 end
 function S.glyph(kind,x,y,r,c)
  local g=love.graphics;g.push("all");tint(g,c or gold,1);g.setLineWidth(1.3)
- if kind=="spn" then g.ellipse("line",x,y,r,r*.55);g.circle("line",x,y,r*.31);g.line(x,y-r*.9,x,y-r*.7)
+ if kind=="bag" then
+  g.rectangle("line",x-r*.8,y-r*.42,r*1.6,r*1.35,r*.22)
+  g.arc("line","open",x,y-r*.4,r*.48,math.pi,math.pi*2)
+  g.line(x-r*.75,y-r*.08,x+r*.75,y-r*.08)
+  g.rectangle("line",x-r*.34,y+r*.26,r*.68,r*.4,r*.08)
+ elseif kind=="spn" then g.ellipse("line",x,y,r,r*.55);g.circle("line",x,y,r*.31);g.line(x,y-r*.9,x,y-r*.7)
  elseif kind=="consumable" then g.line(x-r*.25,y-r,x+r*.25,y-r);g.line(x-r*.2,y-r,x-r*.2,y-r*.35);g.line(x+r*.2,y-r,x+r*.2,y-r*.35);g.arc("line","open",x,y+r*.1,r*.75,-math.pi*.3,math.pi*1.3);g.line(x-r*.66,y+r*.45,x+r*.66,y+r*.45)
  elseif kind=="equipment" then g.polygon("line",x-r*.8,y-r*.8,x+r*.8,y-r*.8,x+r*.68,y+r*.3,x,y+r,x-r*.68,y+r*.3);g.line(x,y-r*.4,x,y+r*.55)
  elseif kind=="cards" then g.rectangle("line",x-r*.85,y-r*.8,r*1.05,r*1.6,2);g.rectangle("line",x-r*.15,y-r*.55,r*1.05,r*1.6,2)

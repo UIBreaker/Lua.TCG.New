@@ -4,7 +4,7 @@ local Style=require("ui.backpack_style")
 local function inside(x,y,r) return x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
 function Panel.select(UI,Bag,entry,combat)
     Bag.selected=entry.index;Bag.selectedSource=entry.source
-    Bag.message=entry.source=="reserve" and ("Nhấp ô phía trên để gắn hoặc thay thế; đồ cũ trở về kho."..(combat and " Đổi đồ tốn 1 lượt đánh." or "")) or "Đã chọn ô trang bị; có thể cất lại hoặc kéo sang ô khác."
+    Bag.message=entry.source=="reserve" and ((Bag.tab=="consumable" and "Lấy 1 lá từ chồng ×"..(entry.count or 1)..". " or "").."Nhấp ô phía trên để gắn hoặc thay thế; đồ cũ trở về kho."..(combat and " Đổi đồ tốn 1 lượt đánh." or "")) or "Đã chọn ô trang bị; có thể cất lại hoặc kéo sang ô khác."
     UI.Polish.clearFocus()
     if not combat then
         local kind=entry.source=="reserve" and (Bag.tab=="spn" and "reserve_deity" or "reserve_consumable")

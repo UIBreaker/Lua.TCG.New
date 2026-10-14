@@ -159,5 +159,5 @@ end
 g=game("spirit_primeval_product");g.deities[5].name="Tích Nguyên Sơ";g.deities[5].stat="addChips";g.deities[5].values={value=1};g.deities[5].productMechanic=true
 local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 assert(restored.deities[5].name=="Cổ Linh Bồi Tụ" and restored.deities[5].values.value==2 and not restored.deities[5].productMechanic,"old saves receive revised definitions")
-assert(#D.getRandomShopPool({},99)==78)
+assert(#D.getRandomShopPool({},99)==80)
 print("SPN rework PASS: 4 persistent growth engines, 6 rule-breaking strategies, costs, save migration, preview purity, locks, damage routing and debt")

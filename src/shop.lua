@@ -47,6 +47,7 @@ local function basicHandsUnlocked(gameState)
 end
 Shop.FREE_OFFER_CHANCE = 0.08
 Shop.SALE_MULTIPLIER = 0.65
+Shop.PRICE_MULTIPLIER = 3
 function Shop.discountedEquipment(eq,bay,roll)
     local free=(roll or Rng.random())<Shop.FREE_OFFER_CHANCE
     return {section="discount",bay=bay,category="equipment",equipment=eq,name=eq.name,
@@ -156,7 +157,18 @@ function Shop.getConsumableParams(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     return Blood.params(rule and rule.params or {},Blood.powerOf(item),true)
 end
-function Shop.getConsumableDescription(item)
+function Shop.getConsumableDescription(item,game)
+    if game and require("src.spn_alchemy").isPotion(item) then
+        local text=require("src.potions").describe(item,game)
+        if text then return text end
+        local boost=require("src.spn_alchemy").multiplier(game,item)
+        if item.healAmt then return "Hồi "..(item.healAmt*boost).." HP, không vượt HP tối đa." end
+        if item.armorAmt then return "+"..(item.armorAmt*boost).." Giáp, không vượt giới hạn Giáp." end
+        local speed=Shop.getConsumableParams(item).speed*boost
+        local _,chance=require("src.spn_alchemy").effects(game)
+        return "Chọn một quân trên tay: +"..speed.." tốc đánh trong trận, tối đa 999. Hủy chọn không mất thuốc."
+            ..(chance>0 and ("\nDƯỢC HỒN · "..string.format("%g",chance).."% giữ lượng tăng vĩnh viễn.") or "")
+    end
     local spectral=require("src.spectral").describe(item);if spectral then return spectral end
     if Blood.powerOf(item)>1 then
         if item.category=="combat_potion" then return require("src.potions").describe(item) end
@@ -390,11 +402,19 @@ function Shop.playingCardOffer(card)
         editionName=edition and edition.shopLabel, icon=card.suitSymbol, color=card.color}
 end
 
+local function priceStock(shop)
+    for _, item in ipairs(shop.items) do
+        item.cost = math.ceil(item.cost * Shop.PRICE_MULTIPLIER)
+        if item.originalCost then item.originalCost = math.ceil(item.originalCost * Shop.PRICE_MULTIPLIER) end
+    end
+end
+
 local function finishStock(shop, gameState)
     -- The card stall rolls all nine editions before calculating its price and labels.
     if shop.mode~="cards" then
         for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
     end
+    priceStock(shop)
     Shop.applyVoucherStock(shop, gameState)
     if gameState.vouchers and gameState.vouchers.v_discount then
         shop.baseRerollCost = 1
@@ -527,6 +547,7 @@ function Shop.refresh(shop, gameState)
             utility.currency = "souls"
             shop.items[#shop.items+1] = utility
         end
+        priceStock(shop)
         return
     end
 

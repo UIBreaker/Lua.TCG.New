@@ -23,7 +23,10 @@ assert(Reward.weighted({{id = "a", weight = 2}, {id = "b", weight = 3}}, functio
 assert(Reward.weighted({{id = "a", weight = 0}}, function() return 0 end) == "gold_bonus")
 for tableId, data in pairs(C.tables) do
     local total = 0
-    for _, entry in ipairs(data.entries) do assert(C.definitions[entry.id], tableId); total = total + entry.weight end
+    for _, entry in ipairs(data.entries) do
+        assert(C.definitions[entry.id] and entry.id ~= "spn_pack", tableId)
+        total = total + entry.weight
+    end
     assert(total > 0)
 end
 local g = game()

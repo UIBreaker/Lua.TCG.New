@@ -9,6 +9,7 @@ local function fixture(ante,index)
  g.run=Run.newRun(g.selectedFaction);g.run.ante=ante;g.run.currentBlindIndex=index
  g.run.regionId=ante>40 and "unknown" or "human"
  g.run.areaStage=ante>40 and ante-40 or ((ante-1)%20)+1
+ if index==3 and g.run.areaStage==20 and g.run.regionId~="unknown" then g.run.difficultyCap=ante end
  g.run.blinds=Run.generateAnteBlinds(ante,g.selectedFaction,g.run.regionId,g.run.areaStage)
  for i,b in ipairs(g.run.blinds) do b.status=i<=index and "completed" or "upcoming" end
  g.run.stats.blindsWon=(ante-1)*3+index
@@ -31,7 +32,6 @@ for _,ante in ipairs({1,3,19,20,21,40,41}) do
   local continues,reason=Run.advanceBlind(twice.run,twice)
   if index<3 then
    assert(continues and twice.run.currentBlindIndex==index+1 and Run.getCurrentBlind(twice.run).status=="current")
-  elseif ante==20 or ante==40 then assert(not continues and reason=="victory")
   else assert(continues and twice.run.ante==ante+1 and twice.run.currentBlindIndex==1) end
   assert(twice.run.stats.blindsWon==won and twice.gold==22)
  end

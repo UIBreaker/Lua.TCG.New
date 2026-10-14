@@ -61,6 +61,20 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-enemy-loadouts" then
+            local ok,err=xpcall(function() require("tests.enemy_loadouts_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("ENEMY LOADOUT CAPTURE FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-consumable-stacks" then
+            local ok,err=pcall(require("tests.consumable_stacks_capture").update,gameRef,callbacks)
+            if not ok then print("CONSUMABLE STACKS FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-debug-ui" or value=="--test-debug-input" then
             local ok,err=xpcall(function() require("tests.debug_ui_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("DEBUG UI FAIL: "..tostring(err));love.event.quit(1) end
@@ -175,6 +189,11 @@ function Capture.update(gameRef, callbacks)
         if value=="--test-potions" then
             local ok,err=pcall(require("tests.potions_capture").update,gameRef,callbacks)
             if not ok then print("POTIONS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value=="--test-spn-alchemy-ui" then
+            local ok,err=pcall(require("tests.spn_alchemy_capture").update,gameRef,callbacks)
+            if not ok then print("SPN ALCHEMY UI FAIL: "..tostring(err));love.event.quit(1) end
             return
         end
     end

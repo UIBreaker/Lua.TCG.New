@@ -16,7 +16,7 @@ function B.params(params,power,counts)
     if power==1 then return params end
     local copy={};for k,v in pairs(params or {}) do copy[k]=type(v)=="number" and (benefits[k] or counts and k=="count") and v*power or v end;return copy
 end
-local effects={healHp=true,xMultBonus=true,extraDamagePct=true,xMult=true,xChips=true,xAura=true,xSoulYield=true,
+local effects={healHp=true,xMultBonus=true,extraDamagePct=true,xMult=true,xChips=true,xAura=true,xSoulYield=true,xPotionPower=true,
     bedExplosionPct=true,consumableChancePct=true,discardCopies=true,bossCopies=true,copyActivations=true,repeatsPerLevel=true,uqChancePct=true}
 function B.effect(result,power)
     if not result or power==1 then return result end

@@ -90,5 +90,5 @@ for _,row in ipairs(G.entries) do
     restored=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")))
     assert(restored.deities[1].id==row[1] and restored.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==78)
+assert(#D.getRandomShopPool({},99)==80)
 print("SPN growth PASS: permanent per-card/hand claims, full repeats, mirror activations, sync/drones/next battle/save, pure live previews, complete gold groups/evolution/no spending, locks/reserve/shop")

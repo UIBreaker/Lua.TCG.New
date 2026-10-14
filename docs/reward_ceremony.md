@@ -1,5 +1,7 @@
 # Reward ceremony
 
+Rương SPN không còn nằm trong bất kỳ bảng thưởng lễ chiến thắng nào, kể cả nội dung rương Hoàng Kim. Các gói SPN đã nhận từ bản lưu cũ vẫn có thể mở.
+
 ## One-click conversion on the ceremony
 
 `QUY ĐỔI NHANH TẤT CẢ +N` sits beside the shop button. One click settles the presentation and converts all available loot from this victory across every page: queued packs, direct playing cards and consumables. It stays on CASH_OUT with updated gold and `ĐÃ ĐỔI +N` receipts, then Continue enters the shop without reopening converted packs. A disabled receipt replaces the conversion action after use.

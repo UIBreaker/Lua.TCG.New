@@ -21,7 +21,7 @@ for stage=1,80 do
         local hp,atk=0.0,0
         for i,m in ipairs(g.enemies) do
             assert(m.groupIndex==i and m.group==g.enemies)
-            hp=hp+m.hp;atk=atk+m.attack
+            hp=hp+(m.enemyInventory and m.enemyInventory.base.maxHp or m.hp);atk=atk+m.attack
             if stage>40 then assert(m.creatureCard and m.cardRank>=2 and m.cardRank<=13 and m.enemyAbility) end
         end
         assert(math.abs(hp-b.hp)<=math.max(1e-7,b.hp*1e-14),"squad must preserve encounter HP budget")
@@ -33,6 +33,7 @@ end
 -- Late-stage damage reaches the player in full after armor, without an HP-based cap.
 local late=start(20)
 late.enemies={late.monster};late.monster.group=late.enemies
+late.monster.enemyInventory=nil -- Isolate stage damage from percentage equipment.
 late.monster.attack=90;late.monster.enemyAbility=nil;late.monster.creatureKind=nil
 late.playerHp=100;late.maxPlayerHp=100;late.playerArmor=10;late.playerShield=10
 late.hand={};late.deities={}
@@ -44,14 +45,14 @@ assert(Combat.resolveMonsterAttack(late).killedPlayer and late.playerHp==0)
 local g=start(3)
 assert(#g.enemies==3)
 assert(Group.select(g,2) and g.monster==g.enemies[2])
-local _,won=Monster.takeDamage(g.monster,g.monster.hp)
+local _,won=Monster.takeDamage(g.monster,g.monster.hp+(g.monster.creatureArmor or 0))
 assert(not won and Combat.getOutcome(g)=="continue","one kill is not encounter victory")
 assert(not Group.select(g,2),"dead enemy cannot be targeted")
 Group.ensureTarget(g);assert(g.monster==g.enemies[1])
-Monster.takeDamage(g.monster,g.monster.hp)
+Monster.takeDamage(g.monster,g.monster.hp+(g.monster.creatureArmor or 0))
 assert(Combat.getOutcome(g)=="continue")
 Group.ensureTarget(g)
-local _,done=Monster.takeDamage(g.monster,g.monster.hp)
+local _,done=Monster.takeDamage(g.monster,g.monster.hp+(g.monster.creatureArmor or 0))
 assert(done and Combat.getOutcome(g)=="victory")
 -- Speed ordering: fast enemies act before; slow enemies after; dead enemies never act.
 g=start(3);g.lastPlayerAttackSpeed=5

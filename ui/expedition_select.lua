@@ -28,6 +28,7 @@ function S.draw(game, UI, mx, my)
     text("NHẬT KÝ VIỄN CHINH",44,29,600,"large",gold)
     text("TỔNG HÀNH TRÌNH "..run.ante.."  /  "..(region.suit and "ĐỐI THỦ ĐỒNG CHẤT" or region.id=="human" and "ĐOÀN ĐỘC LẬP • VÔ CHẤT" or "KHÁM PHÁ LỤC ĐỊA"),46,65,700,"tiny",muted)
     button("open_handbook","SỔ TAY",872,32,108,46,{0.17,0.29,0.29,1})
+    button("open_backpack","BALO",753,32,108,46,{.28,.24,.16,1})
     button("open_deck_viewer","BỘ BÀI",991,32,108,46,{0.19,0.27,0.36,1})
     button("open_pause_menu","TÙY CHỌN",1110,32,126,46,{0.22,0.25,0.30,1})
     -- Persistent route: chapter boundaries and objectives are always visible.
@@ -36,12 +37,12 @@ function S.draw(game, UI, mx, my)
         local active=area.index==i
         panel(x,108,296,64,active and region.color or muted,active and 0.94 or 0.78)
         text(string.format("0%d  %s",i,(region.areas or {})[i] or "MIỀN ĐẤT CHƯA KHÁM PHÁ"),x+12,120,272,"small",active and region.color or muted)
-        text(string.format("ẢI %02d — %02d",run.ante-localStage+(i-1)*5+1,run.ante-localStage+i*5)..(active and "   /   ĐANG KHÁM PHÁ" or area.index>i and "   /   ĐÃ ĐI QUA" or "   /   CHƯA ĐẾN"),x+12,148,272,"tiny",muted)
+        text(string.format("ẢI %02d — %02d",(run.regionStartAnte or run.ante-localStage+1)+(i-1)*5,(run.regionStartAnte or run.ante-localStage+1)+i*5-1)..(active and "   /   ĐANG KHÁM PHÁ" or area.index>i and "   /   ĐÃ ĐI QUA" or "   /   CHƯA ĐẾN"),x+12,148,272,"tiny",muted)
     end
     panel(24,186,1232,82,region.color,0.89)
     text("ẢI "..string.format("%02d",run.ante).."  /  "..region.name,44,197,800,"medium",region.color)
-    text(region.objective,44,229,910,"small",white)
-    text(run.travelPermit and "GIẤY PHÉP: ĐÃ CẤP" or "GIẤY PHÉP: MỐC 20",984,204,250,"small",gold,"right")
+    text(run.difficultyCap and ("ĐÃ CHINH PHỤC · GIỮ ĐỘ KHÓ ẢI "..run.difficultyCap.." · Dùng giấy phép trong balo để rời đi lúc cần.") or region.objective,44,229,910,"small",white)
+    text(E.hasTravelPermit(game) and (E.unlimitedTravel(game) and "GIẤY PHÉP: VÔ HẠN" or "GIẤY PHÉP: TRONG BALO") or "GIẤY PHÉP: MỐC 20",974,204,260,"small",gold,"right")
     text(region.id=="unknown" and "KHÁM PHÁ VÔ TẬN" or "4 KHU VỰC • 20 ẢI",994,235,240,"tiny",muted,"right")
     -- Three encounter dossiers. Only the current fight can be started.
     for i,blind in ipairs(run.blinds) do
@@ -66,7 +67,7 @@ function S.draw(game, UI, mx, my)
         text(blind.name,x+153,y+73,228,"medium",white)
         text("HP  "..UI.formatNumber(blind.hp),x+153,y+145,228,"small",region.color)
         text("CHIẾN LỢI PHẨM  +$"..blind.baseReward,x+153,y+174,228,"tiny",gold)
-        local count=require("src.enemy_group").count(blind.ante,i==3,i==2)
+        local count=require("src.enemy_group").count(blind.difficultyAnte or blind.ante,i==3,i==2)
         text("ĐỘI HÌNH  "..count.." ĐỐI THỦ",x+153,y+196,228,"tiny",muted)
         g.setColor(c[1],c[2],c[3],0.2);g.line(x+18,y+217,x+w-18,y+217)
         if blind.debuff then
@@ -87,7 +88,7 @@ function S.draw(game, UI, mx, my)
         local stage=block+j-1;local x=283+(j-1)*39
         g.setColor(stage<localStage and 0.32 or region.color[1],stage<localStage and 0.65 or region.color[2],stage<localStage and 0.49 or region.color[3],stage<=localStage and 0.9 or 0.22)
         g.rectangle("fill",x,654,30,28,5,5)
-        text(tostring(run.ante-localStage+stage),x,661,30,"tiny",stage==localStage and white or muted,"center")
+        text(tostring((run.regionStartAnte or run.ante-localStage+1)+stage-1),x,661,30,"tiny",stage==localStage and white or muted,"center")
     end
     text("HP "..(game.playerHp or 100).."/"..(game.maxPlayerHp or 100).."   •   $"..(game.gold or 0).."   •   "..#(game.persistentDeck or {}).." LÁ",44,674,240,"tiny",muted)
     text("3 TRẬN / ẢI",1085,663,150,"small",muted,"right")

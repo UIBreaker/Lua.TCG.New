@@ -488,6 +488,8 @@ return {
     ["spirit_battle_memory"] = "assets/cards/continental/spn/spirit_battle_memory.png",
     ["spirit_golden_tithe"] = "assets/cards/continental/spn/spirit_golden_tithe.png",
     ["spirit_victory_bounty"] = "assets/cards/continental/spn/spirit_victory_bounty.png",
+    ["spirit_potion_resonance"] = "assets/cards/continental/spn/spirit_potion_resonance.png",
+    ["spirit_potion_eternity"] = "assets/cards/continental/spn/spirit_potion_eternity.png",
     ["cons_accuracy"] = "assets/cards/continental/utility/cons_accuracy.png",
     ["cons_evasion"] = "assets/cards/continental/utility/cons_evasion.png",
     ["cons_armor_break"] = "assets/cards/continental/utility/cons_armor_break.png",

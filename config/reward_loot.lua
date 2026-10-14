@@ -39,18 +39,18 @@ local C = {
         normal_enemy = {rolls = {2, 3}, entries = {
             {id = "gold_bonus", weight = 40}, {id = "playing_card", weight = 25},
             {id = "card_pack", weight = 15}, {id = "consumable", weight = 10},
-            {id = "spn_pack", weight = 5}, {id = "itm_pack", weight = 4}, {id = "chest", weight = 1},
+            {id = "itm_pack", weight = 4}, {id = "chest", weight = 1},
         }},
         boss = {rolls = {3, 4}, entries = {
             {id = "gold_bonus", weight = 20}, {id = "playing_card", weight = 15},
-            {id = "card_pack", weight = 20}, {id = "spn_pack", weight = 15},
+            {id = "card_pack", weight = 20},
             {id = "itm_pack", weight = 15}, {id = "chest", weight = 12}, {id = "rare_reward", weight = 3},
         }},
         tax = {rolls = {3, 4}, entries = {{id = "gold_bonus", weight = 65}, {id = "card_pack", weight = 25}, {id = "chest", weight = 10}}},
         memory = {rolls = {3, 4}, entries = {{id = "playing_card", weight = 40}, {id = "evolution", weight = 20}, {id = "card_pack", weight = 30}, {id = "chest", weight = 10}}},
-        gate = {rolls = {3, 4}, entries = {{id = "card_pack", weight = 35}, {id = "spn_pack", weight = 25}, {id = "itm_pack", weight = 25}, {id = "chest", weight = 15}}},
+        gate = {rolls = {3, 4}, entries = {{id = "card_pack", weight = 35}, {id = "itm_pack", weight = 25}, {id = "chest", weight = 15}}},
         silver_chest = {rolls = {2, 2}, entries = {{id = "gold_bonus", weight = 40}, {id = "playing_card", weight = 30}, {id = "card_pack", weight = 20}, {id = "consumable", weight = 10}}},
-        golden_chest = {rolls = {2, 2}, entries = {{id = "spn_pack", weight = 35}, {id = "itm_pack", weight = 35}, {id = "evolution", weight = 20}, {id = "consumable_pack", weight = 10}}},
+        golden_chest = {rolls = {2, 2}, entries = {{id = "itm_pack", weight = 35}, {id = "evolution", weight = 20}, {id = "consumable_pack", weight = 10}}},
     },
     bossOverrides = {black_tax_collector = "tax", memory_eater = "memory", gatekeeper = "gate"},
 }

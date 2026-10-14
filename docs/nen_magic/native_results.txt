@@ -1,0 +1,7 @@
+Native LÖVE 11.5: 1080 plays, 27000 rendered phase frames; every hand 4 AURA x 10 consecutive repeats.
+LOW/MEDIUM/HIGH particle budgets, immutable aura, graphics-state restoration, cancellation: PASS
+27 shader fallbacks: PASS; GPU image count unchanged.
+Per-frame batch+GPU-readback mean 0.197 ms, P95 0.277 ms, max 15.370 ms (not whole-game FPS).
+Collected heap delta 1987.7 KB (includes one-time JIT traces).
+GPU: OpenGL / 3.3.0 NVIDIA 591.86 / NVIDIA Corporation / NVIDIA GeForce GTX 1650/PCIe/SSE2
+270 additional create/draw/clear cycles with JIT disabled: retained 34.1 KB (<128 KB), PASS.

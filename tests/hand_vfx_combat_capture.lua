@@ -15,25 +15,32 @@ if allHands then for _,h in ipairs(require("src.advanced_hands").ordered) do ord
 local nenSamples=false
 local nenBasics,nenAll,nenPolish=false,false,false
 local nenJuice=false
+local nenMagic=false
+local nenTiming=false
+local nenEdges=false
 for _,value in ipairs(arg or {}) do if value=="--nen-samples" then nenSamples=true;repeats=10 end end
 for _,value in ipairs(arg or {}) do
     if value=="--nen-basics" then nenBasics=true end
     if value=="--nen-all" then nenAll=true;repeats=3 end
     if value=="--nen-polish" then nenPolish=true end
     if value=="--nen-juice" then nenJuice=true end
+    if value=="--nen-magic" then nenMagic=true;nenAll=true;repeats=1 end
+    if value=="--nen-magic-timing" then nenTiming=true;nenMagic=true;nenAll=true;repeats=1 end
+    if value=="--nen-magic-edges" then nenEdges=true end
 end
 if nenSamples then order=require("config.nen_vfx_config").samples end
 if nenAll then order=require("config.nen_vfx_config").order end
 if nenPolish then order={"high_card","straight","four_of_a_kind","even_frost","obsidian_tide","tesla_369","eclipse_duality","destiny_crown","sealed_gate","prime"} end
 if nenJuice then order=require("config.nen_vfx_config").samples end
 local nenMode=nenSamples or nenBasics or nenAll or nenPolish or nenJuice
-local tierCount=nenMode and 3 or 1
+local tierCount=nenMagic and 4 or nenMode and 3 or 1
 local outputDir=framesOnly and "docs/vfx_review/frames/" or "docs/vfx_review/"
 if nenSamples then outputDir="docs/nen_vfx/checkpoint2/final/" end
 if nenBasics then outputDir="docs/nen_vfx/checkpoint3/" end
 if nenAll then outputDir="docs/nen_vfx/final/" end
 if nenPolish then outputDir="docs/nen_vfx/final/" end
 if nenJuice then outputDir="docs/nen_vfx/juice/combat/" end
+if nenMagic then outputDir="docs/nen_magic/combat_final/" end
 local captured={}
 local frameSamples,drawPeak,particlePeak={},0,0
 local function performance()
@@ -41,14 +48,23 @@ local function performance()
     table.sort(frameSamples)
     local total=0;for _,ms in ipairs(frameSamples) do total=total+ms end
     local report=string.format("NEN real combat frame intervals (capture/encoding included, first 150ms per attack omitted)\nframes %d / mean %.2fms / P95 %.2fms / P99 %.2fms / peak %.2fms\npeak draw calls %d / peak Niệm particles %d\nNot an isolated GPU timer or a guarantee on other hardware.\n",#frameSamples,total/#frameSamples,frameSamples[math.ceil(#frameSamples*.95)],frameSamples[math.ceil(#frameSamples*.99)],frameSamples[#frameSamples],drawPeak,particlePeak)
+    if nenTiming then report=report:gsub("capture/encoding included","no screenshots or encoding") end
     print(report)
     local file=assert(io.open(outputDir.."performance.txt","wb"));file:write(report);file:close()
 end
 local function shot(id,phase)
+    if nenTiming then return end
+    if nenMagic and not (phase=="impact" or id:find("high_card",1,true) or id:find("endless_cycle",1,true)) then return end
     local key=id.."_"..phase
     if captured[key] then return end;captured[key]=true
     love.graphics.captureScreenshot(function(data)
-        local f=assert(io.open(outputDir..key..".png","wb"))
+        local f,err
+        for attempt=1,4 do
+            f,err=io.open(outputDir..key..".png","wb")
+            if f then break end
+            love.timer.sleep(.02)
+        end
+        assert(f,err)
         f:write(data:encode("png"):getString());f:close()
     end)
 end
@@ -77,8 +93,13 @@ local advanced={tesla_369={3,6,9,2,4},jackpot_777={7,7,7,2,4},fibonacci={14,2,3,
 for id,ranks in pairs(advanced) do presets[id]=ranks end
 local suitSets={tesla_369={"hearts","hearts","hearts","clubs","spades"},crimson_tide={"hearts","diamonds","hearts","diamonds","hearts"},obsidian_tide={"spades","clubs","spades","clubs","spades"},eclipse_duality={"hearts","diamonds","hearts","clubs","spades"}}
 function T.update(game,cb)
+    if nenEdges then return require("tests.nen_magic_edges").update(game,cb) end
     if not started then
         if case==0 then require("tests.hd2d_smoke") end
+        if case==0 and nenMagic then
+            assert(require("render.nen_magic").shader,"Attack material must compile in real game")
+            require("tests.nen_magic_damage_capture").verify(UI)
+        end
         case=case+1
         if case>#order*repeats*tierCount then
             F.Attacks.draw=originalDraw
@@ -110,9 +131,10 @@ function T.update(game,cb)
         assert(state=="scoring" and anim.sequence.attack.profile.id==id, "case "..case.." state "..state.." profile "..tostring(anim.sequence and anim.sequence.attack.profile.id))
         expected=anim.scoringData.finalScore
         if nenMode then
-            game.monster.targetAura=expected/({.25,1,2.5})[nenTier]
+            game.monster.targetAura=expected/(nenMagic and { .2,1,2.5,8 } or { .25,1,2.5 })[nenTier]
             F.start(anim,anim.scoringData,UI,{},game.monster.hp,game.monster,id,{lab=true,reducedMotion=nenSamples and case%10==0 or nenAll and case%3==0})
-            assert(anim.sequence.attack.nen and anim.sequence.attack.nen.tier==nenTier)
+            assert(anim.sequence.attack.nen and anim.sequence.attack.nen.tier==math.min(3,nenTier))
+            if nenMagic then assert(require("src.nen_magic").state(anim.sequence.attack).scale.level==nenTier) end
             assert(#require("render.nen_effects").diagnostics==0,"Niệm material shader fallback")
             for _,cue in ipairs({"charge","release","beat","impact"}) do assert(require("src.sound").has("nen_"..id.."_"..cue),"missing Niệm audio") end
         end
@@ -134,10 +156,10 @@ function T.update(game,cb)
         end
         if not s.impactDispatched then assert(game.monster.hp==10000000) end
         if game.monster.hp~=lastHp then hits=hits+1;lastHp=game.monster.hp end
-        assert(love.timer.getTime()-started<25)
+        assert(love.timer.getTime()-started<25,string.format("case %d / %s / %s / age %.3f / active %s / choice %s / lab %s / turn %s",case,state,s.events[s.index] and s.events[s.index].kind or "DONE",s.age,tostring(a.active),tostring(UI.AbilityUI.current~=nil),tostring(F.labOpen),tostring(a.enemyTurn and a.enemyTurn.phase)))
         if (repeats>1 or framesOnly or nenMode) and (case-1)%repeats==0 then
             local e=s.events[s.index]
-            local id=s.attack.profile.id..(nenMode and "_tier"..s.attack.nen.tier or "")
+            local id=s.attack.profile.id..(nenMode and "_tier"..(nenMagic and s.attack.nen.magic.scale.level or s.attack.nen.tier) or "")
             local charge=s.attack.nen and "CHARGE" or "ANTICIPATION"
             local travel=s.attack.nen and "TRAVEL" or "ATTACK"
             local frameAge=e and e.duration*((nenJuice and e.kind==travel) and .75 or .45) or 0

@@ -1,0 +1,1 @@
+76 pixel-exact number-layer comparisons PASS: 0 to 1e308, four animation ages; attack shader/draw does not alter number layer.

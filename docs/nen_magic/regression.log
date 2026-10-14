@@ -1,0 +1,22 @@
+NEN foundation: 27 IDs / 6 types / 81 registry variants; 6 foundation samples / 18 choreographies / 216 scoring sequences, relative tiers, 3-card straight, snapshot, normal/fast/skip/reduced, single contact, dead target, cancellation and lab passed
+NEN memory: 1200 create/release/cancel cycles; collected heap growth <64 KB
+NEN all-ready: 27 actual profiles / 81 variants / 810 sequences (10 consecutive per variant), 3 FPS and qualities, fast/skip/reduced, single contact, snapshot IDs, origins/arrival and camera settle passed
+NEN mixed-profile stress: 810 warm-up + 810 measured sequences, collected heap growth 0.0 KB (<250 KB, trace compilation excluded)
+NEN audio: 108 distinct original PCM cues / audible energy / peak headroom passed
+Balance chest smoke passed
+Motion continuity: 135 hand/tier/quality cases passed; no phase teleport or moving launch origins
+Hand attacks: 270 real scoring sequences passed; tier boundaries, caps, nine silhouettes/conversions/impacts, Ace-low, four suits, FPS/speed, single damage and HP ordering
+Advanced VFX continuity: 270 hand/tier/quality cases; unique lanes and all projectiles reach impact passed
+All 27 isolated VFX Lab previews / 3 Nen tiers (legacy keys clamped) passed
+Advanced hands: 18 matches, 18 planets, priority/order/wild, once-only effects/caps, real chest purchase and save round-trip passed
+Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all three Nen Lab tiers passed
+Bed/speed passed: self heal, cancel, lost turn dispatch, enemy heal, lethal trap, 500% AoE, one use, temporary and permanent speed
+Continental 52 PASS: 11232 scenarios; unique names; pure preview; bounded resources; no retrigger farming; initiative and charges
+Nine editions passed: pool, imprint/persistence, 20 ST, +10 Mult, local Aura, full Echo, evolution, held gold, wild suit, both neighbors and ten final activations
+Scoring runtime PASS: 186 checks; 87 equipment and 80 SPNs, 4 hand sizes each
+SPN snapshot PASS: all 80 SPNs, evolution feedback, multiplier scaling, sparse slots, shared cards and save/load
+SPN rework PASS: 4 persistent growth engines, 6 rule-breaking strategies, costs, save migration, preview purity, locks, damage routing and debt
+PASS: 7 spectral tools, chest/stored modal, cancellation, validation, 21 migrations, souls, Blood/Void, save/load and next combat
+[Sound] Missing cue card_select: ./tests\audio_smoke.lua:120: test missing file
+[Sound] Missing loop music:combat: ./tests\audio_smoke.lua:120: test missing file
+Audio mixer PASS: 108 cues; pools, cooldowns, priorities, crossfades, tension, ducking, focus, buses, settings and failure isolation

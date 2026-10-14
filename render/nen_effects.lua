@@ -1,12 +1,14 @@
 -- Shared preloaded materials; independent silhouettes and motion for every hand.
 local N=require("src.nen_combat")
 local C=N.config
+local Magic=require("render.nen_magic")
 local E={diagnostics={},shader=nil}
 local clamp=function(p) return math.max(0,math.min(1,p)) end
 local out=function(p) return 1-(1-clamp(p))^3 end
 local smooth=function(p) p=clamp(p);return p*p*(3-2*p) end
 local mix=function(a,b,p) return a+(b-a)*p end
 function E.load()
+    Magic.load()
     if E.shader and E.shader.release then E.shader:release() end
     E.diagnostics={};local ok,shader=pcall(love.graphics.newShader,"shaders/nen_material.glsl")
     E.shader=ok and shader or nil
@@ -977,6 +979,7 @@ local function blast(g,a,age)
     end
 end
 function E.draw(a,phase,p,impactAge)
+    if Magic.draw(a,phase,p,impactAge) then return end
     local n=a.nen;local g=love.graphics
     if n.cancelled then return end
     g.push("all")

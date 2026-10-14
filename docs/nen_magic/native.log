@@ -1,0 +1,37 @@
+NEN MAGIC pure: 27 unique profiles/explosions, bounded AURA, 101 path samples/projectile, arrival, dead target, cancellation, 30/60/144 FPS PASS
+NEN MAGIC verified high_card : 4 AURA x 10 repeats
+NEN MAGIC verified pair : 4 AURA x 10 repeats
+NEN MAGIC verified two_pair : 4 AURA x 10 repeats
+NEN MAGIC verified three_of_a_kind : 4 AURA x 10 repeats
+NEN MAGIC verified straight : 4 AURA x 10 repeats
+NEN MAGIC verified flush : 4 AURA x 10 repeats
+NEN MAGIC verified full_house : 4 AURA x 10 repeats
+NEN MAGIC verified four_of_a_kind : 4 AURA x 10 repeats
+NEN MAGIC verified straight_flush : 4 AURA x 10 repeats
+NEN MAGIC verified tesla_369 : 4 AURA x 10 repeats
+NEN MAGIC verified jackpot_777 : 4 AURA x 10 repeats
+NEN MAGIC verified fibonacci : 4 AURA x 10 repeats
+NEN MAGIC verified prime : 4 AURA x 10 repeats
+NEN MAGIC verified odd_star : 4 AURA x 10 repeats
+NEN MAGIC verified even_frost : 4 AURA x 10 repeats
+NEN MAGIC verified crimson_tide : 4 AURA x 10 repeats
+NEN MAGIC verified obsidian_tide : 4 AURA x 10 repeats
+NEN MAGIC verified eclipse_duality : 4 AURA x 10 repeats
+NEN MAGIC verified four_kingdom_prism : 4 AURA x 10 repeats
+NEN MAGIC verified four_kingdom_expedition : 4 AURA x 10 repeats
+NEN MAGIC verified destiny_crown : 4 AURA x 10 repeats
+NEN MAGIC verified continental_gate : 4 AURA x 10 repeats
+NEN MAGIC verified answer_42 : 4 AURA x 10 repeats
+NEN MAGIC verified sealed_gate : 4 AURA x 10 repeats
+NEN MAGIC verified seven_stars : 4 AURA x 10 repeats
+NEN MAGIC verified five_ley_lines : 4 AURA x 10 repeats
+NEN MAGIC verified endless_cycle : 4 AURA x 10 repeats
+Native LÖVE 11.5: 1080 plays, 27000 rendered phase frames; every hand 4 AURA x 10 consecutive repeats.
+LOW/MEDIUM/HIGH particle budgets, immutable aura, graphics-state restoration, cancellation: PASS
+27 shader fallbacks: PASS; GPU image count unchanged.
+Per-frame batch+GPU-readback mean 0.217 ms, P95 0.283 ms, max 15.439 ms (not whole-game FPS).
+Collected heap delta 2030.6 KB (includes one-time JIT traces).
+GPU: OpenGL / 3.3.0 NVIDIA 591.86 / NVIDIA Corporation / NVIDIA GeForce GTX 1650/PCIe/SSE2
+270 additional create/draw/clear cycles with JIT disabled: retained 34.9 KB (<128 KB), PASS.
+
+NEN MAGIC resize/pause/zero/huge/clear: PASS

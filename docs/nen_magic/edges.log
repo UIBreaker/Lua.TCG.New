@@ -1,0 +1,2 @@
+Native real combat edge cases PASS: lethal one-shot damages once and settles; existing Debug.clearScene during TRAVEL cancels the old sequence, cannot damage the new target, and accepts a new attack.
+

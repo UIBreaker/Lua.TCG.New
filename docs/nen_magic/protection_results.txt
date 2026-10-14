@@ -1,0 +1,1 @@
+PASS: 36 protected files byte-identical (SHA-256); main.lua unchanged except menu version. Baseline a96534232f9fb69d9f6dad3b5a5d52d03052e52c.

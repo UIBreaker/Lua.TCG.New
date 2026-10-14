@@ -17,6 +17,7 @@ E.regions = {
         objective="Khám phá Vharos. Mọi đối thủ đều thuộc chất Bích.",
         areas={"Bờ Băng Vharos","Đèo Bão Tuyết","Di Tích Nhật Thực","Tháp Vương Hắc"}},
     {id="unknown",name="LỤC ĐỊA BÍ ẨN",short="BÍ ẨN",background="mysteriousCoast",preset="FOREST",color={0.59,0.79,0.63},
+        requiresRecognitions={"hearts","diamonds","clubs","spades"},
         objective="Đổ bộ bờ biển đá ngầm. Khám phá vô tận và đối đầu các sinh vật lục địa."},
 }
 E.byId={};E.backgroundPaths={}
@@ -27,6 +28,28 @@ end
 -- A legacy ship segment is retained only for callers/saves without route data.
 E.legacyVoyage={id="voyage",name="HẢI TRÌNH VIỄN CHINH",background="expeditionShip",preset="ICE",color={0.36,0.76,0.87}}
 E.byId.voyage=E.legacyVoyage
+E.recognitionIds={"hearts","diamonds","clubs","spades"}
+function E.recognitionCard(id)
+    local r=E.byId[id];if not r or not r.suit then return end
+    return {id="recognition_"..id,category="recognition",type="REGION_RECOGNITION",regionId=id,
+        name="Công Nhận "..r.short,rarity="legendary",color=r.color,
+        desc="Chứng nhận đã chinh phục 20 ải tại "..r.name..". Giữ vĩnh viễn trong hành trình; không tiêu hao. Thu thập đủ bốn công nhận để mở lục địa bí ẩn."}
+end
+function E.recognitionCount(game)
+    local n=0;for _,id in ipairs(E.recognitionIds) do if (game.regionRecognitions or {})[id] then n=n+1 end end;return n
+end
+function E.canEnter(game,id)
+    local r=E.byId[id];if not r or id=="voyage" then return false,"Điểm đến không hợp lệ." end
+    for _,required in ipairs(r.requiresRecognitions or {}) do
+        if not (game.regionRecognitions or {})[required] then return false,"Cần đủ 4 công nhận Cơ, Rô, Chuồn, Bích ("..E.recognitionCount(game).."/4)." end
+    end
+    return true
+end
+function E.travelPermit()
+    return {id="cons_travel_permit",category="travel_permit",type="TRAVEL_PERMIT",name="Giấy Phép Di Chuyển",
+        rarity="rare",cost=2000,color={.53,.78,.94,1},
+        desc="Dùng giữa các trận để chọn khu vực đến; mỗi lần di chuyển tiêu hao một giấy phép. Lục địa bí ẩn yêu cầu đủ 4 công nhận Cơ, Rô, Chuồn, Bích. Có thể bán lấy 1.000 vàng tại màn hình chọn điểm đến."}
+end
 E.humanNames={"Tân Binh Lữ Hành","Trinh Sát Biên Cương","Xạ Thủ Thạch Kiều","Vệ Binh Khiên Thép","Dược Sư Dã Chiến","Kiếm Sĩ Lãng Du","Công Binh Hội Thợ","Lão Binh Thành Cổ","Thống Lĩnh Thương Đoàn","Đội Trưởng Độc Lập","Nữ Công Tước Hội Đồng","Đại Thủ Lĩnh Nhân Loại"}
 E.kingdoms = {
     {id="valoria", suit="hearts", name="Valoria", color={0.91,0.35,0.36}},

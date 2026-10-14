@@ -22,11 +22,13 @@ Tỷ lệ tuyệt đối mỗi lượt, trọng số nguyên trên 100.000:
 | Rương toàn catalog | 2% |
 | Đặc quyền | 0,496% |
 | Mở rộng tay bài +1 | 0,5% |
-| Một vé The Void | 1% |
+| Vé The Void · 1–100 | 1% |
+
+Khi trúng nhóm vé trong gacha, số lượng chọn đều từ 1 đến 100 (1% cho mỗi số lượng trong nhóm, tức 0,01% tuyệt đối mỗi lượt). Số lượng chốt và cộng ngay khi quay; mở hoặc bỏ qua hoạt cảnh không cộng lại. Vé từ lễ thưởng trận vẫn là một vé mỗi lần trúng.
 
 Nhóm SPN thường có tỷ lệ bậc điều kiện: C 61,4%, UC 20%, R 10%, E 5%, L 2%, M 1%, T 0,5%, UQ 0,1%. Trong các nhóm đồ/lá/rương/tiêu hao/đặc quyền: chọn đều danh mục. Tiêu hao gồm toàn thẻ bán lẻ các rương, tất cả thuốc, tiêu hủy và tám hỗ trợ viễn chinh. Trang bị gồm cả cơ bản, trang bị lớn, di vật linh hồn. Đặc quyền trùng chuyển 3 vàng; rương không còn nội dung hợp lệ chuyển 1 vàng, không nâng lên quà hiếm. Rương hợp lệ được mở tại shop ngay sau Void; SPN, tiêu hao và trang bị vào balo, quân bài vào bộ, đặc quyền/tài nguyên áp dụng ngay.
 
-Vé lễ thưởng: 1% khi thắng trận thường, 2% khi thắng boss, một vé khi trúng. Vé là tiền riêng `voidTickets`, hiện thành quà Hiếm trong lễ thưởng; không bị bán bởi nút đổi toàn bộ quà thành vàng và không rơi khi bỏ qua. Lễ thưởng ghi nhận một lần nên mở lại không nhận vé lặp.
+Vé lễ thưởng: 1% khi thắng trận thường, 2% khi thắng boss, một vé khi trúng. Vé là tiền riêng `voidTickets`, hiện thành quà Hiếm trong lễ thưởng; không bị bán bởi nút đổi toàn bộ quà thành vàng và không rơi khi bỏ qua. Lễ thưởng ghi nhận một lần nên mở lại không nhận vé lặp. Artwork riêng `assets/cards/continental/utility/void_ticket.png` dùng chung trong gacha và lễ thưởng, với khung lá bài runtime. Quà mở rộng tay bài tái sử dụng artwork `hand_expansion.png` của shop thông qua `UI.getVoucherImage("v_hand_size")`.
 
 Ưu đãi độc lập mỗi lần vào: 2% có đúng một lượt miễn phí, 5% giảm 50% giá vàng, 10% giảm 25% giá vàng, 83% giá thường. Vé không giảm giá. Lượt miễn phí có thể bù một lượt trong gói 10 (còn trả 9 lượt); dùng xong không sinh thêm lượt miễn phí. Giảm giá giữ suốt lần ghé; tải lại không gieo lại ưu đãi.
 

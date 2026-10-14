@@ -1129,18 +1129,6 @@ end
         })
     end
 
-    for slot,deity in pairs(deities or {}) do
-        local spell=Expansion.byId[deity.enchantment]
-        if spell and not (abilityGame and Boss.isSlotLocked(abilityGame,"spn",slot)) then
-            local res=require("src.blood_shop").effect(spell.effect(handInfo,spell.depth and Depth.game(context) or context and (context.gameState or context) or {},context),deity.enchantmentPower or 1)
-            if res then
-                applyDiscovery(res)
-                table.insert(steps,{type="deity_enchantment",slotIndex=slot,deity=deity,
-                    addedChips=res.addChips or 0,addedMult=res.addMult or 0,
-                    message=deity.name.." · "..spell.name..": "..spell.desc})
-            end
-        end
-    end
     local heldMult=1
     for _,card in ipairs(context.hand) do
         local seal=Deck.normalizeSeal(card.seal)
@@ -1317,6 +1305,47 @@ end
         end
     end
 
+    -- Enchantments scale final SPN output; duplicate copies add percentages rather than compound them.
+    local Enchantments=require("src.spn_enchantments")
+    local enchantmentGame=Depth.game(context)
+    local enchantmentArmor,enchantmentHeal,multPct,chipsPct=0,0,0,0
+    local chipsBeforeEnchant,multBeforeEnchant=currentChips,currentMult
+    local healCap=math.floor((enchantmentGame.maxPlayerHp or 100)*Enchantments.healCapPct/100)
+    local seenEnchantments={}
+    for slot=1,Deities.getMaxSlots(enchantmentGame) do
+        local deity=deities and deities[slot]
+        local spell=deity and Enchantments.get(deity.enchantment)
+        if spell and not seenEnchantments[deity] and not Boss.isSlotLocked(enchantmentGame,"spn",slot) then
+            seenEnchantments[deity]=true
+            local power=deity.enchantmentPower or 1
+            local res=spell.effect(handInfo,enchantmentGame,context,power)
+            if res then
+                if spell.id~="spell_prosper" then res=require("src.blood_shop").effect(res,power) end
+                local beforeChips,beforeMult=currentChips,currentMult
+                chipsPct=math.min(Enchantments.chipsCap,chipsPct+(res.addChipsPct or 0))
+                multPct=math.min(Enchantments.multCap,multPct+(res.addMultPct or 0))
+                currentChips=chipsBeforeEnchant*(1+chipsPct/100)
+                currentMult=multBeforeEnchant*(1+multPct/100)
+                local heal=math.min(res.healHp or 0,math.max(0,healCap-enchantmentHeal))
+                enchantmentHeal=enchantmentHeal+heal;totalHealHp=totalHealHp+heal
+                local armor=res.addArmor or 0;enchantmentArmor=enchantmentArmor+armor
+                bonusGoldAwarded=bonusGoldAwarded+(res.addGold or 0)
+                local parts={}
+                for _,v in ipairs({{currentChips-beforeChips,"ST"},{currentMult-beforeMult,"Cường hóa"},
+                    {armor,"Giáp"},{heal,"HP"},{res.addGold or 0,"Vàng"}}) do
+                    if v[1]>0 then parts[#parts+1]="+"..string.format("%g",v[1]).." "..v[2] end
+                end
+                if #parts>0 then table.insert(steps,{type="deity_enchantment",slotIndex=slot,deity=deity,
+                    addedChips=currentChips-beforeChips,addedMult=currentMult-beforeMult,
+                    addArmor=armor,healHp=heal,addGold=res.addGold or 0,
+                    xChips=beforeChips>0 and currentChips/beforeChips or 1,
+                    xMult=beforeMult>0 and currentMult/beforeMult or 1,
+                    resultingChips=currentChips,resultingMult=currentMult,
+                    message=deity.name.." · "..spell.name.." · "..table.concat(parts," / ")}) end
+            end
+        end
+    end
+
     -- Total calculation: card/equipment XMult is additive & capped at x5.0
     local totalChips = currentChips
     local bossState = context and Boss.state(context.monster)
@@ -1368,7 +1397,7 @@ end
         auraDebtTotal = auraDebtTotal,
         totalExtraDamagePct = totalExtraDamagePct,
         bonusGoldAwarded = bonusGoldAwarded,
-        addArmor = math.min(30, totalArmorGain)+sealHeldArmor,
+        addArmor = math.min(30, totalArmorGain)+sealHeldArmor+enchantmentArmor,
         healHp = totalHealHp,
         hpCost = totalHpCost,
         hasAceOfSpades = hasAceOfSpades,

@@ -14,6 +14,7 @@ local TRANSIENT_GAME_KEYS = {
     map = true,
     abilityCombat = true,
     depthCombat = true,
+    enchantmentCombat = true,
     spnCombat = true,
     spnAttack = true,
     spnFeedback = true,
@@ -122,6 +123,7 @@ local function snapshotRun(run)
         victory = run.victory,
         endless = run.endless,
         travelPermit = run.travelPermit,
+        regionStagesWon = sanitize(run.regionStagesWon),
         shopsVisitedInAnte = run.shopsVisitedInAnte,
         stats = sanitize(run.stats),
         blinds = {},
@@ -148,6 +150,7 @@ local function restoreRun(saved, faction)
     run.victory = saved.victory == true
     run.endless = saved.endless == true or run.ante > 20
     run.travelPermit = saved.travelPermit == true and (saved.regionId~=nil or run.ante<=20)
+    run.regionStagesWon=sanitize(saved.regionStagesWon) or {}
     if run.areaStage<20 or run.regionId=="unknown" then run.victory=false end
     run.shopsVisitedInAnte = tonumber(saved.shopsVisitedInAnte) or 0
     run.stats = sanitize(saved.stats) or run.stats
@@ -162,6 +165,9 @@ local function restoreRun(saved, faction)
     end
     -- Old victory saves represent an earned, unspent permit.
     if run.victory and run.blinds[3].status=="completed" then run.travelPermit=true end
+    if run.regionStagesWon[run.regionId]==nil then
+        run.regionStagesWon[run.regionId]=run.areaStage-1+(run.blinds[3].status=="completed" and 1 or 0)
+    end
     return run
 end
 
@@ -207,6 +213,7 @@ local function restoreDeity(savedDeity)
         if type(value) ~= "function" then deity[key] = sanitize(value) end
     end
     require("src.spn_convergence").migrate(deity)
+    require("src.spn_enchantments").migrateDeity(deity)
     return deity
 end
 
@@ -222,6 +229,7 @@ function Persistence.makeSnapshot(game, activeState)
         version = Persistence.SAVE_VERSION,
         rngState = Rng.getState(),
         activeState = activeState == "victory" and "victory"
+            or (activeState == "travel" and game.travelRequest and "travel")
             or (activeState == "CASH_OUT" and game.pendingVictoryReward and "CASH_OUT")
             or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
             or (activeState == "shop" and "shop")
@@ -269,6 +277,32 @@ function Persistence.restoreSnapshot(snapshot)
             end
         end
     end
+    local Enchantments=require("src.spn_enchantments")
+    for _,list in ipairs({game.consumables or {},game.backpackConsumables or {}}) do
+        for _,item in ipairs(list) do Enchantments.migrateItem(item) end
+    end
+    for _,opening in ipairs(game.rewardPacks or {}) do
+        if opening.pack and opening.pack.packType=="joker_edition" then
+            local seen={}
+            for i=#(opening.cards or {}),1,-1 do
+                local item=opening.cards[i];Enchantments.migrateItem(item)
+                if seen[item.id] then table.remove(opening.cards,i) else seen[item.id]=true end
+            end
+        end
+    end
+    local Spectral=require("src.spectral")
+    for _,list in ipairs({game.consumables or {},game.backpackConsumables or {}}) do
+        for _,item in ipairs(list) do Spectral.migrateItem(item) end
+    end
+    for _,opening in ipairs(game.rewardPacks or {}) do
+        if opening.pack and opening.pack.packType=="spectral" then
+            local seen={}
+            for i=#(opening.cards or {}),1,-1 do
+                local item=opening.cards[i];Spectral.migrateItem(item)
+                if seen[item.id] then table.remove(opening.cards,i) else seen[item.id]=true end
+            end
+        end
+    end
     game.masterDeck = game.persistentDeck
     game.deities = {}
     for slot, savedDeity in pairs(snapshot.game.deities or {}) do
@@ -285,6 +319,16 @@ function Persistence.restoreSnapshot(snapshot)
     end
     require("src.loadout").init(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
+    game.regionRecognitions=game.regionRecognitions or {}
+    if game.run.travelPermit then
+        local found=false
+        for _,list in ipairs({game.backpackConsumables or {},game.consumables or {}}) do
+            for _,item in ipairs(list) do if item.id=="cons_travel_permit" then found=true end end
+        end
+        if not found then require("src.loadout").storeConsumable(game,require("src.expedition").travelPermit()) end
+        local card=require("src.expedition").recognitionCard(game.run.regionId)
+        if card then game.regionRecognitions[game.run.regionId]=true end
+    end
     -- Rebuilding the run may consume random values; restore the exact saved
     -- gameplay RNG state afterwards so future outcomes remain reproducible.
     if snapshot.rngState then Rng.setState(snapshot.rngState) end

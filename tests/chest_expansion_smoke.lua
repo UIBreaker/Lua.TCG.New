@@ -10,13 +10,13 @@ local Deities=require("src.deities")
 local Persistence=require("src.persistence")
 local seen={}
 for _,list in ipairs({X.equipment,X.seals,X.spectral,X.spells}) do
-    assert(#list==(list==X.seals and 2 or 10))
+    assert(#list==(list==X.seals and 2 or list==X.spells and 6 or list==X.spectral and 0 or 10))
     for _,d in ipairs(list) do assert(not seen[d.id]);seen[d.id]=true;assert(d.desc~="" and d.artConcept~="") end
 end
 assert(#Shop.getPackContents("arcana")==#E.POOL)
 assert(#Shop.getPackContents("seal")==10)
-assert(#Shop.getPackContents("spectral")==28)
-assert(#Shop.getPackContents("joker_edition")==24)
+assert(#Shop.getPackContents("spectral")==7)
+assert(#Shop.getPackContents("joker_edition")==8)
 local function fixture()
     local g=G.new();g.gold=24;g.playerHp=80;g.maxPlayerHp=100;g.handsRemaining=1
     local a,b,c=Deck.newCard(6,"valoria"),Deck.newCard(6,"vharos"),Deck.newCard(9,"elaris")
@@ -28,33 +28,7 @@ local function fixture()
     g.deities={};assert(Deities.addDeity(g,Deities.CATALOG.spirit_ward,2))
     return g,g.hand[1]
 end
--- Every transformation passes through the actual chest activation path.
-for _,d in ipairs(X.spectral) do
-    local g,t=fixture();local shop=Shop.new()
-    shop.currentPackOpening={pack={packType="spectral"},cards={d}}
-    local ok,message=Shop.choosePackCard(shop,1,g)
-    assert(ok,d.id..": "..tostring(message));assert(not shop.currentPackOpening)
-    local master=g.persistentDeck[1]
-    assert(master.rank==t.rank and master.suit==t.suit and master.speedBonus==t.speedBonus)
-    assert(master.evolutionLevel==t.evolutionLevel)
-    if d.id=="spec_stairway" then assert(g.hand[2].rank==7 and g.hand[3].rank==8 and g.playerHp==76)
-    elseif d.id=="spec_twin" then assert(g.hand[2].rank==6 and g.hand[2].suit=="vharos" and g.gold==21)
-    elseif d.id=="spec_molt" then assert(t.evolutionLevel==1 and t.speedBonus==8)
-    elseif d.id=="spec_prune" then assert(#g.persistentDeck==2 and t.bonusBaseChips==10 and #g.hand==2)
-    elseif d.id=="spec_migration" then assert(t.suit=="aurelia" and g.persistentDeck[2].suit=="aurelia" and g.gold==20)
-    elseif d.id=="spec_inversion" then assert(t.rank==10 and g.playerHp==78)
-    elseif d.id=="spec_temper" then assert(#t.equipments==0 and t.evolutionLevel==4)
-    elseif d.id=="spec_fission" then assert(t.rank==4 and #g.persistentDeck==4 and g.persistentDeck[4].rank==2)
-    elseif d.id=="spec_redistribute" then assert(t.suit=="vharos" and g.hand[2].suit=="valoria")
-    elseif d.id=="spec_distill" then assert(not t.seal and not t.isAnchor and t.evolutionLevel==3 and t.speedBonus==4) end
-end
-for _,id in ipairs({"spec_twin","spec_stairway","spec_redistribute","spec_temper","spec_molt","spec_prune","spec_distill","spec_fission"}) do
-    local g,t=fixture();g.gold=0;g.playerHp=2;g.hand={t};g.persistentDeck={g.persistentDeck[1]}
-    t.equipments={};t.evolutionLevel=0;t.seal=nil;t.rank=2
-    local shop=Shop.new();shop.currentPackOpening={pack={packType="spectral"},cards={X.byId[id]}}
-    assert(not Shop.choosePackCard(shop,1,g),id.." should fail")
-    assert(shop.currentPackOpening and g.gold==0 and g.playerHp==2 and t.rank==2)
-end
+-- Curated transformations and retired save migration: spectral_persistence_smoke.lua.
 -- Check each equipment's unique condition, including unscored suppression.
 local g,t=fixture();local u=g.hand[2];t.rank=3;u.rank=3
 local ctx={gameState=g,monster=g.monster,hand={u,g.hand[3]}}
@@ -116,7 +90,9 @@ local last=assert(source:find("local function activateConsumable",first,true))
 local chunk=source:sub(first,last-1).."\nreturn useConsumable"
 local function useStored(g,d)
     local env=setmetatable({game=g,Shop=Shop,Sound=require("src.sound"),
-        UI={BossAbilities=require("src.boss_abilities"),Inventory=require("src.inventory"),COLORS={goldYellow={}}},
+        UI={BossAbilities=require("src.boss_abilities"),Inventory=require("src.inventory"),COLORS={goldYellow={}},
+            Abilities=require("src.card_abilities"),Polish={snapshot=function() return {} end,changed=function() end},
+            AbilityUI={openChoices=function(_,choices,callback) callback({{target=choices[1].options[1].target}}) end}},
         anim={floatingTexts={}},saveRunAtSafePoint=function() end},{__index=_G})
     local loader
     if setfenv then loader=assert(loadstring(chunk));setfenv(loader,env)
@@ -126,8 +102,8 @@ end
 for _,list in ipairs({X.spectral,X.spells}) do
     for _,d in ipairs(list) do local g=fixture();assert(useStored(g,d),d.id);assert(#g.consumables==0) end
 end
-g,t=fixture();g.gold=0
-assert(not useStored(g,X.byId.spec_twin) and #g.consumables==1)
+g,t=fixture();g.playerHp=5
+assert(not useStored(g,require("src.spectral").get("spec_cryptid")) and #g.consumables==1)
 g,t=fixture();g.deities={}
 assert(not useStored(g,X.byId.spell_bastion) and #g.consumables==1)
 -- Repeated chest rolls can reach every new reward; no duplicate candidates.

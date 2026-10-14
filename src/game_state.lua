@@ -29,6 +29,7 @@ function GameState.resetRun(game, faction)
     game.pendingBloodShop=nil;game.bloodShopChecked={};game.bloodShopNotice=nil
     game.pendingBarter=nil;game.barterChecked={};game.barterEvent=nil
     game.voidTickets=0;game.voidVisited={};game.voidEvent=nil
+    game.regionRecognitions={};game.pendingJourneyRewards=nil;game.travelRequest=nil
     game.soulShopPurchased = {}
     game.soulDestroyActive = false
     game.soulDestroyConsumable = nil

@@ -65,6 +65,7 @@ function T.update(game,cb)
         assert(game.run.regionId=="hearts" and not game.run.travelPermit and game.run.areaStage==1 and game.persistentDeck==T.deck,"destination button must spend permit")
     elseif step==n+7 then shot("route_after_travel")
     elseif step==n+8 then permit(game,cb)
+        game.regionRecognitions={hearts=true,diamonds=true,clubs=true,spades=true}
     elseif step==n+9 then click(1140,500)
         assert(game.run.regionId=="unknown" and not game.run.travelPermit and game.run.areaStage==1,"direct mysterious continent travel")
     elseif step==n+10 then shot("route_after_unknown")

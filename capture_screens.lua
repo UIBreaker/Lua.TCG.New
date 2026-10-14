@@ -68,6 +68,11 @@ function Capture.update(gameRef, callbacks)
         end
     end
     for _,value in ipairs(arg or {}) do
+        if value=="--test-travel-documents" then
+            local ok,err=pcall(require("tests.travel_documents_capture").update,gameRef,callbacks)
+            if not ok then print("TRAVEL DOCUMENT UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
         if value=="--test-void-gacha" then
             local ok,err=pcall(require("tests.void_gacha_capture").update,gameRef,callbacks)
             if not ok then print("VOID UI FAIL: "..tostring(err));love.event.quit(1) end

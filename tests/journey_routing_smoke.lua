@@ -52,6 +52,9 @@ end
 local g=fresh()
 assert(not Run.resolveTravel(g.run,g,"sell") and g.gold==27)
 completeRegion(g)
+assert(E.recognitionCount(g)==0 and not E.canEnter(g,"unknown"))
+local permits=#g.backpackConsumables
+assert(not Run.resolveTravel(g.run,g,"unknown") and #g.backpackConsumables==permits and g.run.ante==20)
 local saved=Persistence.makeSnapshot(g,"victory")
 local restored,state=Persistence.restoreSnapshot(saved)
 assert(state=="victory" and restored.run.regionId=="human" and restored.run.areaStage==20 and restored.run.travelPermit)
@@ -75,6 +78,8 @@ for _,id in ipairs({"diamonds","clubs","spades","human","unknown"}) do
     assert(restored.run.regionId==id and restored.run.areaStage==1 and restored.run.ante==g.run.ante)
 end
 -- Mysterious continent stays endless rather than issuing a human travel permit.
+assert(E.recognitionCount(g)==4 and E.canEnter(g,"unknown"))
+assert(g.run.regionStagesWon.hearts==20 and g.run.regionStagesWon.spades==20)
 for stage=1,25 do
     for i=1,3 do Run.completeCurrentBlind(g.run,g);assert(Run.advanceBlind(g.run,g)) end
 end
@@ -84,4 +89,26 @@ saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
 saved.game.run.regionId=nil;saved.game.run.areaStage=nil;saved.game.run.ante=26;saved.game.run.travelPermit=true
 restored=Persistence.restoreSnapshot(saved)
 assert(restored.run.regionId=="human" and restored.run.areaStage==6 and not restored.run.travelPermit and #restored.persistentDeck==1)
-print("Journey routing passed: "..checked.." opponent identities, 20-area boundaries, full campaigns, one-time sales, all destinations, inventory and save migration")
+local Shop=require("src.shop");local Loadout=require("src.loadout");local Reward=require("src.reward_system")
+g=fresh();g.shopMode="consumable";g.gold=1999
+local shop=Shop.new();Shop.refresh(shop,g)
+local permitIndex;for i,item in ipairs(shop.items) do if item.id=="cons_travel_permit" then permitIndex=i;assert(item.cost==2000 and item.consumable) end end
+assert(permitIndex and not Shop.buyItem(shop,permitIndex,g) and #g.backpackConsumables==0)
+g.gold=2000;assert(Shop.buyItem(shop,permitIndex,g) and g.gold==0 and #g.backpackConsumables==1)
+assert(not Run.beginTravel(g,"backpackConsumables",1,"playing"))
+assert(Run.beginTravel(g,"backpackConsumables",1,"shop"))
+assert(not Run.resolveTravel(g.run,g,"unknown") and #g.backpackConsumables==1)
+saved=Persistence.makeSnapshot(g,"travel");restored,state=Persistence.restoreSnapshot(saved)
+assert(state=="travel" and restored.travelRequest and #restored.backpackConsumables==1)
+local ok,back=Run.resolveTravel(restored.run,restored,"cancel");assert(ok and back=="shop" and #restored.backpackConsumables==1)
+assert(Run.resolveTravel(g.run,g,"hearts") and g.run.ante==1 and g.run.areaStage==1 and #g.backpackConsumables==0)
+completeRegion(g);assert(g.run.ante==20 and g.regionRecognitions.hearts and E.recognitionCount(g)==1)
+local receipt=Reward.begin(Reward.calculate(Run.getCurrentBlind(g.run),g),g,{lootTableId="normal_enemy"})
+local recognized=false;for _,r in ipairs(receipt.loot) do if r.id=="recognition_hearts" then recognized=true end end
+assert(recognized and g.pendingJourneyRewards==nil)
+Reward.exchangeAll(g,receipt);assert(g.regionRecognitions.hearts)
+assert(Run.resolveTravel(g.run,g,"diamonds") and g.run.ante==21 and g.run.areaStage==1)
+Loadout.storeConsumable(g,E.travelPermit());assert(Run.beginTravel(g,"backpackConsumables",#g.backpackConsumables,"BLIND_SELECT"))
+assert(Run.resolveTravel(g.run,g,"hearts") and g.run.ante==21 and g.run.areaStage==1)
+assert(g.regionRecognitions.hearts and g.run.regionStagesWon.hearts==20)
+print("Journey routing passed: "..checked.." opponents, global stage 20 -> 21, four permanent recognitions, locked unknown, 2000-gold permit purchase, cancellation, consumption, ceremony, return progress and save migration")

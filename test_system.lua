@@ -1194,7 +1194,7 @@ do
     end
 
     local jokers = Collection.getItems("jokers")
-    assert(#jokers == 77, "Collection must expose exactly 77 Common spirits, got: " .. #jokers)
+    assert(#jokers == 78, "Collection must expose exactly 78 Common spirits, got: " .. #jokers)
 
     local consumables = Collection.getItems("consumables")
     assert(#consumables >= 8, "Must have at least 8 Consumables/Equipment in Collection, got: " .. #consumables)
@@ -1297,7 +1297,7 @@ do
         assert(d.lore ~= nil and d.lore ~= "", "Deity must have lore flavor text: " .. tostring(d.id))
         assert(d.rarity == "common", "Every new spirit must be Common: " .. tostring(d.id))
     end
-    assert(count == 77, "Deities catalog must contain exactly 77 common spirits, got: " .. count)
+    assert(count == 78, "Deities catalog must contain exactly 78 common spirits, got: " .. count)
 
     -- D. Hộ Linh Visual Tarot & Relic Sigils Rendering
     local samplePatron = Deities.CATALOG.spirit_pebble
@@ -1805,34 +1805,19 @@ do
     log("[PASS] 75. Editions (Foil +50 flat damage, Holo +10 Mult, Poly x1.5 Aura, Negative +1 Slot) verified 100%")
 end
 
--- 76. Test Joker Spells (Aura, Ectoplasm, Ankh, Hex)
+-- 76. Curated SPN enchantments require a target and preserve the rest of the team.
 do
-    local d1 = { id = "d1", name = "Thần 1" }
-    local d2 = { id = "d2", name = "Thần 2" }
-    local testGame = { deities = { d1, d2 }, maxHandSize = 3 }
-    local shop = {
-        currentPackOpening = {
-            pack = { packType = "joker_edition" },
-            cards = { { id = "spell_ectoplasm" } },
-        }
-    }
-    local ok, msg = Shop.choosePackCard(shop, 1, testGame)
-    assert(ok == true, "Ectoplasm must succeed")
-    assert(testGame.maxHandSize == 2, "Ectoplasm must reduce maxHandSize from 3 to 2, got: " .. testGame.maxHandSize)
-    assert(d1.edition == "negative" or d2.edition == "negative", "One deity must gain negative edition")
-
-    -- Test Ankh (clone 1, destroy others)
-    testGame.deities = { { id = "d1", name = "Thần 1" }, { id = "d2", name = "Thần 2" } }
-    shop.currentPackOpening = {
-        pack = { packType = "joker_edition" },
-        cards = { { id = "spell_ankh" } },
-    }
-    local okAnkh = Shop.choosePackCard(shop, 1, testGame)
-    assert(okAnkh == true, "Ankh must succeed")
-    assert(testGame.deities[1] ~= nil and testGame.deities[2] ~= nil, "Ankh must create a clone into slot 2")
-    assert(testGame.deities[1].name == testGame.deities[2].name, "Cloned deity must have identical name: " .. testGame.deities[1].name)
-    assert(testGame.deities[3] == nil and testGame.deities[4] == nil and testGame.deities[5] == nil, "All other slots must be destroyed")
-    log("[PASS] 76. Joker Spells (Aura, Ectoplasm, Ankh, Hex) mechanics verified 100%")
+    local e=require("src.spn_enchantments")
+    local d1={id="d1",name="Thần 1",edition="foil",evolutionLevel=3}
+    local d2={id="d2",name="Thần 2",edition="negative"}
+    local g={deities={d1,d2},maxHandSize=3}
+    local shop={currentPackOpening={pack={packType="joker_edition"},cards={e.get("spell_bastion")}}}
+    local ok,message=Shop.choosePackCard(shop,1,g)
+    assert(not ok and message=="choose_enchantment" and shop.currentPackOpening)
+    assert(Shop.choosePackCard(shop,1,g,d2))
+    assert(d2.enchantment=="spell_bastion" and d2.edition=="negative" and g.maxHandSize==3)
+    assert(d1.edition=="foil" and d1.evolutionLevel==3 and g.deities[1]==d1)
+    log("[PASS] 76. Eight curated SPN enchantments, explicit targets and preserved team verified")
 end
 
 -- 77. Test 10 focused Battle Seals and legacy migration
@@ -1880,52 +1865,20 @@ do
     log("[PASS] 77. 10 focused Battle Seals and legacy migration verified 100%")
 end
 
--- 78. Test Spectral Transformations (Cryptid, Immolate +$20, Ouija, Black Hole)
+-- 78. Curated Spectral transformations require explicit targets, never auto-sacrifice.
 do
-    local c1 = Deck.newCard(5, "hearts")
-    local c2 = Deck.newCard(9, "spades")
-    local testGame = {
-        hand = { c1, c2 },
-        deck = {},
-        persistentDeck = { c1, c2 },
-        selectedIndices = { 1 },
-        gold = 10,
-        maxHandSize = 3,
-        handLevels = { high_card = 1, pair = 1 },
-    }
-
-    -- Cryptid (2 copies of selected card)
-    local shop = {
-        currentPackOpening = {
-            pack = { packType = "spectral" },
-            cards = { { id = "spec_cryptid" } },
-        }
-    }
-    local okCryptid = Shop.choosePackCard(shop, 1, testGame)
-    assert(okCryptid == true, "Cryptid must succeed")
-    assert(#testGame.persistentDeck == 4, "Cryptid must create 2 copies in persistentDeck, got: " .. #testGame.persistentDeck)
-    assert(#testGame.hand == 4, "Cryptid must add 2 copies to hand, got: " .. #testGame.hand)
-    assert(testGame.persistentDeck[3].rank == c1.rank and testGame.persistentDeck[4].rank == c1.rank, "Copies must match selected card rank")
-
-    -- Immolate (destroy up to 5 cards, grant +$20)
-    shop.currentPackOpening = {
-        pack = { packType = "spectral" },
-        cards = { { id = "spec_immolate" } },
-    }
-    local okImmolate = Shop.choosePackCard(shop, 1, testGame)
-    assert(okImmolate == true, "Immolate must succeed")
-    assert(testGame.gold == 30, "Immolate must grant +$20 gold (10 -> 30), got: " .. testGame.gold)
-
-    -- Black Hole (+1 all hand levels)
-    shop.currentPackOpening = {
-        pack = { packType = "spectral" },
-        cards = { { id = "spec_black_hole" } },
-    }
-    local okHole = Shop.choosePackCard(shop, 1, testGame)
-    assert(okHole == true, "Black Hole must succeed")
-    assert(testGame.handLevels.high_card == 2, "High Card level must increase to 2, got: " .. testGame.handLevels.high_card)
-    assert(testGame.handLevels.pair == 2, "Pair level must increase to 2, got: " .. testGame.handLevels.pair)
-    log("[PASS] 78. Spectral Transformations (Cryptid, Immolate +$20, Ouija, Black Hole) verified 100%")
+    local S=require("src.spectral");assert(#Shop.SPECTRAL_CARDS==7)
+    local c1,c2=Deck.newCard(5,"hearts"),Deck.newCard(9,"spades")
+    local g={hand={c1,c2},deck={},persistentDeck={c1,c2},gold=10,playerHp=50,maxPlayerHp=100,maxHandSize=3,handLevels={high_card=1,pair=1}}
+    local shop={currentPackOpening={pack={packType="spectral"},cards={{id="spec_cryptid"}}}}
+    assert(not Shop.choosePackCard(shop,1,g) and shop.currentPackOpening)
+    assert(Shop.choosePackCard(shop,1,g,{cards={c1}}))
+    assert(#g.persistentDeck==3 and #g.hand==2 and #g.deck==1 and g.playerHp==45)
+    shop.currentPackOpening={pack={packType="spectral"},cards={{id="spec_immolate"}}}
+    assert(Shop.choosePackCard(shop,1,g,{cards={c2}}) and #g.persistentDeck==2 and g.gold==15)
+    shop.currentPackOpening={pack={packType="spectral"},cards={{id="spec_black_hole"}}}
+    assert(Shop.choosePackCard(shop,1,g) and g.handLevels.high_card==2 and g.handLevels.pair==2)
+    log("[PASS] 78. Seven focused Spectrals: explicit selection, cloning, pruning, global levels")
 end
 
 -- 79. Test Hand Leveling & Planet Cards
@@ -1987,7 +1940,7 @@ do
     local ok, msg = Shop.keepPackCard(shop, 1, testGame)
     assert(ok == true, "keepPackCard must succeed when consumables has space")
     assert(#testGame.consumables == 1, "Consumable must be added to inventory")
-    assert(testGame.consumables[1].id == "spell_aura", "Stored card must match chosen card")
+    assert(testGame.consumables[1].id == "spell_confluence", "Stored card must match chosen card")
     assert(testGame.consumables[1].category == "joker_spell", "Stored card must be tagged with correct category")
     assert(shop.currentPackOpening == nil, "Pack opening must close after keeping card")
 
@@ -2207,7 +2160,7 @@ do
     log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
 end
 
--- 88. Test Phase 2: exactly 77 Common spirits and 5 base slots
+-- 88. Test Phase 2: exactly 78 Common spirits and 5 base slots
 do
     local baseSlots = Deities.getMaxSlots({})
     assert(baseSlots == 5, "Deities base slots must be 5, got: " .. baseSlots)
@@ -2217,7 +2170,7 @@ do
         spiritCount = spiritCount + 1
         assert(spirit.rarity == "common", "Every spirit must be Common")
     end
-    assert(spiritCount == 77, "Catalog must contain exactly 77 spirits")
+    assert(spiritCount == 78, "Catalog must contain exactly 78 spirits")
     assert(Deities.CATALOG.spirit_pebble.onHandScored().addChips == 20, "Linh Sỏi effect")
     assert(Deities.CATALOG.spirit_ember.onHandScored().addMult == 4, "Linh Lửa effect")
     assert(Deities.CATALOG.spirit_blade.onCardScored().addChips == 8, "Linh Kiếm effect")
@@ -2228,11 +2181,11 @@ do
     assert(Deities.CATALOG.spirit_crown.onCardScored({ rank = 11 }).addChips == 15, "Linh Miện effect")
     assert(Deities.CATALOG.spirit_coin.onRoundWin().addGold == 2, "Linh Tiền effect")
 
-    local ante1Pool = Deities.getRandomShopPool({}, 77, { ante = 1 })
+    local ante1Pool = Deities.getRandomShopPool({}, 78, { ante = 1 })
     for _, d in ipairs(ante1Pool) do
         assert(d.rarity == "common", "Shop must only offer Common spirits")
     end
-    log("[PASS] 88. Exactly 77 Common spirits and 5 base slots verified 100%")
+    log("[PASS] 88. Exactly 78 Common spirits and 5 base slots verified 100%")
 end
 
 -- 89. Test Phase 3 & 4: Card Enhancements (8 Types with Tradeoffs)
@@ -2510,11 +2463,11 @@ do
     assert(enhMap["enh_vanguard"] ~= nil, "enh_vanguard must exist in Collection")
     assert(enhMap["enh_rearguard"] ~= nil, "enh_rearguard must exist in Collection")
 
-    -- 3. Collection must expose exactly the 77 Common spirits from the catalog.
+    -- 3. Collection must expose exactly the 78 Common spirits from the catalog.
     local jokers = Collection.getItems("jokers")
     local jokerMap = {}
     for _, j in ipairs(jokers) do jokerMap[j.id] = j end
-    assert(#jokers == 77 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 77 Common spirits")
+    assert(#jokers == 78 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 78 Common spirits")
 
     -- 4. Every shop pack and voucher must come from the same catalog as the Collection.
     local packs = Collection.getItems("packs")

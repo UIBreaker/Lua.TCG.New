@@ -59,6 +59,20 @@ for _,row in ipairs(G.config.rates) do
     elseif row.id=="hand" then assert(g.maxHandSize==4) end
     start=start+row.weight
 end
+g=game();local earned=0
+for amount=1,100 do
+    Rng.random=function(a,b) if b==100000 then return 100000 elseif a==1 and b==100 then return amount elseif b then return a elseif not a then return .99 else return 1 end end
+    assert(G.pull(g,1,"gold"));earned=earned+amount
+    local reward=g.voidEvent.results[1]
+    assert(reward.kind=="ticket" and reward.amount==amount and reward.name=="+"..amount.." Vé The Void")
+    assert(g.voidTickets==30+earned and g.gold==10000-amount*100)
+    G.finishReveal(g);assert(g.voidTickets==30+earned,"Reveal duplicated ticket reward")
+end
+g=game();Rng.random=function(a,b) if b==100000 then return 100000 elseif a==1 and b==100 then return 100 elseif b then return a elseif not a then return .99 else return 1 end end
+assert(G.pull(g,10,"ticket") and g.voidTickets==1020 and g.gold==10000)
+local ticketRestore=P.restoreSnapshot(assert(P.decode(P.encode(P.makeSnapshot(g,"void")))))
+assert(ticketRestore.voidTickets==1020 and ticketRestore.voidEvent.results[10].amount==100)
+G.finishReveal(ticketRestore);assert(ticketRestore.voidTickets==1020)
 g=GS.new();g.run=Run.newRun();force(5,0)
 local result=Reward.begin(Reward.calculate({type="small",baseReward=3},g),g)
 assert(g.voidTickets==1);local tickets=g.voidTickets;assert(Reward.begin({},g)==result and g.voidTickets==tickets)

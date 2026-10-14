@@ -15,7 +15,7 @@ return {
         {id="pack",label="Rương toàn danh mục",weight=2000},
         {id="voucher",label="Đặc quyền",weight=496},
         {id="hand",label="Mở rộng tay bài +1",weight=500},
-        {id="ticket",label="Một vé The Void",weight=1000},
+        {id="ticket",label="Vé The Void · 1–100",weight=1000},
     },
     strengths={common=1,uncommon=2,rare=3,epic=4,legendary=5,mythic=6,transcendent=7,unique=8},
     colors={{.62,.72,.83},{.28,.86,.52},{.28,.68,1},{.76,.38,1},{1,.76,.25},{1,.3,.43},{.35,1,1},{.94,.68,1},{1,.9,.6}},

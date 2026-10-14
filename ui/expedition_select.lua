@@ -36,10 +36,10 @@ function S.draw(game, UI, mx, my)
         local active=area.index==i
         panel(x,108,296,64,active and region.color or muted,active and 0.94 or 0.78)
         text(string.format("0%d  %s",i,(region.areas or {})[i] or "MIỀN ĐẤT CHƯA KHÁM PHÁ"),x+12,120,272,"small",active and region.color or muted)
-        text(string.format("ẢI %02d — %02d",(i-1)*5+1,i*5)..(active and "   /   ĐANG KHÁM PHÁ" or area.index>i and "   /   ĐÃ ĐI QUA" or "   /   CHƯA ĐẾN"),x+12,148,272,"tiny",muted)
+        text(string.format("ẢI %02d — %02d",run.ante-localStage+(i-1)*5+1,run.ante-localStage+i*5)..(active and "   /   ĐANG KHÁM PHÁ" or area.index>i and "   /   ĐÃ ĐI QUA" or "   /   CHƯA ĐẾN"),x+12,148,272,"tiny",muted)
     end
     panel(24,186,1232,82,region.color,0.89)
-    text("ẢI "..string.format("%02d",localStage).."  /  "..region.name,44,197,800,"medium",region.color)
+    text("ẢI "..string.format("%02d",run.ante).."  /  "..region.name,44,197,800,"medium",region.color)
     text(region.objective,44,229,910,"small",white)
     text(run.travelPermit and "GIẤY PHÉP: ĐÃ CẤP" or "GIẤY PHÉP: MỐC 20",984,204,250,"small",gold,"right")
     text(region.id=="unknown" and "KHÁM PHÁ VÔ TẬN" or "4 KHU VỰC • 20 ẢI",994,235,240,"tiny",muted,"right")
@@ -87,7 +87,7 @@ function S.draw(game, UI, mx, my)
         local stage=block+j-1;local x=283+(j-1)*39
         g.setColor(stage<localStage and 0.32 or region.color[1],stage<localStage and 0.65 or region.color[2],stage<localStage and 0.49 or region.color[3],stage<=localStage and 0.9 or 0.22)
         g.rectangle("fill",x,654,30,28,5,5)
-        text(tostring(stage),x,661,30,"tiny",stage==localStage and white or muted,"center")
+        text(tostring(run.ante-localStage+stage),x,661,30,"tiny",stage==localStage and white or muted,"center")
     end
     text("HP "..(game.playerHp or 100).."/"..(game.maxPlayerHp or 100).."   •   $"..(game.gold or 0).."   •   "..#(game.persistentDeck or {}).." LÁ",44,674,240,"tiny",muted)
     text("3 TRẬN / ẢI",1085,663,150,"small",muted,"right")

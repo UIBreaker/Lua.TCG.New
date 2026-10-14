@@ -113,74 +113,20 @@ add(D.seals,"seal_gambit","Ấn Đổi Lượt","Bỏ bài chỉ gồm các lá 
 add(D.seals,"seal_threshold","Ấn Tam Nhịp","Mỗi lá mang ấn được tính điểm tổng cộng 3 lần (hai lần thêm), hồi 3 HP mỗi lá. Không yêu cầu tích nhịp qua nhiều tay.","A large three-step heartbeat stamp with three broad grooves in a green forest altar.",function() return {healHp=3} end)
 for _,d in ipairs(D.seals) do d.sealType=d.id;d.sealName=d.name;d.effect=d.effect or function() end end
 
-local function spellState(g,id) return (state(g).spellValues or {})[id] or {} end
-local function saveSpell(g,id,t,ctx)
-    if ctx and ctx.preview and not ctx.depthGame then return end
-    local s=state(g);s.spellValues=s.spellValues or {};s.spellValues[id]=t
-end
-add(D.spells,"spell_seasons","Phù Phép Bốn Mùa","SPN đầu tiên: ghi các thế đánh đã dùng. Đủ 4 thế khác nhau trong trận thì thêm 1 lượt đánh và xóa bộ ghi. Mỗi tay chỉ ghi một lần.","One spectral season wheel with four broad weather sectors above a Western forest.",function(h,g,ctx)
-    local t={};for k,v in pairs(spellState(g,"seasons")) do t[k]=v end;t[h.type.id]=true
-    local n=0;for _ in pairs(t) do n=n+1 end
-    if n>=4 then t={};if not ctx.preview then g.handsRemaining=(g.handsRemaining or 0)+1 end end
-    saveSpell(g,"seasons",t,ctx);return {}
+add(D.spells,"spell_retinue","Phù Phép Bách Khí","Mỗi loại ITM khác nhau trên các lá tính điểm: tăng 10% ST sau SPN, tối đa 50% từ mỗi phép. Tổng tăng ST từ phù phép tối đa +200%.","One supernatural armory guardian surrounded by six large distinct spectral weapons in a ruined Western forge.",function(h)
+    local ids,n={},0
+    for _,c in ipairs(h.scoringCards) do for _,eq in ipairs(c.equipments or {}) do if not ids[eq.id] then ids[eq.id]=true;n=n+1 end end end
+    if n>0 then return {addChipsPct=math.min(50,n*10)} end
 end)
-add(D.spells,"spell_escrow","Phù Phép Bảo Hiểm","SPN đầu tiên: mỗi tay nhận 1 Vàng cho mỗi 5 HP thực sự bị quái lấy từ lần đánh trước, tối đa 3 Vàng; tự trả HP không được bồi thường.","One spectral merchant sheltering a wounded traveler beneath a translucent antique gold canopy.",function(h,g)
-    return {addGold=math.min(3,math.floor((state(g).damage or 0)/5))}
+add(D.spells,"spell_switchcraft","Phù Phép Biến Thế","Đổi sang thế Poker khác tay trước của trận: tăng 50% Cường hóa sau SPN. Tay đầu không kích hoạt; tổng tăng Cường hóa từ phù phép tối đa +200%.","One supernatural blade spirit shifting between paired blades and a long glacial spear.",function(h,g)
+    local last=state(g).lastType
+    if last and last~=h.type.id then return {addMultPct=50} end
 end)
-add(D.spells,"spell_switchcraft","Phù Phép Biến Thế","SPN đầu tiên: chuyển từ Đôi/Hai Đôi sang Sảnh hoặc ngược lại giữa hai tay liên tiếp: +0.45 hệ số Aura. Thùng Phá Sảnh cũng tính là Sảnh.","One supernatural blade spirit shifting between paired blades and a long glacial spear.",function(h,g)
-    local function mode(id) return (id=="pair" or id=="two_pair") and 1 or (id=="straight" or id=="straight_flush") and 2 end
-    local a,b=mode(state(g).lastType),mode(h.type.id)
-    if a and b and a~=b then return {xMultBonus=0.45} end
-end)
-add(D.spells,"spell_recycle","Phù Phép Tái Chế","SPN đầu tiên: khi đánh mà cọc rút đã hết, nhận 1 lượt bỏ bài, một lần mỗi trận; không tự xáo cọc hoặc rút thêm bài.","One spectral serpent carrying discarded stone fragments into a new circle over forest ruins.",function(h,g,ctx)
-    if #(g.deck or {})==0 and not spellState(g,"recycle").used then
-        if not ctx.preview then g.discardsRemaining=(g.discardsRemaining or 0)+1 end
-        saveSpell(g,"recycle",{used=true},ctx);return {}
-    end
-end)
-add(D.spells,"spell_retinue","Phù Phép Bách Khí","SPN đầu tiên: mỗi loại trang bị khác nhau trên các lá tính điểm cho +2 Cường hóa, tối đa +12; trang bị trùng ID chỉ tính một lần.","One supernatural armory guardian surrounded by six large distinct spectral weapons in a ruined Western forge.",function(h)
-    local ids,n={},0;for _,c in ipairs(h.scoringCards) do for _,eq in ipairs(c.equipments or {}) do if not ids[eq.id] then ids[eq.id]=true;n=n+1 end end end
-    return {addMult=math.min(12,2*n)}
-end)
-add(D.spells,"spell_metronome","Phù Phép Nhịp Tiến","SPN đầu tiên: tay trước tính điểm 2 lá, tay này 3 lá: lá thấp rank nhất giữ lại nhận +1 cấp khả năng tạm thời trong trận; hòa rank chọn lá trái nhất.","One spectral conductor marking a two-beat rhythm turning into three luminous mountain stepping stones.",function(h,g,ctx)
-    if state(g).lastSize==2 and #h.scoringCards==3 then
-        local target;for _,c in ipairs(ctx.hand or {}) do if not target or c.rank<target.rank then target=c end end
-        if target then if not ctx.preview then
-            local A=require("src.card_abilities");local n=math.max(0,math.min(1,A.config.maxEvolutionLevel-A.level(target)))
-            if n>0 then A.upgrade(g,target,n,true) end
-        end;return {} end
-    end
-end)
-add(D.spells,"spell_caravan","Phù Phép Trú Quân","SPN đầu tiên: tích số đòn quái thực sự ra tay trong trận. Sau mỗi 3 đòn, tay đánh kế tiếp hồi 10 HP rồi xóa 3 đòn; tối đa một lần mỗi tay.","One broad spectral caravan shelter guarded through three incoming storm waves on a navy coast.",function(h,g,ctx)
-    local n=state(g).attacks or 0
-    if n>=3 then if not ctx.preview or ctx.depthGame then state(g).attacks=n-3 end;return {healHp=10} end
-end)
-add(D.spells,"spell_magnet","Phù Phép Hút Gió","SPN đầu tiên: bỏ đúng 3 lá có rank khác nhau thì mọi lá còn giữ trên tay nhận +2 tốc đánh tạm trong trận (tối đa 999). Có thể kích hoạt nhiều lần.","One spectral wind ray drawing three separate stone fragments into a coordinated cyan current.")
-add(D.spells,"spell_reprisal","Phù Phép Phản Thành","SPN đầu tiên: mỗi đòn quái bị Giáp chặn hết từ lần đánh trước cho +40 ST ở tay kế tiếp, tối đa +80; đòn Boss hủy trước khi ra tay không tính.","One spectral stone fortress reflecting two broad impacts into a single silver shockwave.",function(h,g)
-    return {addChips=math.min(80,40*(state(g).blocked or 0))}
-end)
-add(D.spells,"spell_codex","Phù Phép Luân Vai","SPN đầu tiên: chuyển giữa vùng tính điểm toàn J/Q/K và toàn quân số 2–10: tăng vĩnh viễn 1 cấp của thế đánh mới, một lần mỗi trận; áp dụng từ tay sau.","One spectral librarian turning a page between a royal silhouette and a soldier in Western violet ruins.",function(h,g,ctx)
-    local mode="number";for _,c in ipairs(h.scoringCards) do if c.rank<2 or c.rank>10 then mode=nil end end
-    local allFace=true;for _,c in ipairs(h.scoringCards) do if c.rank<11 or c.rank>13 then allFace=false end end
-    if allFace then mode="face" end
-    local old=spellState(g,"codex");local t={last=mode,used=old.used}
-    if mode and old.last and old.last~=mode and not old.used then
-        t.used=true;if not ctx.preview then g.handLevels=g.handLevels or {};g.handLevels[h.type.id]=(g.handLevels[h.type.id] or 1)+1 end
-    end
-    saveSpell(g,"codex",t,ctx);return {}
-end)
-for _,s in ipairs(D.spells) do s.effect=s.effect or function() end;s.desc=s.desc.." Thay phù phép cũ; giữ ấn bản/tiến hóa." end
+for _,d in ipairs(D.spells) do d.isEnchantment=true;d.cost=4 end
 
-add(D.spectral,"spec_partition","Phân Số","Chọn lá rank ít nhất 6: chia rank của nó thành hai phần gần bằng nhau, đổi rank lá chọn và lá khác đầu tiên trên tay theo hai phần đó. Trả 3 Vàng; giữ chất và nâng cấp.","A supernatural numbered stone splitting into two equal broad spectral slabs over a violet canyon.")
-add(D.spectral,"spec_consolidate","Hợp Lưu Tốc Độ","Chọn một lá: chuyển tối đa 12 tốc đánh thưởng từ các lá khác trên tay sang lá chọn, theo trái sang phải. Trả 4 Vàng; chỉ dùng khi có tốc thưởng và không mất do trần 999.","Three supernatural cyan wind streams converging into a single falcon-shaped current above coastal cliffs.")
-add(D.spectral,"spec_rethread","Hoán Y","Hoán đổi toàn bộ trang bị và cường hóa giữa lá chọn và lá khác đầu tiên trên tay. Rank, chất, con dấu, ấn bản và tiến hóa giữ nguyên; trả 2 Vàng.","Two spectral expedition figures exchanging their armors through a single violet loom.")
-add(D.spectral,"spec_keystone","Trụ Bát","Chọn lá có ấn bản: xóa ấn bản, đổi rank thành 8 và nhận vĩnh viễn +20 ST cơ bản; giữ chất, dấu, trang bị và tiến hóa.","One supernatural eight-sided foundation monolith consuming a shimmering surface layer in a desert.")
-add(D.spectral,"spec_heritage","Di Sản","Chuyển tối đa 3 cấp tiến hóa vĩnh viễn từ lá khác đã tiến hóa đầu tiên trên tay sang lá chọn; không vượt trần. Trả 3 HP, cần hơn 3 HP.","A spectral elder transferring three large green flames to an expedition successor in forest ruins.")
-add(D.spectral,"spec_synthesis","Luyện Chất","Chọn lá có cường hóa: xóa cường hóa để nhận vĩnh viễn +25 ST cơ bản; không xóa trang bị, dấu, ấn bản hay tiến hóa.","One supernatural alchemist condensing an enchanted stone skin into a single dense gold core.")
-add(D.spectral,"spec_shrink","Giải Phóng Vương Quyền","Tiêu hủy lá J/Q/K được chọn để tăng vĩnh viễn 1 kích thước tay; giảm 10 HP tối đa (tối thiểu còn 25), HP hiện tại không vượt trần mới. Không dùng với lá cuối bộ bài.","A spectral crown dissolving and releasing a broad flock of expedition silhouettes into the open sky.")
-add(D.spectral,"spec_sieve","Sàng Mệnh","Chọn một lá: tiêu hủy tối đa 2 lá khác chất có rank thấp nhất trong bộ bài, thêm vĩnh viễn 1 lượt bỏ bài mỗi trận. Trả 8 Vàng; phải có ít nhất một mục tiêu hủy.","A supernatural sieve filtering two dark stone fragments away from a green continental river.")
-add(D.spectral,"spec_traverse","Mượn Đường","Chọn một lá: nhận rank của lá thấp rank nhất khác trên tay và chất của lá cao rank nhất khác trên tay. Hòa rank chọn trái nhất; trả 2 Vàng, giữ mọi nâng cấp.","A spectral traveler crossing a low forest bridge and a high glacial arch through one violet doorway.")
-add(D.spectral,"spec_rebirth","Tái Sinh Đối Ảnh","Tiêu hủy lá chọn, tạo lá mới cùng chất với rank 16 trừ rank cũ và tiến hóa +1 cấp (tối đa trần). Lá mới mất toàn bộ trang bị, dấu, cường hóa, ấn bản và tốc thưởng; ID mới.","One supernatural ash silhouette dissolving while its inverted green reflection awakens as a new traveler.")
+for _,id in ipairs({"spec_rethread","spec_shrink"}) do
+    local d=require("src.spectral").get(id);D.spectral[#D.spectral+1]=d;D.byId[id]=d
+end
 
 function D.discard(g,cards,context)
     g.depthCombat=g.depthCombat or {values={}};local s=state(g)
@@ -196,13 +142,7 @@ function D.discard(g,cards,context)
             g.gold=(g.gold or 0)+4*(c.sealPower or 1)
         end
     end
-    local distinct={};for _,c in ipairs(cards) do distinct[c.rank]=true end
-    local n=0;for _ in pairs(distinct) do n=n+1 end
-    if #cards==3 and n==3 then
-        for _,spn in pairs(g.deities or {}) do if spn.enchantment=="spell_magnet" then
-            for _,c in ipairs(g.hand or {}) do require("src.deck").applyAttackSpeedBonus(c,2*(spn.enchantmentPower or 1)) end
-        end end
-    end
+
 end
 function D.status(g,c)
     local lines={};local function line(label,n,cap) lines[#lines+1]=label..": "..n.." / "..cap end
@@ -216,74 +156,8 @@ function D.status(g,c)
     end
     return table.concat(lines,"\n")
 end
-function D.apply(g,d,c)
-    if d.id:match("^spell_") then return nil end -- Shared SPN targeting lives in chest_expansion.
-    if not d.id:match("^spec_") then return nil end
-    if not c or c.destroyed then return false,"Chọn một lá hợp lệ." end
-    local Deck=require("src.deck");local A=require("src.card_abilities");local cap=A.config.maxEvolutionLevel
-    local id=d.id;local other,lowest,highest,donor
-    for _,o in ipairs(g.hand or {}) do if o.id~=c.id and not o.destroyed then
-        other=other or o;if not lowest or o.rank<lowest.rank then lowest=o end;if not highest or o.rank>highest.rank then highest=o end
-        if not donor and (o.evolutionLevel or 0)>0 then donor=o end
-    end end
-    local function fail(text) return false,text end
-    local function destroy(o) A.destroy(g,o);sync(g,o,function(v) v.destroyed=true;v.destructionNotified=true end) end
-    if id=="spec_partition" then
-        if c.rank<6 or not other then return fail("Cần rank từ 6 và một lá khác trên tay.") end
-        if not spend(g,"gold",3) then return fail("Cần 3 Vàng.") end
-        local rank=c.rank;Deck.transformCard(g,c,math.floor(rank/2));Deck.transformCard(g,other,math.ceil(rank/2))
-    elseif id=="spec_consolidate" then
-        local available=999-Deck.getCardAttackSpeed(c);local amount=0
-        for _,o in ipairs(g.hand or {}) do if o.id~=c.id then amount=amount+(o.speedBonus or 0) end end
-        amount=math.min(12,available,amount)
-        if amount<=0 then return fail("Cần tốc thưởng ở lá khác và khoảng trống dưới trần 999.") end
-        if not spend(g,"gold",4) then return fail("Cần 4 Vàng.") end
-        local left=amount
-        for _,o in ipairs(g.hand) do if o.id~=c.id then
-            local n=math.min(left,o.speedBonus or 0);left=left-n
-            sync(g,o,function(v) v.speedBonus=(v.speedBonus or 0)-n;Deck.getCardAttackSpeed(v) end)
-        end end
-        sync(g,c,function(v) Deck.applyAttackSpeedBonus(v,amount) end)
-    elseif id=="spec_rethread" then
-        if not other then return fail("Cần một lá khác trên tay.") end
-        if not spend(g,"gold",2) then return fail("Cần 2 Vàng.") end
-        local a,b=c.equipments or {},other.equipments or {};local ea,eb=c.enhancement,other.enhancement
-        local function copy(eq) local list={};for _,v in ipairs(eq) do list[#list+1]=v end;return list end
-        sync(g,c,function(v) v.equipments=copy(b);v.enhancement=eb end)
-        sync(g,other,function(v) v.equipments=copy(a);v.enhancement=ea end)
-    elseif id=="spec_keystone" or id=="spec_synthesis" then
-        if id=="spec_keystone" and not (c.edition or c.visualEffect) then return fail("Cần một ấn bản.") end
-        if id=="spec_synthesis" and not c.enhancement then return fail("Cần một cường hóa.") end
-        if id=="spec_keystone" then Deck.transformCard(g,c,8) end
-        sync(g,c,function(v)
-            if id=="spec_keystone" then v.edition=nil;v.visualEffect=nil else v.enhancement=nil end
-            local n=id=="spec_keystone" and 20 or 25;v.bonusBaseChips=(v.bonusBaseChips or 0)+n;v.baseChips=v.baseChips+n
-        end)
-    elseif id=="spec_heritage" then
-        local n=donor and math.min(3,donor.evolutionLevel,cap-(c.evolutionLevel or 0)) or 0
-        if n<=0 then return fail("Cần lá khác đã tiến hóa và lá nhận chưa đạt trần.") end
-        if (g.playerHp or 0)<=3 then return fail("Cần hơn 3 HP.") end
-        g.playerHp=g.playerHp-3;A.upgrade(g,donor,-n,false);A.upgrade(g,c,n,false)
-    elseif id=="spec_shrink" then
-        if c.rank<11 or c.rank>13 or #(g.persistentDeck or {})<2 or (g.maxPlayerHp or 100)<35 then return fail("Cần J/Q/K, còn lá khác và ít nhất 35 HP tối đa.") end
-        destroy(c);g.maxHandSize=(g.maxHandSize or 3)+1;g.maxPlayerHp=g.maxPlayerHp-10;g.playerHp=math.min(g.playerHp,g.maxPlayerHp)
-    elseif id=="spec_sieve" then
-        local victims={};for _,o in ipairs(g.persistentDeck or {}) do if o.id~=c.id and o.suit~=c.suit and not o.destroyed then victims[#victims+1]=o end end
-        table.sort(victims,function(a,b) if a.rank==b.rank then return a.id<b.id end;return a.rank<b.rank end)
-        if #victims==0 then return fail("Không có lá khác chất để tiêu hủy.") end
-        if not spend(g,"gold",8) then return fail("Cần 8 Vàng.") end
-        for i=1,math.min(2,#victims) do destroy(victims[i]) end
-        g.maxDiscards=(g.maxDiscards or 3)+1;g.discardsRemaining=(g.discardsRemaining or 0)+1
-    elseif id=="spec_traverse" then
-        if not lowest then return fail("Cần một lá khác trên tay.") end
-        if not spend(g,"gold",2) then return fail("Cần 2 Vàng.") end
-        Deck.transformCard(g,c,lowest.rank,highest.suit)
-    elseif id=="spec_rebirth" then
-        local fresh=Deck.newCard(16-c.rank,c.suit);fresh.evolutionLevel=math.min(cap,(c.evolutionLevel or 0)+1)
-        destroy(c);Deck.addCardToDeck(g,fresh)
-    end
-    require("src.combat").cleanupDestroyedCards(g)
-    g.selectedIndices={};for i,o in ipairs(g.hand or {}) do if o.selected then g.selectedIndices[#g.selectedIndices+1]=i end end
-    return true,"Đã dùng "..d.name.."."
+function D.apply(g,d,request)
+    if require("src.spectral").get(d.id) then return require("src.spectral").apply(g,d,request) end
+    return nil
 end
 return D

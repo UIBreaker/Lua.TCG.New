@@ -304,6 +304,7 @@ function Combat.start(game, monster, round)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}
+    require("src.spn_enchantments").reset(game)
     game.spnAttack=nil
     game.potionCombat={};game.potionFeedback={};game.potionVictoryPending=nil
     for i,m in ipairs(game.enemies) do

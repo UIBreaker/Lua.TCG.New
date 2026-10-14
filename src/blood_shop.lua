@@ -76,7 +76,6 @@ function B.applyConsumable(game,item,target,apply)
     if (game.gold or 0)>saved.gold then game.gold=saved.gold+(game.gold-saved.gold)*power end
     if game.maxPlayerHp>saved.maxHp then game.maxPlayerHp=saved.maxHp+(game.maxPlayerHp-saved.maxHp)*power end
     if game.playerHp>saved.hp then game.playerHp=math.min(game.maxPlayerHp,saved.hp+(game.playerHp-saved.hp)*power) end
-    for _,d in pairs(game.deities or {}) do if item.id:match("^spell_") and d.enchantment==item.id then d.enchantmentPower=power end end
     return ok,message
 end
 function B.offer(item)

@@ -97,6 +97,7 @@ love . --test-touch           # Chạm, giữ, rê và hủy thao tác cảm ứ
 love . --test-expedition      # Hành trình, giấy phép và ảnh render
 love . --test-chest-expansion # 40 lá mới, tiêu hao, save và render
 love . --test-seals           # 10 con dấu, cân bằng, chuyển save cũ và biểu tượng trên bài
+love . --test-enchantments    # 8 phù phép SPN, chọn mục tiêu, ngân sách và chuyển save cũ
 love . --test-debug-tools     # Tài nguyên, catalog, vùng/ải/trận và đồng bộ bài
 love . --test-debug-ui        # Bấm bảng Debug, đi qua 29 màn và kiểm tra luồng thoát
 ```
@@ -119,3 +120,5 @@ Bật Debug trong Cài đặt rồi nhấn **F7** để mở nhanh. Xem [hướn
 | `docs/` | Tài liệu hệ thống, art và ảnh minh họa |
 
 Mã nguồn được phân phối theo **[MIT License](LICENSE)**, © 2026 UIBreaker.
+
+- Dị Thể: bộ 7 lá thiết yếu, chi phí và chọn mục tiêu — [docs/SPECTRAL_SYSTEM.md](docs/SPECTRAL_SYSTEM.md); kiểm tra + ảnh giao diện: `love . --test-spectral`.

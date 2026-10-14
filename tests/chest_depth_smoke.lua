@@ -29,22 +29,14 @@ local function score(g,cs,kind,preview,held)
 end
 local ids={}
 for _,list in ipairs({D.equipment,D.seals,D.spectral,D.spells}) do
-    assert(#list==(list==D.seals and 4 or 10))
+    assert(#list==(list==D.seals and 4 or list==D.spells and 2 or list==D.spectral and 2 or 10))
     for _,d in ipairs(list) do assert(not ids[d.id] and not X.equipment[d.id]);ids[d.id]=true;assert(X.byId[d.id]==d) end
 end
 for _,d in ipairs(D.spectral) do
     local g,c=fixture();local shop=Shop.new();shop.currentPackOpening={pack={packType="spectral"},cards={d}}
-    assert(Shop.choosePackCard(shop,1,g),d.id);assert(not shop.currentPackOpening)
-    if d.id=="spec_partition" then assert(c.rank==6 and g.hand[2].rank==6 and g.gold==27)
-    elseif d.id=="spec_consolidate" then assert(c.speedBonus==7 and g.hand[2].speedBonus==0 and g.hand[3].speedBonus==0)
-    elseif d.id=="spec_rethread" then assert(#c.equipments==0 and #g.hand[2].equipments==1 and g.hand[2].enhancement=="enh_armor")
-    elseif d.id=="spec_keystone" then assert(c.rank==8 and not c.edition and c.bonusBaseChips==20)
-    elseif d.id=="spec_heritage" then assert(c.evolutionLevel==5 and g.hand[2].evolutionLevel==0 and g.playerHp==77)
-    elseif d.id=="spec_synthesis" then assert(not c.enhancement and c.bonusBaseChips==25)
-    elseif d.id=="spec_shrink" then assert(c.destroyed and #g.persistentDeck==2 and g.maxPlayerHp==90 and g.maxHandSize==4)
-    elseif d.id=="spec_sieve" then assert(#g.persistentDeck==1 and g.persistentDeck[1].id==c.id and g.maxDiscards==4)
-    elseif d.id=="spec_traverse" then assert(c.rank==6 and c.suit=="elaris")
-    elseif d.id=="spec_rebirth" then local f=g.persistentDeck[#g.persistentDeck];assert(f.id~=c.id and f.rank==4 and f.evolutionLevel==3 and not f.seal and #f.equipments==0) end
+    assert(Shop.choosePackCard(shop,1,g,{cards=d.id=="spec_rethread" and {c,g.hand[2]} or {c}}),d.id);assert(not shop.currentPackOpening)
+    if d.id=="spec_rethread" then assert(#c.equipments==0 and #g.hand[2].equipments==1 and g.hand[2].enhancement=="enh_armor" and g.gold==30)
+    elseif d.id=="spec_shrink" then assert(c.destroyed and #g.persistentDeck==2 and g.maxPlayerHp==90 and g.maxHandSize==4) end
     local restored=P.restoreSnapshot(P.makeSnapshot(g,"shop"));assert(#restored.persistentDeck==#g.persistentDeck)
     for i,v in ipairs(g.persistentDeck) do local r=restored.persistentDeck[i];assert(r.rank==v.rank and r.suit==v.suit and r.evolutionLevel==v.evolutionLevel and r.speedBonus==v.speedBonus) end
 end
@@ -90,36 +82,25 @@ g,c=fixture();c.seal="seal_threshold";assert(score(g,{c}).healHp==3)
 assert(score(g,{c}).healHp==3)
 -- Spells span multiple turns; none should consume game resources in preview.
 for _,d in ipairs(D.spells) do
-    local g,c=fixture();assert(X.apply(g,d,c));local before=P.encode({g.depthCombat,g.gold,g.playerHp,g.handsRemaining,g.discardsRemaining,g.handLevels})
+    local g,c=fixture();assert(X.apply(g,d,g.deities[1]));local before=P.encode({g.depthCombat,g.gold,g.playerHp,g.handsRemaining,g.discardsRemaining,g.handLevels})
     score(g,{c},nil,true)
     assert(before==P.encode({g.depthCombat,g.gold,g.playerHp,g.handsRemaining,g.discardsRemaining,g.handLevels}),d.id)
     local restored=P.restoreSnapshot(P.makeSnapshot(g,"shop"));assert(restored.deities[1].enchantment==d.id)
 end
-g,c=fixture();X.apply(g,D.byId.spell_seasons,c)
-for _,kind in ipairs({"HIGH_CARD","PAIR","STRAIGHT","FLUSH"}) do score(g,{c},kind) end
-assert(g.handsRemaining==4)
-g,c=fixture();X.apply(g,D.byId.spell_escrow,c);D.enemyAttack(g,16,0);assert(score(g,{c}).bonusGoldAwarded==3)
-g,c=fixture();X.apply(g,D.byId.spell_switchcraft,c);score(g,{c},"PAIR");assert(score(g,{c},"STRAIGHT").xMultTotal>=1.45)
-g,c=fixture();X.apply(g,D.byId.spell_recycle,c);score(g,{c});score(g,{c});assert(g.discardsRemaining==4)
-g,c=fixture();X.apply(g,D.byId.spell_retinue,c);assert(score(g,{c}).bonusMult>=2)
-g,c=fixture();X.apply(g,D.byId.spell_metronome,c);score(g,{c,g.hand[2]},"PAIR");score(g,{c,g.hand[3],Deck.newCard(4,"aurelia")},"STRAIGHT",false,{g.hand[2]});assert((g.hand[2].temporaryAbilityLevels or 0)>=1)
-g,c=fixture();X.apply(g,D.byId.spell_caravan,c);for _=1,3 do D.enemyAttack(g,1,0) end;assert(score(g,{c}).healHp==10);assert(score(g,{c}).healHp==0)
-g,c=fixture();X.apply(g,D.byId.spell_magnet,c);local bonus=c.speedBonus;A.discard(g,{Deck.newCard(2,"valoria"),Deck.newCard(3,"valoria"),Deck.newCard(4,"valoria")});assert(c.speedBonus==bonus+2 and g.persistentDeck[1].speedBonus==0)
-g,c=fixture();X.apply(g,D.byId.spell_reprisal,c);D.enemyAttack(g,0,10);assert(score(g,{c}).bonusChips>=40)
-g,c=fixture();X.apply(g,D.byId.spell_codex,c);score(g,{c},"HIGH_CARD");score(g,{g.hand[2]},"PAIR");assert(g.handLevels.pair==2)
-score(g,{c},"HIGH_CARD");assert(g.handLevels.high_card==1)
 local monster=require("src.monster").create(1,false,false,1);Combat.start(g,monster,1);assert(not next(g.depthCombat.values))
 -- Verify stored cards use the same activation path and failures keep the card.
 local f=assert(io.open("main.lua","r"));local source=f:read("*a");f:close()
 local start=assert(source:find("local function useConsumable(idx)",1,true));local stop=assert(source:find("local function activateConsumable",start,true))
 local chunk=source:sub(start,stop-1).."\nreturn useConsumable"
 local function stored(g,d)
-    local env=setmetatable({game=g,Shop=Shop,Sound=require("src.sound"),UI={BossAbilities=require("src.boss_abilities"),Inventory=require("src.inventory"),COLORS={goldYellow={}}},anim={floatingTexts={}},saveRunAtSafePoint=function() end},{__index=_G})
+    local env=setmetatable({game=g,Shop=Shop,Sound=require("src.sound"),UI={BossAbilities=require("src.boss_abilities"),Inventory=require("src.inventory"),COLORS={goldYellow={}},
+        Abilities=A,Polish={snapshot=function() return {} end,changed=function() end},
+        AbilityUI={openChoices=function(_,choices,callback) callback({{target=choices[1].options[1].target}}) end}},anim={floatingTexts={}},saveRunAtSafePoint=function() end},{__index=_G})
     local loader;if setfenv then loader=assert(loadstring(chunk));setfenv(loader,env) else loader=assert(load(chunk,"stored depth card","t",env)) end
     g.consumables={d};return loader()(1)
 end
 for _,list in ipairs({D.spectral,D.spells}) do for _,d in ipairs(list) do local g=fixture();assert(stored(g,d),d.id);assert(#g.consumables==0) end end
-g,c=fixture();g.gold=0;assert(not stored(g,D.byId.spec_partition) and #g.consumables==1)
+g,c=fixture();g.maxPlayerHp=30;assert(not stored(g,D.byId.spec_shrink) and #g.consumables==1)
 g,c=fixture();c.equipments={E.ITEMS.itm_hourhand};local beforeHp=g.playerHp
 Combat.resolveMonsterAttack(g,"before",0);assert((g.depthCombat.attacks or 0)==1 and g.playerHp<=beforeHp)
 for _,kind in ipairs({"arcana","seal","spectral","joker_edition"}) do

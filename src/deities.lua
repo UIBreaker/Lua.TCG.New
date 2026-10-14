@@ -269,6 +269,7 @@ require("src.spn_pacts").register(Deities)
 require("src.spn_vitality").register(Deities)
 require("src.spn_foundations").register(Deities)
 require("src.spn_growth").register(Deities)
+require("src.spn_bounty").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -290,6 +291,7 @@ function Deities.getDescription(deity)
     if def.stat=="copyActivations" or def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(value)) end
     if def.stat=="consumableChancePct" or def.stat=="uqChancePct" then value=math.min(100,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(require("src.blood_shop").powerOf(deity) + value)):gsub("{double}",formatEffectNumber(value*2)):gsub("{scale}",formatEffectNumber(effectMultiplier(deity)*require("src.blood_shop").powerOf(deity))))
+    if deity.id=="spirit_victory_bounty" then text=require("src.spn_bounty").description(deity) end
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)*require("src.blood_shop").powerOf(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then
@@ -297,8 +299,8 @@ function Deities.getDescription(deity)
     end
     local growth=require("src.spn_convergence").describe(deity)
     if growth then text=text.."\n"..growth end
-    local spell=require("src.chest_expansion").byId[deity.enchantment]
-    if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..(spell.desc:match(": (.+)") or spell.desc) end
+    local spell=require("src.spn_enchantments").get(deity.enchantment)
+    if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..require("src.blood_shop").describe(spell.desc,deity.enchantmentPower or 1) end
     if deity.bloodPower then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
     if deity.voidPower then text=text.."\nTHE VOID ×"..deity.voidPower.." · Chỉ số hiệu quả gấp "..deity.voidPower.."." end
     return text

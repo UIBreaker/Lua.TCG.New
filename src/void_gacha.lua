@@ -86,7 +86,7 @@ function G.createReward(game,id)
         if #r.opening.cards==0 then r.kind="gold";r.amount=1;r.name="Rương rỗng → 1 Vàng";r.item=nil;r.opening=nil;r.strength=1 end
     elseif id=="voucher" then r.kind="voucher";r.item=Clone(choose(Shop.VOUCHERS));r.item.category="voucher";r.item.voucherId=r.item.id;r.item.cost=0;r.strength=4
     elseif id=="hand" then r.kind="hand";r.name="Mở rộng tay bài +1";r.strength=4
-    elseif id=="ticket" then r.kind="ticket";r.amount=1;r.name="Vé The Void";r.strength=3
+    elseif id=="ticket" then r.kind="ticket";r.amount=Rng.random(1,100);r.name="+"..r.amount.." Vé The Void";r.strength=3
     else r.kind=id; r.amount=id=="gold" and Rng.random(1,10) or Rng.random(1,5);r.name="+"..r.amount..(id=="gold" and " Vàng" or " Linh hồn") end
     if r.item then
         r.name=r.kind=="card" and r.item.rankName..r.item.suitSymbol or r.item.name

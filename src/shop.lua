@@ -104,9 +104,9 @@ Shop.PACK_CATALOG = {
     { packType = "buffoon", name = "GÓI HỘ LINH", subtitle = "HỘ LINH", desc = "Mở 3 Hộ Linh, chọn 1 để sở hữu.", cost = 4, rarity = "Hộ Linh", color = { 0.88, 0.35, 0.35, 1 }, icon = "🃏" },
     { packType = "arcana", name = "GÓI TRANG BỊ", subtitle = "KHẢM NGỌC", desc = "Mở 3 Trang Bị Khảm, chọn 1 để gắn vào bài.", cost = 5, rarity = "Trang Bị", color = { 0.95, 0.75, 0.25, 1 }, icon = "💎" },
     { packType = "standard", name = "GÓI QUÂN BÀI", subtitle = "CƯỜNG HÓA", desc = "Mở 3 quân bài có thể mang cường hóa, chọn 1 vào bộ bài.", cost = 4, rarity = "Quân Bài", color = { 0.25, 0.60, 0.95, 1 }, icon = "📦" },
-    { packType = "joker_edition", name = "GÓI PHÙ PHÉP HỘ LINH", subtitle = "PHÙ PHÉP", desc = "Mở 3 phép Aura, Ectoplasm, Ankh hoặc Hex, chọn 1.", cost = 6, rarity = "Phù Phép", color = { 0.85, 0.40, 0.95, 1 }, icon = "✨" },
+    { packType = "joker_edition", name = "GÓI PHÙ PHÉP HỘ LINH", subtitle = "PHÙ PHÉP", desc = "Mở 3 trong 8 phù phép chiến thuật; chọn 1 và SPN nhận phép.", cost = 6, rarity = "Phù Phép", color = { 0.85, 0.40, 0.95, 1 }, icon = "✨" },
     { packType = "seal", name = "GÓI CON DẤU", subtitle = "ẤN CHIẾN", desc = "Mở 3 Con Dấu chiến thuật, chọn 1 để đóng lên bài.", cost = 6, rarity = "Con Dấu", color = { 0.95, 0.70, 0.20, 1 }, icon = "🔴" },
-    { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 phép biến đổi mạnh có đánh đổi, chọn 1.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
+    { packType = "spectral", name = "GÓI BIẾN ĐỔI", subtitle = "DỊ THỂ", desc = "Mở 3 trong 7 Dị Thể thiết yếu; chọn 1 để chỉnh bộ bài, hoặc cất trong balo.", cost = 7, rarity = "Biến Đổi", color = { 0.40, 0.85, 0.85, 1 }, icon = "🔮" },
     { packType = "celestial", name = "GÓI HÀNH TINH", subtitle = "HÀNH TINH", desc = "Mở 3 Hành Tinh nâng cấp tay bài, chọn 1.", cost = 5, rarity = "Hành Tinh", color = { 0.35, 0.55, 0.95, 1 }, icon = "🪐" },
     { packType = "hand_styles", name = "RƯƠNG THẾ ĐÁNH", subtitle = "THẾ ĐÁNH", desc = "Ưu tiên Bí Tịch cho thế đánh chưa mở khóa; mở 3 lá, chọn 1.", cost = 7, rarity = "Bí Tịch", color = { 0.95, 0.72, 0.22, 1 }, icon = "♠" },
     { packType = "edition", name = "RƯƠNG ẤN BẢN", subtitle = "ẤN BẢN", desc = "Chọn một trong 9 Ấn Bản để cất hoặc khảm lên một lá bài.", cost = 8, rarity = "Ấn Bản", color = { 0.78, 0.48, 0.96, 1 }, icon = "✦" },
@@ -125,49 +125,23 @@ Shop.SPN_RARITY_PRICE_MULTIPLIERS = {
 
 -- Canonical pack reward catalogs. Both the shop and the collection read these
 -- tables so a reward can never be sold without also being documented.
-Shop.JOKER_SPELLS = {
-    { id = "spell_aura", name = "Aura", subtitle = "HÀO QUANG", desc = "Thêm Foil (+50c), Holo (+10m), hoặc Polychrome (x1.5m) cho 1 Hộ Linh ngẫu nhiên!", icon = "✨", color = { 0.95, 0.85, 0.35, 1 } },
-    { id = "spell_ectoplasm", name = "Ectoplasm", subtitle = "NGOẠI CHẤT", desc = "Thêm Negative (+1 ô Hộ Linh) cho 1 Hộ Linh ngẫu nhiên, đổi lại giảm -1 kích thước tay bài!", icon = "👻", color = { 0.35, 0.85, 0.55, 1 } },
-    { id = "spell_ankh", name = "Ankh", subtitle = "THÁNH GIÁ", desc = "Sao chép 1 Hộ Linh ngẫu nhiên và hủy toàn bộ Hộ Linh còn lại!", icon = "☥", color = { 0.95, 0.75, 0.25, 1 } },
-    { id = "spell_hex", name = "Hex", subtitle = "LỜI NGUYỀN", desc = "Thêm Polychrome (x1.5 Mult) cho 1 Hộ Linh ngẫu nhiên và hủy toàn bộ Hộ Linh còn lại!", icon = "🔮", color = { 0.85, 0.25, 0.45, 1 } },
-}
+Shop.JOKER_SPELLS = {}
 
 Shop.SEAL_CARDS = {}
 for _,id in ipairs(Deck.SEAL_ORDER) do Shop.SEAL_CARDS[#Shop.SEAL_CARDS+1]=Deck.SEALS[id] end
 
-Shop.SPECTRAL_CARDS = {
-    { id = "spec_familiar", name = "Familiar", subtitle = "LINH THÚ", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị vào bộ bài!", icon = "🦉", color = { 0.65, 0.45, 0.85, 1 } },
-    { id = "spec_grim", name = "Grim", subtitle = "TỬ THẦN", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 2 lá Át (A) có trang bị vào bộ bài!", icon = "💀", color = { 0.85, 0.30, 0.40, 1 } },
-    { id = "spec_incantation", name = "Incantation", subtitle = "CHÚ THUẬT", desc = "Hủy 1 lá ngẫu nhiên trên tay, thêm 4 lá Quân Số (2-10) có trang bị vào bộ bài!", icon = "🕯️", color = { 0.95, 0.60, 0.30, 1 } },
-    { id = "spec_cryptid", name = "Cryptid", subtitle = "DỊ THỂ", desc = "Nhân bản 1 lá bài đã chọn trên tay thành 2 bản sao y hệt!", icon = "👥", color = { 0.40, 0.75, 0.95, 1 } },
-    { id = "spec_immolate", name = "Immolate", subtitle = "THIÊU RỤI", desc = "Hủy tối đa 5 lá ngẫu nhiên trên tay, lập tức nhận +$20 Tiền Vàng!", icon = "🔥", color = { 0.95, 0.40, 0.20, 1 } },
-    { id = "spec_sigil", name = "Sigil", subtitle = "ẤN KÝ", desc = "Biến đổi vĩnh viễn toàn bộ lá trên tay thành cùng 1 chất ngẫu nhiên!", icon = "🔯", color = { 0.50, 0.85, 0.65, 1 } },
-    { id = "spec_ouija", name = "Ouija", subtitle = "CẦU CƠ", desc = "Biến đổi vĩnh viễn toàn bộ lá trên tay thành cùng 1 Cấp Số ngẫu nhiên, giảm vĩnh viễn -1 kích thước tay bài!", icon = "👁️", color = { 0.75, 0.35, 0.85, 1 } },
-    { id = "spec_black_hole", name = "Black Hole", subtitle = "HỐ ĐEN", desc = "Tăng Cấp Độ của TẤT CẢ Thế Đánh lên +1!", icon = "🕳️", color = { 0.30, 0.30, 0.45, 1 } },
-}
+Shop.SPECTRAL_CARDS = require("src.spectral").cards
 
 Shop.CONSUMABLE_RULES={
     cons_speed_small={params={speed=3},description="Chọn một lá đang trên tay: +{speed} tốc đánh trong trận hiện tại (tối đa 999). Hủy chọn không mất thẻ."},
     cons_speed_large={params={speed=10},description="Chọn một lá đang trên tay: +{speed} tốc đánh trong trận hiện tại (tối đa 999). Hủy chọn không mất thẻ."},
     speed_single={params={speed=5},description="Chọn một lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Hủy chọn không mất thẻ."},
     speed_team={params={speed=2},description="Mọi lá đang trên tay: +{speed} tốc đánh lâu dài (tối đa 999). Chỉ dùng khi đang chiến đấu và có bài."},
-    spell_aura={params={},description="Một SPN ngẫu nhiên nhận Foil (+50 ST cố định), Holographic (+10 Cường hóa) hoặc Polychrome (×1.5 Aura cuối)."},
-    spell_ectoplasm={params={handLoss=1},description="Một SPN ngẫu nhiên nhận Negative (+1 ô SPN); kích thước tay cơ bản giảm {handLoss}, tối thiểu 1."},
-    spell_ankh={params={},description="Giữ một SPN ngẫu nhiên và một bản sao của nó; xóa mọi SPN khác."},
-    spell_hex={params={},description="Một SPN ngẫu nhiên nhận Polychrome (×1.5 Aura cuối); xóa mọi SPN khác."},
-    spec_familiar={params={count=3},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá J/Q/K cùng chất đã chọn, mỗi lá có một ITM ngẫu nhiên."},
-    spec_grim={params={count=2},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá A cùng chất đã chọn, mỗi lá có một ITM ngẫu nhiên."},
-    spec_incantation={params={count=4},description="Tiêu hủy một lá ngẫu nhiên trên tay nếu có; thêm {count} lá ngẫu nhiên 2–10 cùng chất đã chọn, mỗi lá có một ITM."},
-    spec_cryptid={params={count=2},description="Tạo {count} bản sao của lá được chọn (hoặc lá đầu tay/bộ bài). Mỗi bản sao có ID riêng, giữ tiến hóa/trang bị/ấn bản."},
-    spec_immolate={params={count=5,gold=20},description="Tiêu hủy tối đa {count} lá từ đầu tay theo thứ tự hiển thị; nhận {gold} Vàng."},
-    spec_sigil={params={},description="Đổi mọi lá đang trên tay thành cùng chất ngẫu nhiên vĩnh viễn trong bộ bài."},
-    spec_ouija={params={handLoss=1},description="Đổi mọi lá đang trên tay thành cùng rank ngẫu nhiên 2–A vĩnh viễn trong bộ bài; kích thước tay cơ bản giảm vĩnh viễn {handLoss}, tối thiểu 1."},
-    spec_black_hole={params={levels=1},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa thế đánh."},
     celestial={params={levels=2},description=""},
     planet_supernova={params={levels=3},description="Một thế đánh ngẫu nhiên tăng {levels} cấp; không tự mở khóa."},
     planet_black_hole={params={levels=2},description="Tăng mọi thế đánh {levels} cấp; không tự mở khóa."},
 }
-for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SPECTRAL_CARDS,"spectral"}}) do
+for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"}}) do
     local cards={}
     for _,module in ipairs({"src.chest_expansion","src.chest_depth"}) do
         for _,card in ipairs(require(module)[entry[2]]) do cards[#cards+1]=card end
@@ -177,12 +151,13 @@ for _, entry in ipairs({{Shop.JOKER_SPELLS,"spells"},{Shop.SPECTRAL_CARDS,"spect
         if entry[2]~="seals" then Shop.CONSUMABLE_RULES[card.id]={params=card.params,description=card.desc} end
     end
 end
-Shop.PACK_CATALOG[4].desc="Mở 3 phép từ 24 phù phép SPN; chọn 1 để dùng hoặc cất. Phù phép mới áp dụng lên SPN đầu tiên."
+Shop.PACK_CATALOG[4].desc="Mở 3 phép trong bộ 8 phù phép chiến thuật; chọn 1 rồi chọn SPN nhận phép, hoặc cất trong balo."
 function Shop.getConsumableParams(item)
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     return Blood.params(rule and rule.params or {},Blood.powerOf(item),true)
 end
 function Shop.getConsumableDescription(item)
+    local spectral=require("src.spectral").describe(item);if spectral then return spectral end
     if Blood.powerOf(item)>1 then
         if item.category=="combat_potion" then return require("src.potions").describe(item) end
         if item.healAmt then return "Hồi "..item.healAmt.." HP, không vượt HP tối đa.\nHUYẾT LUYỆN ×5" end
@@ -197,16 +172,10 @@ function Shop.getConsumableDescription(item)
         local seal=Deck.getModifier("seal",item.sealType or item.id)
         if seal then return "Đóng lên lá được chọn (hoặc lá đầu tay/bộ bài nếu chưa chọn).\n"..Deck.getModifierDescription("seal",seal.id) end
     end
+    local enchantment=require("src.spn_enchantments").get(item.id)
+    if enchantment then return "Chọn SPN đang trang bị hoặc trong balo; thay phù phép cũ, giữ tiến hóa và ấn bản.\n"..enchantment.desc end
     if item.handId and Poker.SKILL_BOOKS[item.handId] and require("src.advanced_hands").byId[item.handId] and item.id and item.id:find("book_",1,true) then return Poker.SKILL_BOOKS[item.handId].desc end
     if item.permanentSpeed then return item.desc end
-    if item.id=="spell_aura" then
-        local foil=CardEffects.getDefinition("foil").score
-        local holo=CardEffects.getDefinition("holographic").score
-        local poly=CardEffects.getDefinition("polychrome").score
-        return "Một SPN ngẫu nhiên nhận Foil (+"..foil.damage.." ST cố định), Holographic (+"..holo.mult.." Cường hóa) hoặc Polychrome (×"..poly.auraMultiplier.." AURA do SPN đóng góp)."
-    elseif item.id=="spell_hex" then
-        return "Một SPN ngẫu nhiên nhận Polychrome (×"..CardEffects.getDefinition("polychrome").score.auraMultiplier.." AURA do SPN đóng góp); xóa mọi SPN khác."
-    end
     local rule=Shop.CONSUMABLE_RULES[item.id] or Shop.CONSUMABLE_RULES[item.category]
     if item.handId and item.handId~="random" and item.handId~="all" then
         local scale=Poker.HAND_LEVEL_SCALING[item.handId];local stats=Poker.getHandStats(item.handId,1)
@@ -367,7 +336,7 @@ function Shop.getRetailConsumables()
                 card.desc = Shop.getConsumableDescription(card)
                 pool[#pool+1] = {id=card.id, category=category, consumable=card,
                     name=card.name, desc=card.desc, color=card.color, sourcePack=pack.packType,
-                    cost=math.ceil(pack.cost*1.2), subtitle=pack.name}
+                    cost=(definition.isEnchantment or category=="spectral") and definition.cost or math.ceil(pack.cost*1.2), subtitle=pack.name}
             end
         end
     end
@@ -467,7 +436,10 @@ local function marketStock(shop, gameState)
         end
     elseif mode == "consumable" then
         local pool = shuffle(Shop.getRetailConsumables())
-        for i=1,math.min(8,#pool) do shop.items[i]=pool[i] end
+        for i=1,math.min(7,#pool) do shop.items[i]=pool[i] end
+        local permit=require("src.expedition").travelPermit()
+        shop.items[#shop.items+1]={id=permit.id,category=permit.category,consumable=permit,name=permit.name,
+            desc=permit.desc,color=permit.color,cost=2000,subtitle="GIẤY TỜ VIỄN CHINH"}
     elseif mode == "equipment" then
         local basics = require("src.basic_equipment").basic
         for slot=1,4 do
@@ -974,7 +946,7 @@ function Shop.openPack(packItem, gameState)
     }
 end
 
-function Shop.choosePackCard(shop, chosenIndex, gameState)
+function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
     if not shop.currentPackOpening then return false end
     local pack = shop.currentPackOpening.pack
     local card = shop.currentPackOpening.cards and shop.currentPackOpening.cards[chosenIndex]
@@ -993,6 +965,18 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         return nil
     end
 
+    local Enchantments=require("src.spn_enchantments")
+    if Enchantments.get(card.id) then
+        local ok,message,pending=Enchantments.apply(gameState,card,targetDeity)
+        if ok then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        return ok,message,pending
+    end
+    local Spectral=require("src.spectral")
+    if Spectral.get(card.id) then
+        local ok,message,pending=Spectral.apply(gameState,card,targetDeity)
+        if ok then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        return ok,message,pending
+    end
     local expandedResult, expandedMessage = require("src.chest_expansion").apply(gameState, card, getTargetCard())
     if expandedResult ~= nil then
         if expandedResult then shop.currentPackOpening=nil;Sound.play("shop_buy") end
@@ -1017,70 +1001,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         return true, "open_socketing", card
 
     elseif pack.packType == "joker_edition" then
-        local deityList = {}
-        for di = 1, 10 do
-            if gameState.deities and gameState.deities[di] then
-                table.insert(deityList, { slot = di, deity = gameState.deities[di] })
-            end
-        end
-
-        if card.id == "spell_aura" then
-            if #deityList == 0 then
-                Sound.play("cant_afford")
-                return false, "Không có Hộ Linh nào để phù phép!"
-            end
-            local chosen = deityList[Rng.random(#deityList)]
-            local edPool = { "foil", "holo", "polychrome" }
-            chosen.deity.edition = edPool[Rng.random(#edPool)];chosen.deity.editionPower=card.bloodPower
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Aura: Thần [" .. chosen.deity.name .. "] nhận hiệu ứng " .. chosen.deity.edition:upper() .. "!"
-
-        elseif card.id == "spell_ectoplasm" then
-            if #deityList == 0 then
-                Sound.play("cant_afford")
-                return false, "Không có Hộ Linh nào!"
-            end
-            local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "negative";chosen.deity.editionPower=card.bloodPower
-            gameState.maxHandSize = math.max(1, (gameState.maxHandSize or 3) - 1)
-            Sound.play("xmult_boom")
-            shop.currentPackOpening = nil
-            return true, "Ectoplasm: Thần [" .. chosen.deity.name .. "] nhận NEGATIVE (+1 Ô Thần), Hand Size giảm còn " .. gameState.maxHandSize .. "!"
-
-        elseif card.id == "spell_ankh" then
-            if #deityList == 0 then
-                Sound.play("cant_afford")
-                return false, "Không có Hộ Linh nào!"
-            end
-            local chosen = deityList[Rng.random(#deityList)]
-            local cloned = {}
-            for k, v in pairs(chosen.deity) do cloned[k] = v end
-            -- Clear all other slots and put two copies in slots 1 and 2
-            for _, entry in ipairs(deityList) do
-                if entry.deity ~= chosen.deity then require("src.souls").award(gameState,entry.deity) end
-            end
-            gameState.deities = { [1] = chosen.deity, [2] = cloned }
-            Sound.play("xmult_boom")
-            shop.currentPackOpening = nil
-            return true, "Ankh: Nhân bản [" .. cloned.name .. "] và hủy diệt toàn bộ các Thần còn lại!"
-
-        elseif card.id == "spell_hex" then
-            if #deityList == 0 then
-                Sound.play("cant_afford")
-                return false, "Không có Hộ Linh nào!"
-            end
-            local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "polychrome";chosen.deity.editionPower=card.bloodPower
-            local kept = chosen.deity
-            for _, entry in ipairs(deityList) do
-                if entry.deity ~= kept then require("src.souls").award(gameState,entry.deity) end
-            end
-            gameState.deities = { [1] = kept }
-            Sound.play("xmult_boom")
-            shop.currentPackOpening = nil
-            return true, "Hex: Thần [" .. kept.name .. "] nhận POLYCHROME (x1.5 Mult) và hủy diệt toàn bộ các Thần còn lại!"
-        end
+        return false,"Phù phép không hợp lệ."
 
     elseif pack.packType == "seal" then
         local targetCard = getTargetCard()
@@ -1094,119 +1015,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState)
         return true, "Đã đóng ấn [" .. (card.sealName or card.subtitle or card.name) .. "] lên lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
 
     elseif pack.packType == "spectral" then
-        local userFaction = gameState.selectedFaction or gameState.selectedSuit or "aurelia"
-        local function destroyCard(target)
-            require("src.card_abilities").destroy(gameState, target)
-            require("src.combat").cleanupDestroyedCards(gameState)
-            gameState.selectedIndices = {}
-            for i, remaining in ipairs(gameState.hand or {}) do
-                if remaining.selected then table.insert(gameState.selectedIndices, i) end
-            end
-        end
-        if card.id == "spec_familiar" then
-            if gameState.hand and #gameState.hand > 0 then
-                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
-            end
-            local ranks = { 11, 12, 13 }
-            for i = 1, Shop.getConsumableParams(card).count do
-                local r = ranks[(i-1)%3+1]
-                local nc = Deck.newCard(r, userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(gameState, nc)
-            end
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Familiar: Hủy 1 lá, thêm 3 lá Hoàng Gia (J, Q, K) có trang bị vào bộ bài!"
-
-        elseif card.id == "spec_grim" then
-            if gameState.hand and #gameState.hand > 0 then
-                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
-            end
-            for i = 1, Shop.getConsumableParams(card).count do
-                local nc = Deck.newCard(14, userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(gameState, nc)
-            end
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Grim: Hủy 1 lá, thêm 2 lá Át (A) có trang bị vào bộ bài!"
-
-        elseif card.id == "spec_incantation" then
-            if gameState.hand and #gameState.hand > 0 then
-                destroyCard(gameState.hand[Rng.random(#gameState.hand)])
-            end
-            for i = 1, Shop.getConsumableParams(card).count do
-                local r = Rng.random(2, 10)
-                local nc = Deck.newCard(r, userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(gameState, nc)
-            end
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Incantation: Hủy 1 lá, thêm 4 lá Quân Số (2-10) có trang bị vào bộ bài!"
-
-        elseif card.id == "spec_cryptid" then
-            local targetCard = getTargetCard()
-            if not targetCard then
-                Sound.play("cant_afford")
-                return false, "Không tìm thấy lá bài để nhân bản!"
-            end
-            for _ = 1, Shop.getConsumableParams(card).count do
-                local clone = Deck.cloneCard(targetCard)
-                clone.id = Deck.newCard(targetCard.rank, targetCard.suit).id
-                Deck.addCardToDeck(gameState, clone)
-                if gameState.hand then table.insert(gameState.hand, clone) end
-            end
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Cryptid: Tạo " .. Shop.getConsumableParams(card).count .. " bản sao của lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
-
-        elseif card.id == "spec_immolate" then
-            local destroyed = 0
-            while gameState.hand and #gameState.hand > 0 and destroyed < 5 do
-                destroyCard(gameState.hand[1])
-                destroyed = destroyed + 1
-            end
-            gameState.gold = (gameState.gold or 0) + Shop.getConsumableParams(card).gold
-            Sound.play("xmult_boom")
-            shop.currentPackOpening = nil
-            return true, "Immolate: Thiêu rụi " .. destroyed .. " lá, nhận ngay +$20 Tiền Vàng!"
-
-        elseif card.id == "spec_sigil" then
-            local suits = Deck.SUIT_ORDER
-            local targetSuit = suits[Rng.random(#suits)]
-            local fInfo = Deck.SUITS[targetSuit]
-            if gameState.hand then
-                for _, c in ipairs(gameState.hand) do
-                    Deck.transformCard(gameState, c, nil, targetSuit)
-                end
-            end
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Sigil: Toàn bộ bài trên tay biến đổi thành Chất " .. (Deck.STANDARD_SUIT_NAMES[targetSuit] or fInfo.name) .. " (" .. fInfo.symbol .. ")!"
-
-        elseif card.id == "spec_ouija" then
-            local r = Rng.random(2, 14)
-            local rName = Deck.RANK_NAMES[r] or tostring(r)
-            if gameState.hand then
-                for _, c in ipairs(gameState.hand) do
-                    Deck.transformCard(gameState, c, r)
-                end
-            end
-            gameState.maxHandSize = math.max(1, (gameState.maxHandSize or 3) - 1)
-            Sound.play("round_win")
-            shop.currentPackOpening = nil
-            return true, "Ouija: Toàn bộ bài trên tay biến đổi thành Rank " .. rName .. ", Hand Size giảm còn " .. gameState.maxHandSize .. "!"
-
-        elseif card.id == "spec_black_hole" then
-            gameState.handLevels = gameState.handLevels or {}
-            for _, ht in pairs(Poker.HAND_TYPES) do
-                gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + Blood.powerOf(card)
-            end
-            Sound.play("xmult_boom")
-            shop.currentPackOpening = nil
-            return true, "Black Hole: Tất cả các thế bài Poker tăng +1 Cấp độ!"
-        end
+        return false,"Dị Thể không hợp lệ."
 
     elseif pack.packType == "celestial" then
         gameState.handLevels = gameState.handLevels or {}
@@ -1295,6 +1104,7 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
     local storedCard = {}
     for k, v in pairs(card) do storedCard[k] = v end
     storedCard.category = cat
+    require("src.spn_enchantments").migrateItem(storedCard)
 
     Loadout.storeConsumable(gameState,storedCard)
     Sound.play("shop_buy")

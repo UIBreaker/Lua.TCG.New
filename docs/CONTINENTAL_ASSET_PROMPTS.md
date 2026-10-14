@@ -1,5 +1,80 @@
 # Prompts and concepts
 
+## 2026-10-14 — Utility / recognition_hearts
+
+Concept: Official recognition of Valoria, the volcanic human kingdom. One unrolled thick ivory parchment charter upright on a rugged black basalt lectern, with a large dark red wax seal anchored by a bronze phoenix relief (a bird, not a heart or poker symbol), crimson ribbon hanging below. A broad warm volcanic dawn and distant medieval Western fortress arch behind. Antique gold, oxblood and lava orange, dark navy shadows. Prestigious hard-earned expedition recognition, not a magic spell. Parchment contains subtle pictorial map-like mountains with no written marks; one document is the focal subject.
+
+Ability: Công nhận vĩnh viễn sau 20 ải của vương quốc; đủ bốn công nhận mở lục địa bí ẩn.
+
+Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. Official recognition of Valoria, the volcanic human kingdom. One unrolled thick ivory parchment charter upright on a rugged black basalt lectern, with a large dark red wax seal anchored by a bronze phoenix relief (a bird, not a heart or poker symbol), crimson ribbon hanging below. A broad warm volcanic dawn and distant medieval Western fortress arch behind. Antique gold, oxblood and lava orange, dark navy shadows. Prestigious hard-earned expedition recognition, not a magic spell. Parchment contains subtle pictorial map-like mountains with no written marks; one document is the focal subject.
+
+Output: `assets/cards/continental/utility/recognition_hearts.png` — 1024×1536 PNG, full bleed, runtime common frame.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-1829f325-bb0e-428b-9e8d-7c944326a48f.png` (built-in image_gen).
+
+## 2026-10-14 — Utility / recognition_diamonds
+
+Concept: Official recognition of Aurelia, the golden desert human kingdom. One thick folded bone-ivory parchment charter with a broad gold wax seal bearing a simple sun-disc relief (no diamond or poker symbol) and ochre ribbon, upright in a worn brass document stand. A large weathered sandstone arch and distant sand dunes behind, desert sunrise. Bone ivory and antique gold, navy shadows, restrained sunlight, premium royal decree with a clear folded layered silhouette. No writing on parchment; faint illustrated dunes only. One document focal subject.
+
+Ability: Công nhận vĩnh viễn sau 20 ải của vương quốc; đủ bốn công nhận mở lục địa bí ẩn.
+
+Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. Official recognition of Aurelia, the golden desert human kingdom. One thick folded bone-ivory parchment charter with a broad gold wax seal bearing a simple sun-disc relief (no diamond or poker symbol) and ochre ribbon, upright in a worn brass document stand. A large weathered sandstone arch and distant sand dunes behind, desert sunrise. Bone ivory and antique gold, navy shadows, restrained sunlight, premium royal decree with a clear folded layered silhouette. No writing on parchment; faint illustrated dunes only. One document focal subject.
+
+Output: `assets/cards/continental/utility/recognition_diamonds.png` — 1024×1536 PNG, full bleed, runtime common frame.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-9a900044-93f1-4264-8e99-87e69797a9dd.png` (built-in image_gen).
+
+## 2026-10-14 — Utility / recognition_clubs
+
+Concept: Official recognition of Elaris, the ancient forest human kingdom. One ivory bark-paper charter unfurled vertically from a short weathered wooden scroll rod on an old mossed stone pedestal, sealed with a broad emerald resin disk containing a simple oak leaf relief (not a club poker suit) and a dark green fabric tie. One immense ancient oak and quiet woodland ruins behind. Forest green, warm ivory and antique bronze, soft green rim light, controlled glow. Tangible revered expedition charter, strong scroll silhouette, no writing, faint leaf veining only. One document focal subject.
+
+Ability: Công nhận vĩnh viễn sau 20 ải của vương quốc; đủ bốn công nhận mở lục địa bí ẩn.
+
+Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. Official recognition of Elaris, the ancient forest human kingdom. One ivory bark-paper charter unfurled vertically from a short weathered wooden scroll rod on an old mossed stone pedestal, sealed with a broad emerald resin disk containing a simple oak leaf relief (not a club poker suit) and a dark green fabric tie. One immense ancient oak and quiet woodland ruins behind. Forest green, warm ivory and antique bronze, soft green rim light, controlled glow. Tangible revered expedition charter, strong scroll silhouette, no writing, faint leaf veining only. One document focal subject.
+
+Output: `assets/cards/continental/utility/recognition_clubs.png` — 1024×1536 PNG, full bleed, runtime common frame.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-790377fc-d5fe-4b23-b429-c0d578449a27.png` (built-in image_gen).
+
+## 2026-10-14 — Utility / recognition_spades
+
+Concept: Official recognition of Vharos, the cold ice human kingdom. One thick pale vellum charter pinned open by a substantial weathered silver raven seal (bird, no spade or poker symbol), midnight blue ribbon, in a frost-covered stone document stand. Glacial cliff and distant medieval Western watchtower beneath a subdued eclipse behind. Ice blue, slate navy and antique silver with a restrained violet accent. Prestigious tangible expedition document, readable silhouette distinct from other charters, no writing; faint pictorial glacier contour only. One document focal subject.
+
+Ability: Công nhận vĩnh viễn sau 20 ải của vương quốc; đủ bốn công nhận mở lục địa bí ẩn.
+
+Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. Official recognition of Vharos, the cold ice human kingdom. One thick pale vellum charter pinned open by a substantial weathered silver raven seal (bird, no spade or poker symbol), midnight blue ribbon, in a frost-covered stone document stand. Glacial cliff and distant medieval Western watchtower beneath a subdued eclipse behind. Ice blue, slate navy and antique silver with a restrained violet accent. Prestigious tangible expedition document, readable silhouette distinct from other charters, no writing; faint pictorial glacier contour only. One document focal subject.
+
+Output: `assets/cards/continental/utility/recognition_spades.png` — 1024×1536 PNG, full bleed, runtime common frame.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-c5f7560d-1c9c-4819-a5ee-16da3b8c6d35.png` (built-in image_gen).
+
+## 2026-10-14 — Utility / cons_travel_permit
+
+Concept: A consumable expedition TRAVEL PERMIT permitting travel between continents. One open thick folded ivory parchment passport and navigation route map prominently on a dark leather folio at a weathered coastal departure desk. A large antique bronze compass authorization seal attached to the document with a deep blue ribbon, a single engraved arrow-way motif rather than lettering. One small ship sails through a huge eroded Western sea arch in the quiet distance. Clear primary document silhouette, warm antique gold and ocean navy, tasteful daylight, map shows broad mountains and sailing routes pictorially but NO lettering or numbers. The document itself is the main subject, no people, no stamps shaped like poker suits. Beautiful tangible useful travel document matching Continental expedition cards.
+
+Ability: Tiêu hao một giấy phép để di chuyển giữa các trận, giá shop tiêu hao 2.000 vàng; khu vực có điều kiện phải đáp ứng trước.
+
+Prompt: Use case: stylized-concept. Create ONE production game card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear main tangible document silhouette readable small, restrained magical glow and atmospheric depth. Do not bake text, letters, digits, poker suits, ranks, UI, badges, card border, outer frame, logos or watermarks into the painting. No East Asian motifs, dense filigree or blown-out highlights. A consumable expedition TRAVEL PERMIT permitting travel between continents. One open thick folded ivory parchment passport and navigation route map prominently on a dark leather folio at a weathered coastal departure desk. A large antique bronze compass authorization seal attached to the document with a deep blue ribbon, a single engraved arrow-way motif rather than lettering. One small ship sails through a huge eroded Western sea arch in the quiet distance. Clear primary document silhouette, warm antique gold and ocean navy, tasteful daylight, map shows broad mountains and sailing routes pictorially but NO lettering or numbers. The document itself is the main subject, no people, no stamps shaped like poker suits. Beautiful tangible useful travel document matching Continental expedition cards.
+
+Output: `assets/cards/continental/utility/travel_permit.png` — 1024×1536 PNG, full bleed, runtime common frame.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-7b79bb92-1b22-446d-9840-507e9f63f922.png` (built-in image_gen).
+
+
+## 2026-10-14 — Utility / void_ticket
+
+Name: Vé The Void
+
+Concept: Vé giấy cổ ngà với rãnh vé và cuống đục lỗ, dấu nhật thực tím/lam giữa không gian.
+
+Prompt: Use case: stylized-concept. ONE finished production game illustration for a THE VOID SUMMON TICKET, portrait 2:3 PNG 1024x1536, full-bleed art only, Continental Relic Card Design. Cinematic painterly Western dark fantasy expedition, medium detail, one unmistakable main subject legible at thumbnail size. One large thick ivory parchment admission ticket floating diagonally upright above a worn obsidian slab in deep outer space. The tangible ticket has two broad scalloped notches at its sides, a simple perforated detachable stub at the bottom, weathered edges and restrained antique bronze reinforcing corners. At its centre an embossed circular black eclipse seal glows with a thin violet rim and a faint cyan astral trail, clearly authorizing entry to a cosmic summoning gate. Ticket occupies most of the middle and lower canvas, crisp pale silhouette against deep navy and subdued violet nebula, quiet distant stars and dark floating rocks. Controlled magical glow, rich ivory parchment texture, beautiful premium metal and wax materials. NO writing anywhere: no letters, digits, ranks, poker suits, price or quantity, UI, badges, card frame, border around the illustration, watermarks or logos. No barcodes, modern casino motifs, East Asian motifs, dense tiny ornaments, multiple tickets, people or monsters, blown-out white highlights. This is a reusable reward card illustration; the game will draw its name, common card frame and quantity.
+
+Output: `assets/cards/continental/utility/void_ticket.png` — 1024×1536 PNG, full bleed; shared runtime card frame. Used in gacha results and victory reward ceremony.
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-e9455009-e6a6-4f07-9d12-82e7c7caf277.png` (built-in image_gen).
+
+Reuse: hand-size gacha rewards use the existing shop `UI.getVoucherImage("v_hand_size")`, canonical `assets/cards/continental/utility/hand_expansion.png`.
+
 ## 2026-10-13 — Utility / void_gold
 
 Name: Vàng từ The Void
@@ -5366,3 +5441,38 @@ Prompt: Create ONE finished production game environment background, landscape 16
 Output: `assets/scene/events/the_void_space.png` — 1672×941 PNG (16:9).
 
 Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a10210-4fc0-7760-b277-afe44fa945b6\exec-cce21bd4-04b8-4292-bc59-cae8a323bbd3.png`
+
+## SPN victory abundance - 2026-10-14
+
+### Phúc Linh Khải Hoàn (`spirit_victory_bounty`)
+
+Ability: Lễ trao thưởng sau chiến thắng thêm 1 lượt rút quà; trọng số quà bậc Hiếm trở lên +100%. Tiến hóa tăng cả lượng quà và trọng số hiếm.
+
+Concept: A supernatural winged herald blessing an expedition with a stream of rare relics emerging from a golden rift.
+
+Prompt: Create ONE finished production game SPN illustration, portrait PNG 1024x1536, 2:3 full bleed. Cinematic painterly Western dark-fantasy expedition in the Continental world, mysterious eroded western ruins, medium detail, strong dominant silhouette readable at 64 pixels, restrained cinematic glow. Identity: Phuc Linh Khai Hoan, a supernatural victory-abundance spirit, not a physical artifact. Mechanic: after victory its blessing increases the quantity of ceremony loot and the likelihood of rare treasure; it evolves to confer stronger blessings. ONE primary subject: a tall ethereal hooded winged herald formed from silver-blue mist and weathered antique-gold light, face hidden as a shadow, hovering above broad ruined western stone steps. Broad translucent spectral wings curve around its body, one raised hand opening a controlled oval antique-gold rift. A few LARGE clearly separate glowing treasure forms pour slowly from the rift: a violet crystal relic, one ornate but simple closed bronze chest, one faceted blue relic stone, three gold stones, arranged in a generous descending arc below the spirit. The supernatural herald dominates, treasure secondary, no small crowded jewels. Quiet navy dawn atmosphere with old western fortress silhouettes and expedition ruins in the distance, antique-gold and cold silver-blue palette, single small violet rare-treasure accent, elegant and mysterious, not cheerful cartoon. No text, letters, numbers, ranks, suits, emblems, labels, card frame, border, UI, logos or watermarks. No East Asian fantasy, roofs, calligraphy, dense microscopic ornament, noisy particles or blown-out white light.
+
+Output: `assets/cards/continental/spn/spirit_victory_bounty.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-847f4200-f70f-47f7-9afe-c3a964685437.png`
+
+
+## SPN enchantment curation — 2026-10-14
+
+The reward catalog is reduced from 24 to eight strategic persistent enchantments: Bastion, Mend, Prosper, Confluence, Ladder, Balance, Retinue and Switchcraft. Current abilities, prices, additive caps, target selection and save migration are documented in `SPN_ENCHANTMENTS.md` and the active enchantment rows of `asset_manifest.json`. Existing Continental portraits are reused with the same identity; original image-generation prompts remain historical records. Sixteen retired spell paintings remain as source references and are excluded from active rewards. ST/Mult buffs now scale the full post-SPN output; shields and healing scale with player maximum HP. Applying a book chooses an owned equipped or reserve SPN and preserves its edition/evolution and other SPNs.
+
+
+## Dị Thể — gameplay hiện tại (2026-10-14)
+
+Bộ hoạt động được tinh gọn từ 28 còn 7 lá. Dùng tiếp tranh Continental hiện có; không tạo lại ảnh.
+Các prompt ở trên là lịch sử tạo ảnh; mô tả hiệu ứng mới lấy từ `src/spectral.lua` và `docs/SPECTRAL_SYSTEM.md`.
+
+- **Đối Ảnh** (`spec_cryptid`): Chọn 1 lá trong bộ: tạo 1 bản sao giữ mọi nâng cấp vĩnh viễn, ID riêng. Trả 5 HP; bản sao vào chồng rút, không thêm ngay lên tay.
+- **Thiêu Rụi** (`spec_immolate`): Chọn 1–2 lá trong bộ để tiêu hủy vĩnh viễn; +5 Vàng mỗi lá. Không thể hủy lá cuối bộ bài.
+- **Ấn Ký** (`spec_sigil`): Chọn chất và 1–3 lá trong bộ: đổi vĩnh viễn sang chất đó, giữ nâng cấp. Trả 3 HP cho cả lần dùng.
+- **Cầu Cơ** (`spec_ouija`): Chọn rank 2–A và 1–2 lá trong bộ: đổi vĩnh viễn sang rank đó, giữ nâng cấp. Trả 4 HP cho cả lần dùng; không giảm kích thước tay.
+- **Hoán Y** (`spec_rethread`): Chọn 2 lá bất kỳ trong bộ: hoán đổi toàn bộ ITM và cường hóa. Giữ rank, chất, dấu, ấn bản, tiến hóa và tốc đánh. Phải đủ hốc và hợp lệ trang bị ở cả hai lá.
+- **Giải Phóng Vương Quyền** (`spec_shrink`): Tiêu hủy 1 lá J/Q/K được chọn: +1 kích thước tay vĩnh viễn, giảm 10 HP tối đa (còn ít nhất 25). Không thể hủy lá cuối bộ bài.
+- **Hố Đen** (`spec_black_hole`): Tăng +1 cấp tất cả thế đánh Poker, gồm thế nâng cao. Giữ trạng thái mở khóa; không thêm chi phí phụ.
+
+21 lá còn lại đã nghỉ hoạt động; asset được giữ để bảo toàn lịch sử. Save cũ đổi lá theo `S.retired`; không đưa lá nghỉ hoạt động vào rương, shop hoặc bộ sưu tập.

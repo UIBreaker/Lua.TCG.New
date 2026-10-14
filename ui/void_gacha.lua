@@ -34,7 +34,8 @@ local function art(r,x,y,w,h)
     elseif r.kind=="card" then UI.drawCardFace(item,x,y,w,h,false)
     else
         local image=(r.kind=="gold" and Art.get("void_gold") or r.kind=="souls" and Art.get("void_souls"))
-            or r.kind=="ticket" and UI.getVoucherImage("v_welcome") or item and (r.kind=="equipment" and UI.getEquipmentImage(item.id)
+            or r.kind=="hand" and UI.getVoucherImage("v_hand_size")
+            or r.kind=="ticket" and Art.get("void_ticket") or item and (r.kind=="equipment" and UI.getEquipmentImage(item.id)
             or r.kind=="pack" and UI.getPackImage(item.packType)
             or r.kind=="voucher" and UI.getVoucherImage(item.id)
             or UI.getConsumableImage(item))
@@ -47,7 +48,7 @@ local function art(r,x,y,w,h)
             text(r.amount and "+"..r.amount or "+1",x,y+h*.65,w,UI.fonts.small,C.gold,"center")
         end
         if r.kind=="equipment" then require("ui.backpack").stats(UI,item,x,y,w,h) end
-        if r.amount and (r.kind=="gold" or r.kind=="souls") then
+        if r.amount and (r.kind=="gold" or r.kind=="souls" or r.kind=="ticket") then
             local bh=math.max(16,h*.15);g.setColor(.015,.013,.029,.90)
             UI.drawRoundedRect("fill",x+w*.12,y+h-bh-4,w*.76,bh,3)
             text("+"..r.amount,x,y+h-bh-3,w,h>160 and UI.fonts.medium or UI.fonts.tiny,r.kind=="gold" and C.gold or C.purple,"center")
@@ -229,7 +230,7 @@ local function rates(buttons)
         text(row.label,251,y,545,nil,i<=3 and C.gold or C.text)
         text(string.format("%.3f%%",row.weight/1000):gsub("%.",","),842,y,182,UI.fonts.small,i<=3 and C.gold or C.text,"right")
     end
-    text("SPN thường: C 61,4% · UC 20% · R 10% · E 5% · L 2% · M 1% · T 0,5% · UQ 0,1% trong nhóm SPN 3%.",245,505,785,nil,C.muted)
+    text("SPN thường: C 61,4% · UC 20% · R 10% · E 5% · L 2% · M 1% · T 0,5% · UQ 0,1% trong nhóm SPN 3%.\nTrúng nhóm vé: nhận 1–100 vé, mỗi số lượng có xác suất bằng nhau (1% trong nhóm).",245,505,785,nil,C.muted)
     text("Đồ/lá/rương/tiêu hao/đặc quyền: chọn đều từ danh mục. Đặc quyền trùng → 3 vàng; rương không còn nội dung hợp lệ → 1 vàng. Rương mở tại shop sau Void.",245,547,785,nil,C.muted)
     text("Banner cộng lại 0,004% · Trung bình 1 / 25.000 lượt, không phải mốc bảo đảm.",245,589,785,UI.fonts.small,C.red)
 end

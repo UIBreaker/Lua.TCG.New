@@ -1,5 +1,7 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-spectral" then require("tests.spectral_capture");return end
+    if a=="--test-enchantments" then require("tests.spn_enchantments_capture");return end
     if a=="--test-debug-tools" then
         local ok,err=xpcall(function() require("tests.debug_tools_smoke") end,debug.traceback)
         if not ok then print(err) end
@@ -38,6 +40,8 @@ for _, a in ipairs(arg or {}) do
         if not foundationOk then failed=true;print("tests.spn_foundations_smoke FAIL: "..tostring(foundationErr)) end
         local growthOk,growthErr=pcall(require,"tests.spn_growth_smoke")
         if not growthOk then failed=true;print("tests.spn_growth_smoke FAIL: "..tostring(growthErr)) end
+        local bountyOk,bountyErr=pcall(require,"tests.spn_bounty_smoke")
+        if not bountyOk then failed=true;print("tests.spn_bounty_smoke FAIL: "..tostring(bountyErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -152,6 +156,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-hand-drag-select" then isCaptureMode = true end
     if a == "--test-expedition" then isCaptureMode = true end
     if a == "--test-journey-routing" then isCaptureMode = true end
+    if a == "--test-travel-documents" then isCaptureMode = true end
     if a == "--test-soul-shop" then isCaptureMode = true end
     if a == "--test-shop-markets" then isCaptureMode = true end
     if a == "--test-seal-descriptions" then isCaptureMode = true end
@@ -1312,6 +1317,7 @@ local function useConsumable(idx)
     game.consumables = game.consumables or {}
     local c = game.consumables[idx]
     if not c then return false end
+    if c.category=="travel_permit" then return UI.openTravelPermit("consumables",idx) end
     local p=Shop.getConsumableParams(c)
 
     if UI.BossAbilities.isSlotLocked(game, "consumable", c.loadoutSlot or idx) then return false end
@@ -1396,17 +1402,37 @@ local function useConsumable(idx)
         if utilityUsed then Sound.play("round_win");saveRunAtSafePoint() end
         return utilityUsed
     end
-    local expansion=require("src.chest_expansion")
-    if expansion.byId[c.id] and (c.id:match("^spec_") or c.id:match("^spell_")) then
-        local target=game.hand and game.hand[(game.selectedIndices or {})[1] or 1]
-            or (game.persistentDeck or {})[1]
-        local ok,message=require("src.blood_shop").applyConsumable(game,c,target,expansion.apply)
-        table.insert(anim.floatingTexts,{text=message,color=c.color or UI.COLORS.goldYellow,x=640,y=350,alpha=3})
-        if ok then
-            table.remove(game.consumables,idx)
-            Sound.play("round_win");saveRunAtSafePoint()
-        end
-        return ok
+    local Enchantments=require("src.spn_enchantments")
+    if Enchantments.get(c.id) then
+        local opened,message=Enchantments.openTarget(game,c,UI.AbilityUI,function(target)
+            local index;for i,item in ipairs(game.consumables or {}) do if item==c then index=i;break end end
+            if not index then return end
+            local before=UI.Polish.snapshot(game)
+            local ok,text=Enchantments.apply(game,c,target)
+            table.insert(anim.floatingTexts,{text=text,color=c.color or UI.COLORS.goldYellow,x=640,y=350,alpha=3})
+            if ok then
+                table.remove(game.consumables,index);UI.Abilities.consumableUsed(game)
+                UI.Polish.changed(UI,game,before,c);Sound.play("round_win");saveRunAtSafePoint()
+            end
+        end)
+        if not opened then table.insert(anim.floatingTexts,{text=message,color=UI.COLORS.goldYellow,x=640,y=350,alpha=3}) end
+        return opened
+    end
+    local Spectral=require("src.spectral")
+    if Spectral.get(c.id) then
+        local opened,message=Spectral.openTarget(game,c,UI.AbilityUI,function(request)
+            local index;for i,item in ipairs(game.consumables or {}) do if item==c then index=i;break end end
+            if not index then return end
+            local before=UI.Polish.snapshot(game)
+            local ok,text=Spectral.apply(game,c,request)
+            table.insert(anim.floatingTexts,{text=text,color=c.color or UI.COLORS.goldYellow,x=640,y=350,alpha=3})
+            if ok then
+                table.remove(game.consumables,index);UI.Abilities.consumableUsed(game)
+                UI.Polish.changed(UI,game,before,c);Sound.play("round_win");saveRunAtSafePoint()
+            end
+        end)
+        if not opened then table.insert(anim.floatingTexts,{text=message,color=UI.COLORS.goldYellow,x=640,y=350,alpha=3}) end
+        return opened
     end
     if c.id == "cons_vitality" then
         local bonus=(c.hpBonus or 20)*require("src.blood_shop").powerOf(c)
@@ -1558,92 +1584,6 @@ local function useConsumable(idx)
             return true
         end
 
-    -- 2. Joker Spells
-    elseif c.category == "joker_spell" or (c.id and c.id:find("spell_")) then
-        local deityList = {}
-        for di = 1, 10 do
-            if game.deities and game.deities[di] then
-                table.insert(deityList, { slot = di, deity = game.deities[di] })
-            end
-        end
-        if #deityList == 0 then
-            Sound.play("cant_afford")
-            table.insert(anim.floatingTexts, {
-                text = "Không có Hộ Linh nào để dùng phép!",
-                color = { 0.95, 0.35, 0.35, 1 },
-                x = 640,
-                y = 350,
-                alpha = 2.5,
-            })
-            return false
-        end
-
-        if c.id == "spell_aura" then
-            local chosen = deityList[Rng.random(#deityList)]
-            local edPool = { "foil", "holo", "polychrome" }
-            chosen.deity.edition = edPool[Rng.random(#edPool)]
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, {
-                text = "✨ Aura: Thần [" .. chosen.deity.name .. "] nhận " .. chosen.deity.edition:upper() .. "!",
-                color = UI.COLORS.goldYellow,
-                x = 640,
-                y = 350,
-                alpha = 3.0,
-            })
-            return true
-        elseif c.id == "spell_ectoplasm" then
-            local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "negative"
-            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - p.handLoss)
-            Sound.play("xmult_boom")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, {
-                text = "🧪 Ectoplasm: [" .. chosen.deity.name .. "] nhận NEGATIVE (+1 Ô Thần), Hand Size: " .. game.maxHandSize .. "!",
-                color = { 0.3, 0.9, 0.6, 1 },
-                x = 640,
-                y = 350,
-                alpha = 3.0,
-            })
-            return true
-        elseif c.id == "spell_ankh" then
-            local chosen = deityList[Rng.random(#deityList)]
-            local cloned = {}
-            for k, v in pairs(chosen.deity) do cloned[k] = v end
-            for _, entry in ipairs(deityList) do
-                if entry.deity ~= chosen.deity then require("src.souls").award(game,entry.deity) end
-            end
-            game.deities = { [1] = chosen.deity, [2] = cloned }
-            Sound.play("xmult_boom")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, {
-                text = "🪞 Ankh: Nhân bản [" .. cloned.name .. "], hủy diệt các Thần còn lại!",
-                color = UI.COLORS.xmultGold,
-                x = 640,
-                y = 350,
-                alpha = 3.0,
-            })
-            return true
-        elseif c.id == "spell_hex" then
-            local chosen = deityList[Rng.random(#deityList)]
-            chosen.deity.edition = "polychrome"
-            local kept = chosen.deity
-            for _, entry in ipairs(deityList) do
-                if entry.deity ~= kept then require("src.souls").award(game,entry.deity) end
-            end
-            game.deities = { [1] = kept }
-            Sound.play("xmult_boom")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, {
-                text = "🔮 Hex: [" .. kept.name .. "] nhận POLYCHROME, hủy diệt các Thần còn lại!",
-                color = UI.COLORS.xmultGold,
-                x = 640,
-                y = 350,
-                alpha = 3.0,
-            })
-            return true
-        end
-
     -- 3. Seals
     elseif c.category == "seal" or (c.id and c.id:find("seal_")) then
         local target = nil
@@ -1670,111 +1610,6 @@ local function useConsumable(idx)
         })
         return true
 
-    -- 4. Spectral cards
-    elseif c.category == "spectral" or (c.id and c.id:find("spec_")) then
-        local userFaction = game.selectedFaction or game.selectedSuit or "aurelia"
-        if c.id == "spec_familiar" then
-            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
-            local ranks = { 11, 12, 13 }
-            for i = 1, p.count do
-                local nc = Deck.newCard(ranks[(i-1)%#ranks+1], userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(game, nc)
-            end
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "👻 Familiar: Thêm 3 lá J/Q/K có trang bị!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_grim" then
-            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
-            for i = 1, p.count do
-                local nc = Deck.newCard(14, userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(game, nc)
-            end
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "💀 Grim: Thêm 2 lá Át (A) có trang bị!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_incantation" then
-            if game.hand and #game.hand > 0 then destroyHandCard(Rng.random(#game.hand)) end
-            for i = 1, p.count do
-                local r = Rng.random(2, 10)
-                local nc = Deck.newCard(r, userFaction)
-                nc.equipments = { Equipment.getRandomEquipment() }
-                Deck.addCardToDeck(game, nc)
-            end
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🕯️ Incantation: Thêm 4 lá Quân Số có trang bị!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_cryptid" then
-            local target = nil
-            if game.selectedIndices and #game.selectedIndices > 0 and game.hand and game.hand[game.selectedIndices[1]] then
-                target = game.hand[game.selectedIndices[1]]
-            elseif game.hand and #game.hand > 0 then
-                target = game.hand[1]
-            elseif game.persistentDeck and #game.persistentDeck > 0 then
-                target = game.persistentDeck[1]
-            end
-            if not target then Sound.play("cant_afford") return false end
-            for _ = 1, p.count do
-                local clone = Deck.cloneCard(target)
-                clone.id = Deck.newCard(target.rank, target.suit).id
-                Deck.addCardToDeck(game, clone)
-                if game.hand then table.insert(game.hand, clone) end
-            end
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🧬 Cryptid: Tạo " .. p.count .. " bản sao của lá " .. (target.rankName or "") .. (target.suitSymbol or "") .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_immolate" then
-            local destroyed = 0
-            while game.hand and #game.hand > 0 and destroyed < p.count do
-                destroyHandCard(1)
-                destroyed = destroyed + 1
-            end
-            game.gold = (game.gold or 0) + p.gold
-            Sound.play("xmult_boom")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🔥 Immolate: Thiêu rụi " .. destroyed .. " lá, +$20 Vàng!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_sigil" then
-            local suits = Deck.SUIT_ORDER
-            local targetSuit = suits[Rng.random(#suits)]
-            local fInfo = Deck.SUITS[targetSuit]
-            if game.hand then
-                for _, ch in ipairs(game.hand) do
-                    Deck.transformCard(game, ch, nil, targetSuit)
-                end
-            end
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🌀 Sigil: Tất cả lá bài đổi sang Chất " .. (Deck.STANDARD_SUIT_NAMES[targetSuit] or fInfo.name) .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_ouija" then
-            local r = Rng.random(2, 14)
-            local rName = Deck.RANK_NAMES[r] or tostring(r)
-            if game.hand then
-                for _, ch in ipairs(game.hand) do
-                    Deck.transformCard(game, ch, r)
-                end
-            end
-            game.maxHandSize = math.max(1, (game.maxHandSize or 3) - p.handLoss)
-            Sound.play("round_win")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "👁️ Ouija: Đổi bài sang Rank " .. rName .. ", Hand Size: " .. game.maxHandSize .. "!", color = UI.COLORS.goldYellow, x = 640, y = 350, alpha = 3.0 })
-            return true
-        elseif c.id == "spec_black_hole" then
-            game.handLevels = game.handLevels or {}
-            for _, ht in pairs(Poker.HAND_TYPES) do
-                game.handLevels[ht.id] = (game.handLevels[ht.id] or 1) + p.levels
-            end
-            Sound.play("xmult_boom")
-            table.remove(game.consumables, idx)
-            table.insert(anim.floatingTexts, { text = "🕳️ Black Hole: TẤT CẢ các thế bài tăng +1 Cấp độ!", color = { 0.85, 0.45, 0.95, 1 }, x = 640, y = 350, alpha = 3.0 })
-            return true
-        end
     end
 
     return false
@@ -1795,7 +1630,8 @@ local function activateConsumable(idx, currentState)
     Sound.play("card_activate")
     if card.category ~= "evolution" and card.id ~= "cons_evolution"
         and card.category ~= "socket_expansion" and card.category ~= "rule_break"
-        and card.category ~= "speed_single" and card.category ~= "bed" and card.category ~= "edition" and card.id ~= "soul_reaper" then
+        and card.category ~= "speed_single" and card.category ~= "bed" and card.category ~= "edition" and card.id ~= "soul_reaper"
+        and not require("src.spn_enchantments").get(card.id) then
         spawnShopFx("consume", card, x + w / 2, y + h / 2, w, h)
     end
     return true
@@ -2463,6 +2299,14 @@ function love.load()
             if not ok then print("SPN GROWTH ART FAIL: "..tostring(err)) end
             os.exit(ok and 0 or 1)
         end
+        if argument=="--test-spn-bounty-art" then
+            local ok,err=pcall(function()
+                require("tests.spn_art_smoke").verify({"spirit_victory_bounty"},"docs/spn_bounty_runtime.png")
+                require("tests.spn_bounty_capture").verify()
+            end)
+            if not ok then print("SPN BOUNTY ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
         if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" or argument=="--test-spn-basics-art" or argument=="--test-spn-turns-art" or argument=="--test-spn-pacts-art" then
             local ok, err = pcall(function()
                 local ids,output
@@ -2798,7 +2642,7 @@ function love.update(dt)
     local bedCameraX,bedCameraY=UI.BedExplosion.camera()
     cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
-        game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory" or state=="barter") and {stage=game.run and game.run.ante or 1,regionId=game.run and game.run.regionId,areaStage=game.run and game.run.areaStage,shopMode=game.shopMode} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
+        game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory" or state=="travel" or state=="barter") and {stage=game.run and game.run.ante or 1,regionId=game.run and game.run.regionId,areaStage=game.run and game.run.areaStage,shopMode=game.shopMode} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
     Sound.updateGame(dt)
     if state == "defeating" then
         if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
@@ -3383,7 +3227,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.130.0", 48, 185)
+    g.print("beta 0.131.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3977,7 +3821,7 @@ end
 
 local function drawBattleHud(m, mx, my)
     local hudButtons = UI.components.TopHUD.draw({
-        ante = (game.run and (game.run.areaStage or game.run.ante)) or game.act or 1,
+        ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.currentBlindIndex) or game.round or 1,
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
         armor = game.playerArmor or game.playerShield or 0,
@@ -6421,7 +6265,7 @@ function love.draw()
     elseif state == "gameover" then
         if DeathVFX.kind == "player" then drawPlayingState() end
         drawGameOverState()
-    elseif state == "victory" then
+    elseif state == "victory" or state=="travel" then
         drawVictoryState()
     end
 
@@ -6800,37 +6644,48 @@ local function handleShopMousepressed(mx, my, button)
                 if btn.id:sub(1, 12) == "choose_pack_" then
                     local opening = shopData.currentPackOpening
                     local reward = opening.cards and opening.cards[btn.cardIndex]
-                    local before = UI.Polish.snapshot(game)
-                    local ok, action, eq = Shop.choosePackCard(shopData, btn.cardIndex, game)
-                    if ok and action == "open_socketing" and opening.pack.rewardPack then
-                        game.pendingRewardEquipment = eq
-                    elseif ok and RewardSystem.completePack(game, shopData, opening) then saveRunAtSafePoint() end
-                    if ok then
-                        UI.Polish.changed(UI, game, before, reward)
-                        spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
+                    local function finalize(targetDeity)
+                        if shopData.currentPackOpening~=opening then return end
+                        local before = UI.Polish.snapshot(game)
+                        local ok, action, eq = Shop.choosePackCard(shopData, btn.cardIndex, game, targetDeity)
+                        if ok and action == "open_socketing" and opening.pack.rewardPack then
+                            game.pendingRewardEquipment = eq
+                        elseif ok and RewardSystem.completePack(game, shopData, opening) then saveRunAtSafePoint() end
+                        if ok then
+                            UI.Polish.changed(UI, game, before, reward)
+                            spawnShopFx("buy", { packType = opening.pack.packType, reward = reward, name = reward and reward.name }, btn.x + btn.w / 2, btn.y)
+                        end
+                        if ok and action == "open_socketing" and eq then
+                            pendingEquipment = eq
+                            socketingReturnState = "shop"
+                            state = "socketing"
+                            if game.pendingRewardEquipment then saveRunAtSafePoint() end
+                        elseif ok and type(action) == "string" then
+                            table.insert(anim.floatingTexts, {
+                                text = action,
+                                color = UI.COLORS.goldYellow,
+                                x = 640,
+                                y = 200,
+                                alpha = 3.0,
+                            })
+                        elseif not ok and type(action) == "string" then
+                            table.insert(anim.floatingTexts, {
+                                text = action,
+                                color = { 0.95, 0.35, 0.35, 1 },
+                                x = 640,
+                                y = 200,
+                                alpha = 2.5,
+                            })
+                        end
                     end
-                    if ok and action == "open_socketing" and eq then
-                        pendingEquipment = eq
-                        socketingReturnState = "shop"
-                        state = "socketing"
-                        if game.pendingRewardEquipment then saveRunAtSafePoint() end
-                    elseif ok and type(action) == "string" then
-                        table.insert(anim.floatingTexts, {
-                            text = action,
-                            color = UI.COLORS.goldYellow,
-                            x = 640,
-                            y = 200,
-                            alpha = 3.0,
-                        })
-                    elseif not ok and type(action) == "string" then
-                        table.insert(anim.floatingTexts, {
-                            text = action,
-                            color = { 0.95, 0.35, 0.35, 1 },
-                            x = 640,
-                            y = 200,
-                            alpha = 2.5,
-                        })
-                    end
+                    local Enchantments=require("src.spn_enchantments")
+                    if reward and Enchantments.get(reward.id) then
+                        local opened,message=Enchantments.openTarget(game,reward,UI.AbilityUI,finalize)
+                        if not opened then table.insert(anim.floatingTexts,{text=message,color=UI.COLORS.goldYellow,x=640,y=200,alpha=3}) end
+                    elseif reward and require("src.spectral").get(reward.id) then
+                        local opened,message=require("src.spectral").openTarget(game,reward,UI.AbilityUI,finalize)
+                        if not opened then table.insert(anim.floatingTexts,{text=message,color=UI.COLORS.goldYellow,x=640,y=200,alpha=3}) end
+                    else finalize() end
                     return true
                 elseif btn.id:sub(1, 10) == "keep_pack_" then
                     local opening = shopData.currentPackOpening
@@ -7672,11 +7527,17 @@ local function handleModalsMousepressed(mx, my, button)
     return false
 end
 
+UI.openTravelPermit=function(source,index)
+    local ok,message=RunManager.beginTravel(game,source,index,state)
+    if not ok then UI.Backpack.message=message;return false end
+    state="travel";lastActiveState=state;saveRunAtSafePoint();return true
+end
 UI.Backpack.handle=function(mx,my,button)
     UI.Backpack.mouse(UI,game,buttons,mx,my,button,{
         transfer=UI.Backpack.transfer,
         save=saveRunAtSafePoint,inspect=function(c) inspectCardModal=c end,
         cancel=function() pendingEditionCard=nil end,
+        travel=function(i) if UI.openTravelPermit("backpackConsumables",i) then UI.Backpack.close() end end,
         activate=function(i)
             if activateConsumable(i,state) then
                 UI.Backpack.close()
@@ -8405,9 +8266,9 @@ function love.mousepressed(x, y, button, istouch)
             end
         end
 
-    elseif state == "victory" then
+    elseif state == "victory" or state=="travel" then
         for _, btn in ipairs(buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
+            if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
                 if btn.id == "victory_menu" then
                     state = "menu"
                     menuMode = "title"
@@ -8416,8 +8277,9 @@ function love.mousepressed(x, y, button, istouch)
                     return
                 elseif btn.id:match("^travel_") then
                     local action=btn.id:sub(8)
-                    if RunManager.resolveTravel(game.run,game,action) then
-                        state="BLIND_SELECT";lastActiveState="BLIND_SELECT"
+                    local ok,nextState=RunManager.resolveTravel(game.run,game,action)
+                    if ok then
+                        state=nextState or "BLIND_SELECT";lastActiveState=state
                         Sound.play("card_deal");hasRunStarted=true
                         saveRunAtSafePoint()
                     end

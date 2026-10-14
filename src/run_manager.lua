@@ -245,6 +245,7 @@ function RunManager.newRun(starterFaction)
         regionId = "human",
         areaStage = 1,
         travelPermit = false,
+        regionStagesWon = {},
         maxAnte = RunManager.MAX_ANTE,
         currentBlindIndex = 1, -- 1: Small, 2: Big, 3: Boss
         blinds = RunManager.generateAnteBlinds(1, starterFaction,"human",1),
@@ -406,8 +407,24 @@ function RunManager.completeCurrentBlind(run, gameState)
         blind.status = "completed"
         run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
         local completedAnte = blind.ante or run.ante
+        if blind.type=="boss" then
+            run.regionStagesWon=run.regionStagesWon or {}
+            local id=run.regionId or "human"
+            run.regionStagesWon[id]=(run.regionStagesWon[id] or (run.areaStage or completedAnte)-1)+1
+        end
         if (run.areaStage or completedAnte)==20 and blind.type=="boss" and run.regionId~="unknown" then
             run.travelPermit=true
+            if gameState then
+                local permit=Expedition.travelPermit();require("src.loadout").storeConsumable(gameState,permit)
+                gameState.pendingJourneyRewards=gameState.pendingJourneyRewards or {}
+                table.insert(gameState.pendingJourneyRewards,permit)
+                gameState.regionRecognitions=gameState.regionRecognitions or {}
+                local card=Expedition.recognitionCard(run.regionId)
+                if card and not gameState.regionRecognitions[run.regionId] then
+                    gameState.regionRecognitions[run.regionId]=true
+                    table.insert(gameState.pendingJourneyRewards,card)
+                end
+            end
         end
         local isAnteBoss = (blind.index == 3) or (run.currentBlindIndex == 3)
         run.stats.roundRewardAntes = run.stats.roundRewardAntes or {}
@@ -454,13 +471,35 @@ function RunManager.advanceBlind(run, gameState)
     end
 end
 
--- One permit has exactly one outcome: a sale or a selected destination.
+function RunManager.beginTravel(game,source,index,returnState)
+    local item=game[source] and game[source][index]
+    if not game.run or not item or item.id~="cons_travel_permit" then return false,"Không có giấy phép." end
+    if returnState~="shop" and returnState~="BLIND_SELECT" and returnState~="victory" then return false,"Chỉ dùng giấy phép giữa các trận." end
+    game.travelRequest={source=source,index=index,returnState=returnState}
+    return true
+end
+-- Validate the destination before consuming a permit; cancelling spends nothing.
 function RunManager.resolveTravel(run,gameState,action)
-    if not run or not gameState or not run.victory or not run.travelPermit then return false,"missing_permit" end
+    if not run or not gameState then return false,"missing_permit" end
+    local request=gameState.travelRequest
+    local earned=run.victory and run.travelPermit
+    if not request and not earned then return false,"missing_permit" end
     local current=RunManager.getCurrentBlind(run)
-    if not current or current.type~="boss" or current.status~="completed" then return false,"incomplete" end
+    if earned and (not current or current.type~="boss" or current.status~="completed") then return false,"incomplete" end
+    if action=="cancel" and request then gameState.travelRequest=nil;return true,request.returnState end
     local destination=action=="sell" and (run.regionId or "human") or action
+    local allowed,message=Expedition.canEnter(gameState,destination)
+    if action~="sell" and not allowed then return false,message end
     if not Expedition.byId[destination] or destination=="voyage" then return false,"invalid_destination" end
+    local source,index=request and request.source,request and request.index
+    if not request then
+        for _,key in ipairs({"backpackConsumables","consumables"}) do
+            for i,item in ipairs(gameState[key] or {}) do if item.id=="cons_travel_permit" then source,index=key,i;break end end
+            if source then break end
+        end
+    end
+    if request and (not gameState[source] or not gameState[source][index] or gameState[source][index].id~="cons_travel_permit") then return false,"missing_permit" end
+    if source then table.remove(gameState[source],index) end
     if action=="sell" then
         gameState.gold=(gameState.gold or 0)+1000
         run.stats.totalGoldEarned=(run.stats.totalGoldEarned or 0)+1000
@@ -468,12 +507,17 @@ function RunManager.resolveTravel(run,gameState,action)
     else
         run.stats.journeys=(run.stats.journeys or 0)+1
     end
+    gameState.travelRequest=nil
+    if request and action=="sell" and not earned then return true,request.returnState end
+    local nextStage=current and current.type=="boss" and current.status=="completed"
     run.travelPermit=false;run.victory=false;run.endless=true
-    run.regionId=destination;run.areaStage=1;run.ante=run.ante+1
+    run.regionId=destination;run.areaStage=((run.regionStagesWon or {})[destination] or 0)%20+1
+    if destination=="unknown" then run.areaStage=((run.regionStagesWon or {})[destination] or 0)+1 end
+    if nextStage then run.ante=run.ante+1 end
     run.currentBlindIndex=1;run.shopsVisitedInAnte=0
-    run.blinds=RunManager.generateAnteBlinds(run.ante,gameState.selectedFaction,destination,1)
+    run.blinds=RunManager.generateAnteBlinds(run.ante,gameState.selectedFaction,destination,run.areaStage)
     gameState.monster=nil;gameState.enemies=nil
-    return true
+    return true,"BLIND_SELECT"
 end
 
 -- Alias for backwards compatibility

@@ -99,5 +99,5 @@ for _,row in ipairs(F.entries) do
     restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
     assert(restored.deities[1].id==row[1] and restored.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==77)
+assert(#D.getRandomShopPool({},99)==78)
 print("SPN foundations PASS: flat/evolved hand bonuses, replacement same-suit pair/wild aliases, one random temporary opening speed/reset/caps, full rank-two repeats/mimic/resource bounds, preview/shop/save")

@@ -11,15 +11,17 @@ function P.draw(game,UI,mx,my)
         g.setColor(.025,.043,.059,.95);g.rectangle("fill",x,y,w,h,10,10)
         g.setLineWidth(1);g.setColor(c[1],c[2],c[3],.6);g.rectangle("line",x,y,w,h,10,10)
     end
-    local function button(id,label,x,y,w,h,c)
-        local b={id=id,text=label,x=x,y=y,w=w,h=h,color=c,font=UI.fonts.small}
+    local function button(id,label,x,y,w,h,c,disabled)
+        local b={id=id,text=label,x=x,y=y,w=w,h=h,color=c,font=UI.fonts.small,disabled=disabled}
         buttons[#buttons+1]=b;UI.drawButton(b,mx>=x and mx<=x+w and my>=y and my<=y+h)
     end
     g.push("all");g.setColor(.008,.014,.023,.66);g.rectangle("fill",0,0,1280,720)
     panel(24,22,1232,150,gold)
-    text("GIẤY PHÉP DI CHUYỂN",44,38,1000,"large",gold)
-    text("ĐÃ HOÀN THÀNH 20 ẢI • "..current.name,44,82,1140,"medium",current.color)
-    text("Chọn một điểm đến để dùng giấy phép, hoặc bán và tiếp tục khám phá tại đây.",44,120,1140,"small",muted)
+    local permit=E.travelPermit();local permitArt=UI.getConsumableImage(permit)
+    if permitArt then g.setColor(1,1,1);UI.CardFrame.image(permitArt,44,39,72,108);UI.drawCardBorder(44,39,72,108,nil,nil,permit) end
+    text("GIẤY PHÉP DI CHUYỂN",138,38,970,"large",gold)
+    text((run.victory and "ĐÃ HOÀN THÀNH 20 ẢI • " or "ẢI "..run.ante.." • ")..current.name,138,82,1090,"medium",current.color)
+    text("Chọn điểm đến · Chỉ tiêu hao khi xác nhận · Công nhận "..E.recognitionCount(game).."/4",138,120,1090,"small",muted)
     local slot=0
     for _,region in ipairs(E.regions) do
         if region.id~=current.id then
@@ -40,15 +42,24 @@ function P.draw(game,UI,mx,my)
             text(region.short,x+14,y+153,w-28,"medium",region.color)
             text(region.id=="unknown" and "LỤC ĐỊA • VÔ TẬN" or "20 ẢI • 4 KHU VỰC",x+14,y+194,w-28,"small",gold)
             text(region.id=="human" and "Đoàn độc lập, lá bài vô chất." or region.id=="unknown" and "Bờ biển đá ngầm và các sinh vật bí ẩn." or "Đối thủ chỉ mang chất của vương quốc này.",x+14,y+229,w-28,"small",muted)
-            button("travel_"..region.id,"DÙNG GIẤY PHÉP",x+12,y+h-49,w-24,36,{region.color[1]*.35,region.color[2]*.35,region.color[3]*.35,1})
+            local allowed,reason=E.canEnter(game,region.id)
+            if not allowed then text("CẦN 4 CÔNG NHẬN · "..E.recognitionCount(game).."/4",x+14,y+269,w-28,"tiny",{.95,.55,.42}) end
+            button("travel_"..region.id,allowed and "DÙNG GIẤY PHÉP" or "CHƯA ĐỦ ĐIỀU KIỆN",x+12,y+h-49,w-24,36,{region.color[1]*.35,region.color[2]*.35,region.color[3]*.35,1},not allowed)
         end
     end
     panel(24,552,1232,144,gold)
-    text("Ở LẠI "..current.short,44,565,750,"medium",gold)
-    text("Bán giấy phép: +1.000 vàng. Bắt đầu chặng 20 ải mới tại vùng hiện tại.",44,599,900,"small",muted)
+    for i,id in ipairs(E.recognitionIds) do
+        local x=44+(i-1)*225;local card=E.recognitionCard(id);local owned=(game.regionRecognitions or {})[id]
+        local img=UI.getConsumableImage(card);g.setColor(1,1,1,owned and 1 or .35)
+        if img then UI.CardFrame.image(img,x,569,38,57);UI.drawCardBorder(x,569,38,57,nil,nil,card) end
+        text(E.byId[id].short,x+48,575,164,"small",owned and card.color or muted)
+        text(owned and "ĐÃ CÔNG NHẬN" or "CHƯA CHINH PHỤC",x+48,602,164,"tiny",muted)
+        if mx>=x and mx<=x+212 and my>=569 and my<=626 then UI.descriptionCandidate=card end
+    end
+    text(E.recognitionCount(game).." / 4 CÔNG NHẬN",976,581,260,"small",gold,"center")
     button("travel_sell","BÁN • +1.000 VÀNG",44,642,320,38,{.44,.33,.15,1})
     text("VÀNG "..(game.gold or 0).." • "..(run.stats.blindsWon or 0).." TRẬN THẮNG",395,654,545,"small",muted)
-    button("victory_menu","VỀ MÀN HÌNH CHÍNH",958,642,278,38,{.21,.26,.30,1})
+    button(game.travelRequest and "travel_cancel" or "victory_menu",game.travelRequest and "GIỮ GIẤY PHÉP · QUAY LẠI" or "VỀ MÀN HÌNH CHÍNH",958,642,278,38,{.21,.26,.30,1})
     g.pop();return buttons
 end
 return P

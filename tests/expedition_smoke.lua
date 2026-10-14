@@ -51,6 +51,8 @@ assert(run.stats.blindsWon==60)
 local saved=Persistence.makeSnapshot(g,"victory")
 local restored,state=Persistence.restoreSnapshot(saved)
 assert(restored.run.travelPermit and restored.run.maxAnte==20 and state=="victory")
+assert(not Run.resolveTravel(run,g,"unknown") and run.travelPermit)
+g.regionRecognitions={hearts=true,diamonds=true,clubs=true,spades=true}
 assert(Run.resolveTravel(run,g,"unknown") and run.ante==21 and not run.travelPermit)
 run.ante=40;run.areaStage=20;run.currentBlindIndex=3;run.blinds=Run.generateAnteBlinds(40,nil,"unknown",20)
 Run.completeCurrentBlind(run,g);assert(Run.advanceBlind(run,g) and run.ante==41)

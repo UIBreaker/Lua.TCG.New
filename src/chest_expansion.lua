@@ -69,48 +69,32 @@ add(X.seals,"seal_lantern","Ấn Hải Đăng","Khi tính điểm: +16 Cường 
 end)
 for _,d in ipairs(X.seals) do d.sealType=d.id;d.sealName=d.name end
 
-add(X.spectral,"spec_stairway","Bậc Thang Hư Ảnh","Chọn một lá: đổi tối đa 4 lá khác trên tay thành rank kế tiếp của nó (không vượt A), lần lượt theo thứ tự tay. Trả 4 HP.","A supernatural staircase of five spectral stone slabs ascending into a violet eclipse.")
-add(X.spectral,"spec_twin","Giao Ước Song Sinh","Chọn một lá: lá khác đầu tiên trên tay nhận cùng rank, giữ chất và mọi nâng cấp. Trả 3 Vàng.","Two distinct spectral silhouettes bound by one violet thread above a cold coast.")
-add(X.spectral,"spec_molt","Lột Xác","Chọn một lá đã tiến hóa: mất 1 cấp tiến hóa, nhận vĩnh viễn +8 tốc đánh (tối đa 999).","A spectral moth shedding one stone cocoon into cyan wind over forest ruins.")
-add(X.spectral,"spec_prune","Tỉa Nhánh","Chọn một lá: tiêu hủy tối đa 2 lá khác cùng rank trong bộ bài; lá chọn nhận +10 ST cơ bản mỗi lá hủy. Luôn giữ ít nhất 1 lá.","A supernatural pruning shadow drawing strength from two fading branches into one living tree.")
-add(X.spectral,"spec_migration","Đại Di Cư","Chọn một lá: mọi lá cùng rank trong bộ bài đổi sang chất tiếp theo trong vòng Cơ–Rô–Chuồn–Bích. Trả 4 Vàng.","A flock of spectral birds crossing from a green continent into glacial cliffs.")
-add(X.spectral,"spec_inversion","Nghịch Số","Chọn một lá: đổi rank thành 16 trừ rank hiện tại (2↔A, 3↔K, 8 giữ nguyên); trả 2 HP.","A supernatural inverted mountain mirrored beneath a violet rift, two opposing peaks.")
-add(X.spectral,"spec_temper","Tôi Luyện","Chọn một lá có trang bị: tháo trang bị cuối cùng, đổi lấy 2 cấp tiến hóa vĩnh viễn. Không dùng nếu vượt trần tiến hóa.","A spectral forge spirit consuming one iron relic to awaken a floating stone figure.")
-add(X.spectral,"spec_fission","Phân Hạch","Chọn một lá rank 4–A: giảm rank đi 2, thêm một lá rank 2 cùng chất vào bộ bài; lá mới không mang nâng cấp.","One supernatural crystal splitting into a large shard and one tiny shard over volcanic wastes.")
-add(X.spectral,"spec_redistribute","Hoán Mạch","Chọn một lá: hoán đổi chất với lá khác đầu tiên trên tay có chất khác, giữ nguyên rank và nâng cấp.","Two supernatural rivers exchanging their paths through a single suspended violet junction.")
-add(X.spectral,"spec_distill","Chưng Cất","Chọn một lá có con dấu: xóa dấu, nhận vĩnh viễn +1 cấp tiến hóa và +4 tốc đánh. Không dùng ở trần tiến hóa.","A spectral seal dissolving into a single green-gold drop above an ancient forest altar.")
+-- Permanent transformations are curated in src/spectral.lua.
 
--- One enchantment per SPN; independent of edition and evolution. Once per hand.
-add(X.spells,"spell_bastion","Phù Phép Thành Lũy","SPN đầu tiên nhận Thành Lũy: vùng tính điểm có ít nhất 4 lá thì +8 Giáp mỗi tay.","A supernatural guardian forming four broad stone walls around an expedition camp.",function(h,g)
-    if #h.scoringCards>=4 then return {addArmor=8} end
+-- Six core enchantments; two tactical enchantments are defined in chest_depth.
+add(X.spells,"spell_bastion","Phù Phép Thành Lũy","Tính điểm ít nhất 2 lá: +Giáp bằng 15% HP tối đa của người chơi (ít nhất 10 Giáp). Kích hoạt một lần mỗi tay.","A supernatural guardian forming four broad stone walls around an expedition camp.",function(h,g)
+    if #h.scoringCards>=2 then return {addArmor=math.max(10,math.floor((g.maxPlayerHp or 100)*0.15))} end
 end)
-add(X.spells,"spell_mend","Phù Phép Giao Hòa","SPN đầu tiên nhận Giao Hòa: vùng tính điểm có đúng 2 chất thì hồi 4 HP mỗi tay.","A spectral forest healer joining two streams of blue and green light into one living spring.",function(h,g)
-    if suits(h.scoringCards)==2 then return {healHp=4} end
+add(X.spells,"spell_mend","Phù Phép Giao Hòa","Mỗi tay hồi 4% HP tối đa (ít nhất 3 HP); tính điểm tối đa 2 lá thì hồi 8%. Tổng hồi từ phù phép tối đa 25% HP tối đa mỗi tay.","A spectral forest healer joining two streams of blue and green light into one living spring.",function(h,g)
+    local pct=#h.scoringCards<=2 and 0.08 or 0.04
+    return {healHp=math.max(3,math.floor((g.maxPlayerHp or 100)*pct))}
 end)
-add(X.spells,"spell_prosper","Phù Phép Khởi Nghiệp","SPN đầu tiên nhận Khởi Nghiệp: khi giữ dưới 10 Vàng thì nhận 2 Vàng mỗi tay.","A small supernatural gold fox breathing life into an empty desert trading stall.",function(h,g)
-    if (g.gold or 0)<10 then return {addGold=2} end
+add(X.spells,"spell_prosper","Phù Phép Khởi Nghiệp","Mỗi tay nhận 3 Vàng. Toàn bộ phù phép Khởi Nghiệp chung ngân sách 9 Vàng mỗi trận; thay SPN hay phù phép không làm mới ngân sách.","A small supernatural gold fox breathing life into an empty desert trading stall.",function(h,g,ctx,power)
+    g.enchantmentCombat=g.enchantmentCombat or {gold=0}
+    local state=g.enchantmentCombat;local n=math.min(3*(power or 1),math.max(0,9-(state.gold or 0)))
+    if n==0 then return end
+    state.gold=(state.gold or 0)+n;return {addGold=n}
 end)
-add(X.spells,"spell_solitude","Phù Phép Độc Tôn","SPN đầu tiên nhận Độc Tôn: nếu chỉ sở hữu 1 SPN thì +0.4 hệ số Aura mỗi tay (cộng vào trần ×5).","One enormous solitary spectral titan beneath a violet eclipse above empty cliffs.",function(h,g)
-    if require("src.deities").getCount(g.deities)==1 then return {xMultBonus=0.4} end
+add(X.spells,"spell_confluence","Phù Phép Hội Tụ","Thùng hoặc Thùng Phá Sảnh: tăng 75% Cường hóa sau khi toàn bộ SPN kích hoạt. Các phù phép tăng Cường hóa cộng chung, tối đa +200%.","A single ocean spirit formed by five navy waves merging into one clear vortex.",function(h)
+    if h.type.id=="flush" or h.type.id=="straight_flush" then return {addMultPct=75} end
 end)
-add(X.spells,"spell_confluence","Phù Phép Hội Tụ","SPN đầu tiên nhận Hội Tụ: khi đánh Thùng hoặc Thùng Phá Sảnh, +10 Cường hóa mỗi tay.","A single ocean spirit formed by five navy waves merging into one clear vortex.",function(h,g)
-    if h.type.id=="flush" or h.type.id=="straight_flush" then return {addMult=10} end
+add(X.spells,"spell_ladder","Phù Phép Dẫn Lối","Sảnh hoặc Thùng Phá Sảnh: tăng 75% ST sau khi toàn bộ SPN kích hoạt. Các phù phép tăng ST cộng chung, tối đa +200%.","A spectral mountain guide illuminating a clear ascending path between five glacial peaks.",function(h)
+    if h.type.id=="straight" or h.type.id=="straight_flush" then return {addChipsPct=75} end
 end)
-add(X.spells,"spell_ladder","Phù Phép Dẫn Lối","SPN đầu tiên nhận Dẫn Lối: Sảnh hoặc Thùng Phá Sảnh nhận +60 ST mỗi tay.","A spectral mountain guide illuminating a clear ascending path between five glacial peaks.",function(h,g)
-    if h.type.id=="straight" or h.type.id=="straight_flush" then return {addChips=60} end
+add(X.spells,"spell_balance","Phù Phép Trăng Non","Đúng 1 lá tính điểm, bất kỳ rank: tăng 100% Cường hóa sau khi toàn bộ SPN kích hoạt. Tổng tăng Cường hóa từ phù phép tối đa +200%.","A small crescent-shaped supernatural guardian sheltering a lone traveler in a navy desert night.",function(h)
+    if #h.scoringCards==1 then return {addMultPct=100} end
 end)
-add(X.spells,"spell_requiem","Phù Phép Tinh Giản","SPN đầu tiên nhận Tinh Giản: bộ bài vĩnh viễn còn tối đa 15 lá thì +10 Cường hóa mỗi tay.","A spectral archivist gathering a dwindling cloud of stone fragments into one violet orb.",function(h,g)
-    if #(g.persistentDeck or {})<=15 then return {addMult=10} end
-end)
-add(X.spells,"spell_chorus","Phù Phép Hợp Xướng","SPN đầu tiên nhận Hợp Xướng: mỗi SPN khác đang sở hữu cho +12 ST mỗi tay, tối đa +48.","One spectral conductor directing four large ghostly echoes in a Western ruined amphitheater.",function(h,g)
-    return {addChips=math.min(48,math.max(0,require("src.deities").getCount(g.deities)-1)*12)}
-end)
-add(X.spells,"spell_balance","Phù Phép Trăng Non","SPN đầu tiên nhận Trăng Non: đánh đúng 1 lá rank 2–7 thì +0.35 hệ số Aura mỗi tay (cộng vào trần ×5).","A small crescent-shaped supernatural guardian sheltering a lone traveler in a navy desert night.",function(h,g)
-    if #h.scoringCards==1 and h.scoringCards[1].rank<=7 then return {xMultBonus=0.35} end
-end)
-add(X.spells,"spell_ember","Phù Phép Tàn Hỏa","SPN đầu tiên nhận Tàn Hỏa: HP còn tối đa 25% thì +25% sát thương và hồi 2 HP mỗi tay.","A wounded spectral phoenix rekindling from one restrained orange ember in dark volcanic wastes.",function(h,g)
-    if (g.playerHp or 100)<=(g.maxPlayerHp or 100)*0.25 then return {extraDamagePct=0.25,healHp=2} end
-end)
+for _,d in ipairs(X.spells) do d.isEnchantment=true;d.cost=4 end
 
 function X.sync(g,c,fn)
     local seen={}
@@ -121,71 +105,10 @@ function X.sync(g,c,fn)
     end
 end
 function X.apply(g,item,target)
-    local d=X.byId[item.id]
-    if not d then return nil end
-    if item.id:match("^spell_") then
-        local slots={};for k,v in pairs(g.deities or {}) do if type(k)=="number" and type(v)=="table" then slots[#slots+1]=k end end
-        table.sort(slots)
-        if #slots==0 then return false,"Cần ít nhất một SPN để phù phép." end
-        g.deities[slots[1]].enchantment=d.id
-        return true,"Đã phù phép "..g.deities[slots[1]].name..": "..d.name.." (thay phù phép cũ, giữ ấn bản)."
-    end
-    if d.depth then return require("src.chest_depth").apply(g,d,target) end
-    if not item.id:match("^spec_") then return nil end
-    if not target or target.destroyed then return false,"Hãy chọn một lá bài hợp lệ." end
-    local Deck=require("src.deck");local A=require("src.card_abilities");local id=d.id
-    local function payGold(n) if (g.gold or 0)<n then return false end;g.gold=g.gold-n;return true end
-    local function payHp(n) if (g.playerHp or 100)<=n then return false end;g.playerHp=(g.playerHp or 100)-n;return true end
-    local other
-    for _,c in ipairs(g.hand or {}) do if c.id~=target.id and not c.destroyed and (id~="spec_redistribute" or c.suit~=target.suit) then other=c;break end end
-    if id=="spec_stairway" then
-        if not other then return false,"Cần ít nhất 2 lá trên tay." end
-        if not payHp(4) then return false,"Cần hơn 4 HP." end
-        local n=0;for _,c in ipairs(g.hand) do if c.id~=target.id and n<4 then n=n+1;Deck.transformCard(g,c,math.min(14,target.rank+n)) end end
-    elseif id=="spec_twin" then
-        if not other then return false,"Cần một lá khác trên tay." end
-        if not payGold(3) then return false,"Cần 3 Vàng." end
-        Deck.transformCard(g,other,target.rank)
-    elseif id=="spec_molt" then
-        if (target.evolutionLevel or 0)<1 then return false,"Lá phải đã tiến hóa." end
-        A.upgrade(g,target,-1,false);X.sync(g,target,function(c) Deck.applyAttackSpeedBonus(c,8) end)
-    elseif id=="spec_prune" then
-        local victims={};for _,c in ipairs(g.persistentDeck or {}) do if c.id~=target.id and c.rank==target.rank and #victims<2 then victims[#victims+1]=c end end
-        if #victims==0 then return false,"Không có lá khác cùng rank trong bộ bài." end
-        for _,c in ipairs(victims) do
-            A.destroy(g,c)
-            X.sync(g,c,function(o) o.destroyed=true;o.destructionNotified=true end)
-        end
-        require("src.combat").cleanupDestroyedCards(g)
-        X.sync(g,target,function(c) c.bonusBaseChips=(c.bonusBaseChips or 0)+10*#victims;c.baseChips=c.baseChips+10*#victims end)
-        g.selectedIndices={};for i,c in ipairs(g.hand or {}) do if c.selected then g.selectedIndices[#g.selectedIndices+1]=i end end
-    elseif id=="spec_migration" then
-        if not payGold(4) then return false,"Cần 4 Vàng." end
-        local suit=target.suit;local standard=({valoria="hearts",aurelia="diamonds",elaris="clubs",vharos="spades"})[suit] or suit
-        local order={"hearts","diamonds","clubs","spades"};local nextSuit
-        for i,s in ipairs(order) do if s==standard then nextSuit=order[i%4+1] end end
-        nextSuit=nextSuit or "hearts"
-        local rank=target.rank;for _,c in ipairs(g.persistentDeck or {}) do if c.rank==rank then Deck.transformCard(g,c,nil,nextSuit) end end
-    elseif id=="spec_inversion" then
-        if not payHp(2) then return false,"Cần hơn 2 HP." end
-        Deck.transformCard(g,target,16-target.rank)
-    elseif id=="spec_temper" then
-        local eq=target.equipments or {}
-        if #eq==0 then return false,"Lá phải có trang bị." end
-        if (target.evolutionLevel or 0)+2>require("config.card_ability_data").maxEvolutionLevel then return false,"Vượt trần tiến hóa." end
-        X.sync(g,target,function(c) table.remove(c.equipments) end);A.upgrade(g,target,2,false)
-    elseif id=="spec_fission" then
-        if target.rank<4 then return false,"Cần rank ít nhất 4." end
-        Deck.transformCard(g,target,target.rank-2);Deck.addCardToDeck(g,Deck.newCard(2,target.suit))
-    elseif id=="spec_redistribute" then
-        if not other then return false,"Cần một lá khác chất trên tay." end
-        local suit=target.suit;Deck.transformCard(g,target,nil,other.suit);Deck.transformCard(g,other,nil,suit)
-    elseif id=="spec_distill" then
-        if not target.seal then return false,"Lá phải có con dấu." end
-        if (target.evolutionLevel or 0)>=require("config.card_ability_data").maxEvolutionLevel then return false,"Đã đạt trần tiến hóa." end
-        X.sync(g,target,function(c) c.seal=nil;c.isAnchor=false;Deck.applyAttackSpeedBonus(c,4) end);A.upgrade(g,target,1,false)
-    end
-    return true,"Đã dùng "..d.name.."."
+    local Enchantments=require("src.spn_enchantments")
+    if Enchantments.get(item.id) then return Enchantments.apply(g,item,target) end
+    if require("src.spectral").get(item.id) then return require("src.spectral").apply(g,item,target) end
+    return nil
 end
 for id,d in pairs(require("src.chest_depth").byId) do X.byId[id]=d end
 return X

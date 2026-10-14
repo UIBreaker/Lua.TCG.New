@@ -595,6 +595,9 @@ function Deck.cloneCard(card)
     newC.baseRank = card.baseRank or card.rank
     newC.rank = newC.baseRank
     newC.rankName = Deck.RANK_NAMES[newC.rank] or tostring(newC.rank)
+    newC.bloodPower = card.bloodPower
+    newC.voidPower = card.voidPower
+    newC.editionPower = card.editionPower
     newC.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
     Deck.getCardAttackSpeed(newC)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
@@ -616,6 +619,7 @@ function Deck.cloneCard(card)
     newC.disableFactionPassives = card.disableFactionPassives or false
     newC.starterDeckId = card.starterDeckId
     newC.seal = Deck.normalizeSeal(card.seal)
+    newC.sealPower = card.sealPower
     newC.enhancement = card.enhancement
     newC.edition = card.edition or card.visualEffect
     newC.overchargeStacks = card.overchargeStacks or 0

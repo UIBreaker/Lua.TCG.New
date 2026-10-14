@@ -487,6 +487,7 @@ return {
     ["spirit_second_wave"] = "assets/cards/continental/spn/spirit_second_wave.png",
     ["spirit_battle_memory"] = "assets/cards/continental/spn/spirit_battle_memory.png",
     ["spirit_golden_tithe"] = "assets/cards/continental/spn/spirit_golden_tithe.png",
+    ["spirit_victory_bounty"] = "assets/cards/continental/spn/spirit_victory_bounty.png",
     ["cons_accuracy"] = "assets/cards/continental/utility/cons_accuracy.png",
     ["cons_evasion"] = "assets/cards/continental/utility/cons_evasion.png",
     ["cons_armor_break"] = "assets/cards/continental/utility/cons_armor_break.png",
@@ -497,4 +498,10 @@ return {
     ["cons_slow"] = "assets/cards/continental/utility/cons_slow.png",
     ["void_gold"] = "assets/cards/continental/utility/void_gold.png",
     ["void_souls"] = "assets/cards/continental/utility/void_souls.png",
+    ["void_ticket"] = "assets/cards/continental/utility/void_ticket.png",
+    ["recognition_hearts"] = "assets/cards/continental/utility/recognition_hearts.png",
+    ["recognition_diamonds"] = "assets/cards/continental/utility/recognition_diamonds.png",
+    ["recognition_clubs"] = "assets/cards/continental/utility/recognition_clubs.png",
+    ["recognition_spades"] = "assets/cards/continental/utility/recognition_spades.png",
+    ["cons_travel_permit"] = "assets/cards/continental/utility/travel_permit.png",
 }

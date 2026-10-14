@@ -136,7 +136,7 @@ local function fallback(reward, reason)
 end
 
 local rollTable
-local function createReward(id, game, source, depth)
+local function createReward(id, game, source, depth, lootBonus)
     local reward = copy(Config.definitions[id] or Config.definitions.gold_bonus)
     reward.id, reward.source, reward.amount = id, source, 1
     if reward.type == "GOLD" then
@@ -168,17 +168,21 @@ local function createReward(id, game, source, depth)
         reward.name = reward.card.name
     elseif reward.type == "CHEST" then
         if depth >= 2 then return fallback(reward, "Giới hạn rương lồng nhau") end
-        reward.children = rollTable(reward.tableId, game, "RƯƠNG", depth + 1)
+        reward.children = rollTable(reward.tableId, game, "RƯƠNG", depth + 1, nil, lootBonus)
     end
     return reward
 end
 
-rollTable = function(tableId, game, source, depth, modifier)
+rollTable = function(tableId, game, source, depth, modifier, lootBonus)
     local tableData = Config.tables[tableId] or Config.tables.normal_enemy
     local rewards = {}
-    for _ = 1, Rng.random(tableData.rolls[1], tableData.rolls[2]) do
-        local id = RewardSystem.weighted(tableData.entries, nil, modifier)
-        rewards[#rewards + 1] = createReward(id, game, source, depth or 0)
+    -- Extra rolls belong only to the ceremony; nested chests inherit the rarity blessing.
+    local extra=(depth or 0)==0 and lootBonus and lootBonus.extraRolls or 0
+    for _ = 1, Rng.random(tableData.rolls[1], tableData.rolls[2])+extra do
+        local id = RewardSystem.weighted(tableData.entries, nil, function(entry)
+            return require("src.spn_bounty").weight(entry,modifier and modifier(entry) or entry.weight or 0,lootBonus)
+        end)
+        rewards[#rewards + 1] = createReward(id, game, source, depth or 0,lootBonus)
     end
     return rewards
 end
@@ -206,11 +210,19 @@ function RewardSystem.begin(breakdown, game, context)
     end
     local result = {breakdown = breakdown, tableId = tableId, loot = {}, bonusGold = 0, claimed = false}
     if not breakdown.wasSkipped then
-        result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier)
+        result.spnLootBonus=require("src.spn_bounty").bonus(game)
+        result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier,result.spnLootBonus)
         local ticket=require("src.void_gacha").ticketReward(boss)
         if ticket then result.loot[#result.loot+1]=ticket end
+        for _,card in ipairs(game.pendingJourneyRewards or {}) do
+            result.loot[#result.loot+1]={id=card.id,type="JOURNEY_DOCUMENT",card=card,name=card.name,
+                desc=card.desc,rarity=card.rarity,source="CHINH PHỤC KHU VỰC"}
+        end
+        game.pendingJourneyRewards=nil
         if not context.lootTableId and Rng.random() < (boss and Config.supplies.bossChance or Config.supplies.normalChance) then
-            result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries), game, "TIẾP TẾ", 0)
+            result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries,nil,function(entry)
+                return require("src.spn_bounty").weight(entry,entry.weight,result.spnLootBonus)
+            end), game, "TIẾP TẾ", 0,result.spnLootBonus)
         end
     end
     result.earnedSouls = 0
@@ -697,6 +709,10 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.printf(encounterTitle, x + 580, y + 38, w - 614, "right")
     g.setFont(UI.fonts.tiny); g.setColor(muted)
     g.printf(anim.finished and "PHẦN THƯỞNG ĐÃ ĐƯỢC CỘNG" or "ĐANG KIỂM KÊ PHẦN THƯỞNG", x + 580, y + 64, w - 614, "right")
+    local lootBonus=anim.result and anim.result.spnLootBonus
+    if lootBonus and lootBonus.extraRolls>0 then
+        g.setColor(gold);g.printf("PHÚC LINH · +"..lootBonus.extraRolls.." QUÀ · TRỌNG SỐ HIẾM ×"..string.format("%g",1+lootBonus.rareWeightPct/100),x+580,y+82,w-614,"right")
+    end
     g.setColor(0.26, 0.32, 0.39, 0.45); g.line(x + 32, y + 99, x + w - 32, y + 99)
 
     local leftX, leftW = x + 32, 636
@@ -889,7 +905,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             art = chestArt
         elseif revealed and progress >= 0.5 then
             if reward.packType then art = UI.getPackImage(reward.packType)
-            elseif reward.type=="VOID_TICKET" then art=UI.getVoucherImage("v_welcome")
+            elseif reward.type=="VOID_TICKET" then art=require("src.continental_art").get("void_ticket")
             elseif reward.card and reward.type == "PLAYING_CARD" then
                 UI.drawCardFace(reward.card, -46, -69, 92, 138, false)
             elseif reward.card then
@@ -904,7 +920,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         if art then
             g.setColor(1, 1, 1)
             local iw, ih = art:getDimensions()
-            if reward.packType then
+            if reward.packType or reward.type=="VOID_TICKET" then
                 UI.CardFrame.image(art, -46, -69, 92, 138)
                 UI.CardFrame.draw(-46, -69, 92, 138, nil, 1, reward)
             else

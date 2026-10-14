@@ -15,13 +15,14 @@ end
 local function shot(name)
     love.mouse.setPosition(2,2)
     love.graphics.captureScreenshot(function(data)
-        local f=assert(io.open("docs/void_"..name..".png","wb"));f:write(data:encode("png"):getString());f:close()
+        local f=assert(io.open("docs/void_"..(os.getenv("POKER_VOID_CAPTURE_PREFIX") or "")..name..".png","wb"));f:write(data:encode("png"):getString());f:close()
     end)
 end
-local function forced(fn,rolls,units)
+local function forced(fn,rolls,units,ticketAmount)
     local original=Rng.random;local ri,ui=0,0
     Rng.random=function(a,b)
         if b==100000 then ri=ri+1;return rolls[ri] or 5
+        elseif ticketAmount and a==1 and b==100 then return ticketAmount
         elseif not a then ui=ui+1;return units and units[ui] or .99
         elseif b then return a else return 1 end
     end
@@ -52,6 +53,14 @@ function T.update(game,cb)
         local _,state=cb.getRunState();assert(state=="void" and game.run.ante==10)
         assert(require("render.scene").definition.backgroundPath==G.config.background and require("render.scene").art.theVoid)
         assert(#V.featured==3 and V.featured[1].item.voidPower==5 and V.featured[2].item.voidPower==10 and V.featured[3].item.voidPower==10)
+        local UI=require("src.ui");local Shop=require("src.shop")
+        assert(UI.getVoucherImage("v_hand_size")==require("src.continental_art").get("hand_expansion"))
+        assert(require("src.continental_art").get("void_ticket"))
+        for _,item in ipairs(G.consumablePool()) do assert(UI.getConsumableImage(item),"Void consumable art missing: "..item.id) end
+        for id in pairs(require("src.equipment").ITEMS) do assert(UI.getEquipmentImage(id),"Void equipment art missing: "..id) end
+        for id in pairs(require("src.deities").CATALOG) do assert(UI.getDeityImage(id),"Void SPN art missing: "..id) end
+        for _,item in ipairs(Shop.PACK_CATALOG) do assert(UI.getPackImage(item.packType),"Void pack art missing: "..item.packType) end
+        for _,item in ipairs(Shop.VOUCHERS) do assert(UI.getVoucherImage(item.id),"Void voucher art missing: "..item.id) end
         shot("rates");click(button(cb,"void_rates"))
     elseif step==4 then shot("banner");click(button(cb,"void_rates_close"))
     elseif step==5 then
@@ -87,7 +96,10 @@ function T.update(game,cb)
             assert(V.phase(i,0)=="charge" and V.phase(i,1)=="charge" and V.phase(i,1.1)=="signal")
             assert(V.phase(i,1.5)=="fracture" and V.phase(i,V.effectSpec(i).revealAt)=="reveal")
         end
-        forced(function() click(button(cb,"void_pull_10")) end,{5,37005,5,37005,5,37005,5,37005,5,37005})
+        local start,rolls=0,{}
+        for _,row in ipairs(G.config.rates) do rolls[row.id]=start+1;start=start+row.weight end
+        forced(function() click(button(cb,"void_pull_10")) end,{5,37005,rolls.hand,rolls.ticket,5,37005,5,37005,5,37005},nil,100)
+        assert(game.voidEvent.results[3].kind=="hand" and game.voidEvent.results[4].kind=="ticket" and game.voidEvent.results[4].amount==100 and game.voidTickets==100)
         T.rewardGold=game.gold;T.rewardSouls=game.souls
         T.step=23.1;T.deadline=love.timer.getTime()+.28;return
     elseif step==23.1 then
@@ -100,7 +112,11 @@ function T.update(game,cb)
     elseif step==23.3 then
         burst(game,1,"gold_reveal");T.step=23.4;T.deadline=love.timer.getTime()+.28;return
     elseif step==23.4 then
-        burst(game,2,"souls_reveal");T.step=23.5;T.deadline=love.timer.getTime()+.28;return
+        burst(game,2,"souls_reveal");T.step=23.41;T.deadline=love.timer.getTime()+.28;return
+    elseif step==23.41 then
+        burst(game,3,"hand_expansion_reveal");T.step=23.42;T.deadline=love.timer.getTime()+.28;return
+    elseif step==23.42 then
+        burst(game,4,"ticket_reveal");T.step=23.5;T.deadline=love.timer.getTime()+.28;return
     elseif step==23.5 then
         local index=V.animation.index;V.animation.time=V.effectSpec(game.voidEvent.results[index].strength).duration
         V.update(0,game);assert(V.animation.index==index+1 and V.animation.time==0 and not V.animation.signal and not V.animation.impact)

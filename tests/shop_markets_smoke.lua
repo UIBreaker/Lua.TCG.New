@@ -19,8 +19,9 @@ for _,item in ipairs(retail) do
     expected[item.id]=true
     local pack
     for _,def in ipairs(Shop.PACK_CATALOG) do if def.packType==item.sourcePack then pack=def end end
-    assert(item.cost==math.ceil(pack.cost*1.2))
+    assert(item.cost==((item.consumable.isEnchantment or item.category=="spectral") and item.consumable.cost or math.ceil(pack.cost*1.2)))
 end
+expected.cons_travel_permit=true
 for _=1,3000 do
     Shop.enterAfterCombat(game)
     types[game.shopMode]=true
@@ -34,6 +35,7 @@ for _=1,3000 do
         assert(#shop.items==8)
     elseif shop.mode=="consumable" then
         assert(#shop.items==8)
+        assert(shop.items[8].id=="cons_travel_permit" and shop.items[8].cost==2000)
         for _,item in ipairs(shop.items) do assert(item.consumable and expected[item.id]);consumables[item.id]=true end
     elseif shop.mode=="equipment" then
         assert(#shop.items==8)

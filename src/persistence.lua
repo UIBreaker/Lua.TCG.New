@@ -332,6 +332,7 @@ function Persistence.restoreSnapshot(snapshot)
     end
     require("src.loadout").init(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
+    if game.barterEvent then require("src.barter").restore(game) end
     game.regionRecognitions=game.regionRecognitions or {}
     if game.run.travelPermit and snapshot.game.run.travelRulesVersion~=2 then
         local found=false

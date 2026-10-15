@@ -37,7 +37,7 @@ function T.update(game,cb)
  elseif s==5.5 then
   click(button(cb,"bag_use"));assert(game.playerHp==75 and #game.consumables==0 and normalCount(game)==119)
   T.stage=6;T.deadline=now+.5;return
- elseif s==6 then love.keypressed("i");assert(Bag.open)
+ elseif s==6 then assert(Bag.open and Bag.tab=="consumable")
  elseif s==7 then
   assert(Bag.cells[1].count==99 and Bag.cells[2].count==20);click(Bag.cells[2])
  elseif s==8 then

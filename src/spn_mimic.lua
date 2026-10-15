@@ -13,7 +13,7 @@ function M.register(deities)
         descriptionTemplate="Sao chép khả năng SPN ngay bên phải, kích hoạt {value} lần tại ô này theo điều kiện và cấp của nguồn. Mỗi cấp thêm 1 lần; tối đa 128 lần/sự kiện. Ô phải trống hoặc bị khóa: không kích hoạt."}
     entry.desc=entry.descriptionTemplate:gsub("{value}","1");entry.baseDesc=entry.desc;D.CATALOG[entry.id]=entry
 end
-function M.resolve(list,slot,game,locked)
+local function resolveRaw(list,slot,game,locked)
     D=D or require("src.deities")
     local owner=list and list[slot]
     if not owner or owner.id~="spirit_right_echo" then return owner,1 end
@@ -36,13 +36,39 @@ function M.resolve(list,slot,game,locked)
     proxy.spnGrowth=owner.mimicGrowth and owner.mimicGrowth[target.id] or clone(target.spnGrowth)
     return proxy,count
 end
+function M.resolve(list,slot,game,locked)
+    local source,count=resolveRaw(list,slot,game,locked)
+    if not source then return nil,0 end
+    local first
+    for index,item in pairs(list or {}) do
+        if type(index)=="number" and type(item)=="table" and item.id and (not first or index<first) then first=index end
+    end
+    if slot==first and source.id~="spirit_left_refrain" then
+        local repeats=0
+        for index,item in pairs(list or {}) do
+            if type(index)=="number" and type(item)=="table" and index~=slot
+                and not (locked and locked[index]) and not (game and Boss.isSlotLocked(game,"spn",index)) then
+                local repeater,activations=resolveRaw(list,index,game,locked)
+                if repeater and repeater.id=="spirit_left_refrain" then
+                    repeats=math.min(M.MAX_ACTIVATIONS-1,repeats+D.scaleEffect(repeater,{copyActivations=2}).copyActivations*activations)
+                end
+            end
+        end
+        count=math.min(M.MAX_ACTIVATIONS,count*(1+repeats))
+    end
+    return source,count
+end
 -- Run existing mechanics with a separate owned identity at the copier's slot.
 -- Restore the physical card even on errors, but retain intentional self-destruction/replacement.
 function M.each(game,list,slot,fn,locked)
     local physical=list and list[slot]
     local effective,count=M.resolve(list,slot,game,locked)
-    if not effective then return end
-    if not physical or physical.id~="spirit_right_echo" then return fn(effective) end
+    if not effective or effective.id=="spirit_left_refrain" then return end
+    if not physical or physical.id~="spirit_right_echo" then
+        local result
+        for _=1,count do if list[slot]~=physical then break end;result=fn(effective) end
+        return result
+    end
     for i=1,count do
         if list[slot]~=physical then break end
         local gameList=game and game.deities

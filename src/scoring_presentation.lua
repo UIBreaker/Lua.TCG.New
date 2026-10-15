@@ -148,7 +148,7 @@ local function trigger(anim, st)
     -- Card XMult is additive and capped by the calculator; hand SPN XMult is already in resultingMult.
     local beforeX = anim.displayXMult
     if st.cardXMultTotal then anim.displayXMult = st.cardXMultTotal end
-    s.multiply = (st.xMult or 1) > 1 or (st.xChips or 1)>1 or (st.xAura or 1)>1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
+    s.multiply = (st.xMult or 1) > 1 or (st.xChips or 1)~=1 or (st.xAura or 1)>1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
     anim.bounceScale.chips = s.toChips ~= beforeChips and C.pulse.damage or 1
     anim.bounceScale.mult = s.toMult ~= beforeMult and (s.multiply and C.pulse.multiply or C.pulse.enhance) or 1
     local popupY=y-(cardIndex and 94 or 52)
@@ -171,7 +171,7 @@ local function trigger(anim, st)
     end
     if s.multiply then
         local aura=(st.xAura or 1)>1 or st.auraMultiplier or st.cardXMultTotal
-        local chips=(st.xChips or 1)>1
+        local chips=(st.xChips or 1)~=1
         local factor = (st.xAura or 1)>1 and st.xAura or chips and st.xChips or st.auraMultiplier or st.xMult or anim.displayXMult
         s.links[#s.links + 1] = {text = "×" .. string.format("%.2f",factor)
             .. (aura and " AURA" or chips and " ST" or " C.H"), x = x, y = popupY-21,

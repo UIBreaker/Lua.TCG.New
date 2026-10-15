@@ -385,7 +385,7 @@ function Scoring.calculate(handInfo, deities, context)
     local afterChoicesApplied = false
     local previewQueue={}
     for i,c in ipairs(handInfo.scoringCards) do previewQueue[#previewQueue+1]={card=c,index=i} end
-    if not abilityHand then require("src.spn_pacts").queueRepeats(abilityGame or context.gameState,handInfo.scoringCards,previewQueue) end
+    if not abilityHand then require("src.spn_pacts").queueRepeats(abilityGame or context.gameState,handInfo.scoringCards,previewQueue,handInfo) end
     local echoSeen={}
     while true do
         local job
@@ -1180,6 +1180,8 @@ end
             if effectiveDeity and effectiveDeity.onHandScored then
                 local res = effectiveDeity.onHandScored(handInfo, spnContext, effectiveDeity, di)
                 res = Deities.scaleEffect(effectiveDeity, res)
+                if res and res.offering then res=require("src.spn_predators").scored(abilityGame or {deities=deities},di,effectiveDeity,res) end
+                if res then res=require("src.spn_reserves").scored(effectiveDeity,res) end
                 if res then
                     if abilityHand then
                         local repeats = Abilities.spnTriggered(abilityGame, di)

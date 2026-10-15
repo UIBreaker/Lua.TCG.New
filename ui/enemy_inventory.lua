@@ -11,8 +11,15 @@ local function item(UI,owned,x,y,w,h,label)
     local image=owned.kind=="equipment" and UI.getEquipmentImage(owned.id)
         or owned.kind=="spn" and UI.getDeityImage(owned.id) or UI.getConsumableImage({id=owned.id,category=owned.kind})
     if image then
-        love.graphics.setColor(1,1,1);UI.CardFrame.image(image,x+12,y+12,44,66)
-        UI.drawCardBorder(x+12,y+12,44,66)
+        local compact=h<80
+        local ix,iy,iw,ih=x+(compact and 8 or 12),y+(compact and 7 or 12),compact and 30 or 44,compact and 45 or 66
+        love.graphics.setColor(1,1,1);UI.CardFrame.image(image,ix,iy,iw,ih)
+        UI.drawCardBorder(ix,iy,iw,ih)
+    end
+    if h<80 then
+        Core.textLine(label.." · "..d.name,x+46,y+5,w-54,UI.fonts.tiny,gold,"left")
+        text(d.desc,x+46,y+22,w-54,UI.fonts.tiny)
+        return
     end
     text(label.." · "..d.name,x+68,y+9,w-80,UI.fonts.small,gold)
     text(d.desc,x+68,y+32,w-80,UI.fonts.small)
@@ -41,12 +48,19 @@ function I.draw(UI,m,buttons)
     text("DỰ TRỮ CÒN · Hồi "..UI.formatNumber(r.healingLeft).." HP / Tạo "..UI.formatNumber(r.armorLeft).." Giáp",663,435,567,UI.fonts.tiny,blue)
     text(m.isBoss and (require("src.boss_abilities").passiveEnabled(m) and "Phong ấn nội tại để vô hiệu Dấu / SPN." or "Dấu / SPN đang bị phong ấn.")
         or "Dấu / SPN dùng chung dự trữ hồi và tạo giáp.",663,450,567,UI.fonts.tiny)
-    Chrome.panel(28,494,1224,185,gold)
+    Chrome.panel(28,494,1224,198,gold)
     text("BALO DỰ TRỮ · DÙNG / ĐỔI ĐỒ TỐN MỘT HÀNH ĐỘNG",42,506,1160,UI.fonts.small,gold)
+    local supplies={}
     local reserve=bag.backpack.equipment[1] or bag.stowed
-    item(UI,reserve,42,536,572,114,bag.stowed and "Đã cất · không đổi lại" or "Trang bị dự trữ")
-    item(UI,bag.backpack.consumables[1],661,536,577,114,"Thuốc dự trữ")
-    text("Ý định: "..(m.intent and m.intent.label or "Chưa rõ"),42,657,1180,UI.fonts.tiny,blue)
+    if reserve then supplies[#supplies+1]={owned=reserve,label=bag.stowed and "Đã cất" or "Trang bị dự trữ"} end
+    local spn=(bag.backpack.spns or {})[1] or bag.stowedSpn
+    if spn then supplies[#supplies+1]={owned=spn,label=bag.stowedSpn and "SPN đã cất" or "SPN dự trữ"} end
+    for index,owned in ipairs(bag.backpack.consumables) do supplies[#supplies+1]={owned=owned,label="Tiêu hao "..index} end
+    for index,entry in ipairs(supplies) do
+        item(UI,entry.owned,42+((index-1)%3)*400,530+math.floor((index-1)/3)*64,386,60,entry.label)
+    end
+    if #supplies==0 then text("Balo trống · Không còn đồ dự trữ.",42,550,1160,UI.fonts.small) end
+    text("Ý định: "..(m.intent and m.intent.label or "Chưa rõ"),42,662,1180,UI.fonts.tiny,blue)
     local close={id="close_inspector",text="ĐÓNG · ESC",x=1106,y=23,w=143,h=43,font=UI.fonts.small,color=UI.COLORS.btnDiscard}
     buttons[#buttons+1]=close;UI.drawButton(close)
     g.pop()

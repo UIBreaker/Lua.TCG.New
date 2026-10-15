@@ -64,7 +64,7 @@ function A.attach(m)
 end
 function A.start(m)
     m.enemyActions=0;m.reassembled=false
-    m.actionTurns=0;m.combatBuffs={}
+    m.actionTurns=0;m.combatBuffs={};m.spnStolenSpeed=nil
     m.enemyResources=nil
     m.creatureArmor=0;m.creatureArmorMax=0
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
@@ -72,7 +72,8 @@ end
 function A.speed(m)
     local buffs=m.combatBuffs or {}
     local speed=math.min(999,require("src.enemy_loadout").speed(m)+((buffs.speed or {}).value or 0))
-    return buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
+    speed=buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
+    return math.max(1,speed-(m.spnStolenSpeed or 0))
 end
 function A.attack(m)
     return require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0)
@@ -110,25 +111,73 @@ local function armorCap(target)
     return math.max(1,math.floor(target.maxHp*.50))
 end
 
+local function tacticalSupport(game,m)
+    local C=require("src.combat");local role=m.enemyInventory.role
+    local playerSpeed=game.lastPlayerAttackSpeed or A.speed(m)
+    local best,score=nil,0
+    local strongest=1
+    for _,ally in ipairs(require("src.enemy_group").members(game)) do if ally.hp>0 then strongest=math.max(strongest,A.attack(ally)) end end
+    for _,target in ipairs(require("src.enemy_group").members(game)) do if target.hp>0 then
+        local hp=target.hp/target.maxHp;local r=A.resources(target)
+        for _,kind in ipairs({"heal","armor","speed","damage"}) do if A.canSupport(m,kind) then
+            local value=A.buffAmount(target,kind,m);local rank=0
+            local active=(target.combatBuffs or {})[kind]
+            if kind=="heal" then
+                value=math.min(value,target.maxHp-target.hp,r.healingLeft)
+                if hp<=.65 then rank=80+(1-hp)*40+(role=="Quân y" and 10 or 0) end
+            elseif kind=="armor" then
+                value=math.min(value,armorCap(target)-(target.creatureArmor or 0),r.armorLeft)
+                rank=25+(1-hp)*30+(role=="Hộ vệ" and 25 or 0)-40*(target.creatureArmor or 0)/target.maxHp
+            elseif not active then
+                local hit=C.getHitChance(A.speed(target),playerSpeed)
+                if kind=="speed" then
+                    local gain=C.getHitChance(A.speed(target)+value,playerSpeed)-hit
+                    rank=15+gain*120+15*A.attack(target)/strongest
+                        +(A.speed(target)<=playerSpeed and A.speed(target)+value>playerSpeed and 25 or 0)
+                else rank=20+20*hit+15*A.attack(target)/strongest+(role=="Đấu sĩ" and 10 or 0) end
+            end
+            if value>0 and rank>score then score=rank;best={kind=kind,target=target,value=value} end
+        end end
+    end end
+    return best
+end
+
 function A.plan(game,m,turn)
     turn=turn or (m.actionTurns or 0)+1
     local Loadout=require("src.enemy_loadout")
     local resources=A.resources(m)
-    local reserve=not resources.mustAttack and Loadout.plan(m)
-    if reserve then m.intent=reserve;return reserve end
     local function attack()
         local echo=Loadout.attackBonus(m)
         local value=A.attack(m)+A.attackBonus(game,m)+echo
-        m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")}
+        m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")
+            ..(((m.enemyInventory or {}).guaranteedAttacks or 0)>0 and " · Trúng 100%" or "")}
         return m.intent
     end
-    if turn%2==1 or resources.mustAttack then return attack()
+    if resources.mustAttack then return attack() end
+    if m.enemyInventory then
+        local value=A.attack(m)+A.attackBonus(game,m)+Loadout.attackBonus(m)
+        local armor=game.playerArmor or game.playerShield or 0
+        local chance=(m.enemyInventory.guaranteedAttacks or 0)>0 and 1 or require("src.combat").getHitChance(A.speed(m),game.lastPlayerAttackSpeed)
+        if (game.playerHp or math.huge)<=value-math.min(armor,value*(1-Loadout.pierce(m))) and chance>=.8
+            and not (game.potionCombat or {}).evasion then return attack() end
+    end
+    local choice=m.enemyInventory and tacticalSupport(game,m)
+    local rescue=choice and choice.kind=="heal" and choice.target~=m and choice.target.hp/choice.target.maxHp<=.35
+    local reserve=not rescue and Loadout.plan(m,game)
+    if reserve then m.intent=reserve;return reserve end
+    if turn%2==1 and not rescue then return attack()
     else
+        if m.enemyInventory then
+            if not choice then return attack() end
+            local kind,target,value=choice.kind,choice.target,choice.value
+            local to=target==m and "bản thân" or "đồng đội #"..(target.groupIndex or 1)
+            m.intent={type=kind,value=value,targetIndex=target.groupIndex or 1,
+                label=actionNames[kind].." "..to.." +"..value.." "..actionStats[kind]
+                    ..((kind=="speed" or kind=="damage") and " (2 hành động)" or "").." · còn "..resources.charges[kind].." lần"}
+            return m.intent
+        end
         local support=math.floor(turn/2)
         local kind=({"armor","speed","damage"})[(support+(m.groupIndex or 1)-2)%3+1]
-        if m.enemyInventory and support%2==1 then
-            kind=({["Đấu sĩ"]="damage",["Hộ vệ"]="armor",["Quân y"]="speed"})[m.enemyInventory.role] or kind
-        end
         local wounded=recipient(game,m,"heal")
         local target
         if wounded.hp/wounded.maxHp<=.65 and A.resources(wounded).healingLeft>0 and A.canSupport(m,"heal") then kind="heal";target=wounded

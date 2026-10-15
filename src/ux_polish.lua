@@ -309,7 +309,7 @@ function P.snapshot(game)
 end
 local labels={level="TIẾN HÓA",speed="TỐC ĐÁNH",edition="ẤN BẢN",seal="ẤN",enhancement="RÈN",equipment="ITM",sockets="HỐC TRANG BỊ",rulebreak="PHÁ LUẬT",
     rarity="BẬC",addMult="CƯỜNG HÓA",addChips="SÁT THƯƠNG",addGold="VÀNG",addAttackSpeed="TỐC ĐÁNH",repeatsPerLevel="HỆ SỐ KÍCH HOẠT",uqChancePct="UQ (%)",addArmorToHpPct="GIÁP THÀNH MÁU (%)",addTwoRepeats="TÁI KÍCH HOẠT LÁ 2",
-    xMult="HỆ SỐ CƯỜNG HÓA",xPotionPower="HIỆU QUẢ THUỐC",addPotionChancePct="THUỐC VĨNH VIỄN (%)",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
+    xMult="HỆ SỐ CƯỜNG HÓA",addDeathChips="HỆ SỐ ST MỖI TIÊU HỦY",addGoldChips="HỆ SỐ ST MỖI VÀNG",addHandSize="KÍCH THƯỚC TAY",addSoloRepeats="HỆ SỐ ĐỘC ÂM",addStolenSpeed="TỐC CƯỚP",addOfferingMult="HỆ SỐ HIẾN TẾ",xPotionPower="HIỆU QUẢ THUỐC",addPotionChancePct="THUỐC VĨNH VIỄN (%)",addArmor="GIÁP",addHealHp="HỒI HP",addSplashPct="LAN (%)",
     addAfterimagePct="DƯ ẢNH (%)",addReflectPct="PHẢN ST (%)",addReviveHp="HP GIAO KÈO",
     addFlatDamage="ST CỐ ĐỊNH",addTransmutePct="NGHỊCH LUYỆN (%)",addDiscards="LƯỢT BỎ",
     addHands="LƯỢT ĐÁNH",addRewardRolls="LƯỢT RÚT THƯỞNG",addPhantomHp="MÁU ẢO",addFreezeTurns="LƯỢT ĐÓNG BĂNG",addAuraSplitPct="AURA CHIA ĐỀU (%)",addOverkillArmorPct="TÀN DƯ (%)",bedExplosionPct="VỤ NỔ (%)",

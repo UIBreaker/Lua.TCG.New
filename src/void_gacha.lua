@@ -84,7 +84,7 @@ function G.createReward(game,id)
         r.kind="pack";r.item=Clone(choose(Shop.PACK_CATALOG));r.item.cost=0;r.item.category="pack";r.item.rewardPack=true
         r.opening=Shop.openPack(r.item,game);r.strength=4
         if #r.opening.cards==0 then r.kind="gold";r.amount=1;r.name="Rương rỗng → 1 Vàng";r.item=nil;r.opening=nil;r.strength=1 end
-    elseif id=="voucher" then r.kind="voucher";r.item=Clone(choose(Shop.VOUCHERS));r.item.category="voucher";r.item.voucherId=r.item.id;r.item.cost=0;r.strength=4
+    elseif id=="voucher" then r.kind="voucher";r.item=Shop.voucherOffer(choose(Shop.VOUCHERS),game);r.item.cost=0;r.strength=4
     elseif id=="hand" then r.kind="hand";r.name="Mở rộng tay bài +1";r.strength=4
     elseif id=="ticket" then r.kind="ticket";r.amount=Rng.random(1,100);r.name="+"..r.amount.." Vé The Void";r.strength=3
     else r.kind=id; r.amount=id=="gold" and Rng.random(1,10) or Rng.random(1,5);r.name="+"..r.amount..(id=="gold" and " Vàng" or " Linh hồn") end
@@ -107,9 +107,12 @@ local function award(game,r)
     elseif r.kind=="pack" then
         game.rewardPacks=game.rewardPacks or {};game.rewardPacks[#game.rewardPacks+1]=r.opening
     elseif r.kind=="voucher" then
-        if game.vouchers and game.vouchers[r.item.id] then
-            r.kind="gold";r.amount=3;r.name="Đặc quyền trùng → 3 Vàng";r.strength=1;game.gold=(game.gold or 0)+3
-        else local shop=Shop.new();shop.items={r.item};shop.mode="small";assert(Shop.buyItem(shop,1,game)) end
+        local shop=Shop.new();shop.items={r.item};shop.mode="small";assert(Shop.buyItem(shop,1,game))
+        r.item.voucherLevel=Shop.voucherLevel(r.item.id,game)
+        r.item.voucherOwned=true
+        r.item.voucherPower=Shop.voucherPower(r.item.id,game)
+        r.item.name=Shop.voucherName(r.item.id,r.item.voucherLevel);r.name=r.item.name
+        r.item.desc=Shop.voucherDescription(r.item.id,r.item)
     end
 end
 function G.pull(game,count,payment)

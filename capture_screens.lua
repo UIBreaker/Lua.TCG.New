@@ -61,6 +61,41 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-vouchers" then
+            local ok,err=xpcall(function() require("tests.shop_vouchers_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("VOUCHER UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-play-turn-continuation" then
+            local ok,err=xpcall(function() require("tests.play_turn_continuation_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("PLAY TURN CONTINUATION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-backpack-return-transfer" then
+            local ok,err=pcall(require("tests.backpack_return_transfer_capture").update,gameRef,callbacks)
+            if not ok then print("BACKPACK RETURN / TRANSFER FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-spn-reserves-ui" then
+            local ok,err=xpcall(function() require("tests.spn_reserves_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN reserves UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-spn-predators-ui" then
+            local ok,err=xpcall(function() require("tests.spn_predators_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN predators UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-enemy-loadouts" then
             local ok,err=xpcall(function() require("tests.enemy_loadouts_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("ENEMY LOADOUT CAPTURE FAIL: "..tostring(err));love.event.quit(1) end

@@ -25,9 +25,20 @@ return {
         {id="spirit_ward",cost=3,stat="supportArmor",pct=.06},
         {id="spirit_echo",cost=3,stat="echo",pct=.20},
     },
+    consumables={
+        {id="healing_potion",name="Bình Máu",cost=1,effect="heal",pct=.12},
+        {id="armor_potion_small",name="Bình Giáp Nhỏ",cost=1,effect="armor",pct=.15},
+        {id="cons_damage",name="Thuốc Sát Thương",cost=1,effect="damage",pct=.25},
+        {id="cons_speed_single",name="Tăng Tốc Đơn",cost=1,effect="speed",pct=.25},
+        {id="cons_speed_team",name="Tăng Tốc Đội",cost=2,effect="speed",pct=.15,team=true},
+        {id="cons_accuracy",name="Thuốc Chính Xác",cost=1,effect="accuracy"},
+    },
     roles={
-        {name="Đấu sĩ",equipment={"itm_surveyhammer","blood_ring","basic_feather"},seal="seal_sunder",spn="spirit_echo"},
-        {name="Hộ vệ",equipment={"ward_stone","crafted_guard","crafted_runner"},seal="seal_purifying",spn="spirit_ward"},
-        {name="Quân y",equipment={"vitality_gem","crafted_runner","basic_feather"},seal="seal_blood",spn="spirit_ember"},
+        {name="Đấu sĩ",equipment={"itm_surveyhammer","blood_ring","basic_feather"},seal="seal_sunder",spn="spirit_echo",
+            supplies={"cons_damage","cons_accuracy","cons_speed_single","healing_potion"}},
+        {name="Hộ vệ",equipment={"ward_stone","crafted_guard","crafted_runner"},seal="seal_purifying",spn="spirit_ward",
+            supplies={"armor_potion_small","healing_potion","cons_speed_single","cons_accuracy"}},
+        {name="Quân y",equipment={"vitality_gem","crafted_runner","basic_feather"},seal="seal_blood",spn="spirit_ember",
+            supplies={"healing_potion","cons_speed_team","armor_potion_small","cons_accuracy"}},
     },
 }

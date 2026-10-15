@@ -107,5 +107,6 @@ C.start(g,g.enemies[1],20);assert(g.enemies[1].maxHp==hp and g.enemies[1].enemyI
 assert(g.enemies[1].enemyInventory~=g.enemies[2].enemyInventory and g.enemies[1].enemyInventory.backpack~=g.enemies[2].enemyInventory.backpack)
 local saved=require("src.persistence").makeSnapshot(g,"BLIND_SELECT")
 assert(not saved.game.monster and not saved.game.enemies,"enemy inventories do not leak into the player backpack/save")
+require("tests.enemy_ai_smoke")
 print("Enemy loadouts passed: 240 encounters, budgets/caps, editions, seals, SPN, contact actions, counters, 500K one-shots, independent inventories and restart/save safety")
 return true

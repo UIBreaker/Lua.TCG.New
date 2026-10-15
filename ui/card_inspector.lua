@@ -12,9 +12,10 @@ local function row(label,text,color) return {label=label,text=text,color=color} 
 function I.model(item,game)
     item=unwrap(item)
     local title,body=D.resolve(item,game)
+    local voucher=require("src.shop").voucherDescription(item.voucherId or item.id)
     local def=A.definition(item)
     local m={item=item,title=title,body=body,rows={},equipment={},accent=item.color or {.88,.72,.43,1}}
-    m.name=def and def.characterName:match("^(.-) ·") or item.name or title
+    m.name=def and def.characterName:match("^(.-) ·") or (voucher and title) or item.name or title
     m.subtitle=def and ((item.rankName or item.rank)..(item.suitSymbol or "").." · "..def.name) or title
     local pendingEdition
     for line in (body.."\n"):gmatch("([^\n]+)\n") do
@@ -68,8 +69,8 @@ function I.model(item,game)
             m.stats={{"TẦNG TRANG BỊ","T"..E.getTier(item)},{"HỐC CẦN DÙNG",item.slotsNeeded or 1}}
             m.equipment={row("GẮN & THU HỒI","Gắn vào quân bài trong shop. Tháo về balo để giữ lại hoặc dùng làm nguyên liệu ghép."),row("LOẠI TRANG BỊ",item.soulOnly and "Di vật linh hồn" or item.basic and "Nguyên liệu cơ bản" or "Trang bị lớn")}
         else
-            m.subtitle=item.packType and "RƯƠNG BÀI" or item.voucherId and "ĐẶC QUYỀN" or "TIÊU HAO · DÙNG MỘT LẦN"
-            m.equipment={row("SỬ DỤNG",item.packType and (item.desc or "Mở rương và chọn phần thưởng.") or item.voucherId and "Đặc quyền có hiệu lực trong lượt chơi sau khi mua." or "Tiêu hao trong kho cần được đưa vào ô trang bị trước khi dùng. Chuột phải lá đã trang bị để kích hoạt; hủy chọn mục tiêu không mất lá.")}
+            m.subtitle=item.packType and "RƯƠNG BÀI" or voucher and "ĐẶC QUYỀN · SUỐT RUN" or "TIÊU HAO · DÙNG MỘT LẦN"
+            m.equipment={row("SỬ DỤNG",item.packType and (item.desc or "Mở rương và chọn phần thưởng.") or voucher and "Mua để áp dụng ngay suốt run. Mua lại tăng cấp và cộng dồn hiệu ứng." or "Tiêu hao trong kho cần được đưa vào ô trang bị trước khi dùng. Chuột phải lá đã trang bị để kích hoạt; hủy chọn mục tiêu không mất lá.")}
         end
     end
     return m

@@ -82,5 +82,5 @@ g=game({"spirit_meteor_solitude"});D.evolve(g.deities[1]);D.evolve(g.deities[1])
 saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")));saved.monster=g.monster
 assert(not L.canPlay(saved,2) and bonus(score(saved,h),"spirit_meteor_solitude")==4000)
 local state=Rng.getState();score(saved,h,true);assert(Rng.getState()==state and D.getCount(saved.deities)==1)
-assert(#D.getRandomShopPool({},99)==83)
+assert(#D.getRandomShopPool({},99)==91)
 print("SPN legacy PASS: boss-only sacrifice/copies, one kill receipt, deep owned upgrades, full/negative/overflow slots, save/load, no hatch recursion, single-card restriction and doubling evolution")

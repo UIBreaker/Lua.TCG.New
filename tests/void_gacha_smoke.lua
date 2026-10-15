@@ -55,7 +55,15 @@ for _,row in ipairs(G.config.rates) do
     g=game();force(start+1);assert(G.pull(g,1,"gold"));assert(g.voidEvent.results[1].id==row.id)
     if row.id=="consumable" then assert(#g.backpackConsumables==1)
     elseif row.id=="pack" then assert(#g.rewardPacks==1)
-    elseif row.id=="voucher" then assert(next(g.vouchers))
+    elseif row.id=="voucher" then
+        local Shop=require("src.shop")
+        local id=g.voidEvent.results[1].item.id
+        assert(Shop.voucherLevel(id,g)==1)
+        G.finishReveal(g);assert(G.pull(g,10,"gold"))
+        assert(Shop.voucherLevel(id,g)==11 and Shop.voucherPower(id,g)==11)
+        for i,reward in ipairs(g.voidEvent.results) do
+            assert(reward.kind=="voucher" and reward.item.voucherLevel==i+1 and reward.item.voucherOwned)
+        end
     elseif row.id=="hand" then assert(g.maxHandSize==4) end
     start=start+row.weight
 end

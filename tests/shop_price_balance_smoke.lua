@@ -43,13 +43,13 @@ local packs=0
 for i,item in ipairs(raised.items) do
     if item.category=="pack" then
         packs=packs+1
-        assert(item.cost==math.max(1,math.ceil(base.items[i].baseCost*multiplier)-2))
+        assert(item.cost==math.max(1,math.ceil(base.items[i].baseCost*multiplier)-3))
     end
 end
 assert(packs>0)
 Shop.applyVoucherStock(raised,game)
 for _,item in ipairs(raised.items) do
-    if item.category=="pack" then assert(item.cost==math.max(1,item.baseCost-2)) end
+    if item.category=="pack" then assert(item.cost==math.max(1,item.baseCost-3)) end
 end
 Shop.PRICE_MULTIPLIER=multiplier
 print("Shop price balance smoke PASS: all ten markets, purchase deductions, sale labels and pack voucher")

@@ -16,9 +16,12 @@ end
 function L.generate(m)
     local p=L.profile(m)
     local seed=p.stage*11+(m.encounterCount or p.stage)*7+(m.groupIndex or 1)*13
+    local stockSeed=math.floor(seed/7)+p.stage
+    local reserveSpn=p.stage>=15 and ((m.isBoss or m.isElite) and stockSeed%4==0
+        or not m.isBoss and not m.isElite and p.stage>=22 and stockSeed%10==3)
     local role=D.roles[seed%#D.roles+1]
     local bag={role=role.name,budget=p.budget,spent=0,strength=p.strength,
-        equipment={},backpack={equipment={},consumables={}},attacks=0}
+        equipment={},backpack={equipment={},consumables={},spns={}},attacks=0}
     local function take(def,kind)
         if not def or bag.spent+def.cost>bag.budget then return end
         local item={id=def.id,kind=kind,power=p.strength}
@@ -28,7 +31,23 @@ function L.generate(m)
     if first.cost>p.budget then first=find(D.equipment,"basic_feather") end
     bag.equipment[1]=take(first,"equipment")
     if (m.isBoss and p.stage>=4 or m.isElite and p.stage>=8) then bag.spn=take(find(D.spns,role.spn),"spn") end
-    if p.stage>=3 and (m.isBoss or m.isElite and not bag.spn or not m.isElite and seed%2==0) then bag.seal=take(find(D.seals,role.seal),"seal") end
+    if p.stage>=3 and (m.isBoss or m.isElite and not bag.spn or not m.isElite and seed%2==0 and not reserveSpn) then bag.seal=take(find(D.seals,role.seal),"seal") end
+    if p.stage>=4 then
+        local slots=m.isBoss and 3 or m.isElite and 2 or 1
+        for i=1,slots do
+            local id=role.supplies[(stockSeed+i-1)%#role.supplies+1]
+            if p.stage<8 then id="healing_potion" end
+            if id=="cons_speed_team" and not m.isElite then id="cons_speed_single" end
+            local def=find(D.consumables,id)
+            local item=take(def,"consumable")
+            if item then item.pct=def.pct and def.pct*p.strength;bag.backpack.consumables[#bag.backpack.consumables+1]=item end
+            if p.stage<8 then break end
+        end
+    end
+    if reserveSpn then
+        local id=role.spn=="spirit_echo" and "spirit_ward" or "spirit_echo"
+        bag.backpack.spns[1]=take(find(D.spns,id),"spn")
+    end
     for i=2,p.slots do
         local item=take(find(D.equipment,role.equipment[i]),"equipment")
         if item then bag.equipment[#bag.equipment+1]=item end
@@ -42,10 +61,6 @@ function L.generate(m)
     if p.stage>=5 and bag.spent<bag.budget then
         local edition=p.stage>=20 and "polychrome" or p.stage>=12 and "holographic" or "foil"
         local item=bag.equipment[1];item.edition=edition;bag.spent=bag.spent+1
-    end
-    if p.stage>=8 and bag.spent<bag.budget then
-        bag.spent=bag.spent+1
-        bag.backpack.consumables[1]={id="healing_potion",kind="consumable",pct=.12*p.strength}
     end
     return bag
 end
@@ -97,27 +112,114 @@ function L.attackBonus(m)
     return 0
 end
 function L.pierce(m) return effect(m,"seal","pierce") end
-function L.plan(m)
-    local bag=m.enemyInventory;if not bag then return end
-    local potion=bag.backpack.consumables[1]
-    local healingLeft=require("src.enemy_abilities").resources(m).healingLeft
-    if potion and m.hp/m.maxHp<=.35 and healingLeft>0 then
-        local value=math.min(math.floor(m.maxHp*potion.pct),healingLeft)
-        return {type="consume",targetIndex=m.groupIndex or 1,value=value,
-            label="Dùng thuốc từ balo: hồi "..value.." HP · 1 lần"}
+local function supplyValue(m,item,def)
+    local A=require("src.enemy_abilities");local r=A.resources(m)
+    local pct=item.pct or (def.pct or 0)*(item.power or 1)
+    if def.effect=="heal" then return math.max(0,math.min(math.floor(m.maxHp*pct),m.maxHp-m.hp,r.healingLeft)) end
+    if def.effect=="armor" then return math.max(0,math.min(math.floor(m.maxHp*pct),math.floor(m.maxHp*.5)-(m.creatureArmor or 0),r.armorLeft)) end
+    if def.effect=="accuracy" then return 1 end
+    if (m.combatBuffs or {})[def.effect] then return 0 end
+    return math.max(0,math.floor(math.min(def.effect=="speed" and 999-A.speed(m) or math.huge,
+        (def.effect=="speed" and A.speed(m) or A.attack(m))*pct)))
+end
+local function supplyScore(game,m,target,def,value)
+    if value<=0 then return 0 end
+    local A=require("src.enemy_abilities");local C=require("src.combat")
+    local hp=target.hp/target.maxHp;local speed=game.lastPlayerAttackSpeed or A.speed(m)
+    local hit=C.getHitChance(A.speed(target),speed)
+    if def.effect=="heal" then return hp<=.35 and 90+(1-hp)*20 or 0 end
+    if def.effect=="armor" then return hp<=.65 and 50+(1-hp)*20 or 0 end
+    if def.effect=="accuracy" then return hit<.75 and (m.enemyInventory.guaranteedAttacks or 0)==0 and 65+(1-hit)*25 or 0 end
+    if def.effect=="speed" then
+        local gain=C.getHitChance(A.speed(target)+value,speed)-hit
+        return gain>0 and 35+gain*120+(A.speed(target)<=speed and A.speed(target)+value>speed and 20 or 0) or 0
     end
+    return 30+20*hit+math.min(15,15*A.attack(target)/math.max(1,A.attack(m)))
+end
+function L.plan(m,game)
+    local bag=m.enemyInventory;if not bag then return end
+    local A=require("src.enemy_abilities")
+    if A.resources(m).mustAttack then return end
+    game=game or {monster=m,enemies=m.group}
+    local best,score=nil,0
+    for index,item in ipairs(bag.backpack.consumables) do
+        local def=find(D.consumables,item.id)
+        if def then
+            local total,receiver,value=0,nil,0
+            local targets=(def.effect=="heal" or def.effect=="armor" or def.effect=="accuracy") and {m} or require("src.enemy_group").members(game)
+            for _,target in ipairs(targets) do if target.hp>0 then
+                local amount=supplyValue(target,item,def)
+                local rank=supplyScore(game,m,target,def,amount)
+                if def.team then total=total+rank;if not receiver and rank>0 then receiver=target;value=amount end
+                elseif rank>total then total=rank;receiver=target;value=amount end
+            end end
+            if total>score then
+                score=total
+                best={type="consume",itemIndex=index,itemId=item.id,targetIndex=receiver.groupIndex or 1,value=value,
+                    label="Dùng "..def.name..(def.team and " · cả đội" or receiver~=m and " · đồng đội #"..(receiver.groupIndex or 1) or "").." · 1 lần"}
+            end
+        end
+    end
+    if best then return best end
     local reserve=bag.backpack.equipment[1]
     if reserve and m.hp/m.maxHp<=.5 then
         return {type="equip",targetIndex=m.groupIndex or 1,value=0,label="Đổi trang bị từ balo: "..L.describeItem(reserve).name}
     end
+    local spn=(bag.backpack.spns or {})[1]
+    if spn and magic(m) and (not bag.spn or bag.spn.id~=spn.id) then
+        local def=L.item(spn)
+        local r=A.resources(m)
+        local useful=def.stat=="echo" or def.stat=="supportArmor" and r.armorLeft>0 and m.hp/m.maxHp<=.65
+            or def.stat=="support" and r.charges.heal+r.charges.armor+r.charges.speed+r.charges.damage>0
+        if useful then return {type="equip_spn",targetIndex=m.groupIndex or 1,value=0,label="Triệu hồi SPN dự trữ · "..L.describeItem(spn).name} end
+    end
 end
-function L.action(m)
+function L.action(m,game)
     local bag=m.enemyInventory;if not bag then return end
     local kind=(m.intent or {}).type
     if kind=="consume" then
-        local item=table.remove(bag.backpack.consumables,1);if not item then return end
-        local value=require("src.enemy_abilities").heal(m,math.floor(m.maxHp*item.pct))
-        return {attack=0,absorbed=0,damage=0,killedPlayer=false,action="heal",target=m,value=value,label="Dùng thuốc từ balo"}
+        local intent=m.intent;local index=intent.itemIndex or 1
+        local item=bag.backpack.consumables[index]
+        local def=item and find(D.consumables,item.id)
+        local A=require("src.enemy_abilities")
+        local result={attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true,action="consume",target=m,value=0,label="Tiêu hao không còn dùng được"}
+        if not def or intent.itemId and intent.itemId~=item.id or A.resources(m).mustAttack then return result end
+        game=game or {monster=m,enemies=m.group}
+        local targets={m}
+        if def.team then targets=require("src.enemy_group").members(game)
+        elseif def.effect=="speed" or def.effect=="damage" then
+            targets={}
+            for _,target in ipairs(require("src.enemy_group").members(game)) do
+                if (target.groupIndex or 1)==(intent.targetIndex or m.groupIndex or 1) then targets={target};break end
+            end
+        end
+        for _,target in ipairs(targets) do if target.hp>0 then
+            local value=supplyValue(target,item,def)
+            if def.effect=="heal" then value=A.heal(target,value)
+            elseif def.effect=="armor" then value=A.addArmor(target,value)
+            elseif def.effect=="accuracy" then
+                if (bag.guaranteedAttacks or 0)>0 then value=0 else bag.guaranteedAttacks=1 end
+            elseif value>0 then
+                target.combatBuffs=target.combatBuffs or {}
+                target.combatBuffs[def.effect]={value=value,turns=2+(target==m and 1 or 0)}
+            end
+            if value>0 then
+                if result.blocked then result.target=target;result.value=value end
+                result.blocked=false
+            end
+        end end
+        if result.blocked then return result end
+        table.remove(bag.backpack.consumables,index)
+        result.action=def.effect;result.label="Dùng "..def.name..(def.team and " · cả đội" or "")
+        return result
+    elseif kind=="equip_spn" then
+        if not magic(m) or require("src.enemy_abilities").resources(m).mustAttack then
+            return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true,action="equip",target=m,value=0,label="Chưa thể triệu hồi SPN"}
+        end
+        local item=table.remove(bag.backpack.spns or {},1)
+        if not item then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true,action="equip",value=0,label="SPN không còn trong balo"} end
+        bag.stowedSpn=bag.spn;bag.spn=item
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,action="equip",target=m,value=0,label="SPN · "..L.describeItem(item).name}
     elseif kind=="equip" then
         local item=table.remove(bag.backpack.equipment,1);if not item then return end
         -- Swap one slot, preserve HP, and retain the old item for inspection only.
@@ -140,7 +242,7 @@ function L.afterHit(m,damage,attack)
 end
 function L.afterAction(m,action,blocked)
     local bag=m.enemyInventory;if not bag or blocked or m.hp<=0 then return end
-    if action=="attack" then bag.attacks=bag.attacks+1;return end
+    if action=="attack" then bag.attacks=bag.attacks+1;bag.guaranteedAttacks=math.max(0,(bag.guaranteedAttacks or 0)-1);return end
     if action=="equip" then return end
     local stats=L.stats(m)
     require("src.enemy_abilities").heal(m,math.floor(m.maxHp*stats.heal))
@@ -149,7 +251,17 @@ function L.afterAction(m,action,blocked)
 end
 local labels={damage="ST",speed="Tốc",hp="HP tối đa",armor="HP tối đa thành Giáp đầu trận",heal="HP tối đa sau hành động hỗ trợ"}
 function L.describeItem(item)
-    if item.kind=="consumable" then return {id=item.id,name="Bình Máu",desc="Dùng một lần khi HP ≤35%: hồi "..math.floor(item.pct*100).."% HP tối đa. Thay lượt đánh.",kind=item.kind} end
+    if item.kind=="consumable" then
+        local def=find(D.consumables,item.id)
+        if not def then return {id=item.id,name=item.id,desc="Tiêu hao dự trữ",kind=item.kind} end
+        local pct=string.format("%.1f",(item.pct or (def.pct or 0)*(item.power or 1))*100):gsub("%.0$","")
+        local desc=({heal="Hồi "..pct.."% HP tối đa khi còn ≤35% HP; dùng dự trữ hồi.",
+            armor="Tạo giáp bằng "..pct.."% HP tối đa; dùng dự trữ giáp.",
+            damage="+"..pct.."% ST cho một đồng đội hoặc bản thân, 2 hành động.",
+            speed="+"..pct.."% tốc cho "..(def.team and "cả đội" or "một đồng đội/bản thân")..", 2 hành động.",
+            accuracy="Đòn tấn công kế tiếp trúng 100% bất kể tốc; thuốc né vẫn chặn."})[def.effect]
+        return {id=item.id,name=def.name,desc=desc.." Một lần, tốn lượt.",kind=item.kind}
+    end
     local def,power=L.item(item)
     if not def then return {name=item.id,desc="",kind=item.kind} end
     local catalog=item.kind=="seal" and require("src.deck").SEALS or item.kind=="spn" and require("src.deities").CATALOG or require("src.equipment").ITEMS

@@ -138,9 +138,10 @@ ticket = UI.CardPhysics.wrap(ticket, nil, 6)
 local function privilege(item, x, y, w, h, hovered, affordable)
     if item.faceDown then return UI.drawCardBack(x, y, w, h, item.alpha) end
     ticket(item, x + 2, y + 3, 62, 80, hovered)
-    text(item.name, x + 78, y + 4, w - 78, UI.fonts.small, item.color or C.gold)
+    text(item.voucherLevel and item.name:gsub(" · Cấp %d+$","") or item.name, x + 78, y + 4, w - 78, UI.fonts.small, item.color or C.gold)
+    if item.voucherLevel then text("CẤP "..item.voucherLevel,x+78,y+44,w-78,UI.fonts.small,item.color or C.gold) end
     text("HIỆU LỰC SUỐT RUN", x + 78, y + 66, w - 78, nil, C.muted)
-    text("Rê chuột để xem hiệu lực", x, y + 112, w, nil, C.muted)
+    text("MUA LẠI ĐỂ TĂNG CẤP", x, y + 112, w, nil, C.muted)
     text(affordable and ("NHẤP ĐỂ CHỌN · $" .. item.cost) or ("CẦN $" .. item.cost),
         x, y + 158, w, UI.fonts.small, affordable and C.gold or C.red, "center")
 end
@@ -309,7 +310,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
     end
     panel(20,80,690,280,"HÀNG TUYỂN CHỌN","Nhấp chọn → mua · Rê chuột xem chi tiết",C.cyan)
     panel(722,80,540,280,"NGUYÊN LIỆU CƠ BẢN","Máu · Giáp · Tốc đánh · Kinh tế — cất vào balo để ghép",C.green)
-    panel(20,376,232,264,"ĐẶC QUYỀN","Mua một lần · Hiệu lực suốt run",C.gold)
+    panel(20,376,232,264,"ĐẶC QUYỀN","Mua lại tăng cấp · Suốt run",C.gold)
     panel(264,376,650,264,"KHO RƯƠNG","Thế đánh · Rương ngẫu nhiên · Ấn bản",C.purple)
     panel(926,376,336,264,"QUẦY GIẢM GIÁ","Giảm 35% · Mỗi món có 8% miễn phí",C.gold)
     UI.Polish.ensureShop(shop)
@@ -352,7 +353,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         local count = 0
         for _, v in ipairs(Shop.VOUCHERS) do if game.vouchers and game.vouchers[v.id] then count = count + 1 end end
         text("ĐẶC QUYỀN ĐÃ NHẬN", 50, 440, 214, UI.fonts.small, C.gold, "center")
-        text("Đổi hàng để khám phá đặc quyền chưa sở hữu.", 60, 475, 194, nil, C.muted, "center")
+        text("Đổi hàng để tìm phiếu mới hoặc nâng cấp phiếu đã có.", 60, 475, 194, nil, C.muted, "center")
         text(count .. " / " .. #Shop.VOUCHERS .. " đặc quyền sở hữu", 50, 567, 214, nil, C.gold, "center")
     end
     if packIndex < 5 then

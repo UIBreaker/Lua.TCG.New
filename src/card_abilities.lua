@@ -126,7 +126,7 @@ function A.evolve(game,card)
     return A.upgrade(game,card,1,false)
 end
 function A.handSize(game,base)
-    local bonus=combat(game).handSizeBonus or 0
+    local bonus=(combat(game).handSizeBonus or 0)+require("src.spn_reserves").handSize(game)
     for i,c in ipairs(game.hand or {}) do
         if not c.destroyed and not Boss.isAbilityDisabled(game,c) then
             local d=A.definition(c); local p=d and A.params(c,d)
@@ -160,6 +160,8 @@ function A.beginHand(game, handInfo, played, decisions)
     for _,c in ipairs(game.hand or {}) do ctx.resonanceHand[#ctx.resonanceHand+1]=c end
     for _,c in ipairs(game.hand or {}) do ctx.active[#ctx.active+1]=c end
     game.abilityHand=ctx
+    ctx.spnHeldBeforePlay=require("src.spn_reserves").heldCount(game,played)
+    require("src.spn_predators").beginHand(game,played)
     for i,c in ipairs(ctx.scoring) do ctx.queue[#ctx.queue+1]={card=c,index=i,depth=0} end
     for _,c in ipairs(game.hand or {}) do
         local d=A.definition(c)
@@ -175,7 +177,7 @@ function A.beginHand(game, handInfo, played, decisions)
     local repeatCount=combat(game).pendingRepeat or 0
     combat(game).pendingRepeat=0
     if repeatCount>0 then A.repeatCard(game,ctx.scoring[1],repeatCount,ctx) end
-    require("src.spn_pacts").queueRepeats(game,ctx.scoring,ctx.queue)
+    require("src.spn_pacts").queueRepeats(game,ctx.scoring,ctx.queue,handInfo)
     return ctx
 end
 function A.repeatCard(game,card,count,ctx,effectiveness)

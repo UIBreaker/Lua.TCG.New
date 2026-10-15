@@ -98,7 +98,7 @@ function F.hud(game,UI,mx,my,turn,sequence)
             end
             if alive and #list>1 then
                 local intent=m.intent or {}
-                local names={attack="Tấn công",armor="Gia cố",speed="Tăng tốc",heal="Hồi máu",damage="Cường hóa",equip="Đổi đồ",consume="Dùng thuốc"}
+                local names={attack="Tấn công",armor="Gia cố",speed="Tăng tốc",heal="Hồi máu",damage="Cường hóa",equip="Đổi đồ",equip_spn="Triệu hồi SPN",consume="Dùng tiêu hao"}
                 local to=intent.targetIndex and intent.targetIndex~=i and (" · #"..intent.targetIndex) or ""
                 local label=(names[intent.type] or "Tấn công")..to
                 if (m.spnFrozen or 0)>0 then label="ĐÓNG BĂNG · "..m.spnFrozen.." LƯỢT"

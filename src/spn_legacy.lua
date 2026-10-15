@@ -67,7 +67,7 @@ function L.bossDefeated(game,enemy)
         if #pool>0 and game.deities[cocoon.slot]==cocoon.owned then
             local source=pool[Rng.random(#pool)]
             local count=D.scaleEffect(cocoon.owned,{bossCopies=1}).bossCopies
-            game.deities[cocoon.slot]=nil
+            D.destroyDeity(game,cocoon.slot,true,cocoon.physical)
             if game.spnCombat then game.spnCombat[cocoon.owned]=nil end
             for i=1,count do
                 local copy=clone(source);copy.desc=D.getDescription(copy)

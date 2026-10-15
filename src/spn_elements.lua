@@ -44,7 +44,7 @@ end
 function E.remaining(game)
     local total,capacity=0,0;for _,p in ipairs(E.pools(game)) do total=total+p.remaining;capacity=capacity+p.capacity end;return total,capacity
 end
-function E.absorb(game,amount)
+function E.absorb(game,amount,inCombat)
     local remaining=math.max(0,amount or 0)
     for _,p in ipairs(E.pools(game)) do
         if remaining<=0 then break end
@@ -52,8 +52,7 @@ function E.absorb(game,amount)
         p.owner.phantomSpent=(p.owner.phantomSpent or 0)+taken;remaining=remaining-taken
         if taken>0 then notice(game,p.owner,p.slot,"MÁU ẢO -"..string.format("%g",taken)) end
         if p.owner.phantomSpent>=p.capacity then
-            game.deities[p.slot]=nil
-            if game.spnCombat then game.spnCombat[p.owner]=nil end
+            D.destroyDeity(game,p.slot,inCombat~=false,p.owner)
             notice(game,p.owner,p.slot,"MÁU ẢO CẠN · TỰ HỦY")
         end
     end

@@ -509,4 +509,12 @@ return {
     ["recognition_clubs"] = "assets/cards/continental/utility/recognition_clubs.png",
     ["recognition_spades"] = "assets/cards/continental/utility/recognition_spades.png",
     ["cons_travel_permit"] = "assets/cards/continental/utility/travel_permit.png",
+    ["spirit_left_refrain"] = "assets/cards/continental/spn/spirit_left_refrain.png",
+    ["spirit_wind_thief"] = "assets/cards/continental/spn/spirit_wind_thief.png",
+    ["spirit_right_offering"] = "assets/cards/continental/spn/spirit_right_offering.png",
+    ["spirit_ashen_legacy"] = "assets/cards/continental/spn/spirit_ashen_legacy.png",
+    ["spirit_unspent_fury"] = "assets/cards/continental/spn/spirit_unspent_fury.png",
+    ["spirit_open_horizon"] = "assets/cards/continental/spn/spirit_open_horizon.png",
+    ["spirit_gilded_weight"] = "assets/cards/continental/spn/spirit_gilded_weight.png",
+    ["spirit_lone_procession"] = "assets/cards/continental/spn/spirit_lone_procession.png",
 }

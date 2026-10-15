@@ -127,7 +127,7 @@ assert(not gameState.unlockedHands.pair, "shop should not sell a separate hand-u
 local voucherId = shop.items[foundVoucher].voucherId
 local success = Shop.buyItem(shop, foundVoucher, gameState)
 assert(success == true, "Should successfully buy permanent voucher")
-assert(gameState.vouchers[voucherId] == true, "Buying voucher should activate it: " .. voucherId)
+assert(Shop.voucherLevel(voucherId,gameState) == 1, "Buying voucher should activate level 1: " .. voucherId)
 log("[PASS] 9. Shop sells and activates a permanent voucher: " .. voucherId)
 
 -- Test Sell Deity
@@ -1194,7 +1194,7 @@ do
     end
 
     local jokers = Collection.getItems("jokers")
-    assert(#jokers == 83, "Collection must expose exactly 83 Common spirits, got: " .. #jokers)
+    assert(#jokers == 91, "Collection must expose exactly 91 Common spirits, got: " .. #jokers)
 
     local consumables = Collection.getItems("consumables")
     assert(#consumables >= 8, "Must have at least 8 Consumables/Equipment in Collection, got: " .. #consumables)
@@ -1297,7 +1297,7 @@ do
         assert(d.lore ~= nil and d.lore ~= "", "Deity must have lore flavor text: " .. tostring(d.id))
         assert(d.rarity == "common", "Every new spirit must be Common: " .. tostring(d.id))
     end
-    assert(count == 83, "Deities catalog must contain exactly 83 common spirits, got: " .. count)
+    assert(count == 91, "Deities catalog must contain exactly 91 common spirits, got: " .. count)
 
     -- D. Hộ Linh Visual Tarot & Relic Sigils Rendering
     local samplePatron = Deities.CATALOG.spirit_pebble
@@ -2160,7 +2160,7 @@ do
     log("[PASS] 87. Phase 1: Equipment Constraints (3 Slots, No Dupes, Legendary 2 Slots) verified 100%")
 end
 
--- 88. Test Phase 2: exactly 83 Common spirits and 5 base slots
+-- 88. Test Phase 2: exactly 91 Common spirits and 5 base slots
 do
     local baseSlots = Deities.getMaxSlots({})
     assert(baseSlots == 5, "Deities base slots must be 5, got: " .. baseSlots)
@@ -2170,7 +2170,7 @@ do
         spiritCount = spiritCount + 1
         assert(spirit.rarity == "common", "Every spirit must be Common")
     end
-    assert(spiritCount == 83, "Catalog must contain exactly 83 spirits")
+    assert(spiritCount == 91, "Catalog must contain exactly 91 spirits")
     assert(Deities.CATALOG.spirit_pebble.onHandScored().addChips == 20, "Linh Sỏi effect")
     assert(Deities.CATALOG.spirit_ember.onHandScored().addMult == 4, "Linh Lửa effect")
     assert(Deities.CATALOG.spirit_blade.onCardScored().addChips == 8, "Linh Kiếm effect")
@@ -2181,11 +2181,11 @@ do
     assert(Deities.CATALOG.spirit_crown.onCardScored({ rank = 11 }).addChips == 15, "Linh Miện effect")
     assert(Deities.CATALOG.spirit_coin.onRoundWin().addGold == 2, "Linh Tiền effect")
 
-    local ante1Pool = Deities.getRandomShopPool({}, 83, { ante = 1 })
+    local ante1Pool = Deities.getRandomShopPool({}, 91, { ante = 1 })
     for _, d in ipairs(ante1Pool) do
         assert(d.rarity == "common", "Shop must only offer Common spirits")
     end
-    log("[PASS] 88. Exactly 83 Common spirits and 5 base slots verified 100%")
+    log("[PASS] 88. Exactly 91 Common spirits and 5 base slots verified 100%")
 end
 
 -- 89. Test Phase 3 & 4: Card Enhancements (8 Types with Tradeoffs)
@@ -2463,11 +2463,11 @@ do
     assert(enhMap["enh_vanguard"] ~= nil, "enh_vanguard must exist in Collection")
     assert(enhMap["enh_rearguard"] ~= nil, "enh_rearguard must exist in Collection")
 
-    -- 3. Collection must expose exactly the 83 Common spirits from the catalog.
+    -- 3. Collection must expose exactly the 91 Common spirits from the catalog.
     local jokers = Collection.getItems("jokers")
     local jokerMap = {}
     for _, j in ipairs(jokers) do jokerMap[j.id] = j end
-    assert(#jokers == 83 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 83 Common spirits")
+    assert(#jokers == 91 and jokerMap["spirit_blade"] ~= nil, "Collection must contain the 91 Common spirits")
 
     -- 4. Every shop pack and voucher must come from the same catalog as the Collection.
     local packs = Collection.getItems("packs")

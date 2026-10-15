@@ -1,5 +1,14 @@
 local cardEffectsSmokeMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--test-shop-vouchers" then
+        local failed=false
+        for _,name in ipairs({"tests.shop_vouchers_smoke","tests.shop_price_balance_smoke","tests.shop_markets_smoke",
+            "tests.card_shop_smoke","tests.blood_shop_smoke","tests.void_gacha_smoke","tests.reward_ceremony_smoke","tests.debug_tools_smoke"}) do
+            local ok,err=xpcall(function() require(name) end,debug.traceback)
+            if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
+        end
+        os.exit(failed and 1 or 0)
+    end
     if a=="--test-enemy-loadouts" then
         local ok,err=xpcall(function() require("tests.enemy_loadouts_smoke") end,debug.traceback)
         if not ok then print(err) end;os.exit(ok and 0 or 1)
@@ -50,6 +59,10 @@ for _, a in ipairs(arg or {}) do
         if not alchemyOk then failed=true;print("tests.spn_alchemy_smoke FAIL: "..tostring(alchemyErr)) end
         local elementsOk,elementsErr=pcall(require,"tests.spn_elements_smoke")
         if not elementsOk then failed=true;print("tests.spn_elements_smoke FAIL: "..tostring(elementsErr)) end
+        local predatorsOk,predatorsErr=pcall(require,"tests.spn_predators_smoke")
+        if not predatorsOk then failed=true;print("tests.spn_predators_smoke FAIL: "..tostring(predatorsErr)) end
+        local reservesOk,reservesErr=pcall(require,"tests.spn_reserves_smoke")
+        if not reservesOk then failed=true;print("tests.spn_reserves_smoke FAIL: "..tostring(reservesErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -118,6 +131,8 @@ UI.Inventory=require("src.inventory")
 UI.InventoryRail=require("ui.inventory_rail")
 UI.ExpandedInventory=require("ui.inventory_expanded")
 UI.Backpack=require("ui.backpack")
+UI.BackpackContext=require("ui.backpack_context")
+UI.EquipmentTransfer=require("ui.equipment_transfer")
 local Motion = require("src.motion")
 local Theme = require("ui.theme")
 local Renderer = require("render.renderer")
@@ -167,6 +182,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-travel-documents" then isCaptureMode = true end
     if a == "--test-soul-shop" then isCaptureMode = true end
     if a == "--test-shop-markets" then isCaptureMode = true end
+    if a == "--capture-vouchers" then isCaptureMode = true end
     if a == "--test-seal-descriptions" then isCaptureMode = true end
     if a == "--test-expanded-inventory" then isCaptureMode = true end
     if a == "--test-blood-shop" then isCaptureMode = true end
@@ -181,6 +197,8 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-potions" then isCaptureMode = true end
     if a == "--test-spn-alchemy-ui" then isCaptureMode = true end
     if a == "--test-spn-elements-ui" then isCaptureMode = true end
+    if a == "--test-spn-predators-ui" then isCaptureMode = true end
+    if a == "--test-spn-reserves-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -193,6 +211,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-bed-explosion" then isCaptureMode = true end
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
+    if a == "--test-play-turn-continuation" then isCaptureMode = true end
     if a == "--capture-combat-tactics" then isCaptureMode = true end
     if a == "--capture-enemy-loadouts" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
@@ -259,10 +278,6 @@ local isHandbookOpen = false
 
 -- Shop Equipment Transfer
 local isShopTransferOpen = false
-local transferSourceCard = nil
-local transferSourceEqIndex = nil
-local transferMessage = nil
-local transferPage = 1
 local drawShopTransferView -- Implemented after the shop layout.
 
 -- Rest Site & Forge State
@@ -941,10 +956,8 @@ local function startNewGame(chosenDeck)
 
     inspectCardModal = nil
     isShopTransferOpen = false
+    UI.backpackUseReturn=nil
     isHandbookOpen = false
-    transferSourceCard = nil
-    transferSourceEqIndex = nil
-    transferMessage = nil
 
     -- Red Deck begins with one card sampled uniformly from the standard 52.
     game.persistentDeck = Deck.createStarterDeck(game.starterDeckId)
@@ -1777,6 +1790,8 @@ local function startEnemyAttack(phase, speed, done, played)
             ft.label=hit.label
             if hit.action=="damage" then ft.text="+"..hit.value.." ST";ft.color={1,.65,.35} end
             if hit.action=="equip" then ft.text="ĐỔI TRANG BỊ";ft.color={1,.85,.5} end
+            if hit.action=="accuracy" then ft.text="ĐÒN KẾ: TRÚNG 100%";ft.color={1,.85,.5} end
+            if hit.action=="equip" and hit.label then ft.text=hit.label end
             Sound.play("spn_trigger",.85)
             return
         elseif hit.missed then
@@ -1908,6 +1923,7 @@ local function playSelectedHand()
             drawCards = function(n)
                 local drawnCount = 0
                 local maxHand = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris" or game.selectedFaction == "clubs" or game.selectedFaction == "feral_swarm") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
+                maxHand=UI.Abilities.handSize(game,maxHand)
                 while #game.hand < maxHand and #game.deck > 0 and drawnCount < n do
                     local drawn = table.remove(game.deck)
                     if drawn then
@@ -1989,7 +2005,7 @@ local function playSelectedHand()
     end
 end
 
-local function endPlayerTurn(force)
+local function endPlayerTurn(force, playAfterTurn)
     if anim.enemyTurn then return true end
     if not game or not game.monster then return false end
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
@@ -2002,6 +2018,7 @@ local function endPlayerTurn(force)
     availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
     if availableCards == 0 then return false end
 
+    local queuedCards = playAfterTurn and getSelectedCards()
     UI.Abilities.roundEnd(game)
     local function finishTurn()
         Combat.onPlayerTurnEnd(game)
@@ -2032,9 +2049,28 @@ local function endPlayerTurn(force)
         UI.Abilities.handStart(game)
         state = "playing"
         Sound.play(drawnCards > 0 and "card_deal" or "ui_click")
+        if queuedCards then
+            -- Keep the requested cards across the round's selection reset.
+            for i, card in ipairs(game.hand) do
+                for _, chosen in ipairs(queuedCards) do
+                    if card == chosen then game.selectedIndices[#game.selectedIndices + 1] = i; break end
+                end
+            end
+            syncCardSelections()
+            if #game.selectedIndices == #queuedCards and Combat.getOutcome(game) == "continue" then playSelectedHand() end
+        end
     end
     if not startEnemyAttack(nil, nil, finishTurn) then return false end
     return true
+end
+
+function UI.playHandAction()
+    if state ~= "playing" or anim.active or anim.enemyTurn or UI.AbilityUI.current then return end
+    if #game.hand == 0 or (game.handsRemaining or 0) <= 0 then
+        if #game.selectedIndices > 0 and not require("src.spn_legacy").canPlay(game,#game.selectedIndices) then return end
+        return endPlayerTurn(false, #game.selectedIndices > 0)
+    end
+    return playSelectedHand()
 end
 
 UI.endBedTurn=function() return endPlayerTurn(true) end
@@ -2184,17 +2220,12 @@ UI.applyCombatWinRewards=function(scoreResult)
             end
             end)
             if d.extinct then
-                game.deities[di] = nil
+                Deities.destroyDeity(game,di,true,d)
             end
         end
     end
 
-    -- Tiền Lãi (Interest): Cứ mỗi $5 vàng tích trữ trong túi, sau trận được nhận thêm $1 tiền lãi (mặc định tối đa $3, voucher nâng lên $5)
-    local maxInt = game.maxInterest or 3
-    if game.vouchers and (game.vouchers["v_interest"] or game.vouchers["seed_money"]) then
-        maxInt = math.max(maxInt, 5)
-    end
-    local interestBonus = math.min(maxInt, math.floor(game.gold / 5))
+    local interestBonus = Shop.interest(game)
     if interestBonus > 0 then
         table.insert(anim.floatingTexts, {
             text = "[Tiền Lãi] +$" .. interestBonus .. " Vàng!",
@@ -2218,7 +2249,7 @@ UI.applyCombatWinRewards=function(scoreResult)
             alpha = 2.8,
         })
     end
-    anim.earnedGold = baseReward + unusedHandsBonus + deityBonus + interestBonus
+    anim.earnedGold = baseReward + unusedHandsBonus + deityBonus + interestBonus + Shop.voucherParams("v_altar",game).gold
 
     -- Valoria Passive: +25% Gold on monster defeat
     if game.selectedFaction == "valoria" or game.selectedSuit == "valoria" then
@@ -2312,6 +2343,16 @@ function love.load()
             local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_potion_resonance","spirit_potion_eternity"},"docs/spn_alchemy_runtime.png") end)
             if not ok then print("SPN ALCHEMY ART FAIL: "..tostring(err)) end
             os.exit(ok and 0 or 1)
+        end
+        if argument=="--test-spn-reserves-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_ashen_legacy","spirit_unspent_fury","spirit_gilded_weight","spirit_open_horizon","spirit_lone_procession"},"docs/spn_reserves_runtime.png") end)
+            if not ok then print("SPN reserves art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
+        end
+        if argument=="--test-spn-predators-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_left_refrain","spirit_wind_thief","spirit_right_offering"},"docs/spn_predators_runtime.png") end)
+            if not ok then print("SPN predators art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
         end
         if argument=="--test-spn-elements-art" then
             local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_phantom_heart","spirit_first_frost","spirit_cinder_confluence"},"docs/spn_elements_runtime.png") end)
@@ -2513,10 +2554,10 @@ local function updateCaptureMode()
         openInspector = function(card) inspectCardModal = card end,
         getInspector = function() return inspectCardModal end,
         closeInspector = function() inspectCardModal = nil end,
-        openShopTransfer = function() isShopTransferOpen = true end,
+        openShopTransfer = function() isShopTransferOpen = true;UI.EquipmentTransfer.reset();UI.Polish.clearFocus() end,
         closeShopTransfer = function() isShopTransferOpen = false end,
         getShopTransferState = function()
-            return isShopTransferOpen, transferPage, transferSourceCard, transferSourceEqIndex
+            return isShopTransferOpen, UI.EquipmentTransfer.page, UI.EquipmentTransfer.source, UI.EquipmentTransfer.eqIndex
         end,
         openHandbook = function() isHandbookOpen = true end,
         closeHandbook = function() isHandbookOpen = false end,
@@ -2592,6 +2633,7 @@ function love.update(dt)
         return
     end
     require("ui.potion_effects").update(game,dt,settings.reducedMotion,state)
+    if state=="barter" and not isPauseMenuOpen and not isSettingsOpen and require("src.barter").update(game,dt) then saveRunAtSafePoint() end
     require("ui.enemy_formation").update(game,dt)
     if not isCollectionOpen then Collection.prepareCacheStep() end
     if isCollectionOpen and require("ui.collection_book").update(dt) then
@@ -2670,6 +2712,13 @@ function love.update(dt)
     UI.Description.update(dt)
     if state=="void" and require("ui.void_gacha").update(dt,game) then saveRunAtSafePoint() end
     UI.AbilityUI.update(dt)
+    if UI.backpackUseReturn then
+        if state~=UI.backpackUseReturn.state and state~="socketing" then UI.backpackUseReturn=nil
+        elseif state==UI.backpackUseReturn.state and not UI.AbilityUI.current and not pendingEditionCard and not pendingEvolutionCard and not pendingSpeedCard
+            and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen and not anim.enemyTurn and not anim.active then
+            UI.BackpackContext.restore(UI.Backpack,UI.backpackUseReturn);UI.backpackUseReturn=nil
+        end
+    end
     if UI.AbilityUI.current then updateCaptureMode(); return end
     UI.ScoringFeel.updateLab(dt)
     if UI.ScoringFeel.labOpen then updateCaptureMode(); return end
@@ -3238,7 +3287,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.134.0", 48, 185)
+    g.print("beta 0.135.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3545,9 +3594,11 @@ local function drawCollectionDetailView()
 
         -- Item Header Info below card
         local infoY = lcy + lch + 15
+        local infoName,infoDesc=inspItem.name,inspItem.desc
+        if collectionCategory=="vouchers" then infoName,infoDesc=require("src.card_description").resolve(inspItem,game) end
         love.graphics.setFont(UI.fonts.bookChapter or UI.fonts.medium)
         love.graphics.setColor(0.22, 0.16, 0.10, 1)
-        love.graphics.printf(inspItem.name, inspX + 16, infoY, inspW - 32, "center")
+        love.graphics.printf(infoName, inspX + 16, infoY, inspW - 32, "center")
 
         love.graphics.setFont(UI.fonts.small)
         love.graphics.setColor(0.38, 0.29, 0.19, 1)
@@ -3557,7 +3608,7 @@ local function drawCollectionDetailView()
         if inspItem.cost then
             love.graphics.setFont(UI.fonts.small)
             love.graphics.setColor(0.48, 0.29, 0.08, 1)
-            love.graphics.printf("GIÁ GHI NHẬN  ·  $" .. inspItem.cost, inspX + 16, infoY + 52, inspW - 32, "center")
+            love.graphics.printf((collectionCategory=="vouchers" and "GIÁ CẤP 1  ·  $" or "GIÁ GHI NHẬN  ·  $") .. inspItem.cost, inspX + 16, infoY + 52, inspW - 32, "center")
         end
 
         -- Detailed Description
@@ -3580,7 +3631,7 @@ local function drawCollectionDetailView()
                 offsetY + (descY + 26) * Layout.scaleY * RENDER_SCALE,
                 (inspW - 40) * scale * RENDER_SCALE, (descH - 30) * Layout.scaleY * RENDER_SCALE)
         end
-        love.graphics.printf(inspItem.desc or "Chưa có ghi chép cho mục này.", inspX + 22, descY + 31, inspW - 44, "left")
+        love.graphics.printf(infoDesc or "Chưa có ghi chép cho mục này.", inspX + 22, descY + 31, inspW - 44, "left")
         love.graphics.setScissor()
         love.graphics.setLineWidth(1)
     end
@@ -3875,6 +3926,8 @@ local function drawBattleInfoPanel(m, eval)
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
         scoring = scoring, enemyName = (m and m.name) or "Không rõ",
+        turnTransition = not scoring and ((game.handsRemaining or 0) <= 0
+            or anim.enemyTurn and anim.enemyTurn.order == nil),
         guaranteedHit=(game.potionCombat or {}).accuracy, guaranteedDodge=(game.potionCombat or {}).evasion,
         auraIntensity = scoring and anim.sequence.intensity or 0,
         phase = scoring and anim.sequence.events[anim.sequence.index] and anim.sequence.events[anim.sequence.index].kind,
@@ -4121,6 +4174,7 @@ local function drawPlayingState()
 
     -- Hand count badge (e.g. 3/3) above action buttons
     local maxHandSize = (game.selectedFaction == "elaris" or game.selectedSuit == "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
+    maxHandSize=UI.Abilities.handSize(game,maxHandSize)
     local handCountText = #game.hand .. "/" .. maxHandSize .. "  •  Chọn "
         .. #game.selectedIndices .. "/" .. getMaxSelectableCards()
     local hcW = 150
@@ -4150,16 +4204,20 @@ local function drawPlayingState()
     local canEndTurn = not (handLimitIsFinal and (game.handsRemaining or 0) <= 0)
         and (#game.hand == 0 or (game.handsRemaining or 0) <= 0)
         and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
+    local playNextTurn = canEndTurn and hasSelection
     local btnPlay = {
-        id = canEndTurn and "end_turn" or "play",
-        text = state == "scoring" and not anim.enemyTurn and "ĐANG TÍNH AURA" or (canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài"),
+        id = canEndTurn and not playNextTurn and "end_turn" or "play",
+        text = state == "scoring" and not anim.enemyTurn and "ĐANG TÍNH AURA"
+            or (playNextTurn and "ĐÁNH LƯỢT KẾ" or canEndTurn and "KẾT THÚC LƯỢT" or "Chơi Tay Bài"),
         x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
         w = 175,
         h = 58,
         font = UI.fonts.bookChapter,
         variant = "cyan",
-        disabled = anim.enemyTurn ~= nil or state == "scoring" or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0 or not require("src.spn_legacy").canPlay(game,#selectedCards))),
+        disabled = anim.enemyTurn ~= nil or state == "scoring"
+            or (hasSelection and not require("src.spn_legacy").canPlay(game,#selectedCards))
+            or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
     }
     if anim.playButtonPulse > 0 then
@@ -4167,7 +4225,9 @@ local function drawPlayingState()
         btnPlay.animationScale = 1 - 0.05 * (1 - pulseProgress) * math.cos(pulseProgress * math.pi * 2)
     end
     table.insert(buttons, btnPlay)
-    require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,require("src.spn_legacy").canPlay(game,2) and "SPACE · ĐÁNH" or "SPACE · ĐÁNH 1 LÁ")
+    require("ui.combat_chrome").button(UI,btnPlay,mx,my,juice.buttonPressedId,
+        playNextTurn and "SPACE · ĐÁNH TIẾP" or canEndTurn and "SPACE · QUA LƯỢT"
+        or (require("src.spn_legacy").canPlay(game,2) and "SPACE · ĐÁNH" or "SPACE · ĐÁNH 1 LÁ"))
 
     -- Secondary sort controls sit between the two primary actions.
     local sortBoxX = UI.BATTLE_CENTER_X - 65
@@ -5635,7 +5695,7 @@ local function drawShopState(beginLayer)
     buttons = {}
     UI.Polish.goldPosition = UI.Polish.config.gold
 
-    local interestBonus = math.min(game.maxInterest or 5, math.floor((game.gold or 0) / 5))
+    local interestBonus = Shop.interest(game)
     local hoveredShopItem = nil
     hoveredDeityTooltip = nil
 
@@ -5753,6 +5813,7 @@ local function drawShopState(beginLayer)
     if isShopTransferOpen then
         beginLayer(2)
         drawShopTransferView()
+        return
     end
 
     if hoveredDeityTooltip then
@@ -5887,127 +5948,10 @@ local function drawDebugModal()
     end
 end
 
-local TRANSFER_PER_PAGE = 16
-
-local function getTransferPageCards()
-    local allCards = getAllDeckCards()
-    local totalPages = math.max(1, math.ceil(#allCards / TRANSFER_PER_PAGE))
-    transferPage = math.max(1, math.min(transferPage, totalPages))
-    local first = (transferPage - 1) * TRANSFER_PER_PAGE + 1
-    local visible = {}
-    for i = first, math.min(#allCards, first + TRANSFER_PER_PAGE - 1) do
-        visible[#visible + 1] = allCards[i]
-    end
-    return visible, totalPages, #allCards
-end
-
-local function getTransferCardRect(index)
-    local cw, ch, gap, cols = 70, 102, 14, 8
-    local gridW = cols * cw + (cols - 1) * gap
-    local x = (V_WIDTH - gridW) / 2 + ((index - 1) % cols) * (cw + gap)
-    local y = 128 + math.floor((index - 1) / cols) * 132
-    return x, y, cw, ch
-end
-
-local function getTransferEquipmentRect(index)
-    return 250 + (index - 1) * 275, 430, 255, 76
-end
-
 drawShopTransferView = function()
-    local winW, winH = love.graphics.getDimensions()
-    love.graphics.setColor(0.06, 0.08, 0.11, 1)
-    love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
-    local mx, my = toVirtual(love.mouse.getPosition())
-    buttons = {}
-
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("HOÁN ĐỔI TRANG BỊ", 0, 22, V_WIDTH, "center")
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Chọn lá nguồn • chọn trang bị • chọn lá đích", 0, 58, V_WIDTH, "center")
-
-    local visible, totalPages, totalCards = getTransferPageCards()
-    local chosenEq = transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex]
-    local stepText = not transferSourceCard and "1  CHỌN LÁ ĐANG MANG TRANG BỊ"
-        or not chosenEq and ("2  CHỌN TRANG BỊ TỪ " .. (transferSourceCard.rankName or "") .. (transferSourceCard.suitSymbol or ""))
-        or ("3  CHỌN LÁ ĐÍCH CHO " .. chosenEq.name)
-    love.graphics.setColor(0.12, 0.16, 0.21, 0.96)
-    UI.drawRoundedRect("fill", 210, 88, V_WIDTH - 420, 28, 7)
-    love.graphics.setColor(chosenEq and UI.COLORS.hpGreen or UI.COLORS.chipsBlue)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.printf(stepText, 220, 96, V_WIDTH - 440, "center")
-
-    for i, card in ipairs(visible) do
-        local x, y, w, h = getTransferCardRect(i)
-        local hovered = mx >= x and mx <= x + w and my >= y and my <= y + h
-        local isSource = card == transferSourceCard
-        local canReceive = false
-        if chosenEq and not isSource then canReceive = Equipment.canAttach(card, chosenEq) end
-        local float = math.sin((juice and juice.ambientTimer or 0) * 1.2 + i * 0.55) * 1.5
-        love.graphics.push()
-        love.graphics.translate(0, float)
-        card.hovered = hovered
-        UI.drawCard(card, x, y, w, h)
-        love.graphics.pop()
-
-        love.graphics.setLineWidth(isSource and 3 or 2)
-        if isSource then
-            love.graphics.setColor(UI.COLORS.goldYellow)
-            UI.drawCardBorder(x, y + float, w, h, UI.COLORS.goldYellow, nil, card)
-        elseif chosenEq then
-            love.graphics.setColor(canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 })
-            UI.drawCardBorder(x, y + float, w, h, canReceive and UI.COLORS.hpGreen or { 0.65, 0.18, 0.20, 0.8 }, nil, card)
-        end
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(Equipment.getUsedSlots(card) > 0 and UI.COLORS.chipsBlue or UI.COLORS.textMuted)
-        love.graphics.printf(Equipment.getUsedSlots(card) .. "/" .. Equipment.getMaxSlots(card) .. " hốc", x, y + h + 5, w, "center")
-    end
-
-    local prev = { id = "transfer_prev", text = "‹", x = 450, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage <= 1 }
-    local next = { id = "transfer_next", text = "›", x = 788, y = 386, w = 42, h = 30, color = UI.COLORS.btnNormal, font = UI.fonts.medium, disabled = transferPage >= totalPages }
-    buttons[#buttons + 1] = prev
-    buttons[#buttons + 1] = next
-    UI.drawButton(prev, not prev.disabled and mx >= prev.x and mx <= prev.x + prev.w and my >= prev.y and my <= prev.y + prev.h)
-    UI.drawButton(next, not next.disabled and mx >= next.x and mx <= next.x + next.w and my >= next.y and my <= next.y + next.h)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Trang " .. transferPage .. "/" .. totalPages .. "  •  " .. totalCards .. " lá", 500, 394, 280, "center")
-
-    if transferSourceCard then
-        for index, eq in ipairs(transferSourceCard.equipments or {}) do
-            local x, y, w, h = getTransferEquipmentRect(index)
-            local selected = index == transferSourceEqIndex
-            love.graphics.setColor(selected and { 0.20, 0.32, 0.29, 1 } or { 0.13, 0.17, 0.22, 1 })
-            UI.drawRoundedRect("fill", x, y, w, h, 8)
-            love.graphics.setLineWidth(selected and 3 or 1.5)
-            love.graphics.setColor(selected and UI.COLORS.hpGreen or (eq.color or UI.COLORS.panelBorder))
-            UI.drawRoundedRect("line", x, y, w, h, 8)
-            love.graphics.setFont(UI.fonts.small)
-            love.graphics.setColor(eq.color or UI.COLORS.goldYellow)
-            love.graphics.print(eq.name, x + 12, y + 9)
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.textLight)
-            love.graphics.printf(eq.desc or "", x + 12, y + 33, w - 24, "left")
-        end
-    else
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.textMuted)
-        love.graphics.printf("Các lá không có trang bị vẫn được hiển thị để làm đích nhận.", 0, 453, V_WIDTH, "center")
-    end
-
-    if transferMessage then
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(UI.COLORS.goldYellow)
-        love.graphics.printf(transferMessage, 160, 535, V_WIDTH - 320, "center")
-    end
-
-    local reset = { id = "transfer_reset", text = "CHỌN LẠI NGUỒN", x = 250, y = 615, w = 230, h = 44, color = UI.COLORS.btnNormal, font = UI.fonts.small }
-    local close = { id = "close_shop_transfer", text = "XONG / VỀ CỬA HÀNG", x = V_WIDTH - 480, y = 615, w = 230, h = 44, color = UI.COLORS.btnPlay, font = UI.fonts.small }
-    buttons[#buttons + 1] = reset
-    buttons[#buttons + 1] = close
-    UI.drawButton(reset, mx >= reset.x and mx <= reset.x + reset.w and my >= reset.y and my <= reset.y + reset.h)
-    UI.drawButton(close, mx >= close.x and mx <= close.x + close.w and my >= close.y and my <= close.y + close.h)
+    local mx,my=toVirtual(love.mouse.getPosition())
+    buttons={}
+    UI.EquipmentTransfer.draw(UI,game,getAllDeckCards(),buttons,mx,my)
 end
 
 local function drawShopFx()
@@ -6459,11 +6403,8 @@ local function handlePlayingMousepressed(mx, my, button)
 
     for _, btn in ipairs(buttons) do
         if not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-            if btn.id == "play" then
-                playSelectedHand()
-                return true
-            elseif btn.id == "end_turn" then
-                endPlayerTurn()
+            if btn.id == "play" or btn.id == "end_turn" then
+                UI.playHandAction()
                 return true
             elseif btn.id == "discard" then
                 discardSelected()
@@ -6580,80 +6521,11 @@ local function handleShopMousepressed(mx, my, button)
         return true
     end
     if isShopTransferOpen then
-        for _, btn in ipairs(buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-                if btn.id == "close_shop_transfer" then
-                    isShopTransferOpen = false
-                    transferSourceCard = nil
-                    transferSourceEqIndex = nil
-                    transferMessage = nil
-                    transferPage = 1
-                    Sound.play("card_deal")
-                    return true
-                elseif btn.id == "transfer_prev" and not btn.disabled then
-                    transferPage = math.max(1, transferPage - 1)
-                    Sound.play("card_select")
-                    return true
-                elseif btn.id == "transfer_next" and not btn.disabled then
-                    transferPage = transferPage + 1
-                    Sound.play("card_select")
-                    return true
-                elseif btn.id == "transfer_reset" then
-                    transferSourceCard = nil
-                    transferSourceEqIndex = nil
-                    transferMessage = nil
-                    Sound.play("card_select")
-                    return true
-                end
-            end
-        end
-
-        local visible = getTransferPageCards()
-        if transferSourceCard and transferSourceCard.equipments then
-            for idx, eq in ipairs(transferSourceCard.equipments) do
-                local ex, ey, ew, eh = getTransferEquipmentRect(idx)
-                if mx >= ex and mx <= ex + ew and my >= ey and my <= ey + eh then
-                    transferSourceEqIndex = idx
-                    transferMessage = nil
-                    Sound.play("card_select")
-                    return true
-                end
-            end
-        end
-
-        local chosenEq = transferSourceCard and transferSourceEqIndex and transferSourceCard.equipments and transferSourceCard.equipments[transferSourceEqIndex]
-        for i, c in ipairs(visible) do
-            local cx, cy, cw, ch = getTransferCardRect(i)
-            if mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
-                if chosenEq and c ~= transferSourceCard then
-                    local canAttach, reason = Equipment.canAttach(c, chosenEq)
-                    if not canAttach then
-                        transferMessage = reason
-                        Sound.play("cant_afford")
-                        return true
-                    end
-                    local before = UI.Polish.snapshot(game)
-                    local ok, msg = Shop.transferEquipment(transferSourceCard, transferSourceEqIndex, c)
-                    transferMessage = msg
-                    if ok then
-                        UI.Polish.changed(UI, game, before, chosenEq)
-                        transferSourceEqIndex = nil
-                    end
-                    return true
-                elseif c.equipments and #c.equipments > 0 then
-                    transferSourceCard = c
-                    transferSourceEqIndex = nil
-                    transferMessage = nil
-                    Sound.play("card_select")
-                    return true
-                else
-                    transferMessage = "Lá này chưa có trang bị; hãy chọn làm đích sau khi chọn trang bị nguồn."
-                    return true
-                end
-            end
-        end
-
-        return true
+        return UI.EquipmentTransfer.press(UI,game,mx,my,button,{
+            close=function() isShopTransferOpen=false;UI.EquipmentTransfer.searchFocus=false;love.keyboard.setTextInput(false) end,
+            inspect=function(item) inspectCardModal=item end,
+            save=saveRunAtSafePoint,
+        })
     end
 
     -- Intercept clicks if Booster Pack is currently being opened
@@ -6781,10 +6653,8 @@ local function handleShopMousepressed(mx, my, button)
             elseif btn.id == "open_backpack" then
                 UI.Backpack.show();Sound.play("card_deal");return true
             elseif btn.id == "open_shop_transfer" then
+                UI.EquipmentTransfer.reset();UI.Polish.clearFocus()
                 isShopTransferOpen = true
-                transferSourceCard = nil
-                transferSourceEqIndex = nil
-                transferMessage = nil
                 Sound.play("card_deal")
                 return true
             elseif btn.id == "open_handbook" or btn.id == "shop_round_info" then
@@ -6862,7 +6732,7 @@ function UI.Debug.clearScene()
     cashOutAnim, shopFx = nil, {}
     monsterMotion.attack, monsterMotion.hit = 0, 0
     isShopTransferOpen, isDeckViewerOpen, isHandbookOpen, isCollectionOpen = false, false, false, false
-    inspectCardModal, transferSourceCard, transferSourceEqIndex = nil, nil, nil
+    inspectCardModal = nil
     socketingPage = 1
     shopData = Shop.new()
     DebugTools.clearScene(game)
@@ -7386,7 +7256,7 @@ local function handleModalsMousepressed(mx, my, button)
 
     -- Transfer owns the full shop screen, so its cards and controls take
     -- priority over generic inspector and drag input.
-    if state == "shop" and isShopTransferOpen and not isDeckViewerOpen then
+    if state == "shop" and isShopTransferOpen and not isDeckViewerOpen and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen then
         return handleShopMousepressed(mx, my, button)
     end
 
@@ -7565,10 +7435,14 @@ UI.Backpack.handle=function(mx,my,button)
         cancel=function() pendingEditionCard=nil end,
         travel=function(i) if UI.openTravelPermit("backpackConsumables",i) then UI.Backpack.close() end end,
         activate=function(i)
+            local origin=UI.BackpackContext.capture(UI.Backpack)
+            if origin then origin.state=state;origin.item=game.consumables[i];origin.game=game end
             if activateConsumable(i,state) then
-                UI.Backpack.close()
-                if pendingEditionCard then
-                    UI.Backpack.show();UI.Backpack.tab="cards"
+                if UI.AbilityUI.current or state=="socketing" or pendingEditionCard or pendingSpeedCard or pendingEvolutionCard or isDeckViewerOpen then
+                    UI.backpackUseReturn=origin;UI.Backpack.close()
+                else UI.BackpackContext.restore(UI.Backpack,origin) end
+                if pendingEditionCard and UI.backpackUseReturn then
+                    UI.Backpack.show();require("ui.backpack_qol").switch(UI.Backpack,"cards")
                     UI.Backpack.message="Chọn lá bài để áp dụng Ấn Bản; có thể chuyển sang ngăn SPN."
                 end
             end
@@ -8320,6 +8194,10 @@ end
 
 function love.keypressed(key, scancode)
     if isDebugOpen then UI.Debug.key(key, scancode); return end
+    if state=="barter" and not isPauseMenuOpen and not isSettingsOpen then
+        local result=require("ui.barter").keypressed(game,key)
+        if result then if result=="changed" then saveRunAtSafePoint() end;return end
+    end
     if key == "f7" and settings.debugEnabled then UI.Debug.open(); return end
     if UI.ExpandedInventory.open and not inspectCardModal then
         if key=="escape" then
@@ -8383,6 +8261,11 @@ function love.keypressed(key, scancode)
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if Renderer.keypressed(key) then return end
     if state == "shop" and UI.Polish.busy() then return end
+    if state=="shop" and isShopTransferOpen and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen then
+        if UI.EquipmentTransfer.key(key) then return end
+        if key=="escape" then isShopTransferOpen=false;love.keyboard.setTextInput(false) end
+        return
+    end
     if UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen and UI.Backpack.key(key) then return end
     if key=="escape" and UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen then UI.Backpack.close();pendingEditionCard=nil;return end
     if key=="i" and (state=="playing" or state=="shop" or state=="BLIND_SELECT") and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not UI.AbilityUI.current and not anim.active then
@@ -8499,7 +8382,7 @@ function love.keypressed(key, scancode)
 
     if state == "playing" then
         if key == "space" or key == "return" then
-            if #game.hand == 0 or (game.handsRemaining or 0) <= 0 then endPlayerTurn() else playSelectedHand() end
+            UI.playHandAction()
         elseif key == "d" then
             discardSelected()
         elseif key == "r" then
@@ -8562,6 +8445,12 @@ function love.keyreleased(key, scancode)
 end
 
 function love.textinput(text)
+    if state=="shop" and isShopTransferOpen and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDebugOpen then
+        UI.EquipmentTransfer.textinput(text);return
+    end
+    if state=="barter" and not isDebugOpen and not isPauseMenuOpen and not isSettingsOpen then
+        if require("ui.barter").textinput(game,text) then return end
+    end
     if not isDebugOpen then
         if UI.Backpack.open and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen and not isDeckViewerOpen and not isHandbookOpen then UI.Backpack.textinput(text) end
         return
@@ -8570,6 +8459,9 @@ function love.textinput(text)
 end
 
 function love.wheelmoved(x, y)
+    if state=="shop" and isShopTransferOpen and not inspectCardModal and not isPauseMenuOpen and not isSettingsOpen then
+        UI.EquipmentTransfer.page=math.max(1,math.min(UI.EquipmentTransfer.pages or 1,UI.EquipmentTransfer.page-(y>0 and 1 or y<0 and -1 or 0)));return
+    end
     if isDebugOpen then
         if y ~= 0 then UI.Debug.key(y > 0 and "pageup" or "pagedown") end
         return
@@ -8582,6 +8474,10 @@ function love.wheelmoved(x, y)
         local mx,my=toVirtual(love.mouse.getPosition());UI.ExpandedInventory.wheel(y,mx,my);return
     end
     if UI.Description.wheelmoved(y) then return end
+    if state=="barter" and not isPauseMenuOpen and not isSettingsOpen then
+        local mx,my=toVirtual(love.mouse.getPosition())
+        if require("ui.barter").wheel(game,y,mx,my) then return end
+    end
     if (state=="shop" or state=="playing") and UI.Backpack.open and not inspectCardModal and not isSettingsOpen then
         local mx,my=toVirtual(love.mouse.getPosition())
         if UI.Backpack.wheel(mx,my,y) then return end

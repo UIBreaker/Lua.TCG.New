@@ -6,7 +6,8 @@ local A=require("src.enemy_abilities")
 local L=require("src.enemy_loadout")
 local R=require("src.rng")
 local cases={{kind="small",stage=1,width=1920},{kind="small",width=1920},{kind="big",width=960},{kind="big",width=960,meters=true},{kind="boss",width=1920},
-    {kind="swap",width=1920},{kind="potion",width=960},{kind="oneshot",width=1920}}
+    {kind="supplies",width=960},{kind="swap",width=1920},{kind="potion",width=960},
+    {kind="spn",width=960},{kind="accuracy",width=960},{kind="oneshot",width=1920}}
 local function click(x,y,button)
     local w,h=love.graphics.getDimensions();local s=math.min(w/1280,h/720)
     love.mousepressed((w-1280*s)/2+x*s,(h-720*s)/2+y*s,button or 1)
@@ -22,16 +23,16 @@ function T.update(game,cb)
     local now=love.timer.getTime()
     if not T.started then
         T.index=T.index+1;local spec=cases[T.index]
-        if not spec then R.random=T.random;print("Enemy inventory runtime passed: actual bag/right clicks, 1920/960 UI, equip/potion contact and 500K one-shot scoring");love.event.quit(0);return end
+        if not spec then R.random=T.random;print("Enemy inventory runtime passed: actual bag/right clicks, 1920/960 UI with five reserves, equip/potion/SPN/accuracy contact and 500K one-shot scoring");love.event.quit(0);return end
         cb.startNewGame("red_deck");cb.startMonsterEncounter(1,false)
         local stage=spec.stage or 20
         game.run.ante=stage;game.run.areaStage=stage
         local kind=spec.kind=="oneshot" and "small" or spec.kind
-        if spec.kind=="swap" or spec.kind=="potion" then kind="boss" end
+        if spec.kind=="swap" or spec.kind=="potion" or spec.kind=="spn" or spec.kind=="accuracy" or spec.kind=="supplies" then kind="boss" end
         local blind=Run.generateAnteBlinds(stage)[kind=="small" and 1 or kind=="big" and 2 or 3]
         game.run.currentBlindIndex=blind.index
         local m=Run.createBlindMonster(blind,game)
-        if spec.kind=="swap" or spec.kind=="potion" then m.bossData=require("src.boss_abilities").newDefinitions.gatekeeper end
+        if spec.kind=="swap" or spec.kind=="potion" or spec.kind=="spn" or spec.kind=="accuracy" then m.bossData=require("src.boss_abilities").newDefinitions.gatekeeper end
         C.start(game,m,stage)
         if spec.meters then
             m.hp=math.floor(m.maxHp*.625);m.damageLagHp=m.hp
@@ -46,11 +47,23 @@ function T.update(game,cb)
         T.started=now;T.step=0;T.spec=spec;T.deadline=now+1.8;T.checked=false
         T.random=T.random or R.random;R.random=function(a,b) if a then return T.random(a,b) end;return 0 end
         local anim=cb.getScoringState();anim.floatingTexts={}
-        if spec.kind=="swap" or spec.kind=="potion" then
-            assert(m.enemyInventory.backpack.equipment[1] and m.enemyInventory.backpack.consumables[1])
+        if spec.kind=="supplies" then
+            local bag=m.enemyInventory
+            bag.backpack={equipment={{id="ward_stone",kind="equipment",power=1}},spns={{id="spirit_echo",kind="spn",power=1}},
+                consumables={{id="healing_potion",kind="consumable",pct=.12},{id="cons_speed_team",kind="consumable",pct=.15},{id="cons_accuracy",kind="consumable"}}}
+        elseif spec.kind=="swap" or spec.kind=="potion" then
+            m.enemyInventory.backpack={equipment={{id="ward_stone",kind="equipment",power=1}},spns={},
+                consumables={{id="healing_potion",kind="consumable",pct=.12}}}
             m.attackSpeed=999;m.hp=math.floor(m.maxHp*(spec.kind=="swap" and .45 or .25));m.damageLagHp=m.hp
             A.plan(game,m);T.hp=m.hp
             assert(m.intent.type==(spec.kind=="swap" and "equip" or "consume"))
+            cb.selectCardIndex(1);cb.playSelectedHand()
+        elseif spec.kind=="spn" or spec.kind=="accuracy" then
+            local bag=m.enemyInventory;bag.backpack={equipment={},spns={},consumables={}}
+            if spec.kind=="spn" then bag.spn=nil;bag.backpack.spns={{id="spirit_echo",kind="spn",power=1}}
+            else m.attackSpeed=1;game.lastPlayerAttackSpeed=27;bag.backpack.consumables={{id="cons_accuracy",kind="consumable"}} end
+            A.plan(game,m)
+            assert(m.intent.type==(spec.kind=="spn" and "equip_spn" or "consume"))
             cb.selectCardIndex(1);cb.playSelectedHand()
         elseif spec.kind=="oneshot" then
             game.hand[1].baseChips=500000;game.hand[1].speedBonus=50
@@ -60,12 +73,14 @@ function T.update(game,cb)
     end
     assert(now-T.started<30,"enemy loadout runtime timeout")
     local spec=T.spec;local anim,state=cb.getScoringState()
-    if spec.kind=="swap" or spec.kind=="potion" then
+    if spec.kind=="swap" or spec.kind=="potion" or spec.kind=="spn" or spec.kind=="accuracy" then
         local turn=anim.enemyTurn
         if turn and turn.index==1 and turn.phase=="recover" and not T.checked then
             local hit=assert(turn.result);assert(hit.damage==0 and game.playerHp==500)
             if spec.kind=="swap" then assert(hit.action=="equip" and #game.monster.enemyInventory.backpack.equipment==0 and game.monster.enemyInventory.stowed)
-            else assert(hit.action=="heal" and game.monster.hp>T.hp and #game.monster.enemyInventory.backpack.consumables==0) end
+            elseif spec.kind=="potion" then assert(hit.action=="heal" and game.monster.hp>T.hp and #game.monster.enemyInventory.backpack.consumables==0)
+            elseif spec.kind=="spn" then assert(hit.action=="equip" and game.monster.enemyInventory.spn.id=="spirit_echo" and #game.monster.enemyInventory.backpack.spns==0)
+            else assert(hit.action=="accuracy" and game.monster.enemyInventory.guaranteedAttacks==1 and #game.monster.enemyInventory.backpack.consumables==0) end
             shot(spec.kind);T.checked=true
         end
         if T.checked and state=="playing" and not anim.enemyTurn and not anim.active then T.started=nil end

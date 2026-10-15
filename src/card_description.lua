@@ -149,8 +149,17 @@ function D.resolve(item,game)
     local consumable=require("src.shop").getConsumableDescription(item,game)
     if consumable then return item.name,consumable end
     if item.category=="heal" then return item.name,"Trang bị vào ô tiêu hao, chuột phải dùng một lần: hồi tối đa "..(item.healAmt or 25).." HP, không vượt HP tối đa." end
-    local voucher=require("src.shop").voucherDescription(item.voucherId or item.id,item)
-    if voucher then return item.name,voucher end
+    local Shop=require("src.shop")
+    local id=item.voucherId or item.id
+    local voucher=Shop.voucherDescription(id,item)
+    if voucher then
+        if item.voucherLevel then
+            return item.name,(item.voucherOwned and "ĐÃ NHẬN · CẤP "..item.voucherLevel or "CẤP "..(item.voucherPreviousLevel or 0).." → "..item.voucherLevel.." · TỔNG HIỆU LỰC SAU KHI MUA").."\n"..voucher
+        end
+        local level=Shop.voucherLevel(id,game)
+        if level>0 then return Shop.voucherName(id,level),"ĐANG SỞ HỮU · CẤP "..level.."\n"..Shop.voucherDescription(id,{voucherPower=Shop.voucherPower(id,game)}) end
+        return Shop.voucherName(id,1),voucher
+    end
     return item.name or item.title or "Thẻ bài",item.desc or item.description or ""
 end
 function D.draw(UI,item,mx,my,game)

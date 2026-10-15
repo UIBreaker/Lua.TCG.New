@@ -67,10 +67,10 @@ function T.update(game,cb)
   for _,b in ipairs(cb.getButtons()) do if b.id=="bag_use" then assert(sell.x>=b.x+b.w or sell.y+sell.h<=b.y,"sell must not overlap use") end end
   shot("consumable_action_1920");T.stage=22.5;T.deadline=now+.3;return
  elseif s==22.5 then
-  click(cb,"bag_use");assert(not Bag.open and game.handLevels.pair==T.level+2 and #game.consumables==2,"explicit use must upgrade instead of selling")
+  click(cb,"bag_use");assert(Bag.open and Bag.tab=="consumable" and game.handLevels.pair==T.level+2 and #game.consumables==2,"explicit use must upgrade and return to consumables")
   T.stage=23;T.deadline=now+.3;return
  elseif s==23 then
-  love.keypressed("i");assert(Bag.open and Bag.tab=="consumable");T.stage=23.5;T.deadline=now+.3;return
+  assert(Bag.open and Bag.tab=="consumable");T.stage=23.5;T.deadline=now+.3;return
  elseif s==23.5 then
   clickRect(Bag.cells[1]);T.stage=24;T.deadline=now+.3;return
  elseif s==24 then

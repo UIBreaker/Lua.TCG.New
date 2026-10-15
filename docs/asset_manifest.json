@@ -11127,6 +11127,190 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-837c447c-c290-407b-8d91-6079d9459221.png",
         "prompt": "Create ONE finished production SPN card artwork, portrait PNG 1024x1536, full-bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. Strong dominant supernatural entity silhouette, one primary subject, medium detail, large readable forms at 64px, restrained cinematic glow, atmospheric depth and quiet environment. Mechanic: Chia đều 100% tổng AURA của đòn cho tất cả địch còn sống; mỗi địch bị đốt thêm 5% phần AURA nó nhận trong 2 vòng. Tiến hóa tăng sát thương và tỷ lệ đốt. Concept: A single volcanic spectral phoenix divides a central aura core into three equally sized cinder beams. One supernatural phoenix spirit rising from a dark volcanic fissure, its coherent broad wings made of restrained ember-orange smoke, one round compact aura core in its chest sending THREE equally sized thick luminous orange streams downward toward three large distant basalt monoliths of equal size. Embers remain as small controlled flames on each monolith, showing continued burning after an evenly split blast. Charcoal continental cliffs and distant ancient western ruins, navy black and lava orange, no huge white explosion, no tiny ornament. No text, letters, numbers, ranks, suit symbols, badges, card border or frame, UI, logo, watermark, dense miniature decorations, Eastern roofs or calligraphy, noisy particles or blown-out whites. This is artwork only; game draws its own frame."
       }
+    },
+    {
+      "id": "spirit_left_refrain",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Tái kích hoạt SPN ngoài cùng bên trái thêm 2 lần theo cấp và trạng thái thật của lá nguồn; tiến hóa thêm lượt.",
+      "source": "src/spn_predators.lua",
+      "name": "Hồi Âm Tả Cực",
+      "concept": "A spectral conductor sends two large echoes toward a single ancient lantern at the far left.",
+      "file": "assets/cards/continental/spn/spirit_left_refrain.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Tái kích hoạt SPN ngoài cùng bên trái thêm 2 lần theo cấp và trạng thái thật của lá nguồn; tiến hóa thêm lượt.. Concept: A spectral conductor sends two large echoes toward a single ancient lantern at the far left.. A single tall translucent faceless spectral conductor on the right half, one sweeping arm directing TWO broad coherent silver-blue crescent echoes toward one large antique-gold spectral lantern floating at the far LEFT edge. Lantern is clearly the recipient, conductor primary. Quiet navy western ruined amphitheater, silver-blue and antique-gold light, readable large shapes. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_left_refrain",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-2513f1a9-ad3b-46b3-a215-553f4b251994.png",
+        "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Tái kích hoạt SPN ngoài cùng bên trái thêm 2 lần theo cấp và trạng thái thật của lá nguồn; tiến hóa thêm lượt.. Concept: A spectral conductor sends two large echoes toward a single ancient lantern at the far left.. A single tall translucent faceless spectral conductor on the right half, one sweeping arm directing TWO broad coherent silver-blue crescent echoes toward one large antique-gold spectral lantern floating at the far LEFT edge. Lantern is clearly the recipient, conductor primary. Quiet navy western ruined amphitheater, silver-blue and antique-gold light, readable large shapes. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_wind_thief",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay đánh cướp 2 tốc từ địch đang chọn, cho mỗi quân đã chơi nhận tốc đó tạm trong trận; tiến hóa tăng lượng cướp.",
+      "source": "src/spn_predators.lua",
+      "name": "Đoạt Phong U Linh",
+      "concept": "A predatory wind wraith pulls blue wind from a distant enemy silhouette into allied blade fragments.",
+      "file": "assets/cards/continental/spn/spirit_wind_thief.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Mỗi tay đánh cướp 2 tốc từ địch đang chọn, cho mỗi quân đã chơi nhận tốc đó tạm trong trận; tiến hóa tăng lượng cướp.. Concept: A predatory wind wraith pulls blue wind from a distant enemy silhouette into allied blade fragments.. One lean supernatural wind wraith made of dark teal mist and silver ribbons, long readable cloak silhouette twisting in midair. It pulls one thick cyan ribbon of wind from a small distant hostile armored silhouette to the right and divides it into three broad silver streams feeding three large hovering blade fragments in the foreground. Forest-green continental canyon ruins, navy atmosphere, cyan and silver accent, controlled glow. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_wind_thief",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-c30f4404-22ec-4b4c-9849-c6a8ef100dc9.png",
+        "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Mỗi tay đánh cướp 2 tốc từ địch đang chọn, cho mỗi quân đã chơi nhận tốc đó tạm trong trận; tiến hóa tăng lượng cướp.. Concept: A predatory wind wraith pulls blue wind from a distant enemy silhouette into allied blade fragments.. One lean supernatural wind wraith made of dark teal mist and silver ribbons, long readable cloak silhouette twisting in midair. It pulls one thick cyan ribbon of wind from a small distant hostile armored silhouette to the right and divides it into three broad silver streams feeding three large hovering blade fragments in the foreground. Forest-green continental canyon ruins, navy atmosphere, cyan and silver accent, controlled glow. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_right_offering",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi tay ghi điểm tiêu hủy SPN ngay bên phải để tích vĩnh viễn +0,5 vào hệ số cường hóa; tiến hóa tăng lượng tích.",
+      "source": "src/spn_predators.lua",
+      "name": "Hữu Tế Tham Linh",
+      "concept": "A spectral maw consumes a neighboring spirit on its right and condenses it into a permanent violet growth ring.",
+      "file": "assets/cards/continental/spn/spirit_right_offering.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Mỗi tay ghi điểm tiêu hủy SPN ngay bên phải để tích vĩnh viễn +0,5 vào hệ số cường hóa; tiến hóa tăng lượng tích.. Concept: A spectral maw consumes a neighboring spirit on its right and condenses it into a permanent violet growth ring.. One dominant supernatural dark-violet spectral creature shaped like a hollow crowned maw, its clear broad silhouette on the LEFT and center. It consumes a single small silver spirit fragment immediately on its RIGHT through a thick violet stream; one substantial new antique-gold ring condenses around the creature's core, showing accumulated permanent strength. Mysterious western ruin arches over a void cliff, deep violet/navy and restrained antique-gold accent. No gore or organic flesh. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_right_offering",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-76bf6f60-0474-492f-b682-87137219e78a.png",
+        "prompt": "Create ONE production SPN card illustration, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One dominant supernatural entity, strong coherent silhouette, medium detail and broad shapes, readable at 64px, quiet atmospheric background, restrained magical glow. Mechanic: Mỗi tay ghi điểm tiêu hủy SPN ngay bên phải để tích vĩnh viễn +0,5 vào hệ số cường hóa; tiến hóa tăng lượng tích.. Concept: A spectral maw consumes a neighboring spirit on its right and condenses it into a permanent violet growth ring.. One dominant supernatural dark-violet spectral creature shaped like a hollow crowned maw, its clear broad silhouette on the LEFT and center. It consumes a single small silver spirit fragment immediately on its RIGHT through a thick violet stream; one substantial new antique-gold ring condenses around the creature's core, showing accumulated permanent strength. Mysterious western ruin arches over a void cliff, deep violet/navy and restrained antique-gold accent. No gore or organic flesh. No text, letters, digits, ranks, suits, badges, fixed card frame, border, UI, watermark, Eastern roofs, calligraphy, dense micro-ornament, particle noise or blown-out white highlights. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_ashen_legacy",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Mỗi khi SPN khác bị tiêu hủy, tích vĩnh viễn +0,5 vào hệ số Sát thương; tiến hóa tăng lượng tích.",
+      "source": "src/spn_reserves.lua",
+      "name": "Tàn Linh Thừa Diệt",
+      "concept": "A single ash specter gathers the remains of a broken neighboring spirit into permanent bright rings around its core.",
+      "file": "assets/cards/continental/spn/spirit_ashen_legacy.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Mỗi khi SPN khác bị tiêu hủy, tích vĩnh viễn +0,5 vào hệ số Sát thương; tiến hóa tăng lượng tích. Concept: A single ash specter gathers the remains of a broken neighboring spirit into permanent bright rings around its core. One dominant tall supernatural ash specter with a hollow obsidian torso and broad torn cloak, drawing a thick violet stream from ONE shattered silver spirit silhouette low at its side into TWO substantial antique-gold rings permanently encircling its core. Charcoal continental western ruins over a void cliff, deep navy, violet and antique gold, restrained glow, no gore. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_ashen_legacy",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-cecfd787-6b3e-49d6-83d6-f4d57c22c73c.png",
+        "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Mỗi khi SPN khác bị tiêu hủy, tích vĩnh viễn +0,5 vào hệ số Sát thương; tiến hóa tăng lượng tích. Concept: A single ash specter gathers the remains of a broken neighboring spirit into permanent bright rings around its core. One dominant tall supernatural ash specter with a hollow obsidian torso and broad torn cloak, drawing a thick violet stream from ONE shattered silver spirit silhouette low at its side into TWO substantial antique-gold rings permanently encircling its core. Charcoal continental western ruins over a void cliff, deep navy, violet and antique gold, restrained glow, no gore. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_unspent_fury",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "+50 Sát thương mỗi lượt bỏ bài còn lại khi ghi điểm; tiến hóa tăng sát thương mỗi lượt.",
+      "source": "src/spn_reserves.lua",
+      "name": "Dư Lực Chưa Xả",
+      "concept": "A desert sand apparition holds three untouched stone orbitals storing unused force.",
+      "file": "assets/cards/continental/spn/spirit_unspent_fury.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: +50 Sát thương mỗi lượt bỏ bài còn lại khi ghi điểm; tiến hóa tăng sát thương mỗi lượt. Concept: A desert sand apparition holds three untouched stone orbitals storing unused force. One broad-shouldered supernatural desert sand guardian rising from a fossil canyon, three LARGE intact floating stone discs arranged in a simple arc above one shoulder, each sending a thick restrained amber energy channel into one compact glowing fist. Bone ivory and sand-gold, quiet dark navy sky, ancient western expedition ruins. One main spectral guardian, strong simple silhouette, no tiny decorations. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_unspent_fury",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-eb7b8521-b16d-4295-a9a7-6428a0684d5d.png",
+        "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: +50 Sát thương mỗi lượt bỏ bài còn lại khi ghi điểm; tiến hóa tăng sát thương mỗi lượt. Concept: A desert sand apparition holds three untouched stone orbitals storing unused force. One broad-shouldered supernatural desert sand guardian rising from a fossil canyon, three LARGE intact floating stone discs arranged in a simple arc above one shoulder, each sending a thick restrained amber energy channel into one compact glowing fist. Bone ivory and sand-gold, quiet dark navy sky, ancient western expedition ruins. One main spectral guardian, strong simple silhouette, no tiny decorations. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_open_horizon",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Tăng kích thước tay bài lên 1 khi trang bị; tiến hóa tăng thêm chỗ trên tay.",
+      "source": "src/spn_reserves.lua",
+      "name": "Linh Vực Khai Thủ",
+      "concept": "A spectral living tree opens one extra branch beside an existing fan of broad crystalline leaves.",
+      "file": "assets/cards/continental/spn/spirit_open_horizon.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Tăng kích thước tay bài lên 1 khi trang bị; tiến hóa tăng thêm chỗ trên tay. Concept: A spectral living tree opens one extra branch beside an existing fan of broad crystalline leaves. One elegant supernatural living forest tree spirit, its large translucent emerald canopy shaped as a broad fan of FOUR broad crystalline leaf-limbs, one newly extending branch opening to hold an additional large luminous leaf. Quiet mossy western ruin clearing, deep forest-green and antique-gold accent, controlled green growth light. Readable one primary entity, medium detail, no literal playing cards or text. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_open_horizon",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-139a4733-2438-49dc-b58f-b7091c6fe98d.png",
+        "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Tăng kích thước tay bài lên 1 khi trang bị; tiến hóa tăng thêm chỗ trên tay. Concept: A spectral living tree opens one extra branch beside an existing fan of broad crystalline leaves. One elegant supernatural living forest tree spirit, its large translucent emerald canopy shaped as a broad fan of FOUR broad crystalline leaf-limbs, one newly extending branch opening to hold an additional large luminous leaf. Quiet mossy western ruin clearing, deep forest-green and antique-gold accent, controlled green growth light. Readable one primary entity, medium detail, no literal playing cards or text. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_gilded_weight",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Khi ghi điểm, nhân Sát thương với hệ số đúng bằng 0,25 nhân số Vàng đang giữ: 2 vàng ×0,5; 4 vàng ×1. Tiến hóa tăng hệ số mỗi vàng.",
+      "source": "src/spn_reserves.lua",
+      "name": "Kim Trọng Hư Linh",
+      "concept": "A gold gravity apparition forms a single weighted halo from accumulated treasure.",
+      "file": "assets/cards/continental/spn/spirit_gilded_weight.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Khi ghi điểm, nhân Sát thương với hệ số đúng bằng 0,25 nhân số Vàng đang giữ: 2 vàng ×0,5; 4 vàng ×1. Tiến hóa tăng hệ số mỗi vàng. Concept: A gold gravity apparition forms a single weighted halo from accumulated treasure. One massive supernatural antique-gold gravitational halo surrounding a dark spectral torso rising above a simple stack of large weathered gold ingots, thick restrained golden energy flows from the treasure into the halo. Quiet navy western vault ruins in a fossil desert cliff, antique gold and bone palette, broad meaningful forms. No tiny coin shower or text. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_gilded_weight",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-b511ac56-1d13-41ba-b7fc-21db288df19a.png",
+        "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Khi ghi điểm, nhân Sát thương với hệ số đúng bằng 0,25 nhân số Vàng đang giữ: 2 vàng ×0,5; 4 vàng ×1. Tiến hóa tăng hệ số mỗi vàng. Concept: A gold gravity apparition forms a single weighted halo from accumulated treasure. One massive supernatural antique-gold gravitational halo surrounding a dark spectral torso rising above a simple stack of large weathered gold ingots, thick restrained golden energy flows from the treasure into the halo. Quiet navy western vault ruins in a fossil desert cliff, antique gold and bone palette, broad meaningful forms. No tiny coin shower or text. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only."
+      }
+    },
+    {
+      "id": "spirit_lone_procession",
+      "group": "spn",
+      "rarity": "common",
+      "ability": "Chỉ khi chơi đúng 1 quân: tái kích hoạt thêm quân đó bằng số quân đang cầm trước khi đánh. Tiến hóa tăng hệ số số lần tái kích hoạt.",
+      "source": "src/spn_reserves.lua",
+      "name": "Độc Âm Vạn Ảnh",
+      "concept": "A single spectral duelist projects a procession of echoes counted by the spirits waiting in its hand.",
+      "file": "assets/cards/continental/spn/spirit_lone_procession.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Chỉ khi chơi đúng 1 quân: tái kích hoạt thêm quân đó bằng số quân đang cầm trước khi đánh. Tiến hóa tăng hệ số số lần tái kích hoạt. Concept: A single spectral duelist projects a procession of echoes counted by the spirits waiting in its hand. One dominant supernatural silver-blue faceless duelist in a broad torn cloak at the front of a glacial western causeway. Behind the same duelist, THREE broad translucent successive echo silhouettes follow in a simple clearly separated procession. One outstretched spectral hand holds a compact fan of FOUR large blue crystalline shards that feed the echoes through a single coherent blue ribbon. Icy navy canyon and western bridge arches, controlled cold silver-blue light, readable broad silhouette. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "id": "spirit_lone_procession",
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-296fe696-5939-48e9-afa3-70bf962baf66.png",
+        "prompt": "Create ONE production SPN card artwork, portrait 1024x1536 PNG, full bleed 2:3. Cinematic painterly Western dark-fantasy expedition matching the Continental world. One dominant supernatural entity, clear silhouette, medium detail and broad readable shapes at 64px, quiet atmospheric environment, controlled glow. Ability: Chỉ khi chơi đúng 1 quân: tái kích hoạt thêm quân đó bằng số quân đang cầm trước khi đánh. Tiến hóa tăng hệ số số lần tái kích hoạt. Concept: A single spectral duelist projects a procession of echoes counted by the spirits waiting in its hand. One dominant supernatural silver-blue faceless duelist in a broad torn cloak at the front of a glacial western causeway. Behind the same duelist, THREE broad translucent successive echo silhouettes follow in a simple clearly separated procession. One outstretched spectral hand holds a compact fan of FOUR large blue crystalline shards that feed the echoes through a single coherent blue ribbon. Icy navy canyon and western bridge arches, controlled cold silver-blue light, readable broad silhouette. No text, letters, numbers, ranks, suit symbols, badges, fixed card frame, border, UI, watermark, Eastern roofs/calligraphy, dense micro-ornament, blown-out highlights or particle noise. Artwork only."
+      }
     }
   ],
   "scene_backgrounds": [
@@ -11214,8 +11398,8 @@
     }
   ],
   "completion": {
-    "generated": 454,
-    "total": 454,
+    "generated": 462,
+    "total": 462,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

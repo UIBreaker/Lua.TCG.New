@@ -68,7 +68,7 @@ function P.register(deities)
         D.CATALOG[entry.id]=entry
     end
 end
-function P.queueRepeats(game,cards,queue)
+function P.queueRepeats(game,cards,queue,handInfo)
     if not game then return end
     local cap=require("config.card_ability_data").maxTriggersPerHand
     active(game,function(source)
@@ -89,6 +89,7 @@ function P.queueRepeats(game,cards,queue)
             end
         end
     end)
+    require("src.spn_reserves").queueRepeats(game,cards,queue,handInfo)
 end
 function P.bloodEnabled(game)
     D=D or require("src.deities")

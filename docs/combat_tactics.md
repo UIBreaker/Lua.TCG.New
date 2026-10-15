@@ -3,7 +3,7 @@
 - Tốc bạn là tốc đánh trung bình của toàn bộ lá đã chơi, gồm trang bị và thưởng tốc. Tốc địch gồm buff đang có.
 - Chính xác: `clamp(tốc người đánh / tốc mục tiêu, 5%, 100%)`. Nhanh bằng hoặc hơn mục tiêu: trúng 100%. Tốc 5 đánh tốc 10: 50%; tốc 9 đánh tốc 10: 90%. Bạn tốc 27, địch tốc 1: bạn trúng 100%, địch trúng 5%. Áp dụng đối xứng cho cả hai phía, gồm buff tốc đang có.
 - Đòn hụt gây 0 sát thương, không tiêu hao giáp/giường, không kích hoạt hiệu ứng khi đánh trúng, độc, hút máu hoặc sát thương lan của đòn đó. Các thưởng từ thế bài như giáp, vàng, hồi máu vẫn nhận được; sét của Ba Cột không gây sát thương khi hụt. Sát thương hiệu ứng độc và sát thương chuẩn độc lập không phải đòn đánh thường.
-- Địch luân phiên tấn công và hỗ trợ. Khi hỗ trợ, ưu tiên hồi máu cho thành viên còn sống có tỉ lệ HP thấp nhất nếu còn tối đa 65% HP, gồm cả bản thân. Nếu không cần hồi máu thì luân phiên giáp, tốc, sát thương; luân phiên tự buff và hỗ trợ đồng đội. Địch một mình tự buff. Khi giáp/tốc đã đạt giới hạn, chuyển sang buff sát thương.
+- Địch xen kẽ tấn công và hỗ trợ. AI có kho đồ chọn hỗ trợ theo HP, giáp, tốc/chính xác và sát thương thực tế thay vì xoay vòng cứng; ưu tiên cứu người ≤65% HP, buff sát thương cho chủ lực và buff tốc khi cải thiện chính xác/thứ tự ra đòn. Đồng đội ≤35% HP được ưu tiên cứu trước khi chuẩn bị tiêu hao tấn công. Không làm mới buff còn hiệu lực, không hỗ trợ vào giáp/tốc đã chạm trần. Khi đủ sát thương và chính xác ≥80%, ưu tiên đòn kết liễu người chơi thay vì chuẩn bị đồ.
 - Buff tính trực tiếp từ **chỉ số của địch nhận buff**, gồm tự buff và buff đồng đội. Không có lượng cộng cố định theo ải; chỉ số tăng thì buff tăng theo:
   - Giáp: 25% HP tối đa. Tổng giáp tối đa 50% HP tối đa, bị tiêu hao khi chịu sát thương.
   - Hồi máu: 20% HP tối đa, giới hạn theo HP còn thiếu, không hồi sinh đồng đội đã chết.
@@ -23,4 +23,8 @@
 - Địch có kho đồ riêng theo ải/vai trò, gồm trang bị phần trăm, ấn bản, dấu và SPN. Đồ dự trữ phải tốn một hành động đã báo trước để dùng/đổi. Xem [quy tắc kho đồ địch](ENEMY_LOADOUTS.md); buff cơ bản bên trên được tăng hiệu lực khi người thi triển có Tàn Hỏa.
 
 Kiểm tra logic: `lovec.exe . --test-combat-tactics`.
+
+Khi hết lượt đánh nhưng còn bài trên tay, chọn bài làm nút chính hiện **ĐÁNH LƯỢT KẾ**. Nhấn nút hoặc Space sẽ kết thúc lượt hiện tại, giữ đúng các lá đã chọn rồi tự đánh ở lượt mới; địch và bạn vẫn phân xử theo tốc đánh. Bảng tốc hiển thị **CHUYỂN LƯỢT · ĐỊCH ĐI** trong bước kết thúc lượt, tránh báo sai bạn đánh trước chỉ vì tốc cao hơn. Nếu chưa chọn lá nào, **KẾT THÚC LƯỢT** chỉ chuyển lượt. Không tiếp tục lệnh đánh nếu nhân vật đã chết; giới hạn lượt cuối của Xuyên Tâm vẫn giữ nguyên. Trước bản sửa, nút kết thúc lượt luôn xóa lựa chọn và chỉ cho địch hành động, khiến thao tác chọn rồi Đánh trông như mất đòn.
+
+Kiểm tra thao tác thật (cách ly save): `lovec.exe . --test-play-turn-continuation`. Đã tái hiện lỗi trước sửa: chọn khi hết lượt rồi click nút khiến số lần phân xử đòn người chơi bằng 0. Kiểm thử hồi quy gồm chuột/Space, chọn rồi bấm nhanh trước khi nút vẽ lại, nhiều lá, nhanh/chậm/bằng tốc, bấm lặp trong hoạt ảnh, kết thúc lượt không chọn bài và hủy lệnh khi chết.
 Kiểm tra game/UI, xuất ảnh `docs/combat_tactics_*.png`: `lovec.exe . --capture-combat-tactics` (chế độ capture cách ly save người chơi).

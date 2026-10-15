@@ -36,7 +36,7 @@ Collection.CATEGORIES = {
     {
         id = "vouchers",
         title = "Phiếu",
-        sub = "3 Phiếu Đặc Quyền",
+        sub = "9 Phiếu Đặc Quyền · Mua lại tăng cấp",
         col = "left",
         btnColor = { 0.92, 0.28, 0.22, 1 },
         badge = "3",
@@ -309,7 +309,7 @@ local function buildItems(category, packFilter)
                 name = voucher.name,
                 subtitle = "PHIẾU ĐẶC QUYỀN",
                 rarity = "Đặc Quyền",
-                cost = voucher.cost,
+                cost = voucher.cost * Shop.PRICE_MULTIPLIER,
                 desc = voucher.desc,
                 icon = voucher.icon or "🎟️",
                 color = voucher.color,

@@ -115,8 +115,9 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  -- Keep scoring targets fixed; only the preparation layout closes the empty space.
  y=y+(data.scoring and 0 or -108)
  local es=tonumber(data.enemySpeed);local ps=tonumber(data.playerSpeed)
- Chrome.well(x+12,y+309,w-24,69,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red)
- Core.text(ps and ps>=(es or 1) and "BẠN RA ĐÒN TRƯỚC" or ps and "ĐỐI THỦ RA ĐÒN TRƯỚC" or "THỨ TỰ HÀNH ĐỘNG",x+21,y+317,w-42,f.detail,not ps and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red,"center")
+ local orderColor=(data.turnTransition or not ps) and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red
+ Chrome.well(x+12,y+309,w-24,69,orderColor)
+ Core.text(data.turnTransition and "CHUYỂN LƯỢT · ĐỊCH ĐI" or ps and ps>=(es or 1) and "BẠN RA ĐÒN TRƯỚC" or ps and "ĐỐI THỦ RA ĐÒN TRƯỚC" or "THỨ TỰ HÀNH ĐỘNG",x+21,y+317,w-42,f.detail,orderColor,"center")
  local speed=ps and string.format("%.1f",ps):gsub("%.0$","") or "—"
  Core.text("Tốc bạn "..speed.."  /  Địch "..tostring(es or "—"),x+21,y+338,w-42,f.detail,Theme.colors.muted,"center")
  if ps then

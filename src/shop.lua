@@ -38,7 +38,7 @@ end
 function Shop.payItem(item,game)
     if item.currency=="blood" then
         if not Shop.canAfford(item,game) then return false end
-        game.playerHp=game.playerHp-require("src.spn_elements").absorb(game,item.cost)
+        game.playerHp=game.playerHp-require("src.spn_elements").absorb(game,item.cost,false)
     else game.gold=(game.gold or 0)-item.cost end
 end
 local function basicHandsUnlocked(gameState)
@@ -72,36 +72,74 @@ Shop.SOUL_SUPPORT = {
 -- Public catalogs are shared with the collection screen so every listed item
 -- is obtainable and every obtainable shop item is documented in one place.
 Shop.VOUCHERS = {
-    { id = "v_discount", name = "Thẻ Thành Viên", desc = "Giảm vĩnh viễn -$2 giá gieo lại tại mọi Cửa Hàng!", cost = 10, color = { 0.35, 0.85, 0.55, 1 }, icon = "🎟️" },
-    { id = "v_interest", name = "Sổ Tiết Kiệm", desc = "Nâng trần lãi ngân khố từ +$5 lên tối đa +$10 mỗi ván!", cost = 10, color = { 0.95, 0.80, 0.25, 1 }, icon = "💰" },
-    { id = "v_hand_plus", name = "Bùa Hảo Thủ", desc = "Tăng vĩnh viễn +1 lượt đánh mỗi trận!", cost = 10, color = { 0.85, 0.45, 0.95, 1 }, icon = "✋" },
-    { id = "v_welcome", name = "Lời Chào Thương Hội", desc = "Lần đổi hàng đầu tiên ở mỗi cửa hàng miễn phí. Không tăng giá đổi hàng.", cost = 12, color = { 0.38, 0.80, 0.94, 1 }, icon = "↻" },
-    { id = "v_pack_discount", name = "Bản Đồ Kho Báu", desc = "Mọi rương trong shop giảm $2, giá tối thiểu $1. Áp dụng ngay và suốt run.", cost = 14, color = { 0.95, 0.68, 0.30, 1 }, icon = "◇" },
-    { id = "v_apothecary", name = "Lời Thề Dược Sư", desc = "Bình máu trong shop hồi 40 HP thay vì 25 HP, không tăng giá.", cost = 10, color = { 0.39, 0.84, 0.62, 1 }, icon = "+" },
-    { id = "v_altar", name = "Giao Kèo Tro Vàng", desc = "Mỗi lần hiến tế SPN, quân bài hoặc tiêu hao nhận thêm $2 vàng.", cost = 14, color = { 0.94, 0.48, 0.38, 1 }, icon = "✦" },
-    { id = "v_vitality", name = "Trái Tim Bất Diệt", desc = "Tăng vĩnh viễn 20 HP tối đa và hồi ngay 20 HP khi mua.", cost = 12, color = { 0.93, 0.36, 0.51, 1 }, icon = "♥" },
-    { id = "v_second_chance", name = "Quân Cờ Dự Phòng", desc = "Thêm 1 lượt bỏ bài mỗi trận. Nhận ngay 1 lượt bỏ bài khi mua.", cost = 10, color = { 0.65, 0.58, 0.94, 1 }, icon = "♠" },
+    { id = "v_discount", name = "Thẻ Thành Viên", cost = 6, color = { 0.35, 0.85, 0.55, 1 }, icon = "🎟️" },
+    { id = "v_interest", name = "Sổ Tiết Kiệm", cost = 8, color = { 0.95, 0.80, 0.25, 1 }, icon = "💰" },
+    { id = "v_hand_plus", name = "Bùa Hảo Thủ", cost = 12, color = { 0.85, 0.45, 0.95, 1 }, icon = "✋" },
+    { id = "v_welcome", name = "Lời Chào Thương Hội", cost = 6, color = { 0.38, 0.80, 0.94, 1 }, icon = "↻" },
+    { id = "v_pack_discount", name = "Bản Đồ Kho Báu", cost = 8, color = { 0.95, 0.68, 0.30, 1 }, icon = "◇" },
+    { id = "v_apothecary", name = "Lời Thề Dược Sư", cost = 8, color = { 0.39, 0.84, 0.62, 1 }, icon = "+" },
+    { id = "v_altar", name = "Giao Kèo Tro Vàng", cost = 8, color = { 0.94, 0.48, 0.38, 1 }, icon = "✦" },
+    { id = "v_vitality", name = "Trái Tim Bất Diệt", cost = 8, color = { 0.93, 0.36, 0.51, 1 }, icon = "♥" },
+    { id = "v_second_chance", name = "Quân Cờ Dự Phòng", cost = 8, color = { 0.65, 0.58, 0.94, 1 }, icon = "♠" },
 }
-local voucherParams={v_discount={discount=2},v_interest={cap=10},v_hand_plus={hands=1},v_welcome={},
-    v_pack_discount={discount=2},v_apothecary={heal=8},v_altar={gold=2},v_vitality={hp=20},v_second_chance={discards=1}}
+local voucherParams={v_discount={discount=2},v_interest={cap=5,bonus=1},v_hand_plus={hands=1},v_welcome={rolls=1},
+    v_pack_discount={discount=3},v_apothecary={heal=8},v_altar={gold=2},v_vitality={hp=25},v_second_chance={discards=1}}
 local voucherText={
-    v_discount="Giảm giá đổi hàng {discount} Vàng tại mọi shop, giá tối thiểu 1.",
-    v_interest="Trần lãi ngân khố mỗi trận thành {cap} Vàng.",
-    v_hand_plus="Thêm {hands} lượt đánh mỗi trận và nhận ngay khi mua.",
-    v_welcome="Đổi hàng đầu tiên mỗi shop miễn phí, không tăng giá đổi hàng.",
+    v_discount="Giảm {discount} Vàng mỗi lần đổi hàng trả vàng, tối thiểu 1 Vàng. Không giảm giá đổi bằng HP/linh hồn.",
+    v_interest="Trần lãi +{cap} Vàng; thêm {bonus} Vàng lãi mỗi 20 Vàng tích trữ. Phe miễn trần lãi vẫn nhận lãi thêm.",
+    v_hand_plus="Thêm {hands} lượt đánh mỗi trận. Mỗi lần mua nhận ngay phần lượt tăng thêm.",
+    v_welcome="{rolls} lần đổi hàng đầu mỗi shop vàng miễn phí, không tăng giá đổi hàng. Không áp dụng shop máu/linh hồn.",
     v_pack_discount="Mọi rương shop giảm {discount} Vàng, tối thiểu 1; áp dụng ngay và suốt run.",
-    v_apothecary="Mỗi lần dùng Lá Tiêu Hủy thành công: hồi {heal} HP, không vượt HP tối đa.",
-    v_altar="Hiến tế bán SPN hoặc tiêu hao: thêm {gold} Vàng; không áp dụng cho tiêu hủy quân bài.",
-    v_vitality="HP tối đa +{hp}; hồi ngay {hp} HP khi mua.",
-    v_second_chance="Thêm {discards} lượt bỏ bài mỗi trận và nhận ngay khi mua.",
+    v_apothecary="Hồi {heal} HP đầu mỗi trận. Khi mua hồi ngay phần hồi phục mới thêm, không vượt HP tối đa.",
+    v_altar="Mỗi trận thắng nhận thêm {gold} Vàng. Không thưởng khi bỏ qua trận; không tăng giá bán đồ.",
+    v_vitality="Tổng HP tối đa +{hp}. Khi mua tăng và hồi đúng phần HP mới thêm.",
+    v_second_chance="Thêm {discards} lượt bỏ bài mỗi trận. Mỗi lần mua nhận ngay phần lượt tăng thêm.",
 }
-function Shop.voucherParams(id,game) return Blood.params(voucherParams[id] or {},Blood.powerOf(game and game.vouchers and game.vouchers[id])) end
+function Shop.voucherLevel(id,game)
+    local owned=game and game.vouchers and game.vouchers[id]
+    return owned and (type(owned)=="table" and owned.level or 1) or 0
+end
+function Shop.voucherPower(id,game)
+    local owned=game and game.vouchers and game.vouchers[id]
+    return owned and (type(owned)=="table" and owned.power or Blood.powerOf(owned)) or 0
+end
+function Shop.voucherParams(id,game)
+    local power=game and Shop.voucherPower(id,game) or 1
+    local params={}
+    for k,v in pairs(voucherParams[id] or {}) do params[k]=v*power end
+    return params
+end
+function Shop.voucherName(id,level)
+    for _,v in ipairs(Shop.VOUCHERS) do if v.id==id then return v.name.." · Cấp "..level end end
+    return id
+end
 function Shop.voucherDescription(id,item)
     local template=voucherText[id];if not template then return nil end
-    local p=Blood.params(voucherParams[id] or {},Blood.powerOf(item))
-    return template:gsub("{([%w_]+)}",function(k) return tostring(p[k] or 0) end)
+    local power=item and item.voucherPower or Blood.powerOf(item)
+    local text=template:gsub("{([%w_]+)}",function(k) return tostring((voucherParams[id][k] or 0)*power) end)
+    return text.."\nSuốt run · Mua lại cộng dồn, tăng cấp và tăng giá."
+end
+function Shop.voucherOffer(v,game,power)
+    power=power or 1
+    local level=Shop.voucherLevel(v.id,game)+1
+    local offer={id=v.id,category="voucher",voucherId=v.id,voucherLevel=level,voucherPreviousLevel=level-1,
+        voucherPower=Shop.voucherPower(v.id,game)+power,name=Shop.voucherName(v.id,level),
+        cost=math.ceil(v.cost*(1+.6*(level-1)+.15*(level-1)^2)),color=v.color,icon=v.icon,
+        subtitle="PHIẾU ĐẶC QUYỀN · CẤP "..level}
+    offer.desc=Shop.voucherDescription(v.id,offer)
+    return offer
 end
 for _,v in ipairs(Shop.VOUCHERS) do v.params=Shop.voucherParams(v.id);v.desc=Shop.voucherDescription(v.id) end
+
+function Shop.interest(game)
+    local p=Shop.voucherParams("v_interest",game)
+    local cap=math.max(game.maxInterest or 3,Shop.voucherLevel("v_interest",game)>0 and 5+p.cap or 0,
+        game.vouchers and game.vouchers.seed_money and 5 or 0)
+    local gold=game.gold or 0
+    local gilded=game.selectedFaction=="diamonds" or game.selectedFaction=="gilded_conclave" or game.isGildedConclave==true
+    local interest=math.floor(gold/(gilded and 4 or 5))+math.floor(gold/20)*p.bonus
+    return gilded and interest or math.min(cap,interest),cap,gilded
+end
 
 Shop.PACK_CATALOG = {
     { packType = "buffoon", name = "GÓI HỘ LINH", subtitle = "HỘ LINH", desc = "Mở 3 Hộ Linh, chọn 1 để sở hữu.", cost = 4, rarity = "Hộ Linh", color = { 0.88, 0.35, 0.35, 1 }, icon = "🃏" },
@@ -282,16 +320,17 @@ function Shop.resetReroll(shop)
     shop.rerollCost = shop.baseRerollCost or 2
     shop.rerollCount = 0
     shop.welcomeRerollUsed = false
+    shop.welcomeRerollsUsed = 0
 end
 
 function Shop.getRerollCost(shop, gameState)
     if Blood.isMode(shop.mode) then return (shop.mode=="blood_large" and 30 or 20)+10*(shop.rerollCount or 0) end
     if shop.soulMode then return 5 + 2 * (gameState.soulRerollCount or 0) end
     if (gameState.freeRerolls or 0) > 0
-        or (gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed) then
+        or (shop.welcomeRerollsUsed or (shop.welcomeRerollUsed and 1 or 0)) < Shop.voucherParams("v_welcome",gameState).rolls then
         return 0
     end
-    return shop.rerollCost or 2
+    return math.max(1,(shop.rerollCost or 2)-Shop.voucherParams("v_discount",gameState).discount)
 end
 
 -- Reprice existing stock as well as future rerolls, without stacking discounts.
@@ -418,10 +457,6 @@ local function finishStock(shop, gameState)
     end
     priceStock(shop)
     Shop.applyVoucherStock(shop, gameState)
-    if gameState.vouchers and gameState.vouchers.v_discount then
-        shop.baseRerollCost = 1
-        if not shop.rerollCount or shop.rerollCount == 0 then shop.rerollCost = 1 end
-    end
 end
 
 local function marketStock(shop, gameState)
@@ -434,7 +469,7 @@ local function marketStock(shop, gameState)
         end
         retail[#retail+1]=Shop.destructionItem("stall")
         local gear={};for id in pairs(Equipment.ITEMS) do gear[#gear+1]=id end;table.sort(gear)
-        local vouchers={};for _,v in ipairs(Shop.VOUCHERS) do if not (gameState.vouchers or {})[v.id] then vouchers[#vouchers+1]=v end end
+        local vouchers={};for _,v in ipairs(Shop.VOUCHERS) do vouchers[#vouchers+1]=v end
         local packs={};for _,p in ipairs(Shop.PACK_CATALOG) do if p.packType~="hand_styles_advanced" or basicHandsUnlocked(gameState) then packs[#packs+1]=p end end
         local count=mode=="blood_large" and Blood.largeCount or Blood.smallCount
         for i=1,count do
@@ -448,7 +483,7 @@ local function marketStock(shop, gameState)
             elseif kind==4 then offer=Shop.healingItem("stall",Shop.POTIONS[Rng.random(#Shop.POTIONS)].id)
             elseif kind==5 and #vouchers>0 then
                 local v=table.remove(vouchers,Rng.random(#vouchers))
-                offer={id=v.id,category="voucher",voucherId=v.id,name=v.name,desc=v.desc,cost=v.cost,color=v.color}
+                offer=Shop.voucherOffer(v,gameState,5)
             elseif kind==6 then
                 offer=cloneDeity(packs[Rng.random(#packs)]);offer.category="pack"
             elseif kind==7 then offer=retail[Rng.random(#retail)]
@@ -633,24 +668,10 @@ function Shop.refresh(shop, gameState)
     -- 2. LOWER SECTION CARDS (Phiếu Ante / Voucher & Gói Bài Booster Packs)
     ----------------------------------------------------------------------------
     -- A. Left: permanent voucher. Hand unlocks now come from the hand-style chest.
-    local availableVouchers = {}
-    for _, voucher in ipairs(Shop.VOUCHERS) do
-        if not (gameState.vouchers and gameState.vouchers[voucher.id]) then
-            availableVouchers[#availableVouchers + 1] = voucher
-        end
-    end
-    local v = #availableVouchers > 0 and availableVouchers[Rng.random(#availableVouchers)]
-    if v then table.insert(shop.items, {
-        section = "lower_voucher",
-        category = "voucher",
-        voucherId = v.id,
-        name = v.name,
-        subtitle = "PHIẾU ĐẶC QUYỀN",
-        desc = v.desc,
-        cost = v.cost,
-        color = v.color,
-        icon = v.icon or "🎟️",
-    }) end
+    local v=Shop.VOUCHERS[Rng.random(#Shop.VOUCHERS)]
+    local offer=Shop.voucherOffer(v,gameState)
+    offer.section="lower_voucher"
+    table.insert(shop.items,offer)
 
     -- B. Replace the hand-style chest once every hand is unlocked.
     local handChest
@@ -760,8 +781,8 @@ function Shop.buyItem(shop, itemIndex, gameState)
         Loadout.storeConsumable(gameState,item.consumable)
         return true, "Đã cất "..item.name.." vào balo. Kéo lên ô trang bị để mang vào trận."
     end
-    if item.category == "voucher" and gameState.vouchers and gameState.vouchers[item.voucherId] then
-        return false, "Bạn đã sở hữu đặc quyền này!"
+    if item.category == "voucher" and not voucherParams[item.voucherId] then
+        return false, "Đặc quyền không tồn tại!"
     end
 
     if item.currency=="blood" and not Blood.isMode(shop.mode) then return false,"Vật phẩm này chỉ đổi tại Shop Máu." end
@@ -801,17 +822,18 @@ function Shop.buyItem(shop, itemIndex, gameState)
         return true, "Đã mở khóa bí tịch: " .. item.name .. "!"
 
     elseif item.category == "voucher" then
-        local p=Blood.params(voucherParams[item.voucherId] or {},Blood.powerOf(item))
+        local power=Blood.powerOf(item)
+        local p={};for k,v in pairs(voucherParams[item.voucherId]) do p[k]=v*power end
+        local level=Shop.voucherLevel(item.voucherId,gameState)+1
+        local totalPower=Shop.voucherPower(item.voucherId,gameState)+power
+        local previousInterestCap=item.voucherId=="v_interest" and select(2,Shop.interest(gameState))
         Shop.payItem(item,gameState)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         gameState.vouchers = gameState.vouchers or {}
-        gameState.vouchers[item.voucherId] = item.bloodPower and {bloodPower=item.bloodPower} or true
-        if item.voucherId == "v_discount" then
-            shop.baseRerollCost = math.max(1, (shop.baseRerollCost or 2) - p.discount)
-            shop.rerollCost = math.max(1, shop.rerollCost - p.discount)
-        elseif item.voucherId == "v_interest" then
-            gameState.maxInterest = p.cap
+        gameState.vouchers[item.voucherId] = {level=level,power=totalPower}
+        if item.voucherId == "v_interest" then
+            gameState.maxInterest = previousInterestCap+p.cap
             gameState.hasSeedMoney = true
         elseif item.voucherId == "v_hand_plus" then
             gameState.maxHands = (gameState.maxHands or 4) + p.hands
@@ -821,12 +843,14 @@ function Shop.buyItem(shop, itemIndex, gameState)
         elseif item.voucherId == "v_vitality" then
             gameState.maxPlayerHp = (gameState.maxPlayerHp or 100) + p.hp
             gameState.playerHp = math.min(gameState.maxPlayerHp, (gameState.playerHp or 100) + p.hp)
+        elseif item.voucherId == "v_apothecary" then
+            gameState.playerHp=math.min(gameState.maxPlayerHp or 100,(gameState.playerHp or 100)+p.heal)
         elseif item.voucherId == "v_second_chance" then
             gameState.maxDiscards = (gameState.maxDiscards or 3) + p.discards
             gameState.discardsRemaining = (gameState.discardsRemaining or 0) + p.discards
         end
         Shop.applyVoucherStock(shop, gameState)
-        return true, "Đã kích hoạt đặc quyền: " .. item.name .. "!"
+        return true, "Đã nhận " .. Shop.voucherName(item.voucherId,level) .. " · Hiệu lực suốt run!"
 
     elseif item.category == "equipment" then
         Shop.payItem(item,gameState)
@@ -1204,7 +1228,8 @@ function Shop.reroll(shop, gameState, refresh)
         Sound.play("shop_reroll")
         return true
     end
-    if gameState.vouchers and gameState.vouchers.v_welcome and not shop.welcomeRerollUsed then
+    if (shop.welcomeRerollsUsed or (shop.welcomeRerollUsed and 1 or 0)) < Shop.voucherParams("v_welcome",gameState).rolls then
+        shop.welcomeRerollsUsed=(shop.welcomeRerollsUsed or (shop.welcomeRerollUsed and 1 or 0))+1
         shop.welcomeRerollUsed = true
         refreshShop(shop, gameState)
         Sound.play("shop_reroll")
@@ -1217,20 +1242,19 @@ function Shop.reroll(shop, gameState, refresh)
     end
     gameState.gold = gameState.gold - cost
     shop.rerollCount = (shop.rerollCount or 0) + 1
-    shop.rerollCost = cost + 1 + shop.rerollCount
+    shop.rerollCost = (shop.rerollCost or 2) + 1 + shop.rerollCount
     refreshShop(shop, gameState)
     Sound.play("shop_reroll")
     return true
 end
 
 function Shop.getSacrificePrice(item, kind, gameState)
-    local bonus = gameState and gameState.vouchers and gameState.vouchers.v_altar and Shop.voucherParams("v_altar",gameState).gold or 0
     if kind == "deity" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
     elseif kind == "consumable" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2)) + bonus
+        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
     elseif kind == "card" then
-        return math.max(1, math.floor(((item and item.sellValue) or 1))) + bonus
+        return math.max(1, math.floor(((item and item.sellValue) or 1)))
     end
     return 0
 end
@@ -1335,7 +1359,6 @@ end
 function Shop.getDestructionRewards(gameState, card)
     local soulMarket=gameState.shopMode=="soul"
     local heal=soulMarket and 10 or 0
-    if gameState.vouchers and gameState.vouchers.v_apothecary then heal=heal+Shop.voucherParams("v_apothecary",gameState).heal end
     return {souls=Souls.value(card)*(soulMarket and 2 or 1), multiplier=soulMarket and 2 or 1,
         heal=heal, gold=soulMarket and 5 or 0}
 end

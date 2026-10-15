@@ -194,7 +194,7 @@ local function resolveOneAttack(game,playerSpeed)
     end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
-    local inventoryAction=require("src.enemy_loadout").action(monster)
+    local inventoryAction=require("src.enemy_loadout").action(monster,game)
     if inventoryAction then return inventoryAction end
     local support=EnemyAbilities.support(game,monster)
     if support then return support end
@@ -205,7 +205,8 @@ local function resolveOneAttack(game,playerSpeed)
         require("src.potions").emit(game,"evasion","NÉ ĐÒN ĐỊCH · 0 ST",nil,monster)
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=0,action="attack"}
     end
-    local roll=accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
+    local guaranteed=((monster.enemyInventory or {}).guaranteedAttacks or 0)>0
+    local roll=guaranteed and {hitChance=1,missed=false} or accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
     if roll.missed then
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
     end
@@ -332,6 +333,12 @@ function Combat.start(game, monster, round)
     require("src.spn_enchantments").reset(game)
     game.spnAttack=nil
     game.potionCombat={};game.potionFeedback={};game.potionVictoryPending=nil
+    local heal=require("src.shop").voucherParams("v_apothecary",game).heal
+    local before=game.playerHp or 100
+    if heal>0 and before>0 then
+        game.playerHp=math.min(game.maxPlayerHp or 100,before+heal)
+        if game.playerHp>before then require("src.potions").emit(game,"heal","DƯỢC SƯ · +"..(game.playerHp-before).." HP",game.playerHp-before) end
+    end
     game.spnOpeningAttackUsed=nil
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end

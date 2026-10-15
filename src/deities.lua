@@ -274,6 +274,8 @@ require("src.spn_growth").register(Deities)
 require("src.spn_bounty").register(Deities)
 require("src.spn_alchemy").register(Deities)
 require("src.spn_elements").register(Deities)
+require("src.spn_predators").register(Deities)
+require("src.spn_reserves").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -300,12 +302,15 @@ function Deities.getDescription(deity)
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(require("src.blood_shop").powerOf(deity) + value)):gsub("{double}",formatEffectNumber(value*2)):gsub("{scale}",formatEffectNumber(effectMultiplier(deity)*require("src.blood_shop").powerOf(deity))))
     if deity.id=="spirit_victory_bounty" then text=require("src.spn_bounty").description(deity) end
     if deity.id=="spirit_cinder_confluence" then text=text:gsub("{burn}",formatEffectNumber(Deities.scaleEffect(deity,{addBurnPct=5}).addBurnPct)) end
+    if deity.id=="spirit_gilded_weight" then text=def.descriptionTemplate:gsub("{value}",(string.format("%.3f",value):gsub("0+$", ""):gsub("%.$", ""))) end
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)*require("src.blood_shop").powerOf(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then
         text="Một lần mỗi trận: chặn đòn chí tử, còn 5 HP."
     end
     local growth=require("src.spn_convergence").describe(deity)
+    if deity.id=="spirit_right_offering" then growth="TÍCH HIẾN TẾ · ×"..formatEffectNumber(1+((deity.spnGrowth or {}).offeringMult or 0)) end
+    if deity.id=="spirit_ashen_legacy" then growth="TÍCH THỪA DIỆT · ×"..formatEffectNumber(1+((deity.spnGrowth or {}).deathChips or 0)) end
     if growth then text=text.."\n"..growth end
     local spell=require("src.spn_enchantments").get(deity.enchantment)
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..require("src.blood_shop").describe(spell.desc,deity.enchantmentPower or 1) end
@@ -378,6 +383,16 @@ function Deities.getMaxSlots(gameState)
     end
     -- Boss rewards may exceed capacity; every occupied slot stays visible and active.
     return math.max(maxSlots,occupiedMax)
+end
+
+function Deities.destroyDeity(game,slot,inCombat,physical)
+    if not game.deities or not game.deities[slot] then return false end
+    physical=physical or game.deities[slot]
+    if inCombat then require("src.spn_predators").destroyed(game,physical) end
+    game.deities[slot]=nil
+    if game.spnCombat then game.spnCombat[physical]=nil end
+    require("src.spn_reserves").destroyed(game)
+    return true
 end
 
 function Deities.addDeity(gameState, deity, preferredSlot)

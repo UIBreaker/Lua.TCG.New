@@ -17,20 +17,8 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
     local handsLeft = (not wasSkip and (gameState.handsRemaining or 0)) or 0
     local unusedHandsBonus = handsLeft * 1
 
-    -- 2. Interest (+1$ per 5$ stored, max 3$ default or 5$ with Seed Money voucher)
-    -- Trần Lãi Siêu Việt: Gilded Conclave gets +1$ per 4$ stored with NO CAP!
-    local isGilded = (gameState.selectedFaction == "diamonds" or gameState.selectedFaction == "gilded_conclave" or gameState.isGildedConclave == true)
-    local maxInt = gameState.maxInterest or 3
-    if gameState.vouchers and (gameState.vouchers["v_interest"] or gameState.vouchers["seed_money"]) then
-        maxInt = math.max(maxInt, 5)
-    end
+    local interestBonus,maxInt,isGilded=require("src.shop").interest(gameState)
     local currentGold = gameState.gold or 0
-    local interestBonus
-    if isGilded then
-        interestBonus = math.floor(currentGold / 4)
-    else
-        interestBonus = math.min(maxInt, math.floor(currentGold / 5))
-    end
 
     -- 3. Deities onRoundWin Bonuses (Use cached from main.lua if available to prevent double execution)
     local deityBonus = 0
@@ -65,7 +53,8 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
     end
 
     -- Subtotal of items 1-4
-    local subtotal = basePayout + unusedHandsBonus + interestBonus + deityBonus
+    local voucherBonus=not wasSkip and require("src.shop").voucherParams("v_altar",gameState).gold or 0
+    local subtotal = basePayout + unusedHandsBonus + interestBonus + deityBonus + voucherBonus
 
     -- 4. Valoria Faction Passive: +25% Gold (math.ceil(subtotal * 0.25))
     local factionBonus = 0
@@ -88,8 +77,10 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
         currentGold = currentGold,
         maxInterest = maxInt,
         interestBonus = interestBonus,
+        interestVoucherBonus = require("src.shop").voucherParams("v_interest",gameState).bonus,
         isGilded = isGilded,
         deityBonus = deityBonus,
+        voucherBonus = voucherBonus,
         deityDetails = deityDetails,
         subtotal = subtotal,
         isValoria = isValoria,
@@ -383,6 +374,7 @@ function RewardSystem.newAnimation(breakdown, result)
     }
     if (breakdown.bossVictoryBonus or 0) > 0 then lines[#lines + 1] = {label = "CHINH PHỤC BOSS", valNum = breakdown.bossVictoryBonus, boss = true} end
     if breakdown.deityBonus > 0 then lines[#lines + 1] = {label = "THƯỞNG HỘ LINH", valNum = breakdown.deityBonus} end
+    if (breakdown.voucherBonus or 0)>0 then lines[#lines+1]={label="GIAO KÈO TRO VÀNG",valNum=breakdown.voucherBonus} end
     if breakdown.factionBonus > 0 then lines[#lines + 1] = {label = "VIỆN TRỢ VALORIA", valNum = breakdown.factionBonus} end
     local slots = {}
     for _, reward in ipairs(result.loot) do
@@ -738,7 +730,9 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         g.setFont(UI.fonts.small); g.setColor(revealed and gold or muted)
         g.printf(revealed and "+" .. line.valNum or "—", leftX + leftW - 72, ry + 2, 50, "right")
         if revealed and inside(mx, my, leftX + 12, ry, leftW - 24, 20) then
-            UI.descriptionCandidate = {hoverKey = line, name = line.label, desc = line.interest and (anim.breakdown.isGilded and "+1 xu mỗi 4 xu, không giới hạn." or "+1 xu mỗi 5 xu. Trần lãi: " .. anim.breakdown.maxInterest .. " xu" .. (anim.breakdown.interestBonus >= anim.breakdown.maxInterest and " · Lãi tối đa." or "")) or "Nguồn thưởng được cộng vào túi vàng khi kết thúc trận.", color = gold}
+            local interestText=anim.breakdown.isGilded and "+1 Vàng mỗi 4 Vàng, không giới hạn." or "+1 Vàng mỗi 5 Vàng. Trần lãi: "..anim.breakdown.maxInterest.." Vàng."
+            if (anim.breakdown.interestVoucherBonus or 0)>0 then interestText=interestText.." Sổ Tiết Kiệm: thêm "..anim.breakdown.interestVoucherBonus.." lãi mỗi 20 Vàng tích trữ (cùng trần lãi)." end
+            UI.descriptionCandidate = {hoverKey = line, name = line.label, desc = line.interest and interestText or "Nguồn thưởng được cộng vào túi vàng khi kết thúc trận.", color = gold}
         end
     end
     local tx, ty = rightX + 100, y + 180

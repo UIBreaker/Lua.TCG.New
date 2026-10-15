@@ -46,6 +46,20 @@ Dấu và SPN của Boss bị tắt khi nội tại bị phong ấn. Trang bị 
 - Đối thủ từ ải 8 có thể mang một thuốc hồi 12% HP tối đa (scale theo ải). HP còn ≤35% báo trước dùng thuốc, ưu tiên trước đổi đồ. Thuốc dùng một lần, không hồi sinh.
 - Hiệu ứng chỉ thay đổi HP/giáp/đồ khi đến nhịp tiếp xúc trong luồng hành động hiện có. Không tự dùng đồ ngay lúc bị người chơi gây sát thương.
 
+## Chống hồi và buff vô hạn
+
+| Loại địch | Lượt hồi / giáp / tốc / ST mỗi trận | Tổng HP có thể hồi thêm | Tổng giáp có thể tạo thêm |
+| --- | --- | --- | --- |
+| Thường | 1 / 1 / 1 / 1 | 35% HP tối đa đầu trận | 50% HP tối đa đầu trận |
+| Tinh anh | 2 / 2 / 1 / 1 | 50% HP tối đa đầu trận | 75% HP tối đa đầu trận |
+| Boss | 2 / 2 / 2 / 2 | 60% HP tối đa đầu trận | 100% HP tối đa đầu trận |
+
+HP tối đa đầu trận đã gồm trang bị. Lượt hỗ trợ thuộc người thi triển; dự trữ hồi/giáp thuộc người nhận. Kỹ năng, hút máu, thuốc, hồi sau hỗ trợ, dấu/SPN và nội tại tái tạo dùng chung dự trữ, nên nhiều Quân y không chữa vô tận cho một Hộ vệ. Dự trữ chỉ giảm theo lượng thực nhận, không hồi lại khi đổi đồ hoặc sang tay mới. Giáp đang có giữ trần 50% HP tối đa; giáp đầu trận không tính vào lượng giáp tạo thêm. Giường và hồi sinh xương vẫn là cứu mạng một lần riêng biệt.
+
+Sau hỗ trợ/uống thuốc/đổi đồ, địch bắt buộc tấn công trước khi hỗ trợ tiếp. Hai lần dùng kỹ năng hồi cần ít nhất hai hành động thực sự xen giữa. Hết lượt hoặc hết dự trữ thì AI chọn hỗ trợ còn dùng được hoặc tấn công; không tự chuyển một chiêu hỗ trợ đã báo trước thành đòn gây sát thương nếu mục tiêu hết dự trữ trước nhịp tiếp xúc. Khóa/ngủ không tiêu lượt hỗ trợ và không kích hoạt trang bị.
+
+Kho đồ hiển thị số lượt từng kỹ năng và lượng dự trữ hồi/giáp còn lại. Hệ số tại `src/enemy_abilities.lua` (`A.limits`).
+
 ## One-shot, save và giới hạn bản thử
 
 Không thêm bất tử, chặn sát thương chí tử hoặc giới hạn AURA. Nếu đòn trúng vượt HP và giáp, địch chết ngay (quái xương vẫn giữ hồi sinh sẵn có). Kiểm tra trực tiếp 500.000 AURA hạ các quái thường ải 20 có trang bị; một đòn vượt tổng độ bền vẫn hạ tinh anh/Boss.
@@ -57,7 +71,7 @@ Chỉnh hệ số, trần và danh mục tại `config/enemy_loadout_data.lua`; 
 ## Kiểm chứng
 
 - `lovec.exe . --test-enemy-loadouts`: 240 trận; ngân sách và trần, catalog, ấn bản, dấu, SPN, hành động đồ, phong ấn, one-shot, không RNG phụ, tách kho đồ, khởi động lại và save.
-- `lovec.exe . --test-combat-tactics`: chính xác, buff, đội hình, nhịp tiếp xúc, thế bài nâng cao và hiệu ứng.
+- `lovec.exe . --test-combat-tactics`: chính xác, buff, đội hình, nhịp tiếp xúc, thế bài nâng cao và hiệu ứng; tái hiện đánh 7 ST / hồi 7 HP, số lần hỗ trợ từng cấp, dự trữ chung, chờ hồi, bắt buộc tấn công và không làm mới trong trận.
 - `lovec.exe . --capture-enemy-loadouts`: mở/đóng bằng các thao tác thật ở 1920 và 960, đổi đồ/uống thuốc ở contact, đòn Poker 500K hạ mục tiêu thật. Ảnh `docs/enemy_loadout_*.png` cách ly save người chơi.
 - Hồi quy Continental 52: khả năng bài, Boss, giường, editions và SPN qua; `tests/soul_shop_smoke.lua:133` còn lỗi fixture Ankh/Hex cũ. Đã xác nhận cùng lỗi khi dùng mã combat trước thay đổi này.
 

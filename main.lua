@@ -14,7 +14,7 @@ for _, a in ipairs(arg or {}) do
     if a=="--test-seals" then require("tests.seal_capture");return end
     if a=="--test-combat-tactics" then
         local failed=false
-        for _,name in ipairs({"tests.combat_tactics_smoke","tests.enemy_group_smoke",
+        for _,name in ipairs({"tests.combat_tactics_smoke","tests.enemy_support_limits_smoke","tests.enemy_group_smoke",
             "tests.enemy_attack_presentation_smoke","tests.advanced_hands_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
@@ -48,6 +48,8 @@ for _, a in ipairs(arg or {}) do
         if not bountyOk then failed=true;print("tests.spn_bounty_smoke FAIL: "..tostring(bountyErr)) end
         local alchemyOk,alchemyErr=pcall(require,"tests.spn_alchemy_smoke")
         if not alchemyOk then failed=true;print("tests.spn_alchemy_smoke FAIL: "..tostring(alchemyErr)) end
+        local elementsOk,elementsErr=pcall(require,"tests.spn_elements_smoke")
+        if not elementsOk then failed=true;print("tests.spn_elements_smoke FAIL: "..tostring(elementsErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -178,6 +180,7 @@ for _, a in ipairs(arg or {}) do
     end
     if a == "--test-potions" then isCaptureMode = true end
     if a == "--test-spn-alchemy-ui" then isCaptureMode = true end
+    if a == "--test-spn-elements-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -2310,6 +2313,11 @@ function love.load()
             if not ok then print("SPN ALCHEMY ART FAIL: "..tostring(err)) end
             os.exit(ok and 0 or 1)
         end
+        if argument=="--test-spn-elements-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_phantom_heart","spirit_first_frost","spirit_cinder_confluence"},"docs/spn_elements_runtime.png") end)
+            if not ok then print("SPN ELEMENTS ART FAIL: "..tostring(err)) end
+            os.exit(ok and 0 or 1)
+        end
         if argument == "--test-spn-art" or argument == "--test-spn-anomalies-art" or argument=="--test-spn-convergence-art" or argument=="--test-spn-velocity-art" or argument=="--test-spn-provisions-art" or argument=="--test-spn-discard-art" or argument=="--test-spn-souls-art" or argument=="--test-spn-legacy-art" or argument=="--test-spn-twin-fang-art" or argument=="--test-spn-mimic-art" or argument=="--test-spn-basics-art" or argument=="--test-spn-turns-art" or argument=="--test-spn-pacts-art" then
             local ok, err = pcall(function()
                 local ids,output
@@ -2636,7 +2644,7 @@ function love.update(dt)
         require("src.spn_anomalies").showFeedback(game,anim)
     end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
-    if state=="playing" and game.potionVictoryPending and not DeathVFX.busy() and Combat.getOutcome(game)=="victory" then
+    if state=="playing" and (game.potionVictoryPending or (game.spnCombat or {}).victoryPending) and not DeathVFX.busy() and Combat.getOutcome(game)=="victory" then
         UI.applyCombatWinRewards(nil)
         UI.finishCombatVictory()
     end
@@ -3230,7 +3238,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.133.0", 48, 185)
+    g.print("beta 0.134.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3823,10 +3831,12 @@ getHandCardPosition = function(index, totalCards)
 end
 
 local function drawBattleHud(m, mx, my)
+    local phantomHp,phantomMaxHp=require("src.spn_elements").remaining(game)
     local hudButtons = UI.components.TopHUD.draw({
         ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.currentBlindIndex) or game.round or 1,
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
+        phantomHp=phantomHp,phantomMaxHp=phantomMaxHp,
         armor = game.playerArmor or game.playerShield or 0,
         armorCap = UI.Abilities.config.armorCap, goldBounce = juice.goldBounce,
         hpBounce = juice.hpBounce, armorBounce = juice.armorBounce,
@@ -3861,6 +3871,7 @@ local function drawBattleInfoPanel(m, eval)
         or (anim.playerAttackResult and anim.playerAttackResult.missed and "Đánh hụt • 0 sát thương"
             or "Đã gây " .. UI.formatNumber(anim.damageDealt or 0) .. " sát thương"))
         or UI.localizeText(anim.stepLog or "")) or ""
+    if scoring and finished and anim.playerAttackResult and anim.playerAttackResult.frozen then detail="Đóng băng mục tiêu · 0 sát thương" end
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
         scoring = scoring, enemyName = (m and m.name) or "Không rõ",

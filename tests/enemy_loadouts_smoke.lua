@@ -75,7 +75,8 @@ g,m,bag=fixture();bag.seal={id="seal_purifying",kind="seal",power=1};bag.spn={id
 m.intent={type="armor",targetIndex=1}
 assert(C.resolveMonsterAttack(g,nil,nil,m).value==250 and m.creatureArmor==350)
 for i=1,5 do m.intent={type="armor",targetIndex=1};C.resolveMonsterAttack(g,nil,nil,m) end
-assert(m.creatureArmor==500)
+assert(m.creatureArmor==350,"exhausted/blocked support cannot trigger seal or SPN armor")
+assert(A.addArmor(m,1000)==150 and m.creatureArmor==500,"all generated armor shares the finite reserve")
 g,m,bag=fixture();bag.backpack.consumables[1]={id="healing_potion",kind="consumable",pct=.12};m.hp=300
 assert(A.plan(g,m).type=="consume" and m.hp==300)
 m.spnSleep=1;assert(C.resolveMonsterAttack(g,nil,nil,m).blocked and #bag.backpack.consumables==1)

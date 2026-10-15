@@ -32,11 +32,13 @@ end
 function Shop.canAfford(item,game)
     local cost=tonumber(item.cost)
     if not cost or cost<0 or cost~=cost or cost==math.huge then return false end
-    if item.currency=="blood" then return (game.playerHp or 0)-cost>=1 end
+    if item.currency=="blood" then return (game.playerHp or 0)>=1 and (game.playerHp or 0)+require("src.spn_elements").remaining(game)-cost>=1 end
     return (item.currency=="souls" and (game.souls or 0) or (game.gold or 0))>=cost
 end
 function Shop.payItem(item,game)
-    if item.currency=="blood" then game.playerHp=game.playerHp-item.cost
+    if item.currency=="blood" then
+        if not Shop.canAfford(item,game) then return false end
+        game.playerHp=game.playerHp-require("src.spn_elements").absorb(game,item.cost)
     else game.gold=(game.gold or 0)-item.cost end
 end
 local function basicHandsUnlocked(gameState)
@@ -1181,7 +1183,7 @@ function Shop.reroll(shop, gameState, refresh)
     if Blood.isMode(shop.mode) then
         local cost=Shop.getRerollCost(shop,gameState)
         if not Shop.canAfford({cost=cost,currency="blood"},gameState) then return false,"Đổi hàng cần "..cost.." HP và phải giữ lại 1 HP." end
-        gameState.playerHp=gameState.playerHp-cost
+        Shop.payItem({cost=cost,currency="blood"},gameState)
         shop.rerollCount=(shop.rerollCount or 0)+1
         refreshShop(shop,gameState);Sound.play("shop_reroll");return true
     end

@@ -20,6 +20,7 @@ local TRANSIENT_GAME_KEYS = {
     spnFeedback = true,
     spnDiscardCap = true,
     spnBasicArmorGranted = true,
+    spnOpeningAttackUsed = true,
     abilityHand = true,
     advancedHand = true,
     advancedCombat = true,

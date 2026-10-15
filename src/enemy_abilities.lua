@@ -1,8 +1,46 @@
 local A = {}
+-- Recovery belongs to the recipient, so several healers/items cannot refill it.
+A.limits={
+    normal={heal=1,armor=1,speed=1,damage=1,healing=.35,shielding=.50},
+    elite={heal=2,armor=2,speed=1,damage=1,healing=.50,shielding=.75},
+    boss={heal=2,armor=2,speed=2,damage=2,healing=.60,shielding=1},
+}
+function A.resources(m)
+    if not m.enemyResources then
+        local limits=A.limits[m.isBoss and "boss" or m.isElite and "elite" or "normal"]
+        m.enemyResources={charges={heal=limits.heal,armor=limits.armor,speed=limits.speed,damage=limits.damage},
+            healingLeft=math.floor(m.maxHp*limits.healing),armorLeft=math.floor(m.maxHp*limits.shielding),
+            actions=0,healReadyAt=0,mustAttack=false}
+    end
+    return m.enemyResources
+end
+function A.canSupport(m,kind)
+    local r=A.resources(m)
+    return not r.mustAttack and (r.charges[kind] or 0)>0 and (kind~="heal" or r.actions>=r.healReadyAt)
+end
+function A.spendSupport(m,kind)
+    local r=A.resources(m);r.charges[kind]=r.charges[kind]-1
+    if kind=="heal" then r.healReadyAt=r.actions+3 end
+end
+function A.heal(m,amount)
+    if m.hp<=0 then return 0 end
+    local r=A.resources(m)
+    local value=math.max(0,math.min(math.floor(amount),m.maxHp-m.hp,r.healingLeft))
+    m.hp=m.hp+value;r.healingLeft=r.healingLeft-value
+    return value
+end
+function A.addArmor(m,amount,cap)
+    if m.hp<=0 then return 0 end
+    local r=A.resources(m);local before=m.creatureArmor or 0
+    local value=math.max(0,math.min(math.floor(amount),math.floor(cap or m.maxHp*.5)-before,r.armorLeft))
+    m.creatureArmor=before+value;r.armorLeft=r.armorLeft-value
+    m.creatureArmorMax=math.max(m.creatureArmorMax or 0,m.creatureArmor)
+    return value
+end
 A.types = {
     forest_goblin={name="Đánh Cắp",suit="clubs",desc="Mỗi 2 lần ra đòn, lấy 1 Vàng. Không còn Vàng thì tăng sát thương."},
-    lava_golem={name="Da Nham Thạch",suit="diamonds",desc="Có giáp bằng 12% HP. Sau mỗi đòn, phục hồi một phần giáp."},
-    swamp_wraith={name="Hút Sinh Khí",suit="spades",desc="Hồi HP theo sát thương thực sự gây lên người chơi."},
+    lava_golem={name="Da Nham Thạch",suit="diamonds",desc="Có giáp bằng 12% HP. Sau mỗi đòn, phục hồi giáp từ dự trữ hữu hạn trong trận."},
+    swamp_wraith={name="Hút Sinh Khí",suit="spades",desc="Hồi HP theo sát thương thực gây ra, dùng dự trữ hồi máu hữu hạn trong trận."},
     frost_wolf={name="Săn Theo Đàn",suit="hearts",desc="Tăng 20% tấn công cho mỗi đồng đội còn sống."},
     desert_scorpion={name="Nọc Ăn Mòn",suit="diamonds",desc="Đòn gây sát thương thêm Độc. Cuối tay mất HP theo Độc, tối đa 6."},
     ancient_skeleton={name="Tái Kết Xương",suit="spades",desc="Một lần mỗi trận: khi bị hạ, sống lại với 25% HP."},
@@ -27,6 +65,7 @@ end
 function A.start(m)
     m.enemyActions=0;m.reassembled=false
     m.actionTurns=0;m.combatBuffs={}
+    m.enemyResources=nil
     m.creatureArmor=0;m.creatureArmorMax=0
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
 end
@@ -44,7 +83,9 @@ local actionStats={armor="Giáp",speed="Tốc",damage="ST",heal="HP"}
 local function recipient(game,m,kind,allies)
     local best
     for _,ally in ipairs(require("src.enemy_group").members(game)) do
-        if ally.hp>0 and (not allies or ally~=m) then
+        local available=kind~="heal" or ally.hp<ally.maxHp and A.resources(ally).healingLeft>0
+        if kind=="armor" then available=(ally.creatureArmor or 0)<math.floor(ally.maxHp*.5) and A.resources(ally).armorLeft>0 end
+        if ally.hp>0 and available and (not allies or ally~=m) then
             if not best or kind=="heal" and ally.hp/ally.maxHp<best.hp/best.maxHp
                 or kind=="armor" and (ally.creatureArmor or 0)<(best.creatureArmor or 0)
                 or kind=="speed" and A.speed(ally)>A.speed(best)
@@ -72,12 +113,16 @@ end
 function A.plan(game,m,turn)
     turn=turn or (m.actionTurns or 0)+1
     local Loadout=require("src.enemy_loadout")
-    local reserve=Loadout.plan(m)
+    local resources=A.resources(m)
+    local reserve=not resources.mustAttack and Loadout.plan(m)
     if reserve then m.intent=reserve;return reserve end
-    if turn%2==1 then
+    local function attack()
         local echo=Loadout.attackBonus(m)
         local value=A.attack(m)+A.attackBonus(game,m)+echo
         m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")}
+        return m.intent
+    end
+    if turn%2==1 or resources.mustAttack then return attack()
     else
         local support=math.floor(turn/2)
         local kind=({"armor","speed","damage"})[(support+(m.groupIndex or 1)-2)%3+1]
@@ -86,15 +131,27 @@ function A.plan(game,m,turn)
         end
         local wounded=recipient(game,m,"heal")
         local target
-        if wounded.hp/wounded.maxHp<=.65 then kind="heal";target=wounded
+        if wounded.hp/wounded.maxHp<=.65 and A.resources(wounded).healingLeft>0 and A.canSupport(m,"heal") then kind="heal";target=wounded
         else target=(support+(m.groupIndex or 1))%2==0 and m or recipient(game,m,kind,true) end
         if kind=="speed" and A.speed(target)>=999
-            or kind=="armor" and (target.creatureArmor or 0)>=armorCap(target) then kind="damage" end
+            or kind=="armor" and ((target.creatureArmor or 0)>=armorCap(target) or A.resources(target).armorLeft<=0) then kind="damage" end
+        if not A.canSupport(m,kind) then
+            kind=nil
+            for _,candidate in ipairs({"armor","speed","damage"}) do
+                local receiver=recipient(game,m,candidate,true)
+                if A.canSupport(m,candidate) and (candidate~="armor" or A.resources(receiver).armorLeft>0 and (receiver.creatureArmor or 0)<armorCap(receiver))
+                    and (candidate~="speed" or A.speed(receiver)<999) then kind=candidate;target=receiver;break end
+            end
+            if not kind then return attack() end
+        end
         local value=A.buffAmount(target,kind,m)
+        if kind=="heal" then value=math.min(value,target.maxHp-target.hp,A.resources(target).healingLeft)
+        elseif kind=="armor" then value=math.min(value,armorCap(target)-(target.creatureArmor or 0),A.resources(target).armorLeft) end
+        if value<=0 then return attack() end
         local to=target==m and "bản thân" or "đồng đội #"..(target.groupIndex or 1)
         m.intent={type=kind,value=value,targetIndex=target.groupIndex or 1,
             label=actionNames[kind].." "..to.." +"..value.." "..actionStats[kind]
-                ..((kind=="speed" or kind=="damage") and " (2 hành động)" or "")}
+                ..((kind=="speed" or kind=="damage") and " (2 hành động)" or "").." · còn "..resources.charges[kind].." lần"}
     end
     return m.intent
 end
@@ -102,6 +159,10 @@ end
 function A.support(game,m)
     local intent=m.intent or {};local kind=intent.type
     if not actionNames[kind] then return nil end
+    local function exhausted(target)
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true,action=kind,target=target or m,value=0,label="Hỗ trợ đã hết lượt hoặc dự trữ"}
+    end
+    if not A.canSupport(m,kind) then return exhausted() end
     local target
     for _,ally in ipairs(require("src.enemy_group").members(game)) do
         if (ally.groupIndex or 1)==intent.targetIndex and ally.hp>0 then target=ally;break end
@@ -109,22 +170,24 @@ function A.support(game,m)
     if not target or kind=="heal" and target.hp>=target.maxHp then target=recipient(game,m,kind) end
     local value=A.buffAmount(target,kind,m)
     if kind=="heal" then
-        value=math.min(value,target.maxHp-target.hp);target.hp=target.hp+value
+        value=A.heal(target,value)
     elseif kind=="armor" then
-        local before=target.creatureArmor or 0
-        target.creatureArmor=math.min(math.max(before,armorCap(target)),before+value)
-        value=target.creatureArmor-before
-        target.creatureArmorMax=math.max(target.creatureArmorMax or 0,target.creatureArmor)
+        value=A.addArmor(target,value)
     else
         target.combatBuffs=target.combatBuffs or {}
         -- Refresh rather than stack; a self buff also survives the current action's tick.
         target.combatBuffs[kind]={value=value,turns=2+(target==m and 1 or 0)}
     end
+    if value<=0 then return exhausted(target) end
+    A.spendSupport(m,kind)
     return {attack=0,absorbed=0,damage=0,killedPlayer=false,action=kind,target=target,value=value,
         label=actionNames[kind]..(target==m and " bản thân" or " đồng đội #"..(target.groupIndex or 1))}
 end
 
-function A.finishAction(game,m)
+function A.finishAction(game,m,result)
+    if result and not result.blocked then
+        local r=A.resources(m);r.actions=r.actions+1;r.mustAttack=result.action~="attack"
+    end
     for kind,buff in pairs(m.combatBuffs or {}) do
         buff.turns=buff.turns-1
         if buff.turns<=0 then m.combatBuffs[kind]=nil end
@@ -158,9 +221,9 @@ function A.afterAttack(game,m,damage)
     m.enemyActions=(m.enemyActions or 0)+1
     if m.creatureKind=="forest_goblin" and m.enemyActions%2==0 then game.gold=math.max(0,(game.gold or 0)-1)
     elseif m.creatureKind=="lava_golem" then
-        m.creatureArmor=math.min(m.creatureArmorMax or 0,(m.creatureArmor or 0)+math.max(1,math.floor(m.maxHp*0.03)))
+        A.addArmor(m,math.max(1,math.floor(m.maxHp*0.03)),m.creatureArmorMax or 0)
     elseif m.creatureKind=="swamp_wraith" then
-        m.hp=math.min(m.maxHp,m.hp+math.floor(damage*(0.5+(m.cardRank or 2)/13)))
+        A.heal(m,math.floor(damage*(0.5+(m.cardRank or 2)/13)))
     elseif m.creatureKind=="desert_scorpion" and damage>0 then
         game.enemyPoison=math.min(6,(game.enemyPoison or 0)+((m.cardRank or 2)>=10 and 2 or 1))
     end
@@ -168,7 +231,7 @@ end
 function A.handEnd(game)
     local poison=game.enemyPoison or 0
     if poison>0 then
-        local damage=require("src.card_abilities").damageGuard(game,poison)
+        local damage=require("src.card_abilities").damageGuard(game,require("src.spn_elements").absorb(game,poison))
         local hpBefore=game.playerHp or 100
         game.playerHp=math.max(0,hpBefore-damage)
         require("src.potions").payBlood(game,hpBefore)

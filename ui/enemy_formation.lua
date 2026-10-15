@@ -101,6 +101,8 @@ function F.hud(game,UI,mx,my,turn,sequence)
                 local names={attack="Tấn công",armor="Gia cố",speed="Tăng tốc",heal="Hồi máu",damage="Cường hóa",equip="Đổi đồ",consume="Dùng thuốc"}
                 local to=intent.targetIndex and intent.targetIndex~=i and (" · #"..intent.targetIndex) or ""
                 local label=(names[intent.type] or "Tấn công")..to
+                if (m.spnFrozen or 0)>0 then label="ĐÓNG BĂNG · "..m.spnFrozen.." LƯỢT"
+                elseif #(m.spnAuraBurns or {})>0 then label="THIÊU ĐỐT · "..#m.spnAuraBurns.." NGUỒN" end
                 Core.textLine(label,x-9,y+h+20,w+18,UI.fonts.tiny,{.01,.016,.021},"center")
                 Core.textLine(label,x-9,y+h+19,w+18,UI.fonts.tiny,{.72,.80,.83},"center")
             end

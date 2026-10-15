@@ -5502,3 +5502,41 @@ Prompt: Create ONE production game SPN artwork, PNG portrait 1024x1536, 2:3 full
 Output: `assets/cards/continental/spn/spirit_potion_eternity.png`
 
 Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-2f00d720-380a-4e4a-93cb-969e42a852ea.png`
+
+## SPN phantom heart, opening frost and shared cinders - 2026-10-15
+
+### Huyễn Tâm Hộ Mệnh (`spirit_phantom_heart`)
+
+Ability: Cấp 1000 máu ảo không thể hồi hay được giáp bảo vệ; giữ qua trận, hết thì SPN tự hủy. Tiến hóa tăng dung lượng.
+
+Concept: A hollow spectral titan guards one large fractured violet heart, its body visibly dissolving as the heart is depleted.
+
+Prompt: Create ONE finished production SPN card artwork, portrait PNG 1024x1536, full-bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. Strong dominant supernatural entity silhouette, one primary subject, medium detail, large readable forms at 64px, restrained cinematic glow, atmospheric depth and quiet environment. Mechanic: Cấp 1000 máu ảo không thể hồi hay được giáp bảo vệ; giữ qua trận, hết thì SPN tự hủy. Tiến hóa tăng dung lượng. Concept: A hollow spectral titan guards one large fractured violet heart, its body visibly dissolving as the heart is depleted. One towering translucent spectral guardian with a simple hollow armored silhouette enclosing one very large faceted violet glass heart in its chest. Several substantial fractures in the heart leak thin silver mist and portions of the guardian's lower body dissolve into the void. The guardian protects a tiny expedition traveler below its open palm. Ancient dark western cliff ruins, navy and violet palette, restrained silver rim light, no gore, no realistic organs. No text, letters, numbers, ranks, suit symbols, badges, card border or frame, UI, logo, watermark, dense miniature decorations, Eastern roofs or calligraphy, noisy particles or blown-out whites. This is artwork only; game draws its own frame.
+
+Output: `assets/cards/continental/spn/spirit_phantom_heart.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-aa510056-1b8b-4d6b-909f-6fd771c19ef3.png`
+
+### Tĩnh Đông Khai Trận (`spirit_first_frost`)
+
+Ability: Lượt đánh đầu tiên không gây sát thương, đóng băng mục tiêu được chọn để địch mất 1 lượt. Tiến hóa tăng số lượt đóng băng.
+
+Concept: A spectral glacial owl arrests a descending blade in clear ice, replacing its strike with a cold stillness.
+
+Prompt: Create ONE finished production SPN card artwork, portrait PNG 1024x1536, full-bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. Strong dominant supernatural entity silhouette, one primary subject, medium detail, large readable forms at 64px, restrained cinematic glow, atmospheric depth and quiet environment. Mechanic: Lượt đánh đầu tiên không gây sát thương, đóng băng mục tiêu được chọn để địch mất 1 lượt. Tiến hóa tăng số lượt đóng băng. Concept: A spectral glacial owl arrests a descending blade in clear ice, replacing its strike with a cold stillness. One imposing supernatural snow owl made of cold blue translucent glacial feathers, wings folded into a powerful readable arch. Its gaze suspends a single descending broad sword inside a large simple ice crystal below its talons, showing a stopped attack instead of an impact. Frozen ancient western ramparts, deep navy and glacial cyan palette, one restrained silver accent, quiet still air, medium detail. No text, letters, numbers, ranks, suit symbols, badges, card border or frame, UI, logo, watermark, dense miniature decorations, Eastern roofs or calligraphy, noisy particles or blown-out whites. This is artwork only; game draws its own frame.
+
+Output: `assets/cards/continental/spn/spirit_first_frost.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c68767f4-00fc-42ae-a301-ea93a4ca48d9.png`
+
+### Liệt Hồn Phân Quang (`spirit_cinder_confluence`)
+
+Ability: Chia đều 100% tổng AURA của đòn cho tất cả địch còn sống; mỗi địch bị đốt thêm 5% phần AURA nó nhận trong 2 vòng. Tiến hóa tăng sát thương và tỷ lệ đốt.
+
+Concept: A single volcanic spectral phoenix divides a central aura core into three equally sized cinder beams.
+
+Prompt: Create ONE finished production SPN card artwork, portrait PNG 1024x1536, full-bleed 2:3. Cinematic painterly Western dark-fantasy expedition in the established Continental world. Strong dominant supernatural entity silhouette, one primary subject, medium detail, large readable forms at 64px, restrained cinematic glow, atmospheric depth and quiet environment. Mechanic: Chia đều 100% tổng AURA của đòn cho tất cả địch còn sống; mỗi địch bị đốt thêm 5% phần AURA nó nhận trong 2 vòng. Tiến hóa tăng sát thương và tỷ lệ đốt. Concept: A single volcanic spectral phoenix divides a central aura core into three equally sized cinder beams. One supernatural phoenix spirit rising from a dark volcanic fissure, its coherent broad wings made of restrained ember-orange smoke, one round compact aura core in its chest sending THREE equally sized thick luminous orange streams downward toward three large distant basalt monoliths of equal size. Embers remain as small controlled flames on each monolith, showing continued burning after an evenly split blast. Charcoal continental cliffs and distant ancient western ruins, navy black and lava orange, no huge white explosion, no tiny ornament. No text, letters, numbers, ranks, suit symbols, badges, card border or frame, UI, logo, watermark, dense miniature decorations, Eastern roofs or calligraphy, noisy particles or blown-out whites. This is artwork only; game draws its own frame.
+
+Output: `assets/cards/continental/spn/spirit_cinder_confluence.png`
+
+Generator source: `C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-837c447c-c290-407b-8d91-6079d9459221.png`

@@ -18,6 +18,7 @@ local function accuracy(attackerSpeed,targetSpeed)
     return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
 end
 function Combat.rollPlayerAttack(game)
+    if require("src.spn_elements").openingPower(game)>0 then return {hitChance=1,missed=false,frozen=true} end
     if (game.potionCombat or {}).accuracy or game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
 end
@@ -61,6 +62,10 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     require("src.spn_basics").armor(game,false)
     local Monster = require("src.monster")
     local target = game.monster
+    if require("src.spn_elements").opening(game) then
+        game.spnAttack=nil;require("src.advanced_hands").resolve(game,false)
+        return 0,false,{}, {hitChance=1,missed=false,frozen=true}
+    end
     roll=roll or Combat.rollPlayerAttack(game)
     local attackEffects=game.spnAttack or {}
     game.spnAttack=nil
@@ -87,8 +92,16 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     local bedExplosions=Combat.bedExplosions(game,aura,locked)
     if #bedExplosions>0 then target.hasBed=nil end
     local hpBefore=target.hp
-    local routedAura,portalHits=require("src.spn_convergence").route(game,aura,locked)
-    local damage = Monster.takeDamage(target, routedAura)
+    local spread=require("src.spn_elements").spread(game,aura,locked)
+    local routedAura,portalHits=require("src.spn_convergence").route(game,spread and 0 or aura,locked)
+    local damage=0
+    if spread then
+        portalHits={}
+        for _,hit in ipairs(spread) do
+            if hit.enemy==target then damage=Monster.takeDamage(target,hit.raw)
+            else portalHits[#portalHits+1]=hit end
+        end
+    else damage=Monster.takeDamage(target, routedAura) end
     for _,hit in ipairs(portalHits) do hit.damage=Monster.takeDamage(hit.enemy,hit.raw) end
     local splashHits = Anomalies.playerAttack(game,aura,hpBefore,damage,locked)
     for _,hit in ipairs(portalHits) do splashHits[#splashHits+1]=hit end
@@ -170,6 +183,9 @@ end
 local function resolveOneAttack(game,playerSpeed)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
+    if require("src.spn_elements").frozen(game,monster) then
+        return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true,frozen=true}
+    end
     if Anomalies.sleep(game,monster) then
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true}
     end
@@ -200,10 +216,13 @@ local function resolveOneAttack(game,playerSpeed)
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
         and (game.playerHp or 100)<(game.maxPlayerHp or 100)*Boss.config.executionThreshold
     if execution then attack=attack*Boss.config.executionMultiplier end
+    local incomingAttack=attack
+    local phantomAbsorbed
+    attack,phantomAbsorbed=require("src.spn_elements").absorb(game,attack)
     local armor = execution and 0 or (game.playerArmor or game.playerShield or 0)
     local pierce=attack*require("src.enemy_loadout").pierce(monster)
     local absorbed = math.min(armor, attack-pierce)
-    armor = math.floor((armor - absorbed) * 0.5)
+    armor = phantomAbsorbed>0 and attack==0 and armor or math.floor((armor - absorbed) * 0.5)
     local damage = attack - absorbed
 
     damage = require("src.spn_convergence").redirect(game,monster,damage)
@@ -228,8 +247,9 @@ local function resolveOneAttack(game,playerSpeed)
     end
 
     return {
-        attack = attack,
-        absorbed = absorbed,
+        attack = incomingAttack,
+        absorbed = absorbed+phantomAbsorbed,
+        phantomAbsorbed = phantomAbsorbed,
         damage = damage,
         killedPlayer = game.playerHp <= 0,
         playerSpeed = game.lastPlayerAttackSpeed or 0,
@@ -251,7 +271,7 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
             if attack then
                 game.enemyActed[m]=true
                 require("src.enemy_loadout").afterAction(m,attack.action,attack.blocked)
-                EnemyAbilities.finishAction(game,m)
+                EnemyAbilities.finishAction(game,m,attack)
                 if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
                 result.attack=result.attack+attack.attack;result.absorbed=result.absorbed+attack.absorbed
                 result.damage=result.damage+attack.damage;result.attackerCount=result.attackerCount+1
@@ -312,6 +332,7 @@ function Combat.start(game, monster, round)
     require("src.spn_enchantments").reset(game)
     game.spnAttack=nil
     game.potionCombat={};game.potionFeedback={};game.potionVictoryPending=nil
+    game.spnOpeningAttackUsed=nil
     for i,m in ipairs(game.enemies) do
         if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
         EnemyAbilities.start(m)
@@ -433,6 +454,7 @@ end
 -- Enemy plans advance here; held seals resolve once in the scoring calculation.
 function Combat.onMonsterTurnEnd(game)
     if not game or not game.hand then return false end
+    require("src.spn_elements").roundEnd(game)
     for _,m in ipairs(Group.members(game)) do
         if m.hp>0 and m.actionTurns~=nil then EnemyAbilities.plan(game,m) end
     end

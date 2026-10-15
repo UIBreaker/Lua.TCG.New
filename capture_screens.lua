@@ -196,6 +196,11 @@ function Capture.update(gameRef, callbacks)
             if not ok then print("SPN ALCHEMY UI FAIL: "..tostring(err));love.event.quit(1) end
             return
         end
+        if value=="--test-spn-elements-ui" then
+            local ok,err=pcall(require("tests.spn_elements_capture").update,gameRef,callbacks)
+            if not ok then print("SPN ELEMENTS UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
     end
     for _,value in ipairs(arg or {}) do
         if value=="--test-shop-markets" then

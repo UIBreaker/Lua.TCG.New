@@ -118,6 +118,11 @@ function Boss.activeDescription(m)
     local s=Boss.state(m); local a=m and m.bossData and m.bossData.active
     if not a then return "" end
     local desc=a.description:gsub("{amount}",tostring(a.amount))
+    if a.op=="heal" then
+        local r=require("src.enemy_abilities").resources(m)
+        if r.charges.heal<=0 or r.healingLeft<=0 then return "Hồi máu đã hết lượt hoặc dự trữ trong trận." end
+        return desc.." Còn "..r.charges.heal.." lượt, dùng chung dự trữ hồi máu."
+    end
     if a.op=="tax_lock" then return "Khóa ô "..((s and s.cycle or 0)%2==0 and "Tiêu Hao" or "SPN").." số 1 tay kế tiếp; sát thương Nợ "..((s and s.debt or 0)*Boss.config.debtDamage).."." end
     if a.op=="gate_lock" then return "Khóa 1 lượt "..((s and s.cycle or 0)%2==0 and "bỏ bài" or "đánh").." tay kế tiếp; không hạ dưới 1." end
     return desc
@@ -164,7 +169,9 @@ local function applyActive(game,a,s)
         end
     elseif op=="armor" then game.playerArmor=math.max(0,(game.playerArmor or 0)-a.amount); game.playerShield=game.playerArmor
     elseif op=="gold" then game.gold=math.max(0,(game.gold or 0)-a.amount)
-    elseif op=="heal" then m.hp=math.min(m.maxHp,m.hp+a.amount)
+    elseif op=="heal" then
+        local A=require("src.enemy_abilities")
+        if A.canSupport(m,"heal") and A.heal(m,a.amount)>0 then A.spendSupport(m,"heal") end
     elseif op=="damage" then s.pendingDamage=(s.pendingDamage or 0)+a.amount
     elseif op=="repeat_penalty" then s.repeatHand=game.lastPlayedHandId; s.repeatUntil=s.handIndex+1 end
     s.cycle=s.cycle+1
@@ -183,7 +190,7 @@ function Boss.handEnd(game)
             local index=require("src.rng").random(#target.equipments)
             table.remove(target.equipments,index)
             for _,pc in ipairs(game.persistentDeck or {}) do if pc.id==target.id then table.remove(pc.equipments,index) end end
-            m.hp=math.min(m.maxHp,m.hp+Boss.config.gemPassiveHeal)
+            require("src.enemy_abilities").heal(m,Boss.config.gemPassiveHeal)
         end
     end
     local a=m.bossData.active
@@ -212,7 +219,7 @@ function Boss.passiveDescription(m)
     if key=="damage_resist" then return "Kháng "..(c.resist*100).."% mọi sát thương nhận vào." end
     if key=="taxman" then return "Mỗi lá tạo Aura trả "..c.taxCardCost.." Vàng; không đủ trả sẽ mất "..c.taxCardHp.." HP." end
     if key=="the_hook" then return "Mỗi khi chơi: bỏ ngẫu nhiên tối đa "..c.hookCount.." lá còn giữ trên tay; kích hoạt hiệu ứng Khi Bỏ." end
-    if key=="gem_devourer" then return "Cuối tay: nuốt một ITM ngẫu nhiên từ lá đang giữ, hồi "..c.gemPassiveHeal.." HP nếu nuốt được." end
+    if key=="gem_devourer" then return "Cuối tay: nuốt một ITM ngẫu nhiên từ lá đang giữ, hồi "..c.gemPassiveHeal.." HP nếu nuốt được và còn dự trữ hồi trong trận." end
     if key=="executioner" then return "Khi người chơi dưới "..(c.executionThreshold*100).."% HP tối đa: đòn đánh ×"..c.executionMultiplier..", bỏ qua Giáp; không xóa Giáp." end
     return m and m.bossData and m.bossData.desc or ""
 end

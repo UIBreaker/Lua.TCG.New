@@ -105,6 +105,7 @@ function Deities.scaleEffect(deity, result)
             if key=="addTransmutePct" then scaled=math.min(90,scaled) end
             if key=="addRedirectPct" then scaled=math.min(100,scaled) end
             if key=="addPotionChancePct" then scaled=math.min(100,scaled) end
+            if key=="addFreezeTurns" then scaled=math.min(128,scaled) end
             result[key] = scaled
 
             local message = not result.fixedMessage and result.message
@@ -272,6 +273,7 @@ require("src.spn_foundations").register(Deities)
 require("src.spn_growth").register(Deities)
 require("src.spn_bounty").register(Deities)
 require("src.spn_alchemy").register(Deities)
+require("src.spn_elements").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -294,8 +296,10 @@ function Deities.getDescription(deity)
     if def.stat=="copyActivations" or def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(value)) end
     if def.stat=="consumableChancePct" or def.stat=="uqChancePct" then value=math.min(100,value) end
     if def.stat=="addPotionChancePct" then value=math.min(100,value) end
+    if def.stat=="addFreezeTurns" then value=math.min(128,value) end
     local text=(def.descriptionTemplate:gsub("{value}",formatEffectNumber(value)):gsub("{factor}",formatEffectNumber(require("src.blood_shop").powerOf(deity) + value)):gsub("{double}",formatEffectNumber(value*2)):gsub("{scale}",formatEffectNumber(effectMultiplier(deity)*require("src.blood_shop").powerOf(deity))))
     if deity.id=="spirit_victory_bounty" then text=require("src.spn_bounty").description(deity) end
+    if deity.id=="spirit_cinder_confluence" then text=text:gsub("{burn}",formatEffectNumber(Deities.scaleEffect(deity,{addBurnPct=5}).addBurnPct)) end
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)*require("src.blood_shop").powerOf(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then

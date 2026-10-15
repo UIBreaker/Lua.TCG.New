@@ -88,6 +88,7 @@ function GameState.resetRun(game, faction)
     game.enemies = nil
     game.enemyPoison = 0
     game.potionCombat=nil;game.potionFeedback=nil;game.potionVictoryPending=nil
+    game.spnOpeningAttackUsed=nil
     game.playerShield = 0
     game.playerArmor = 0
     game.deck = {}

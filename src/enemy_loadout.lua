@@ -100,9 +100,11 @@ function L.pierce(m) return effect(m,"seal","pierce") end
 function L.plan(m)
     local bag=m.enemyInventory;if not bag then return end
     local potion=bag.backpack.consumables[1]
-    if potion and m.hp/m.maxHp<=.35 then
-        return {type="consume",targetIndex=m.groupIndex or 1,value=math.floor(m.maxHp*potion.pct),
-            label="Dùng thuốc từ balo: hồi "..math.floor(potion.pct*100).."% HP tối đa"}
+    local healingLeft=require("src.enemy_abilities").resources(m).healingLeft
+    if potion and m.hp/m.maxHp<=.35 and healingLeft>0 then
+        local value=math.min(math.floor(m.maxHp*potion.pct),healingLeft)
+        return {type="consume",targetIndex=m.groupIndex or 1,value=value,
+            label="Dùng thuốc từ balo: hồi "..value.." HP · 1 lần"}
     end
     local reserve=bag.backpack.equipment[1]
     if reserve and m.hp/m.maxHp<=.5 then
@@ -114,7 +116,7 @@ function L.action(m)
     local kind=(m.intent or {}).type
     if kind=="consume" then
         local item=table.remove(bag.backpack.consumables,1);if not item then return end
-        local value=math.min(m.maxHp-m.hp,math.floor(m.maxHp*item.pct));m.hp=m.hp+value
+        local value=require("src.enemy_abilities").heal(m,math.floor(m.maxHp*item.pct))
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,action="heal",target=m,value=value,label="Dùng thuốc từ balo"}
     elseif kind=="equip" then
         local item=table.remove(bag.backpack.equipment,1);if not item then return end
@@ -124,8 +126,7 @@ function L.action(m)
         m.maxHp=math.max(1,math.floor(bag.base.maxHp*(1+stats.hp)));m.hp=math.min(m.hp,m.maxHp)
         local def,power=L.item(item)
         local armor=math.floor(m.maxHp*(def.stats.armor or 0)*power)
-        m.creatureArmor=math.min(m.maxHp*.5,before+armor)
-        m.creatureArmorMax=math.max(m.creatureArmorMax or 0,m.creatureArmor)
+        require("src.enemy_abilities").addArmor(m,armor)
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,action="equip",target=m,value=m.creatureArmor-before,label="Đổi trang bị · "..L.describeItem(item).name}
     end
 end
@@ -134,7 +135,7 @@ function L.afterHit(m,damage,attack)
     if damage>0 and pct>0 and m.hp>0 then
         -- Player and enemy HP grow on different scales; leech uses enemy HP, reduced by blocked damage.
         local ratio=math.min(1,damage/math.max(1,attack or L.attack(m)))
-        m.hp=math.min(m.maxHp,m.hp+math.floor(m.maxHp*math.min(.04,pct)*ratio))
+        require("src.enemy_abilities").heal(m,math.floor(m.maxHp*math.min(.04,pct)*ratio))
     end
 end
 function L.afterAction(m,action,blocked)
@@ -142,11 +143,9 @@ function L.afterAction(m,action,blocked)
     if action=="attack" then bag.attacks=bag.attacks+1;return end
     if action=="equip" then return end
     local stats=L.stats(m)
-    m.hp=math.min(m.maxHp,m.hp+math.floor(m.maxHp*stats.heal))
+    require("src.enemy_abilities").heal(m,math.floor(m.maxHp*stats.heal))
     local armorPct=math.min(.10,effect(m,"seal","supportArmor")+effect(m,"spn","supportArmor"))
-    local before=m.creatureArmor or 0
-    m.creatureArmor=math.min(math.max(before,math.floor(m.maxHp*.5)),before+math.floor(m.maxHp*armorPct))
-    m.creatureArmorMax=math.max(m.creatureArmorMax or 0,m.creatureArmor)
+    require("src.enemy_abilities").addArmor(m,math.floor(m.maxHp*armorPct))
 end
 local labels={damage="ST",speed="Tốc",hp="HP tối đa",armor="HP tối đa thành Giáp đầu trận",heal="HP tối đa sau hành động hỗ trợ"}
 function L.describeItem(item)

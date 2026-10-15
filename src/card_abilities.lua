@@ -204,7 +204,7 @@ function A.score(game,card)
     local resources={gold=game.gold or 0,playerHp=game.playerHp or 100,playerArmor=game.playerArmor or 0}
     require("src.soul_relics").score(game,card,ctx)
     if Boss.key(game.monster)=="taxman" and Boss.passiveEnabled(game.monster) then
-        if (game.gold or 0)>=Boss.config.taxCardCost then game.gold=game.gold-Boss.config.taxCardCost else game.playerHp=math.max(0,(game.playerHp or 100)-Boss.config.taxCardHp) end
+        if (game.gold or 0)>=Boss.config.taxCardCost then game.gold=game.gold-Boss.config.taxCardCost else game.playerHp=math.max(0,(game.playerHp or 100)-require("src.spn_elements").absorb(game,Boss.config.taxCardHp)) end
     end
     if not ctx.retrigger or Boss.allowRetriggerAbility(game,card) then A.dispatch(game,"score",{card},ctx) end
     if ctx.effectiveness and ctx.effectiveness~=1 then
@@ -263,7 +263,7 @@ end
 function A.resolveBossDamage(game)
     local bs=Boss.state(game.monster)
     if bs and (bs.pendingDamage or 0)>0 then
-        local damage=bs.pendingDamage;bs.pendingDamage=0
+        local damage=require("src.spn_elements").absorb(game,bs.pendingDamage);bs.pendingDamage=0
         local absorbed=math.min(game.playerArmor or 0,damage)
         game.playerArmor=math.max(0,(game.playerArmor or 0)-absorbed);game.playerShield=game.playerArmor
         damage=A.damageGuard(game,damage-absorbed)

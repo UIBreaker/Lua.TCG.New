@@ -112,6 +112,7 @@ function D.resolve(item,game)
     end
     if Deities.CATALOG[item.id] then
         local text="SPN · "..Deities.getRarityLabel(item).."\n"..Deities.getDescription(item)..D.edition(item)
+        if item.id=="spirit_phantom_heart" then text=text.."\nĐÃ TIÊU · "..(item.phantomSpent or 0).." MÁU ẢO" end
         local targets=require("src.spn_pacts").describe(game,item);if targets then text=text.."\n"..targets end
         if item.id=="spirit_right_echo" and game then
             for slot,owned in pairs(game.deities or {}) do

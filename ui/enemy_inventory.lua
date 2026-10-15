@@ -35,9 +35,12 @@ function I.draw(UI,m,buttons)
     for index=1,3 do item(UI,bag.equipment[index],42,184+(index-1)*94,572,88,"Ô "..index) end
     text("DẤU ẤN / SPN",663,155,570,UI.fonts.small,gold)
     item(UI,bag.seal,661,184,577,120,"Dấu ấn")
-    item(UI,bag.spn,661,314,577,120,"SPN")
+    item(UI,bag.spn,661,314,577,100,"SPN")
+    local r=A.resources(m);local c=r.charges
+    text("LƯỢT CÒN · Hồi "..c.heal.." / Giáp "..c.armor.." / Tốc "..c.speed.." / ST "..c.damage,663,420,567,UI.fonts.tiny,gold)
+    text("DỰ TRỮ CÒN · Hồi "..UI.formatNumber(r.healingLeft).." HP / Tạo "..UI.formatNumber(r.armorLeft).." Giáp",663,435,567,UI.fonts.tiny,blue)
     text(m.isBoss and (require("src.boss_abilities").passiveEnabled(m) and "Phong ấn nội tại để vô hiệu Dấu / SPN." or "Dấu / SPN đang bị phong ấn.")
-        or "Dấu / SPN kích hoạt theo hành động của đối thủ.",663,446,567,UI.fonts.tiny)
+        or "Dấu / SPN dùng chung dự trữ hồi và tạo giáp.",663,450,567,UI.fonts.tiny)
     Chrome.panel(28,494,1224,185,gold)
     text("BALO DỰ TRỮ · DÙNG / ĐỔI ĐỒ TỐN MỘT HÀNH ĐỘNG",42,506,1160,UI.fonts.small,gold)
     local reserve=bag.backpack.equipment[1] or bag.stowed

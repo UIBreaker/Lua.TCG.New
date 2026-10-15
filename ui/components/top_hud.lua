@@ -17,10 +17,12 @@ function HUD.draw(data,fonts,mx,my,pressed)
  Chrome.well(658,16,95,47,T.colors.gold)
  local meters=data.meters or {};local hp=meters.hp;local armor=meters.armor
  g.push();g.translate(327,50);g.scale(data.hpBounce or 1);g.translate(-327,-50)
- Health.draw(235,39,184,23,hp and hp.shown or data.hp or 0,data.maxHp or 1,
+ local phantom=(data.phantomHp or 0)>0
+ Health.draw(235,39,phantom and 114 or 184,23,hp and hp.shown or data.hp or 0,data.maxHp or 1,
   {variant="green",font=f,label="MÁU "..math.floor(data.hp or 0).." / "..math.floor(data.maxHp or 1),
    trailValue=hp and hp.trail,trailColor={1,.58,.36}})
  g.pop()
+ if phantom then Health.draw(353,39,66,23,data.phantomHp,data.phantomMaxHp or data.phantomHp,{variant="purple",font=f,label="ẢO "..math.floor(data.phantomHp)}) end
  Health.draw(235,18,184,16,armor and armor.shown or data.armor or 0,data.armorCap or 30,
   {variant="cyan",shield=true,font=f,label="GIÁP "..math.floor(data.armor or 0),
    trailValue=armor and armor.trail,pulse=((data.armorBounce or 1)-1)*8})

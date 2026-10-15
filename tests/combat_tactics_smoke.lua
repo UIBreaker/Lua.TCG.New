@@ -76,7 +76,8 @@ a.intent={type="attack"};g.playerArmor=0;g.playerShield=0
 assert(C.resolveMonsterAttack(g,nil,nil,a).attack==25,"damage buff changes resolved damage")
 assert(a.attack==22,"temporary damage is excluded from permanent attack growth")
 g,a,b=fixture();a.intent={type="speed",targetIndex=2}
-A.support(g,a);A.support(g,a);assert(A.speed(b)==10,"buffs refresh instead of stacking")
+A.support(g,a);b.intent={type="speed",targetIndex=2}
+A.support(g,b);assert(A.speed(b)==10,"an ally's second cast refreshes instead of stacking")
 b.attackSpeed=999;A.support(g,a);assert(A.speed(b)==999)
 g,a,b=fixture();g.lastPlayerAttackSpeed=9;b.combatBuffs={speed={value=2,turns=2}}
 roll(.99,function() assert(not C.resolveMonsterAttack(g,nil,nil,b).missed,"speed buffs affect accuracy immediately") end)
@@ -84,9 +85,11 @@ g,a,b=fixture();g.lastPlayerAttackSpeed=4;a.combatBuffs={speed={value=2,turns=2}
 assert(C.rollPlayerAttack(g).hitChance==.4,"target speed buffs reduce player accuracy")
 g,a,b=fixture();a.intent={type="armor",targetIndex=1}
 for i=1,10 do A.support(g,a) end
-assert(a.creatureArmor==50,"armor buff is capped at 50% max HP")
+assert(a.creatureArmor==25,"normal enemies cannot recast exhausted armor buffs")
+assert(A.addArmor(a,100)==25 and a.creatureArmor==50,"armor is capped at 50% max HP")
 g,a,b=fixture();b.hp=99;a.intent={type="heal",targetIndex=2}
 A.support(g,a);assert(b.hp==100,"healing is capped at max HP")
+g,a,b=fixture();a.intent={type="heal",targetIndex=2}
 b.hp=0;a.hp=50;A.support(g,a);assert(b.hp==0 and a.hp==70,"dead recipients are retargeted, never revived")
 
 g,a,b=fixture();A.start(a);A.start(b)
@@ -128,7 +131,7 @@ for _,maxHp in ipairs({100,200000,1000000,10000000}) do
         local hit=A.support(g,a)
         assert(hit.value==expected,"resolved support must match the stat-based magnitude")
         if kind=="speed" or kind=="damage" then
-            for i=1,10 do assert(A.support(g,a).value==expected,"refresh cannot amplify an active buff") end
+            for i=1,10 do assert(A.support(g,a).blocked and A.buffAmount(b,kind)==expected,"exhausted buffs cannot be amplified or refreshed") end
         end
     end
     assert(A.speed(b)==125 and A.attack(b)==2500)
@@ -139,7 +142,9 @@ assert(a.intent.type=="armor" and a.intent.value==250000,"intent scales to recip
 local hit=A.support(g,a);assert(hit.value==250000 and b.creatureArmor==250000)
 assert(M.takeDamage(b,200000)==0 and b.hp==1000000 and b.creatureArmor==50000,"250k armor absorbs a real 200k AURA hit")
 for i=1,3 do A.support(g,a) end
-assert(b.creatureArmor==500000,"armor cap also scales with max HP")
+assert(b.creatureArmor==50000,"spent casts cannot refill broken armor")
+assert(A.addArmor(b,1000000)==250000 and b.creatureArmor==300000,"generated armor has a finite lifetime reserve")
+assert(A.addArmor(b,1000000)==0,"absorbing damage cannot refill the armor reserve")
 b.combatBuffs={};b.attack=4000;b.attackSpeed=200
 assert(A.buffAmount(b,"damage")==1000 and A.buffAmount(b,"speed")==50,"new buffs use current attack and speed")
 g,a,b=fixture();a.stage=80;b.stage=1

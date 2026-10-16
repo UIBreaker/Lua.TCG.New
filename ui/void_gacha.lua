@@ -4,6 +4,7 @@ local G=require("src.void_gacha")
 local Sound=require("src.sound")
 local Visual=require("config.visual_config")
 local Art=require("src.continental_art")
+local Effects=require("ui.reward_effects")
 local V={}
 local function text(s,x,y,w,font,color,align)
     love.graphics.setFont(font or UI.fonts.tiny);love.graphics.setColor(color or C.text)
@@ -66,7 +67,11 @@ function V.update(dt,game)
     local spec=V.effectSpec(reward.strength)
     if not a.signal and a.time>=1.05 then a.signal=true;Sound.play("reward_chest_open") end
     if not a.impact and a.time>=spec.revealAt then
-        a.impact=true;Sound.play(reward.strength>=3 and "reward_rare_reveal" or "reward_loot_reveal")
+        a.impact=true
+        if reward.kind=="ticket" then local profile=Effects.profile(reward);Sound.play(profile.sound,profile.pitch)
+        elseif reward.kind=="gold" then Sound.play("coin",1.15)
+        elseif reward.kind=="pack" then Sound.play("reward_chest_open")
+        else Sound.play(reward.strength>=3 and "reward_rare_reveal" or "reward_loot_reveal") end
     end
     if a.time>=spec.duration then
         if a.index<#event.results then a.index=a.index+1;a.time=0;a.impact=nil;a.signal=nil;Sound.play("reward_chest_open")
@@ -76,9 +81,10 @@ end
 local function summon(event,buttons)
     local a=V.animation;if not a then return end
     local r=event.results[a.index];local strength=r.strength;local spec=V.effectSpec(strength)
+    local ticket=r.kind=="ticket" and Effects.profile(r)
     local phase=V.phase(strength,a.time);local opened=phase=="reveal"
     local charge=math.min(1,a.time/1.05);local blast=math.max(0,(a.time-spec.revealAt)/(spec.duration-spec.revealAt));local g=love.graphics
-    local c=phase=="charge" and {.46,.34,.95} or G.config.colors[strength];local x,y=640,343
+    local c=phase=="charge" and {.46,.34,.95} or ticket and ticket.color or G.config.colors[strength];local x,y=640,343
     g.setColor(.002,.003,.012,.76);g.rectangle("fill",0,80,1280,640)
     local shake=Visual.enabled and opened and math.max(0,1-blast*4)*spec.kick or 0
     g.push();g.translate(math.sin(a.time*63)*shake,math.cos(a.time*79)*shake*.6)
@@ -201,9 +207,12 @@ local function summon(event,buttons)
     g.setBlendMode("alpha")
     if opened then
         if Visual.enabled then g.setColor(1,.95,1,math.max(0,.16*strength/9-blast*.5));g.rectangle("fill",-20,-20,1320,760) end
+        g.push();g.translate(x,y);g.scale(1.6)
+        Effects.drawSlot(ticket or Effects.profile(r),0,0,a.time-spec.revealAt,false,a.time)
+        g.pop()
         local size=math.min(1,blast*7);g.push();g.translate(x,y);g.scale(math.max(.01,size),math.max(.01,size))
         local width=156+strength*6;art(r,-width/2,-width*.75,width,width*1.5);g.pop()
-        text(r.featured and "HƯ KHÔNG VỠ TAN · TRÚNG BANNER" or ({"THƯỜNG","KHÁC THƯỜNG","HIẾM","SỬ THI","HUYỀN THOẠI","THẦN THOẠI","SIÊU VIỆT","ĐỘC NHẤT"})[strength],210,127,860,UI.fonts.large,c,"center")
+        text(ticket and ticket.label or r.featured and "HƯ KHÔNG VỠ TAN · TRÚNG BANNER" or ({"THƯỜNG","KHÁC THƯỜNG","HIẾM","SỬ THI","HUYỀN THOẠI","THẦN THOẠI","SIÊU VIỆT","ĐỘC NHẤT"})[strength],210,127,860,UI.fonts.large,c,"center")
         text(r.name,230,526,820,UI.fonts.medium,C.text,"center")
     else
         -- The closed core has no reward artwork or rarity badge.
@@ -216,7 +225,9 @@ local function summon(event,buttons)
         rgba(i<=a.index and c or C.muted,i==a.index and 1 or .35)
         g.circle("fill",640+(i-(#event.results+1)/2)*18,590,i==a.index and 4 or 2.5)
     end
-    g.pop();button(buttons,"void_skip","MỞ TOÀN BỘ KẾT QUẢ",447,637,386,46,false)
+    g.pop()
+    if ticket and opened then Effects.jackpot(ticket,a.time-spec.revealAt,1280,720,UI.fonts) end
+    button(buttons,"void_skip","MỞ TOÀN BỘ KẾT QUẢ",447,637,386,46,false)
 end
 local function rates(buttons)
     local g=love.graphics;g.setColor(0,0,0,.78);g.rectangle("fill",0,0,1280,720)
@@ -250,7 +261,7 @@ function V.draw(game,buttons,mx,my)
     local offer=event.freeRemaining>0 and "ƯU ĐÃI: 1 LƯỢT MIỄN PHÍ" or event.goldMultiplier<1 and "ƯU ĐÃI: GIẢM "..math.floor((1-event.goldMultiplier)*100).."% GIÁ VÀNG" or "HÔM NAY KHÔNG CÓ ƯU ĐÃI"
     text(offer,38,223,249,UI.fonts.small,event.freeRemaining>0 and C.green or C.purple)
     if mx>=38 and mx<=287 and my>=220 and my<=252 then UI.descriptionCandidate={hoverKey=event,name="ƯU ĐÃI CỦA THE VOID",desc="Mỗi lần vào: 2% nhận một lượt miễn phí; 5% giảm 50% giá vàng; 10% giảm 25% giá vàng; 83% giá thường. Vé không giảm giá. Ưu đãi cố định khi tải lại.",color=C.purple} end
-    text("Vé rơi hiếm: thường 1% · boss 2%.",38,257,249,nil,C.muted)
+    text("Thường: 1% · Boss: luôn 1–100 vé.",38,257,249,nil,C.muted)
     panel(23,474,279,222)
     text("HÀNH TRANG VIỄN CHINH",38,491,249,UI.fonts.small,C.gold)
     for i,kind in ipairs({"gold","souls"}) do
@@ -286,10 +297,11 @@ function V.draw(game,buttons,mx,my)
     else
         for i,r in ipairs(event.results) do
             local x=336+(i-1)%5*181;local y=425+math.floor((i-1)/5)*85
-            local color=r.kind=="gold" and C.gold or r.kind=="souls" and C.purple or G.config.colors[r.strength]
+            local ticket=r.kind=="ticket" and Effects.profile(r)
+            local color=ticket and ticket.color or r.kind=="gold" and C.gold or r.kind=="souls" and C.purple or G.config.colors[r.strength]
             panel(x,y,175,80,color);art(r,x+5,y+5,46,69)
             text(r.name,x+59,y+8,109,UI.fonts.tiny,r.featured and C.gold or C.text)
-            text(r.featured and "BANNER" or r.kind=="gold" and "VÀNG" or r.kind=="souls" and "LINH HỒN" or ({"C","UC","R","E","L","M","T","UQ"})[r.strength],x+59,y+61,109,nil,color)
+            text(ticket and (ticket.jackpot and "JACKPOT" or "VÉ THE VOID") or r.featured and "BANNER" or r.kind=="gold" and "VÀNG" or r.kind=="souls" and "LINH HỒN" or ({"C","UC","R","E","L","M","T","UQ"})[r.strength],x+59,y+61,109,nil,color)
             if mx>=x and mx<=x+175 and my>=y and my<=y+80 then UI.descriptionCandidate=r.item or {name=r.name,desc=r.kind=="hand" and "Tay bài tối đa đã tăng thêm 1 lá." or r.kind=="gold" and "Vàng đã được cộng vào túi tiền, có thể dùng ngay tại shop hoặc The Void." or r.kind=="souls" and "Linh hồn đã được cộng vào hành trang để giao dịch tại shop linh hồn." or "Phần thưởng đã ghi nhận trong hành trang.",color=color} end
         end
     end

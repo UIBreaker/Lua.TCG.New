@@ -11,6 +11,15 @@ local function random(i) return (math.sin(i*127.1+43.7)*43758.5453)%1 end
 function D.load()
     local ok,shader=pcall(love.graphics.newShader,"shaders/enemy_ash_dissolve.glsl")
     if ok then D.shader=shader else D.shaderError=tostring(shader);print("[Death VFX] shader fallback: "..D.shaderError) end
+    local veilOk,veil=pcall(love.graphics.newShader,"shaders/player_defeat_veil.glsl")
+    if veilOk then D.playerShader=veil else print("[Death VFX] veil fallback: "..tostring(veil)) end
+    local fadeOk,fade=pcall(love.graphics.newShader,[[
+        extern number opacity;
+        vec4 effect(vec4 color, Image image, vec2 uv, vec2 screen) {
+            return Texel(image,uv)*color*vec4(1.0,1.0,1.0,opacity);
+        }
+    ]])
+    if fadeOk then D.uiShader=fade end
     for i=1,C.particles.max do D.pool[i]={} end
     local paths={chest="assets/scene/treasure_chest.png",mini="assets/scene/enemy_small_lowpoly.png",elite="assets/scene/enemy_elite_lowpoly.png",boss="assets/scene/enemy_boss_lowpoly.png"}
     for _,list in ipairs({EnemyArt.normal,EnemyArt.bosses}) do
@@ -32,7 +41,7 @@ function D.load()
 end
 function D.reset()
     D.kind,D.monster,D.seen,D.preset=nil,nil,nil,nil;D.count,D.age=0,0
-    D.cards=nil
+    D.cards=nil;D.reducedMotion=false
 end
 function D.busy() return D.kind~=nil and D.age<D.duration end
 function D.enemyActive(monster) return D.kind=="enemy" and D.monster==monster end
@@ -56,13 +65,14 @@ function D.startChest(quality)
     Sound.play("pack_open");Camera.kick(0,C.chest.kick)
     Light.flash(D.x,D.y,C.enemy.crack,0.26,0.42,220)
 end
-function D.startPlayer(x,quality)
+function D.startPlayer(x,quality,reducedMotion)
     D.kind,D.age,D.count,D.duration,D.stop="player",0,0,C.player.duration,C.player.stop
     D.x,D.y=x or C.player.coreX,C.player.coreY
     D.clock=0
+    D.reducedMotion=reducedMotion==true
     D.limit=math.min(C.particles.max,C.particles[quality] or C.particles.HIGH);D.burst=false
     D.ambience,D.text=false,false
-    Sound.play("defeat_hit");Camera.kick(0,3)
+    Sound.play("defeat_hit");if not D.reducedMotion then Camera.kick(-2,5) end
     Light.flash(D.x,D.y,C.player.soul,0.20,0.28,220)
 end
 function D.emit()
@@ -82,6 +92,14 @@ function D.emit()
         p.delay=s*0.22;p.life=math.max(0.1,math.min(p.life,D.duration-D.age-p.delay-0.03))
         p.age=-p.delay;p.size=p.kind=="smoke" and 15+s*16 or 1+s*3
         p.spin=r*math.pi
+        if not enemy then
+            p.kind=i%10<4 and "shard" or i%10<9 and "ember" or "smoke"
+            p.x=D.x+(r-0.5)*250;p.y=D.y+(random(i+617)-0.5)*90
+            p.vx=(r-0.5)*320;p.vy=-75-s*155
+            p.life=1.10+s*0.55;p.delay=random(i+811)*0.18;p.age=-p.delay
+            p.size=p.kind=="smoke" and 24+s*22 or 1.4+s*3
+            p.ox,p.oy=p.x,p.y
+        end
     end
     Sound.play(D.kind=="chest" and "chest_dissolve" or enemy and "enemy_ash_break" or "defeat_collapse",enemy and 1 or 0.7)
 end
@@ -96,8 +114,15 @@ function D.update(dt)
         if not D.text and D.age>=C.player.textAt then D.text=true;Sound.play("defeat_text_reveal",0.7) end
     end
     for i=1,D.count do
-        local p=D.pool[i];p.age=p.age+dt
-        if p.age>0 and p.age<p.life then
+        local p=D.pool[i]
+        if D.kind=="player" then
+            -- Absolute trajectories keep the burst identical at 30 and 144 Hz.
+            p.age=D.age-C.player.collapseAt-p.delay
+            local t=math.max(0,p.age);local motion=D.reducedMotion and 0.22 or 1
+            p.x=p.ox+p.vx*(1-math.exp(-t*1.5))/1.5*motion
+            p.y=p.oy+(p.vy*t+32*t*t)*motion
+        else p.age=p.age+dt end
+        if D.kind~="player" and p.age>0 and p.age<p.life then
             local drag=math.exp(-dt*2.3);p.vx=p.vx*drag
             p.x=p.x+p.vx*dt+math.sin(p.spin+D.age*3)*dt*7;p.y=p.y+p.vy*dt
             p.vy=p.vy+dt*(p.kind=="ash" and 22 or -9)
@@ -171,11 +196,24 @@ function D.drawParticles()
                 g.setBlendMode("add");Light.glow(p.x,p.y,p.size*4,col,a*0.3)
                 g.setColor(col[1],col[2],col[3],a);g.circle("fill",p.x,p.y,p.size*0.55)
             elseif p.kind=="shard" then
+                if D.kind=="player" then
+                    g.setBlendMode("add");g.setLineWidth(1)
+                    g.setColor(col[1],col[2],col[3],a*0.22)
+                    local trail=D.reducedMotion and 0.018 or 0.055
+                    g.line(p.x,p.y,p.x-p.vx*trail*math.exp(-p.age*1.5),p.y-(p.vy+64*p.age)*trail)
+                    Light.glow(p.x,p.y,p.size*5,col,a*0.20)
+                end
                 g.push();g.translate(p.x,p.y);g.rotate(p.spin+p.age*3)
-                g.setBlendMode("add");g.setColor(col[1],col[2],col[3],a*0.16)
-                g.circle("fill",0,0,p.size*3)
-                g.setBlendMode("alpha");g.setColor(1,0.93,0.72,a)
-                g.polygon("fill",-p.size,-p.size/2,p.size/2,-p.size,p.size,p.size/2,-p.size/2,p.size)
+                if D.kind~="player" then
+                    g.setBlendMode("add");g.setColor(col[1],col[2],col[3],a*0.16)
+                    g.circle("fill",0,0,p.size*3)
+                end
+                g.setBlendMode("alpha")
+                if D.kind=="player" then g.setColor(0.79,0.90,1,a*0.85)
+                else g.setColor(1,0.93,0.72,a) end
+                if D.kind=="player" then
+                    g.polygon("fill",0,-p.size*1.7,p.size*0.45,0,0,p.size*1.7,-p.size*0.45,0)
+                else g.polygon("fill",-p.size,-p.size/2,p.size/2,-p.size,p.size,p.size/2,-p.size/2,p.size) end
                 g.pop()
             else
                 g.setBlendMode("alpha");g.setColor(col[1],col[2],col[3],a*0.8)
@@ -190,56 +228,85 @@ function D.drawParticles()
     end
     g.pop()
 end
-function D.cardProgress() return D.kind=="player" and ramp(D.age,0.16,0.85) or 0 end
+function D.cardProgress() return D.kind=="player" and ramp(D.age,0.16,1.12) or 0 end
 function D.uiProgress() return D.kind=="player" and ramp(D.age,C.player.buttonsAt,C.player.duration) or 1 end
+function D.infoProgress() return D.kind=="player" and ramp(D.age,C.player.textAt+0.28,C.player.buttonsAt+0.12) or 1 end
 function D.drawCard(UI,card,x,y,w,h,index)
-    local g=love.graphics;local p=D.cardProgress()
-    g.push("all");g.translate(x+w/2,y+h/2+C.player.cardDrop*p)
-    g.rotate((index%2==0 and -1 or 1)*C.player.cardTilt*p);g.translate(-x-w/2,-y-h/2)
+    local g=love.graphics;local delay=math.min(index-1,7)*C.player.cardStagger
+    local p=ramp(D.age,0.16+delay,1.12+delay);local direction=index%2==0 and -1 or 1
+    local motion=D.reducedMotion and 0.20 or 1
+    local recoil=math.sin(ramp(D.age,D.stop,0.30)*math.pi)*7
+    g.push("all");g.translate(x+w/2+direction*C.player.cardSpread*p*motion,y+h/2+(C.player.cardDrop*p-recoil)*motion)
+    g.rotate(direction*C.player.cardTilt*p*motion);g.translate(-x-w/2,-y-h/2)
     UI.CardPhysics.suspend();UI.drawCard(card,x,y,w,h);UI.CardPhysics.resume()
-    g.setShader();g.setColor(0.025,0.023,0.04,p*0.72);g.rectangle("fill",x,y,w,h,6,6)
+    g.setShader();g.setColor(0.025,0.023,0.04,p*0.82);g.rectangle("fill",x,y,w,h,6,6)
     g.pop()
 end
 function D.drawPlayer(UI)
     if D.kind~="player" then return end
-    local g=love.graphics;local t=D.age;local collapse=D.cardProgress()
+    local g=love.graphics;local t=D.age
     g.push("all");g.setShader()
-    -- Layered bottom fog closes around the cards while the victor stays readable.
-    local dim=ramp(t,0.08,1.2)*C.player.dim
-    g.setColor(C.player.shadow[1],C.player.shadow[2],C.player.shadow[3],dim);g.rectangle("fill",0,0,1280,720)
-    for i=1,18 do
-        local a=ramp(t,0.15,0.95)*(i/18)*0.038
-        g.setColor(0.008,0.009,0.018,a);g.rectangle("fill",0,720-i*27,1280,i*27)
-    end
-    for i=1,12 do
-        local a=C.overlay.vignette*ramp(t,0.04,0.95)/12
-        g.setColor(0.005,0.006,0.015,a)
-        g.rectangle("fill",0,0,1280,i*9);g.rectangle("fill",0,720-i*9,1280,i*9)
-        g.rectangle("fill",0,0,i*12,720);g.rectangle("fill",1280-i*12,0,i*12,720)
+    local close=ramp(t,0.06,1.42)
+    local impact=(1-ramp(t,0.035,0.28))*(D.reducedMotion and 0.12 or 0.65)
+    if D.playerShader and Light.radial then
+        D.playerShader:send("progress",close);D.playerShader:send("elapsed",D.reducedMotion and 0 or D.clock)
+        D.playerShader:send("impact",impact);D.playerShader:send("shadow",C.player.shadow)
+        D.playerShader:send("darkness",C.player.dim)
+        g.setShader(D.playerShader);g.setColor(1,1,1,1)
+        g.draw(Light.radial,0,0,0,1280/Light.radial:getWidth(),720/Light.radial:getHeight());g.setShader()
+    else
+        g.setColor(C.player.shadow[1],C.player.shadow[2],C.player.shadow[3],close*C.player.dim)
+        g.rectangle("fill",0,0,1280,720)
+        for i=1,24 do
+            g.setColor(0.005,0.006,0.015,C.overlay.vignette*close/24)
+            g.rectangle("fill",0,0,1280,i*5);g.rectangle("fill",0,720-i*5,1280,i*5)
+            g.rectangle("fill",0,0,i*7,720);g.rectangle("fill",1280-i*7,0,i*7,720)
+        end
     end
     g.setBlendMode("add")
-    Light.glow(D.x,D.y,C.player.coreRadius*(1+collapse*1.4),C.player.soul,(1-collapse)*0.34)
-    g.setLineWidth(1.5);g.setColor(0.48,0.62,0.80,(1-collapse)*0.65)
-    for i=1,7 do
-        local angle=i*math.pi*2/7
-        local r=C.player.coreRadius*(1-collapse*0.4)
-        g.line(D.x+math.cos(angle)*r,D.y+math.sin(angle)*r,D.x+math.cos(angle)*(r+18+collapse*55),D.y+math.sin(angle)*(r+18+collapse*55))
+    local burst=ramp(t,C.player.collapseAt,C.player.collapseAt+0.70)
+    local energy=ramp(t,0.015,0.09)*(1-ramp(t,0.22,0.90))
+    Light.glow(D.x,D.y,C.player.coreRadius*(0.8+burst*2.6),C.player.soul,energy*0.65)
+    Light.glow(D.x,D.y,32,C.player.soul,energy*0.9)
+    if not D.reducedMotion then
+        local wave=ramp(t,C.player.collapseAt,C.player.collapseAt+0.85)
+        g.setLineWidth(1.5);g.setColor(0.64,0.81,1,math.sin(wave*math.pi)*(1-wave)*0.48)
+        g.ellipse("line",D.x,D.y+8,28+wave*300,9+wave*76)
+    end
+    for i=1,9 do
+        local angle=i*math.pi*2/9
+        local travel=D.reducedMotion and 0 or burst*48
+        local x=D.x+math.cos(angle)*travel;local y=D.y+math.sin(angle)*travel*0.6
+        local radius=C.player.coreRadius*(1-burst*0.35)
+        g.setLineWidth(1.3);g.setColor(0.67,0.83,1,energy*0.62)
+        g.arc("line","open",x,y,radius,angle,angle+0.38,12)
     end
     g.setBlendMode("alpha");D.drawParticles()
     local reveal=ramp(t,C.player.textAt,C.player.textAt+C.player.textFade)
     if reveal>0 then
-        -- A broken seal, title and lingering dust replace a flat modal.
-        g.setColor(0.49,0.38,0.43,reveal*0.14);g.setLineWidth(1)
+        -- The seal settles before the information and retry action appear.
+        g.push();g.translate(640,270);g.scale(2,1)
+        Light.glow(0,0,240,C.player.shadow,reveal*0.72);g.pop()
+        g.setBlendMode("add")
+        Light.glow(640,220,260,{0.46,0.18,0.17},reveal*0.20)
+        g.setColor(0.61,0.40,0.34,reveal*0.24);g.setLineWidth(1)
         for i=1,9 do local a=i*math.pi*2/9
-            g.arc("line","open",640,C.overlay.sigilY,92,a,a+0.43)
+            local drift=D.reducedMotion and 0 or (1-reveal)*0.12
+            g.arc("line","open",640,C.overlay.sigilY,113+(1-reveal)*14,a+drift,a+drift+0.43)
         end
+        g.setBlendMode("alpha")
+        g.setColor(0.74,0.52,0.39,reveal*0.60)
+        local span=148*reveal
+        g.line(640-span-18,153,622,153);g.line(658,153,658+span,153)
+        g.polygon("line",640,147,646,153,640,159,634,153)
         for i=1,C.overlay.dust do
             local x=380+random(i)*520;local y=140+(random(i+32)*270-(D.clock or t)*(3+random(i)*5))%270
             g.setColor(0.63,0.55,0.52,reveal*0.16);g.circle("fill",x,y,1+random(i+5))
         end
-        g.push();g.translate(640,C.overlay.textY);local scale=1+(1-reveal)*0.055;g.scale(scale)
+        g.push();g.translate(640,C.overlay.textY+(D.reducedMotion and 0 or (1-reveal)*9))
+        local scale=1+(D.reducedMotion and 0 or (1-reveal)*0.085);g.scale(scale)
         g.setFont(UI.fonts.huge);g.setColor(0,0,0,reveal*0.9);g.printf(C.overlay.title,-640,4,1280,"center")
-        g.setColor(0.77,0.57,0.55,reveal);g.printf(C.overlay.title,-640,0,1280,"center");g.pop()
+        g.setColor(0.88,0.65,0.57,reveal);g.printf(C.overlay.title,-640,0,1280,"center");g.pop()
     end
     g.pop()
 end

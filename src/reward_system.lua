@@ -2,6 +2,7 @@ local UI = require("src.ui")
 local Sound = require("src.sound")
 local Deities = require("src.deities")
 local Visual = require("config.visual_config")
+local Effects = require("ui.reward_effects")
 
 local RewardSystem = {}
 
@@ -378,9 +379,9 @@ function RewardSystem.newAnimation(breakdown, result)
     if breakdown.factionBonus > 0 then lines[#lines + 1] = {label = "VIỆN TRỢ VALORIA", valNum = breakdown.factionBonus} end
     local slots = {}
     for _, reward in ipairs(result.loot) do
-        slots[#slots + 1] = {reward = reward, chest = reward.type == "CHEST"}
+        slots[#slots + 1] = {reward = reward, chest = reward.type == "CHEST", effect = Effects.profile(reward)}
         local parentIndex = #slots
-        for _, child in ipairs(reward.children or {}) do slots[#slots + 1] = {reward = child, parent = reward, parentIndex = parentIndex} end
+        for _, child in ipairs(reward.children or {}) do slots[#slots + 1] = {reward = child, parent = reward, parentIndex = parentIndex, effect = Effects.profile(child)} end
     end
     local anim = {breakdown = breakdown, result = result, lines = lines, slots = slots, coins = {},
         state = "ENTER", timer = 0, phaseTime = 0, revealedCount = 0, revealedLoot = 0,
@@ -399,8 +400,8 @@ local function visualRandom(anim)
 end
 
 local function burst(anim, anchor, color, count, power)
-    if not Visual.effects.particles then return end
-    local limit = Config.presentation.maxSparks
+    if not Visual.enabled or not Visual.effects.particles then return end
+    local limit = math.min(Config.presentation.maxSparks, (Visual.qualities[Visual.quality] or Visual.qualities.HIGH).particles)
     for _ = 1, math.min(count, math.max(0, limit - #anim.sparks)) do
         local angle = visualRandom(anim) * math.pi * 2
         local speed = (35 + visualRandom(anim) * 85) * power
@@ -497,10 +498,12 @@ local function revealSlot(anim, index)
     anim.lootPage = math.ceil(index / 6)
     local reward = slot.reward
     local rarity = Config.rarities[reward.rarity] or Config.rarities.common
+    local effect = slot.effect
     anim.flares[index] = anim.timer
     if rarity.strength >= 3 then anim.highlightSlot, anim.highlightAt = index, anim.timer end
-    burst(anim, index, rarity.color, 6 + rarity.strength * 3, 0.7 + rarity.strength * 0.16)
-    Sound.play(slot.chest and "reward_chest_open" or (rarity.strength >= 3 and "reward_rare_reveal" or "reward_loot_reveal"))
+    burst(anim, index, effect.color, effect.particles, .65 + effect.level * .18)
+    Sound.play(effect.sound, effect.pitch)
+    anim.revealEvent = {profile = effect, index = index, started = anim.timer}
     if reward.type == "GOLD" then spawnCoins(anim, reward.amount, #anim.lines + 1) end
 end
 
@@ -548,12 +551,16 @@ function RewardSystem.update(anim, dt)
                 anim.lootPage = math.ceil((anim.revealedLoot + 1) / 6)
                 local slot = anim.slots[anim.revealedLoot + 1]
                 local rarity = Config.rarities[slot.reward.rarity] or Config.rarities.common
+                if slot.effect.kind == "ticket" and slot.effect.level >= 3 then Sound.play("score_charge", .8 + slot.effect.level * .04)
+                elseif slot.effect.kind == "chest" then Sound.play("chest_dissolve", .96) end
                 setState(anim, rarity.strength >= 3 and "RARE_REVEAL" or "LOOT_REVEAL")
             end
         elseif (state == "LOOT_REVEAL" or state == "RARE_REVEAL") then
             local slot = anim.slots[anim.revealedLoot + 1]
-            local wait = Config.lootInterval + (state == "RARE_REVEAL" and Config.rarePause or 0) + (slot.chest and 0.25 or 0)
-            if anim.phaseTime >= wait then revealSlot(anim, anim.revealedLoot + 1); setState(anim, "LOOT_PREPARE") end
+            if anim.phaseTime >= slot.effect.anticipation then revealSlot(anim, anim.revealedLoot + 1); setState(anim, "REWARD_HOLD") end
+        elseif state == "REWARD_HOLD" then
+            local effect = anim.slots[anim.revealedLoot].effect
+            if anim.phaseTime >= (Visual.enabled and effect.hold or math.min(.18, effect.hold)) then setState(anim, "LOOT_PREPARE") end
         elseif state == "SUMMARY" and #anim.coins == 0 and anim.phaseTime >= 0.24 then
             anim.displayTotal = anim.result.earnedGold
             anim.walletTotal = anim.breakdown.currentGold + anim.displayTotal
@@ -566,8 +573,9 @@ function RewardSystem.finishImmediately(anim)
     if not anim or anim.finished then return end
     anim.coins = {}
     anim.sparks, anim.flares, anim.goldFlare = {}, {}, 0
+    anim.revealEvent = nil
     anim.revealedCount, anim.revealedLoot = #anim.lines, #anim.slots
-    for _, slot in ipairs(anim.slots) do slot.revealedAt = anim.timer - 1 end
+    for _, slot in ipairs(anim.slots) do slot.revealedAt = anim.timer - 1; slot.suppressEffects = true end
     anim.totalRevealed, anim.finished, anim.buttonActive = true, true, true
     anim.displayTotal = anim.result.earnedGold
     anim.soulsCollected = anim.result.earnedSouls or 0
@@ -823,10 +831,10 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.setFont(UI.fonts.medium); g.setColor(gold); g.print("KHO BÁU CHIẾN LỢI PHẨM", x + 32, y + 302)
     g.setFont(UI.fonts.tiny); g.setColor(muted)
     local highlight = anim.highlightSlot and anim.slots[anim.highlightSlot]
-    if highlight and anim.timer - anim.highlightAt < 0.7 then
+    if highlight and anim.timer - anim.highlightAt < highlight.effect.duration then
         local rarity = Config.rarities[highlight.reward.rarity] or Config.rarities.common
         g.setColor(rarity.color)
-        g.printf("✦  " .. rarity.label .. "  ·  " .. highlight.reward.name, x + w - 522, y + 308, 490, "right")
+        g.printf("✦  " .. highlight.effect.label .. "  ·  " .. highlight.reward.name, x + w - 522, y + 308, 490, "right")
     else
         g.printf(anim.finished and "ĐÃ THU THẬP  /  " .. #anim.slots .. " PHẦN THƯỞNG" or "ĐANG MỞ PHẦN THƯỞNG", x + w - 332, y + 308, 300, "right")
     end
@@ -848,37 +856,17 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         local slot = anim.slots[i]
         local reward = slot.reward
         local rarity = Config.rarities[reward.rarity] or Config.rarities.common
+        local effect = slot.effect
         local sx, sy = startX + (i - first) * (slotW + gap), y + 326
         local revealed = i <= anim.revealedLoot
         local active = i == anim.revealedLoot + 1 and (anim.state == "RARE_REVEAL" or anim.state == "LOOT_REVEAL")
         local progress = revealed and math.min(1, (anim.timer - (slot.revealedAt or 0)) / 0.24) or 0
         local isHovered = revealed and inside(mx, my, sx, sy, slotW, slotH)
-        local flareAge = anim.timer - (anim.flares[i] or -100)
-        local flare = math.max(0, 1 - flareAge / Config.presentation.flareDuration)
+        local flareAge = slot.suppressEffects and effect.duration or anim.timer - (anim.flares[i] or -100)
+        local flare = math.max(0, 1 - flareAge / effect.duration)
         softGlow(sx + slotW / 2, sy + slotH, slotW * 0.6, 17, rarity.color, revealed and 0.2 or 0.04)
         panel(sx, sy, slotW, slotH)
-        g.setBlendMode("add")
-        if active or flare > 0 then
-            local intensity = active and (0.45 + math.sin(anim.phaseTime * 12) * 0.08) or flare
-            softGlow(sx + slotW / 2, sy + 90, 82, 86, rarity.color, intensity * 0.32)
-            g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], intensity * 0.07)
-            g.polygon("fill", sx + slotW * 0.4, sy + 90, sx + slotW * 0.6, sy + 90, sx + slotW * 0.85, sy - 24, sx + slotW * 0.15, sy - 24)
-            if flare > 0 then
-                local radius = 45 + (1 - flare) * 65
-                g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], flare * 0.55)
-                g.setLineWidth(1); g.ellipse("line", sx + slotW / 2, sy + 95, radius, radius * 0.4)
-                softGlow(sx + slotW / 2, sy + 89, 62 + (1 - flare) * 18, 74, rarity.color, flare * 0.38)
-                g.setColor(1, 0.95, 0.80, flare * 0.75)
-                g.line(sx + slotW / 2 - 58, sy + 75, sx + slotW / 2 + 58, sy + 75)
-                for ray = 1, rarity.strength * 3 do
-                    local angle = ray * math.pi * 2 / (rarity.strength * 3)
-                    g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], flare * 0.25)
-                    g.line(sx + slotW / 2 + math.cos(angle) * 24, sy + 72 + math.sin(angle) * 24,
-                        sx + slotW / 2 + math.cos(angle) * radius, sy + 72 + math.sin(angle) * radius)
-                end
-            end
-        end
-        g.setBlendMode("alpha")
+        if active or (revealed and flare > 0) then Effects.drawSlot(effect, sx + slotW / 2, sy + 94, flareAge, active, anim.timer) end
         g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], active and 0.18 + math.sin(anim.timer * 16) * 0.06 or 0.07)
         UI.drawRoundedRect("fill", sx - 4, sy - 4, slotW + 8, slotH + 8, 12)
         g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], revealed and 0.9 or active and 0.7 or 0.2)
@@ -928,6 +916,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             end
         end
         g.pop()
+        if revealed then Effects.counter(effect, flareAge, sx + slotW / 2, sy + 149, UI.fonts) end
         if slot.chest and active and anim.phaseTime > 0.18 then
             local dust = math.min(1, (anim.phaseTime - 0.18) / 0.3)
             for j = 1, 6 do
@@ -994,7 +983,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     UI.drawButton(exchange,not exchange.disabled and inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h))
     if inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h) then
         UI.descriptionCandidate={hoverKey=anim.result,name="QUY ĐỔI NHANH TẤT CẢ",
-            desc="Đổi toàn bộ rương/gói, quân bài và thẻ tiêu hao vừa nhận ở mọi trang thành vàng.\nChỉ đổi chiến lợi phẩm của trận này; vàng và linh hồn đã nhận được giữ nguyên.",color=gold}
+            desc="Đổi toàn bộ rương/gói, quân bài và thẻ tiêu hao vừa nhận ở mọi trang thành vàng.\nChỉ đổi chiến lợi phẩm của trận này; vàng, linh hồn và vé The Void đã nhận được giữ nguyên.",color=gold}
     end
     local btn = {id = "cashout_continue", text = anim.finished and "ĐẾN CỬA HÀNG  →" or "NHẬN NHANH PHẦN THƯỞNG", x = x + w - 362, y = y + h - 66, w = 330, h = 46,
         color = gold, font = UI.fonts.regular, variant = "gold"}
@@ -1008,6 +997,10 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.print(anim.result.bulkExchanged and "Đã thu vàng từ chiến lợi phẩm" or anim.finished and "Phần thưởng đã sẵn sàng" or "Đang thu thập phần thưởng", x + 32, y + h - 64)
     g.setFont(UI.fonts.tiny); g.setColor(muted)
     g.print(anim.finished and "ENTER / SPACE  ·  Tiếp tục hành trình" or "ENTER / SPACE / CLICK  ·  Nhận ngay", x + 32, y + h - 40)
+    if anim.revealEvent then
+        local event = anim.revealEvent
+        Effects.jackpot(event.profile, anim.timer - event.started, width, height, UI.fonts)
+    end
     g.pop()
 end
 

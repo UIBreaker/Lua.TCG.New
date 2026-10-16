@@ -101,5 +101,5 @@ local fullShop={items={{category="deity",deity=D.CATALOG.spirit_coin_wisp,cost=4
 assert(Shop.buyItem(fullShop,1,g) and g.gold==96 and #fullShop.items==0 and g.backpackDeities[1].id=="spirit_coin_wisp")
 Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},3)
 assert(D.getCount(g.deities)==5 and D.getMaxSlots(g)==5,"battle adds no overflow slot")
-assert(#D.getRandomShopPool({},99)==91)
+assert(#D.getRandomShopPool({},99)==96)
 print("SPN basics PASS: held heal, all-played gold, dynamic/evolved/copied speed, pre-hit armor, locks/caps, normal shop buy/sell, persistent evolution, no automatic grants and save safety")

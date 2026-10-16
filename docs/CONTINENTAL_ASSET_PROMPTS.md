@@ -5640,3 +5640,65 @@ Prompt: Create ONE production SPN card artwork, portrait 1024x1536 PNG, full ble
 Output: assets/cards/continental/spn/spirit_lone_procession.png
 
 Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-296fe696-5939-48e9-afa3-70bf962baf66.png
+
+## 2026-10-16 — SPN đội hình và sinh lực
+
+### Quân Lộ Sinh Linh — spirit_march_covenant
+
+Ability: Đánh thế Đường Hành Quân: +50 Sát thương và hồi 5% máu tối đa; tiến hóa tăng cả hai.
+
+Concept: A single towering spectral standard-bearer turns a straight expedition road into a living healing path.
+
+Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, full bleed 2:3, in the established Continental cinematic Western dark-fantasy expedition style. One dominant supernatural entity with a strong readable silhouette at 64px, medium detail and broad forms, quiet atmospheric background, restrained cinematic glow. Mechanic: Đánh thế Đường Hành Quân: +50 Sát thương và hồi 5% máu tối đa; tiến hóa tăng cả hai. Concept: A single towering spectral standard-bearer turns a straight expedition road into a living healing path. One dominant supernatural armored standard-bearer formed from translucent moss-green light, standing above a straight ancient western causeway. One large antique-gold spectral spear points along the road while a broad restrained green healing ribbon flows behind it, three distant small expedition silhouettes for scale, quiet forest continental cliffs. Artwork only. No text, digits, letters, ranks, suit symbols, UI, badge, card frame, border, watermark, Eastern fantasy roofs/calligraphy, dense micro-ornament, particle noise or blown-out white highlights.
+
+Output: assets/cards/continental/spn/spirit_march_covenant.png
+
+Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-68804913-cda1-4cfa-be75-d06df23838cf.png
+
+### Tiên Quân Hồi Trận — spirit_vanguard_reprise
+
+Ability: Đánh đúng 5 quân: mỗi quân ghi điểm kích hoạt tổng cộng bằng giá trị quân đầu theo thứ tự đánh, gồm lần gốc; chỉ lặp quân, không lặp điểm nền/SPN theo tay. Tiến hóa tăng hệ số lượt.
+
+Concept: A spectral vanguard commander echoes a five-sigil formation across an ancient battlefield.
+
+Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, full bleed 2:3, in the established Continental cinematic Western dark-fantasy expedition style. One dominant supernatural entity with a strong readable silhouette at 64px, medium detail and broad forms, quiet atmospheric background, restrained cinematic glow. Mechanic: Đánh 5 quân: tái kích hoạt thế đánh theo giá trị quân đầu tiên theo thứ tự đánh; tiến hóa tăng số lượt. Concept: A spectral vanguard commander echoes a five-sigil formation across an ancient battlefield. One dominant faceless silver-blue spectral commander standing at the FRONT of a formation of FIVE broad luminous stone sigils on a dark continental causeway. Two large separated translucent echoes of the SAME five-sigil formation recede behind it, lead sigil bright antique gold. Quiet navy western fortress ruins, clear broad forms and controlled glow, no literal numbers or playing-card frames. Artwork only. No text, digits, letters, ranks, suit symbols, UI, badge, card frame, border, watermark, Eastern fantasy roofs/calligraphy, dense micro-ornament, particle noise or blown-out white highlights.
+
+Output: assets/cards/continental/spn/spirit_vanguard_reprise.png
+
+Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-06a6980f-4923-4565-bfe6-f49da4163d73.png
+
+### Từ Tức Sinh Linh — spirit_breath_of_mercy
+
+Ability: Mỗi lần đánh hồi 5% máu tối đa; tiến hóa tăng phần trăm hồi.
+
+Concept: One gentle supernatural guardian breathes a single life-giving ribbon into an expedition camp.
+
+Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, full bleed 2:3, in the established Continental cinematic Western dark-fantasy expedition style. One dominant supernatural entity with a strong readable silhouette at 64px, medium detail and broad forms, quiet atmospheric background, restrained cinematic glow. Mechanic: Mỗi lần đánh hồi 5% máu tối đa; tiến hóa tăng phần trăm hồi. Concept: One gentle supernatural guardian breathes a single life-giving ribbon into an expedition camp. One large serene faceless supernatural guardian made of pale forest-green mist and silver leaves, rounded coherent silhouette, breathes a single broad emerald ribbon toward a small weathered expedition brazier near its chest, gentle living shoots surround the base. Quiet mossy western cloister ruins by a stream, green and antique-gold accent, no angel wings, no busy particles. Artwork only. No text, digits, letters, ranks, suit symbols, UI, badge, card frame, border, watermark, Eastern fantasy roofs/calligraphy, dense micro-ornament, particle noise or blown-out white highlights.
+
+Output: assets/cards/continental/spn/spirit_breath_of_mercy.png
+
+Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-a43e90bb-204c-4ae8-91ff-de17d430a263.png
+
+### Tứ Ảnh Chiến Phong — spirit_fourfold_edge
+
+Ability: Đánh đúng 4 quân: nhân đôi sát thương đóng góp của từng quân khi ghi điểm; tiến hóa tăng hệ số.
+
+Concept: A single four-armed spectral swordsman splits each of four blades into a paired energy edge.
+
+Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, full bleed 2:3, in the established Continental cinematic Western dark-fantasy expedition style. One dominant supernatural entity with a strong readable silhouette at 64px, medium detail and broad forms, quiet atmospheric background, restrained cinematic glow. Mechanic: Đánh đúng 4 quân: nhân đôi sát thương đóng góp của từng quân khi ghi điểm; tiến hóa tăng hệ số. Concept: A single four-armed spectral swordsman splits each of four blades into a paired energy edge. One dominant imposing FOUR-ARMED supernatural spectral swordsman made of restrained cyan mist and dark navy armor; each of its FOUR broad clearly separated blades has ONE coherent parallel silver energy edge, visual doubling of each blade. Glacial western bridge and quiet icy cliffs, cold silver-blue controlled rim light, clean silhouette, no Eastern motifs. Artwork only. No text, digits, letters, ranks, suit symbols, UI, badge, card frame, border, watermark, Eastern fantasy roofs/calligraphy, dense micro-ornament, particle noise or blown-out white highlights.
+
+Output: assets/cards/continental/spn/spirit_fourfold_edge.png
+
+Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-ce728ad6-3558-4f8a-82a5-50127d9c4d03.png
+
+### Tứ Trụ Đồng Tâm — spirit_quartet_oath
+
+Ability: Đánh đúng 4 quân cùng số: cùng chất ×4 Sát thương, khác chất ×4 Cường hóa; chỉ một nhánh. Tiến hóa tăng hệ số.
+
+Concept: One ancient guardian binds four matching monoliths with a dual gold-and-violet oath.
+
+Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, full bleed 2:3, in the established Continental cinematic Western dark-fantasy expedition style. One dominant supernatural entity with a strong readable silhouette at 64px, medium detail and broad forms, quiet atmospheric background, restrained cinematic glow. Mechanic: Đánh 4 quân cùng số hoặc cùng chất để nhân Cường hóa hoặc Sát thương; tiến hóa tăng hệ số. Concept: One ancient guardian binds four matching monoliths with a dual gold-and-violet oath. One dominant supernatural antique-gold and dark-violet guardian torso levitating above FOUR large identical western stone monoliths in a compact clear formation. One thick antique-gold square binds the monoliths and one restrained violet ribbon unifies their identical glowing cores. Ancient western continental fortress on a void cliff, quiet navy atmosphere, broad clear forms, medium detail. Artwork only. No text, digits, letters, ranks, suit symbols, UI, badge, card frame, border, watermark, Eastern fantasy roofs/calligraphy, dense micro-ornament, particle noise or blown-out white highlights.
+
+Output: assets/cards/continental/spn/spirit_quartet_oath.png
+
+Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-dc65de6f-f1f6-4336-9d42-a4c7bd3631d1.png

@@ -1,4 +1,5 @@
 -- lovec.exe . --test-reward-ceremony; capture mode never writes player saves.
+if os.getenv("POKER_REWARD_FX_CAPTURE")=="1" then return require("tests.reward_effects_capture") end
 local Reward = require("src.reward_system")
 local Sound = require("src.sound")
 local Deck = require("src.deck")
@@ -46,7 +47,9 @@ function Test.update(game, callbacks)
         C.tables.golden_chest = {rolls = {2, 2}, entries = {{id = "itm_pack", weight = 1}}}
         callbacks.openReward("capture")
         local anim, state = callbacks.getRewardAnimation()
-        assert(state == "CASH_OUT" and #anim.slots == 6 and #game.rewardPacks == 4)
+        assert(state == "CASH_OUT" and #anim.slots == 7 and #game.rewardPacks == 4)
+        local ticket=anim.slots[7].reward
+        assert(ticket.type=="VOID_TICKET" and ticket.amount>=1 and ticket.amount<=100)
         assert(anim.breakdown.bossVictoryBonus==10 and anim.result.earnedSouls==4 and #anim.lines==6)
         gold, before = game.gold, #game.persistentDeck
         originalRng = require("src.rng").getState()
@@ -70,6 +73,7 @@ function Test.update(game, callbacks)
     elseif stage == "summary" then
         local anim = callbacks.getRewardAnimation()
         if not anim.finished then nextStage("summary", 0.1); return end
+        if anim.lootPage~=1 then Reward.changePage(anim,-1);nextStage("summary",0.1);return end
         assert(anim.finished and anim.displayTotal == anim.result.earnedGold and game.gold == gold)
         assert(require("src.rng").getState() == originalRng, "drawing cannot alter gameplay RNG")
         shot("shot_reward_summary.png")
@@ -143,7 +147,7 @@ function Test.update(game, callbacks)
         C.tables.capture={rolls={4,4},entries={{id="rare_reward",weight=1}}}
         callbacks.openReward("capture")
         local anim=callbacks.getRewardAnimation()
-        assert(#anim.slots==12 and #game.rewardPacks==8)
+        assert(#anim.slots==13 and #game.rewardPacks==8)
         love.keypressed("space")
         gold=game.gold;originalRng=require("src.rng").getState()
         nextStage("overflow_first",0.2)
@@ -169,6 +173,7 @@ function Test.update(game, callbacks)
         assert(callbacks.getRewardAnimation().lootPage==2)
         nextStage("bulk_click",0.2)
     elseif stage == "bulk_click" then
+        local tickets=game.voidTickets
         local expected=Reward.getBulkExchangeGold(game,callbacks.getRewardAnimation().result)
         assert(expected==16)
         clickButton(callbacks,"cashout_exchange_all")
@@ -176,6 +181,7 @@ function Test.update(game, callbacks)
         local anim,state=callbacks.getRewardAnimation()
         assert(state=="CASH_OUT" and anim.finished and game.gold==gold+expected and #game.rewardPacks==0)
         assert(anim.displayTotal==anim.result.earnedGold and anim.walletTotal==game.gold)
+        assert(game.voidTickets==tickets,"bulk exchange must keep boss tickets")
         assert(require("src.rng").getState()==originalRng)
         gold=game.gold
         nextStage("bulk_shot",0.3)

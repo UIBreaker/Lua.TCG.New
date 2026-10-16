@@ -114,5 +114,5 @@ for _,row in ipairs(V.entries) do
     g.monster.isBoss=true;g.monster.bossState={handIndex=1,passiveUntil=0,slotLock={kind="spn",slot=5,untilHand=1}}
     assert(not step(score(g,h),row[1]),row[1].." boss lock")
 end
-assert(#D.getRandomShopPool({},99)==91)
+assert(#D.getRandomShopPool({},99)==96)
 print("SPN velocity PASS: six cards, guaranteed hit, area damage, miss speed, last hand, save/load, evolution and locks")

@@ -91,4 +91,15 @@ for key=1,5 do
 end
 Feel.labKeypressed("escape",ui)
 assert(not Feel.labOpen)
+do
+    local Game=require("src.game_state");local Abilities=require("src.card_abilities")
+    for _,same in ipairs({false,true}) do
+        local game=Game.new();game.hand={};game.deities={}
+        for i=1,4 do local card=Deck.newCard(7,same and "spades" or ({"spades","hearts","clubs","diamonds"})[i]);card.disableFactionPassives=true;game.hand[i]=card end
+        game.monster={hp=100000,maxHp=100000,attack=0,attackSpeed=1};Abilities.start(game)
+        assert(Deities.addDeity(game,Deities.CATALOG.spirit_fourfold_edge,1));assert(Deities.addDeity(game,Deities.CATALOG.spirit_quartet_oath,2))
+        local result=Scoring.calculate(assert(Poker.evaluate(game.hand)),game.deities,{gameState=game,monster=game.monster})
+        run(result,game.hand,game.deities,60,false);run(result,game.hand,game.deities,144,true)
+    end
+end
 print("Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all three Nen Lab tiers passed")

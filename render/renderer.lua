@@ -77,7 +77,7 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
         C.enabled and 1+zoom or 1)
     local collapse=death and death.kind=="player" and death.cardProgress() or 0
     Lighting.presentationDim=collapse*(death and death.config.player.torchDim or 0)
-    if collapse>0 and C.enabled then Camera.focus(0,death.config.player.drift*collapse,1+death.config.player.zoom*collapse) end
+    if collapse>0 and C.enabled and not death.reducedMotion then Camera.focus(0,death.config.player.drift*collapse,1+death.config.player.zoom*collapse) end
     Camera.update(dt,C.enabled and not reduced and Scene.preset.cameraIdle or 0,C.enabled and not reduced and impulseX or 0,C.enabled and not reduced and impulseY or 0)
 end
 function R.beginFrame(previousFrame)

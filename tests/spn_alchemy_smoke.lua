@@ -119,5 +119,5 @@ for _,id in ipairs({amp,eternal}) do
     assert(require("src.loadout").move(g,"spn","reserve",1,1,false));D.evolve(g.deities[1])
     loaded=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")));assert(loaded.deities[1].id==id and loaded.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==91)
+assert(#D.getRandomShopPool({},99)==96)
 print("SPN alchemy PASS: all potion magnitudes/durations, evolution/chance boundaries, one shared proc, confirmed speed target, permanent sync/no double bonus/save/next battle/drone, preview/RNG, ineligible/failed use, locks/reserve/copies/blood/caps/shop")

@@ -59,10 +59,7 @@ local function preview(handInfo, deities, context)
         if g and g.abilityCombat and g.abilityCombat.playIndex ~= nil then
             g.deities = ds or {}
             g.monster = ctx.monster or g.monster
-            local played = {}
-            for _, group in ipairs({h.scoringCards or {}, h.unscoredCards or {}}) do
-                for _, c in ipairs(group) do played[#played + 1] = c end
-            end
+            local played = require("src.spn_formations").played(h)
             if not g.abilityHand or g.abilityHand.finished or g.abilityHand.cursor > 0 then
                 Abilities.beginHand(g, h, played, g.abilityApproved)
                 g.handsRemaining = ctx.handsAfterPlay or math.max(0, (g.handsRemaining or 1) - 1)
@@ -930,6 +927,7 @@ function Scoring.calculate(handInfo, deities, context)
                 end
             end
             end -- Card modifiers.
+            bonusChips=require("src.spn_formations").scaleCard(handInfo,deities,abilityGame,card,idx,cardEvent,before.chips,bonusChips)
             local strength=job.effectiveness or 1
             if strength~=1 then
                 bonusChips=before.chips+(bonusChips-before.chips)*strength

@@ -97,6 +97,6 @@ for _,row in ipairs(T.entries) do
     assert(require("src.shop").buyItem({items={{category="deity",deity=D.CATALOG[row[1]],cost=4}}},1,g))
     assert(require("src.loadout").move(g,"spn","reserve",1,1,false));assert(D.evolve(g.deities[1]))
 end
-assert(#D.getRandomShopPool({},99)==91)
+assert(#D.getRandomShopPool({},99)==96)
 print("SPN predators PASS: shared source repeats/evolution/gaps/chains/caps/locks; speed steal/every played card/floor/ownership/hidden permanent destruction; per-hand adjacent offering/saved growth/upgrade; pure preview/shop/reserve/save")
 return true

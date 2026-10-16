@@ -30,9 +30,20 @@ The scene and victorious enemy remain visible; cards slump/tilt/darken, soul
 light breaks apart, fog and vignette close, practical lights weaken and camera
 drifts/zooms slightly. Played card references are retained when the hand is empty,
 including a lethal enemy pre-score attack. No card attributes are changed for
-the effect. Title reveals at 0.98 s, information/buttons at 1.42 s and the existing
-gameover/retry handler becomes active at 1.70 s. Dust continues drifting after
-settle. Retry uses the original menu flow.
+the effect. A short impact leads into a broken soul ring, a floor shockwave and
+slender soul fragments with trails. Cards recoil, then slump with a 45 ms stagger.
+The single-pass `shaders/player_defeat_veil.glsl` closes a continuous vignette and
+slow bottom fog; a layered overlay remains available without that shader.
+Title reveals at 1.10 s, information at 1.38 s, buttons at 1.76 s and the existing
+gameover/retry handler becomes active at 2.15 s. The button fades directly rather
+than being covered by an opaque rectangle. Dust continues drifting after settle.
+Retry uses the original menu flow.
+Starting the next combat clears the previous scoring/enemy-turn presentation so
+a lethal turn cannot leave the new encounter blocked by an old animation.
+
+Player particle positions are evaluated from elapsed time, so trajectories match
+at different frame rates. Reduced motion suppresses the new camera kick, drift,
+zoom and shockwave, and reduces card/particle travel while retaining the reveals.
 
 ## Audio
 
@@ -75,6 +86,10 @@ has no image to draw.
 & '../love-11.5-win64/lovec.exe' . --test-death-vfx
 # Quick player sequence replay (no real HP change)
 & '../love-11.5-win64/lovec.exe' . --test-death-vfx --death-preview-only
+# Player shader fallback / reduced-motion previews
+& '../love-11.5-win64/lovec.exe' . --test-death-vfx --death-preview-only --death-veil-fallback
+& '../love-11.5-win64/lovec.exe' . --test-death-vfx --death-preview-only --death-reduced-motion
+lua tests/death_vfx_smoke.lua
 ```
 
 The capture harness replays mini/elite/boss, player defeat, actual mini/boss kills
@@ -83,9 +98,17 @@ hand exhaustion, all three quality levels and a forced shader fallback. It check
 damage applies once, rewards wait for settle, encounter count advances once,
 defeat grants no gold, all particle families exist and audio hooks resolve.
 Save write/delete methods are stubbed in this harness before gameplay callbacks.
-Screenshots and local performance measurements are in docs/death_*.png and
+Polished player screenshots use docs/death_polished_player_*.png; original
+docs/death_player_*.png remain as the visual baseline. Local performance is in
 docs/death_performance.log. These measure uncapped wall-clock frame intervals
 on this machine with the full battle UI, not a guarantee for other hardware.
+The headless smoke check compares player particle positions at 30/144 Hz and
+checks reveal order, one-shot audio, reduced motion and all particle caps.
+The polished sequence passed all six combat integration cases, all quality
+levels, audio hooks, player shader compilation, reduced-motion preview and the
+player/enemy shader fallbacks on 2026-10-16. The VFX harness forces hits and attack
+intents to exercise lethal paths without random misses or support actions, and
+checks resolved damage rather than assuming boss defenses preserve raw score.
 
 Checkpoint runtime checks passed for basic enemy, polished enemy presets,
 basic player, polished player, and final integration/fallback/quality.

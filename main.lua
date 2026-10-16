@@ -63,6 +63,8 @@ for _, a in ipairs(arg or {}) do
         if not predatorsOk then failed=true;print("tests.spn_predators_smoke FAIL: "..tostring(predatorsErr)) end
         local reservesOk,reservesErr=pcall(require,"tests.spn_reserves_smoke")
         if not reservesOk then failed=true;print("tests.spn_reserves_smoke FAIL: "..tostring(reservesErr)) end
+        local formationsOk,formationsErr=pcall(require,"tests.spn_formations_smoke")
+        if not formationsOk then failed=true;print("tests.spn_formations_smoke FAIL: "..tostring(formationsErr)) end
         for _,name in ipairs({"tests.continental52_smoke","tests.gameplay_expansion_smoke","tests.bed_speed_smoke",
             "tests.inventory_expansion_smoke","tests.soul_shop_smoke","tests.spectral_persistence_smoke",
             "tests.editions_smoke","tests.spn_tactics_smoke","tests.spn_anomalies_smoke","tests.spn_convergence_smoke","tests.spn_velocity_smoke","tests.spn_provisions_smoke","tests.spn_discard_smoke","tests.spn_souls_smoke","tests.spn_legacy_smoke","tests.spn_twin_fang_smoke","tests.spn_mimic_smoke","tests.spn_basics_smoke","tests.spn_turns_smoke","tests.spn_pacts_smoke"}) do
@@ -199,6 +201,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-spn-elements-ui" then isCaptureMode = true end
     if a == "--test-spn-predators-ui" then isCaptureMode = true end
     if a == "--test-spn-reserves-ui" then isCaptureMode = true end
+    if a == "--test-spn-formations-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -906,6 +909,7 @@ end
 
 local function initializeCombat(monster, round)
     UI.ScoringFeel.cancel(anim)
+    anim.active, anim.enemyTurn = false, nil
     local result = Combat.start(game, monster, round)
     if result.slaughterChips > 0 then
         table.insert(anim.floatingTexts, {
@@ -1122,7 +1126,7 @@ end
 
 local function beginPlayerDefeat(played)
     if state == "defeating" then return end
-    DeathVFX.startPlayer(UI.BATTLE_CENTER_X, Renderer.quality)
+    DeathVFX.startPlayer(UI.BATTLE_CENTER_X, Renderer.quality, settings.reducedMotion)
     DeathVFX.monster = game.monster
     DeathVFX.cards = {}
     if #(game.hand or {}) == 0 then
@@ -2344,6 +2348,11 @@ function love.load()
             if not ok then print("SPN ALCHEMY ART FAIL: "..tostring(err)) end
             os.exit(ok and 0 or 1)
         end
+        if argument=="--test-spn-formations-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_march_covenant","spirit_vanguard_reprise","spirit_breath_of_mercy","spirit_fourfold_edge","spirit_quartet_oath"},"docs/spn_formations_runtime.png") end)
+            if not ok then print("SPN formations art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
+        end
         if argument=="--test-spn-reserves-art" then
             local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_ashen_legacy","spirit_unspent_fury","spirit_gilded_weight","spirit_open_horizon","spirit_lone_procession"},"docs/spn_reserves_runtime.png") end)
             if not ok then print("SPN reserves art FAIL: "..tostring(err)) end
@@ -3287,7 +3296,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.135.0", 48, 185)
+    g.print("beta 0.136.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -6055,13 +6064,14 @@ local function drawChestReveal()
 end
 
 local function drawGameOverState()
-    local winW, winH = love.graphics.getDimensions()
     if DeathVFX.kind == "player" then
         DeathVFX.drawPlayer(UI)
     else Renderer.veil() end
 
     local mx, my = toVirtual(love.mouse.getPosition())
     local reveal = DeathVFX.uiProgress()
+    local info = DeathVFX.infoProgress()
+    local slide = DeathVFX.kind == "player" and not DeathVFX.reducedMotion and (1-info)*10 or 0
 
     if DeathVFX.kind ~= "player" then
         love.graphics.setFont(UI.fonts.huge)
@@ -6070,12 +6080,12 @@ local function drawGameOverState()
     end
 
     love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(0.85, 0.82, 0.83, reveal)
-    love.graphics.printf("Dừng bước tại Round " .. game.round .. " trước " .. (game.monster and game.monster.name or "Quái Vật"), 0, 240, V_WIDTH, "center")
+    love.graphics.setColor(0.85, 0.82, 0.83, info)
+    love.graphics.printf("Dừng bước tại Round " .. game.round .. " trước " .. (game.monster and game.monster.name or "Quái Vật"), 80, 250+slide, V_WIDTH-160, "center")
 
     love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(0.63,0.61,0.67,reveal)
-    love.graphics.printf("Máu quái còn lại: " .. (game.monster and game.monster.hp or 0) .. " HP", 0, 290, V_WIDTH, "center")
+    love.graphics.setColor(0.63,0.61,0.67,info)
+    love.graphics.printf("Máu quái còn lại: " .. (game.monster and game.monster.hp or 0) .. " HP", 0, 300+slide, V_WIDTH, "center")
 
     buttons = {}
     local btnRetry = {
@@ -6090,9 +6100,13 @@ local function drawGameOverState()
     }
     if reveal > 0 then
         table.insert(buttons, btnRetry)
+        love.graphics.push("all")
+        if DeathVFX.uiShader then
+            DeathVFX.uiShader:send("opacity",reveal);love.graphics.setShader(DeathVFX.uiShader)
+        end
+        if not DeathVFX.reducedMotion then love.graphics.translate(0,(1-reveal)*12) end
         UI.drawButton(btnRetry, state == "gameover" and mx >= btnRetry.x and mx <= btnRetry.x + btnRetry.w and my >= btnRetry.y and my <= btnRetry.y + btnRetry.h)
-        love.graphics.setColor(0.012,0.013,0.024,(1-reveal)*0.97)
-        love.graphics.rectangle("fill",btnRetry.x-2,btnRetry.y-2,btnRetry.w+4,btnRetry.h+4,6,6)
+        love.graphics.pop()
     end
 end
 

@@ -9,25 +9,53 @@ Persistence.saveRun=function() return true end
 Persistence.saveSettings=function() return true end
 local preset=1;local presets={"mini","elite","boss"}
 local case=0;local cases={"kill_mini","kill_boss","pre_score_death","counter_death","end_turn_death","needle_exhaustion"}
-local lastHp,impacts,seen,expected,originalGold,encounters
+local lastHp,impacts,seen,resolvedDamage,attackCalls,originalGold,encounters
+local Combat=require("src.combat")
+-- Exercise lethal hits rather than the accuracy lottery in this VFX harness.
+Combat.getHitChance=function() return 1 end
+local resolvePlayerAttack=Combat.resolvePlayerAttack
+Combat.resolvePlayerAttack=function(...)
+    local damage,defeated,splash,result=resolvePlayerAttack(...)
+    resolvedDamage=damage;attackCalls=(attackCalls or 0)+1
+    return damage,defeated,splash,result
+end
 local qualityIndex=1;local qualities={"LOW","MEDIUM","HIGH"};local samples={};local savedShader
 local previewOnly=false
-for _,value in ipairs(arg or {}) do if value=="--death-preview-only" then previewOnly=true end end
+local reducedPreview,veilFallback=false,false
+local playerShots={}
+for _,value in ipairs(arg or {}) do
+    if value=="--death-preview-only" then previewOnly=true end
+    if value=="--death-reduced-motion" then reducedPreview=true end
+    if value=="--death-veil-fallback" then veilFallback=true end
+end
 local Sound=require("src.sound")
 local function shot(name)
+    if reducedPreview or veilFallback then
+        if name~="player_collapse" and name~="player_settled" then return end
+        name=name..(veilFallback and "_fallback" or "_reduced")
+    end
     love.graphics.captureScreenshot(function(data)
-        local f=assert(io.open("docs/death_"..name..".png","wb"));f:write(data:encode("png"):getString());f:close()
+        local png=data:encode("png"):getString()
+        local f=assert(io.open("docs/death_polished_"..name..".png","wb"))
+        assert(f:write(png));assert(f:close())
     end)
 end
 function T.update(game,cb)
     elapsed=elapsed+love.timer.getDelta()
-    assert(elapsed<16,"death test timeout, phase "..phase.." case "..case)
+    local currentAnim,currentState=cb.getScoringState()
+    assert(elapsed<16,"death test timeout, phase "..phase.." case "..case.." state "..tostring(currentState)
+        .." hands "..tostring(game.handsRemaining).." enemyTurn "..tostring(currentAnim.enemyTurn~=nil)
+        .." passive "..tostring(require("src.boss_abilities").passiveEnabled(game.monster)))
     if phase==0 then
         cb.startNewGame("red_deck");cb.startMonsterEncounter(20,true)
         assert(D.shader,D.shaderError);D.startEnemy(game.monster,640,R.quality)
         D.reset();game.monster.isBoss=false;game.monster.isElite=false;D.startEnemy(game.monster,640,R.quality)
         phase=1;elapsed=0
-        if previewOnly then D.reset();game.monster.isBoss=true;cb.previewPlayerDefeat();phase=2 end
+        if previewOnly then
+            D.reset();game.monster.isBoss=true;cb.previewPlayerDefeat();phase=2
+            D.reducedMotion=reducedPreview
+            if veilFallback then D.playerShader=nil end
+        end
     elseif phase==1 then
         if D.age>0.36 and not captured then shot("enemy_break_"..presets[preset]);captured=true end
         if elapsed>1.8 then
@@ -45,8 +73,13 @@ function T.update(game,cb)
         end
     elseif phase==2 then
         local _,state=cb.getScoringState()
+        assert(veilFallback or D.playerShader,"player veil shader must compile")
+        assert(D.uiShader,"defeat UI fade shader must compile")
+        for _,frame in ipairs({{"player_impact",0.09},{"player_soul_break",0.38},{"player_title",1.44}}) do
+            if D.age>=frame[2] and not playerShots[frame[1]] then shot(frame[1]);playerShots[frame[1]]=true end
+        end
         if D.age>0.64 and not captured then shot("player_collapse");captured=true end
-        if elapsed>1.9 then
+        if elapsed>D.config.player.duration+0.2 then
             assert(state=="gameover","defeat must settle into existing gameover")
             assert(D.ambience and D.text and D.burst)
             shot("player_settled");print("Death VFX player runtime PASS");phase=3;elapsed=0
@@ -59,6 +92,7 @@ function T.update(game,cb)
         game.monster.maxHp,game.monster.damageLagHp=game.monster.hp,game.monster.hp
         game.monster.attackSpeed=case==3 and 999 or 0
         game.monster.attack=case==6 and 0 or 10
+        game.monster.enemyInventory=nil;game.monster.intent={type="attack"}
         game.playerHp=(case>=3 and case<=5) and 1 or 100
         game.maxPlayerHp=100;game.playerArmor=0;game.playerShield=0;game.deities={}
         local card=require("src.deck").newCard(8,"hearts")
@@ -69,8 +103,13 @@ function T.update(game,cb)
         originalGold=game.gold;encounters=game.monsterEncounterCount
         if case==5 then
             game.hand={};game.deck={require("src.deck").newCard(9,"hearts")};assert(cb.endPlayerTurn())
-        else cb.selectCardIndex(1);cb.playSelectedHand() end
-        local anim=cb.getScoringState();expected=anim.scoringData and anim.scoringData.finalScore
+        else
+            cb.selectCardIndex(1);cb.playSelectedHand()
+            local anim,state=cb.getScoringState()
+            assert(state=="scoring" or anim.enemyTurn,"fixture must start scoring, active="..tostring(anim.active)
+                .." selected="..#game.selectedIndices)
+        end
+        resolvedDamage,attackCalls=nil,0
         lastHp=game.monster.hp;impacts=0;seen=false;phase=4;elapsed=0;captured=false
     elseif phase==4 then
         local anim,state=cb.getScoringState()
@@ -85,7 +124,8 @@ function T.update(game,cb)
             end
             if state~="scoring" then
                 assert(seen and game.monster.hp==0);assert(impacts==1)
-                assert(anim.damageDealt==expected,"unchanged actual damage")
+                -- Boss defenses can change raw score; compare the resolved combat hit.
+                assert(attackCalls==1 and anim.damageDealt==resolvedDamage,"one unchanged resolved damage hit")
                 assert(game.monsterEncounterCount==encounters+1,"victory applied once")
                 assert(state=="CASH_OUT" and game.gold>=originalGold,"existing reward flow")
                 print("Death integration "..cases[case].." PASS")

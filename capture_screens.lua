@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-spn-formations-ui" then
+            local ok,err=xpcall(function() require("tests.spn_formations_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN formations UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-vouchers" then
             local ok,err=xpcall(function() require("tests.shop_vouchers_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("VOUCHER UI FAIL: "..tostring(err));love.event.quit(1) end

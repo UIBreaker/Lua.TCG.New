@@ -221,7 +221,7 @@ for _, faction in ipairs({"aurelia","valoria"}) do
     assert(cash.bossVictoryBonus==10 and cash.totalGold==cash.subtotal+cash.factionBonus+10)
     assert(Reward.calculate(bossBlind,rich,true).bossVictoryBonus==0)
     local won=Reward.begin(cash,rich)
-    assert(#won.loot>=4 and #won.loot<=5 and won.loot[#won.loot].source=="TIẾP TẾ")
+    assert(#won.loot>=5 and #won.loot<=6 and won.loot[#won.loot].source=="TIẾP TẾ")
     local wallet=rich.gold;assert(Reward.begin(cash,rich)==won and rich.gold==wallet)
     local resume=Persistence.restoreSnapshot(Persistence.makeSnapshot(rich,"CASH_OUT"))
     assert(Reward.begin(cash,resume).breakdown.bossVictoryBonus==10 and resume.gold==wallet)

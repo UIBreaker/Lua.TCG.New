@@ -442,6 +442,7 @@ function Poker.evaluate(cards, unlockedHands, handLevels)
             list[#list + 1] = c
         end
         local handId = hand.type.id
+        hand.playedCards={};for _,card in ipairs(cards) do hand.playedCards[#hand.playedCards+1]=card end
         local lvl = (handLevels and handLevels[handId]) or 1
         local stats = Poker.getHandStats(handId, lvl)
         hand.level = lvl

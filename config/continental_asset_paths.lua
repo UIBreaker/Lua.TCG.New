@@ -517,4 +517,9 @@ return {
     ["spirit_open_horizon"] = "assets/cards/continental/spn/spirit_open_horizon.png",
     ["spirit_gilded_weight"] = "assets/cards/continental/spn/spirit_gilded_weight.png",
     ["spirit_lone_procession"] = "assets/cards/continental/spn/spirit_lone_procession.png",
+    ["spirit_march_covenant"] = "assets/cards/continental/spn/spirit_march_covenant.png",
+    ["spirit_vanguard_reprise"] = "assets/cards/continental/spn/spirit_vanguard_reprise.png",
+    ["spirit_breath_of_mercy"] = "assets/cards/continental/spn/spirit_breath_of_mercy.png",
+    ["spirit_fourfold_edge"] = "assets/cards/continental/spn/spirit_fourfold_edge.png",
+    ["spirit_quartet_oath"] = "assets/cards/continental/spn/spirit_quartet_oath.png",
 }

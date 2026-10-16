@@ -90,6 +90,7 @@ function P.queueRepeats(game,cards,queue,handInfo)
         end
     end)
     require("src.spn_reserves").queueRepeats(game,cards,queue,handInfo)
+    require("src.spn_formations").queueRepeats(game,cards,queue,handInfo)
 end
 function P.bloodEnabled(game)
     D=D or require("src.deities")

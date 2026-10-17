@@ -91,10 +91,11 @@ function R.beginFrame(previousFrame)
 end
 function R.drawTransition()
     if not C.enabled or not R.transitionCanvas or R.transitionAge>=C.transition.duration then return end
-    local p=math.max(0,math.min(1,R.transitionAge/C.transition.duration)); local smooth=p*p*(3-2*p)
+    local p=math.max(0,math.min(1,R.transitionAge/C.transition.duration)); local smooth=1-(1-p)^3
     local g=love.graphics;g.push("all");g.setShader();g.setBlendMode("alpha","premultiplied")
     local opacity=1-smooth
-    g.setColor(opacity,opacity,opacity,opacity);g.draw(R.transitionCanvas,0,0,0,1280/1920,720/1080);g.pop()
+    g.setColor(opacity,opacity,opacity,opacity)
+    g.draw(R.transitionCanvas,0,R.reducedMotion and 0 or -14*smooth,0,1280/1920,720/1080);g.pop()
 end
 function R.veil(alpha,color)
     local g=love.graphics;local c=color or {0.009,0.017,0.030}

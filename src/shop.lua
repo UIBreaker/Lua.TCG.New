@@ -206,7 +206,7 @@ function Shop.getConsumableDescription(item,game)
         if item.armorAmt then return "+"..(item.armorAmt*boost).." Giáp, không vượt giới hạn Giáp." end
         local speed=Shop.getConsumableParams(item).speed*boost
         local _,chance=require("src.spn_alchemy").effects(game)
-        return "Chọn một quân trên tay: +"..speed.." tốc đánh trong trận, tối đa 999. Hủy chọn không mất thuốc."
+        return "Chọn một quân trên tay: +"..speed..(item.permanentSpeed and " tốc đánh vĩnh viễn" or " tốc đánh trong trận")..", tối đa 999. Hủy chọn không mất thuốc."
             ..(chance>0 and ("\nDƯỢC HỒN · "..string.format("%g",chance).."% giữ lượng tăng vĩnh viễn.") or "")
     end
     local spectral=require("src.spectral").describe(item);if spectral then return spectral end
@@ -1264,6 +1264,7 @@ function Shop.sellConsumable(gameState, consumableIndex)
     if not item then return false end
     local price = Shop.getSacrificePrice(item, "consumable", gameState)
     table.remove(gameState.consumables, consumableIndex)
+    if require("src.void_tickets").isTicket(item) then require("src.void_tickets").count(gameState) end
     gameState.gold = (gameState.gold or 0) + price
     Sound.play("sell")
     return true, price
@@ -1275,6 +1276,7 @@ function Shop.sellStoredItem(gameState,kind,index)
     if not item then return false,"Món đồ không còn trong balo." end
     local price=Shop.getSacrificePrice(item,kind=="reserve_deity" and "deity" or "consumable",gameState)
     table.remove(list,index);gameState.gold=(gameState.gold or 0)+price
+    if require("src.void_tickets").isTicket(item) then require("src.void_tickets").count(gameState) end
     Sound.play("sell");return true,price
 end
 

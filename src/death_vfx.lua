@@ -57,13 +57,14 @@ function D.startEnemy(monster,x,quality)
     Light.flash(D.x,D.y,C.enemy.crack,0.38,0.26,240)
     return true
 end
-function D.startChest(quality)
+function D.startChest(quality,reducedMotion)
     D.reset();D.kind="chest";D.preset=C.chest
+    D.reducedMotion=reducedMotion==true
     D.duration,D.stop,D.x,D.y=C.chest.duration,C.chest.stop,640,328
-    D.limit=math.min(C.particles.max,math.floor((C.particles[quality] or C.particles.HIGH)*C.chest.count))
+    D.limit=math.min(C.particles.max,math.floor((C.particles[quality] or C.particles.HIGH)*C.chest.count*(D.reducedMotion and 0.3 or 1)))
     D.points=D.silhouettes.chest;D.burst=false
-    Sound.play("pack_open");Camera.kick(0,C.chest.kick)
-    Light.flash(D.x,D.y,C.enemy.crack,0.26,0.42,220)
+    Sound.play("pack_open");if not D.reducedMotion then Camera.kick(0,C.chest.kick) end
+    Light.flash(D.x,D.y,C.enemy.crack,D.reducedMotion and 0.09 or 0.26,0.42,220)
 end
 function D.startPlayer(x,quality,reducedMotion)
     D.kind,D.age,D.count,D.duration,D.stop="player",0,0,C.player.duration,C.player.stop
@@ -166,12 +167,13 @@ function D.drawEnemy(image,x,y,size,card)
     g.ellipse("fill",x,C.enemy.floorY,C.enemy.floorRadius,12)
     g.setBlendMode("add");Light.glow(x,C.enemy.floorY,140,C.enemy.ember,0.14*remains*ramp(p,0.05,0.30));g.setBlendMode("alpha")
     if image and dissolve<1 then
-        g.translate(x+C.enemy.recoil*math.sin(clamp(p/0.35)*math.pi),y+9*p)
-        g.rotate(D.kind=="chest" and math.sin(p*26)*0.045*(1-dissolve)
-            or -C.enemy.rotation*math.sin(clamp(p/0.65)*math.pi))
+        local motion=D.reducedMotion and 0 or 1
+        g.translate(x+C.enemy.recoil*math.sin(clamp(p/0.35)*math.pi)*motion,y+9*p*motion)
+        g.rotate((D.kind=="chest" and math.sin(p*26)*0.045*(1-dissolve)
+            or -C.enemy.rotation*math.sin(clamp(p/0.65)*math.pi))*motion)
         if D.shader then
             D.shader:send("dissolveAmount",dissolve);D.shader:send("crackAmount",ramp(p,C.enemy.crackAt,C.enemy.breakAt)*(1-dissolve))
-            D.shader:send("flashAmount",(1-ramp(p,0.04,0.14))*0.8)
+            D.shader:send("flashAmount",(1-ramp(p,0.04,0.14))*(D.kind=="chest" and (D.reducedMotion and 0 or 0.18) or 0.8))
             D.shader:send("emberColor",D.kind=="chest" and {1,0.82,0.43} or C.enemy.ember);D.shader:send("crackGlowColor",C.enemy.crack);g.setShader(D.shader)
         end
         if not D.shader then

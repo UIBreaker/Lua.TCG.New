@@ -4,6 +4,8 @@ local Sound = require("src.sound")
 local Effects = require("src.card_effects")
 local Config = require("config.ux_polish_config")
 local Feedback = require("src.combat_feedback")
+local Motion = require("src.motion")
+local Physics = require("src.card_physics")
 local P = {config=Config, focus=nil, job=nil, age=0, time=0, applications={},moneyFeedback={}}
 local motion=setmetatable({}, {__mode="k"})
 local shader, canvas, loaded
@@ -26,7 +28,21 @@ end
 function P.clearFocus() P.focus=nil end
 function P.isFocused(card) return P.focus and identity(P.focus.item)==card end
 function P.ensureShop(shop)
-    if P.shop~=shop then P.shop=shop;P.age=0;P.clearFocus() end
+    if P.shop~=shop or P.shopMode~=shop.mode or P.shopPage~=(shop.page or 1) then
+        P.shop=shop;P.shopMode=shop.mode;P.shopPage=shop.page or 1;P.age=0;P.clearFocus()
+    end
+end
+function P.stockReady(index)
+    return P.reducedMotion or P.age>=Config.arrivalDelay+math.min(index-1,7)*Config.arrivalStagger+Config.arrival
+end
+function P.arrivalPose(index,x,y,w,h)
+    if P.stockReady(index) then return 0,0,0,1 end
+    local elapsed=math.max(0,P.age-Config.arrivalDelay-math.min(index-1,7)*Config.arrivalStagger)
+    local travel=Motion.settle(elapsed,Config.arrival)
+    local remaining=1-travel
+    local source=P.shop and P.shop.mode~="large" and not P.shop.soulMode and 770 or 640
+    local dx=math.max(-150,math.min(150,source-x-w/2))
+    return dx*remaining,(y>360 and 16 or 54)*remaining,-dx/150*0.12*remaining,1-0.12*remaining
 end
 function P.items(shop) return P.job and P.job.items or shop.items end
 function P.focusItem(item,kind,index,rect)
@@ -36,12 +52,15 @@ function P.focusItem(item,kind,index,rect)
     return true
 end
 function P.tooltipAllowed(item)
+    local s=motion[item];if s and s.arriving then return false end
     local key=identity(item)
     for _,a in ipairs(P.applications) do if a.target==key and a.age<(a.duration or Config.application) then return false end end
     return not P.busy() and (not P.focus or key==identity(P.focus.item))
 end
 function P.hiddenOwned(item)
+    local s=Physics.getState(item)
     return P.focus and P.focus.kind~="stock" and identity(P.focus.item)==item
+        and not Physics.isHeld(item) and not (s and s.settling)
         or P.job and (identity(P.job.item)==item or P.job.acquired==item)
 end
 function P.rect(UI,item,fallback)
@@ -225,21 +244,23 @@ function P.surface(item,index,hovered,x,y,w,h,draw)
         local t=clamp((job.age-start)/(job.flip*2))
         flip=math.abs(math.cos(smooth(t)*math.pi))
         back=job.swapped and t<0.5 or not job.swapped and t>=0.5
-    else
-        local entrance=clamp((P.age-(index-1)*0.025)/Config.arrival)
-        flip=0.90+0.10*out(entrance)
     end
     if job and job.item==item then return end -- Transaction ghost owns the surface.
     local g=love.graphics
-    local entryLift=job and 0 or (1-out((P.age-(index-1)*0.025)/Config.arrival))*16
-    g.push("all");g.translate(x+w/2,y+h/2+s.lift+entryLift);g.scale(math.max(0.012,flip)*s.scale,s.scale);g.translate(-x-w/2,-y-h/2)
+    local dx,dy,rotation,entryScale=0,0,0,1
+    s.arriving=not job and not P.stockReady(index)
+    if s.arriving then dx,dy,rotation,entryScale=P.arrivalPose(index,x,y,w,h) end
+    local physics=require("src.ui").CardPhysics
+    if s.arriving then physics.suspend() end
+    g.push("all");g.translate(x+w/2+dx,y+h/2+s.lift+dy);g.rotate(rotation)
+    g.scale(math.max(0.012,flip)*s.scale*entryScale,s.scale*entryScale);g.translate(-x-w/2,-y-h/2)
     if back then require("src.ui").drawCardBack(x,y,w,h)
     else draw() end
-    if P.focus and not focused or P.age<(index-1)*0.025+Config.arrival then
-        local a=P.focus and not focused and Config.dim or 1-out((P.age-(index-1)*0.025)/Config.arrival)
-        g.setShader();g.setColor(0.01,0.02,0.03,a);g.rectangle("fill",x,y,w,h,5,5)
+    if P.focus and not focused then
+        g.setShader();g.setColor(0.01,0.02,0.03,Config.dim);g.rectangle("fill",x,y,w,h,5,5)
     end
     g.pop()
+    if s.arriving then physics.resume() end
     return back
 end
 function P.load()
@@ -368,7 +389,8 @@ function P.draw(UI,game,buttons,mx,my)
     local function drawItem(item,x,y,w,h) return P.renderItem(UI,item,x,y,w,h) end
     local g=love.graphics
     UI.CardPhysics.suspend()
-    if P.focus and P.focus.kind~="stock" then
+    local focusedPose=P.focus and Physics.getState(P.focus.item)
+    if P.focus and P.focus.kind~="stock" and not Physics.isHeld(P.focus.item) and not (focusedPose and focusedPose.settling) then
         local r=P.focus.rect;local scale=1+0.08*out(P.focus.age/0.16)
         g.push("all");g.translate(r.x+r.w/2,r.y+r.h/2-Config.focusLift*out(P.focus.age/0.16));g.scale(scale)
         drawItem(P.focus.item,-r.w/2,-r.h/2,r.w,r.h);g.pop()

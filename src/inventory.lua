@@ -53,6 +53,7 @@ end
 function Inventory.useUtility(game,index)
     local card=game.consumables and game.consumables[index]
     if not card then return nil end
+    if require("src.void_tickets").isTicket(card) then return require("src.void_tickets").redeem(game,"equipped",index,1) end
     if card.category=="slot_expansion" then
         if card.slotType=="spn" then game.extraDeitySlots=(game.extraDeitySlots or 0)+require("src.blood_shop").powerOf(card)
         elseif card.slotType=="consumable" then game.maxConsumables=Inventory.limit(game)+require("src.blood_shop").powerOf(card)

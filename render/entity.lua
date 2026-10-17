@@ -40,6 +40,7 @@ function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventSt
             pose.angle=pose.angle+((angle+(hover and mx/cw*2*Feel.hover.angle or 0))-pose.angle)*response
             pose.lift=pose.lift+((hover and 1 or 0)-pose.lift)*response
             pose.tilt=pose.tilt+((hover and my/ch*1.4 or 0)-pose.tilt)*response
+            require("src.card_physics").shadow(-cw/2,-ch/2,cw,ch,0,pose.lift,pose.angle,1)
             g.translate(0,-Feel.hover.lift*pose.lift);g.rotate(pose.angle)
             g.shear(0,pose.tilt*Feel.rotation.verticalShear)
             local scale=1+(Feel.hover.scale-1)*pose.lift;g.scale(scale)

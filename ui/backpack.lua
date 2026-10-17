@@ -232,12 +232,12 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable,context)
     local valid=E.canAttach(item,Bag.pendingItem)
     g.setColor(valid and {.4,.83,.64,.7} or {.8,.39,.34,.5});g.circle("fill",x+w+3,y+3,5)
    end
-   if loadoutTab and (UI.Polish.hiddenOwned(item) or Bag.drag and Bag.drag.moving and Bag.drag.item==item) then
+   if loadoutTab and UI.Polish.hiddenOwned(item) then
    elseif Bag.tab=="spn" then
     UI.drawPatronCard(item,x,y,w,h,hover,false,false)
    elseif Bag.tab=="consumable" or Bag.tab=="journey" then UI.Polish.renderItem(UI,item,x,y,w,h)
    elseif Bag.tab=="cards" then if not UI.Polish.hiddenOwned(item) then UI.drawCard(item,x,y,w,h,hover) end
-   else local img=UI.getEquipmentImage(item.id);g.setColor(1,1,1);if img then UI.CardFrame.image(img,x,y,w,h) end;UI.drawCardBorder(x,y,w,h,hover and UI.COLORS.goldYellow,nil,item);Bag.stats(UI,item,x,y,w,h) end
+   else local img=UI.getEquipmentImage(item.id);g.setColor(1,1,1);require("ui.card_surfaces").image(item,x,y,w,h,img);Bag.stats(UI,item,x,y,w,h) end
    if Bag.tab=="consumable" then
     g.setColor(.015,.03,.04,.96);g.rectangle("fill",x+w-37,y+h-23,35,21,4,4)
     label(UI,"×"..v.count,x+w-37,y+h-19,35,"tiny",UI.COLORS.goldYellow,"center")
@@ -251,12 +251,17 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable,context)
   end
   if loadoutTab and Bag.selectedSource=="equipped" then detail=Loadout.equipped(game,Bag.tab,Bag.selected);entry=nil end
   if not detail and #list>0 then local v=list[(Bag.page-1)*Bag.pageSize+1];detail=v.item;entry=v.entry;detailCount=v.count end
+  Bag.detailCount=detailCount
   details(UI,game,detail,entry,buttons,mx,my,detailCount)
   if #list==0 then Bag.icon(532,loadoutTab and 350 or 272,91,115);label(UI,"KHÔNG CÓ MỤC PHÙ HỢP",279,loadoutTab and 490 or 420,591,"small",UI.COLORS.goldYellow,"center");wrapped(UI,Bag.pending and "Không tìm thấy lá gắn được. Chuyển bộ lọc sang MỌI LÁ để kiểm tra hốc hoặc hủy bằng Esc." or "Thử xóa tìm kiếm hoặc đổi bộ lọc. Đồ mua và thu hồi được cất trong ngăn tương ứng.",347,loadoutTab and 526 or 456,454,4,UI.COLORS.textMuted,"small") end
   if loadoutTab and Bag.selected then
+   if Bag.tab=="consumable" and detail and require("src.void_tickets").isTicket(detail) then
+    local count=Bag.selectedSource=="equipped" and 1 or Bag.detailCount or 1
+    button(UI,buttons,"bag_redeem_ticket","ĐỔI "..count.." VÉ → "..count.." VÀNG",594,641,330,38,mx,my)
+   end
    if Bag.tab=="consumable" and Bag.selectedSource~="equipped" and detail and detail.category=="travel_permit" then button(UI,buttons,"bag_use_permit","CHỌN ĐIỂM ĐẾN",594,641,330,38,mx,my) end
    button(UI,buttons,"bag_loadout_action",Bag.selectedSource=="equipped" and "CẤT VÀO BALO" or Bag.tab=="consumable" and "LẤY 1 LÁ VÀO Ô TRANG BỊ" or "TRANG BỊ VÀO Ô TRỐNG",243,641,337,38,mx,my,Bag.combat and (game.handsRemaining or 0)<=0)
-   if Bag.tab=="consumable" and Bag.selectedSource=="equipped" then button(UI,buttons,"bag_use","DÙNG VẬT PHẨM",594,641,330,38,mx,my) end
+   if Bag.tab=="consumable" and Bag.selectedSource=="equipped" and not require("src.void_tickets").isTicket(detail) then button(UI,buttons,"bag_use","DÙNG VẬT PHẨM",594,641,330,38,mx,my) end
   elseif Bag.tab=="equipment" and Bag.selected and (game.backpackEquipment or {})[Bag.selected] and not Bag.combat then
    button(UI,buttons,"bag_equip","GẮN VÀO LÁ BÀI",243,641,337,38,mx,my)
    button(UI,buttons,"bag_sell","BÁN · "..B.resale(game.backpackEquipment[Bag.selected]).." VÀNG",594,641,330,38,mx,my)
@@ -298,6 +303,12 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
   elseif b.id=="bag_filter" then Q.state(Bag).filter=Q.state(Bag).filter%(Bag.filterCount or 1)+1;Q.resetPage(Bag)
   elseif b.id=="bag_use" and Bag.tab=="consumable" and Bag.selectedSource=="equipped" then
    local _,index=Loadout.equipped(game,Bag.tab,Bag.selected);if index and callbacks.activate then callbacks.activate(index) end
+  elseif b.id=="bag_redeem_ticket" then
+   local source=Bag.selectedSource=="equipped" and "equipped" or "reserve"
+   local index=Bag.selected
+   if source=="equipped" then local _,activeIndex=Loadout.equipped(game,"consumable",index);index=activeIndex end
+   local count=source=="equipped" and 1 or Bag.detailCount or 1
+   if require("src.void_tickets").redeem(game,source,index,count) then Bag.selected=nil;Bag.message="Đã đổi "..count.." vé lấy "..count.." vàng.";if callbacks.save then callbacks.save() end end
   elseif b.id=="bag_use_permit" and callbacks.travel then callbacks.travel(Bag.selected)
   elseif b.id=="bag_loadout_prev" then Bag.loadoutOffset=math.max(0,(Bag.loadoutOffset or 0)-6)
   elseif b.id=="bag_loadout_next" then Bag.loadoutOffset=(Bag.loadoutOffset or 0)+6

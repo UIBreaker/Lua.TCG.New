@@ -308,7 +308,12 @@ function Deities.getDescription(deity)
     if deity.id=="spirit_hell_sleep" then
         text="Mỗi Giường đang giữ: +"..formatEffectNumber(10*effectMultiplier(deity)*require("src.blood_shop").powerOf(deity)).." Cường hóa khi tính điểm."
     elseif deity.id=="spirit_last_pact" then
-        text="Một lần mỗi trận: chặn đòn chí tử, còn 5 HP."
+        text="Một lần mỗi trận: chặn đòn chí tử, còn "..(5*require("src.blood_shop").powerOf(deity)).." HP, không vượt máu tối đa."
+    end
+    if deity.id=="spirit_borrowed_turn" then
+        text="Một lần mỗi trận: chơi đúng 3 lá đều tính điểm, nhận một bình +"..(3*require("src.blood_shop").powerOf(deity)).." tốc đánh vĩnh viễn cho một lá (tối đa 999)."
+    elseif deity.id=="spirit_archive" and require("src.blood_shop").powerOf(deity)>1 then
+        text="Mỗi 3 kiểu tay khác nhau đánh trong trận: nhận "..require("src.blood_shop").powerOf(deity).." lá Tiến Hóa, rồi bắt đầu đếm lại."
     end
     local growth=require("src.spn_convergence").describe(deity)
     if deity.id=="spirit_right_offering" then growth="TÍCH HIẾN TẾ · ×"..formatEffectNumber(1+((deity.spnGrowth or {}).offeringMult or 0)) end

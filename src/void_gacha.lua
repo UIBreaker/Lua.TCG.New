@@ -8,6 +8,7 @@ local Basic=require("src.basic_equipment")
 local Loadout=require("src.loadout")
 local Clone=require("src.blood_shop").clone
 local G={config=C}
+local Tickets=require("src.void_tickets")
 local function ids(catalog)
     local list={};for id in pairs(catalog) do list[#list+1]=id end;table.sort(list);return list
 end
@@ -32,17 +33,18 @@ local function playingCard(rank,suit,power)
     if power then card.voidPower=power;card.baseChips=card.baseChips*power;card.bonusBaseChips=card.baseChips-Deck.getChipValue(rank) end
     return card
 end
-function G.enterIfDue(game)
+function G.enterIfDue(game,forceEntry)
     local run=game.run
     if not run or run.ante%10~=0 or run.currentBlindIndex~=3 or not run.blinds or run.blinds[3].status~="completed" then return false end
     local key=run.ante..":"..(run.regionId or "human");game.voidVisited=game.voidVisited or {}
     if game.voidVisited[key] then return false end
+    game.voidVisited[key]=true
+    if not forceEntry and Rng.random(1,100)>C.entryChance*100 then return false end
     local gear={};for _,id in ipairs(ids(E.ITEMS)) do if (E.ITEMS[id].craftTier or 0)>=3 or E.ITEMS[id].soulOnly then gear[#gear+1]=id end end
     if #gear==0 then gear=ids(E.ITEMS) end
     local promotion=Rng.random();local discount=promotion<.02 and 0 or promotion<.07 and .5 or promotion<.17 and .75 or 1
     game.voidEvent={ante=run.ante,spnId=choose(ids(D.CATALOG)),equipmentId=choose(gear),rank=Rng.random(2,14),suit=choose(Deck.SUIT_ORDER),
-        goldMultiplier=discount==0 and 1 or discount,freeRemaining=discount==0 and 1 or 0,totalRolls=0,serial=0,results={},payment=(game.voidTickets or 0)>0 and "ticket" or "gold"}
-    game.voidVisited[key]=true
+        goldMultiplier=discount==0 and 1 or discount,freeRemaining=discount==0 and 1 or 0,totalRolls=0,serial=0,results={},payment=Tickets.count(game)>=C.ticketPrice and "ticket" or "gold"}
     return true
 end
 function G.banner(game)
@@ -58,8 +60,8 @@ function G.quote(game,count,payment)
     local event=game.voidEvent
     if not event or (count~=1 and count~=10) or (payment~="gold" and payment~="ticket") then return end
     local free=math.min(count,event.freeRemaining or 0);local paid=count-free
-    local cost=payment=="gold" and math.ceil(paid*C.price*event.goldMultiplier) or paid
-    return {count=count,payment=payment,cost=cost,free=free,affordable=not event.pendingResults and (game[payment=="gold" and "gold" or "voidTickets"] or 0)>=cost}
+    local cost=payment=="gold" and math.ceil(paid*C.price*event.goldMultiplier) or paid*C.ticketPrice
+    return {count=count,payment=payment,cost=cost,free=free,affordable=not event.pendingResults and (payment=="gold" and (game.gold or 0) or Tickets.count(game))>=cost}
 end
 function G.consumablePool()
     local pool,seen={},{}
@@ -98,7 +100,7 @@ end
 local function award(game,r)
     if r.kind=="gold" then game.gold=(game.gold or 0)+r.amount
     elseif r.kind=="souls" then game.souls=(game.souls or 0)+r.amount
-    elseif r.kind=="ticket" then game.voidTickets=(game.voidTickets or 0)+r.amount
+    elseif r.kind=="ticket" then Tickets.add(game,r.amount)
     elseif r.kind=="spn" then Loadout.storeDeity(game,r.item)
     elseif r.kind=="equipment" then Basic.store(game,r.item,0)
     elseif r.kind=="card" then Deck.addCardToDeck(game,r.item)
@@ -120,8 +122,9 @@ function G.pull(game,count,payment)
     if not quote or not quote.affordable then return false,"Không đủ tài nguyên hoặc lượt quay trước chưa mở xong." end
     local results={}
     for i=1,count do results[i]=G.createReward(game,G.pick(Rng.random(1,100000))) end
-    local event=game.voidEvent;local key=payment=="gold" and "gold" or "voidTickets"
-    game[key]=(game[key] or 0)-quote.cost;event.freeRemaining=event.freeRemaining-quote.free
+    local event=game.voidEvent
+    if payment=="ticket" then assert(Tickets.spend(game,quote.cost)) else game.gold=(game.gold or 0)-quote.cost end
+    event.freeRemaining=event.freeRemaining-quote.free
     for _,r in ipairs(results) do award(game,r) end
     event.serial=event.serial+1;event.totalRolls=event.totalRolls+count;event.results=results;event.pendingResults=true;event.lastQuote=quote
     return true,results
@@ -133,6 +136,6 @@ function G.ticketReward(boss)
     if not boss and Rng.random()>=C.ticketChance then return end
     local amount=boss and Rng.random(C.bossTicketAmount[1],C.bossTicketAmount[2]) or 1
     return {id="void_ticket",type="VOID_TICKET",source="THE VOID",name="+"..amount.." VÉ THE VOID",amount=amount,rarity="rare",
-        desc="Nhận "..amount.." vé quay The Void. Mỗi vé thay "..C.price.." vàng, lưu trong run; không có bảo hiểm."}
+        desc="Nhận "..amount.." vé tiêu hao vào balo. 10 vé/lần quay; 100 vé/10 lần. Mỗi vé đổi được 1 vàng; không có bảo hiểm."}
 end
 return G

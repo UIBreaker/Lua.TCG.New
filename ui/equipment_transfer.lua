@@ -65,7 +65,7 @@ function T.undo(game,UI,save)
 end
 function T.draw(UI,game,cards,buttons,mx,my)
  local g=love.graphics;T.deck=cards;T.buttons=buttons;T.rects={};T.equipmentRects={}
- UI.CardPhysics.blockBehind();UI.CardPhysics.suspend();UI.descriptionCandidate=nil;T.hoverEquipment=nil;g.push("all");g.setShader();g.setScissor();g.setBlendMode("alpha")
+ UI.CardPhysics.blockBehind();UI.descriptionCandidate=nil;T.hoverEquipment=nil;g.push("all");g.setShader();g.setScissor();g.setBlendMode("alpha")
  Style.background(UI.Polish.time)
  local gold=UI.COLORS.goldYellow;local muted=UI.COLORS.textMuted
  Style.glyph("equipment",45,48,18,gold)
@@ -99,9 +99,10 @@ function T.draw(UI,game,cards,buttons,mx,my)
  for index,eq in ipairs(T.source and T.source.equipments or {}) do
   local x,y=326+(index-1)%2*138,198+math.floor((index-1)/2)*108
   local r=button("transfer_equipment_"..index,"",x,y,130,100,false,T.eqIndex==index,index);T.equipmentRects[index]=r
+  r.cardSurface=true
   Style.panel(x,y,130,100,eq.color,T.eqIndex==index)
   local img=UI.getEquipmentImage(eq.id)
-  if img then g.setColor(1,1,1,1);UI.CardFrame.image(img,x+6,y+6,40,60);UI.drawCardBorder(x+6,y+6,40,60,nil,nil,eq) end
+  if img then g.setColor(1,1,1,1);require("ui.card_surfaces").image(eq,x+6,y+6,40,60,img) end
   local _,lines=UI.fonts.tiny:getWrap(eq.name,74)
   for row=1,math.min(3,#lines) do text(UI,lines[row],x+51,y+9+(row-1)*15,74,"tiny",eq.color) end
   text(UI,(eq.slotsNeeded or 1).." hốc · T"..E.getTier(eq),x+51,y+54,74,"tiny",muted)
@@ -138,7 +139,7 @@ function T.draw(UI,game,cards,buttons,mx,my)
  button("transfer_undo","HOÀN TÁC LẦN CUỐI",24,670,230,32,not T.history)
  text(UI,T.message or (eq and "Nhấp một lá nhận để chuyển ngay. Chuột phải xem chi tiết." or "Chọn nguồn → chọn món → nhấp lá nhận. Ctrl+F tìm · PgUp/PgDn trang · Esc quay lại"),272,681,982,"tiny",T.message and gold or muted)
  UI.descriptionCandidate=T.hoverEquipment
- UI.CardPhysics.resume();g.pop()
+ g.pop()
 end
 function T.press(UI,game,x,y,mouse,callbacks)
  for _,b in ipairs(T.buttons or {}) do if inside(x,y,b) then

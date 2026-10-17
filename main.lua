@@ -176,6 +176,9 @@ for _, a in ipairs(arg or {}) do
         return
     end
     if a == "--test-animation" then isCaptureMode = true end
+    if a == "--test-shop-motion" then isCaptureMode = true end
+    if a == "--test-card-drag" then isCaptureMode = true end
+    if a == "--test-hand-chest-motion" then isCaptureMode = true;chestAnimationCaptureMode=true end
     if a == "--test-debug-ui" then isCaptureMode = true end
     if a == "--test-debug-input" then isCaptureMode = true end
     if a == "--test-hand-drag-select" then isCaptureMode = true end
@@ -671,14 +674,8 @@ local getHandCardPosition
 
 function anim.prepareDrawAnimation(card, order)
     if not card then return end
-    order = order or 1
-    card.visualX = 1180
-    card.visualY = 620
-    card.visualAngle = -0.12 + order * 0.025
-    card.visualScale = 0.68
-    card.dealPending = true
-    card.dealDelay = (order - 1) * 0.075
-    card.dealTrail = 0
+    local x,y,w,h=unpack(Layout.battle.deck)
+    UI.HandMotion.prepareDeal(card,order or 1,x+(w-100)/2,y+(h-145)/2,UI.HandMotion.returnDuration())
 end
 
 local function spawnSparks(x, y, count, color)
@@ -911,6 +908,8 @@ local function initializeCombat(monster, round)
     UI.ScoringFeel.cancel(anim)
     anim.active, anim.enemyTurn = false, nil
     local result = Combat.start(game, monster, round)
+    UI.HandMotion.reset()
+    for i,card in ipairs(game.hand) do anim.prepareDrawAnimation(card,i) end
     if result.slaughterChips > 0 then
         table.insert(anim.floatingTexts, {
             text = "⚔️ SÁT KHÍ BỘC PHÁT (A♠): +" .. result.slaughterChips .. " Starting Chips!",
@@ -940,6 +939,7 @@ local function startBlindCombat(blind)
 end
 
 local function startNewGame(chosenDeck)
+    UI.HandMotion.reset()
     UI.ExpandedInventory.close()
     UI.BedExplosion.clear(); anim.pendingBedScore=nil
     anim.pendingStoredEquipment=nil
@@ -998,6 +998,7 @@ local function getSelectedCards()
 end
 
 local function toggleCardSelection(index)
+    if UI.HandMotion.busy(game.hand) then return end
     local found = nil
     for i, idx in ipairs(game.selectedIndices) do
         if idx == index then
@@ -1041,6 +1042,7 @@ end
 
 local function handInputBlocked()
     return state ~= "playing" or anim.enemyTurn or UI.AbilityUI.current
+        or UI.HandMotion.busy(game.hand)
         or isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isCollectionOpen
         or isDeckViewerOpen or inspectCardModal or isDebugOpen or isUiGalleryOpen
         or UI.ScoringFeel.labOpen or UI.CardPhysics.isLabOpen()
@@ -1116,6 +1118,7 @@ end
 -- Input stays anchored to the hand slots while lift, scale and tilt animate.
 -- Rightmost slot owns overlaps, consistently for hover, press and sweep.
 handDrag.cardAt = function(mx, my)
+    if UI.HandMotion.busy(game.hand) then return end
     for i = #game.hand, 1, -1 do
         local x, y, w, h = getHandCardPosition(i, #game.hand)
         if mx >= x - 4 and mx <= x + w + 4 and my >= y - 56 and my <= y + h + 8 then
@@ -1180,6 +1183,7 @@ local function dealCombatHand(recycleDiscard)
 end
 
 local function discardSelected()
+    if UI.HandMotion.busy(game.hand) then return end
     if #game.selectedIndices == 0 or not require("src.spn_pacts").canDiscard(game) then return end
 
     screenShake = math.max(screenShake or 0, 2.5)
@@ -1313,6 +1317,10 @@ local function discardSelected()
         game.discardsUsedInCombat = (game.discardsUsedInCombat or 0) + 1
     end
 
+    local pile=Layout.battle.deck
+    for i,card in ipairs(discardedCards) do
+        UI.HandMotion.collect(card,i,pile[1]+(pile[3]-100)/2,pile[2]+(pile[4]-145)/2)
+    end
     -- Draw only from the remaining deck; the discard pile returns on explicit end turn.
     dealCombatHand(false)
     Sound.play("card_deal")
@@ -1836,6 +1844,7 @@ local function startEnemyAttack(phase, speed, done, played)
 end
 
 local function playSelectedHand()
+    if UI.HandMotion.busy(game.hand) then return end
     if anim.enemyTurn then return end
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
@@ -2010,6 +2019,7 @@ local function playSelectedHand()
 end
 
 local function endPlayerTurn(force, playAfterTurn)
+    if UI.HandMotion.busy(game.hand) then return false end
     if anim.enemyTurn then return true end
     if not game or not game.monster then return false end
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
@@ -2145,7 +2155,16 @@ end
 -- SHADERS & CANVAS PIPELINE
 --------------------------------------------------------------------------------
 
-UI.finishCombatVictory=function()
+UI.finishCombatVictory=function(collected)
+    if UI.HandMotion.onCollected then return end
+    if not collected and not settings.reducedMotion and #game.hand>0 then
+        local pile=Layout.battle.deck
+        for i,card in ipairs(game.hand) do
+            UI.HandMotion.collect(card,i,pile[1]+(pile[3]-100)/2,pile[2]+(pile[4]-145)/2)
+        end
+        UI.HandMotion.onCollected=function() UI.finishCombatVictory(true) end
+        return
+    end
     game.potionCombat={};game.potionVictoryPending=nil
     require("src.souls").awardKills(game)
     UI.Abilities.combatWin(game)
@@ -2524,6 +2543,8 @@ function love.focus(focused)
     end
     Touch.cancel()
     UI.CardPhysics.release()
+    anim.cardClick = nil
+    UI.Backpack.drag, UI.ExpandedInventory.drag = nil, nil
     handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
     shopDrag.active, shopDrag.isDragging, shopDrag.item = false, false, nil
     shopDrag.itemIndex, shopDrag.sourceKind, shopDrag.sourceIndex = nil, nil, nil
@@ -2585,6 +2606,7 @@ local function updateCaptureMode()
         previewPlayerDefeat = beginPlayerDefeat,
         endPlayerTurn = endPlayerTurn,
         setScoringSpeed = function(fast) settings.fastScoring = fast end,
+        setReducedMotion = function(reduced) settings.reducedMotion = reduced end,
         setMenuMode = function(m) menuMode = m end,
         setCaptureState = function(value) state = value end,
         openSettings = function() isSettingsOpen = true end,
@@ -2641,6 +2663,8 @@ function love.update(dt)
         updateCaptureMode()
         return
     end
+    UI.HandMotion.reducedMotion,UI.HandMotion.fast=settings.reducedMotion,settings.fastScoring
+    UI.HandMotion.updateReturns(dt)
     require("ui.potion_effects").update(game,dt,settings.reducedMotion,state)
     if state=="barter" and not isPauseMenuOpen and not isSettingsOpen and require("src.barter").update(game,dt) then saveRunAtSafePoint() end
     require("ui.enemy_formation").update(game,dt)
@@ -2684,7 +2708,8 @@ function love.update(dt)
     if (state == "playing" or state == "scoring") and game.monster and (game.monster.hp or 1) <= 0 then
         DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality)
     end
-    DeathVFX.update(dt)
+    local chestStep=dt*(settings.fastScoring and UI.Polish.config.fastFactor or 1)
+    DeathVFX.update(DeathVFX.kind=="chest" and chestStep or dt)
     if state=="playing" or state=="scoring" or UI.BedExplosion.debug then UI.BedExplosion.update(dt) end
     if UI.BedExplosion.pending then
         UI.BedExplosion.pending=false
@@ -2703,6 +2728,8 @@ function love.update(dt)
     if state == "scoring" then cameraX, cameraY = UI.ScoringFeel.camera(anim) end
     local bedCameraX,bedCameraY=UI.BedExplosion.camera()
     cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
+    Renderer.reducedMotion=settings.reducedMotion
+    UI.Polish.reducedMotion=settings.reducedMotion
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
         game and ((state == "BLIND_SELECT" or state == "shop" or state == "victory" or state=="travel" or state=="barter") and {stage=game.run and game.run.ante or 1,regionId=game.run and game.run.regionId,areaStage=game.run and game.run.areaStage,shopMode=game.shopMode} or game.monster), anim.sequence, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
     Sound.updateGame(dt)
@@ -2759,10 +2786,10 @@ function love.update(dt)
         if anim.chestReveal.state ~= state then
             anim.chestReveal.state = state
             anim.chestReveal.timer = isCaptureMode and not chestAnimationCaptureMode and UI.ChestChoices.finished() or 0
-            if anim.chestReveal.timer == 0 then DeathVFX.startChest(Renderer.quality) end
+            if anim.chestReveal.timer == 0 then DeathVFX.startChest(Renderer.quality,settings.reducedMotion) end
         end
         local previous = anim.chestReveal.timer
-        anim.chestReveal.timer = math.min(UI.ChestChoices.finished(), previous + dt)
+        anim.chestReveal.timer = math.min(UI.ChestChoices.finished(), previous + chestStep)
         for i=1,3 do
             local flipAt = DeathVFX.config.chest.flipAt + (i-1)*DeathVFX.config.chest.stagger
             if previous < flipAt and anim.chestReveal.timer >= flipAt then Sound.play("card_deal", 0.85+i*0.08) end
@@ -2858,28 +2885,13 @@ function love.update(dt)
     -- Smoothly lerp player hand cards visual positions & rotation
     if game.hand and #game.hand > 0 then
         for i, c in ipairs(game.hand) do
-            local waitingForDeal = false
-            if c.dealPending then
-                c.dealDelay = math.max(0, (c.dealDelay or 0) - dt)
-                if c.dealDelay <= 0 then
-                    c.dealPending = false
-                    c.dealTrail = 0.18
-                    c.visualScale = 0.76
-                    Sound.play("card_draw", math.min(1.18, 0.92 + i * 0.035))
-                else
-                    waitingForDeal = true
-                end
-            end
-            if c.dealTrail and c.dealTrail > 0 then
-                c.dealTrail = math.max(0, c.dealTrail - dt)
-            end
-
             local tx, ty, tw, th, tangle = getHandCardPosition(i, #game.hand)
             local idle = math.sin(juice.ambientTimer * 1.35 + i * 0.82) * 0.85
             ty = ty + idle
             tangle = tangle + math.sin(juice.ambientTimer * 1.25 + i * 0.67) * 0.008
-            UI.HandMotion.update(c, tx, ty, tangle or 0, dt, waitingForDeal,
+            local launched=UI.HandMotion.update(c, tx, ty, tangle or 0, dt, false,
                 c.hovered and not (handDrag.active and handDrag.cardIndex == i and handDrag.isDragging))
+            if launched then Sound.play("card_draw",math.min(1.18,0.92+i*0.035)) end
         end
     end
 
@@ -2915,9 +2927,9 @@ function love.update(dt)
         local previous = opening.animationTimer or 0
         if not opening.ashStarted then
             opening.ashStarted = true
-            if previous < DeathVFX.config.chest.duration then DeathVFX.startChest(Renderer.quality) end
+            if previous < DeathVFX.config.chest.duration then DeathVFX.startChest(Renderer.quality,settings.reducedMotion) end
         end
-        opening.animationTimer = math.min(UI.ChestChoices.finished(), previous + dt)
+        opening.animationTimer = math.min(UI.ChestChoices.finished(), previous + chestStep)
         for i=1,3 do
             local flipAt=DeathVFX.config.chest.flipAt+(i-1)*DeathVFX.config.chest.stagger
             if previous<flipAt and opening.animationTimer>=flipAt then Sound.play("card_deal",0.85+i*0.08) end
@@ -3296,7 +3308,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.136.0", 48, 185)
+    g.print("beta 0.137.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4149,22 +4161,15 @@ local function drawPlayingState()
     for pass = 1, 3 do
         for i, c in ipairs(game.hand) do
             local layer = c.hovered and 3 or c.selected and 2 or 1
-            if layer == pass then -- Physics lifts the single held card into the shared overlay.
+            if layer == pass and not UI.HandMotion.hidden(c) then -- Physics lifts the single held card into the shared overlay.
                 local cx = c.visualX or 0
                 local cy = c.visualY or 0
-                if c.dealTrail and c.dealTrail > 0 then
-                    local trailAlpha = math.min(0.7, c.dealTrail / 0.18)
-                    love.graphics.setBlendMode("add")
-                    love.graphics.setLineWidth(3)
-                    love.graphics.setColor(0.45, 0.75, 1.0, trailAlpha)
-                    love.graphics.line(1180, 620, cx + cardW / 2, cy + cardH / 2)
-                    love.graphics.circle("fill", cx + cardW / 2, cy + cardH / 2, 5 + trailAlpha * 5)
-                    love.graphics.setLineWidth(1)
-                    love.graphics.setBlendMode("alpha")
-                end
+                local dealing=UI.HandMotion.isDealing(c)
+                if dealing then UI.CardPhysics.suspend() end
                 if state == "defeating" or (state == "gameover" and DeathVFX.kind == "player") then
                     DeathVFX.drawCard(UI, c, cx, cy, cardW, cardH, i)
                 else UI.drawCard(c, cx, cy, cardW, cardH, false, c.hovered) end
+                if dealing then UI.CardPhysics.resume() end
             end
         end
     end
@@ -4224,7 +4229,7 @@ local function drawPlayingState()
         h = 58,
         font = UI.fonts.bookChapter,
         variant = "cyan",
-        disabled = anim.enemyTurn ~= nil or state == "scoring"
+        disabled = anim.enemyTurn ~= nil or state == "scoring" or UI.HandMotion.busy(game.hand)
             or (hasSelection and not require("src.spn_legacy").canPlay(game,#selectedCards))
             or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
@@ -4255,7 +4260,7 @@ local function drawPlayingState()
         h = 36,
         font = UI.fonts.tiny,
         selected = game.sortMode == "rank",
-        disabled = state ~= "playing" or anim.enemyTurn ~= nil,
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil or UI.HandMotion.busy(game.hand),
     }
     table.insert(buttons, btnSortRank)
     require("ui.combat_chrome").button(UI,btnSortRank,mx,my,juice.buttonPressedId,nil)
@@ -4269,7 +4274,7 @@ local function drawPlayingState()
         h = 36,
         font = UI.fonts.tiny,
         selected = game.sortMode == "suit",
-        disabled = state ~= "playing" or anim.enemyTurn ~= nil,
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil or UI.HandMotion.busy(game.hand),
     }
     table.insert(buttons, btnSortSuit)
     require("ui.combat_chrome").button(UI,btnSortSuit,mx,my,juice.buttonPressedId,nil)
@@ -4284,7 +4289,7 @@ local function drawPlayingState()
         h = 58,
         font = UI.fonts.bookChapter,
         variant = "red",
-        disabled = state ~= "playing" or anim.enemyTurn ~= nil or not hasSelection or not require("src.spn_pacts").canDiscard(game),
+        disabled = state ~= "playing" or anim.enemyTurn ~= nil or UI.HandMotion.busy(game.hand) or not hasSelection or not require("src.spn_pacts").canDiscard(game),
     }
     table.insert(buttons, btnDiscard)
     require("ui.combat_chrome").button(UI,btnDiscard,mx,my,juice.buttonPressedId,"D · ĐỔI BÀI")
@@ -4307,6 +4312,7 @@ local function drawPlayingState()
     local totalCardsInGame = #game.deck + #game.discardPile + #game.hand
     UI.components.DeckCounter.draw(deckPileX, deckPileY, deckPileW, deckPileH,
         #game.deck, totalCardsInGame, UI.fonts, isDeckHovered)
+    UI.HandMotion.drawReturns(UI)
 
     local btnDeckPile = {
         id = "open_deck_viewer",
@@ -5802,7 +5808,8 @@ local function drawShopState(beginLayer)
         local pack = pData.pack
         local cards = pData.cards or {}
 
-        love.graphics.setColor(0, 0, 0, 0.88)
+        local veil=math.min(1,(pData.animationTimer or 0)/0.18)
+        love.graphics.setColor(0, 0, 0, 0.88*veil*veil*(3-2*veil))
         love.graphics.rectangle("fill", -offsetX / scale, -offsetY / Layout.scaleY, winW / scale, winH / Layout.scaleY)
 
         local packImg = UI.getPackImage(pack.packType or pack.id)
@@ -6720,6 +6727,7 @@ function UI.Debug.close()
 end
 
 function UI.Debug.clearScene()
+    UI.HandMotion.reset()
     UI.ScoringFeel.cancel(anim)
     anim.active, anim.enemyTurn, anim.sequence, anim.scoringData = false, nil, nil, nil
     anim.pendingBedScore, anim.pendingStoredEquipment = nil, nil
@@ -6770,7 +6778,7 @@ local function debugTeleport(screenId, bossId)
     local ok, message = DebugTools.validateAnte(debugAnteInput, blindIndex, UI.Debug.region)
     if not ok then debugMessage = message; return false end
     if screenId == "void" and tonumber(debugAnteInput) % 10 ~= 0 then
-        debugMessage = "The Void xuất hiện sau Boss ở ải chia hết cho 10. Nhập 10, 20, 30…"; return false
+        debugMessage = "The Void có 10% xuất hiện sau Boss ở ải chia hết cho 10. Nhập 10, 20, 30…"; return false
     end
     if not hasRunStarted then startNewGame("red_deck") end
     UI.Debug.clearScene()
@@ -6817,6 +6825,10 @@ local function debugTeleport(screenId, bossId)
         state = "CASH_OUT"
     elseif screenId == "scoring" then
         startBlindCombat(blind)
+        for i,c in ipairs(game.hand) do
+            local x,y,_,_,angle=getHandCardPosition(i,#game.hand)
+            UI.HandMotion.update(c,x,y,angle,1,false,false) -- Debug preview jumps to the settled hand.
+        end
         toggleCardSelection(1)
         playSelectedHand()
     elseif screenId == "victory" then
@@ -6833,7 +6845,7 @@ local function debugTeleport(screenId, bossId)
             Shop.refresh(shopData, game)
             local key = game.run.ante .. ":" .. game.run.regionId
             game.voidVisited = game.voidVisited or {}; game.voidVisited[key] = nil
-            assert(require("src.void_gacha").enterIfDue(game))
+            assert(require("src.void_gacha").enterIfDue(game,true))
         end
         state = screenId
     elseif screenId == "gameover" then
@@ -6869,7 +6881,7 @@ function UI.Debug.activate(id)
     elseif id == "debug_add_souls" or id == "debug_heal" or id == "debug_add_tickets" then
         if not hasRunStarted then startNewGame("red_deck"); isDebugOpen = true end
         if id == "debug_add_souls" then game.souls = math.min(9007199254740991, (game.souls or 0) + 100); debugMessage = "Đã cộng 100 linh hồn."
-        elseif id == "debug_add_tickets" then game.voidTickets = (game.voidTickets or 0) + 10; debugMessage = "Đã cộng 10 vé Void."
+        elseif id == "debug_add_tickets" then require("src.void_tickets").add(game,10); debugMessage = "Đã cộng 10 vé Void vào balo."
         else game.playerHp = game.maxPlayerHp; debugMessage = "Đã hồi đầy HP." end
         saveRunAtSafePoint()
     elseif id == "debug_set_ante" then debugTeleport("BLIND_SELECT")
@@ -7416,7 +7428,9 @@ local function handleModalsMousepressed(mx, my, button)
                 UI.Polish.focusItem(card,"card_sale",nil,UI.Polish.rect(UI,card,{x=mx-37,y=my-54,w=74,h=108}))
                 return true
             end
-            inspectCardModal = card
+            if button == 1 and UI.CardPhysics.isHeld(card) then
+                anim.cardClick = {card=card, x=mx, y=my}
+            else inspectCardModal = card end
             Sound.play("card_deal")
             return true
         end
@@ -7519,6 +7533,7 @@ function love.mousepressed(x, y, button, istouch)
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     if UI.ScoringFeel.labOpen then return end
     local mx, my = toVirtual(x, y)
+    if UI.AbilityUI.current then UI.CardPhysics.press(mx,my,button) end
     if UI.AbilityUI.press(mx, my, button) then return end
     if state == "shop" and UI.Polish.busy() then return end
     if state=="playing" and not inspectCardModal and not isSettingsOpen and not isPauseMenuOpen
@@ -7562,6 +7577,7 @@ function love.mousepressed(x, y, button, istouch)
                 handleModalsMousepressed(mx,my,button);return
             end
         end
+        UI.CardPhysics.press(mx,my,button)
         UI.Backpack.handle(mx,my,button)
         return
     end
@@ -7571,10 +7587,10 @@ function love.mousepressed(x, y, button, istouch)
     end
     local physicsButton = false
     for _, btn in ipairs(buttons or {}) do
-        if not btn.invisible and not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w
+        if not btn.invisible and not btn.cardSurface and not btn.disabled and mx >= btn.x and mx <= btn.x + btn.w
             and my >= btn.y and my <= btn.y + btn.h then physicsButton = true; break end
     end
-    if not physicsButton and state ~= "shop" then UI.CardPhysics.press(mx, my, button) end
+    if not physicsButton then UI.CardPhysics.press(mx, my, button) end
     if isUiGalleryOpen then
         if button == 1 and mx >= 1152 and mx <= 1248 and my >= 20 and my <= 51 then
             isUiGalleryOpen = false
@@ -8207,6 +8223,7 @@ function love.mousepressed(x, y, button, istouch)
 end
 
 function love.keypressed(key, scancode)
+    if key=="escape" and anim.cardClick then anim.cardClick=nil;UI.CardPhysics.release() end
     if isDebugOpen then UI.Debug.key(key, scancode); return end
     if state=="barter" and not isPauseMenuOpen and not isSettingsOpen then
         local result=require("ui.barter").keypressed(game,key)
@@ -8395,6 +8412,7 @@ function love.keypressed(key, scancode)
     end
 
     if state == "playing" then
+        if UI.HandMotion.busy(game.hand) then return end
         if key == "space" or key == "return" then
             UI.playHandAction()
         elseif key == "d" then
@@ -8531,6 +8549,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
     end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
     local mx, my = toVirtual(x, y)
+    UI.CardPhysics.move(mx,my)
     if UI.Backpack.open and require("ui.backpack_loadout").move(UI.Backpack,mx,my) then return end
     if UI.ExpandedInventory.open and not inspectCardModal then UI.ExpandedInventory.move(mx,my);return end
 
@@ -8607,14 +8626,21 @@ end
 
 function love.mousereleased(x, y, button, istouch)
     if istouch then return end
+    local mx, my = toVirtual(x, y)
     if button == 1 then
-        UI.CardPhysics.release()
+        local dragged=UI.CardPhysics.release(mx,my)
+        if anim.cardClick then
+            local click=anim.cardClick;anim.cardClick=nil
+            if isDeckViewerOpen and not dragged and (mx-click.x)^2+(my-click.y)^2<=UI.CardPhysics.config.dragThreshold^2 then
+                inspectCardModal=click.card;Sound.play("card_deal")
+            end
+            return
+        end
         if handDrag.active and handInputBlocked() then
             handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
         end
     end
     if state == "defeating" or (DeathVFX.enemyActive(game.monster) and DeathVFX.busy()) then return end
-    local mx, my = toVirtual(x, y)
     if UI.Backpack.open and require("ui.backpack_loadout").release(UI.Backpack,mx,my,button,UI.Backpack.transfer) then return end
     if UI.ExpandedInventory.open and not inspectCardModal then
         UI.ExpandedInventory.release(mx,my,button,UI.ExpandedInventory.callbacks);return

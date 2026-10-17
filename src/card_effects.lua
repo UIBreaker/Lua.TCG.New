@@ -100,7 +100,7 @@ function CardEffects.getScoreBonus(card)
     local effectName = CardEffects.getEffectName(card)
     local definition = effectName and Config.effects[effectName]
     local score=definition and definition.score or nil
-    local power=math.max(card.editionPower==5 and 5 or 1,require("src.blood_shop").powerOf(card))
+    local power=math.max((card.editionPower==5 or card.editionPower==10) and card.editionPower or 1,require("src.blood_shop").powerOf(card))
     if score and power>1 then
         local boosted={};for k,v in pairs(score) do boosted[k]=type(v)=="number" and (k~="auraMultiplier" or v>1) and v*power or v end;return boosted
     end

@@ -242,7 +242,7 @@ function RewardSystem.begin(breakdown, game, context)
         if reward.type == "GOLD" then
             result.bonusGold = result.bonusGold + reward.amount
         elseif reward.type=="VOID_TICKET" then
-            game.voidTickets=(game.voidTickets or 0)+reward.amount
+            require("src.void_tickets").add(game,reward.amount,reward.receipt)
         elseif reward.type == "PLAYING_CARD" then
             Deck.addCardToDeck(game, reward.card)
         elseif reward.type == "CONSUMABLE" then

@@ -29,6 +29,8 @@ function B.effect(result,power)
             if k=="copyActivations" or k=="repeatsPerLevel" then copy[k]=math.min(128,math.floor(copy[k])) end
         else copy[k]=v end
     end
+    if copy.grantPermanentSpeedSmall then copy.grantPermanentSpeedSmallPower=(copy.grantPermanentSpeedSmallPower or 1)*power end
+    if copy.grantEvolution then copy.grantEvolutionCount=(copy.grantEvolutionCount or 1)*power end
     return copy
 end
 function B.describe(text,power)

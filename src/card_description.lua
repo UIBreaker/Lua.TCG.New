@@ -44,13 +44,13 @@ function D.edition(card)
     local definition=Effects.getDefinition(Effects.getEffectName(card))
     if not definition then return "" end
     local description=definition.shopText
-    if card.editionPower==5 or require("src.blood_shop").powerOf(card)>1 then
+    if card.editionPower==5 or card.editionPower==10 or require("src.blood_shop").powerOf(card)>1 then
         local score=Effects.getScoreBonus(card)
         if score then
             local parts={};if (score.damage or 0)>0 then parts[#parts+1]="+"..score.damage.." Sát thương" end
             if (score.mult or 0)>0 then parts[#parts+1]="+"..score.mult.." Cường hóa" end
             if (score.auraMultiplier or 1)>1 then parts[#parts+1]="×"..score.auraMultiplier.." Aura" end
-            description=table.concat(parts," · ").." · "..(card.voidPower and "THE VOID ×"..card.voidPower or "HUYẾT LUYỆN ×5")
+            description=table.concat(parts," · ").." · "..((card.voidPower or card.editionPower==10) and ("THE VOID ×"..math.max(card.voidPower or 1,card.editionPower or 1)) or "HUYẾT LUYỆN ×5")
         end
     end
     return "\nẤN BẢN · "..definition.shopLabel.."\n"..description

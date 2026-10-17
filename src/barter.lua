@@ -33,7 +33,7 @@ function T.role(kind,item)
     return "attack"
 end
 function T.value(kind,item)
-    if kind=="resource" then return item.amount*(item.resource=="voidTickets" and 100 or 3) end
+    if kind=="resource" then return item.amount*(item.resource=="voidTickets" and 1 or 3) end
     local Shop=require("src.shop")
     if not prices then
         prices={}
@@ -57,11 +57,13 @@ function T.value(kind,item)
 end
 local function resource(id,amount)
     return {id="barter_"..id,resource=id,amount=amount,name=(id=="souls" and "Linh Hồn" or "Vé The Void").." ×"..amount,
-        desc="Trao đúng "..amount..(id=="souls" and " linh hồn." or " vé quay The Void."),cost=amount*(id=="souls" and 3 or 100)}
+        desc="Trao đúng "..amount..(id=="souls" and " linh hồn." or " vé quay The Void; mỗi vé trị giá 1 vàng."),cost=amount*(id=="souls" and 3 or 1)}
 end
 function T.owned(game,kind)
+    require("src.void_tickets").count(game)
     local list={}
     local function add(k,item,source,index,where,card)
+        if k=="consumable" and require("src.void_tickets").isTicket(item) then return end
         if item and (not kind or kind==k) then
             list[#list+1]={key=k..":"..source..":"..(card and tostring(card.id)..":" or "")..index,kind=k,item=item,source=source,index=index,where=where,card=card}
         end
@@ -290,7 +292,9 @@ local function removePlayer(game,entries)
         if ak~=bk then return ak<bk end;return a.index>b.index
     end)
     for _,entry in ipairs(entries) do
-        if entry.kind=="resource" then game[entry.item.resource]=game[entry.item.resource]-entry.item.amount
+        if entry.kind=="resource" then
+            if entry.item.resource=="voidTickets" then assert(require("src.void_tickets").spend(game,entry.item.amount))
+            else game[entry.item.resource]=game[entry.item.resource]-entry.item.amount end
         elseif entry.kind=="card" then
             for i,c in ipairs(game.persistentDeck) do if c==entry.item then table.remove(game.persistentDeck,i);break end end
             for _,pile in ipairs({game.hand or {},game.deck or {},game.discardPile or {}}) do
@@ -310,7 +314,9 @@ local function grant(game,entry)
     if entry.kind=="spn" then Loadout.storeDeity(game,item)
     elseif entry.kind=="equipment" then Basic.store(game,item,item.acquisitionCost or item.investment or 0)
     elseif entry.kind=="card" then Deck.addCardToDeck(game,item)
-    elseif entry.kind=="resource" then game[item.resource]=(game[item.resource] or 0)+item.amount
+    elseif entry.kind=="resource" then
+        if item.resource=="voidTickets" then require("src.void_tickets").add(game,item.amount)
+        else game[item.resource]=(game[item.resource] or 0)+item.amount end
     else Loadout.storeConsumable(game,item) end
 end
 function T.accept(game)

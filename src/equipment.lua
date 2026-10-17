@@ -152,6 +152,9 @@ for id,p in pairs(values) do Equipment.ITEMS[id].params=p;Equipment.ITEMS[id].de
 function Equipment.getDescription(item)
     if require("src.blood_shop").powerOf(item)>1 then
         local def=Equipment.ITEMS[item.id]
+        local power=require("src.blood_shop").powerOf(item)
+        local soul=require("src.soul_relics").description(item,power)
+        if soul then return soul.."\n"..(item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Giữ nguyên điều kiện kích hoạt và số hốc." end
         if def and def.descriptionTemplate then
             local power=require("src.blood_shop").powerOf(item)
             local p=require("src.blood_shop").params(def.params,power)

@@ -24,6 +24,22 @@ R.definitions = {
     {id="soul_edition_prism",name="Lăng Kính Hoàng Hôn",cost=42,slotsNeeded=2,color={1,.7,.55,1},desc="Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly. Một lần mỗi trận."},
 }
 for _,def in ipairs(R.definitions) do def.shopSummary=summaries[def.id] end
+function R.description(item,power)
+    if not summaries[item.id] or power==1 then return end
+    local texts={
+        soul_phoenix_lantern="Khi còn trên tay: chặn chí tử tối đa "..power.." lần mỗi trận, mỗi lần hồi "..math.min(100,50*power).."% HP tối đa.",
+        soul_frost_bell="Khi tính điểm: đóng băng "..(2*power).." đòn đánh địch kế tiếp. Một lần mỗi trận.",
+        soul_rift_compass="Mỗi tay tính điểm: kéo tối đa "..power.." lá rank cao nhất còn trong bộ lên tay, vượt giới hạn cầm bài; không tạo bản sao.",
+        soul_return_chain="Sau khi tính điểm: lá mang xích và tối đa "..(power-1).." đồng đội đang tính điểm trở lại tay, thay vì cọc bỏ. Không tạo bản sao.",
+        soul_echo_mirror="Mỗi tay tính điểm: tái kích hoạt "..(2*power).." lần cho mỗi lá kề trái/phải. Dùng chung trần kích hoạt của tay.",
+        soul_evolution_quill="Khi tính điểm: tiến hóa vĩnh viễn +"..power.." cấp cho đồng đội ngẫu nhiên đang tính điểm, không vượt cấp tối đa.",
+        soul_silence_anchor="Khi tính điểm: tắt kỹ năng chủ động và nội tại boss thêm "..(2*power).." tay bài. Một lần mỗi món mỗi trận; nhiều món nối tiếp thời hạn.",
+        soul_plague_chalice="Khi tính điểm: đặt độc riêng trong "..(3*power).." đòn; mỗi đòn gây "..(8*power).."% HP tối đa địch. Nhiều món cộng dồn; chính món đó làm mới thời hạn.",
+        soul_reaper_contract="Sau lần tính điểm đầu: mỗi kẻ địch chết cho +"..(3*power).." linh hồn đến hết trận. Mỗi cái chết trả một lần cho từng khế ước.",
+        soul_edition_prism="Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly, đồng thời cường độ ấn bản ít nhất ×"..power..". Poly cũng nhận cường độ này. Một lần mỗi trận.",
+    }
+    return texts[item.id]
+end
 local function state(g)
     g.soulRelicCombat=g.soulRelicCombat or {used={},claimed={},freeze=0}
     return g.soulRelicCombat
@@ -44,25 +60,30 @@ function R.score(g,card,ctx)
         if not ctx.soulRelics[key] then
             ctx.soulRelics[key]=true
             local id,message=eq.id,nil
+            local power=require("src.blood_shop").powerOf(eq)
             if id=="soul_frost_bell" and not s.used[key] then
-                s.freeze=s.freeze+2;s.used[key]=true;message="ĐÓNG BĂNG 2 ĐÒN"
+                s.freeze=s.freeze+2*power;s.used[key]=true;message="ĐÓNG BĂNG "..(2*power).." ĐÒN"
             elseif id=="soul_rift_compass" then
-                local index
-                for i,c in ipairs(g.deck or {}) do
-                    if not c.destroyed and (not index or c.rank>g.deck[index].rank) then index=i end
+                local count=0
+                for _=1,power do
+                    local index
+                    for i,c in ipairs(g.deck or {}) do if not c.destroyed and (not index or c.rank>g.deck[index].rank) then index=i end end
+                    if not index then break end
+                    local drawn=table.remove(g.deck,index);drawn.selected=false;drawn.dealPending=true;drawn.visualX=1180;drawn.visualY=620
+                    g.hand=g.hand or {};g.hand[#g.hand+1]=drawn;count=count+1
                 end
-                if index then
-                    local drawn=table.remove(g.deck,index)
-                    drawn.selected=false;drawn.dealPending=true;drawn.visualX=1180;drawn.visualY=620
-                    g.hand=g.hand or {};g.hand[#g.hand+1]=drawn;message="KÉO LÁ MẠNH NHẤT"
-                end
+                if count>0 then message="KÉO "..count.." LÁ MẠNH NHẤT" end
             elseif id=="soul_return_chain" then
                 ctx.returns[card.id]=true;message="TRỞ LẠI TAY"
+                local count=1
+                for _,other in ipairs(ctx.scoring) do if count>=power then break end
+                    if other~=card and not other.destroyed then ctx.returns[other.id]=true;count=count+1 end
+                end
             elseif id=="soul_echo_mirror" then
                 local n=0
                 for _,i in ipairs({ctx.index-1,ctx.index+1}) do
                     local other=ctx.scoring[i]
-                    if other and not other.destroyed then require("src.card_abilities").repeatCard(g,other,2,ctx);n=n+1 end
+                    if other and not other.destroyed then require("src.card_abilities").repeatCard(g,other,2*power,ctx,nil,power>1 and 2*power or nil);n=n+1 end
                 end
                 if n>0 then message="VỌNG ÂM "..n.." LÁ KỀ" end
             elseif id=="soul_evolution_quill" then
@@ -75,18 +96,19 @@ function R.score(g,card,ctx)
                     end
                 end
                 target=candidates and candidates[require("src.rng").random(#candidates)]
-                if target and Abilities.upgrade(g,target,1,false) then message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +1 CẤP"
+                if target and Abilities.upgrade(g,target,power,false) then message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +"..power.." CẤP"
                 else message="CẦN ĐỒNG ĐỘI TÍNH ĐIỂM CHƯA ĐẠT TRẦN" end
             elseif id=="soul_silence_anchor" and not s.used[key] and require("src.boss_abilities").state(g.monster) then
                 local Boss=require("src.boss_abilities");local bs=Boss.state(g.monster)
                 local remaining=math.max(0,math.max(bs.passiveUntil or 0,bs.activeUntil or 0)-bs.handIndex)
-                Boss.disable(g,remaining+2,true,true);s.used[key]=true;message="KHÓA KỸ NĂNG BOSS · +2 TAY"
+                Boss.disable(g,remaining+2*power,true,true);s.used[key]=true;message="KHÓA KỸ NĂNG BOSS · +"..(2*power).." TAY"
             elseif id=="soul_plague_chalice" and g.monster and g.monster.hp>0 then
                 g.monster.soulPoisonSources=g.monster.soulPoisonSources or {}
-                g.monster.soulPoisonSources[key]=3;g.monster.soulPoisonTurns=3;message="ĐỘC RIÊNG · 3 ĐÒN · 8% HP"
+                g.monster.soulPoisonSources[key]={turns=3*power,percent=.08*power}
+                g.monster.soulPoisonTurns=math.max(g.monster.soulPoisonTurns or 0,3*power);message="ĐỘC RIÊNG · "..(3*power).." ĐÒN · "..(8*power).."% HP"
             elseif id=="soul_reaper_contract" then
                 s.reaperSources=s.reaperSources or {}
-                if not s.reaperSources[key] then s.reaperSources[key]=true;message="MỖI KẺ ĐỊCH CHẾT +3 LH" end
+                if not s.reaperSources[key] then s.reaperSources[key]=3*power;message="MỖI KẺ ĐỊCH CHẾT +"..(3*power).." LH" end
             elseif id=="soul_edition_prism" and not s.used[key] then
                 local suits,count={},0
                 for _,other in ipairs(ctx.scoring) do
@@ -96,12 +118,15 @@ function R.score(g,card,ctx)
                 end
                 local Effects=require("src.card_effects")
                 local nextEdition=({normal="foil",foil="holographic",holographic="polychrome"})[Effects.getEffectName(card) or "normal"]
-                if count>=3 and nextEdition then
-                    Effects.setEffect(card,nextEdition)
+                local current=Effects.getEffectName(card)
+                if count>=3 and (nextEdition or current and power>(card.editionPower or 1)) then
+                    local targetEdition=nextEdition or current
+                    local editionPower=math.max(card.editionPower or 1,power)
+                    Effects.setEffect(card,targetEdition);card.editionPower=editionPower
                     for _,pile in ipairs({g.persistentDeck or {},g.hand or {},g.deck or {},g.discardPile or {}}) do
-                        for _,copy in ipairs(pile) do if copy.id==card.id then Effects.setEffect(copy,nextEdition) end end
+                        for _,copy in ipairs(pile) do if copy.id==card.id then Effects.setEffect(copy,targetEdition);copy.editionPower=editionPower end end
                     end
-                    s.used[key]=true;message="ẤN BẢN → "..nextEdition
+                    s.used[key]=true;message="ẤN BẢN → "..targetEdition..(power>1 and (" ×"..editionPower) or "")
                 end
             end
             if message then report(g,card,eq,message,equipmentIndex) end
@@ -115,8 +140,10 @@ function R.guard(g,damage)
         if not card.destroyed then
             for equipmentIndex,eq in ipairs(card.equipments or {}) do
                 local key=tostring(card.id or card)..":"..eq.id..":"..equipmentIndex
-                if eq.id=="soul_phoenix_lantern" and not s.used[key] then
-                    s.used[key]=true;g.playerHp=math.max(1,math.floor((g.maxPlayerHp or 100)*.5))
+                local used=s.used[key]==true and 1 or tonumber(s.used[key]) or 0
+                local power=require("src.blood_shop").powerOf(eq)
+                if eq.id=="soul_phoenix_lantern" and used<power then
+                    s.used[key]=used+1;g.playerHp=math.max(1,math.floor((g.maxPlayerHp or 100)*math.min(1,.5*power)))
                     report(g,card,eq,"CHẶN CHÍ TỬ · HỒI SINH",equipmentIndex);return 0
                 end
             end
@@ -126,7 +153,7 @@ function R.guard(g,damage)
 end
 function R.reap(g)
     local s=state(g);local reward=0
-    for _ in pairs(s.reaperSources or {}) do reward=reward+3 end
+    for _,amount in pairs(s.reaperSources or {}) do reward=reward+(amount==true and 3 or amount) end
     if reward==0 then return end
     for i,enemy in ipairs(g.enemies or {g.monster}) do
         if enemy and enemy.hp<=0 and not s.claimed[i] then
@@ -137,14 +164,19 @@ function R.reap(g)
 end
 function R.beforeAttack(g,enemy)
     if (enemy.soulPoisonTurns or 0)>0 then
-        local sources,remaining=0,0
-        for key,turns in pairs(enemy.soulPoisonSources or {}) do if turns>0 then
-            sources=sources+1;enemy.soulPoisonSources[key]=turns-1;remaining=math.max(remaining,turns-1)
-        end end
-        if not enemy.soulPoisonSources then sources=1;remaining=enemy.soulPoisonTurns-1 end
+        local ticks,remaining={},0
+        for key,source in pairs(enemy.soulPoisonSources or {}) do
+            local turns=type(source)=="table" and source.turns or source
+            if turns>0 then
+                ticks[#ticks+1]=type(source)=="table" and source.percent or .08
+                if type(source)=="table" then source.turns=turns-1 else enemy.soulPoisonSources[key]=turns-1 end
+                remaining=math.max(remaining,turns-1)
+            end
+        end
+        if not enemy.soulPoisonSources then ticks={.08};remaining=enemy.soulPoisonTurns-1 end
         enemy.soulPoisonTurns=remaining
-        for _=1,sources do
-            if enemy.hp>0 then require("src.monster").takeDamage(enemy,math.max(1,math.floor((enemy.maxHp or enemy.hp)*.08))) end
+        for _,percent in ipairs(ticks) do
+            if enemy.hp>0 then require("src.monster").takeDamage(enemy,math.max(1,math.floor((enemy.maxHp or enemy.hp)*percent))) end
         end
         R.reap(g)
         if enemy.hp<=0 then return false end

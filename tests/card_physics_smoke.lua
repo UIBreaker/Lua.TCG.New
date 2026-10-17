@@ -17,7 +17,7 @@ local function simulate(fps)
     return x, angle
 end
 local x60, r60 = simulate(60)
-for _, fps in ipairs({120, 144}) do
+for _, fps in ipairs({30, 120, 144}) do
     local x, r = simulate(fps)
     assert(math.abs(x - x60) < 0.2 and math.abs(r - r60) < 0.001, "Physics changes with FPS")
 end
@@ -28,4 +28,4 @@ assert(math.abs(x - 32) < 0.000001 and math.abs(y - 78) < 0.000001,
 local p, v = 0, 500
 p, v = Physics.spring(p, v, -30, 600, 32, 1 / 240)
 assert(v > 0 and p > 0, "Changing direction must preserve momentum")
-print("Card physics math passed: 60/120/144 FPS, inverse transforms, reversal momentum")
+print("Card physics math passed: 30/60/120/144 FPS, inverse transforms, reversal momentum")

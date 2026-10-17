@@ -35,7 +35,7 @@ local function burst(game,index,name)
     shot(name)
 end
 function T.update(game,cb)
-    T.started=T.started or love.timer.getTime();assert(love.timer.getTime()-T.started<55,"Void UI timeout at "..T.step)
+    T.started=T.started or love.timer.getTime();assert(love.timer.getTime()-T.started<75,"Void UI timeout at "..T.step)
     if love.timer.getTime()<(T.deadline or 0) then return end
     local step=T.step
     if step==0 then
@@ -53,6 +53,8 @@ function T.update(game,cb)
         local _,state=cb.getRunState();assert(state=="void" and game.run.ante==10)
         assert(require("render.scene").definition.backgroundPath==G.config.background and require("render.scene").art.theVoid)
         assert(#V.featured==3 and V.featured[1].item.voidPower==5 and V.featured[2].item.voidPower==10 and V.featured[3].item.voidPower==10)
+        require("src.void_tickets").add(game,9);game.voidEvent.payment="ticket"
+        game.voidEvent.spnId="spirit_borrowed_turn";game.voidEvent.equipmentId="soul_edition_prism";V.bannerEvent=nil
         local UI=require("src.ui");local Shop=require("src.shop")
         assert(UI.getVoucherImage("v_hand_size")==require("src.continental_art").get("hand_expansion"))
         assert(require("src.continental_art").get("void_ticket"))
@@ -130,7 +132,25 @@ function T.update(game,cb)
     elseif step==24 then
         local _,state=cb.getRunState();assert(state=="shop" and game.shopMode=="soul","Void return: "..state.."/"..game.shopMode)
         assert(game.run.ante==10 and game.voidVisited["10:human"] and not game.voidEvent)
+        love.keypressed("i")
+        local Bag=require("ui.backpack");require("ui.backpack_qol").switch(Bag,"consumable")
+        require("ui.backpack_qol").state(Bag).query="ve the void"
+        T.step=24.1;T.deadline=love.timer.getTime()+.6;return
+    elseif step==24.1 then
+        local Bag=require("ui.backpack");assert(Bag.open)
+        local cell;for _,r in ipairs(Bag.cells) do if r.item.id=="void_ticket" then cell=r;break end end
+        assert(cell and cell.count==99);click(cell)
+        T.step=24.2;T.deadline=love.timer.getTime()+.4;return
+    elseif step==24.2 then
+        assert(button(cb,"bag_redeem_ticket") and require("src.consumable_art").get(require("src.void_tickets").item()))
+        shot("tickets_backpack");T.ticketGold=game.gold
+        T.step=24.3;T.deadline=love.timer.getTime()+.3;return
+    elseif step==24.3 then
+        click(button(cb,"bag_redeem_ticket"));assert(game.gold==T.ticketGold+99 and require("src.void_tickets").count(game)==1)
+        love.keypressed("i");T.step=24.4;T.deadline=love.timer.getTime()+.3;return
+    elseif step==24.4 then
         click(button(cb,"next_round") or button(cb,"leave_shop"))
+        T.step=25;T.deadline=love.timer.getTime()+1.15;return
     elseif step==25 then
         assert(game.shopMode=="large" and game.run.ante==10);click(button(cb,"next_round") or button(cb,"leave_shop"))
     elseif step==26 then
@@ -139,7 +159,7 @@ function T.update(game,cb)
         assert(state=="BLIND_SELECT" and game.run.ante==11);T.step=27;T.deadline=love.timer.getTime()+.3;return
     elseif step==27 then
         local _,state=cb.getRunState();assert(state=="BLIND_SELECT" and game.run.ante==11)
-        print("Void UI PASS: real boss ceremony/ticket -> guaranteed Void, dedicated background, 3 banner identities, rates, actual 1-ticket/10-gold pulls, rarity VFX 1-9, featured card, save/resume, Void -> soul -> large -> optional barter -> stage 11")
+        print("Void UI PASS: ceremony -> Void, 10/100-ticket quotes, actual ticket/gold pulls, powered banners, rarity VFX 1-9, save/resume, physical tickets/99 stacks/99-gold backpack redemption, Void -> soul -> large -> optional barter -> stage 11")
         love.event.quit(0)
     end
     T.step=step+1;T.deadline=love.timer.getTime()+((step==0 or step==2 or step==24 or step==25) and 1.15 or .28)

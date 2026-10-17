@@ -223,12 +223,13 @@ local function soulShop(shop, game, buttons, mx, my, time)
         g.setColor(accent[1],accent[2],accent[3],hovered and .8 or .32);g.setLineWidth(1);UI.drawRoundedRect("line",x,y,w,h,9)
         g.setColor(accent[1],accent[2],accent[3],.65);g.line(x+14,y,x+w-14,y)
     end
-    local function offer(item,index,x,y,w,h,face)
-        local hovered=mx>=x and mx<=x+w and my>=y and my<=y+h
+    local function offer(item,index,x,y,w,h,face,details)
+        local hovered=UI.Polish.stockReady(index) and mx>=x and mx<=x+w and my>=y and my<=y+h
         UI.Polish.surface(item,index,hovered,face.x,face.y,face.w,face.h,function()
             art(item,face.x,face.y,face.w,face.h,hovered,mx,my)
+            details()
         end)
-        buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item,focusRect=face}
+        buttons[#buttons+1]={id="buy_"..index,x=x,y=y,w=w,h=h,invisible=true,itemIndex=index,stockItem=item,focusRect=face,disabled=not UI.Polish.stockReady(index)}
         if hovered and UI.Polish.tooltipAllowed(item) then hoveredItem=item end
     end
     for slot=1,5 do
@@ -238,12 +239,13 @@ local function soulShop(shop, game, buttons, mx, my, time)
         local hovered=mx>=x and mx<x+224 and my>=127 and my<=396
         bay(x,127,224,269,item and item.color,hovered)
         if item then
-            offer(item,index,x,127,224,269,{x=x+56,y=157,w=112,h=168})
-            g.setColor(.15,.1,.23,1);UI.drawRoundedRect("fill",x+71,133,82,20,5)
-            text(item.cost.." LH",x+71,134,82,UI.fonts.small,(game.souls or 0)>=item.cost and C.gold or C.red,"center")
-            text(item.name,x+7,332,210,UI.fonts.small,item.color,"center")
-            local caption=item.equipment.shopSummary or item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
-            text(caption,x+12,358,200,nil,{0.81,0.79,0.89,1},"center")
+            offer(item,index,x,127,224,269,{x=x+56,y=157,w=112,h=168},function()
+                g.setColor(.15,.1,.23,1);UI.drawRoundedRect("fill",x+71,133,82,20,5)
+                text(item.cost.." LH",x+71,134,82,UI.fonts.small,(game.souls or 0)>=item.cost and C.gold or C.red,"center")
+                text(item.name,x+7,332,210,UI.fonts.small,item.color,"center")
+                local caption=item.equipment.shopSummary or item.desc:gsub("Chiếm ",""):gsub(" khi tính điểm%.",""):gsub(" và "," · "):gsub(", tối đa HP tối đa%.","")
+                text(caption,x+12,358,200,nil,{0.81,0.79,0.89,1},"center")
+            end)
         else
             local eq=require("src.equipment").ITEMS[id]
             text("◇",x,205,224,UI.fonts.large,C.muted,"center")
@@ -263,13 +265,14 @@ local function soulShop(shop, game, buttons, mx, my, time)
         local hovered=mx>=x and mx<=x+112 and my>=439 and my<=634
         bay(x,439,112,195,item and item.color,hovered)
         if item then
-            text(item.name,x+4,447,104,UI.fonts.tiny,item.color,"center")
-            offer(item,index,x,439,112,195,{x=x+16,y=478,w=80,h=120})
-            local c=item.consumable
-            local summary=c.slotType=="spn" and "Ô SPN +1" or c.slotType=="consumable" and "Ô tiêu hao +1"
-                or summaries[c.category] or "Hủy bài · ×2 LH"
-            text(summary,x+2,602,108,UI.fonts.tiny,{.81,.79,.89,1},"center")
-            text(item.cost.." LH",x+4,618,104,UI.fonts.tiny,(game.souls or 0)>=item.cost and (rare and C.gold or C.purple) or C.red,"center")
+            offer(item,index,x,439,112,195,{x=x+16,y=478,w=80,h=120},function()
+                text(item.name,x+4,447,104,UI.fonts.tiny,item.color,"center")
+                local c=item.consumable
+                local summary=c.slotType=="spn" and "Ô SPN +1" or c.slotType=="consumable" and "Ô tiêu hao +1"
+                    or summaries[c.category] or "Hủy bài · ×2 LH"
+                text(summary,x+2,602,108,UI.fonts.tiny,{.81,.79,.89,1},"center")
+                text(item.cost.." LH",x+4,618,104,UI.fonts.tiny,(game.souls or 0)>=item.cost and (rare and C.gold or C.purple) or C.red,"center")
+            end)
         else
             text("ĐÃ ĐỔI",x+4,520,104,UI.fonts.small,C.muted,"center")
             if definition then text(require("src.run_manager")[definition.factory]().name,x+4,447,104,UI.fonts.tiny,C.muted,"center") end
@@ -290,17 +293,17 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         for index,item in ipairs(UI.Polish.items(shop) or {}) do
             local x,y,w,h=position(item,index,0,shop.mode,shop.page)
             if x then
-                local hovered=mx>=x and mx<=x+w and my>=y-25 and my<=y+h+25
+                local hovered=UI.Polish.stockReady(index) and mx>=x and mx<=x+w and my>=y-25 and my<=y+h+25
                 local affordable=Shop.canAfford(item,game)
                 UI.Polish.surface(item,index,hovered,x,y,w,h,function()
                     art(item,x,y,w,h,hovered,mx,my)
+                    love.graphics.setColor(C.goldDim);love.graphics.setLineWidth(1)
+                    love.graphics.line(x+w+2,y+18,x+w+11,y+18)
+                    price(item,x+w+9,y+7,54,affordable)
+                    Interiors.label(item,x,y,w,h)
                 end)
-                love.graphics.setColor(C.goldDim);love.graphics.setLineWidth(1)
-                love.graphics.line(x+w+2,y+18,x+w+11,y+18)
-                price(item,x+w+9,y+7,54,affordable)
-                Interiors.label(item,x,y,w,h)
                 buttons[#buttons+1]={id="buy_"..index,text="",x=x,y=y-6,w=w,h=h+6,
-                    invisible=true,itemIndex=index,stockItem=item}
+                    invisible=true,itemIndex=index,stockItem=item,disabled=not UI.Polish.stockReady(index)}
                 if hovered and UI.Polish.tooltipAllowed(item) and not UI.CardPhysics.isHolding()
                     and not (drag.active and drag.isDragging) then hoveredItem=item end
             end
@@ -326,7 +329,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
         if pack and not retail then packIndex=packIndex+1 end
         x,y,w,h=position(item,index,packIndex)
         if x then
-            hovered = mx >= x and mx <= x + w and my >= y - (voucher and 0 or 24) and my <= y + h + (voucher and 0 or 21)
+            hovered = UI.Polish.stockReady(index) and mx >= x and mx <= x + w and my >= y - (voucher and 0 or 24) and my <= y + h + (voucher and 0 or 21)
             local dragged = false -- Physics draws held surfaces above the UI.
             local affordable = (game.gold or 0) >= item.cost
             UI.Polish.surface(item, index, hovered, x, y, w, h, function()
@@ -343,7 +346,7 @@ function Display.draw(shop, game, buttons, drag, mx, my, time)
                 love.graphics.setColor(C.metal)
                 UI.drawRoundedRect("line", x, y, w, h, 6)
             end
-            buttons[#buttons + 1] = { id = "buy_" .. index, text = "", x = x, y = y - (voucher and 0 or 6), w = w, h = h + (voucher and 0 or 6), invisible = true, itemIndex = index, stockItem = item }
+            buttons[#buttons + 1] = { id = "buy_" .. index, text = "", x = x, y = y - (voucher and 0 or 6), w = w, h = h + (voucher and 0 or 6), invisible = true, itemIndex = index, stockItem = item, disabled=not UI.Polish.stockReady(index) }
             if hovered and UI.Polish.tooltipAllowed(item) and not UI.CardPhysics.isHolding() and not (drag.active and drag.isDragging) then
                 hoveredItem = item
             end

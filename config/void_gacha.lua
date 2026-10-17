@@ -1,6 +1,6 @@
 return {
-    background="assets/scene/events/the_void_space.png",price=100,
-    ticketChance=.01,bossTicketAmount={1,100},
+    background="assets/scene/events/the_void_space.png",price=100,ticketPrice=10,
+    entryChance=.10,ticketChance=.01,bossTicketAmount={1,100},
     -- Integer weights out of 100,000. Every pull uses the same table; no pity.
     rates={
         {id="featured_spn",label="Banner SPN UQ ×5",weight=2},

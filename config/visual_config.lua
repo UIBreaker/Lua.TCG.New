@@ -17,7 +17,7 @@ return {
     ui = { veil = 0.58, surfaceAlpha = 0.89, raisedAlpha = 0.93, textureAlpha = 0.016 },
     shop = { spotlight = 0.075, focusedLight = 0.16, shadow = 0.26 },
     reward = { veil = 0.38, panelAlpha = 0.89, light = 0.20 },
-    transition = { duration = 0.42 },
+    transition = { duration = 0.32 },
     debug = { key = "f1", views = {"FINAL", "LAYERS", "LIGHT", "BLOOM", "FOG", "DOF", "PARTICLES"} },
     palette = { magic = {0.28,0.70,0.95}, danger = {0.92,0.24,0.20},
         curse = {0.50,0.28,0.72}, item = {0.35,0.76,0.48}, reward = {1,0.72,0.32} },

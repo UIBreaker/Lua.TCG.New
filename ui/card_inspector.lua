@@ -139,10 +139,9 @@ function I.draw(UI,item,game,buttons,mx,my)
     local close={id="close_inspector",text="ĐÓNG · ESC",x=1106,y=23,w=143,h=43,font=UI.fonts.small,color=UI.COLORS.btnDiscard}
     buttons[#buttons+1]=close;UI.drawButton(close,mx>=close.x and mx<=close.x+close.w and my>=close.y and my<=close.y+close.h)
     g.setColor(.72,.56,.31,.3);g.line(28,92,1251,92)
-    UI.CardPhysics.suspend()
+    UI.CardPhysics.blockBehind()
     if m.item.rank then UI.drawCard(m.item,35,115,210,315,false,false)
     else UI.Polish.renderItem(UI,m.item,35,115,210,315) end
-    UI.CardPhysics.resume()
     for i,stat in ipairs(m.stats) do
         local x=28+(i-1)%2*116;local y=447+math.floor((i-1)/2)*63
         Style.panel(x,y,108,55,m.accent)

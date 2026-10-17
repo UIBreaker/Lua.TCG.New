@@ -61,6 +61,13 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-card-drag" then
+            local ok,err=xpcall(function() require("tests.card_drag_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("CARD DRAG FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-spn-formations-ui" then
             local ok,err=xpcall(function() require("tests.spn_formations_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("SPN formations UI FAIL: "..tostring(err));love.event.quit(1) end
@@ -316,6 +323,16 @@ function Capture.update(gameRef, callbacks)
         if value == "--test-animation" then
             local ok, err = pcall(require("tests.animation_capture").update, gameRef, callbacks)
             if not ok then print("ANIMATION FAILED: " .. tostring(err)); love.event.quit(1) end
+            return
+        end
+        if value == "--test-shop-motion" then
+            local ok,err=xpcall(function() require("tests.shop_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SHOP MOTION FAILED: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value == "--test-hand-chest-motion" then
+            local ok,err=xpcall(function() require("tests.hand_chest_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("HAND/CHEST MOTION FAILED: "..tostring(err));love.event.quit(1) end
             return
         end
     end

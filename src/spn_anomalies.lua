@@ -103,12 +103,14 @@ function A.commitHand(game,slot,result,preview)
     end
     if result.grantPermanentSpeedSmall then
         local reward=require("src.shop").healingItem("upper","cons_speed_small").consumable
+        local power=result.grantPermanentSpeedSmallPower or 1
+        if power>1 then reward.voidPower=power end
         reward.permanentSpeed=true
-        reward.desc="Chọn một lá đang trên tay: +3 tốc đánh vĩnh viễn (tối đa 999)."
+        reward.desc="Chọn một lá đang trên tay: +"..(3*power).." tốc đánh vĩnh viễn (tối đa 999)."
         giveConsumable(game,reward)
     end
     if result.grantEvolution then
-        giveConsumable(game,require("src.run_manager").createEvolutionCard())
+        for _=1,result.grantEvolutionCount or 1 do giveConsumable(game,require("src.run_manager").createEvolutionCard()) end
     end
     if result.guaranteeHit or result.afterstorm then
         game.spnAttack=game.spnAttack or {afterstorms={}}
@@ -162,7 +164,7 @@ function A.guard(game,damage)
         local hp=game.playerHp or 100
         if deity.id=="spirit_last_pact" and hp>0 and damage>=hp then
             if not state.used then
-                local keep=math.min(game.maxPlayerHp or 100,5)
+                local keep=math.min(game.maxPlayerHp or 100,5*require("src.blood_shop").powerOf(deity))
                 game.playerHp=math.max(hp,keep);damage=game.playerHp-keep
                 state.used=true;store(game,slot,state)
                 notice(game,deity,slot,"GIAO KÈO · CÒN "..keep.." HP")

@@ -76,6 +76,26 @@ function love.load()
         assert(s.hoverLift<0.001 and math.abs(s.y-s.homeY)<1,"hover returns to idle slot")
         local cx=s.ox+s.a*64+s.c*96;local cy=s.oy+s.b*64+s.d*96
         assert(P.hit(card,cx,cy) and not P.hit(card,-1000,-1000),"hit area must follow animated face")
+        P.press(cx,cy,1)
+        for i=1,math.ceil(fps*.2) do step(cx+140,cy-40) end
+        local attached=0
+        P.beginFrame(true);surface(card,300,150,128,192)
+        P.drawAttached(card,function(x,y)
+            attached=attached+1
+            local px,py=g.transformPoint(x,y)
+            assert(math.abs(px-s.ox)+math.abs(py-s.oy)<.001,"held rim must follow final face")
+        end)
+        assert(attached==0,"held rim must wait for overlay instead of remaining in the slot")
+        P.endFrame();assert(attached==1,"held rim must render exactly once")
+        step(cx,cy)
+        local vx,vy=s.vx,s.vy
+        assert(P.release(cx,cy),"returning to press origin must remain a drag")
+        assert(s.settling and s.vx==vx and s.vy==vy,"release must preserve pose and momentum")
+        for i=1,fps do step(-500,-500) end
+        assert(not s.settling and math.abs(s.x-s.homeX)<1,"release must finish above the slot before returning to normal layer")
+        local px,py=s.ox+s.a*64+s.c*96,s.oy+s.b*64+s.d*96
+        P.press(px,py,1);P.move(px+40,py);P.move(px,py)
+        assert(P.release(px,py),"fast out-and-back between rendered frames must remain a drag")
     end
     local Surfaces=require("ui.card_surfaces")
     local faces={

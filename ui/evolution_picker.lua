@@ -43,7 +43,6 @@ function Picker.draw(UI,m,mx,my)
     if not upgrade then button("tab_deities","HỘ LINH  ·  "..counts.deities,272,158,176,36,nil,false,m.filter=="deities") end
     g.setColor(violet);g.rectangle("fill",m.filter=="cards" and 84 or 272,195,176,2,1,1)
     local pages=math.max(1,math.ceil(#filtered/8));m.page=math.max(1,math.min(m.page,pages))
-    UI.CardPhysics.suspend()
     for slot=0,7 do
         local index=filtered[(m.page-1)*8+slot+1]
         if index then
@@ -60,7 +59,6 @@ function Picker.draw(UI,m,mx,my)
             m.buttons[#m.buttons+1]={id="target",index=index,x=x,y=y,w=166,h=190}
         end
     end
-    UI.CardPhysics.resume()
     if #filtered==0 then text(UI,"Không có lá thuộc nhóm này.",100,350,660,"small",muted,"center") end
     panel(824,158,372,448,{0.075,0.087,0.12,1})
     text(UI,upgrade and "NGHI LỄ · XEM TRƯỚC" or "XEM TRƯỚC TIẾN HÓA",848,179,324,"tiny",violet)

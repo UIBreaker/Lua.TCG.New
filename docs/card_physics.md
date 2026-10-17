@@ -1,5 +1,11 @@
 # Held card physics
 
+Updated 2026-10-17 from the user's `keothabai.mp4`: faster positional follow,
+velocity-driven angular lag, projected soft shadows, and a raised release layer
+until the spring settles. Backpack, expanded inventory, inspector, evolution,
+equipment transfer, barter and Void card faces now share this adapter.
+See [the detailed reference analysis](CARD_DRAG_REFERENCE.md).
+
 All existing card renderers share `src/card_physics.lua`. The adapter does not
 create cards or change card stats, poker/scoring, inventory, purchases or saves.
 Physics state lives outside the persisted card tables. Existing drag handlers
@@ -32,7 +38,7 @@ starter-deck tile. Scoring/dissolve sprites are animation-owned, not draggable.
 - `pickup`: lift, scale and transition response.
 - `pivot`: normalized origin (default 0.5, 0.75).
 - `stretch`: toggle/cap (default 2.5%) and speed scale.
-- `shadow`: held alpha and lift offset.
+- `shadow`: held alpha, lift offset, softness and layer count.
 - `maxDt`, `step`: stall guard and spring substep.
 
 ## Developer controls

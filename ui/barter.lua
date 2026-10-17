@@ -55,6 +55,7 @@ local function art(entry,x,y,w,h)
         UI.drawCardBorder(x,y,w,h,nil,nil,item)
     end
 end
+art=UI.CardPhysics.wrap(art,function(entry) return entry.item end)
 local function picked(game,draft,side)
     local result={};for _,entry in ipairs(T.inventory(game,side)) do if draft[side][entry.key] then result[#result+1]=entry end end;return result
 end
@@ -99,7 +100,7 @@ local function inventory(game,buttons,side,mx,my)
             Core.color(C.green);love.graphics.circle("fill",tx+104,ty+14,9)
             text("✓",tx+96,ty+6,17,UI.fonts.small,C.charcoal,"center")
         end
-        buttons[#buttons+1]={id="barter_item",side=side,key=entry.key,resource=entry.kind=="resource" and entry.item.resource or nil,x=tx,y=ty,w=121,h=150,disabled=e.status=="thinking"}
+        buttons[#buttons+1]={id="barter_item",cardSurface=true,side=side,key=entry.key,resource=entry.kind=="resource" and entry.item.resource or nil,x=tx,y=ty,w=121,h=150,disabled=e.status=="thinking"}
         if hover then UI.descriptionCandidate=entry.item;V.hover=entry end
     end
     if #items==0 then
@@ -122,7 +123,7 @@ local function tray(game,buttons,side,mx,my)
         art(entry,cx,620,34,51)
         Core.color({.04,.06,.07,1});love.graphics.circle("fill",cx+32,624,7)
         text("×",cx+26,616,13,UI.fonts.small,C.text,"center")
-        buttons[#buttons+1]={id="barter_item",side=side,key=entry.key,resource=entry.kind=="resource" and entry.item.resource or nil,x=cx-2,y=617,w=44,h=60,disabled=e.status=="thinking"}
+        buttons[#buttons+1]={id="barter_item",cardSurface=true,side=side,key=entry.key,resource=entry.kind=="resource" and entry.item.resource or nil,x=cx-2,y=617,w=44,h=60,disabled=e.status=="thinking"}
         if inside(mx,my,cx-2,617,44,60) then UI.descriptionCandidate=entry.item end
     end
     if #entries==0 then

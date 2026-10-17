@@ -48,7 +48,7 @@ end
 T.setGold(g,"player",9000);agree(g)
 local before=g.gold;local npcGold=e.gold;local souls=g.souls;local tickets=g.voidTickets
 assert(T.accept(g) and e.trades==1 and g.gold==before-9000 and e.gold==npcGold+9000)
-assert(#g.backpackDeities==2 and #g.backpackEquipment==2 and #g.backpackConsumables==3 and #g.persistentDeck==4)
+assert(#g.backpackDeities==2 and #g.backpackEquipment==2 and #g.backpackConsumables-require("src.void_tickets").count(g)==3 and #g.persistentDeck==4)
 assert(g.souls+g.voidTickets>souls+tickets and not T.accept(g),"commit once only")
 assert(P.encode({D.CATALOG,E.ITEMS})==original,"catalogs never mutate")
 
@@ -60,7 +60,7 @@ assert(T.toggle(g,"player",find(g,"player","resource","barter_voidTickets").key)
 T.setGold(g,"npc",e.gold);agree(g)
 local price=e.draft.npcGold;before=g.gold;npcGold=e.gold
 assert(T.accept(g) and g.gold==before+price and e.gold==npcGold-price and g.souls==23 and g.voidTickets==6)
-assert(#g.backpackDeities==0 and #g.backpackEquipment==0 and #g.backpackConsumables==1)
+assert(#g.backpackDeities==0 and #g.backpackEquipment==0 and #g.backpackConsumables-require("src.void_tickets").count(g)==1)
 local transferred,plate
 for _,entry in ipairs(T.inventory(g,"npc")) do
     if entry.kind=="spn" and entry.item.bloodPower==5 then transferred=entry.item end

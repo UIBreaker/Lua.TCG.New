@@ -43,11 +43,12 @@ function T.update(game,cb)
         game.run.ante=2;game.run.areaStage=2;game.run.currentBlindIndex=3
         game.run.blinds=require("src.run_manager").generateAnteBlinds(2,game.selectedFaction)
         for _,blind in ipairs(game.run.blinds) do blind.status="completed" end
-        game.gold=5000;game.playerHp=82;game.souls=30;game.voidTickets=6
+        game.gold=5000;game.playerHp=82;game.souls=30
         game.backpackDeities={copy(D.CATALOG.spirit_pebble),copy(D.CATALOG.spirit_pebble)}
         game.backpackDeities[1].rarity="rare";game.backpackDeities[1].evolutionLevel=1;game.backpackDeities[1].edition="foil"
         game.backpackEquipment={};for _=1,7 do B.store(game,E.instance("basic_plate"),6) end
         game.backpackConsumables={require("src.shop").healingItem(nil,"cons_draw").consumable,require("src.expedition").travelPermit()}
+        require("src.void_tickets").add(game,6)
         game.pendingBarter=true;game.shopMode="small";cb.openShop()
     elseif s==1 then click(button(cb,"next_round") or button(cb,"leave_shop"))
     elseif s==2 then

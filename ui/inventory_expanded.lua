@@ -29,7 +29,7 @@ function E.draw(UI,game,mx,my,pending)
     E.game=game
     local g=love.graphics;local color=E.kind=="spn" and T.colors.gold or T.colors.green
     L.init(game);E.pages=math.max(1,math.ceil(L.limit(game,E.kind)/10));E.page=math.min(E.page,E.pages)
-    E.slots={};E.controls={};UI.descriptionCandidate=nil;UI.CardPhysics.blockBehind();UI.CardPhysics.suspend()
+    E.slots={};E.controls={};UI.descriptionCandidate=nil;UI.CardPhysics.blockBehind()
     g.push("all");g.setColor(.003,.009,.014,.87);g.rectangle("fill",0,0,1280,720)
     H.panel(30,82,1220,620,color)
     H.crest(66,112,18,color,E.kind=="spn" and "spn" or "consumable")
@@ -55,13 +55,10 @@ function E.draw(UI,game,mx,my,pending)
         if selected or over then C.color(color,selected and .8 or .45);g.rectangle("line",r.x+6,r.y+6,r.w-12,r.h-12,4) end
         C.text("Ô "..slot..(locked and " · KHÓA" or ""),r.x+12,r.y+8,r.w-24,UI.fonts.tiny,locked and T.colors.red or color)
         if item then
-            local dragging=E.drag and E.drag.moving and E.drag.slot==slot
-            if not dragging then
-                if E.kind=="spn" then
-                    item.slotIndex=slot
-                    UI.drawPatronCard(item,r.x+20,r.y+27,100,150,false,false,false,item.isCopyDeity and require("src.deities").resolveDeity(game.deities,slot,game))
-                else UI.Polish.renderItem(UI,item,r.x+20,r.y+27,100,150) end
-            end
+            if E.kind=="spn" then
+                item.slotIndex=slot
+                UI.drawPatronCard(item,r.x+20,r.y+27,100,150,false,false,false,item.isCopyDeity and require("src.deities").resolveDeity(game.deities,slot,game))
+            else UI.Polish.renderItem(UI,item,r.x+20,r.y+27,100,150) end
             C.text(item.name,r.x+7,r.y+181,r.w-14,UI.fonts.tiny,T.colors.text,"center")
         else
             C.text("+",r.x+20,r.y+74,100,UI.fonts.title,T.colors.goldDim,"center")
@@ -105,14 +102,7 @@ function E.draw(UI,game,mx,my,pending)
         or E.moving and ("CHỌN Ô ĐÍCH CHO Ô "..E.moving.." · ESC HỦY")
         or "Kéo thả đổi ô · Đổi đồ tốn 1 lượt đánh · Chuột phải xem chi tiết"
     C.text(E.message or hint,273,657,943,UI.fonts.tiny,E.message and T.colors.red or T.colors.muted)
-    if E.drag and E.drag.moving then
-        local d=E.drag;local it=L.equipped(game,E.kind,d.slot)
-        if it then
-            if E.kind=="spn" then UI.drawPatronCard(it,d.x-50,d.y-75,100,150,false)
-            else UI.Polish.renderItem(UI,it,d.x-50,d.y-75,100,150) end
-        end
-    end
-    g.pop();UI.descriptionCandidate=nil;UI.CardPhysics.resume()
+    g.pop();UI.descriptionCandidate=nil
 end
 local function transfer(cb,from,to)
     if from==to then return end
@@ -136,7 +126,10 @@ function E.press(x,y,mouse,cb)
         if r.item and cb.target(r) then return end
         if E.moving then transfer(cb,E.moving,r.slot);return end
         E.selected=r.slot;E.scroll=0;E.message=nil
-        if r.item then E.drag={slot=r.slot,startX=x,startY=y,x=x,y=y} end
+        if r.item then
+            require("src.card_physics").press(x,y,mouse)
+            E.drag={slot=r.slot,startX=x,startY=y,x=x,y=y}
+        end
         return
     end end
 end

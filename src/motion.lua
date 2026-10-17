@@ -4,6 +4,13 @@ function Motion.response(speed, dt)
     return 1 - math.exp(-speed * math.max(0, dt))
 end
 
+function Motion.settle(elapsed, duration)
+    local t = math.max(0, math.min(1, elapsed / duration))
+    local travel = Motion.spring(0, 0, 1, 240, 24, t * 0.5)
+    local tail = math.max(0, (t - 0.65) / 0.35)
+    return travel + (1 - travel) * tail * tail * (3 - 2 * tail)
+end
+
 -- Exact damped spring: preserves momentum and the same timing at every FPS.
 function Motion.spring(x, velocity, target, stiffness, damping, dt)
     if dt <= 0 then return x, velocity end

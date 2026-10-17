@@ -32,8 +32,8 @@ local function classify(line, def)
     return {text=line,kind=detail and "detail" or "state"}
 end
 function View.model(item,title,body,expanded)
-    while item.card or item.deity or item.equipment or item.item do
-        item=item.card or item.deity or item.equipment or item.item
+    while item.card or item.deity or item.equipment or item.consumable or item.item do
+        item=item.card or item.deity or item.equipment or item.consumable or item.item
     end
     local def=require("src.card_abilities").definition(item)
     local m={title=title,badge="TIÊU HAO",accent=Theme.colors.purple,rows={},expanded=expanded}
@@ -57,6 +57,8 @@ function View.model(item,title,body,expanded)
                 m.accent=require("src.equipment").getTierColor(eq)
                 primary[1]={kind="equipment",equipment=item,standalone=true,label="TẦNG "..require("src.equipment").getTier(item).." · "..(item.slotsNeeded or 1).." HỐC",text=equipmentText(item)}
             else primary[1]={text=line:gsub("^ITM · ",""),kind="effect",label=def and "KHẢ NĂNG HIỆN TẠI" or nil} end
+        elseif primary[1].standalone and primary[1].text:find(line,1,true) then
+            -- The structured equipment row already contains the complete multiline description.
         else
             local row=classify(line,def)
             if previous and previous.kind=="edition" and row.kind=="state" then previous.text=previous.text..": "..row.text

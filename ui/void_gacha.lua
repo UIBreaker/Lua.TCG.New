@@ -56,6 +56,7 @@ local function art(r,x,y,w,h)
         end
     end
 end
+art=UI.CardPhysics.wrap(art)
 function V.update(dt,game)
     local event=game.voidEvent;if not event then V.animation=nil;return end
     if event.pendingResults and (not V.animation or V.animation.event~=event or V.animation.serial~=event.serial) then
@@ -251,12 +252,15 @@ function V.draw(game,buttons,mx,my)
     panel(18,14,1244,66)
     text("THE VOID · GIAO ƯỚC HƯ KHÔNG",36,23,790,UI.fonts.large,C.gold)
     text("Boss ải "..event.ante.." · Banner của lần viếng thăm này · KHÔNG BẢO HIỂM",38,58,790,nil,C.muted)
-    if event.pendingResults then summon(event,buttons);g.pop();return end
+    if event.pendingResults then
+        UI.CardPhysics.suspend();summon(event,buttons);UI.CardPhysics.resume()
+        g.pop();return
+    end
     button(buttons,"void_rates","BẢNG TỶ LỆ",974,27,130,37,false)
     button(buttons,"void_leave","RỜI THE VOID",835,27,126,37,false)
     panel(23,102,279,190)
     text("ĐÁNH ĐỔI VỚI HƯ KHÔNG",38,119,249,UI.fonts.small,C.gold)
-    text("1 lượt  ·  1 vé / 100 vàng\n10 lượt  ·  10 vé / 1.000 vàng",38,154,249,UI.fonts.small,C.text)
+    text("1 lượt  ·  10 vé / 100 vàng\n10 lượt  ·  100 vé / 1.000 vàng",38,154,249,UI.fonts.small,C.text)
     text("Mỗi lượt độc lập. Không bảo hiểm.",38,198,249,nil,C.muted)
     local offer=event.freeRemaining>0 and "ƯU ĐÃI: 1 LƯỢT MIỄN PHÍ" or event.goldMultiplier<1 and "ƯU ĐÃI: GIẢM "..math.floor((1-event.goldMultiplier)*100).."% GIÁ VÀNG" or "HÔM NAY KHÔNG CÓ ƯU ĐÃI"
     text(offer,38,223,249,UI.fonts.small,event.freeRemaining>0 and C.green or C.purple)
@@ -270,7 +274,7 @@ function V.draw(game,buttons,mx,my)
         text(tostring(kind=="gold" and (game.gold or 0) or (game.souls or 0)),79,y+2,205,UI.fonts.medium,kind=="gold" and C.gold or C.purple)
         text(kind=="gold" and "VÀNG" or "LINH HỒN",79,y+28,205,nil,C.muted)
     end
-    text(tostring(game.voidTickets or 0).." VÉ THE VOID",38,637,249,UI.fonts.small,C.purple)
+    text(tostring(require("src.void_tickets").count(game)).." VÉ TRONG BALO",38,637,249,UI.fonts.small,C.purple)
     text("Đã quay tại đây: "..event.totalRolls.." lượt",38,671,249,nil,C.muted)
     text("Cổng mở. Không lời hứa.\nChỉ có vận may của bạn.",38,359,249,UI.fonts.small,C.muted,"center")
     panel(320,101,932,272)

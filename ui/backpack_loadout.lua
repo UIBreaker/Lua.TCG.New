@@ -31,7 +31,7 @@ function Panel.draw(UI,Bag,game,buttons,mx,my)
         Bag.loadoutSlots[#Bag.loadoutSlots+1]=r
         local hover=inside(mx,my,r)
         Style.panel(r.x-5,r.y-3,r.w+10,r.h+6,selected and UI.COLORS.goldYellow or item and (item.color or UI.COLORS.goldYellow) or {.3,.38,.4,1},hover or selected or Bag.selectedSource=="equipped" and Bag.selected==slot)
-        if item and not (Bag.drag and Bag.drag.moving and Bag.drag.item==item) and not UI.Polish.hiddenOwned(item) then
+        if item and not UI.Polish.hiddenOwned(item) then
             if Bag.tab=="spn" then
                 item.slotIndex=slot
                 UI.drawPatronCard(item,r.x,r.y,r.w,r.h,hover,false,false,item.isCopyDeity and require("src.deities").resolveDeity(game.deities,slot,game))
@@ -89,11 +89,9 @@ end
 function Panel.drawDrag(UI,Bag)
     local d=Bag.drag
     if d and d.moving then
-        UI.CardPhysics.suspend()
         local g=love.graphics;g.push("all")
         Style.glow(d.x,d.y,80,d.item.color or UI.COLORS.goldYellow,.25)
-        UI.Polish.renderItem(UI,d.item,d.x-43,d.y-65,86,130)
-        g.pop();UI.CardPhysics.resume()
+        g.pop()
     end
 end
 return Panel

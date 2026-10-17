@@ -1,23 +1,26 @@
 local UI=require("src.ui")
 local C=require("config.death_vfx_config").chest
+local Motion=require("src.motion")
 local Choices={}
 local function progress(t,a,d) return math.max(0,math.min(1,(t-a)/d)) end
 local function smooth(p) return p*p*(3-2*p) end
 function Choices.ready(timer,index) return timer>=C.flipAt+(index-1)*C.stagger+C.flipDuration end
 function Choices.finished() return C.flipAt+2*C.stagger+C.flipDuration end
 function Choices.pose(timer,index)
-    local travel=smooth(progress(timer,C.cardsAt,C.cardsTravel))
+    local t=progress(timer,C.cardsAt+(index-1)*C.stagger,C.cardsTravel)
+    local travel=Motion.settle(t,1)
     local reveal=smooth(progress(timer,C.flipAt+(index-1)*C.stagger,C.flipDuration))
     local total=3*C.cardW+2*C.gap
     local finalX=(1280-total)/2+(index-1)*(C.cardW+C.gap)
+    if UI.Polish.reducedMotion then travel=1;t=1 end
     return {x=640-C.cardW/2+(finalX-640+C.cardW/2)*travel,
-        y=C.cardY+(1-travel)*74,rotation=(index-2)*0.13*(1-travel),
-        scale=0.66+0.34*travel,reveal=reveal}
+        y=C.cardY+(1-travel)*66-math.sin(t*math.pi)*16,rotation=(index-2)*0.12*(1-travel),
+        scale=0.76+0.24*travel,reveal=reveal}
 end
 local function fragments(g,x,y,timer,index,reveal,color)
     local p=progress(timer,C.cardsAt+(index-1)*C.stagger,0.95)
     local alpha=math.sin(p*math.pi)*(1-reveal*0.75)
-    if alpha<=0 then return end
+    if alpha<=0 or UI.Polish.reducedMotion then return end
     g.push("all");g.setBlendMode("add")
     for k=1,24 do
         local seed=(math.sin(k*127.1+index*31.7)*43758.5453)%1
@@ -38,12 +41,14 @@ local function fragments(g,x,y,timer,index,reveal,color)
 end
 function Choices.draw(rewards,timer,title,mx,my,buttons,full,packType)
     local g=love.graphics
-    g.setFont(UI.fonts.large);g.setColor(0.90,0.76,0.49,1)
+    local heading=smooth(progress(timer,0,0.22))
+    g.setFont(UI.fonts.large);g.setColor(0.90,0.76,0.49,heading)
     g.printf(title,0,48,1280,"center")
-    g.setFont(UI.fonts.small);g.setColor(0.68,0.70,0.76,1)
+    g.setFont(UI.fonts.small);g.setColor(0.68,0.70,0.76,heading)
     g.printf("CHỌN MỘT PHẦN THƯỞNG",0,99,1280,"center")
     if timer<C.cardsAt then return end
     for i,rew in ipairs(rewards) do
+        if timer>=C.cardsAt+(i-1)*C.stagger then
         local pose=Choices.pose(timer,i)
         local x,y=pose.x,pose.y
         local ready=Choices.ready(timer,i)
@@ -56,14 +61,18 @@ function Choices.draw(rewards,timer,title,mx,my,buttons,full,packType)
         g.pop()
         fragments(g,x,y,timer,i,pose.reveal,color)
         if not ready then UI.CardPhysics.suspend() end
-        g.push("all");g.translate(x+C.cardW/2,y+C.cardH/2);g.rotate(pose.rotation);g.scale(pose.scale)
+        local flip=UI.Polish.reducedMotion and 1 or math.max(0.025,math.abs(math.cos(pose.reveal*math.pi)))
+        g.push("all");g.translate(x+C.cardW/2,y+C.cardH/2);g.rotate(pose.rotation);g.scale(pose.scale*flip,pose.scale)
         g.translate(-x-C.cardW/2,-y-C.cardH/2)
         local function face(a,b,w,h)
             require("ui.card_surfaces").fullReward(item,a,b,w,h,
                 packType or (rew.type=="card" and "standard" or "arcana"),hovered)
         end
-        if pose.reveal>0 and pose.reveal<1 then
-            UI.Polish.dissolve(UI,x,y,C.cardW,C.cardH,1-pose.reveal,color,face)
+        if pose.reveal<0.5 and not UI.Polish.reducedMotion then
+            UI.drawCardBack(x,y,C.cardW,C.cardH)
+        elseif pose.reveal<1 then
+            local amount=UI.Polish.reducedMotion and 1-pose.reveal or (1-pose.reveal)*2
+            UI.Polish.dissolve(UI,x,y,C.cardW,C.cardH,amount,color,face)
         elseif pose.reveal>=1 then face(x,y,C.cardW,C.cardH) end
         g.pop()
         if not ready then UI.CardPhysics.resume() end
@@ -77,6 +86,7 @@ function Choices.draw(rewards,timer,title,mx,my,buttons,full,packType)
                     w=C.cardW,h=C.buttonH,font=UI.fonts.small,color=action==1 and UI.COLORS.btnPlay or {0.20,0.35,0.49,1},disabled=action==2 and full}
                 buttons[#buttons+1]=btn;UI.drawButton(btn,not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h)
             end
+        end
         end
     end
     if full then g.setFont(UI.fonts.tiny);g.setColor(0.82,0.58,0.42,1);g.printf("Ô GIỮ LẠI ĐÃ ĐẦY (3/3)",0,644,1280,"center") end

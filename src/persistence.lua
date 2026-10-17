@@ -228,6 +228,7 @@ local function restoreDeity(savedDeity)
 end
 
 function Persistence.makeSnapshot(game, activeState)
+    if game then require("src.void_tickets").count(game) end
     local savedGame = {}
     for key, value in pairs(game or {}) do
         if not TRANSIENT_GAME_KEYS[key] and key ~= "run" then
@@ -331,6 +332,7 @@ function Persistence.restoreSnapshot(snapshot)
         end
     end
     require("src.loadout").init(game)
+    require("src.void_tickets").count(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
     if game.barterEvent then require("src.barter").restore(game) end
     game.regionRecognitions=game.regionRecognitions or {}

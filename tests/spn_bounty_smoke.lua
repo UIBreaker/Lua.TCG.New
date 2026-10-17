@@ -6,6 +6,10 @@ local Reward=require("src.reward_system")
 local Rng=require("src.rng")
 local P=require("src.persistence")
 local Config=Reward.config
+-- Ticket drops are tested separately; they must not change these exact loot counts.
+local voidConfig=require("config.void_gacha")
+local ticketChance=voidConfig.ticketChance
+voidConfig.ticketChance=0
 local blind={type="small",baseReward=3,name="Test"}
 local function game(owned)
     local g=Game.new();g.deities={};g.gold=10;g.handsRemaining=2;g.selectedFaction="aurelia"
@@ -87,5 +91,6 @@ assert(require("src.loadout").move(g,"spn","reserve",1,1,false));D.evolve(g.deit
 restored=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")))
 assert(B.bonus(restored).extraRolls==2 and B.bonus(restored).rareWeightPct==150)
 Config.tables.bounty_test=nil
+voidConfig.ticketChance=ticketChance
 assert(#D.getRandomShopPool({},99)==96)
 print("SPN bounty PASS: extra real grants, exact rare/evolved weights, chest inheritance/no recursive quantity, all boss tables, caps/copies/blood, no skip/reserve/locked effect, replay/save/fast-forward/RNG/shop")

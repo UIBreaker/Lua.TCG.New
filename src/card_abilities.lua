@@ -180,16 +180,17 @@ function A.beginHand(game, handInfo, played, decisions)
     require("src.spn_pacts").queueRepeats(game,ctx.scoring,ctx.queue,handInfo)
     return ctx
 end
-function A.repeatCard(game,card,count,ctx,effectiveness)
+function A.repeatCard(game,card,count,ctx,effectiveness,poweredLimit)
     ctx=ctx or game.abilityHand
     if not ctx or not card or card.destroyed and not contains(ctx.scored,card) then return end
     local depth=(ctx.depth or 0)+1
     if depth>Data.maxRetriggerDepth then return end
     local idx; for i,c in ipairs(ctx.scoring) do if c==card then idx=i; break end end
     if not idx then return end
+    local limit=math.min(Data.maxTriggersPerHand,math.max(Data.maxRetriggersPerCard,poweredLimit or 0))
     for _=1,count do
         local used=ctx.repeats[card.id] or 0
-        if used>=Data.maxRetriggersPerCard or #ctx.queue>=Data.maxTriggersPerHand then break end
+        if used>=limit or #ctx.queue>=Data.maxTriggersPerHand then break end
         ctx.repeats[card.id]=used+1
         ctx.queue[#ctx.queue+1]={card=card,index=idx,depth=depth,retrigger=true,effectiveness=effectiveness}
     end

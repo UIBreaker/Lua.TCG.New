@@ -1,5 +1,6 @@
 local Potions=require("src.potions")
 local Lighting=require("render.lighting")
+local Motion=require("src.motion")
 local F={active={}}
 local colors={heal={.26,1,.53},armor={.26,.66,1},speed={.18,.91,1},rest={.64,1,.74}}
 for _,d in ipairs(Potions.definitions) do colors[d.kind]=d.color end
@@ -11,7 +12,21 @@ local function hash(i,s)
     return n-math.floor(n)
 end
 
-function F.update(game,dt,reducedMotion,state)
+local function clamp(t) return math.max(0,math.min(1,t)) end
+function F.pose(e)
+    local arrival=e.contactAt or (e.reactive and 0 or .42)
+    local t=clamp(e.age/.42);local p=Motion.settle(t,1)
+    local x,y=e.x,e.y
+    if not e.reduced then
+        x=(e.sourceX or 1160)+(x-(e.sourceX or 1160))*p
+        y=(e.sourceY or 220)+(y-(e.sourceY or 220))*p-math.sin(t*math.pi)^2*36
+    end
+    local contact=math.max(0,e.age-arrival)
+    return {x=x,y=y,travel=t,scale=e.reduced and 1 or 1-.55*p,
+        iconAlpha=e.reduced and 0 or 1-clamp((t-.72)/.28),contact=contact,
+        alpha=e.age>=arrival and Motion.settle(contact,.12)*clamp((e.life-e.age)/.45) or 0}
+end
+function F.update(game,dt,reducedMotion,state,fast)
     if state=="menu" or state=="BLIND_SELECT" then F.active={};game.potionFeedback={} end
     for _,event in ipairs(game.potionFeedback or {}) do
         for i=#F.active,1,-1 do
@@ -19,9 +34,11 @@ function F.update(game,dt,reducedMotion,state)
             if previous.kind==event.kind then table.remove(F.active,i)
             elseif previous.age>.45 then previous.life=math.min(previous.life,previous.age+.3) end
         end
-        event.age=0;event.life=2.2;event.reduced=reducedMotion
+        event.age=0;event.reduced=reducedMotion
         event.reactive=event.target and (event.kind=="accuracy" or event.kind=="evasion")
             or event.kind=="gold_blood" and (event.value or 0)>0
+        event.contactAt=(event.reactive or reducedMotion) and 0 or .42
+        event.life=event.contactAt+1.5
         event.x=event.target and (event.target.screenX or 640) or 640
         event.y=event.target and 305 or 438
         if event.kind=="evasion" then event.x=640;event.y=448 end
@@ -34,13 +51,16 @@ function F.update(game,dt,reducedMotion,state)
                 size=1+hash(i,seed+2)*2.7,delay=hash(i,seed+3)*.42,
                 life=.75+hash(i,seed+4)*.9,phase=hash(i,seed+5)*tau}
         end
-        Lighting.flash(event.x,event.y,colors[event.kind] or colors.heal,.22,.55,220)
         F.active[#F.active+1]=event
         if #F.active>6 then table.remove(F.active,1) end
     end
     game.potionFeedback={}
     for i=#F.active,1,-1 do
-        local e=F.active[i];e.age=e.age+math.min(dt,.1)
+        local e=F.active[i];e.age=e.age+math.min(dt,.05)*(fast and 2 or 1);e.reduced=reducedMotion
+        if not e.contacted and e.age>=e.contactAt then
+            e.contacted=true
+            Lighting.flash(e.x,e.y,colors[e.kind] or colors.heal,reducedMotion and .05 or .14,.36,160)
+        end
         if e.age>=e.life then table.remove(F.active,i) end
     end
 end
@@ -71,6 +91,8 @@ local function spark(x,y,size,c,a)
 end
 local function pose(anchor)
     local card=anchor.card
+    local s=require("src.card_physics").getState(card)
+    if s and s.ox then return s.ox+s.a*s.w/2+s.c*s.h/2,s.oy+s.b*s.w/2+s.d*s.h/2,card.visualAngle or 0 end
     return (card.visualX or card.x or 590)+50,(card.visualY or card.y or 480)+72,card.visualAngle or 0
 end
 local function spiral(x,y,r,age,c,a,vertical)
@@ -90,8 +112,8 @@ local function shield(x,y,c,a,r)
 end
 
 local function motif(e,c,a)
-    local g=love.graphics;local t=e.reduced and .55 or e.age
-    local burst=1-math.exp(-e.age*6)
+    local g=love.graphics;local t=e.reduced and .55 or math.max(0,e.age-e.contactAt)
+    local burst=e.reduced and 1 or Motion.settle(t,.36)
     local x,y=e.x,e.y
     if #e.anchors==0 then glow(x,y,145,c,a*.4);glow(x,y,48,c,a*.45) end
     if e.kind=="accuracy" then
@@ -240,39 +262,40 @@ function F.draw(UI,game,activeState)
         end
     end
     for _,e in ipairs(F.active) do
-        local p=e.age/e.life
-        local alpha=math.min(1,e.age/.1)*math.min(1,(1-p)*2.8)
+        local presentation=F.pose(e)
+        local alpha=presentation.alpha
         local c=colors[e.kind] or colors.heal
-        motif(e,c,alpha)
-        for _,particle in ipairs(e.particles) do
-            local age=e.age-particle.delay
-            if age>=0 and age<particle.life then
-                local fade=(1-age/particle.life)^2*alpha
-                local distance=e.reduced and 45 or particle.speed*age
-                local x=e.x+math.cos(particle.angle)*distance
-                local y=e.y+math.sin(particle.angle)*distance*.7-age*22
-                if #e.anchors>0 then
-                    local cx,cy=pose(e.anchors[math.floor(particle.phase/tau*#e.anchors)+1])
-                    x=cx+math.cos(particle.angle)*distance*.6;y=cy+math.sin(particle.angle)*distance*.8-age*35
+        if alpha>0 then
+            motif(e,c,alpha)
+            for _,particle in ipairs(e.particles) do
+                local age=e.age-e.contactAt-particle.delay
+                if age>=0 and age<particle.life then
+                    local fade=(1-age/particle.life)^2*alpha
+                    local distance=e.reduced and 45 or particle.speed*age
+                    local x=e.x+math.cos(particle.angle)*distance
+                    local y=e.y+math.sin(particle.angle)*distance*.7-(e.reduced and 0 or age*22)
+                    if #e.anchors>0 then
+                        local cx,cy=pose(e.anchors[math.floor(particle.phase/tau*#e.anchors)+1])
+                        x=cx+math.cos(particle.angle)*distance*.6;y=cy+math.sin(particle.angle)*distance*.8-(e.reduced and 0 or age*35)
+                    end
+                    spark(x,y,particle.size,c,fade)
                 end
-                spark(x,y,particle.size,c,fade)
             end
         end
-        if not e.reactive and e.age<.52 then
-            local t=e.reduced and 1 or math.min(1,e.age/.4)
-            local x=(e.sourceX or 1160)*(1-t)+e.x*t
-            local y=(e.sourceY or 220)*(1-t)+e.y*t-(e.reduced and 0 or math.sin(t*math.pi)*80)
-            glow(x,y,45,c,alpha*.45*(1-t))
-            local image=UI.getConsumableImage({id=artIds[e.kind]})
-            if image then
-                g.setBlendMode("alpha");g.setColor(1,1,1,alpha*(1-t));UI.CardFrame.image(image,x-19,y-28,38,56)
-                g.setBlendMode("add","alphamultiply")
-            end
+        if not e.reactive and presentation.iconAlpha>0 then
+            local x,y=presentation.x,presentation.y
+            g.push("all");g.setBlendMode("alpha");g.translate(x,y);g.scale(presentation.scale)
+            local item=e.sourceItem or {id=artIds[e.kind]}
+            local w,h=e.sourceW or 38,e.sourceH or 56
+            UI.Polish.dissolve(UI,-w/2,-h/2,w,h,1-presentation.iconAlpha,c,function(ix,iy,iw,ih)
+                UI.Polish.renderItem(UI,item,ix,iy,iw,ih)
+            end)
+            g.pop()
         end
     end
     g.setBlendMode("alpha")
     for _,e in ipairs(F.active) do
-        local a=math.min(1,e.age/.1)*math.min(1,(1-e.age/e.life)*2.8)
+        local a=F.pose(e).alpha
         local c=colors[e.kind] or colors.heal
         local y=e.y-116
         g.setColor(.015,.025,.038,.8*a);g.rectangle("fill",e.x-220,y,440,30,5,5)

@@ -1,6 +1,7 @@
 local UI=require("src.ui")
 local C=require("ui.theme").colors
 local G=require("src.void_gacha")
+local Deities=require("src.deities")
 local Sound=require("src.sound")
 local Visual=require("config.visual_config")
 local Art=require("src.continental_art")
@@ -85,7 +86,7 @@ local function summon(event,buttons)
     local ticket=r.kind=="ticket" and Effects.profile(r)
     local phase=V.phase(strength,a.time);local opened=phase=="reveal"
     local charge=math.min(1,a.time/1.05);local blast=math.max(0,(a.time-spec.revealAt)/(spec.duration-spec.revealAt));local g=love.graphics
-    local c=phase=="charge" and {.46,.34,.95} or ticket and ticket.color or G.config.colors[strength];local x,y=640,343
+    local c=phase=="charge" and {.46,.34,.95} or ticket and ticket.color or r.featured and G.config.bannerColor or G.config.colors[strength];local x,y=640,343
     g.setColor(.002,.003,.012,.76);g.rectangle("fill",0,80,1280,640)
     local shake=Visual.enabled and opened and math.max(0,1-blast*4)*spec.kick or 0
     g.push();g.translate(math.sin(a.time*63)*shake,math.cos(a.time*79)*shake*.6)
@@ -202,7 +203,7 @@ local function summon(event,buttons)
             end
         end
     end
-    if strength==9 and opened then
+    if (r.featured or ticket and ticket.jackpot) and opened then
         for i=1,5 do rgba(c,math.max(0,.22-blast*.4));g.rectangle("fill",x-200+i*70,y-280,6+i,560) end
     end
     g.setBlendMode("alpha")
@@ -213,7 +214,7 @@ local function summon(event,buttons)
         g.pop()
         local size=math.min(1,blast*7);g.push();g.translate(x,y);g.scale(math.max(.01,size),math.max(.01,size))
         local width=156+strength*6;art(r,-width/2,-width*.75,width,width*1.5);g.pop()
-        text(ticket and ticket.label or r.featured and "HƯ KHÔNG VỠ TAN · TRÚNG BANNER" or ({"THƯỜNG","KHÁC THƯỜNG","HIẾM","SỬ THI","HUYỀN THOẠI","THẦN THOẠI","SIÊU VIỆT","ĐỘC NHẤT"})[strength],210,127,860,UI.fonts.large,c,"center")
+        text(ticket and ticket.label or r.featured and "HƯ KHÔNG VỠ TAN · TRÚNG BANNER" or UI.toUpperUtf8(Deities.RARITIES[strength].name),210,127,860,UI.fonts.large,c,"center")
         text(r.name,230,526,820,UI.fonts.medium,C.text,"center")
     else
         -- The closed core has no reward artwork or rarity badge.
@@ -242,7 +243,7 @@ local function rates(buttons)
         text(row.label,251,y,545,nil,i<=3 and C.gold or C.text)
         text(string.format("%.3f%%",row.weight/1000):gsub("%.",","),842,y,182,UI.fonts.small,i<=3 and C.gold or C.text,"right")
     end
-    text("SPN thường: C 61,4% · UC 20% · R 10% · E 5% · L 2% · M 1% · T 0,5% · UQ 0,1% trong nhóm SPN 3%.\nTrúng nhóm vé: nhận 1–100 vé, mỗi số lượng có xác suất bằng nhau (1% trong nhóm).",245,505,785,nil,C.muted)
+    text("SPN: C 61,34% · UC 20% · R 10% · E 5% · L 2% · M 1% · T 0,5% · UQ 0,1% · VH 0,05% · TT 0,01% trong nhóm SPN 3%.\nTrúng nhóm vé: nhận 1–100 vé, mỗi số lượng có xác suất bằng nhau (1% trong nhóm).",245,505,785,nil,C.muted)
     text("Đồ/lá/rương/tiêu hao/đặc quyền: chọn đều từ danh mục. Đặc quyền trùng → 3 vàng; rương không còn nội dung hợp lệ → 1 vàng. Rương mở tại shop sau Void.",245,547,785,nil,C.muted)
     text("Banner cộng lại 0,004% · Trung bình 1 / 25.000 lượt, không phải mốc bảo đảm.",245,589,785,UI.fonts.small,C.red)
 end
@@ -302,10 +303,10 @@ function V.draw(game,buttons,mx,my)
         for i,r in ipairs(event.results) do
             local x=336+(i-1)%5*181;local y=425+math.floor((i-1)/5)*85
             local ticket=r.kind=="ticket" and Effects.profile(r)
-            local color=ticket and ticket.color or r.kind=="gold" and C.gold or r.kind=="souls" and C.purple or G.config.colors[r.strength]
+            local color=ticket and ticket.color or r.featured and G.config.bannerColor or r.kind=="gold" and C.gold or r.kind=="souls" and C.purple or G.config.colors[r.strength]
             panel(x,y,175,80,color);art(r,x+5,y+5,46,69)
             text(r.name,x+59,y+8,109,UI.fonts.tiny,r.featured and C.gold or C.text)
-            text(ticket and (ticket.jackpot and "JACKPOT" or "VÉ THE VOID") or r.featured and "BANNER" or r.kind=="gold" and "VÀNG" or r.kind=="souls" and "LINH HỒN" or ({"C","UC","R","E","L","M","T","UQ"})[r.strength],x+59,y+61,109,nil,color)
+            text(ticket and (ticket.jackpot and "JACKPOT" or "VÉ THE VOID") or r.featured and "BANNER" or r.kind=="gold" and "VÀNG" or r.kind=="souls" and "LINH HỒN" or Deities.RARITIES[r.strength].code,x+59,y+61,109,nil,color)
             if mx>=x and mx<=x+175 and my>=y and my<=y+80 then UI.descriptionCandidate=r.item or {name=r.name,desc=r.kind=="hand" and "Tay bài tối đa đã tăng thêm 1 lá." or r.kind=="gold" and "Vàng đã được cộng vào túi tiền, có thể dùng ngay tại shop hoặc The Void." or r.kind=="souls" and "Linh hồn đã được cộng vào hành trang để giao dịch tại shop linh hồn." or "Phần thưởng đã ghi nhận trong hành trang.",color=color} end
         end
     end

@@ -54,7 +54,8 @@ for _=1,3000 do
             seen[item.id]=true;rarities[item.rarity]=(rarities[item.rarity] or 0)+1
             spnOffers=spnOffers+1
             if item.rarity=="epic" or item.rarity=="legendary" or item.rarity=="mythic"
-                or item.rarity=="transcendent" or item.rarity=="unique" then
+                or item.rarity=="transcendent" or item.rarity=="unique"
+                or item.rarity=="eternal" or item.rarity=="supreme" then
                 highSpnOffers=highSpnOffers+1
             end
         end

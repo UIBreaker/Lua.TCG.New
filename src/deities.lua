@@ -10,6 +10,8 @@ Deities.RARITIES = {
     { id = "mythic", name = "Thần Thoại", code = "M", color = { 0.94, 0.28, 0.30, 1 } },
     { id = "transcendent", name = "Siêu Việt", code = "T", color = { 0.48, 0.90, 0.96, 1 } },
     { id = "unique", name = "Độc Nhất", code = "UQ", color = { 0.82, 0.70, 1.00, 1 } },
+    { id = "eternal", name = "Vĩnh Hằng", code = "VH", color = { 0.46, 0.95, 0.77, 1 } },
+    { id = "supreme", name = "Tối Thượng", code = "TT", color = { 1.00, 0.85, 0.43, 1 } },
 }
 
 local rarityIndex = {}

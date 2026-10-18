@@ -169,14 +169,13 @@ end
 function I.label(item,x,y,w,h)
     local g=love.graphics;g.push("all")
     local width=208;local font=UI.fonts.small
-    local scale=math.min(1,width/math.max(1,font:getWidth(item.name or "")))
-    g.setFont(font);g.setColor(C.text)
-    g.translate(x+w/2-width/2,y+h+9);g.scale(scale)
-    g.printf(item.name or "",0,0,width/scale,"center");g.pop()
+    g.setColor(.008,.018,.026,.96);g.rectangle("fill",x+w/2-108,y+h+5,216,43,4,4)
+    require("ui.components.core").textLine(item.name or "",x+w/2-width/2,y+h+9,width,font,C.text,"center",UI.fonts.tiny)
+    g.pop()
     local caption=item.bloodPower and "HUYẾT LUYỆN ×5 · HP" or item.deity and require("src.deities").getRarityLabel(item.deity)
         or item.equipment and (item.equipment.basic and "NGUYÊN LIỆU CƠ BẢN" or "TRANG BỊ LỚN")
         or item.subtitle or "TIÊU HAO"
-    text(caption,x+w/2-104,y+h+28,208,nil,item.color or C.muted,"center")
+    text(caption,x+w/2-104,y+h+28,208,nil,{.83,.88,.91,1},"center")
 end
 
 function I.drawWorld(shop,time)

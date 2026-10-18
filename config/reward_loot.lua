@@ -5,7 +5,8 @@ local C = {
     bossVictoryGold = 10,
     maxCoins = 40,
     rowInterval = 0.16,
-    presentation = {maxSparks = 72, trailPoints = 5, flareDuration = 0.55, ambience = 18},
+    presentation = {maxSparks = 72, trailPoints = 5, flareDuration = 0.55, ambience = 18,
+        enter = 0.46, stagger = 0.032, flip = 0.36},
     pity = {enabled = false, after = 6, extraPackWeight = 5},
     -- One independent supply roll per won encounter; bosses have better odds.
     supplies = {normalChance = 0.60, bossChance = 1, entries = {

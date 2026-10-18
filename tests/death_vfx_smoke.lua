@@ -27,7 +27,7 @@ assert(kicks==0 and D.reducedMotion)
 assert(math.abs(D.pool[1].y-D.pool[1].oy)<normalDistance*0.25)
 for _,quality in ipairs({"LOW","MEDIUM","HIGH"}) do
     simulate(60,false,quality)
-    assert(kicks==1)
+    assert(kicks==0,"death camera follows its timeline instead of an instantaneous kick")
     local lastInfo,lastUI=0,0
     for _=1,180 do
         D.update(1/60)

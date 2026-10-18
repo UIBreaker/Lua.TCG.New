@@ -183,6 +183,7 @@ function D.draw(UI,item,mx,my,game)
     local left=r and r.x-w-24 or mx-w-16
     local x=math.max(10,math.min(1270-w,right+w<=1270 and right or left))
     local y=math.max(10,math.min(710-h,my+14))
+    if r and item.rank and r.y>=440 then y=math.max(10,math.min(620-h,r.y)) end
     if expanded and anchorX then
         x=math.max(10,math.min(1270-w,anchorX));y=math.max(10,math.min(710-h,anchorY))
     end

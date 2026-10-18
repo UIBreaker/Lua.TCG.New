@@ -2,6 +2,7 @@ local A=require("src.card_abilities")
 local Deities=require("src.deities")
 local Effects=require("src.card_effects")
 local Sound=require("src.sound")
+local EvolutionMotion=require("ui.evolution_motion")
 local Modal={current=nil,toast=nil}
 local paramLabels={armor="Giáp",returnArmor="Giáp khi trả bài",healPercent="HP hồi (%)",maxStacks="Giới hạn tích",capacity="Kích thước tay",returns="Số lá trả",draw="Số lá rút",block="Sát thương chặn",gold="Vàng",maxGold="Trần Vàng",levels="Cấp khả năng",repeats="Lần tái kích hoạt",copies="Lần sao chép",range="Phạm vi bên trái",duration="Số tay hiệu lực",cancels="Số kỹ năng hủy",hands="Lượt đánh",skip="Hành động bỏ qua"}
 function Modal.openChoices(game,choices,callback)
@@ -39,10 +40,11 @@ function Modal.choose(index)
     Sound.play("card_select")
 end
 function Modal.confirm()
-    local m=Modal.current;local c=m and m.selected;if not c then return false end
+    local m=Modal.current;local c=m and m.selected;if not c or m.ritual then return false end
     local index;for i,item in ipairs(m.game.consumables or {}) do if item==m.consumable then index=i;break end end
     if not index then close();return false end
-    local UI=require("src.ui");local before=UI.Polish.snapshot(m.game)
+    local UI=require("src.ui");local before={}
+    for k,v in pairs(c) do before[k]=v end
     local success
     if m.mode=="card_upgrade" then success=require("src.inventory").useCardUpgrade(m.game,index,c)
     else
@@ -53,15 +55,15 @@ function Modal.confirm()
     end
     if not success then return false end
     if m.mode~="card_upgrade" then table.remove(m.game.consumables,index);A.consumableUsed(m.game) end
-    UI.Polish.changed(UI,m.game,before,m.consumable,m.sourceRect)
-    Effects.triggerScorePulse(c)
-    Modal.toast=nil -- Changed-value feedback is anchored to the target instead.
-    Modal.current=nil;Sound.play("xmult_boom")
+    m.ritual={age=0,before=before,reduced=UI.CardPhysics.reducedMotion==true}
+    Modal.toast=nil
+    Sound.play("card_slide",.95)
     if m.callback then m.callback(c) end
     return true
 end
 function Modal.press(mx,my,button)
     local m=Modal.current;if not m then return false end
+    if m.ritual then return true end
     if button~=1 then return true end
     for _,b in ipairs(m.buttons or {}) do
         if not b.disabled and mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
@@ -81,12 +83,21 @@ end
 function Modal.key(key)
     if key=="f4" and not Modal.current then Modal.current={mode="glossary"};Sound.play("ui_click");return true end
     if not Modal.current then return false end
+    if Modal.current.ritual then return true end
     if key=="escape" then close() end
     if key=="return" and Modal.current and (Modal.current.mode=="evolution" or Modal.current.mode=="card_upgrade") then Modal.confirm() end
     return true
 end
-function Modal.update(dt)
+function Modal.update(dt,fast,reduced)
     if Modal.toast then Modal.toast.age=Modal.toast.age+dt;if Modal.toast.age>1.6 then Modal.toast=nil end end
+    local m=Modal.current;local r=m and m.ritual
+    if r then
+        r.age=r.age+math.min(dt,.05)*(fast and 2 or 1);r.reduced=reduced==true
+        if not r.contacted and r.age>=EvolutionMotion.contactAt then
+            r.contacted=true;Effects.triggerScorePulse(m.selected);Sound.play("xmult_boom",.96)
+        end
+        if r.age>=EvolutionMotion.duration then Modal.current=nil end
+    end
 end
 function Modal.draw(UI,mx,my)
     local m=Modal.current

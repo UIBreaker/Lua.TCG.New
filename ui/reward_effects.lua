@@ -44,12 +44,16 @@ local function diamond(x,y,size,color,alpha)
 end
 
 -- All paths are deterministic geometry; presentation never rolls gameplay RNG.
-function E.drawSlot(p,x,y,age,anticipating,time)
+function E.drawSlot(p,x,y,age,anticipating,time,reduced)
     if not Visual.enabled then return end
     local g=love.graphics
     local progress=math.max(0,math.min(1,age/p.duration))
     local alpha=anticipating and .30 or (1-progress)^(p.kind=="ticket" and .7 or 1.4)
     if alpha<=0 then return end
+    if reduced then
+        g.push("all");g.setBlendMode("add")
+        glow(x,y,55,78,p.color,alpha*.16);g.pop();return
+    end
     local low=Visual.quality=="LOW"
     local travel=anticipating and .1 or progress
     g.push("all");g.setBlendMode("add")
@@ -132,7 +136,7 @@ function E.counter(p,age,x,y,fonts)
     g.pop()
 end
 
-function E.jackpot(p,age,width,height,fonts)
+function E.jackpot(p,age,width,height,fonts,reduced)
     if not p.jackpot or not Visual.enabled or age<0 or age>=p.duration then return end
     local g=love.graphics
     local alpha=math.min(1,age/.12,(p.duration-age)/.35)
@@ -143,19 +147,19 @@ function E.jackpot(p,age,width,height,fonts)
     g.setBlendMode("add")
     glow(cx,cy,430,300,purple,alpha*.43)
     glow(cx,cy,270,210,gold,alpha*.23)
-    local rays=Visual.quality=="LOW" and 12 or 28
+    local rays=reduced and 0 or Visual.quality=="LOW" and 12 or 28
     for i=1,rays do
         local a=i*math.pi*2/rays+age*.11;local radius=(220+i%4*45)*bloom
         tint(i%3==0 and purple or gold,alpha*.13)
         g.polygon("fill",cx+math.cos(a-.015)*70,cy+math.sin(a-.015)*70,cx+math.cos(a)*radius,cy+math.sin(a)*radius,
             cx+math.cos(a+.015)*70,cy+math.sin(a+.015)*70)
     end
-    for i=1,3 do
+    for i=1,reduced and 0 or 3 do
         g.push();g.translate(cx,cy);g.rotate(i*.55+age*(i%2==0 and -.2 or .17))
         tint(i==2 and gold or purple,alpha*.7);g.setLineWidth(i==2 and 2 or 1)
         g.ellipse("line",0,0,155+i*18+age*9,100+i*11);g.pop()
     end
-    if Visual.effects.particles then
+    if Visual.effects.particles and not reduced then
         for i=1,Visual.quality=="LOW" and 12 or 38 do
             local angle=i*2.399;local speed=40+(i*37)%150
             local t=age*.7;local px=cx+math.cos(angle)*(90+t*speed)

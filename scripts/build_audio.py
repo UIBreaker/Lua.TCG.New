@@ -16,6 +16,9 @@ OUT = ROOT / "assets/audio/continental"
 RATE = 32000
 TAU = 2 * np.pi
 CUES = {}
+VARIANTS = {"ui_click", "card_select", "card_deselect", "card_slide", "card_draw", "card_deal",
+            "card_play", "chip_tick", "mult_pop", "coin", "damage_hit", "damage_heavy",
+            "shop_buy", "shop_reroll", "reward_coin_spawn", "reward_coin_land", "reward_coin_collect"}
 
 
 def cue(name, kind, duration, freq=440, gain=.65, priority=3, cooldown=.035):
@@ -155,7 +158,11 @@ def effect(recipe, rng):
         if kind == "fusion": x += .70 * tone(t, f * .5, 8) + .4 * sweep * np.exp(-t * 6)
     # Every effect has a click-free envelope; room reflections give it a material.
     x *= np.minimum(1, t * 650) * np.minimum(1, (d - t) * 45)
-    return stereo(x, wet=.12 if kind in ("paper", "wood", "riffle") else .24)
+    y = stereo(x, wet=.10 if kind in ("paper", "wood", "riffle") else .24)
+    if kind in ("slash", "orbit", "wave", "storm", "astral"):
+        pan = (.48 * np.sin(TAU * t / d) if kind in ("orbit", "storm") else .38 * np.sin(np.pi * (t / d - .5)))
+        y *= np.column_stack((np.sqrt(1 - pan), np.sqrt(1 + pan)))
+    return y
 
 
 def stereo(x, wet=.22, loop=False):
@@ -176,15 +183,18 @@ def add_note(y, at, duration, midi, instrument, amplitude, pan=0):
     t = np.arange(round(duration * RATE)) / RATE
     f = 440 * 2 ** ((midi - 69) / 12)
     if instrument == "strings":
-        vibrato = .003 * np.sin(TAU * 4.7 * t)
-        phase = TAU * f * t + vibrato * np.sin(TAU * f * t)
-        x = sum(np.sin(phase * h) / h ** 1.6 for h in range(1, 6))
+        phase = TAU * f * t + f * .0014 / 4.7 * (1 - np.cos(TAU * 4.7 * t))
+        x = sum((np.sin(phase * h) + .35 * np.sin(phase * h * 1.0017)) / h ** 1.8 for h in range(1, 8))
         x *= np.minimum(1, t * 3) * np.minimum(1, (duration - t) * 2)
     elif instrument == "choir":
         x = sum(np.sin(TAU * f * r * t) * a for r, a in ((.998, .4), (1.002, .4), (2, .12), (3, .06)))
         x *= np.sin(np.pi * t / duration) ** .8
     elif instrument == "bass":
         x = tone(t, f, 2.2, (1, .15, .05)) * np.minimum(1, t * 80)
+    elif instrument == "horn":
+        phase = TAU * f * t
+        x = sum(np.sin(phase * h + .025 * np.sin(TAU * 3 * t)) / h ** 1.6 for h in range(1, 7))
+        x *= np.minimum(1, t * 9) * np.minimum(1, (duration - t) * 5) * np.exp(-t * .55)
     else:
         x = tone(t, f, 3.7 if instrument == "harp" else 6, (1, .3, .09), (1, 2, 3) if instrument == "harp" else (1, 2.003, 4.01))
         x *= np.minimum(1, t * 180)
@@ -197,39 +207,57 @@ def add_note(y, at, duration, midi, instrument, amplitude, pan=0):
 MUSIC = {"exploration": (96, .20), "combat": (120, .28), "boss": (120, .31),
          "tension": (120, .18), "shop": (80, .18), "rest": (64, .16),
          "mystery": (80, .19), "victory": (96, .23), "defeat": (64, .17)}
+MUSIC_BARS = 16
 
 
 def music(name, rng):
     bpm, _ = MUSIC[name]
     beat = 60 / bpm
-    y = np.zeros((round(32 * beat * RATE), 2))
+    y = np.zeros((round(MUSIC_BARS * 4 * beat * RATE), 2))
     roots = [50, 46, 53, 48, 50, 46, 48, 45]
     if name in ("shop", "victory"): roots = [50, 55, 59, 57, 50, 55, 52, 57]
     melody = [0, 7, 12, 10, 7, 3, 5, 7, 0, 3, 7, 10, 12, 7, 5, 3]
-    for bar, root in enumerate(roots):
+    for bar, root in enumerate(roots * 2):
         at = bar * 4 * beat
+        # The second phrase develops the theme; the last bar leaves room to breathe.
+        development = bar >= 8
+        breathing = bar == 15
         if name != "tension":
             major = name in ("shop", "victory")
             for k, interval in enumerate((0, 4 if major else 3, 7)):
-                add_note(y, at, 4.8 * beat, root + interval, "choir" if name in ("mystery", "defeat") else "strings", .075, (k - 1) * .48)
+                add_note(y, at + k * .018, 4.8 * beat, root + interval, "choir" if name in ("mystery", "defeat") else "strings", .075, (k - 1) * .48)
             add_note(y, at, 3.8 * beat, root - 12, "bass", .17, 0)
             count = 8 if name in ("combat", "boss", "exploration") else 4
             for j in range(count):
                 interval = (0, 7, 12, 4 if major else 3)[j % 4]
-                add_note(y, at + j * 4 * beat / count, 1.7 * beat, root + 12 + interval, "harp", .10, .48 if j % 2 else -.48)
+                add_note(y, at + j * 4 * beat / count + rng.uniform(0, .012), 1.7 * beat, root + 12 + interval, "harp", .10 * rng.uniform(.82, 1.08), .48 if j % 2 else -.48)
             if name not in ("defeat", "mystery"):
                 for j in range(2):
                     add_note(y, at + (j * 2 + .5) * beat, 2.4 * beat, 62 + melody[(bar * 2 + j) % len(melody)], "bell", .095, -.18)
+            if development and not breathing:
+                if name in ("boss", "combat", "exploration", "victory"):
+                    for j, interval in enumerate((7, 12, 10 if not major else 11)):
+                        add_note(y, at + j * beat * 1.25, 1.8 * beat, root + interval, "horn", .10 if name == "boss" else .055, .25)
+                elif name in ("shop", "rest"):
+                    add_note(y, at + 2.5 * beat, 2.7 * beat, root + 19, "harp", .075, -.35)
+                else:
+                    add_note(y, at + beat, 4 * beat, root + 19, "choir", .045, .35)
         if name in ("combat", "boss", "tension", "exploration", "victory"):
             for j in range(4):
                 t = np.arange(round(beat * .7 * RATE)) / RATE
                 drum = np.sin(TAU * (72 * t - 38 * t * t)) * np.exp(-t * 16)
                 drum += filtered_noise(len(t), rng, 5) * np.exp(-t * 60) * .16
-                amp = .24 if name == "boss" else .15 if name in ("combat", "tension") else .065
+                amp = (.24 if name == "boss" else .15 if name in ("combat", "tension") else .065) * (.65 if breathing else 1)
                 idx = (np.arange(len(t)) + round((at + j * beat) * RATE)) % len(y)
                 y[idx] += (drum * amp)[:, None]
                 if name == "tension":
                     add_note(y, at + j * beat + .25 * beat, .6 * beat, 38, "bass", .13)
+                if development and not breathing and name in ("combat", "boss", "tension"):
+                    u = np.arange(round(.12 * RATE)) / RATE
+                    skin = filtered_noise(len(u), rng, 8) * np.exp(-u * 43)
+                    skin += .35 * tone(u, 190, 28)
+                    idx = (np.arange(len(u)) + round((at + (j + .5) * beat) * RATE)) % len(y)
+                    y[idx] += (skin * .055)[:, None]
             if name == "boss":
                 for k in (0, 7): add_note(y, at, 3.5 * beat, root + k, "choir", .16, -.25 if k == 0 else .25)
     # Wrapped reverberation preserves tails across the exact musical loop boundary.
@@ -277,12 +305,24 @@ def seed(name):
 
 
 def write_audio(path, samples, peak, loop=False):
+    # Remove rumble/harsh top end and keep bass centered before gentle saturation.
+    frequencies = np.fft.rfftfreq(len(samples), 1 / RATE)
+    spectrum = np.fft.rfft(samples, axis=0)
+    highpass = frequencies ** 2 / (frequencies ** 2 + 28 ** 2)
+    shelf = 1 / np.sqrt(1 + (frequencies / 10500) ** 4)
+    spectrum *= (highpass * shelf)[:, None]
+    mid = (spectrum[:, 0] + spectrum[:, 1]) * .5
+    side = (spectrum[:, 0] - spectrum[:, 1]) * .5
+    side *= frequencies ** 2 / (frequencies ** 2 + 160 ** 2)
+    samples = np.fft.irfft(np.column_stack((mid + side, mid - side)), n=len(samples), axis=0)
+    samples = np.tanh(samples * 1.15)
     samples -= np.mean(samples, axis=0)
     samples *= peak / max(.001, np.max(np.abs(samples)))
     if not loop:
-        n = min(256, len(samples) // 4)
-        samples[:n] *= np.linspace(0, 1, n)[:, None]
-        samples[-n:] *= np.linspace(1, 0, n)[:, None]
+        attack = min(32, len(samples) // 4)
+        tail = min(384, len(samples) // 4)
+        samples[:attack] *= np.linspace(0, 1, attack)[:, None]
+        samples[-tail:] *= np.linspace(1, 0, tail)[:, None]
     assert np.isfinite(samples).all() and np.max(np.abs(samples)) < .9
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "wb") as f:
@@ -294,19 +334,28 @@ def write_audio(path, samples, peak, loop=False):
 
 
 def build():
-    manifest = {"description": "Original deterministic Continental DSP compositions; no third-party samples.",
-                "sampleRate": RATE, "channels": 2, "bits": 16, "sfx": {}, "music": {}, "ambience": {}}
+    manifest = {"description": "Continental second edition: layered stereo, material variants, evolving orchestration; original DSP, no third-party samples.",
+                "sampleRate": RATE, "channels": 2, "bits": 16, "sfx": {}, "variants": {}, "music": {}, "ambience": {}}
     lines = ["-- Generated by scripts/build_audio.py; edit recipes there, then rebuild.", "return {", "    cues = {"]
     for name, recipe in CUES.items():
         meta = write_audio(OUT / "sfx" / (name + ".wav"), effect(recipe, seed(name)), .64)
         manifest["sfx"][name] = {**meta, **recipe}
-        lines.append(f'        {name} = {{path="{meta["path"]}", gain={recipe["gain"]}, priority={recipe["priority"]}, cooldown={recipe["cooldown"]}}},')
+        variants = []
+        if name in VARIANTS:
+            for take in (2, 3):
+                variant = dict(recipe, freq=recipe["freq"] * (1 + (take - 2.5) * .035))
+                key = f"{name}_{take}"
+                alternate = write_audio(OUT / "sfx" / (key + ".wav"), effect(variant, seed(key)), .64)
+                manifest["variants"][key] = alternate
+                variants.append('"' + alternate["path"] + '"')
+        alternate_paths = ", variants={" + ",".join(variants) + "}" if variants else ""
+        lines.append(f'        {name} = {{path="{meta["path"]}", gain={recipe["gain"]}, priority={recipe["priority"]}, cooldown={recipe["cooldown"]}{alternate_paths}}},')
     lines += ["    },", "    music = {"]
     lines.append('        menu = {path="assets/audio/menu_theme.mp3", gain=0.38},')
     for name, (_, gain) in MUSIC.items():
         meta = write_audio(OUT / "music" / (name + ".wav"), music(name, seed(name)), .48, loop=True)
         manifest["music"][name] = meta
-        lines.append(f'        {name} = {{path="{meta["path"]}", gain={gain}}},')
+        lines.append(f'        {name} = {{path="{meta["path"]}", gain={gain}, seconds={meta["seconds"]}}},')
     lines += ["    },", "    ambience = {"]
     for name in AMBIENCE:
         meta = write_audio(OUT / "ambience" / (name + ".wav"), ambience(name, seed(name)), .32, loop=True)
@@ -321,6 +370,18 @@ def build():
         start = round((.5 + i * 2.05) * RATE)
         reel[start:start + len(x)] += x
     write_audio(ROOT / "docs/audio/continental_preview.wav", reel, .64)
+    # A short in-world mix demonstrates the arrangement and contact sounds together.
+    def read_pcm(path):
+        with wave.open(str(path)) as source:
+            return np.frombuffer(source.readframes(source.getnframes()), "<i2").reshape(-1, 2) / 32768
+    cinematic = read_pcm(OUT / "music/boss.wav")[:24 * RATE].copy() * .36
+    for at, name in ((1, "card_draw"), (3, "pair_release"), (3.35, "pair_impact"), (6, "spn_trigger"),
+                     (9, "flush_impact"), (12, "armor_gain"), (15, "straight_flush_impact"), (20, "round_win")):
+        start = round(at * RATE)
+        effect_pcm = read_pcm(OUT / "sfx" / (name + ".wav")) * CUES[name]["gain"]
+        cinematic[start:start + len(effect_pcm)] *= .55
+        cinematic[start:start + len(effect_pcm)] += effect_pcm
+    write_audio(ROOT / "docs/audio/continental_cinematic_preview.wav", cinematic, .78)
     check()
 
 
@@ -328,7 +389,7 @@ def check():
     manifest = json.loads((OUT / "manifest.json").read_text())
     hashes = set()
     count = 0
-    for section in ("sfx", "music", "ambience"):
+    for section in ("sfx", "variants", "music", "ambience"):
         for name, meta in manifest[section].items():
             path = ROOT / meta["path"]
             assert hashlib.sha256(path.read_bytes()).hexdigest() == meta["sha256"], name
@@ -338,7 +399,7 @@ def check():
                 assert f.getnchannels() == 2 and f.getframerate() == RATE and f.getsampwidth() == 2
                 pcm = np.frombuffer(f.readframes(f.getnframes()), "<i2").reshape(-1, 2) / 32768
             assert 0 < np.max(np.abs(pcm)) < .9 and np.sqrt(np.mean(pcm ** 2)) > .001, name
-            if section == "sfx": assert np.max(np.abs(pcm[[0, -1]])) == 0, name
+            if section in ("sfx", "variants"): assert np.max(np.abs(pcm[[0, -1]])) == 0, name
             else: assert np.max(np.abs(pcm[0] - pcm[-1])) < .06, f"Loop discontinuity: {name}"
             count += 1
     print(f"Audio PASS: {count} distinct stereo WAVs; hashes, headroom, energy, envelopes and loop seams checked.")

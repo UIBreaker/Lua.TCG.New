@@ -14,7 +14,8 @@ local unpack = unpack or table.unpack
 local function clamp(v, lo, hi) return math.max(lo, math.min(hi, v)) end
 local function smooth(v, target, response, dt) return target + (v - target) * math.exp(-response * dt) end
 
-local spring = require("src.motion").spring
+local Motion=require("src.motion")
+local spring = Motion.spring
 Physics.spring = spring
 
 local function inverse(a, b, c, d, tx, ty, x, y)
@@ -32,6 +33,13 @@ end
 
 function Physics.setPreset(name)
     if Config.presets[name] then Config.preset = name end
+end
+
+function Physics.reset()
+    states=setmetatable({}, {__mode="k"})
+    registry,previousRegistry={},{}
+    held,lastCard=nil,nil
+    mouseVX,mouseVY=0,0;previousX,previousY=mx,my
 end
 
 function Physics.move(x, y)
@@ -57,42 +65,46 @@ function Physics.update(dt, mouseX, mouseY)
             elseif s.active or s.frame >= frame - 1 then
                 s.active = true
                 local holding = s == held
+                local reduced=Physics.reducedMotion
+                local step=hdt*(not holding and Physics.fast and 2 or 1)
+                if s.contactAge then s.contactAge=s.contactAge+step end
                 if holding then
                     s.holdTime = s.holdTime + hdt
                 end
                 local visible = not s.detached and s.frame >= frame - 1
                 local hover = enabled and visible and s.hovered and not holding
                 local pointerX, pointerY = 0, 0
-                if hover and s.a then
+                if hover and s.a and not reduced then
                     local lx, ly = inverse(s.a,s.b,s.c,s.d,s.ox,s.oy,mx,my)
                     pointerX = clamp(lx / s.w - 0.5, -0.5, 0.5) * 2
                     pointerY = clamp(ly / s.h - 0.5, -0.5, 0.5) * 2
                 end
-                local idleAngle = visible and math.sin(elapsed * Config.idle.speed + s.phase) * Config.idle.angle or 0
-                local bob = visible and math.sin(elapsed * Config.idle.speed * 0.8 + s.phase) * Config.idle.bob or 0
+                local idleAngle = not reduced and visible and math.sin(elapsed * Config.idle.speed + s.phase) * Config.idle.angle or 0
+                local bob = not reduced and visible and math.sin(elapsed * Config.idle.speed * 0.8 + s.phase) * Config.idle.bob or 0
                 s.hoverLift = smooth(s.hoverLift or 0, hover and 1 or 0, Config.hover.response, hdt)
                 s.targetX = holding and (mx - s.grabX) or s.homeX
-                s.targetY = holding and (my - s.grabY - Config.pickup.lift) or (s.homeY + bob - Config.hover.lift * s.hoverLift)
+                s.targetY = holding and (my - s.grabY - (reduced and 0 or Config.pickup.lift)) or (s.homeY + bob - (reduced and 0 or Config.hover.lift * s.hoverLift))
                 local sway = 0
-                if holding and Config.sway.enabled then
+                if holding and Config.sway.enabled and not reduced then
                     sway = math.sin(s.holdTime * Config.sway.speed1) * Config.sway.amplitude1
                         + math.sin(s.holdTime * Config.sway.speed2 + 0.8) * Config.sway.amplitude2
                 end
-                s.targetRotation = holding and clamp(mouseVX * Config.input.velocityToTilt
+                s.targetRotation = reduced and 0 or holding and clamp(mouseVX * Config.input.velocityToTilt
                     + (s.targetX - s.x) * Config.input.lagToTilt + sway,
                     -Config.rotation.maxAngle, Config.rotation.maxAngle) or (idleAngle + pointerX * Config.hover.angle)
-                s.x, s.vx = spring(s.x, s.vx, s.targetX, preset.stiffness, preset.damping, hdt)
-                s.y, s.vy = spring(s.y, s.vy, s.targetY, preset.stiffness, preset.damping, hdt)
+                local damping=reduced and 2*math.sqrt(preset.stiffness) or preset.damping
+                s.x, s.vx = spring(s.x, s.vx, s.targetX, preset.stiffness, damping, step)
+                s.y, s.vy = spring(s.y, s.vy, s.targetY, preset.stiffness, damping, step)
                 s.rotation, s.angularVelocity = spring(s.rotation, s.angularVelocity,
-                    s.targetRotation, preset.rotationStiffness, preset.rotationDamping, hdt)
+                    s.targetRotation, preset.rotationStiffness, preset.rotationDamping, step)
                 s.rotation = clamp(s.rotation, -Config.rotation.maxAngle * 1.2, Config.rotation.maxAngle * 1.2)
-                s.lift = smooth(s.lift, holding and 1 or 0, Config.pickup.response, hdt)
-                s.tiltY = smooth(s.tiltY, holding and clamp(mouseVY * Config.rotation.verticalResponse
-                    + (s.targetY - s.y) * 0.002, -1, 1) or pointerY * 0.7, Config.hover.response, hdt)
-                local stretch = Config.stretch.enabled and holding
+                s.lift = smooth(s.lift, holding and not reduced and 1 or 0, Config.pickup.response, step)
+                s.tiltY = smooth(s.tiltY, reduced and 0 or holding and clamp(mouseVY * Config.rotation.verticalResponse
+                    + (s.targetY - s.y) * 0.002, -1, 1) or pointerY * 0.7, Config.hover.response, step)
+                local stretch = not reduced and Config.stretch.enabled and holding
                     and math.min(Config.stretch.maxAmount, math.sqrt(s.vx^2 + s.vy^2)
                         / Config.stretch.speedScale * Config.stretch.maxAmount) or 0
-                s.stretch = smooth(s.stretch, stretch, Config.stretch.response, hdt)
+                s.stretch = smooth(s.stretch, stretch, Config.stretch.response, step)
                 if s.settling and not holding and math.abs(s.x - s.targetX) + math.abs(s.y - s.targetY) < 0.4
                     and math.abs(s.vx) + math.abs(s.vy) < 4 and s.lift < 0.003
                     and math.abs(s.rotation - s.targetRotation) < 0.006 then s.settling = false end
@@ -140,7 +152,7 @@ function Physics.shaderInput(w, h)
     local lx, ly = love.graphics.inverseTransformPoint(px, py)
     local s = current
     return clamp(lx / math.max(1, w), 0, 1), clamp(ly / math.max(1, h), 0, 1),
-        s and clamp(s.rotation / Config.rotation.maxAngle, -1, 1) or 0, s and s.tiltY or 0,
+        not Physics.reducedMotion and s and clamp(s.rotation / Config.rotation.maxAngle, -1, 1) or 0, not Physics.reducedMotion and s and s.tiltY or 0,
         s and s == held or false
 end
 
@@ -167,17 +179,20 @@ end
 
 local function apply(s)
     local g = love.graphics
+    local reduced=Physics.reducedMotion
     local dx, dy = inverse(s.pa, s.pb, s.pc, s.pd, 0, 0, s.x - s.renderX, s.y - s.renderY)
     g.translate(dx, dy)
     local _, _, _, alpha = g.getColor()
-    Physics.shadow(s.args[2], s.args[3], s.w, s.h, s.lift, s.hoverLift or 0,
+    Physics.shadow(s.args[2], s.args[3], s.w, s.h, reduced and 0 or s.lift, reduced and 0 or s.hoverLift or 0,
         s.rotation, alpha * (s.args[1].alpha or 1))
     local x, y = s.args[2] + s.w * Config.pivot.x, s.args[3] + s.h * Config.pivot.y
     g.translate(x, y)
-    g.rotate(s.rotation)
-    local scale = 1 + (Config.pickup.scale - 1) * s.lift + (Config.hover.scale - 1) * (s.hoverLift or 0)
-    g.scale(scale * (1 + s.stretch), scale * (1 - s.stretch * 0.5))
-    g.shear(0, s.tiltY * Config.rotation.verticalShear)
+    local contact=not Physics.reducedMotion and s.contactAge and Motion.impact(s.contactAge,.28) or 0
+    g.rotate(reduced and 0 or s.rotation+contact*.012)
+    local scale = Physics.reducedMotion and 1 or 1 + (Config.pickup.scale - 1) * s.lift + (Config.hover.scale - 1) * (s.hoverLift or 0)
+    local stretch=reduced and 0 or s.stretch
+    g.scale(scale * (1 + stretch+contact*.025), scale * (1 - stretch * 0.5+contact*.018))
+    g.shear(0, reduced and 0 or s.tiltY * Config.rotation.verticalShear)
     g.translate(-x, -y)
 end
 
@@ -358,6 +373,11 @@ function Physics.getState(card)
     end
     local surfaces = states[card]
     if surfaces then for _, s in pairs(surfaces) do if s.frame >= frame - 1 then return s end end end
+end
+
+function Physics.pulse(card)
+    local s=Physics.getState(card)
+    if s and not Physics.reducedMotion then s.active=true;s.contactAge=0 end
 end
 
 -- Late selection/evolution rims reuse the final face matrix, including renderer tilt.

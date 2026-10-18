@@ -17,7 +17,16 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen_coords) {
     number halo=exp(-pow(r-.29,2.0)*140.0);
     number inner=exp(-pow(r-.235,2.0)*4200.0);
     number rays=pow(max(0.0,cos(atan(p.y,p.x)*12.0-t*.7)),24.0)*exp(-pow(r-.32,2.0)*120.0);
-    number ring=exp(-pow(r-(0.12+fract(t*0.3)*0.5),2.0)*900.0);
+    number angle=atan(p.y,p.x);
+    number sunRays=pow(max(0.0,cos(angle*12.0-t*.20)),24.0)*exp(-pow(r-.37,2.0)*160.0);
+    number solar=exp(-pow(r-.32,2.0)*3600.0);
+    number bezel=exp(-pow(r-.265,2.0)*8500.0)*pow(max(0.0,cos(angle*16.0)),6.0);
+    vec2 crown=vec2(cos(t*.65),sin(t*.65))*.29;
+    number d=length(p-crown);
+    number sun=exp(-d*d*2400.0)+exp(-d*d*140.0)*.16;
+    number bevel=cos(angle-t*.35)*exp(-pow(r-.29,2.0)*500.0);
+    number cycle=fract(t*.3);
+    number ring=exp(-pow(r-(0.12+cycle*0.5),2.0)*900.0)*sin(cycle*3.14159);
     number gild=pow(max(0.0,sin(uv.y*5.0-t*1.7+u_tilt.x)),8.0);
     number pulse=0.65+u_scorePulse*0.5+u_selectPulse*0.2;
     number luminance=dot(base.rgb,vec3(0.2126,0.7152,0.0722));
@@ -25,5 +34,9 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen_coords) {
     vec3 rgb=mix(base.rgb,vec3(luminance)*vec3(1.25,0.95,0.56),min(0.30,u_intensity*0.2));
     rgb+=gold*(seal*.62+halo*.10+ring*.24+gild*.20+rays*.16)*u_intensity*pulse;
     rgb+=vec3(1.0,.91,.64)*inner*.42*u_intensity*pulse;
+    rgb+=gold*(bezel*.30+max(0.0,bevel)*.14)*u_intensity;
+    rgb-=base.rgb*max(0.0,-bevel)*.14*u_intensity;
+    rgb+=vec3(1.0,.93,.72)*sun*.85*u_intensity;
+    rgb+=vec3(1.0,.65,.14)*(sunRays*.43+solar*.30)*u_intensity;
     return vec4(clamp(rgb,0.0,1.0),base.a);
 }

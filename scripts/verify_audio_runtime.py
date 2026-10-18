@@ -1,7 +1,7 @@
 """Windows fallback for checking audio when the LÖVE launcher is unavailable.
 
 Uses the actual LÖVE/LuaJIT DLLs, decoders and OpenAL; no Python audio substitute.
-python scripts/verify_audio_runtime.py [--runtime PATH] [--render]
+python scripts/verify_audio_runtime.py [--runtime PATH] [--render | --bake-outcomes]
 """
 import argparse
 import ctypes
@@ -11,6 +11,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument("--runtime", default=os.path.join(os.path.dirname(os.getcwd()), "love-11.5-win64"))
 parser.add_argument("--render", action="store_true")
+parser.add_argument("--bake-outcomes", action="store_true")
 args = parser.parse_args()
 sys.stdout.reconfigure(encoding="utf-8")
 dll_directory = os.add_dll_directory(args.runtime)
@@ -53,7 +54,10 @@ try:
         love.filesystem.init("audio_check")
         love.filesystem.setSource(love.filesystem.getWorkingDirectory())
     ''')
-    if not args.render:
+    if args.bake_outcomes:
+        os.makedirs("assets/audio/nen_outcomes", exist_ok=True)
+        run('assert(loadfile("scripts/bake_attack_outcomes.lua"))()')
+    elif not args.render:
         run('assert(loadfile("tests/audio_capture.lua"))();love.load()')
     else:
         run('''
@@ -84,7 +88,11 @@ try:
             local data=canvas:newImageData()
             local f=assert(io.open("docs/audio/settings.png","wb"));f:write(data:encode("png"):getString());f:close()
             local Sound=require("src.sound")
-            assert(Sound.currentTrack=="menu" and Sound.stats().cues==108)
+            local expected=0
+            for _ in pairs(require("config.audio_catalog").cues) do expected=expected+1 end
+            expected=expected+#require("config.nen_vfx_config").order*25
+            expected=expected+#require("src.reward_audio").order*4
+            assert(Sound.currentTrack=="menu" and Sound.stats().cues==expected)
             local actualButtons
             for i=1,60 do
                 local name,value=debug.getupvalue(draw,i)

@@ -39,13 +39,17 @@ function T.update(game,cb)
  elseif s==1.5 then press(slot(1),2);T.stage=2;T.deadline=now+.3;return
  elseif s==2 then assert(Modal.current and not Bag.open);click(cb,"target");shot("evolution_target")
  elseif s==3 then click(cb,"confirm");assert(T.source.evolutionLevel==1 and #game.consumables==2)
- elseif s==4 then returned();shot("after_evolution");T.stage=4.5;T.deadline=now+.3;return
+ elseif s==4 then if Modal.current then return end;returned();shot("after_evolution");T.stage=4.5;T.deadline=now+.3;return
  elseif s==4.5 then press(slot(2),2);T.stage=5;T.deadline=now+.3;return
  elseif s==5 then assert(Modal.current.mode=="card_upgrade" and not Bag.open);love.keypressed("escape")
  elseif s==6 then returned();assert(#game.consumables==2);press(slot(2),2)
  elseif s==7 then click(cb,"target");T.socketTarget=Modal.current.selected;T.sockets=E.getMaxSlots(T.socketTarget)
  elseif s==8 then click(cb,"confirm")
- elseif s==9 then returned();assert(E.getMaxSlots(T.socketTarget)==T.sockets+1 and #game.consumables==1);press(slot(3),2)
+ elseif s==9 then
+  if Modal.current then return end
+  returned();assert(E.getMaxSlots(T.socketTarget)==T.sockets+1 and #game.consumables==1)
+  T.stage=9.5;T.deadline=now+.3;return
+ elseif s==9.5 then press(slot(3),2);T.stage=10;T.deadline=now+.3;return
  elseif s==10 then assert(Bag.open and Bag.tab=="cards");love.keypressed("escape")
  elseif s==11 then returned();assert(#game.consumables==1);press(slot(3),2)
  elseif s==12 then assert(Bag.tab=="cards");press(Bag.cells[1])

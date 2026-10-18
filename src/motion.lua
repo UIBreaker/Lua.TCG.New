@@ -11,6 +11,11 @@ function Motion.settle(elapsed, duration)
     return travel + (1 - travel) * tail * tail * (3 - 2 * tail)
 end
 
+function Motion.impact(elapsed, duration)
+    local t = math.max(0, math.min(1, elapsed / duration))
+    return math.sin(t * math.pi) * math.exp(-3 * t) * 2.8 * (1 - t)
+end
+
 -- Exact damped spring: preserves momentum and the same timing at every FPS.
 function Motion.spring(x, velocity, target, stiffness, damping, dt)
     if dt <= 0 then return x, velocity end

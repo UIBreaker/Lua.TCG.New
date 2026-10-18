@@ -44,10 +44,10 @@ function T.update(game,cb)
   local Health=require("ui.components.health_bar");T.healthDraw=Health.draw;T.hpTrailFrames=0
   Health.draw=function(x,y,w,h,value,maxHp,options)
    local a,state=cb.getScoringState()
-   if state=="scoring" and a.active and a.sequence and y==144 then
+   if state=="scoring" and a.active and a.sequence and not a.enemyTurn and not a.counterAttackStarted and y==142 then
     for i,m in ipairs(Group.members(game)) do
      local tx=Group.rect(i,#Group.members(game))
-     if m==game.monster and x==tx-12 then
+     if m==game.monster and x==tx-9 then
       assert(value==a.sequence.hp and options.trailValue==a.sequence.hpTrail,"target HP must follow the scoring impact and trail")
       if value~=options.trailValue then T.hpTrailFrames=T.hpTrailFrames+1 end
      end
@@ -85,9 +85,9 @@ function T.update(game,cb)
   local a,state=cb.getScoringState()
   if state=="scoring" then
    if T.resumed and not T.scoringShot and a.active and a.sequence and (a.displayAura or 0)>0 then shot("scoring");T.scoringShot=true end
-   assert(control(cb,"play").disabled);assert(control(cb,"sort_rank").disabled)
    if not T.paused then control(cb,"open_pause_menu",true);T.paused=true;T.deadline=now+.2;return
    elseif not T.resumed then control(cb,"pause_resume",true);T.resumed=true;T.deadline=now+.2;return end
+   assert(control(cb,"play").disabled);assert(control(cb,"sort_rank").disabled)
    assert(now-T.scoringStart<25,"scoring timeout")
    T.deadline=now+.15;return
   end
@@ -99,8 +99,13 @@ function T.update(game,cb)
  elseif n==6 then
   if not T.bossShot then shot("boss");T.bossShot=true;T.deadline=now+.6;return end
   control(cb,"open_handbook",true)
- elseif n==7 then cb.closeHandbook();control(cb,"open_deck_viewer",true)
- elseif n==8 then cb.closeDeckViewer();control(cb,"open_settings",true)
+ elseif n==7 then
+  -- Controls are rebuilt by draw after a modal closes.
+  if not T.handbookClosed then cb.closeHandbook();T.handbookClosed=true;T.deadline=now+.2;return end
+  control(cb,"open_deck_viewer",true)
+ elseif n==8 then
+  if not T.deckClosed then cb.closeDeckViewer();T.deckClosed=true;T.deadline=now+.2;return end
+  control(cb,"open_settings",true)
  elseif n==9 then cb.closeSettings();love.window.setMode(960,540,{resizable=true});love.resize(960,540)
  elseif n==10 then require("tests.combat_material_smoke")(UI);shot("960");control(cb,"sort_suit",true)
  elseif n==11 then assert(game.sortMode=="suit");love.window.setMode(1920,1080,{resizable=true});love.resize(1920,1080)

@@ -75,13 +75,16 @@ function T.update(game,cb)
     elseif step==9 then
         local start=0;local spnRoll
         for _,r in ipairs(G.config.rates) do if r.id=="spn" then spnRoll=start+1 end;start=start+r.weight end
-        local rolls={};for i=1,8 do rolls[i]=spnRoll end;rolls[9]=1;rolls[10]=3
+        local rolls={};for i=1,10 do rolls[i]=spnRoll end
         T.gold=game.gold;T.spnCount=#game.backpackDeities;T.gearCount=#game.backpackEquipment
-        forced(function() click(button(cb,"void_pull_10")) end,rolls,{.1,.7,.85,.95,.98,.99,.996,.9999})
-        assert(game.gold==T.gold-1000 and #game.voidEvent.results==10 and #game.backpackDeities==T.spnCount+9 and #game.backpackEquipment==T.gearCount+1)
-        for i=1,9 do assert(game.voidEvent.results[i].strength==i) end
+        forced(function() click(button(cb,"void_pull_10")) end,rolls,{.1,.7,.85,.95,.98,.99,.996,.999,.9996,.99995})
+        assert(game.gold==T.gold-1000 and #game.voidEvent.results==10 and #game.backpackDeities==T.spnCount+10 and #game.backpackEquipment==T.gearCount)
+        for i=1,10 do assert(game.voidEvent.results[i].strength==i) end
     elseif step>=10 and step<=18 then burst(game,step-9,"vfx_tier_"..(step-9))
-    elseif step==19 then click(button(cb,"void_skip"))
+    elseif step==19 then
+        burst(game,10,"vfx_tier_10");T.step=19.5;T.deadline=love.timer.getTime()+.28;return
+    elseif step==19.5 then
+        click(button(cb,"void_skip"));T.step=20;T.deadline=love.timer.getTime()+.28;return
     elseif step==20 then shot("results_10");T.step=20.1;T.deadline=love.timer.getTime()+.28;return
     elseif step==20.1 then forced(function() click(button(cb,"void_pull_1")) end,{4});T.step=21;T.deadline=love.timer.getTime()+.28;return
     elseif step==21 then burst(game,1,"banner_card_burst")
@@ -90,11 +93,11 @@ function T.update(game,cb)
         local restored,state=P.restoreSnapshot(assert(P.decode(P.encode(P.makeSnapshot(game,"void")))))
         assert(state=="void" and restored.voidTickets==0 and not G.enterIfDue(restored))
         assert(restored.persistentDeck[#restored.persistentDeck].voidPower==10)
-        for i=1,8 do
+        for i=1,9 do
             local a,b=V.effectSpec(i),V.effectSpec(i+1);assert(b.particles>a.particles and b.kick>a.kick and b.duration>a.duration)
         end
         local Art=require("src.continental_art");assert(Art.get("void_gold") and Art.get("void_souls"))
-        for i=1,9 do
+        for i=1,10 do
             assert(V.phase(i,0)=="charge" and V.phase(i,1)=="charge" and V.phase(i,1.1)=="signal")
             assert(V.phase(i,1.5)=="fracture" and V.phase(i,V.effectSpec(i).revealAt)=="reveal")
         end
@@ -159,7 +162,7 @@ function T.update(game,cb)
         assert(state=="BLIND_SELECT" and game.run.ante==11);T.step=27;T.deadline=love.timer.getTime()+.3;return
     elseif step==27 then
         local _,state=cb.getRunState();assert(state=="BLIND_SELECT" and game.run.ante==11)
-        print("Void UI PASS: ceremony -> Void, 10/100-ticket quotes, actual ticket/gold pulls, powered banners, rarity VFX 1-9, save/resume, physical tickets/99 stacks/99-gold backpack redemption, Void -> soul -> large -> optional barter -> stage 11")
+        print("Void UI PASS: ceremony -> Void, 10/100-ticket quotes, actual ticket/gold pulls, powered banners, rarity VFX 1-10, save/resume, physical tickets/99 stacks/99-gold backpack redemption, Void -> soul -> large -> optional barter -> stage 11")
         love.event.quit(0)
     end
     T.step=step+1;T.deadline=love.timer.getTime()+((step==0 or step==2 or step==24 or step==25) and 1.15 or .28)

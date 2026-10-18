@@ -106,24 +106,26 @@ function HandMotion.update(card, x, y, angle, dt, waitingForDeal, hovering)
         return launched
     end
     if s.collecting then return false end
-    local response = Motion.response(22, dt)
+    local step=dt*(HandMotion.fast and Config.fastFactor or 1)
+    local response = Motion.response(22, step)
     s.hover = s.hover + ((hovering and 1 or 0) - s.hover) * response
     s.selected = s.selected + ((card.selected and 1 or 0) - s.selected) * response
-    y = y - (card.selected and 28 or 0) - (hovering and (card.selected and 6 or 14) or 0)
+    y = y - (card.selected and 28 or 0) - (not HandMotion.reducedMotion and hovering and (card.selected and 6 or 14) or 0)
     if not card.visualX then
         card.visualX, card.visualY, card.visualAngle = x, y, angle
     elseif not waitingForDeal then
-        card.visualX, s.vx = Motion.spring(card.visualX, s.vx, x, 900, 44, dt)
-        card.visualY, s.vy = Motion.spring(card.visualY, s.vy, y, 900, 44, dt)
+        local damping=HandMotion.reducedMotion and 60 or 44
+        card.visualX, s.vx = Motion.spring(card.visualX, s.vx, x, 900, damping, step)
+        card.visualY, s.vy = Motion.spring(card.visualY, s.vy, y, 900, damping, step)
         card.visualAngle, s.angularVelocity = Motion.spring(card.visualAngle or angle,
-            s.angularVelocity, angle, 500, 36, dt)
+            s.angularVelocity, angle, 500, 36, step)
     end
     card.rotation = card.visualAngle
-    card.selectPulse = math.max(0, (card.selectPulse or 0) - dt * 5.5)
-    local scale = card.selected and 1.045 or hovering and 1.035 or 1
-    scale = scale + math.sin(card.selectPulse * math.pi) * 0.018
+    card.selectPulse = math.max(0, (card.selectPulse or 0) - step * 5.5)
+    local scale = HandMotion.reducedMotion and 1 or card.selected and 1.045 or hovering and 1.035 or 1
+    if not HandMotion.reducedMotion then scale=scale+Motion.impact((1-card.selectPulse)/5.5,1/5.5)*.018 end
     card.visualScale, s.scaleVelocity = Motion.spring(card.visualScale or 1,
-        s.scaleVelocity, scale, 1100, 54, dt)
+        s.scaleVelocity, scale, 1100, HandMotion.reducedMotion and 67 or 54, step)
 end
 
 return HandMotion

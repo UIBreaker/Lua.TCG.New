@@ -23,11 +23,19 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
         + sin(uv.y * 4.4 - u_time * u_speed * 0.63) * 0.7 + u_tilt.x * 2.0);
     number flowB = cos(uv.y * 3.7 - uv.x * 2.3 - u_time * u_speed * 0.78
         + sin(uv.x * 2.8 + u_mouseUV.y * 3.0) * 0.65 + u_tilt.y * 2.0);
-    number field = 0.5 + flowA * 0.19 + flowB * 0.17 + (uv.x - uv.y) * 0.08;
-    // Broad, moving jewel facets distinguish this material from thin-film holo.
-    number facet = floor((uv.x + uv.y * .62 + flowA * .12) * 6.0) / 6.0;
+    // Six large prism faces remain identifiable at playing-card size.
+    vec2 p=(uv-vec2(.5))*vec2(1.0,1.5);
+    number r=length(p), angle=atan(p.y,p.x)+u_time*u_speed*.12+u_tilt.x*.15;
+    number sector=floor((angle+3.14159)/1.047198);
+    number facet=sector/6.0;
     vec3 palette = flowingPalette(facet + u_mouseUV.x * 0.08 + u_time * u_speed * 0.045);
-    number seam = pow(1.0 - abs(sin((uv.x + uv.y * .62 + flowA * .12) * 18.84954)), 18.0);
+    number localAngle=mod(angle+3.14159,1.047198)-.523599;
+    number hex=r*cos(localAngle);
+    number edge=min(abs(hex-.31),abs(sin(localAngle+.523599))*r);
+    number glint=pow(.5+.5*sin(facet*14.0+u_time*u_speed*1.4+u_tilt.x*2.0),8.0);
+    number seam=exp(-edge*145.0)*(.45+glint*.55)*exp(-r*r*2.0);
+    number prism=exp(-pow(hex-.31,2.0)*1800.0);
+    number inner=exp(-pow(hex-.25,2.0)*3000.0);
 
     number edgeDistance = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
     number edgeGlow = 1.0 - smoothstep(0.018, 0.18, edgeDistance);
@@ -42,6 +50,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     vec3 crystal = base.rgb * (.75 + palette*.80) + palette*.055;
     rgb = mix(rgb, crystal, clamp(colorMix*1.9, 0.0, 0.75));
     rgb += palette * edgeGlow * (0.035 + interaction * 0.09) * u_intensity;
-    rgb += mix(palette,vec3(1.0),.35) * seam * (.16 + interaction * .14) * u_intensity;
+    rgb += mix(palette,vec3(1.0),.25)*seam*(.28+interaction*.14)*u_intensity;
+    rgb += mix(palette,vec3(1.0),.48)*(prism*.52+inner*.22)*u_intensity;
+    rgb += palette*glint*exp(-r*r*3.0)*.13*u_intensity;
     return vec4(clamp(rgb, 0.0, 1.0), base.a);
 }

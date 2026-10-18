@@ -12,7 +12,7 @@ end
 function love.load()
     UI.initFonts()
     local g=love.graphics
-    local canvas=g.newCanvas(1440,420)
+    local canvas=g.newCanvas(#Deities.RARITIES*180,420)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.025,0.03,0.045,1)
     local fingerprints={}
     for i,rarity in ipairs(Deities.RARITIES) do
@@ -31,7 +31,7 @@ function love.load()
         g.setFont(UI.fonts.medium);g.setColor(rarity.color);g.printf(rarity.code,x,266,148,"center")
     end
     g.pop();save(canvas,"docs/card_rarity_frames.png");canvas:release()
-    canvas=g.newCanvas(1440,570)
+    canvas=g.newCanvas(#Deities.RARITIES*180,570)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(0.025,0.03,0.045,1)
     P.suspend()
     local maxLevel=require("config.card_ability_data").maxEvolutionLevel
@@ -122,6 +122,6 @@ function love.load()
         Frame.draw=original
     end
     require("tests.card_frame_capture").verify()
-    print("Card motion PASS: 8 rarity tiers at two sizes; idle/hover/exit/hit area at 30/60/120/144 FPS; attached frame")
+    print("Card motion PASS: "..#Deities.RARITIES.." rarity tiers at two sizes; idle/hover/exit/hit area at 30/60/120/144 FPS; attached frame")
     love.event.quit(0)
 end

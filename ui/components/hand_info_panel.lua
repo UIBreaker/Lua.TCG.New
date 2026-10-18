@@ -127,11 +127,11 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  end
  Chrome.rule(x+16,y+378,w-32)
  Chrome.title("MỤC TIÊU",x+16,y+390,w-32,f.detail,Theme.colors.gold)
- Core.textLine(data.enemyName or "Không rõ",x+16,y+411,w-32,f.body,Theme.colors.text,"left",f.label)
- Chrome.well(x+12,y+439,w-24,72,Theme.colors.red)
+ Core.text(boundedLines(data.enemyName or "Không rõ",f.label,w-32,2),x+16,y+411,w-32,f.label,Theme.colors.text)
+ Chrome.well(x+12,y+439,w-24,88,Theme.colors.red)
  Chrome.title("CHIÊU TIẾP THEO",x+21,y+449,w-42,f.detail,Theme.colors.red)
- Core.text(boundedLines(data.intent or "Chưa rõ",f.label,w-42,2),x+21,y+470,w-42,f.label,Theme.colors.text)
- local traitY=y+528
+ Core.text(boundedLines(data.intent or "Chưa rõ",f.label,w-42,3),x+21,y+470,w-42,f.label,Theme.colors.text)
+ local traitY=y+544
  local trait=data.debuff
  if data.isBoss and data.boss and data.boss.bossData then
   local Boss=require("src.boss_abilities");local bs=Boss.state(data.boss);local a=data.boss.bossData.active

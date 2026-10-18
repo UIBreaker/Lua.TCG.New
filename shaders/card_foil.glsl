@@ -16,7 +16,7 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     number response = clamp(u_hoverAmount * 0.58 + u_selectedAmount * 0.72
         + u_scorePulse * 0.98 + u_selectPulse * 0.30, 0.0, 1.0);
     number diagonal = uv.x + uv.y * 0.46 + u_tilt.x * 0.45 - u_tilt.y * 0.28;
-    number sweepCenter = mod(u_time * u_speed * 0.27 + u_mouseUV.x * 0.22 + 0.30, 1.52) - 0.22;
+    number sweepCenter = mod(u_time * u_speed * 0.27 + u_mouseUV.x * 0.22 + 0.30, 1.96) - 0.25;
     number distanceToBand = abs(diagonal - sweepCenter);
     number band = exp(-distanceToBand * distanceToBand * 180.0);
     number razor = exp(-distanceToBand * distanceToBand * 2400.0);
@@ -24,6 +24,12 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     number cursorGlint = exp(-length((uv - u_mouseUV) * vec2(1.0, 0.72)) * 23.0)
         * u_hoverAmount * 0.22;
     number grain = sin(dot(uv * vec2(560.0, 360.0), vec2(1.17, 2.31)) + u_time * 0.4) * 0.009;
+    number satin = pow(.5+.5*sin(diagonal*11.0-u_time*u_speed*.8),12.0);
+    number luminance = dot(base.rgb,vec3(.2126,.7152,.0722));
+    number relief = smoothstep(.12,.70,luminance);
+    // A permanent diagonal satin reflection survives the travelling glint.
+    number signature=exp(-pow(uv.x+uv.y*.46-.73-u_tilt.x*.07,2.0)*115.0);
+    number side=exp(-pow(uv.x+uv.y*.46-.54-u_tilt.x*.07,2.0)*1200.0);
 
     vec3 silver = vec3(0.72, 0.86, 1.0);
     vec3 warmMetal = vec3(0.88, 0.94, 1.0);
@@ -33,5 +39,8 @@ vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) 
     vec3 rgb = mix(base.rgb, mix(base.rgb, metalTint, 0.42), reflection)
         + metalTint * shine * u_intensity * 0.72 + vec3(0.85,0.95,1.0)*razor*u_intensity*0.42 + base.rgb * grain * u_intensity;
     rgb = mix(rgb, base.rgb * vec3(.86,.96,1.08), min(.22,u_intensity*.18));
+    rgb += metalTint*(satin*.10+razor*relief*.32)*u_intensity;
+    rgb += vec3(.72,.88,1.0)*band*relief*grain*5.0*u_intensity;
+    rgb += vec3(.70,.86,1.0)*(signature*.22+side*.14)*u_intensity;
     return vec4(clamp(rgb, 0.0, 1.0), base.a);
 }

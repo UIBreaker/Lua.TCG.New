@@ -14,12 +14,12 @@ Each of the nine editions now owns its own GLSL shader. Playing cards, SPN, edit
 | --- | --- |
 | Foil | Cool silver material, narrow metallic sweep and white glint |
 | Holographic | Thin-film spectral interference reacting to tilt |
-| Polychrome | Broad moving jewel facets and chromatic seams |
-| Gilded | Warm gold embossed seal with an expanding golden ring |
-| Echo | Two displaced cyan afterimages and an expanding echo wave |
-| Ancient | Carved branching rune awakened by an upward light pulse |
+| Polychrome | Six large prism faces and bright hexagonal seams |
+| Gilded | Warm gold embossed solar seal with twelve rays |
+| Echo | Two displaced cyan/violet afterimages and two side curtains |
+| Ancient | Large green branching rune awakened by an upward light pulse |
 | Void | Purple vortex rim, dark core and local inward distortion |
-| Astral | Twinkling stars and four rotating elliptical orbits |
+| Astral | Five-point constellation, twinkling stars and orbiting comets |
 | Resonant | Two counter-travelling cyan waves connecting three nodes |
 
 `shader_comparison.png` and `edition_effects.gif` demonstrate all nine materials on **identical artwork**, making their visual differences reviewable independently of the nine separate illustrations. The GIF uses 48 GPU-rendered frames at 12 fps. The six new materials no longer borrow the Foil or Holographic shader.
@@ -27,6 +27,12 @@ Each of the nine editions now owns its own GLSL shader. Playing cards, SPN, edit
 The enhanced pass (2026-10-07) is shown in `edition_effects_enhanced.gif`. Idle strength is raised so the edition remains visible without hovering. Bright cores are paired with softer halos: embossed gold double rings, cyan/violet echo trails, waking stone channels, purple plasma filaments, orbiting star heads and white-cored resonance waves. Polychrome uses transmitted jewel tint to retain the artwork's tonal contrast; Holographic's sweep repeats instead of drifting permanently off the card. All effects preserve source transparency and remain beneath the frame and text. Gameplay values are unchanged by this visual pass.
 
 The GPU preview also checks all nine effects through the production reward renderer and verifies partially transparent and empty pixels for every shader.
+
+The material pass (2026-10-18) adds satin relief to Foil, curved thin-film caustics to Holographic, triangular gemstone faces to Polychrome, a bevelled rotating gold glint to Gilded, violet delayed wavefronts to Echo, awakening cracks and rising embers to Ancient, a tilted accretion disc to Void, tapered comet trails to Astral, and pulsing node rings to Resonant. Holographic specks use a shaped highlight rather than illuminating an entire grid cell. Expanding waves and rising embers fade at the ends of their lifetimes.
+
+`edition_gallery.png` and `edition_gallery_idle.png` show the actual nine artworks at 1200×1200 using the production reward renderer and shared card frame. `edition_effects_premium.gif` cycles through idle, hover, selection and scoring at 24 fps. The preview exports 96 `gallery_*.png` frames for this animation in addition to the existing identical-art shader comparison. These are material changes only; no gameplay values or frame styles were changed in this pass.
+
+The latest recognition pass is documented in `identity/README.md`. Its captures and animation are kept under `identity/`, including an identical-art comparison at 96×144 in idle, hover and scoring states. Shapes and motion distinguish the nine editions even before their separate illustrations are considered.
 
 ## Gameplay
 

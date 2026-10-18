@@ -197,7 +197,7 @@ function Test.update(game, callbacks)
         callbacks.openReward("capture")
         gold=game.gold
         assert(#game.persistentDeck==before+2)
-        nextStage("bulk_cards",0.1)
+        nextStage("bulk_cards",0.6)
     elseif stage == "bulk_cards" then
         assert(not callbacks.getRewardAnimation().finished)
         clickButton(callbacks,"cashout_exchange_all")

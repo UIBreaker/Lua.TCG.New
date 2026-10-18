@@ -3,6 +3,8 @@ local L=require("render.lighting")
 local Frame=require("ui.components.card_frame")
 local Entity={}
 local poses=setmetatable({}, {__mode="k"})
+local faces=setmetatable({}, {__mode="k"})
+function Entity.face(card) return faces[card] end
 local Feel=require("config.card_hold_config")
 function Entity.load()
     local ok,shader=pcall(love.graphics.newShader,"shaders/world_entity.glsl")
@@ -60,6 +62,14 @@ function Entity.draw(image,x,y,size,time,attack,hit,recoil,squash,preset,eventSt
         Frame.draw(-iw*fit/2,-ih*fit/2,iw*fit,ih*fit,highlight,nil,card)
     else
         g.draw(image,-iw*fit/2,-ih*fit/2,0,fit,fit)
+    end
+    if card then
+        local face=faces[card] or {};faces[card]=face
+        local w,h=iw*fit,ih*fit
+        face[1],face[2]=g.transformPoint(-w/2,-h/2)
+        face[3],face[4]=g.transformPoint(w/2,-h/2)
+        face[5],face[6]=g.transformPoint(w/2,h/2)
+        face[7],face[8]=g.transformPoint(-w/2,h/2)
     end
     g.pop()
 end

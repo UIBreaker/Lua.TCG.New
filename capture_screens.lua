@@ -61,6 +61,48 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-target-clarity" then
+            local ok,err=xpcall(function() require("tests.target_clarity_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("TARGET CLARITY FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-ability-motion" then
+            local ok,err=xpcall(function() require("tests.ability_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("ABILITY MOTION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-interaction-motion" then
+            local ok,err=xpcall(function() require("tests.interaction_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("INTERACTION MOTION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-scene-motion" then
+            local ok,err=xpcall(function() require("tests.scene_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SCENE MOTION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-outcome-motion" then
+            local ok,err=xpcall(function() require("tests.outcome_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("OUTCOME MOTION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-enemy-motion" then
+            local ok,err=xpcall(function() require("tests.enemy_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("ENEMY MOTION FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--test-card-drag" then
             local ok,err=xpcall(function() require("tests.card_drag_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("CARD DRAG FAIL: "..tostring(err));love.event.quit(1) end
@@ -333,6 +375,11 @@ function Capture.update(gameRef, callbacks)
         if value == "--test-hand-chest-motion" then
             local ok,err=xpcall(function() require("tests.hand_chest_motion_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("HAND/CHEST MOTION FAILED: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value == "--test-combat-motion" then
+            local ok,err=xpcall(function() require("tests.combat_motion_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("COMBAT MOTION FAILED: "..tostring(err));love.event.quit(1) end
             return
         end
     end

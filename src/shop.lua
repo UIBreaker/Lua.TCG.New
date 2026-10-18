@@ -15,7 +15,7 @@ Shop.MARKETS = {
     small = {name="SHOP NHỎ", note="Quầy tổng hợp · SPN, trang bị, quân bài, đặc quyền, rương và tiêu hao", color={.35,.82,.78,1}},
     consumable = {name="SHOP TIÊU HAO", note="Thẻ lẻ từ mọi rương tiêu hao · Giá cao hơn giá rương 20%, làm tròn lên", color={.74,.48,.94,1}},
     equipment = {name="SHOP TRANG BỊ", note="4 nguyên liệu cơ bản + 4 trang bị lớn · Mua để cất vào balo", color={.95,.73,.35,1}},
-    spn = {name="SHOP SPN", note="Chỉ bán SPN · Ngẫu nhiên đủ 8 bậc từ Thường đến Độc Nhất", color={.53,.75,.98,1}},
+    spn = {name="SHOP SPN", note="Chỉ bán SPN · Ngẫu nhiên đủ 10 bậc từ Thường đến Tối Thượng", color={.53,.75,.98,1}},
     medicine = {name="SHOP THUỐC", note="Hồi phục, giáp, tốc đánh và 8 thuốc chiến thuật · Hai ngăn thuốc", color={.38,.88,.57,1}},
     cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
     large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
@@ -156,12 +156,14 @@ Shop.ADVANCED_HAND_CHEST = {packType="hand_styles_advanced",name="RƯƠNG THẾ 
 Shop.PACK_CATALOG[#Shop.PACK_CATALOG+1]=Shop.ADVANCED_HAND_CHEST
 
 Shop.SPN_RARITY_WEIGHTS = {
-    common = 0.614, uncommon = 0.20, rare = 0.10, epic = 0.05,
+    common = 0.6134, uncommon = 0.20, rare = 0.10, epic = 0.05,
     legendary = 0.02, mythic = 0.01, transcendent = 0.005, unique = 0.001,
+    eternal = 0.0005, supreme = 0.0001,
 }
 Shop.SPN_RARITY_PRICE_MULTIPLIERS = {
     common = 1, uncommon = 1.5, rare = 2, epic = 3,
     legendary = 5, mythic = 8, transcendent = 12, unique = 18,
+    eternal = 27, supreme = 40,
 }
 
 -- Canonical pack reward catalogs. Both the shop and the collection read these
@@ -998,6 +1000,11 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
     local pack = shop.currentPackOpening.pack
     local card = shop.currentPackOpening.cards and shop.currentPackOpening.cards[chosenIndex]
     if not card then return false end
+    local function received(fallback)
+        if pack.rewardPack then
+            require("src.reward_audio").play("collect",card,shop.rewardAudioPitch or 1)
+        else Sound.play(fallback or "shop_buy") end
+    end
 
     local function getTargetCard()
         if gameState.selectedIndices and #gameState.selectedIndices > 0 and gameState.hand and gameState.hand[gameState.selectedIndices[1]] then
@@ -1015,35 +1022,35 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
     local Enchantments=require("src.spn_enchantments")
     if Enchantments.get(card.id) then
         local ok,message,pending=Enchantments.apply(gameState,card,targetDeity)
-        if ok then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        if ok then shop.currentPackOpening=nil;received() end
         return ok,message,pending
     end
     local Spectral=require("src.spectral")
     if Spectral.get(card.id) then
         local ok,message,pending=Spectral.apply(gameState,card,targetDeity)
-        if ok then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        if ok then shop.currentPackOpening=nil;received() end
         return ok,message,pending
     end
     local expandedResult, expandedMessage = require("src.chest_expansion").apply(gameState, card, getTargetCard())
     if expandedResult ~= nil then
-        if expandedResult then shop.currentPackOpening=nil;Sound.play("shop_buy") end
+        if expandedResult then shop.currentPackOpening=nil;received() end
         return expandedResult, expandedMessage
     end
 
     if pack.packType == "buffoon" then
         Loadout.storeDeity(gameState, card)
-        Sound.play("shop_buy")
+        received()
         shop.currentPackOpening = nil
         return true, "Đã chiêu mộ: " .. card.name .. "!"
 
     elseif pack.packType == "standard" then
         Deck.addCardToDeck(gameState, card)
-        Sound.play("shop_buy")
+        received()
         shop.currentPackOpening = nil
         return true, "Đã thêm lá " .. card.rankName .. card.suitSymbol .. " vào bộ bài!"
 
     elseif pack.packType == "arcana" then
-        Sound.play("shop_buy")
+        received()
         shop.currentPackOpening = nil
         return true, "open_socketing", card
 
@@ -1057,7 +1064,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
             return false, "Không tìm thấy lá bài để đóng dấu!"
         end
         if not Deck.applySeal(gameState,targetCard,card.sealType or card.id,card.bloodPower) then return false,"Con dấu không hợp lệ." end
-        Sound.play("shop_buy")
+        received()
         shop.currentPackOpening = nil
         return true, "Đã đóng ấn [" .. (card.sealName or card.subtitle or card.name) .. "] lên lá " .. (targetCard.rankName or "") .. (targetCard.suitSymbol or "") .. "!"
 
@@ -1071,14 +1078,14 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
             for _, ht in pairs(Poker.HAND_TYPES) do table.insert(allHands, ht) end
             local h = allHands[Rng.random(#allHands)]
             gameState.handLevels[h.id] = (gameState.handLevels[h.id] or 1) + 3*Blood.powerOf(card)
-            Sound.play("round_win")
+            received("round_win")
             shop.currentPackOpening = nil
             return true, "Siêu Tân Tinh: Nâng cấp " .. h.vnName .. " lên +3 Cấp (Cấp " .. gameState.handLevels[h.id] .. ")!"
         elseif card.handId == "all" or card.id == "planet_black_hole" or card.id == "black_hole" then
             for _, ht in pairs(Poker.HAND_TYPES) do
                 gameState.handLevels[ht.id] = (gameState.handLevels[ht.id] or 1) + 2*Blood.powerOf(card)
             end
-            Sound.play("xmult_boom")
+            received("xmult_boom")
             shop.currentPackOpening = nil
             return true, "Hố Đen: Nâng cấp TẤT CẢ các thế bài Poker lên +2 Cấp độ!"
         elseif card.handId then
@@ -1086,7 +1093,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
             local hType = nil
             for _, ht in pairs(Poker.HAND_TYPES) do if ht.id == card.handId then hType = ht break end end
             local vName = hType and hType.vnName or card.name
-            Sound.play("round_win")
+            received("round_win")
             shop.currentPackOpening = nil
             return true, "Đã nâng cấp thế bài " .. vName .. " lên Cấp " .. gameState.handLevels[card.handId] .. "!"
         end
@@ -1099,13 +1106,13 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
         if gameState.unlockedHands[handId] then
             gameState.handLevels[handId] = (gameState.handLevels[handId] or 1) + Blood.powerOf(card)
             shop.currentPackOpening = nil
-            Sound.play("round_win")
+            received("round_win")
             return true, "Thế đánh " .. (card.handName or card.name) .. " tăng lên Cấp " .. gameState.handLevels[handId] .. "!"
         end
         gameState.unlockedHands[handId] = true
         gameState.handLevels[handId] = math.max(1, gameState.handLevels[handId] or 1)
         shop.currentPackOpening = nil
-        Sound.play("shop_buy")
+        received()
         return true, "Đã mở khóa thế đánh: " .. (card.handName or card.name) .. "!"
 
     elseif pack.packType == "edition" then
@@ -1122,7 +1129,7 @@ function Shop.choosePackCard(shop, chosenIndex, gameState, targetDeity)
             end
         end
         shop.currentPackOpening = nil
-        Sound.play("round_win")
+        received("round_win")
         return true, targetCard.rankName .. (targetCard.suitSymbol or "") .. " nhận " .. card.name .. "!"
     end
 
@@ -1154,7 +1161,8 @@ function Shop.keepPackCard(shop, chosenIndex, gameState)
     require("src.spn_enchantments").migrateItem(storedCard)
 
     Loadout.storeConsumable(gameState,storedCard)
-    Sound.play("shop_buy")
+    if pack.rewardPack then require("src.reward_audio").play("collect",card,shop.rewardAudioPitch or 1)
+    else Sound.play("shop_buy") end
     shop.currentPackOpening = nil
     return true, "Đã cất [" .. (storedCard.name or "Thẻ Phép") .. "] vào balo!"
 end

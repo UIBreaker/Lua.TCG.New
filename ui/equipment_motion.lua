@@ -1,11 +1,13 @@
 local M={}
 local Style=require("ui.backpack_style")
+local Motion=require("src.motion")
 local function clamp(t) return math.max(0,math.min(1,t)) end
-local function ease(t) t=clamp(t);return t*t*(3-2*t) end
 function M.position(a,t)
  local from,to=a.kind=="unequip" and a.rect or a.source,a.kind=="unequip" and a.source or a.rect
- local p=ease(t);local fx,fy=from.x+from.w/2,from.y+from.h/2;local tx,ty=to.x+to.w/2,to.y+to.h/2
- return fx+(tx-fx)*p,fy+(ty-fy)*p-math.sin(p*math.pi)*(a.kind=="unequip" and 92 or 58),p
+ t=clamp(t)
+ local p=Motion.settle(t,1);local fx,fy=from.x+from.w/2,from.y+from.h/2;local tx,ty=to.x+to.w/2,to.y+to.h/2
+ if a.reducedMotion then return tx,ty,t end
+ return fx+(tx-fx)*p,fy+(ty-fy)*p-math.sin(t*math.pi)^2*(a.kind=="unequip" and 72 or 44),p
 end
 local function ring(g,x,y,r,color,alpha,rotation,broken)
  g.setColor(color[1],color[2],color[3],alpha);g.setLineWidth(1.5)
@@ -21,6 +23,13 @@ function M.draw(UI,a)
  local alpha=t<1 and 1 or math.max(0,1-contact/.28)
  local cx,cy=a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2
  g.push("all")
+ if a.reducedMotion then
+  if a.hit then
+   local ix,iy=remove and a.source.x+a.source.w/2 or cx,remove and a.source.y+a.source.h/2 or cy
+   ring(g,ix,iy,22,c,Motion.impact(contact,.36)*.4,0,remove)
+  end
+  g.pop();return
+ end
  -- The attachment locks inward; removal opens four halves before releasing the relic.
  if a.age<travel then
   local strength=remove and (1-t) or (.3+.7*p)
@@ -35,13 +44,13 @@ function M.draw(UI,a)
  g.setBlendMode("add")
  if t<1 then
   local lastX,lastY=x,y
-  for i=1,15 do
+  for i=1,10 do
    local q=math.max(0,t-i*.021);local px,py=M.position(a,q)
    g.setColor(c[1],c[2],c[3],alpha*.44*(1-i/16));g.setLineWidth(5*(1-i/17));g.line(lastX,lastY,px,py);lastX,lastY=px,py
    if i%3==0 then g.circle("fill",px,py,1.8) end
   end
-  for i=1,8 do
-   local angle=a.age*(remove and -9 or 9)+i*math.pi/4;local radius=18+6*math.sin(i+a.age*7)
+  for i=1,4 do
+   local angle=a.age*(remove and -6 or 6)+i*math.pi/2;local radius=16+4*math.sin(i+a.age*7)
    g.setColor(c[1],c[2],c[3],.6*alpha);g.circle("fill",x+math.cos(angle)*radius,y+math.sin(angle)*radius*.65,i%2+1)
   end
   for side=-1,1,2 do
@@ -57,12 +66,12 @@ function M.draw(UI,a)
  for i=1,4 do g.setColor(c[1],c[2],c[3],alpha*.035*(5-i));g.circle("fill",x,y,22+i*7) end
  g.setBlendMode("alpha")
  local image=UI.getEquipmentImage(a.sourceItem.id)
- g.push();g.translate(x,y);g.rotate(math.sin(p*math.pi)*(remove and -.3 or .12));g.scale(1+.2*math.sin(p*math.pi)-.25*p)
+ g.push();g.translate(x,y);g.rotate(math.sin(t*math.pi)*(remove and -.16 or .08));g.scale(1+.08*math.sin(t*math.pi)-.25*p)
  g.setColor(1,1,1,alpha)
  if image then UI.CardFrame.image(image,-28,-42,56,84);UI.drawCardBorder(-28,-42,56,84,{c[1],c[2],c[3],alpha},alpha,a.sourceItem) end
  g.pop()
  if a.hit then
-  local fade=math.max(0,1-contact/.72);local ix,iy=remove and a.source.x+a.source.w/2 or cx,remove and a.source.y+a.source.h/2 or cy
+  local fade=Motion.impact(contact,.42);local ix,iy=remove and a.source.x+a.source.w/2 or cx,remove and a.source.y+a.source.h/2 or cy
   ring(g,ix,iy,24+contact*(remove and 64 or -15),c,fade,a.age*2,remove)
   if not remove then
    g.setColor(c[1],c[2],c[3],fade*.8);g.setLineWidth(2)
@@ -71,7 +80,7 @@ function M.draw(UI,a)
     local px,py,sx,sy=unpack(corner);g.line(px,py+sy*16,px,py,px+sx*16,py)
    end
    for i=1,12 do local angle=i*math.pi/6;local radius=20+contact*65;g.setColor(c[1],c[2],c[3],fade*.7);g.circle("fill",cx+math.cos(angle)*radius,cy+math.sin(angle)*radius,1.5) end
-   g.setBlendMode("add");g.setColor(c[1],c[2],c[3],math.exp(-contact*18)*.22)
+   g.setBlendMode("add");g.setColor(c[1],c[2],c[3],fade*.16)
    g.ellipse("fill",cx,cy,a.rect.w*.75,7);g.ellipse("fill",cx,cy,5,a.rect.h*.38)
   else
    for i=1,4 do
@@ -85,7 +94,7 @@ end
 function M.confirmation(UI,a,alpha)
  local bag=UI.Backpack
  if not a.sourceItem or not a.fixedRect or not bag or not bag.open or bag.tab~="cards" or bag.pending then return false end
- local g=love.graphics;local c=a.color;local y=641+(1-alpha)*7
+ local g=love.graphics;local c=a.color;local y=641+(a.reducedMotion and 0 or (1-alpha)*7)
  Style.panel(243,y,681,38,c,true,alpha)
  local image=UI.getEquipmentImage(a.sourceItem.id)
  g.push("all");g.setColor(1,1,1,alpha)

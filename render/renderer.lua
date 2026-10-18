@@ -5,6 +5,7 @@ local Camera = require("render.camera")
 local Lighting = require("render.lighting")
 local Post = require("render.postprocess")
 local Entity = require("render.entity")
+local Transition = require("src.scene_transition")
 local R = { config=C, scene=Scene, camera=Camera, lighting=Lighting, post=Post,
     entity=Entity, eventStrength=0, dim=0, stats={frames=0, total=0, peak=0}, diagnostics={} }
 function R.setQuality(name)
@@ -32,10 +33,8 @@ function R.load(art, quality)
     R.transitionCanvas=ok and canvas or nil; R.transitionAge=C.transition.duration
 end
 function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,death)
-    local key=(state=="playing" or state=="scoring") and "battle" or state
-    if state=="shop" then key="shop:"..tostring(monster and monster.shopMode or "normal") end
-    if R.stateKey and R.stateKey~=key then R.transitionPending=C.enabled end
-    R.stateKey=key; R.transitionAge=math.min(C.transition.duration,(R.transitionAge or 0)+dt)
+    Transition.update(R,dt,R.fastMotion)
+    R.death=death
     Scene.update(dt,state,monster)
     local event=state=="scoring" and sequence and sequence.events[sequence.index]
     local kind=event and event.kind
@@ -44,7 +43,7 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
     local intensity=sequence and sequence.intensity or 0.3
     local handAttack=event and sequence.attack
     local nen=handAttack and handAttack.nen
-    local reduced=nen and nen.reducedMotion
+    local reduced=R.reducedMotion or nen and nen.reducedMotion
     R.attackSequence=handAttack and sequence or nil
     if handAttack then handAttack.quality=string.lower(R.quality) end
     
@@ -57,7 +56,7 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
     if nen then dimTarget=not reduced and nen.tier==3 and (handAttack.profile.id=="eclipse_duality" and .10 or .045) or 0 end
     if kind=="SETTLE" then dimTarget=0 end
     R.dim=R.dim+(dimTarget-R.dim)*response
-    if kind~=R.lastEvent and kind=="ENEMY_IMPACT" then
+    if kind~=R.lastEvent and kind=="ENEMY_IMPACT" and not (sequence and sequence.missed) then
         Lighting.flash(handAttack and handAttack.cx or 630,270,handAttack and handAttack.color or C.palette.magic,reduced and .09 or .22+intensity*0.25,0.24)
     end
     if (attack or 0)>0.8 and (R.lastAttack or 0)<=0.8 then
@@ -80,22 +79,43 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
     if collapse>0 and C.enabled and not death.reducedMotion then Camera.focus(0,death.config.player.drift*collapse,1+death.config.player.zoom*collapse) end
     Camera.update(dt,C.enabled and not reduced and Scene.preset.cameraIdle or 0,C.enabled and not reduced and impulseX or 0,C.enabled and not reduced and impulseY or 0)
 end
-function R.beginFrame(previousFrame)
-    if not R.transitionPending then return end
-    R.transitionPending=false
-    if not R.transitionCanvas or not previousFrame then return end
+function R.sceneContext(state,game)
+    if not game then return nil end
+    if state=="BLIND_SELECT" or state=="map" or state=="shop" or state=="victory" or state=="travel" or state=="barter" then
+        local run=game.run or {}
+        return {stage=run.ante or 1,regionId=run.regionId,areaStage=run.areaStage,shopMode=game.shopMode}
+    end
+    return game.monster
+end
+function R.transitionBusy(state,game)
+    return Transition.busy(R,state,game,C.enabled and R.transitionCanvas~=nil)
+end
+function R.mapOffset()
+    if not C.enabled or not R.transitionCanvas or R.transitionKind~="map" then return 0 end
+    return Transition.pose(R).mapY
+end
+function R.beginFrame(previousFrame,state,game)
+    local previous=R.displayedScene
+    local changed=Transition.observe(R,state,game,C.enabled and R.transitionCanvas~=nil and previousFrame~=nil,R.reducedMotion)
+    -- State can change late in love.update or between two frames of input.
+    local renderState=(state=="defeating" or state=="gameover" and R.death and R.death.kind=="player") and "playing" or state
+    if changed or previous~=state then Scene.update(0,renderState,R.sceneContext(state,game)) end
+    if not changed then return false end
     local g=love.graphics
     g.push("all");g.origin();g.setScissor();g.setCanvas(R.transitionCanvas);g.setShader()
-    g.setBlendMode("replace");g.setColor(1,1,1,1);g.draw(previousFrame);g.pop()
-    R.transitionAge=0
+    local w,h=R.transitionCanvas:getDimensions();local pw,ph=previousFrame:getDimensions()
+    g.setBlendMode("replace");g.setColor(1,1,1,1);g.draw(previousFrame,0,0,0,w/pw,h/ph);g.pop()
+    return true
 end
 function R.drawTransition()
-    if not C.enabled or not R.transitionCanvas or R.transitionAge>=C.transition.duration then return end
-    local p=math.max(0,math.min(1,R.transitionAge/C.transition.duration)); local smooth=1-(1-p)^3
+    if not C.enabled or not R.transitionCanvas then return end
+    local pose=Transition.pose(R)
+    if pose.opacity<=0 then return end
     local g=love.graphics;g.push("all");g.setShader();g.setBlendMode("alpha","premultiplied")
-    local opacity=1-smooth
+    local opacity=pose.opacity
     g.setColor(opacity,opacity,opacity,opacity)
-    g.draw(R.transitionCanvas,0,R.reducedMotion and 0 or -14*smooth,0,1280/1920,720/1080);g.pop()
+    local w,h=R.transitionCanvas:getDimensions()
+    g.draw(R.transitionCanvas,0,pose.outY,0,1280/w,720/h);g.pop()
 end
 function R.veil(alpha,color)
     local g=love.graphics;local c=color or {0.009,0.017,0.030}
@@ -103,6 +123,10 @@ function R.veil(alpha,color)
 end
 function R.drawWorld(drawEntities,drawVfx)
     local g=love.graphics; local start=love.timer.getTime()
+    R.worldRoot=R.worldRoot or love.math.newTransform()
+    local ox,oy=g.transformPoint(0,0)
+    local ax,ay=g.transformPoint(1,0);local bx,by=g.transformPoint(0,1)
+    R.worldRoot:setMatrix("row",ax-ox,bx-ox,0,ox,ay-oy,by-oy,0,oy,0,0,1,0,0,0,0,1)
     if R.world then
         g.push("all"); g.setCanvas({R.world,stencil=true}); g.origin(); g.scale(R.worldScale)
         g.setShader(); g.setScissor(); g.setBlendMode("alpha"); g.clear(0,0,0,1)

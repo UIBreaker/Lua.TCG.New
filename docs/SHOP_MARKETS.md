@@ -15,12 +15,14 @@ Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho ba
 | Shop nhỏ | Tối đa 8 món: SPN, trang bị, quân bài, mở rộng tay, thuốc/tiêu hủy, đặc quyền, một rương ngẫu nhiên và một thẻ tiêu hao lẻ. Hết đặc quyền chưa sở hữu thì còn 7 món. |
 | Shop tiêu hao | 8 thẻ lẻ, không trùng: Phép SPN, Ấn Chiến, Phổ, Hành Tinh, Ấn Bản. Toàn bộ thẻ trong các rương này đều có thể xuất hiện. Giá gốc thông thường bằng giá rương × 1,2, làm tròn lên; một số phép có giá gốc riêng. Giá bán bằng giá gốc của thẻ × 3. Mua vào kho balo, giữ nguyên khả năng của thẻ trong rương. |
 | Shop trang bị | 4 nguyên liệu cơ bản, mỗi nhóm HP/giáp/tốc/vàng một món; 4 trang bị lớn ngẫu nhiên, không trùng. Kho gồm toàn bộ trang bị thường, kể cả đồ ghép; di vật chỉ đổi bằng linh hồn vẫn ở chợ linh hồn. Mua vào balo. |
-| Shop SPN | Tối đa 6 SPN chưa sở hữu, không trùng. Mỗi lá chọn bậc theo tỷ lệ: Thường 61,4%, Không Thường 20%, Hiếm 10%, Sử Thi 5%, Huyền Thoại 2%, Thần Thoại 1%, Siêu Việt 0,5%, Độc Nhất 0,1%; giá theo hệ số bậc hiện có. |
+| Shop SPN | Tối đa 6 SPN chưa sở hữu, không trùng. Mỗi lá chọn bậc theo tỷ lệ: Thường 61,34%, Không Thường 20%, Hiếm 10%, Sử Thi 5%, Huyền Thoại 2%, Thần Thoại 1%, Siêu Việt 0,5%, Độc Nhất 0,1%, Vĩnh Hằng 0,05%, Tối Thượng 0,01%; giá theo hệ số bậc hiện có. |
 | Shop thuốc | Đủ 15 món trong hai ngăn: 7 đồ hồi phục/giáp/tốc/giường và 8 thuốc chiến thuật. Chỉ còn bình hồi 25 và 60 HP; bình nhỏ không còn xuất hiện trong shop hoặc thưởng tiếp tế. Mua vào kho balo. |
 | Shop quân bài | 8 lá không trùng bậc/chất trên cùng kệ, lấy đều từ đủ 52 lá (2–A của Cơ/Rô/Chuồn/Bích). Có thể là bản thường hoặc kèm tiến hóa cấp 1–2, một trang bị **cơ bản** đã gắn, một trong 9 ấn bản. Các nâng cấp có thể đi cùng nhau; không có đồ lớn, đồ ghép hay di vật linh hồn. Mua thẳng vào bộ bài, giữ nguyên thuộc tính. |
 | Shop lớn | Giữ các quầy cũ: hàng tuyển chọn, nguyên liệu cơ bản, đặc quyền, rương, giảm giá. Chỉ mở sau chợ linh hồn trong luồng chơi. |
 
 Đổi hàng giữ nguyên loại cửa hàng, dùng chi phí/voucher hiện có. Lưu game giữ loại shop đang mở; save cũ có shop `normal` được tiếp tục ở shop nhỏ. Nút thoát chợ linh hồn ghi rõ **SHOP LỚN →**.
+
+SPN có mười bậc: **C → UC → R → E → L → M → T → UQ → VH → TT**. Hai bậc mới là **Vĩnh Hằng (VH)** và **Tối Thượng (TT)**; hệ số giá gốc lần lượt ×27 và ×40, trước hệ số giá chung của shop. Tiến hóa tiếp sau TT hiển thị TT+1, TT+2… Save cũ giữ nguyên cấp và sức mạnh: UQ+1 đổi nhãn thành VH, UQ+2 thành TT, UQ+3 thành TT+1. Huyết Khế Đổi Vận vẫn chỉ nâng SPN dưới UQ lên đúng UQ.
 
 Shop quân bài: mỗi lá có 50% không tiến hóa, 35% cấp 1, 15% cấp 2. Trang bị cơ bản có xác suất 35%, chọn đều giữa 12 nguyên liệu; ấn bản có xác suất 30%, chọn đều giữa 9 loại. Ba lần chọn độc lập. Giá gốc = 4 vàng + 6 mỗi cấp tiến hóa + giá trang bị cơ bản + 8 nếu có ấn bản; giá bán bằng giá gốc × 3. Nhãn quầy ghi loại nâng cấp, rê chuột xem khả năng và trang bị thực tế. Lá bài mua được giữ tiến hóa, trang bị, ấn bản khi nhân bản bộ bài và lưu/khôi phục game.
 

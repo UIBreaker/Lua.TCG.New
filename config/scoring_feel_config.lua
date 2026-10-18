@@ -3,9 +3,9 @@ return {
     maxFrameDt = 0.05, -- Keep short beats visible after a stalled render/asset frame.
     speed = { normal = 1, fast = 2, forward = 3 },
     timing = {
-        button = 0.10, lift = 0.07, travel = 0.24, stagger = 0.055,
+        button = 0.10, lift = 0.06, travel = 0.36, stagger = 0.045, cardPulse = 0.30,
         hand = 0.18, base = 0.14, card = 0.21, modifier = 0.16,
-        spn = 0.23, multiplyAnticipation = 0.06, gap = 0.025,
+        spn = 0.23, multiplyAnticipation = 0.06, countDelay = 0.035, gap = 0.025,
         formula = 0.16, countMin = 0.25, countMax = 0.65,
         peak = 0.10, conversion = 0.25, convergence = 0.18,
         releaseMin = 0.03, releaseMax = 0.08, beam = 0.18,

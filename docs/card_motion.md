@@ -14,24 +14,34 @@ Tinh chỉnh tay bài theo nhịp tương tác của FFF4.mp4 (2026-10-11):
 - Bài nhân vật trong trận có cùng thông số nghiêng/hover trong `render/entity.lua`, kết hợp chuyển động tấn công và recoil. Viền nằm cùng transform với tranh.
 - `UI.drawCardBorder` dùng ma trận cuối của mặt bài cho viền chọn/tiến hóa vẽ sau. Vùng chọn bài trên tay vẫn neo vào ô để không mất hover ở mép dưới.
 - Rương giữ quyền điều khiển lá trong lúc materialize; khi lá sẵn sàng thì chuyển sang hover chung.
-- `ui/components/card_frame.lua` giải bậc theo cùng quy tắc của huy hiệu SPN: bậc gốc + tiến hóa, chặn ở UQ và có dấu khắc vượt bậc.
+- `ui/components/card_frame.lua` giải bậc theo cùng quy tắc của huy hiệu SPN: bậc gốc + tiến hóa, chặn ở TT và có dấu khắc vượt bậc. Save cũ UQ+1/UQ+2 hiển thị thành VH/TT mà không đổi sức mạnh.
 
 | Bậc | Viền |
 | --- | --- |
 | C | Đồng cơ bản, nét mảnh |
-| UC | Kim loại xanh cổ, khắc góc |
-| R | Bạc xanh, nẹp góc và sapphire |
-| E | Kim loại tím, góc kép và amethyst |
-| L | Vàng cổ, huy hiệu hai đầu và ánh viền nhẹ |
-| M | Đồng hồng, góc tỏa nhánh và ruby hai bên |
-| T | Bạc lam, điểm sáng và đường khắc bên |
-| UQ | Bạch kim tím, vương miện và chòm sao |
+| UC | Kim loại xanh cổ, khắc góc và một ánh quét chậm |
+| R | Bạc vát cạnh, nẹp góc, sapphire và dòng sáng xanh chạy viền |
+| E | Men amethyst, viền khắc kép và đường năng lượng thở nhẹ |
+| L | Vàng cổ nổi khối, bệ đá quý hai đầu và hai luồng ánh kim |
+| M | Đồng hồng, ruby hai bên và tinh thạch phát sáng theo nhịp |
+| T | Bạc lam, hai quỹ đạo ngược chiều và sóng năng lượng vào mép tranh |
+| UQ | Bạch kim tím, ba đuôi sao, tinh tú ở góc và bùng sáng bảo thạch |
+| VH | Bạc xanh ngọc, nút thắt vĩnh hằng, hai đường dẫn và luồng sáng đan ngược chiều |
+| TT | Vàng trắng, bốn luồng sao, hai lớp sóng sáng và vầng mặt trời ở bốn góc |
 
 Họa tiết ôm vào tranh, cờ đuôi én ở góc trên phải; thu nhỏ vẫn giữ rõ hình chính. Hover làm sáng kim loại nhưng giữ màu bậc.
 
+Huy hiệu SPN dùng `Frame.drawRarityPennant` trong cùng khung cơ bản. Bậc càng cao, phù hiệu càng lớn: C/UC là kim loại khắc trên men tối; R/E thêm bảo thạch và viền kép; L/M có vương miện và cánh kim loại; T/UQ thêm quỹ đạo, tinh tú và ánh kim; VH có nút thắt vĩnh hằng màu ngọc; TT có vương miện vàng trắng, tinh thạch và vầng mặt trời bùng sáng. Chữ nổi có bóng, luôn nằm trong bảng men tối để đọc trên cả tranh sáng lẫn tối.
+
+Ánh quét, quỹ đạo và đợt bùng sáng tính theo đồng hồ trình diễn, không dùng RNG gameplay. LOW bỏ các đốm sáng bay; Reduced Motion giữ phù hiệu tĩnh. Mọi chi tiết nằm trong giới hạn lá, theo transform và alpha của lá. Ảnh tổng hợp: `docs/spn_rarity_badges.png`; bản chuyển động: `docs/spn_rarity_badges.mp4`.
+
+Viền động SPN dùng `Frame.drawEnergy` ngay trong khung chung, nhận cùng đồng hồ và Reduced Motion với huy hiệu. Đường dẫn mép được dùng lại; sóng đang lan không được ghi vào cache. Kim loại có cạnh sáng/tối, mặt men và bệ bảo thạch; ánh chạy và tia sáng nằm trong vùng mép để không che chủ thể. LOW giảm số luồng/đoạn và bỏ sóng phụ nhưng vẫn giữ chuyển động của bậc cao; Reduced Motion hoặc tắt hiệu ứng sẽ giữ viền tĩnh. Không áp chuyển động SPN cho quái, trang bị hay mặt sau lá bài. Ảnh tổng hợp: `docs/spn_rarity_frames.png`; bản chuyển động: `docs/spn_rarity_frames.mp4`.
+
 Kiểm tra đã qua:
 
-- `lovec.exe . --test-card-motion`: 8 bậc ở hai kích thước, hover trên 6 loại bài bằng renderer thật, 30/60/120/144 FPS, rời hover, vùng bấm và viền vẽ sau bám mặt bài; kiểm tra viền tấn công/recoil và không còn viền enemy đã chết.
+- `lovec.exe . --test-card-motion`: 10 bậc ở hai kích thước và 11 mức tiến hóa gồm TT+1, hover trên 6 loại bài bằng renderer thật, 30/60/120/144 FPS, rời hover, vùng bấm và viền vẽ sau bám mặt bài; kiểm tra viền tấn công/recoil và không còn viền enemy đã chết.
+- Kiểm tra huy hiệu trong cùng lệnh: đủ 10 bậc ở 46/82/200 px, tương phản kim loại/men, không tràn ra khỏi lá, Reduced Motion, phục hồi trạng thái graphics, tan biến theo alpha, bám lá khi chuyển động và không thay đổi RNG.
+- Kiểm tra viền động trong cùng lệnh: đủ 10 bậc ở 46/82/200 px, chuyển động từ UC đến TT, giữ thoáng chủ thể, giới hạn ánh sáng, LOW/Reduced Motion/tắt hiệu ứng, alpha/mặt úp, phục hồi graphics, bám transform và không tạo Image/Canvas theo frame. Có phép đo riêng 15 lá TT, không coi đó là cam kết FPS trên thiết bị khác.
 - `lua tests/card_physics_smoke.lua`: spring, phép đổi tọa độ và giữ quán tính.
 - `lovec.exe . --test-hand-drag-select`: 12 chu kỳ kéo chọn ở ba độ rộng cửa sổ; mép lá, cảm ứng, Shift reorder và mất focus.
 - `lovec.exe . --test-chest-vfx`: chọn/dùng/giữ bài và trang bị, hủy thao tác, túi đầy, quyền tương tác sau materialize.

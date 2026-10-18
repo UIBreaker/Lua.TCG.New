@@ -2,6 +2,8 @@
 
 Tiếp nối nghiên cứu `FFFF7.mp4` và animation shop ngày 17/10/2026. Dùng lại tranh, mặt sau, khung bài chung, nội thất và hiệu ứng tro Continental; không nhập tài nguyên từ game tham khảo.
 
+Phần [đánh bài, tính điểm và sát thương](COMBAT_MOTION.md) tiếp tục dùng cùng nhịp chuyển động.
+
 ## Nhịp chuyển động
 
 - **Chia bài:** áp dụng cả đầu trận lẫn rút bổ sung. Lá đi từ chồng bài bên phải lên tay theo đường cong, nghiêng nhẹ rồi hạ xuống. Mỗi lá đi trong 0,46 giây, lệch 0,045 giây; giới hạn phần trễ ở 8 lá. Spring và đuôi hạ cánh dùng chung với shop qua `Motion.settle`.

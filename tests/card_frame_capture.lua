@@ -40,20 +40,14 @@ function T.verify()
         local w,h = size[1],size[2]
         local x,y,fw,fh = frame.pennantRect(w,h)
         assert(x>w/2 and x+fw<w and y>0 and y+fh<h/3, "pennant stays in top-right corner")
-        local canvas = g.newCanvas(w,h)
-        g.push("all"); g.setCanvas(canvas); g.origin(); g.clear(0,0,0,0)
-        UI.drawPatronCard(patron,0,0,w,h); g.pop()
-        local pixels = canvas:newImageData()
-        local r,b,c,a = pixels:getPixel(math.floor(x+3),math.floor(y+3))
-        assert(a>.99 and math.abs(r-.78)<.02 and math.abs(b-.82)<.02 and math.abs(c-.88)<.02,
-            "rarity flag must render at the top-right anchor")
-        pixels:release(); canvas:release()
     end
     UI.CardPhysics.resume()
     local file = assert(io.open("docs/card_frame_comparison.png","wb"))
     file:write(sheet:newImageData():encode("png"):getString()); file:close(); sheet:release()
     print("Card frame PASS: six card families share one rim; top-right pennant at three sizes")
     require("tests.card_frame_motion").verify()
+    require("tests.spn_rarity_badges_capture").verify()
+    require("tests.spn_rarity_frames_capture").verify()
 end
 
 return T

@@ -2,6 +2,7 @@ local A=require("src.card_abilities")
 local Deities=require("src.deities")
 local Core=require("ui.components.core")
 local Picker={}
+local Motion=require("ui.evolution_motion")
 local ink={0.90,0.92,0.97,1}
 local muted={0.53,0.58,0.69,1}
 local violet={0.66,0.48,0.97,1}
@@ -29,9 +30,10 @@ function Picker.draw(UI,m,mx,my)
     text(UI,"NÂNG CẤP VĨNH VIỄN",84,55,700,"tiny",violet)
     text(UI,title,84,80,700,"large")
     text(UI,upgrade and "Chọn quân bài, xem thay đổi rồi xác nhận. Hiệu ứng giữ suốt run." or "Nâng khả năng của một lá. Giữ nguyên bậc và chất.",84,120,1050,"small",muted)
-    m.buttons={}
+    if m.ritual then mx,my=-1000,-1000 end
+    m.buttons={};m.cardRects={}
     local function button(id,label,x,y,w,h,index,disabled,active)
-        local b={id=id,text=label,x=x,y=y,w=w,h=h,index=index,disabled=disabled,
+        local b={id=id,text=label,x=x,y=y,w=w,h=h,index=index,disabled=disabled or m.ritual~=nil,
             font=UI.fonts.small,color=active and {0.35,0.24,0.55,1} or UI.COLORS.btnNormal}
         m.buttons[#m.buttons+1]=b;UI.drawButton(b,not disabled and mx>=x and mx<=x+w and my>=y and my<=y+h)
     end
@@ -52,8 +54,11 @@ function Picker.draw(UI,m,mx,my)
             if selected or hovered then
                 g.setColor(selected and violet or {0.34,0.38,0.49,1});g.setLineWidth(selected and 2 or 1);g.rectangle("line",x,y,166,190,10,10)
             end
-            if A.definition(c) then UI.drawCard(c,x+31,y+9,104,150)
-            else UI.drawPatronCard(c,x+31,y+9,104,150) end
+            m.cardRects[c]={x=x+31,y=y+9,w=104,h=150}
+            local function draw(card,cx,cy,cw,ch)
+                if A.definition(card) then UI.drawCard(card,cx,cy,cw,ch) else UI.drawPatronCard(card,cx,cy,cw,ch) end
+            end
+            if selected then Motion.card(UI,m,x+31,y+9,104,150,draw) else draw(c,x+31,y+9,104,150) end
             local name=c.name or ((c.rankName or tostring(c.rank))..(c.suitSymbol or ""))
             text(UI,name,x+8,y+165,150,"small",selected and violet or ink,"center")
             m.buttons[#m.buttons+1]={id="target",index=index,x=x,y=y,w=166,h=190}
@@ -62,7 +67,7 @@ function Picker.draw(UI,m,mx,my)
     if #filtered==0 then text(UI,"Không có lá thuộc nhóm này.",100,350,660,"small",muted,"center") end
     panel(824,158,372,448,{0.075,0.087,0.12,1})
     text(UI,upgrade and "NGHI LỄ · XEM TRƯỚC" or "XEM TRƯỚC TIẾN HÓA",848,179,324,"tiny",violet)
-    local c=m.selected
+    local c=m.ritual and m.ritual.before or m.selected
     if c then
         local d=A.definition(c);local name=c.name or ((c.rankName or tostring(c.rank))..(c.suitSymbol or ""))
         text(UI,name,848,210,324,"medium")
@@ -91,7 +96,10 @@ function Picker.draw(UI,m,mx,my)
     text(UI,"Trang "..m.page.." / "..pages,330,638,180,"tiny",muted,"center")
     if m.page>1 then button("prev","←",270,628,46,38) end
     if m.page<pages then button("next","→",524,628,46,38) end
-    button("confirm",upgrade and "XÁC NHẬN NGHI LỄ" or "XÁC NHẬN TIẾN HÓA",824,624,372,46,nil,not c,true)
+    local confirmText=m.ritual and (m.ritual.contacted and (upgrade and "ĐÃ HOÀN TẤT NGHI LỄ" or "ĐÃ TIẾN HÓA") or "ĐANG HỢP NHẤT…")
+        or (upgrade and "XÁC NHẬN NGHI LỄ" or "XÁC NHẬN TIẾN HÓA")
+    button("confirm",confirmText,824,624,372,46,nil,not c,true)
+    Motion.draw(UI,m)
     g.pop()
 end
 return Picker

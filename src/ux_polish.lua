@@ -213,19 +213,20 @@ function P.update(dt,fast,state,shop)
         end
     end
     for i=#P.applications,1,-1 do
-        local a=P.applications[i];a.age=a.age+step
+        local a=P.applications[i];a.age=a.age+math.min(dt,.05)*(fast and Config.fastFactor or 1);a.reducedMotion=P.reducedMotion==true
         if not a.hit and a.age>=(a.duration or Config.application)*0.60 then
             a.hit=true;Effects.triggerScorePulse(a.target)
+            if not a.reducedMotion then Physics.pulse(a.target) end
             if a.kind=="equip" or a.kind=="unequip" then
                 a.effect=Feedback.emit("equip",a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2,1,nil,a.kind=="unequip")
                 a.effect.equipmentAction=a.kind
                 local profile={};for k,v in pairs(a.effect.profile) do profile[k]=v end;profile.color=a.color;a.effect.profile=profile
                 if a.kind=="unequip" then Sound.play("card_slide",.9) end
-                local pose=require("src.card_physics").getState(a.target)
-                if pose then pose.active=true;pose.vy=48;pose.angularVelocity=0.13;pose.stretch=-0.025 end
             else Sound.play("mult_pop") end
         end
-        if a.age>=(a.duration or Config.application)+(a.popup or Config.popup) then table.remove(P.applications,i) end
+        if a.onSettled and a.age>=(a.duration or Config.application) then
+            local done=a.onSettled;a.onSettled=nil;table.remove(P.applications,i);done()
+        elseif a.age>=(a.duration or Config.application)+(a.popup or Config.popup) then table.remove(P.applications,i) end
     end
 end
 function P.surface(item,index,hovered,x,y,w,h,draw)
@@ -235,9 +236,9 @@ function P.surface(item,index,hovered,x,y,w,h,draw)
     s.hovered=hovered
     local elapsed=math.max(0,P.time-s.last);s.last=P.time
     local response=1-math.exp(-Config.hoverResponse*elapsed)
-    local target=focused and Config.focusScale or hovered and not job and Config.hoverScale or 1
+    local target=P.reducedMotion and 1 or focused and Config.focusScale or hovered and not job and Config.hoverScale or 1
     s.scale=s.scale+(target-s.scale)*response
-    s.lift=s.lift+((focused and -Config.focusLift or hovered and not job and -4 or 0)-s.lift)*response
+    s.lift=s.lift+((not P.reducedMotion and (focused and -Config.focusLift or hovered and not job and -4) or 0)-s.lift)*response
     local flip,back=1,false
     if job and job.kind=="flip" then
         local start=(job.swapped and job.swapAt+job.revealDelay or job.startDelay)+((index-1)%job.groupSize)*job.stagger
@@ -252,8 +253,9 @@ function P.surface(item,index,hovered,x,y,w,h,draw)
     if s.arriving then dx,dy,rotation,entryScale=P.arrivalPose(index,x,y,w,h) end
     local physics=require("src.ui").CardPhysics
     if s.arriving then physics.suspend() end
-    g.push("all");g.translate(x+w/2+dx,y+h/2+s.lift+dy);g.rotate(rotation)
-    g.scale(math.max(0.012,flip)*s.scale*entryScale,s.scale*entryScale);g.translate(-x-w/2,-y-h/2)
+    local lift,scale=P.reducedMotion and 0 or s.lift,P.reducedMotion and 1 or s.scale
+    g.push("all");g.translate(x+w/2+dx,y+h/2+lift+dy);g.rotate(rotation)
+    g.scale(math.max(0.012,flip)*scale*entryScale,scale*entryScale);g.translate(-x-w/2,-y-h/2)
     if back then require("src.ui").drawCardBack(x,y,w,h)
     else draw() end
     if P.focus and not focused then
@@ -297,13 +299,14 @@ function P.application(UI,source,target,text,sourceRect,targetRect,kind)
     if not target or not text or text=="" then return end
     local s=sourceRect or P.rect(UI,source,{x=1110,y=405,w=64,h=88})
     local r=targetRect or P.rect(UI,target)
-    local a={source=s,target=target,rect=r,text=text,age=0,kind=kind,color=kind=="equip" and Feedback.config.profiles.equip.color or Effects.getBeamColor(target)}
+    local a={source=s,target=target,rect=r,text=text,age=0,kind=kind,reducedMotion=P.reducedMotion==true,color=kind=="equip" and Feedback.config.profiles.equip.color or Effects.getBeamColor(target)}
     if (kind=="equip" or kind=="unequip") and source and require("src.equipment").ITEMS[source.id] then
         a.sourceItem=source;a.duration=.9;a.popup=1.1
         a.color=kind=="equip" and {1,.78,.34} or {.45,.84,1}
         a.text=(kind=="equip" and "ĐÃ GẮN · " or "ĐÃ THÁO · ")..source.name.."\n"..text
     end
     P.applications[#P.applications+1]=a
+    return a
 end
 function P.snapshot(game)
     local A=require("src.card_abilities");local D=require("src.deities");local Deck=require("src.deck")
@@ -352,10 +355,10 @@ local function valueText(key,value)
 end
 function P.changed(UI,game,before,source,sourceRect)
     local after=P.snapshot(game)
-    local seen={}
+    local seen,application={},nil
     local function report(target)
         local key=target.rank and target.id or target
-        if seen[key] then return end;seen[key]=true
+        if seen[key] then return end
         local values=before[target];if not values then return end
         local nextValues=after[target]
         if nextValues then
@@ -365,13 +368,17 @@ function P.changed(UI,game,before,source,sourceRect)
                 if new~=nil and new~=old then lines[#lines+1]=(labels[key] or key).." "..valueText(key,old).." → "..valueText(key,new) end
             end
             table.sort(lines)
-            if #lines>0 then P.application(UI,source,target,table.concat(lines,"\n"),sourceRect,nil,nextValues.equipment>values.equipment and "equip" or nextValues.equipment<values.equipment and "unequip" or nil) end
+            if #lines>0 then
+                seen[key]=true
+                application=P.application(UI,source,target,table.concat(lines,"\n"),sourceRect,nil,nextValues.equipment>values.equipment and "equip" or nextValues.equipment<values.equipment and "unequip" or nil)
+            end
         end
     end
     -- Prefer visible hand instances over their persistent copies (same card ID).
     for _,pile in ipairs({game.hand or {},game.deities or {},game.persistentDeck or {}}) do
         for _,target in pairs(pile) do report(target) end
     end
+    return application
 end
 function P.renderItem(UI,item,x,y,w,h)
     if UI.getConsumableImage(item) or (item.handId and UI.getHandImage(item.handId)) then
@@ -391,8 +398,8 @@ function P.draw(UI,game,buttons,mx,my)
     UI.CardPhysics.suspend()
     local focusedPose=P.focus and Physics.getState(P.focus.item)
     if P.focus and P.focus.kind~="stock" and not Physics.isHeld(P.focus.item) and not (focusedPose and focusedPose.settling) then
-        local r=P.focus.rect;local scale=1+0.08*out(P.focus.age/0.16)
-        g.push("all");g.translate(r.x+r.w/2,r.y+r.h/2-Config.focusLift*out(P.focus.age/0.16));g.scale(scale)
+        local r=P.focus.rect;local progress=P.reducedMotion and 0 or out(P.focus.age/0.16);local scale=1+0.08*progress
+        g.push("all");g.translate(r.x+r.w/2,r.y+r.h/2-Config.focusLift*progress);g.scale(scale)
         drawItem(P.focus.item,-r.w/2,-r.h/2,r.w,r.h);g.pop()
     end
     local b=P.button(game)
@@ -445,35 +452,37 @@ function P.draw(UI,game,buttons,mx,my)
             -- A deck-only target needs a brief preview after its picker has closed.
             a.rect.x=568;a.rect.y=290;a.rect.w=80;a.rect.h=110
             local contact=math.max(0,a.age-(a.duration or Config.application)*0.60)
-            local bounce=a.hit and a.kind=="equip" and 0.04*math.exp(-contact*20)*math.sin(contact*44) or 0
+            local bounce=not a.reducedMotion and a.hit and a.kind=="equip" and 0.035*Motion.impact(contact,.28) or 0
             g.push();g.translate(a.rect.x+a.rect.w/2,a.rect.y+a.rect.h/2);g.scale(1+bounce,1-bounce*0.4)
             P.renderItem(UI,a.target,-a.rect.w/2,-a.rect.h/2,a.rect.w,a.rect.h);g.pop()
         end
         if a.effect then local destination=a.kind=="unequip" and a.source or a.rect;a.effect.x=destination.x+destination.w/2;a.effect.y=destination.y+destination.h/2 end
-        local r,s=a.rect,a.source;local p=smooth(a.age/((a.duration or Config.application)*0.6))
+        local r,s=a.rect,a.source;local travel=clamp(a.age/((a.duration or Config.application)*.6));local p=Motion.settle(travel,1)
         local x=s.x+s.w/2+(r.x+r.w/2-s.x-s.w/2)*p
-        local y=s.y+s.h/2+(r.y+r.h/2-s.y-s.h/2)*p-math.sin(p*math.pi)*45
+        local y=s.y+s.h/2+(r.y+r.h/2-s.y-s.h/2)*p-math.sin(travel*math.pi)^2*32
         local c=a.color
         if a.sourceItem then
             require("ui.equipment_motion").draw(UI,a)
         else
-            g.setColor(c[1],c[2],c[3],1-p);g.circle("fill",x,y,5)
+            g.setColor(c[1],c[2],c[3],a.reducedMotion and 0 or 1-travel);g.circle("fill",x,y,5)
         end
         local contact=math.max(0,a.age-(a.duration or Config.application)*0.6)
-        g.setColor(c[1],c[2],c[3],a.hit and math.max(0,0.6-contact*3) or 0.22)
-        UI.drawCardBorder(r.x,r.y,r.w,r.h,{c[1],c[2],c[3],a.hit and math.max(0,0.6-contact*3) or 0.22})
+        local rimAlpha=a.hit and (.22*(1-clamp(contact/.08))+.5*Motion.impact(contact,.30)) or .22
+        g.setColor(c[1],c[2],c[3],rimAlpha)
+        UI.drawCardBorder(r.x,r.y,r.w,r.h,{c[1],c[2],c[3],rimAlpha})
         if a.hit and contact<0.10 then
             g.setColor(c[1],c[2],c[3],0.08*(1-contact/0.10));g.rectangle("fill",r.x,r.y,r.w,r.h,5,5)
         end
         if a.hit and not require("ui.equipment_motion").confirmation(UI,a,clamp(contact/.08)*clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/.25)) then
-            g.setColor(c[1],c[2],c[3],clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/0.25))
+            local popupAlpha=clamp(contact/.08)*clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/.25)
+            g.setColor(c[1],c[2],c[3],popupAlpha)
             g.setFont(UI.fonts.tiny)
             if not a.height then local _,lines=UI.fonts.tiny:getWrap(a.text,190);a.height=#lines*UI.fonts.tiny:getHeight() end
-            local tx=math.max(10,math.min(1080,r.x-40));local ty=math.max(60,r.y-a.height-10-out(contact)*15)
+            local tx=math.max(10,math.min(1080,r.x-40));local ty=math.max(60,r.y-a.height-10-(a.reducedMotion and 0 or out(contact)*15))
             if a.sourceItem then
-                g.setColor(.025,.04,.055,.96*clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/.25))
+                g.setColor(.025,.04,.055,.96*popupAlpha)
                 UI.drawRoundedRect("fill",tx-7,ty-7,204,a.height+14,6)
-                g.setColor(c[1],c[2],c[3],clamp(((a.duration or Config.application)+(a.popup or Config.popup)-a.age)/.25))
+                g.setColor(c[1],c[2],c[3],popupAlpha)
             end
             g.printf(a.text,tx,ty,190,"center")
         end

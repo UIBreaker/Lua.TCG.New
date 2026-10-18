@@ -17,7 +17,7 @@ V.profiles = {
         help="Mở balo để ghép đồ hoặc gắn trang bị lên quân bài."},
     spn = {brand="ĐIỆN HỘ LINH", motto="Những khế ước từ bên kia lục địa.",
         rows={"BỆ KHẾ ƯỚC I", "BỆ KHẾ ƯỚC II"},
-        notes={"SPN ngẫu nhiên từ Thường đến Độc Nhất", "Xem bậc và năng lực trước khi chiêu mộ"},
+        notes={"SPN ngẫu nhiên từ Thường đến Tối Thượng", "Xem bậc và năng lực trước khi chiêu mộ"},
         material={.075,.10,.18}, accent={.57,.74,.96,1}, preset="MYSTIC", columns=3,
         help="SPN mua vào balo. Kéo vào ô trang bị để kích hoạt."},
     medicine = {brand="TIỆM THẢO DƯỢC", motto="Nghỉ chân, hồi sức rồi tiếp tục hành trình.",

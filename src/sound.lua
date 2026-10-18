@@ -26,16 +26,22 @@ local function prune()
     end
 end
 local function mixVoices()
-    -- Headroom falls with density so scoring cascades do not overwhelm impacts.
-    local headroom = 1 / math.sqrt(math.max(1, #voices / 4))
+    local foreground=false
+    for _,v in ipairs(voices) do if v.priority>=4 then foreground=true;break end end
+    local density=0
+    for _,v in ipairs(voices) do
+        v.weight=foreground and (v.priority<=1 and .18 or v.priority==2 and .34 or v.priority==3 and .68 or 1) or 1
+        density=density+v.weight*v.weight
+    end
+    local headroom = 1 / math.sqrt(math.max(1, density / 4))
     local peak=0
-    for _,v in ipairs(voices) do peak=peak+v.gain*volumes.sfx*headroom*.64 end
+    for _,v in ipairs(voices) do peak=peak+v.gain*v.weight*volumes.sfx*headroom*v.peak end
     for _,l in pairs(loops) do
         peak=peak+l.level*l.gain*volumes[l.bus]*duck*(l.bus=="ambience" and .32 or l.name=="menu" and 1 or .48)
     end
     -- WAV peak ceilings are verified at build time; bound even coincident hits.
     limiter=math.min(1,.92/math.max(.001,peak))
-    for _,v in ipairs(voices) do v.source:setVolume(v.gain * volumes.sfx * headroom * limiter) end
+    for _,v in ipairs(voices) do v.source:setVolume(v.gain * v.weight * volumes.sfx * headroom * limiter) end
     for _,l in pairs(loops) do l.source:setVolume(l.level*l.gain*volumes[l.bus]*duck*limiter) end
 end
 
@@ -58,7 +64,13 @@ function Sound.init()
         if ok then
             local pool = {source}
             for i=2,POOL_SIZE do
-                local cloned,copy = pcall(source.clone,source)
+                local path=c.variants and c.variants[i-1]
+                local cloned,copy
+                if path then
+                    cloned,copy=pcall(love.audio.newSource,path,"static")
+                    if not cloned then print("[Sound] Variant unavailable: "..path) end
+                end
+                if not cloned then cloned,copy=pcall(source.clone,source) end
                 if cloned then pool[#pool+1]=copy end
             end
             pools[name]=pool
@@ -68,6 +80,7 @@ function Sound.init()
         end
     end
     require("src.nen_audio").register(Sound)
+    require("src.reward_audio").register(Sound)
     Sound.setMasterVolume(volumes.master)
     return complete
 end
@@ -130,11 +143,11 @@ local function loop(bus,name)
     end
     source:setLooping(true);source:setVolume(0)
     local l={source=source,bus=bus,name=name,gain=entry.gain,level=0,target=0}
-    -- Combat, boss and percussion stems share the same 120 BPM / 16 second grid.
+    -- Match position across the full phrase, including its developed second half.
     if bus=="music" and (name=="tension" or name=="boss" or name=="combat") then
         for _,other in pairs(loops) do
             if other.bus=="music" and (other.name=="combat" or other.name=="boss" or other.name=="tension") and other.source.tell then
-                source:seek(other.source:tell("seconds")%16,"seconds");break
+                source:seek(other.source:tell("seconds")%(entry.seconds or 16),"seconds");break
             end
         end
     end
@@ -156,6 +169,41 @@ function Sound.setMenuMusicEnabled(shouldPlay)
     return true
 end
 function Sound.has(name) return pools[aliases[name] or name]~=nil end
+function Sound.rewardPitch()
+    prune()
+    for i=#voices,1,-1 do
+        local cue=proceduralCues[voices[i].name]
+        if cue and cue.bossVictory==1 then
+            local id=voices[i].name:match("^nen_(.-)_boss_")
+            local score=require("config.attack_audio")[id]
+            if score then
+                local root=score.tone*voices[i].pitch
+                while root>392.445 do root=root*.5 end
+                while root<196.2225 do root=root*2 end
+                local tier=voices[i].name:match("_extreme$") and 3 or voices[i].name:match("_strong$") and 2 or 1
+                local lift=.65+(tier-1)*.45+.70
+                return root/261.63,math.max(0,lift/voices[i].pitch-(now()-voices[i].startedAt))
+            end
+        end
+    end
+    return 1,0
+end
+function Sound.playCombatVictory()
+    prune()
+    -- A boss's own finishing voice already contains its seamless victory phrase.
+    for _,v in ipairs(voices) do
+        local cue=proceduralCues[v.name]
+        if cue and cue.bossVictory==1 then return true end
+    end
+    return Sound.play("round_win")
+end
+function Sound.stopCue(name)
+    name=aliases[name] or name
+    for i=#voices,1,-1 do
+        if voices[i].name==name then table.remove(voices,i).source:stop() end
+    end
+    mixVoices()
+end
 function Sound.silence(duration)
     quietRemaining=math.max(0,math.min(.08,duration or .06))
     Sound.quietUntil=now()+quietRemaining
@@ -173,7 +221,16 @@ function Sound.play(name,pitch)
     if time<(Sound.quietUntil or 0) or time-(lastPlayed[name] or -math.huge)<c.cooldown then return false end
     prune()
     local source
-    for _,s in ipairs(pool) do if not s:isPlaying() then source=s;break end end
+    for offset=0,#pool-1 do
+        local s=pool[((variations[name] or 0)+offset)%#pool+1]
+        if not s:isPlaying() then source=s;break end
+    end
+    -- A fresh heavy contact takes precedence over its own oldest lingering tail.
+    if not source and c.priority>=4 then
+        for i,v in ipairs(voices) do
+            if v.name==name then source=table.remove(voices,i).source;source:stop();break end
+        end
+    end
     if not source then return false end
     if #voices>=MAX_VOICES then
         local victim
@@ -187,9 +244,12 @@ function Sound.play(name,pitch)
         variations[name]=(variations[name] or 0)+1
         local variation=1+((variations[name]*7)%5-2)*.007
         if type(pitch)~="number" or pitch~=pitch then pitch=1 end
-        source:setPitch(math.max(.35,math.min(2.5,pitch*variation)))
-        voices[#voices+1]={source=source,gain=c.gain,priority=c.priority,name=name}
-        if c.priority>=4 then duck=math.min(duck,.48) end
+        local playbackPitch=math.max(.35,math.min(c.maxPitch or 2.5,pitch*variation))
+        source:setPitch(playbackPitch)
+        voices[#voices+1]={source=source,gain=c.gain,priority=c.priority,name=name,peak=c.peak or .64,
+            pitch=playbackPitch,startedAt=time,
+            duckUntil=time+(c.duckDuration or (c.priority>=5 and .18 or .10)),duckLevel=c.duck or .58}
+        if c.priority>=4 then duck=math.min(duck,c.duck or .48) end
         mixVoices();source:play()
     end)
     if ok then lastPlayed[name]=time end
@@ -232,7 +292,8 @@ function Sound.update(dt,state,game,paused,menuMode,scene)
     prune()
     quietRemaining=math.max(0,quietRemaining-dt)
     local targetDuck=quietRemaining>0 and .14 or 1
-    for _,v in ipairs(voices) do if v.priority>=4 then targetDuck=math.min(targetDuck,.58) end end
+    local time=now()
+    for _,v in ipairs(voices) do if v.priority>=4 and time<v.duckUntil then targetDuck=math.min(targetDuck,v.duckLevel) end end
     duck=duck+(targetDuck-duck)*(1-math.exp(-dt*(targetDuck<duck and 24 or 3)))
     for _,l in pairs(loops) do l.target=0 end
     local track,ambient,weather,intensity=Sound.context(state,game,menuMode,scene)

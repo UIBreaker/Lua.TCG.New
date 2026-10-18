@@ -3,6 +3,8 @@ local Sound = require("src.sound")
 local Deities = require("src.deities")
 local Visual = require("config.visual_config")
 local Effects = require("ui.reward_effects")
+local RewardAudio = require("src.reward_audio")
+local Motion = require("src.motion")
 
 local RewardSystem = {}
 
@@ -146,7 +148,7 @@ local function createReward(id, game, source, depth, lootBonus)
             pack.name = reward.name
             pack.desc = "Mở 3 Trang Bị Cơ Bản, chọn 1 để gắn vào bài."
         end
-        pack.cost, pack.category, pack.rewardPack = 0, "pack", true
+        pack.cost, pack.category, pack.rewardPack,pack.rarity = 0, "pack", true,reward.rarity
         reward.opening = Shop.openPack(pack, game)
         if #reward.opening.cards == 0 then return fallback(reward, "Không còn nội dung gói hợp lệ") end
     elseif reward.type == "CONSUMABLE" then
@@ -275,7 +277,8 @@ function RewardSystem.openNextPack(game, shop)
     end
     opening.animationTimer = 0
     shop.currentPackOpening = opening
-    Sound.play("pack_open")
+    shop.rewardAudioPitch=Sound.rewardPitch()
+    RewardAudio.play("open",opening.pack,shop.rewardAudioPitch)
     return true
 end
 
@@ -366,7 +369,8 @@ local function setState(anim, state)
     anim.state, anim.phaseTime = state, 0
 end
 
-function RewardSystem.newAnimation(breakdown, result)
+function RewardSystem.newAnimation(breakdown, result, options)
+    local audioPitch,audioLead=Sound.rewardPitch()
     result = result or {loot = {}, bonusGold = 0, earnedGold = breakdown.totalGold}
     local lines = {
         {label = breakdown.wasSkipped and "ĐÃ BỎ QUA ẢI" or "THƯỞNG TRẬN", valNum = breakdown.basePayout},
@@ -383,14 +387,45 @@ function RewardSystem.newAnimation(breakdown, result)
         local parentIndex = #slots
         for _, child in ipairs(reward.children or {}) do slots[#slots + 1] = {reward = child, parent = reward, parentIndex = parentIndex, effect = Effects.profile(child)} end
     end
+    for _,slot in ipairs(slots) do
+        local _,level=RewardAudio.rarity(slot.reward);slot.audioLevel=level
+        if level>5 and slot.effect.kind~="ticket" and slot.effect.kind~="gold" then
+            slot.effect.anticipation=math.max(slot.effect.anticipation,.20+level*.045)
+        end
+    end
     local anim = {breakdown = breakdown, result = result, lines = lines, slots = slots, coins = {},
         state = "ENTER", timer = 0, phaseTime = 0, revealedCount = 0, revealedLoot = 0,
         displayTotal = 0, walletTotal = breakdown.currentGold, totalRevealed = false,
         pulse = 0, finished = false, buttonActive = false, visualSeed = 17, coinsSpawned = 0,
         sparks = {}, flares = {}, goldFlare = 0,
-        soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0, lootPage = 1}
+        soulsCollected = 0, soulTotal = result.soulsBefore or 0, soulFlare = 0, lootPage = 1,
+        reducedMotion = options and options.reducedMotion == true,audioPitch=audioPitch,audioLead=audioLead}
     if result.bulkExchanged then RewardSystem.finishImmediately(anim) end
     return anim
+end
+
+function RewardSystem.panelPose(anim)
+    if anim.reducedMotion or anim.skipped then return 0,true end
+    local p=Motion.settle(anim.timer,Config.presentation.enter)
+    return 32*(1-p),anim.timer>=Config.presentation.enter
+end
+
+function RewardSystem.slotPose(anim,index)
+    local slot=anim.slots[index]
+    local age=anim.timer-(slot.revealedAt or anim.timer)
+    local pageIndex=(index-1)%6
+    local elapsed=anim.timer-(anim.pageAt or 0)-pageIndex*Config.presentation.stagger
+    local enter=(anim.reducedMotion or anim.skipped) and 1 or Motion.settle(elapsed,Config.presentation.enter)
+    local progress=math.max(0,math.min(1,age/Config.presentation.flip))
+    if anim.reducedMotion and slot.revealedAt then progress=1 end
+    local pulse=slot.revealedAt and not anim.reducedMotion and Motion.impact(age,Config.presentation.flip) or 0
+    return {enter=enter,progress=progress,lift=6*pulse,
+        ready=(anim.reducedMotion or anim.skipped or elapsed>=Config.presentation.enter)
+            and slot.revealedAt~=nil and (anim.reducedMotion or age>=Config.presentation.flip)}
+end
+
+local function setPage(anim,page)
+    if page~=anim.lootPage then anim.lootPage=page;anim.pageAt=anim.timer end
 end
 
 -- Local presentation RNG: effects cannot advance the saved gameplay generator.
@@ -400,7 +435,7 @@ local function visualRandom(anim)
 end
 
 local function burst(anim, anchor, color, count, power)
-    if not Visual.enabled or not Visual.effects.particles then return end
+    if anim.reducedMotion or not Visual.enabled or not Visual.effects.particles then return end
     local limit = math.min(Config.presentation.maxSparks, (Visual.qualities[Visual.quality] or Visual.qualities.HIGH).particles)
     for _ = 1, math.min(count, math.max(0, limit - #anim.sparks)) do
         local angle = visualRandom(anim) * math.pi * 2
@@ -424,6 +459,12 @@ end
 
 local function spawnCoins(anim, amount, row, interest)
     if amount <= 0 then return end
+    if anim.reducedMotion then
+        anim.displayTotal=anim.displayTotal+amount
+        anim.walletTotal=anim.breakdown.currentGold+anim.displayTotal
+        Sound.play("reward_coin_collect")
+        return
+    end
     local budget = math.max(1, math.floor(Config.maxCoins / (#anim.lines + #anim.slots + 1)))
     local count = math.min(amount, budget, math.max(0, Config.maxCoins - anim.coinsSpawned))
     if count == 0 then
@@ -495,20 +536,23 @@ end
 local function revealSlot(anim, index)
     local slot = anim.slots[index]
     slot.revealedAt, anim.revealedLoot = anim.timer, index
-    anim.lootPage = math.ceil(index / 6)
+    setPage(anim,math.ceil(index / 6))
     local reward = slot.reward
     local rarity = Config.rarities[reward.rarity] or Config.rarities.common
     local effect = slot.effect
     anim.flares[index] = anim.timer
     if rarity.strength >= 3 then anim.highlightSlot, anim.highlightAt = index, anim.timer end
     burst(anim, index, effect.color, effect.particles, .65 + effect.level * .18)
-    Sound.play(effect.sound, effect.pitch)
+    if anim.rewardCharge then Sound.stopCue(anim.rewardCharge);anim.rewardCharge=nil end
+    if effect.kind=="ticket" or effect.kind=="gold" then Sound.play(effect.sound, effect.pitch)
+    else RewardAudio.play(effect.kind=="chest" and "open" or "receive",reward,anim.audioPitch) end
     anim.revealEvent = {profile = effect, index = index, started = anim.timer}
     if reward.type == "GOLD" then spawnCoins(anim, reward.amount, #anim.lines + 1) end
 end
 
-function RewardSystem.update(anim, dt)
+function RewardSystem.update(anim, dt,audioSpeed)
     if not anim then return end
+    anim.audioTime=(anim.audioTime or 0)+dt/(audioSpeed or 1)
     -- Fixed steps keep physics and transitions stable through slow frames.
     anim.accumulator = (anim.accumulator or 0) + dt
     while anim.accumulator >= 1 / 120 do
@@ -517,10 +561,13 @@ function RewardSystem.update(anim, dt)
         anim.timer, anim.phaseTime = anim.timer + step, anim.phaseTime + step
         anim.pulse = math.max(0, anim.pulse - step * 0.55)
         anim.soulFlare = math.max(0, anim.soulFlare - step)
+        for _,slot in ipairs(anim.slots) do
+            slot.hover=(slot.hover or 0)+((slot.hoverTarget or 0)-(slot.hover or 0))*Motion.response(18,step)
+        end
         updateCoins(anim, step)
         updateSparks(anim, step)
         local state = anim.state
-        if state == "ENTER" and anim.phaseTime >= 0.12 then setState(anim, "GOLD_BREAKDOWN")
+        if state == "ENTER" and anim.phaseTime >= Config.presentation.enter then setState(anim, "GOLD_BREAKDOWN")
         elseif state == "GOLD_BREAKDOWN" and anim.phaseTime >= Config.rowInterval then
             anim.revealedCount = anim.revealedCount + 1
             local line = anim.lines[anim.revealedCount]
@@ -532,7 +579,7 @@ function RewardSystem.update(anim, dt)
             anim.totalRevealed, anim.pulse = true, 0.16
             anim.goldFlare = Config.presentation.flareDuration
             burst(anim, "gold", {1, 0.80, 0.34}, 20, 1)
-            Sound.play("reward_gold_total")
+            RewardAudio.play("collect",{rarity="uncommon"},anim.audioPitch)
             setState(anim, "GOLD_SETTLE")
         elseif state == "GOLD_SETTLE" and anim.phaseTime >= 0.15 then
             setState(anim, (anim.result.earnedSouls or 0) > 0 and "SOUL_GATHER" or "LOOT_PREPARE")
@@ -542,25 +589,27 @@ function RewardSystem.update(anim, dt)
             if collected > anim.soulsCollected then
                 anim.soulsCollected, anim.soulFlare = collected, 0.45
                 anim.soulTotal = (anim.result.soulsBefore or 0) + collected
-                Sound.play("reward_rare_reveal", 0.9 + collected * 0.06)
+                RewardAudio.play("collect",{rarity="rare"},anim.audioPitch*(.97+collected*.01))
             end
             if anim.phaseTime >= 0.65 + earned * 0.12 then setState(anim, "LOOT_PREPARE") end
-        elseif state == "LOOT_PREPARE" then
+        elseif state == "LOOT_PREPARE" and (anim.revealedLoot==#anim.slots or anim.audioTime>=anim.audioLead) then
             if anim.revealedLoot == #anim.slots then setState(anim, "SUMMARY")
             else
-                anim.lootPage = math.ceil((anim.revealedLoot + 1) / 6)
+                setPage(anim,math.ceil((anim.revealedLoot + 1) / 6))
                 local slot = anim.slots[anim.revealedLoot + 1]
-                local rarity = Config.rarities[slot.reward.rarity] or Config.rarities.common
                 if slot.effect.kind == "ticket" and slot.effect.level >= 3 then Sound.play("score_charge", .8 + slot.effect.level * .04)
-                elseif slot.effect.kind == "chest" then Sound.play("chest_dissolve", .96) end
-                setState(anim, rarity.strength >= 3 and "RARE_REVEAL" or "LOOT_REVEAL")
+                elseif slot.effect.kind == "chest" or slot.audioLevel>=3 then
+                    anim.rewardCharge=RewardAudio.cue("charge",slot.reward)
+                    Sound.play(anim.rewardCharge,anim.audioPitch)
+                end
+                setState(anim, slot.audioLevel >= 3 and "RARE_REVEAL" or "LOOT_REVEAL")
             end
         elseif (state == "LOOT_REVEAL" or state == "RARE_REVEAL") then
             local slot = anim.slots[anim.revealedLoot + 1]
             if anim.phaseTime >= slot.effect.anticipation then revealSlot(anim, anim.revealedLoot + 1); setState(anim, "REWARD_HOLD") end
         elseif state == "REWARD_HOLD" then
             local effect = anim.slots[anim.revealedLoot].effect
-            if anim.phaseTime >= (Visual.enabled and effect.hold or math.min(.18, effect.hold)) then setState(anim, "LOOT_PREPARE") end
+            if anim.phaseTime >= math.max(Config.presentation.flip,Visual.enabled and effect.hold or math.min(.18, effect.hold)) then setState(anim, "LOOT_PREPARE") end
         elseif state == "SUMMARY" and #anim.coins == 0 and anim.phaseTime >= 0.24 then
             anim.displayTotal = anim.result.earnedGold
             anim.walletTotal = anim.breakdown.currentGold + anim.displayTotal
@@ -571,6 +620,8 @@ end
 
 function RewardSystem.finishImmediately(anim)
     if not anim or anim.finished then return end
+    if anim.rewardCharge then Sound.stopCue(anim.rewardCharge);anim.rewardCharge=nil end
+    anim.skipped=true
     anim.coins = {}
     anim.sparks, anim.flares, anim.goldFlare = {}, {}, 0
     anim.revealEvent = nil
@@ -584,12 +635,12 @@ function RewardSystem.finishImmediately(anim)
     anim.lootPage = 1
     anim.walletTotal, anim.pulse = anim.breakdown.currentGold + anim.displayTotal, 0.16
     setState(anim, "SUMMARY")
-    Sound.play("reward_gold_total")
+    RewardAudio.play("collect",{rarity="uncommon"},anim.audioPitch)
 end
 
 function RewardSystem.changePage(anim, direction)
     if not anim or not anim.finished then return false end
-    anim.lootPage = math.max(1, math.min(math.max(1, math.ceil(#anim.slots / 6)), (anim.lootPage or 1) + direction))
+    setPage(anim,math.max(1, math.min(math.max(1, math.ceil(#anim.slots / 6)), (anim.lootPage or 1) + direction)))
     return true
 end
 
@@ -637,6 +688,7 @@ end
 
 function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     if not anim then return end
+    UI.CardPhysics.suspend()
     local g = love.graphics
     local w, h = 1160, 680
     local x, y = (width - w) / 2, (height - h) / 2
@@ -655,7 +707,11 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         g.setLineWidth(1); UI.drawRoundedRect("line", px, py, pw, ph, 12)
     end
     g.push("all")
-    g.setColor(0.008, 0.016, 0.028, Visual.reward.veil); g.rectangle("fill", 0, 0, width, height)
+    local panelY,panelReady=RewardSystem.panelPose(anim)
+    if not panelReady then mx,my=-1000,-1000 end
+    local veil=math.min(1,anim.timer/0.22)
+    g.setColor(0.008, 0.016, 0.028, Visual.reward.veil*veil); g.rectangle("fill", 0, 0, width, height)
+    g.translate(0,panelY)
     -- Soft stepped halos and a recessed frame keep the ceremony above the board.
     for i = 5, 1, -1 do
         g.setColor(0, 0, 0, 0.07); UI.drawRoundedRect("fill", x - i * 3, y + i * 2, w + i * 6, h + i * 4, 20)
@@ -669,7 +725,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         g.line(corner[1]+corner[3]*28,corner[2],corner[1],corner[2],corner[1],corner[2]+corner[4]*28)
     end
     -- Quiet moving dust and broad light shafts, behind the readable UI.
-    if Visual.effects.particles then
+    if Visual.effects.particles and not anim.reducedMotion then
         for i = 1, Config.presentation.ambience do
             local px = x + 25 + (i * 79.31) % (w - 50)
             local py = y + 18 + (i * 53.73 - anim.timer * (6 + i % 4)) % (h - 40)
@@ -685,7 +741,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.setColor(0.98, 0.73, 0.27, 0.09); g.circle("fill", cx, cy, 30)
     g.setColor(0.88, 0.68, 0.32, 0.55); g.circle("line", cx, cy, 29)
     for i = 1, 12 do
-        local angle = i * math.pi / 6 + anim.timer * 0.035
+        local angle = i * math.pi / 6 + (anim.reducedMotion and 0 or anim.timer * 0.035)
         g.setColor(1, 0.79, 0.34, 0.13)
         g.line(cx + math.cos(angle) * 32, cy + math.sin(angle) * 32, cx + math.cos(angle) * 41, cy + math.sin(angle) * 41)
     end
@@ -693,7 +749,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.setColor(0.99, 0.88, 0.59); g.rectangle("fill", cx - 11, cy + 13, 22, 3, 1)
     g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("LỄ TRAO THƯỞNG", x + 110, y + 24)
     g.setFont(UI.fonts.title); g.setColor(gold)
-    local entrance = 1 - math.max(0, 1 - anim.timer / 0.35) ^ 3
+    local entrance = (anim.reducedMotion or anim.skipped) and 1 or Motion.settle(anim.timer,Config.presentation.enter)
     g.push(); g.translate(x + 108, y + 43 + (1 - entrance) * 8); g.scale(0.96 + entrance * 0.04)
     local headline = anim.breakdown.wasSkipped and "QUÂN LƯƠNG" or boss and "CHINH PHỤC BOSS" or "CHIẾN THẮNG"
     local headlineScale = math.min(1, 445 / UI.fonts.title:getWidth(headline))
@@ -756,7 +812,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.push(); g.translate(rightX + 154, y + 150)
     local totalFont = UI.fonts.huge
     local totalScale = math.min(1, (rightW - 194) / math.max(1, totalFont:getWidth("+" .. anim.displayTotal)))
-    g.scale((1 + anim.pulse) * totalScale)
+    g.scale((1 + (anim.reducedMotion and 0 or anim.pulse)) * totalScale)
     g.setFont(UI.fonts.huge); g.setColor(1, 0.87, 0.52)
     g.print("+" .. anim.displayTotal, 0, 0); g.pop()
     g.setFont(UI.fonts.tiny); g.setColor(muted)
@@ -774,7 +830,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.printf("+" .. anim.soulsCollected, rightX + 264, y + 247, 60, "right")
     g.setFont(UI.fonts.tiny); g.setColor(UI.COLORS.textLight)
     g.printf("TỔNG " .. anim.soulTotal, rightX + 324, y + 267, 100, "right")
-    if anim.state == "SOUL_GATHER" then
+    if anim.state == "SOUL_GATHER" and not anim.reducedMotion then
         -- Curved wisps converge on the crystal; tails fade without gameplay RNG.
         g.setBlendMode("add")
         for i = 1, anim.result.earnedSouls or 0 do
@@ -860,27 +916,27 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         local sx, sy = startX + (i - first) * (slotW + gap), y + 326
         local revealed = i <= anim.revealedLoot
         local active = i == anim.revealedLoot + 1 and (anim.state == "RARE_REVEAL" or anim.state == "LOOT_REVEAL")
-        local progress = revealed and math.min(1, (anim.timer - (slot.revealedAt or 0)) / 0.24) or 0
-        local isHovered = revealed and inside(mx, my, sx, sy, slotW, slotH)
+        local pose=RewardSystem.slotPose(anim,i)
+        local progress=pose.progress
+        local isHovered = panelReady and pose.ready and inside(mx, my, sx, sy, slotW, slotH)
+        local drift=(1-pose.enter)
+        g.push();g.translate(math.max(-100,math.min(100,x+w/2-sx-slotW/2))*drift,18*drift)
         local flareAge = slot.suppressEffects and effect.duration or anim.timer - (anim.flares[i] or -100)
         local flare = math.max(0, 1 - flareAge / effect.duration)
         softGlow(sx + slotW / 2, sy + slotH, slotW * 0.6, 17, rarity.color, revealed and 0.2 or 0.04)
         panel(sx, sy, slotW, slotH)
-        if active or (revealed and flare > 0) then Effects.drawSlot(effect, sx + slotW / 2, sy + 94, flareAge, active, anim.timer) end
-        g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], active and 0.18 + math.sin(anim.timer * 16) * 0.06 or 0.07)
+        if active or (revealed and flare > 0) then Effects.drawSlot(effect, sx + slotW / 2, sy + 94, flareAge, active, anim.timer,anim.reducedMotion) end
+        g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], active and (anim.reducedMotion and .18 or 0.18 + math.sin(anim.timer * 16) * 0.06) or 0.07)
         UI.drawRoundedRect("fill", sx - 4, sy - 4, slotW + 8, slotH + 8, 12)
         g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], revealed and 0.9 or active and 0.7 or 0.2)
         g.setLineWidth(1); UI.drawRoundedRect("line", sx, sy, slotW, slotH, 12)
         g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], revealed and 0.85 or 0.25)
         g.rectangle("fill", sx + 14, sy, slotW - 28, 2)
-        local chestDrop = slot.chest and active and math.max(0, 1 - anim.phaseTime / 0.18) or 0
-        local chestShake = slot.chest and active and anim.phaseTime > 0.18 and math.sin(anim.phaseTime * 65) * 2 or 0
-        g.push(); g.translate(sx + slotW / 2 + chestShake + (slot.parentIndex and slot.parentIndex >= first and revealed and (slot.parentIndex - i) * (slotW + gap) * (1 - progress) ^ 3 or 0),
-            sy + 94 - chestDrop * 45 - (1 - progress) * (revealed and (slot.parent and 42 or 12) or 0) - (isHovered and 5 or 0))
-        if isHovered then
-            g.scale(1.05); g.rotate(math.max(-0.035, math.min(0.035, (mx - sx - slotW / 2) / slotW * 0.08)))
-        end
-        g.scale(revealed and not slot.chest and math.max(0.08, math.abs(math.cos(progress * math.pi))) or 1, 1)
+        local chestShake = not anim.reducedMotion and slot.chest and active and math.sin(anim.phaseTime*24)*Motion.impact(anim.phaseTime,effect.anticipation)*1.5 or 0
+        g.push(); g.translate(sx + slotW / 2 + chestShake,sy + 94 - pose.lift - (slot.hover or 0)*5)
+        g.scale(1+(slot.hover or 0)*.045)
+        g.scale(revealed and not slot.chest and not anim.reducedMotion and math.max(0.05, math.abs(math.cos(progress * math.pi))) or 1, 1)
+        slot.hoverTarget=isHovered and not anim.reducedMotion and 1 or 0
         local art
         if slot.chest and (active or revealed) then
             if not chestArt then chestArt = g.newImage("assets/scene/treasure_chest.png") end
@@ -907,7 +963,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
                 UI.CardFrame.draw(-46, -69, 92, 138, nil, 1, reward)
             else
                 local artScale = math.min(slotW * 0.76 / iw, 130 / ih)
-                g.draw(art, 0, -2, slot.chest and math.sin(anim.timer * 5) * (1 - progress) * 0.05 or 0, artScale, artScale, iw / 2, ih / 2)
+                g.draw(art, 0, -2,not anim.reducedMotion and slot.chest and math.sin(anim.timer * 5) * (1 - progress) * 0.05 or 0, artScale, artScale, iw / 2, ih / 2)
                 if flare > 0 then
                     g.setBlendMode("add"); g.setColor(rarity.color[1], rarity.color[2], rarity.color[3], flare * 0.16)
                     g.polygon("fill", -9, -4, 9, -4, 32 + flare * 10, -78, -32 - flare * 10, -78)
@@ -917,7 +973,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
         end
         g.pop()
         if revealed then Effects.counter(effect, flareAge, sx + slotW / 2, sy + 149, UI.fonts) end
-        if slot.chest and active and anim.phaseTime > 0.18 then
+        if slot.chest and active and anim.phaseTime > 0.18 and not anim.reducedMotion then
             local dust = math.min(1, (anim.phaseTime - 0.18) / 0.3)
             for j = 1, 6 do
                 g.setColor(0.85, 0.73, 0.52, (1 - dust) * 0.35)
@@ -925,7 +981,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             end
         end
         if revealed then
-            if rarity.strength >= 3 and progress < 1 then
+            if rarity.strength >= 3 and progress < 1 and not anim.reducedMotion then
                 for j = 1, 8 do
                     local angle = j * math.pi / 4
                     local radius = 20 + progress * 65
@@ -941,11 +997,12 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
             UI.drawRoundedRect("fill", sx + slotW / 2 - 40, sy + 207, 80, 18, 5)
             g.setColor(reward.exchangedGold and gold or rarity.color)
             g.printf(reward.exchangedGold and "ĐÃ ĐỔI +" .. reward.exchangedGold or slot.chest and "ĐÃ MỞ" or "ĐÃ NHẬN", sx + 4, sy + 209, slotW - 8, "center")
-            if inside(mx, my, sx, sy, slotW, slotH) then
+            if isHovered then
                 if reward.type == "PLAYING_CARD" then UI.descriptionCandidate = reward.card
                 else UI.descriptionCandidate = {hoverKey = reward, name = reward.name, desc = rarity.label .. " · " .. reward.source .. "\n" .. (reward.desc or reward.metadata and reward.metadata.reason or reward.card and reward.card.desc or reward.packType and "Mở miễn phí tại cửa hàng: chọn phần thưởng theo luật gói hiện tại." or slot.chest and "Rương đã mở; các món bên cạnh là nội dung đã nhận." or "Thêm $" .. reward.amount .. " vào túi vàng."), color = rarity.color} end
             end
         end
+        g.pop()
     end
     g.setBlendMode("add")
     for _, p in ipairs(anim.sparks) do
@@ -978,7 +1035,7 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     local exchangeGold = RewardSystem.getBulkExchangeGold(game, anim.result)
     local exchange = {id="cashout_exchange_all",text=anim.result.bulkExchanged and "ĐÃ QUY ĐỔI +"..anim.result.exchangeGold.." VÀNG"
         or "QUY ĐỔI NHANH TẤT CẢ  +"..exchangeGold,x=x+w-716,y=y+h-66,w=342,h=46,
-        variant="gold",font=UI.fonts.small,disabled=exchangeGold==0}
+        variant="gold",font=UI.fonts.small,disabled=exchangeGold==0 or not panelReady}
     if buttons then buttons[#buttons+1]=exchange end
     UI.drawButton(exchange,not exchange.disabled and inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h))
     if inside(mx,my,exchange.x,exchange.y,exchange.w,exchange.h) then
@@ -999,9 +1056,10 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     g.print(anim.finished and "ENTER / SPACE  ·  Tiếp tục hành trình" or "ENTER / SPACE / CLICK  ·  Nhận ngay", x + 32, y + h - 40)
     if anim.revealEvent then
         local event = anim.revealEvent
-        Effects.jackpot(event.profile, anim.timer - event.started, width, height, UI.fonts)
+        Effects.jackpot(event.profile, anim.timer - event.started, width, height, UI.fonts,anim.reducedMotion)
     end
     g.pop()
+    UI.CardPhysics.resume()
 end
 
 return RewardSystem

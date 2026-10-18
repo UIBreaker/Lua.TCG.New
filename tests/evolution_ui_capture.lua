@@ -43,7 +43,10 @@ function T.update(game,cb)
         assert(target.evolutionLevel==0 and #game.consumables==1,"preview preserves reward")
         shot("selected");stage=7;age=0
     elseif stage==7 and age>0.2 then
-        press("confirm");assert(not Modal.current and target.evolutionLevel==1 and #game.consumables==0)
+        press("confirm");assert(Modal.current.ritual and target.evolutionLevel==1 and #game.consumables==0)
+        assert(not Modal.confirm());stage=8;age=0
+    elseif stage==8 and age>1.1 then
+        assert(not Modal.current)
         print("Evolution selection, tabs, pagination, preview and confirm PASS")
         game.consumables={consumable};assert(Modal.openEvolution(game,consumable));Modal.key("escape")
         assert(not Modal.current and #game.consumables==1);print("Evolution cancel preserves consumable PASS")

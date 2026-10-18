@@ -1,5 +1,6 @@
 -- The scoring timeline owns contact. This director reads a frozen visual snapshot.
 local N={config=require("config.nen_vfx_config"),reducedMotion=false}
+local Motion=require("src.motion")
 local C=N.config
 local clamp=function(p) return math.max(0,math.min(1,p)) end
 local smooth=function(p) p=clamp(p);return p*p*(3-2*p) end
@@ -51,14 +52,21 @@ function N.enter(a,phase)
     local n=a.nen;n.stage=phase;n.phaseProgress=0
     if phase=="PREPARE" then n.charge,n.travel,n.beat=0,0,0 end
     local sound=require("src.sound")
-    if phase=="NEN_AWAKENING" then sound.play("nen_"..a.profile.id.."_charge",1.03-(n.tier-1)*.055) end
+    local weight=n.tier==3 and "_extreme" or n.tier==2 and "_strong" or ""
+    local speed=n.audioSpeed or n.speed or 1
+    if phase=="NEN_AWAKENING" then
+        n.chargeCue="nen_"..a.profile.id.."_charge"..weight
+        sound.play(n.chargeCue,speed)
+    end
     if phase=="RELEASE" then
+        if n.chargeCue then sound.stopCue(n.chargeCue);n.chargeCue=nil end
         n.charge=1;n.releaseCount=n.releaseCount+1
         for i=1,N.count(a) do local x,y=N.position(a,i,"CHARGE",1);n.launch[i]={x=x,y=y} end
-        sound.play("nen_"..a.profile.id.."_release",1.07-(n.tier-1)*.085)
+        sound.play("nen_"..a.profile.id.."_release"..weight,speed)
     end
-    if phase=="CHARGE" and n.tier==3 and not n.reducedMotion then sound.silence(.035) end
-    if phase=="ENEMY_IMPACT" then sound.play("nen_"..a.profile.id.."_impact",1.05-(n.tier-1)*.11) end
+    if phase=="ENEMY_IMPACT" then
+        sound.play("nen_"..a.profile.id.."_"..(a.contactKind or "impact")..weight,1.05-(n.tier-1)*.11)
+    end
 end
 function N.update(a,phase,p)
     local n=a.nen;n.stage=phase;n.phaseProgress=p
@@ -214,17 +222,18 @@ function N.cardPose(a,i,p)
 end
 function N.camera(a,age)
     local n=a.nen;if n.reducedMotion then return 0,0 end
-    local p=clamp(age/C.camera.duration);local kick=C.camera.kick[n.tier]*math.exp(-7*p)*(1-p)*math.cos(7*p)
+    local p=clamp(age/C.camera.duration);local kick=C.camera.kick[n.tier]*Motion.impact(age,C.camera.duration)*math.cos(7*p)
     local side=a.profile.id=="pair" and .35 or a.profile.id=="straight" and -.35 or .08
     return side*kick,-kick
 end
 function N.reaction(a,age)
-    local n=a.nen;local p=clamp(age/C.camera.duration);local weight=n.reducedMotion and .3 or 1
-    local impulse=math.exp(-6.5*p)*(1-p)*math.cos(7*p)
+    local n=a.nen;local p=clamp(age/C.camera.duration);local weight=n.reducedMotion and 0 or 1
+    local impulse=Motion.impact(age,C.camera.duration)
     return -C.camera.recoil[n.tier]*impulse*weight,1-.075*impulse*weight,(1-p)^2.8
 end
 function N.cancel(a)
     if not a or not a.nen then return end
     local n=a.nen;n.cancelled=true;n.particleCount=0;n.points={};n.launch={}
+    if n.chargeCue then require("src.sound").stopCue(n.chargeCue);n.chargeCue=nil end
 end
 return N

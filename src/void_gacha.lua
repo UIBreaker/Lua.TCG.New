@@ -21,7 +21,7 @@ end
 local function rarity()
     local roll=Rng.random();local total=0
     for _,r in ipairs(D.RARITIES) do total=total+Shop.SPN_RARITY_WEIGHTS[r.id];if roll<total then return r.id end end
-    return "unique"
+    return D.RARITIES[#D.RARITIES].id
 end
 local function deity(id,r)
     local item=Clone(D.CATALOG[id]);item.rarity=r;item.baseRarity=r

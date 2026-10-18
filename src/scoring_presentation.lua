@@ -5,6 +5,7 @@ local Sound = require("src.sound")
 local Attacks = require("src.hand_attacks")
 local Feedback = require("src.combat_feedback")
 local Nen = require("src.nen_combat")
+local Motion = require("src.motion")
 Feel.Attacks = Attacks
 local C = Feel.config
 local clamp = function(v, a, b) return math.max(a, math.min(b, v)) end
@@ -31,7 +32,7 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId,context)
     attack.cx=enemy and enemy.screenX or attack.cx
     if attack.nen then attack.nen.snapshot.targetX=attack.cx end
     local q, t = {}, C.timing
-    append(q, "ENTRY", t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
+    append(q, "ENTRY", context.reducedMotion and 0.08 or t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
     local base = result.steps[1]
     append(q, "HAND_REVEAL", t.hand, base, 1)
     append(q, "BASE_DAMAGE", t.base, base, 1)
@@ -77,7 +78,10 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId,context)
     append(q, "SETTLE", math.max(attack.profile.timing[5], t.trailDelay+t.trail-attack.profile.timing[4]))
     end
     anim.sequence = {events = q, index = 1, age = 0, time = 0, entered = false, finished = false,
-        attack = attack, intensity = intensity, result = result, ui = ui, deities = deities or {},
+        attack = attack, intensity = intensity, result = result, ui = ui, deities = deities or {}, enemy=enemy,
+        reducedMotion=context.reducedMotion==true or attack.nen and attack.nen.reducedMotion or false,
+        armor=enemy and enemy.creatureArmor or 0, armorBefore=enemy and enemy.creatureArmor or 0,
+        armorTrail=enemy and enemy.creatureArmor or 0, armorTarget=enemy and enemy.creatureArmor or 0,
         hp = initialHp or 0, hpTrail = initialHp or 0, hpBefore = initialHp or 0,
         cameraAge = attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration, damageApplied = false, energy = {}, links = {},
         high = attack.tier >= 3, tickAge = 0, milestone = 1000}
@@ -86,7 +90,33 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId,context)
     anim.currentStepIndex, anim.entranceTimer = 0, 0
     anim.stepCategory, anim.stepLog = "CHUẨN BỊ", "Đưa bài vào vùng tính điểm"
     anim.cardTransform, anim.energyBolts = {}, {}
+    anim.deityHit={}
     return anim.sequence
+end
+
+function Feel.spnPose(anim,index,reduced)
+    local age=anim.deityHit and anim.deityHit[index]
+    local pulse=age and Motion.impact(age,.36) or 0
+    if reduced then return 1,0,0,pulse*.3 end
+    return 1+.045*pulse,-5*pulse,.008*pulse,pulse*.55
+end
+
+function Feel.cardPose(anim,index)
+    local s,t=anim.sequence,C.timing
+    local targetX=s.ui.getScoringCardX(index,#anim.playedCards)
+    local start=anim.cardEntryFrom and anim.cardEntryFrom[index]
+    local fromX,fromY=start and start.x or targetX,start and start.y or 490
+    local age=math.max(0,(anim.entranceTimer or 0)-(index-1)*t.stagger)
+    local travel=clamp((age-t.lift)/t.travel,0,1)
+    local p=s.reducedMotion and 1 or Motion.settle(travel,1)
+    local lift=s.reducedMotion and 0 or 12*smooth(age/t.lift)*(1-p)
+    local pulse=not s.reducedMotion and anim.cardHit and anim.cardHit[index]
+    pulse=pulse and Motion.impact(pulse,t.cardPulse) or 0
+    return {x=fromX+(targetX-fromX)*p,
+        y=fromY+(295-fromY)*p-lift-(s.reducedMotion and 0 or math.sin(travel*math.pi)*14)-8*pulse,
+        scale=((start and start.scale or 1)+(0.96-(start and start.scale or 1))*p)*(1+0.02*pulse),
+        rotation=(s.reducedMotion and 0 or (start and start.rotation or 0)*(1-p))+0.02*pulse*(index%2==0 and 1 or -1),
+        scaleX=1+0.018*pulse,scaleY=1+0.03*pulse}
 end
 
 local function play(s, name, boost)
@@ -102,7 +132,7 @@ local function sourcePoint(anim, st)
         return x + w / 2, y + h / 2
     end
     for i, card in ipairs(anim.playedCards) do
-        if st.card == card then return ui.getScoringCardX(i, #anim.playedCards) + 48, 355, i end
+        if st.card == card then local p=Feel.cardPose(anim,i);return p.x+48,p.y+70,i end
     end
     return ui.BATTLE_CENTER_X, 445
 end
@@ -127,11 +157,12 @@ local function trigger(anim, st)
     if st.type=="equipment_trigger" then Effects.triggerEquipmentPulse(st.card,st.equipmentIndex) end
     anim.activeCardIndex = cardIndex
     if st.slotIndex then
-        anim.deityBounce[st.slotIndex] = C.pulse.spn
+        anim.deityHit=anim.deityHit or {}
+        anim.deityHit[st.slotIndex]=anim.deityHit[st.slotIndex] or 0
         Effects.triggerScorePulse(st.deity or s.deities[st.slotIndex])
     elseif cardIndex then
-        anim.cardBounce[cardIndex] = {scaleX = C.pulse.cardX, scaleY = C.pulse.cardY}
-        anim.cardHit[cardIndex] = 0
+        anim.cardBounce[cardIndex] = {scaleX = 1, scaleY = 1}
+        anim.cardHit[cardIndex] = anim.cardHit[cardIndex] or 0 -- Consecutive effects on one card share its current lift.
         Effects.triggerScorePulse(st.card)
         if st.type == "card_scored" then anim.scoredCards[cardIndex] = st end
     end
@@ -282,6 +313,7 @@ end
 
 function Feel.isFinished(anim) return anim.sequence and anim.sequence.finished end
 function Feel.cancel(anim)
+    if anim then anim.deityHit={} end
     local s=anim and anim.sequence
     if not s then return end
     Nen.cancel(s.attack);s.finished=true;s.index=#s.events+1;s.links={}
@@ -291,21 +323,11 @@ end
 
 function Feel.update(anim, dt, fast)
     local s = anim.sequence
+    local t = C.timing
     if not s or s.finished then return end
     local speed = s.forward and C.speed.forward or (fast and C.speed.fast or C.speed.normal)
+    if s.attack.nen then s.attack.nen.audioSpeed=speed*s.attack.nen.speed end
     dt = clamp(dt, 0, C.maxFrameDt) * speed
-    s.time = s.time + dt
-    s.cameraAge = math.min(s.attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration, s.cameraAge + dt)
-    for i = #s.links, 1, -1 do
-        local p = s.links[i]
-        p.age = p.age + dt
-        if p.age >= p.duration then table.remove(s.links, i) end
-    end
-    if s.damageApplied then
-        s.hpAge = s.hpAge + dt
-        s.hp = s.hpBefore + (s.hpTarget - s.hpBefore) * ease(s.hpAge / C.timing.hp)
-        s.hpTrail = s.hpBefore + (s.hpTarget - s.hpBefore) * ease((s.hpAge - C.timing.trailDelay) / C.timing.trail)
-    end
     while not s.finished do
         local ev = s.events[s.index]
         if not s.entered then
@@ -319,11 +341,32 @@ function Feel.update(anim, dt, fast)
         end
         local consumed = math.min(dt, math.max(0, ev.duration - s.age))
         s.age, dt = s.age + consumed, dt - consumed
+        s.time=s.time+consumed
+        s.cameraAge=math.min(s.attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration,s.cameraAge+consumed)
+        for index,age in pairs(anim.cardHit or {}) do
+            age=age+consumed;anim.cardHit[index]=age<t.cardPulse and age or nil
+        end
+        for index,age in pairs(anim.deityHit or {}) do
+            age=age+consumed;anim.deityHit[index]=age<.36 and age or nil
+        end
+        for i=#s.links,1,-1 do
+            local l=s.links[i];l.age=l.age+consumed
+            if l.age>=l.duration then table.remove(s.links,i) end
+        end
+        if s.damageApplied then
+            s.hpAge=s.hpAge+consumed
+            local hp=smooth(s.hpAge/C.timing.hp)
+            local trail=smooth((s.hpAge-C.timing.trailDelay)/C.timing.trail)
+            s.hp=s.hpBefore+(s.hpTarget-s.hpBefore)*hp
+            s.hpTrail=s.hpBefore+(s.hpTarget-s.hpBefore)*trail
+            s.armor=s.armorBefore+(s.armorTarget-s.armorBefore)*hp
+            s.armorTrail=s.armorBefore+(s.armorTarget-s.armorBefore)*trail
+        end
         local p = clamp(s.age / ev.duration, 0, 1)
         Attacks.update(s.attack, ev.kind, p)
         if ev.kind == "ENTRY" then anim.entranceTimer = s.age
         elseif ev.kind == "BASE_DAMAGE" or ev.kind == "BASE_ENHANCE" or ev.kind == "TRIGGER" or ev.kind == "FORMULA" then
-            local wait = s.multiply and C.timing.multiplyAnticipation or 0
+            local wait = s.multiply and C.timing.multiplyAnticipation or C.timing.countDelay
             local k = smooth((s.age - wait) / math.max(0.01, ev.duration - C.timing.gap - wait))
             anim.displayChips = s.fromChips + (s.toChips - s.fromChips) * k
             anim.displayMult = s.fromMult + (s.toMult - s.fromMult) * k
@@ -358,15 +401,23 @@ function Feel.update(anim, dt, fast)
     end
 end
 
-function Feel.damageApplied(anim, hp, actualDamage,missed)
+function Feel.damageApplied(anim, hp, actualDamage,missed,armor,outcome)
     local s = anim.sequence
     if not s or s.damageApplied then return end
     s.damageApplied, s.hpAge, s.hpTarget, s.actualDamage = true, 0, math.max(0, hp), actualDamage
+    s.armorTarget=math.max(0,armor or s.armorBefore or 0)
     s.missed=missed;s.attack.missed=missed
     if missed then
         anim.hitStop=0;s.cameraAge=10
         anim.stepCategory,anim.stepLog="ĐÁNH HỤT","Mục tiêu né được đòn đánh"
-    else Attacks.enter(s.attack,"ENEMY_IMPACT") end
+    else
+        outcome=outcome or {armorBroken=s.armorBefore>0 and s.armorTarget<=0,finisher=s.hpBefore>0 and s.hpTarget<=0,
+            bossFinisher=s.enemy and s.enemy.isBoss and s.hpBefore>0 and s.hpTarget<=0}
+        s.attack.contactKind=outcome.finisher and (outcome.bossFinisher and (outcome.armorBroken and "boss_armored_finisher" or "boss_finisher")
+            or outcome.armorBroken and "armored_finisher" or "finisher")
+            or outcome.armorBroken and "armor_break" or "impact"
+        Attacks.enter(s.attack,"ENEMY_IMPACT")
+    end
     anim.damageDealt = actualDamage
     if actualDamage > 0 then
         local nen=s.attack.nen
@@ -381,15 +432,16 @@ function Feel.damageApplied(anim, hp, actualDamage,missed)
         anim.floatingTexts[#anim.floatingTexts+1] = {text=missed and "BẠN ĐÁNH HỤT" or "ĐÒN BỊ CHẶN",color={0.4,0.84,1},
             x=s.attack.cx or s.ui.BATTLE_CENTER_X,y=232,alpha=1.6}
     end
+    return not missed and s.attack.nen~=nil and outcome.finisher
 end
 
 function Feel.camera(anim)
     local s = anim.sequence
-    if not s or s.missed then return 0, 0 end
+    if not s or s.missed or s.reducedMotion then return 0, 0 end
     if s.attack.nen then return Nen.camera(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local amount = 0.5 + Attacks.config.camera.maxKick * s.intensity
-    local decay = math.exp(-7*p)*(1-p)
+    local decay = Motion.impact(s.cameraAge,Attacks.config.camera.duration)
     -- One directional punch and a small rebound, not many oscillations.
     local spring=math.cos(p*7)
     return s.attack.profile.camera.x*amount*spring*decay,
@@ -403,8 +455,9 @@ function Feel.enemyReaction(anim)
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2
     local force=s.attack.tier>1 and s.intensity or 0.12
-    local recoil=-Attacks.config.camera.maxRecoil*force*math.sin(p*8+0.22)*math.exp(-5*p)*(1-p)
-    local compression=math.cos(p*7)*math.exp(-6*p)*(1-p)
+    if s.reducedMotion then return 0,1,hit*0.4 end
+    local compression=Motion.impact(s.cameraAge,Attacks.config.camera.duration)
+    local recoil=-Attacks.config.camera.maxRecoil*force*compression
     return recoil,1-0.07*compression*(0.3+s.intensity),hit
 end
 
@@ -426,15 +479,15 @@ function Feel.draw(anim, ui)
     g.push("all")
     for _, l in ipairs(s.links) do
         local k=clamp(l.age/l.duration,0,1)
-        local flight=smooth((k-0.20)/0.80)
+        local flight=s.reducedMotion and 0 or Motion.settle((l.age-C.timing.countDelay)/.18,1)
         local x,y=l.x+(l.tx-l.x)*flight,l.y+(l.ty-l.y)*flight-math.sin(flight*math.pi)*22
-        local fade=1-smooth((k-0.55)/0.45)
+        local fade=(1-smooth((k-0.55)/0.45))*smooth(l.age/.06)
         g.push("all");g.setBlendMode("add")
-        g.setColor(l.color[1],l.color[2],l.color[3],(1-k)*0.12)
+        g.setColor(l.color[1],l.color[2],l.color[3],s.reducedMotion and 0 or (1-k)*0.12*fade)
         g.setLineWidth(3);g.line(x,y,x+(l.x-x)*0.045,y+(l.y-y)*0.045)
         g.setColor(l.color[1],l.color[2],l.color[3],math.sin(flight*math.pi)*0.85)
         g.circle("fill",x,y,l.multiply and 3.5 or 2.5)
-        if l.echo then g.setLineWidth(1);g.line(l.x,l.y,x,y);g.circle("line",x,y,7+4*k) end
+        if l.echo and not s.reducedMotion then g.setLineWidth(1);g.line(l.x,l.y,x,y);g.circle("line",x,y,7+4*k) end
         g.pop()
         -- The value stays beside its source; only a small energy mote travels.
         if l.x>=240 then
@@ -442,9 +495,9 @@ function Feel.draw(anim, ui)
             l.feedback.age=l.age;l.feedback.alpha=fade
             Feedback.draw(l.feedback,ui)
         else
-        g.push("all");g.translate(l.x,l.y-10*smooth(k))
-        local pop=1+0.23*math.exp(-l.age*11)*math.sin(l.age*26)-0.12*math.exp(-l.age*35)
-        g.scale(pop);g.rotate(l.multiply and math.sin(l.age*19)*math.exp(-l.age*12)*0.035 or 0)
+        g.push("all");g.translate(l.x,l.y-(s.reducedMotion and 0 or 10*smooth(k)))
+        local pulse=s.reducedMotion and 0 or Motion.impact(l.age,.30)
+        g.scale(1+.045*pulse);g.rotate(l.multiply and pulse*.008 or 0)
         g.setFont(l.multiply and ui.fonts.medium or (ui.fonts.regular or ui.fonts.small))
         local width=g.getFont():getWidth(l.text)
         if width>118 then g.scale(118/width) end

@@ -20,8 +20,18 @@ vec4 effect(vec4 color, Image texture, vec2 uv, vec2 screen_coords) {
     number core=1.0-smoothstep(.04,.20,r);
     number halo=exp(-pow(r-.24,2.0)*130.0);
     number filaments=pow(max(0.0,sin(a*5.0-r*32.0+u_time*u_speed*2.0)),22.0)*exp(-pow(r-.29,2.0)*90.0);
-    rgb*=1.0-core*min(.65,u_intensity*.38);
+    vec2 disc=vec2(p.x+p.y*.28,p.y*3.6);
+    number discR=length(disc);
+    number accretion=exp(-pow(discR-.34,2.0)*1800.0);
+    number haze=exp(-pow(discR-.34,2.0)*130.0);
+    number orbit=.4+.6*pow(.5+.5*sin(atan(disc.y,disc.x)*3.0-u_time*u_speed*2.0),4.0);
+    number occlusion=smoothstep(.12,.21,r);
+    rgb*=1.0-core*min(.88,.45+u_intensity*.30);
     rgb+=vec3(.54,.10,.92)*(ring*.40+spiral*.25+halo*.12+filaments*.22)*u_intensity;
     rgb+=vec3(.92,.64,1.0)*ring*.28*u_intensity;
+    rgb+=vec3(.46,.18,1.0)*(accretion*.52+haze*.10)*orbit*occlusion*u_intensity;
+    rgb+=vec3(.91,.77,1.0)*accretion*.23*orbit*occlusion*u_intensity;
+    number horizon=exp(-pow(r-.17,2.0)*2800.0);
+    rgb+=vec3(.70,.29,1.0)*horizon*(.30+orbit*.18)*u_intensity;
     return vec4(clamp(rgb,0.0,1.0),original.a);
 }

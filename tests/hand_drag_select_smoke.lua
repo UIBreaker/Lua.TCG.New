@@ -11,14 +11,16 @@ local env = setmetatable({
     anim = {floatingTexts = {}}, juice = {}, buttons = {},
     shopDrag = {active = false}, deityDrag = {active = false},
     Touch = {enabled = false, cancel = function() end, mouseInput = function() end},
+    Renderer = {transitionBusy = function() return false end},
     UI = {BATTLE_ARENA_X = 200, BATTLE_ARENA_W = 650, AbilityUI = {}, ScoringFeel = {},
-        COLORS = {}, Inventory = {limit = function() return 0 end}, CardPhysics = {
+        COLORS = {}, Backpack = {}, ExpandedInventory = {}, HandMotion = {busy = function() return false end}, Inventory = {limit = function() return 0 end}, CardPhysics = {
+            move = function() end,
             release = function() held = false end,
             isLabOpen = function() return false end,
             hit = function(_, _, _, fallback) return fallback end,
         }},
     DeathVFX = {enemyActive = function() return false end, busy = function() return false end},
-    EnemyFormation = {press = function() return false end},
+    EnemyFormation = {press = function() return false end,inventoryAt = function() end},
     Deities = {getMaxSlots = function() return 0 end},
     Deck = require("src.deck"),
     CardEffects = {triggerSelectPulse = function(card) card.pulses = (card.pulses or 0) + 1 end},

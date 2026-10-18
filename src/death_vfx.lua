@@ -4,6 +4,7 @@ local Sound=require("src.sound")
 local Camera=require("render.camera")
 local Light=require("render.lighting")
 local EnemyArt=require("src.enemy_art")
+local Motion=require("src.motion")
 local D={config=C,pool={},silhouettes={},count=0,age=0}
 local function clamp(x) return math.max(0,math.min(1,x)) end
 local function ramp(t,a,b) local p=clamp((t-a)/(b-a));return p*p*(3-2*p) end
@@ -45,16 +46,23 @@ function D.reset()
 end
 function D.busy() return D.kind~=nil and D.age<D.duration end
 function D.enemyActive(monster) return D.kind=="enemy" and D.monster==monster end
-function D.startEnemy(monster,x,quality)
+function D.camera()
+    if D.reducedMotion or D.kind~="player" and D.kind~="enemy" then return 0,0 end
+    local strength=D.kind=="player" and 1.4 or D.preset.kick*.65
+    local p=Motion.impact(D.age,.30)
+    return -strength*.25*p,strength*.6*p
+end
+function D.startEnemy(monster,x,quality,reducedMotion,authoredAudio)
     if not monster or D.seen==monster then return false end
     D.kind,D.monster,D.seen,D.age,D.count="enemy",monster,monster,0,0
+    D.reducedMotion=reducedMotion==true
     D.preset=monster.isBoss and C.enemy.boss or monster.isElite and C.enemy.elite or C.enemy.mini
     D.points=D.silhouettes[EnemyArt.key(monster)] or D.silhouettes[monster.isBoss and "boss" or monster.isElite and "elite" or "mini"]
     D.duration,D.stop,D.x,D.y=D.preset.duration,D.preset.stop,x or 640,270
-    D.limit=math.min(C.particles.max,math.floor((C.particles[quality] or C.particles.HIGH)*D.preset.count))
-    D.burst=false;Sound.play("enemy_death_hit")
-    Camera.kick(-D.preset.kick,D.preset.kick*0.35)
-    Light.flash(D.x,D.y,C.enemy.crack,0.38,0.26,240)
+    D.limit=math.min(C.particles.max,math.floor((C.particles[quality] or C.particles.HIGH)*D.preset.count*(D.reducedMotion and .3 or 1)))
+    D.authoredAudio=authoredAudio==true
+    D.burst=false;if not D.authoredAudio then Sound.play("enemy_death_hit") end
+    Light.flash(D.x,D.y,C.enemy.crack,D.reducedMotion and .09 or 0.25,0.26,240)
     return true
 end
 function D.startChest(quality,reducedMotion)
@@ -73,7 +81,7 @@ function D.startPlayer(x,quality,reducedMotion)
     D.reducedMotion=reducedMotion==true
     D.limit=math.min(C.particles.max,C.particles[quality] or C.particles.HIGH);D.burst=false
     D.ambience,D.text=false,false
-    Sound.play("defeat_hit");if not D.reducedMotion then Camera.kick(-2,5) end
+    Sound.play("defeat_hit")
     Light.flash(D.x,D.y,C.player.soul,0.20,0.28,220)
 end
 function D.emit()
@@ -102,7 +110,9 @@ function D.emit()
             p.ox,p.oy=p.x,p.y
         end
     end
-    Sound.play(D.kind=="chest" and "chest_dissolve" or enemy and "enemy_ash_break" or "defeat_collapse",enemy and 1 or 0.7)
+    if D.kind~="enemy" or not D.authoredAudio then
+        Sound.play(D.kind=="chest" and "chest_dissolve" or enemy and "enemy_ash_break" or "defeat_collapse",enemy and 1 or 0.7)
+    end
 end
 function D.update(dt)
     if not D.kind then return end
@@ -173,7 +183,7 @@ function D.drawEnemy(image,x,y,size,card)
             or -C.enemy.rotation*math.sin(clamp(p/0.65)*math.pi))*motion)
         if D.shader then
             D.shader:send("dissolveAmount",dissolve);D.shader:send("crackAmount",ramp(p,C.enemy.crackAt,C.enemy.breakAt)*(1-dissolve))
-            D.shader:send("flashAmount",(1-ramp(p,0.04,0.14))*(D.kind=="chest" and (D.reducedMotion and 0 or 0.18) or 0.8))
+            D.shader:send("flashAmount",(1-ramp(p,0.04,0.14))*(D.reducedMotion and .06 or D.kind=="chest" and .18 or .6))
             D.shader:send("emberColor",D.kind=="chest" and {1,0.82,0.43} or C.enemy.ember);D.shader:send("crackGlowColor",C.enemy.crack);g.setShader(D.shader)
         end
         if not D.shader then
@@ -233,15 +243,21 @@ end
 function D.cardProgress() return D.kind=="player" and ramp(D.age,0.16,1.12) or 0 end
 function D.uiProgress() return D.kind=="player" and ramp(D.age,C.player.buttonsAt,C.player.duration) or 1 end
 function D.infoProgress() return D.kind=="player" and ramp(D.age,C.player.textAt+0.28,C.player.buttonsAt+0.12) or 1 end
+function D.cardPose(index)
+    local delay=math.min(index-1,7)*C.player.cardStagger
+    local p=Motion.settle(D.age-0.16-delay,0.96)
+    if D.reducedMotion then return 0,0,0,clamp(p) end
+    local direction=index%2==0 and -1 or 1
+    local recoil=Motion.impact(D.age-D.stop,0.30)*7
+    return direction*C.player.cardSpread*p,C.player.cardDrop*p-recoil,direction*C.player.cardTilt*p,clamp(p)
+end
 function D.drawCard(UI,card,x,y,w,h,index)
-    local g=love.graphics;local delay=math.min(index-1,7)*C.player.cardStagger
-    local p=ramp(D.age,0.16+delay,1.12+delay);local direction=index%2==0 and -1 or 1
-    local motion=D.reducedMotion and 0.20 or 1
-    local recoil=math.sin(ramp(D.age,D.stop,0.30)*math.pi)*7
-    g.push("all");g.translate(x+w/2+direction*C.player.cardSpread*p*motion,y+h/2+(C.player.cardDrop*p-recoil)*motion)
-    g.rotate(direction*C.player.cardTilt*p*motion);g.translate(-x-w/2,-y-h/2)
+    local g=love.graphics;local dx,dy,rotation,p=D.cardPose(index)
+    g.push("all");g.translate(x+w/2+dx,y+h/2+dy)
+    g.rotate(rotation);g.translate(-x-w/2,-y-h/2)
     UI.CardPhysics.suspend();UI.drawCard(card,x,y,w,h);UI.CardPhysics.resume()
-    g.setShader();g.setColor(0.025,0.023,0.04,p*0.82);g.rectangle("fill",x,y,w,h,6,6)
+    g.translate(x+w/2,y+h/2);g.rotate(card.rotation or 0);g.scale(card.visualScale or 1)
+    g.setShader();g.setColor(0.025,0.023,0.04,p*0.82);g.rectangle("fill",-w/2,-h/2,w,h,6,6)
     g.pop()
 end
 function D.drawPlayer(UI)
@@ -249,7 +265,7 @@ function D.drawPlayer(UI)
     local g=love.graphics;local t=D.age
     g.push("all");g.setShader()
     local close=ramp(t,0.06,1.42)
-    local impact=(1-ramp(t,0.035,0.28))*(D.reducedMotion and 0.12 or 0.65)
+    local impact=Motion.impact(t,0.28)*(D.reducedMotion and 0.12 or 0.50)
     if D.playerShader and Light.radial then
         D.playerShader:send("progress",close);D.playerShader:send("elapsed",D.reducedMotion and 0 or D.clock)
         D.playerShader:send("impact",impact);D.playerShader:send("shadow",C.player.shadow)
@@ -294,19 +310,20 @@ function D.drawPlayer(UI)
         g.setColor(0.61,0.40,0.34,reveal*0.24);g.setLineWidth(1)
         for i=1,9 do local a=i*math.pi*2/9
             local drift=D.reducedMotion and 0 or (1-reveal)*0.12
-            g.arc("line","open",640,C.overlay.sigilY,113+(1-reveal)*14,a+drift,a+drift+0.43)
+            g.arc("line","open",640,C.overlay.sigilY,113+(D.reducedMotion and 0 or (1-reveal)*14),a+drift,a+drift+0.43)
         end
         g.setBlendMode("alpha")
         g.setColor(0.74,0.52,0.39,reveal*0.60)
         local span=148*reveal
         g.line(640-span-18,153,622,153);g.line(658,153,658+span,153)
         g.polygon("line",640,147,646,153,640,159,634,153)
-        for i=1,C.overlay.dust do
+        for i=1,D.reducedMotion and 0 or C.overlay.dust do
             local x=380+random(i)*520;local y=140+(random(i+32)*270-(D.clock or t)*(3+random(i)*5))%270
             g.setColor(0.63,0.55,0.52,reveal*0.16);g.circle("fill",x,y,1+random(i+5))
         end
-        g.push();g.translate(640,C.overlay.textY+(D.reducedMotion and 0 or (1-reveal)*9))
-        local scale=1+(D.reducedMotion and 0 or (1-reveal)*0.085);g.scale(scale)
+        local settle=D.reducedMotion and 1 or Motion.settle(t-C.player.textAt,C.player.textFade)
+        g.push();g.translate(640,C.overlay.textY+(1-settle)*9)
+        local scale=1+(1-settle)*0.06;g.scale(scale)
         g.setFont(UI.fonts.huge);g.setColor(0,0,0,reveal*0.9);g.printf(C.overlay.title,-640,4,1280,"center")
         g.setColor(0.88,0.65,0.57,reveal);g.printf(C.overlay.title,-640,0,1280,"center");g.pop()
     end

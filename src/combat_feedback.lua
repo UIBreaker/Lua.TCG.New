@@ -134,7 +134,7 @@ function F.new(kind, amount, x, y, format)
         age=0, life=duration, maxLife=duration, alpha=1, rewardLevel=rewardLevel,label=label}
 end
 
-function F.add(list, kind, amount, x, y, format)
+function F.add(list, kind, amount, x, y, format,quiet)
     local ft = F.new(kind, amount, x, y, format)
     if kind=="damage" then
         -- Three readable lanes per target; a new hit replaces its oldest lane.
@@ -171,7 +171,7 @@ function F.add(list, kind, amount, x, y, format)
         local vx,vy=x,y
         if kind=="heal" and y==114 then vx,vy=320,43
         elseif kind=="armor" and y==85 then vx,vy=245,23 end
-        local silent=y>=450
+        local silent=quiet or y>=450
         -- Contact and HUD describe the same hit; keep one transient.
         if amount<0 and y<150 then
             for _,e in ipairs(F.vfx) do if e.kind==effect and e.age<0.06 then silent=true;break end end

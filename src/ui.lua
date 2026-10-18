@@ -3,7 +3,7 @@ local ContinentalArt = require("src.continental_art")
 UI.CardFrame = require("ui.components.card_frame")
 function UI.drawCardBorder(x,y,w,h,highlight,alpha,card)
     local function draw(a,b,c,d)
-        UI.CardFrame.draw(a,b,c,d,highlight,alpha,card)
+        UI.CardFrame.draw(a,b,c,d,highlight,alpha,card,UI.Polish and UI.Polish.time or 0,UI.Polish and UI.Polish.reducedMotion)
         if card and card.rank and not card.faceDown and UI.drawPlayingMetadata then
             love.graphics.push("all");love.graphics.translate(a,b)
             UI.drawPlayingMetadata(card,c,d,true);love.graphics.pop()
@@ -1277,35 +1277,7 @@ end
 -- Full Tarot Card Frame for Hộ Linh (Patrons)
 
 local function drawRarityPennant(deity, width, height)
-    local badge, color = Deities.getRarityBadge(deity)
-    local font = UI.fonts.small
-    local flagX, flagY, flagW, flagH = UI.CardFrame.pennantRect(width, height)
-    local notchY = flagY + flagH * 0.73
-    local isCommon = (deity.rarity or "common") == "common" and (deity.evolutionLevel or 0) == 0
-    local fill = isCommon and { 0.78, 0.82, 0.88, 1 } or color
-
-    love.graphics.setColor(0, 0, 0, 0.82)
-    love.graphics.polygon("fill", flagX, flagY, flagX + flagW, flagY,
-        flagX + flagW, flagY + flagH, flagX + flagW / 2, notchY, flagX, flagY + flagH)
-    love.graphics.setColor(fill)
-    love.graphics.polygon("fill", flagX + 1, flagY + 1, flagX + flagW - 1, flagY + 1,
-        flagX + flagW - 1, flagY + flagH - 1, flagX + flagW / 2, notchY - 1,
-        flagX + 1, flagY + flagH - 1)
-    love.graphics.setColor(1, 1, 1, 0.52)
-    love.graphics.line(flagX + 3, flagY + 2, flagX + flagW - 3, flagY + 2)
-    love.graphics.setLineWidth(0.8)
-    love.graphics.setColor(0.025, 0.035, 0.055, 1)
-    love.graphics.polygon("line", flagX, flagY, flagX + flagW, flagY,
-        flagX + flagW, flagY + flagH, flagX + flagW / 2, notchY, flagX, flagY + flagH)
-
-    local textScale = math.min(1, (flagW - 5) / math.max(1, font:getWidth(badge)), flagH * 0.55 / font:getHeight())
-    love.graphics.push()
-    love.graphics.translate(flagX + flagW / 2, flagY + flagH * 0.12)
-    love.graphics.scale(textScale)
-    love.graphics.setFont(font)
-    love.graphics.setColor(0.035, 0.045, 0.065, 1)
-    love.graphics.printf(badge, -flagW / (2 * textScale), 0, flagW / textScale, "center")
-    love.graphics.pop()
+    UI.CardFrame.drawRarityPennant(deity,width,height,UI.fonts.medium,UI.Polish.time,UI.Polish.reducedMotion)
 end
 
 function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, copyTarget,

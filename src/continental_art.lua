@@ -6,7 +6,6 @@ function Art.get(id)
     if Art.cache[id]~=nil then return Art.cache[id] or nil end
     local path=paths[id]
     if Art.cache[path] then Art.cache[id]=Art.cache[path];return Art.cache[path] end
-    if not love.filesystem.getInfo(path) then return nil end
     -- Load the already-sized texture instead of decoding a multi-megabyte
     -- source PNG and allocating a resize Canvas on the first card visit.
     local runtimeBase=path:gsub("assets/cards/continental/", "assets/cards/continental/runtime/", 1):gsub("%.png$", "")
@@ -15,6 +14,7 @@ function Art.get(id)
         local candidate=runtimeBase..extension
         if love.filesystem.getInfo(candidate) then loadPath=candidate;break end
     end
+    if not love.filesystem.getInfo(loadPath) then return nil end
     local image=love.graphics.newImage(loadPath);image:setFilter("linear","linear")
     local w,h=image:getDimensions()
     if w>512 then

@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import io
 import json
+import re
 from pathlib import Path
 import shutil
 import urllib.request
@@ -10,7 +11,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "c4f04e185033a7c9fbefa9be3bec88c41a90421b"
-VERSION = "0.83.3"
+VERSION = "0.138.1"
 
 
 def runtime_files(root):
@@ -29,14 +30,16 @@ def packed_image(path, mobile):
         if "ui" in path.relative_to(ROOT).parts:
             return path.read_bytes()
         image = image.convert("RGBA")
-        if "scene" in path.parts and image.width > image.height:
+        if "runtime" in path.relative_to(ROOT).parts:
+            bounds = (256, 384) if mobile else (512, 768)
+        elif "scene" in path.parts and image.width > image.height:
             bounds = (1280, 720) if mobile else (1920, 1080)
         else:
             bounds = (256, 384) if mobile else (512, 768)
         image.thumbnail(bounds, Image.Resampling.LANCZOS)
         if path.suffix.lower() in (".jpg", ".jpeg"):
             output = io.BytesIO()
-            image.convert("RGB").save(output, "JPEG", quality=94, subsampling=0, optimize=True)
+            image.convert("RGB").save(output, "JPEG", quality=88, subsampling=0, optimize=True)
             return output.getvalue()
         image = image.quantize(colors=192 if mobile else 256, method=Image.Quantize.FASTOCTREE)
         output = io.BytesIO()
@@ -46,18 +49,42 @@ def packed_image(path, mobile):
 
 def package(target, mobile=False):
     from build_runtime_card_art import build
+    from build_runtime_audio import build as build_audio
     build()
+    audio = build_audio()
+    originals = set(re.findall(r'"(assets/cards/continental/[^"\n]+\.png)"',
+                              (ROOT / "config/continental_asset_paths.lua").read_text(encoding="utf-8")))
+    runtime = set()
+    for original in originals:
+        base = ROOT / original.replace("continental/", "continental/runtime/", 1)
+        replacement = next((base.with_suffix(ext) for ext in (".jpg", ".png") if base.with_suffix(ext).exists()), None)
+        assert replacement, f"Missing runtime texture: {original}"
+        runtime.add(replacement.relative_to(ROOT).as_posix())
+    totals = {}
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for path in runtime_files(ROOT):
+            name = path.relative_to(ROOT).as_posix()
+            if name.startswith("assets/cards/continental/") and name not in runtime:
+                continue
             if mobile and path.suffix == ".ogv":
                 continue
-            data = packed_image(path, mobile) if path.suffix.lower() in (".png", ".jpg", ".jpeg") else path.read_bytes()
-            archive.writestr(path.relative_to(ROOT).as_posix(), data)
+            packed_audio = audio.get(path.relative_to(ROOT))
+            if packed_audio:
+                data = packed_audio.read_bytes()
+                name = str(Path(name).with_suffix(packed_audio.suffix)).replace("\\", "/")
+            else:
+                data = packed_image(path, mobile) if path.suffix.lower() in (".png", ".jpg", ".jpeg") else path.read_bytes()
+            archive.writestr(name, data)
         if mobile:
             archive.writestr("mobile_build.flag", "phone/web build\n")
     with zipfile.ZipFile(target) as archive:
         assert archive.testzip() is None
         assert "main.lua" in archive.namelist() and not any(p.startswith("docs/") for p in archive.namelist())
+        assert runtime.issubset(archive.namelist()) and not originals.intersection(archive.namelist())
+        for entry in archive.infolist():
+            group = entry.filename.split("/")[0] if not entry.filename.startswith("assets/") else "/".join(entry.filename.split("/")[:2])
+            totals[group] = totals.get(group, 0) + entry.compress_size
+    target.with_suffix(".size.json").write_text(json.dumps(totals, indent=2), encoding="utf-8")
     print(f"{target.name}: {target.stat().st_size / 1048576:.1f} MiB", flush=True)
 
 

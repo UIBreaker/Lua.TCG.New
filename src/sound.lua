@@ -1,5 +1,6 @@
 local Sound = {}
 local Catalog = require("config.audio_catalog")
+local Assets = require("src.runtime_assets")
 local pools, voices, loops, failed, lastPlayed, variations = {}, {}, {}, {}, {}, {}
 local proceduralCues={}
 local volumes = {master=1, sfx=.8, music=.8, ambience=.65}
@@ -37,9 +38,9 @@ local function mixVoices()
     local peak=0
     for _,v in ipairs(voices) do peak=peak+v.gain*v.weight*volumes.sfx*headroom*v.peak end
     for _,l in pairs(loops) do
-        peak=peak+l.level*l.gain*volumes[l.bus]*duck*(l.bus=="ambience" and .32 or l.name=="menu" and 1 or .48)
+        peak=peak+l.level*l.gain*volumes[l.bus]*duck*l.peak
     end
-    -- WAV peak ceilings are verified at build time; bound even coincident hits.
+    -- Bound coincident hits, including the codec margin in optimized packages.
     limiter=math.min(1,.92/math.max(.001,peak))
     for _,v in ipairs(voices) do v.source:setVolume(v.gain * v.weight * volumes.sfx * headroom * limiter) end
     for _,l in pairs(loops) do l.source:setVolume(l.level*l.gain*volumes[l.bus]*duck*limiter) end
@@ -60,14 +61,14 @@ function Sound.init()
     if not enabled then return false end
     local complete = true
     for name,c in pairs(Catalog.cues) do
-        local ok,source = pcall(love.audio.newSource,c.path,"static")
+        local ok,source = pcall(love.audio.newSource,Assets.audio(c.path),"static")
         if ok then
             local pool = {source}
             for i=2,POOL_SIZE do
                 local path=c.variants and c.variants[i-1]
                 local cloned,copy
                 if path then
-                    cloned,copy=pcall(love.audio.newSource,path,"static")
+                    cloned,copy=pcall(love.audio.newSource,Assets.audio(path),"static")
                     if not cloned then print("[Sound] Variant unavailable: "..path) end
                 end
                 if not cloned then cloned,copy=pcall(source.clone,source) end
@@ -135,14 +136,15 @@ local function loop(bus,name)
         if not oldest then return nil end
         release(loops[oldest].source);loops[oldest]=nil
     end
-    local ok,source=pcall(love.audio.newSource,entry.path,"stream")
+    local ok,source=pcall(love.audio.newSource,Assets.audio(entry.path),"stream")
     if not ok then
         failed[key]=true
         print("[Sound] Missing loop "..key..": "..tostring(source))
         return nil
     end
     source:setLooping(true);source:setVolume(0)
-    local l={source=source,bus=bus,name=name,gain=entry.gain,level=0,target=0}
+    local l={source=source,bus=bus,name=name,gain=entry.gain,level=0,target=0,
+        peak=Assets.peak(entry,bus=="ambience" and .32 or name=="menu" and 1 or .48)}
     -- Match position across the full phrase, including its developed second half.
     if bus=="music" and (name=="tension" or name=="boss" or name=="combat") then
         for _,other in pairs(loops) do
@@ -246,7 +248,7 @@ function Sound.play(name,pitch)
         if type(pitch)~="number" or pitch~=pitch then pitch=1 end
         local playbackPitch=math.max(.35,math.min(c.maxPitch or 2.5,pitch*variation))
         source:setPitch(playbackPitch)
-        voices[#voices+1]={source=source,gain=c.gain,priority=c.priority,name=name,peak=c.peak or .64,
+        voices[#voices+1]={source=source,gain=c.gain,priority=c.priority,name=name,peak=Assets.peak(c,.64),
             pitch=playbackPitch,startedAt=time,
             duckUntil=time+(c.duckDuration or (c.priority>=5 and .18 or .10)),duckLevel=c.duck or .58}
         if c.priority>=4 then duck=math.min(duck,c.duck or .48) end

@@ -272,7 +272,7 @@ function A.register(sound,forceRender)
                     local name="nen_"..id.."_"..kind..suffix
                     local data,cue
                     if baked[name] then
-                        local ok,decoded=pcall(love.sound.newSoundData,baked[name].path)
+                        local ok,decoded=pcall(love.sound.newSoundData,require("src.runtime_assets").audio(baked[name].path))
                         if ok then data,cue=decoded,baked[name] end
                     end
                     if not data then data,cue=render(score,kind,tier,index) end

@@ -8,6 +8,7 @@ import ctypes
 import hashlib
 import io
 import os
+import re
 from pathlib import Path
 import secrets
 import subprocess
@@ -30,6 +31,18 @@ def run(*args):
     subprocess.run(arguments, check=True, cwd=BUILD_CWD)
 
 
+def write_parts(output, chunk_size=50 * 1048576):
+    # Always use parts, even after optimization takes the ignored raw APK below 100 MiB.
+    for part in output.parent.glob(output.name + ".part*"):
+        if re.fullmatch(re.escape(output.name) + r"\.part\d+", part.name):
+            part.unlink()
+    with output.open("rb") as source:
+        index = 1
+        while chunk := source.read(chunk_size):
+            output.with_name(output.name + f".part{index:02d}").write_bytes(chunk)
+            index += 1
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tools", type=Path, default=ROOT / "dist/android-tools")
@@ -37,7 +50,7 @@ def main():
     args = parser.parse_args()
     from build_release import package, runtime_files
     if args.game is None:
-        args.game = ROOT / "dist/LUA-TCG-0.138.0-Mobile.love"
+        args.game = ROOT / "dist/LUA-TCG-0.138.1-Mobile.love"
         package(args.game, mobile=True)
     with zipfile.ZipFile(args.game) as game:
         for path in runtime_files(ROOT):
@@ -79,8 +92,8 @@ def main():
             '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
             '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 13800")
-    text = text.replace("versionName: 11.5a", "versionName: 0.138.0-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 13801")
+    text = text.replace("versionName: 11.5a", "versionName: 0.138.1-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
     metadata.write_text(text, encoding="utf-8")
     # Boot in immersive mode too, before Lua initializes or restores old settings.
     with zipfile.ZipFile(args.game) as source, zipfile.ZipFile(work / "assets/game.love", "w", zipfile.ZIP_DEFLATED) as bundled:
@@ -112,7 +125,7 @@ def main():
             "-keyalg", "RSA", "-keysize", "3072", "-validity", "10000", "-storetype", "PKCS12",
             "-storepass:env", "TERRA_SIGNING_PASSWORD", "-dname", "CN=Terra Suit, OU=Game, O=UIBreaker, C=VN")
         del os.environ["TERRA_SIGNING_PASSWORD"]
-    output = ROOT / "downloads/LUA-TCG-0.138.0-Android.apk"
+    output = ROOT / "downloads/LUA-TCG-0.138.1-Android.apk"
     output.parent.mkdir(exist_ok=True)
     signer = sdk / "lib/apksigner.jar"
     run("java", "-jar", signer, "sign", "--ks", key, "--ks-pass", "file:" + str(password.relative_to(ROOT)),
@@ -124,7 +137,7 @@ def main():
         with zipfile.ZipFile(io.BytesIO(apk.read("assets/game.love"))) as game, zipfile.ZipFile(args.game) as source:
             assert b"t.window.fullscreen = true" in game.read("conf.lua")
             assert b"t.window.resizable = false" in game.read("conf.lua")
-            assert b"beta 0.138.0" in game.read("main.lua")
+            assert b"beta 0.138.1" in game.read("main.lua")
             assert game.read("main.lua") == source.read("main.lua")
             for path in runtime_files(ROOT):
                 if path.suffix in (".lua", ".glsl"):
@@ -135,12 +148,7 @@ def main():
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     output.with_suffix(".apk.sha256").write_text(f"{digest}  {output.name}\n", encoding="ascii")
     # GitHub rejects individual Git files over 100 MiB; Releases accepts the rebuilt APK.
-    if output.stat().st_size >= 100 * 1048576:
-        with output.open("rb") as source:
-            index = 1
-            while chunk := source.read(50 * 1048576):
-                output.with_name(output.name + f".part{index:02d}").write_bytes(chunk)
-                index += 1
+    write_parts(output)
     print(f"Signed Android APK: {output.stat().st_size / 1048576:.1f} MiB")
 
 

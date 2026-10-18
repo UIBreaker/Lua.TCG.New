@@ -52,6 +52,7 @@ function N.enter(a,phase)
     local n=a.nen;n.stage=phase;n.phaseProgress=0
     if phase=="PREPARE" then n.charge,n.travel,n.beat=0,0,0 end
     local sound=require("src.sound")
+    if phase=="PREPARE" and sound.prepareAttack then sound.prepareAttack(a.profile.id,n.tier) end
     local weight=n.tier==3 and "_extreme" or n.tier==2 and "_strong" or ""
     local speed=n.audioSpeed or n.speed or 1
     if phase=="NEN_AWAKENING" then

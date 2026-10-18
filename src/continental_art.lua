@@ -1,6 +1,8 @@
 -- Canonical new art; old loaders remain available as fallbacks.
 local paths=require("config.continental_asset_paths")
 local Art={cache={},indexed=setmetatable({}, {__mode="k"}),generated=setmetatable({}, {__mode="k"})}
+local indexedUse=setmetatable({}, {__mode='k'})
+local indexClock=0
 function Art.get(id)
     if not id or not paths[id] then return nil end
     if Art.cache[id]~=nil then return Art.cache[id] or nil end
@@ -29,7 +31,11 @@ end
 function Art.withIndices(image,suit,rank)
     local key=(suit or "neutral").."_"..tostring(rank)
     Art.indexed[image]=Art.indexed[image] or {}
-    if Art.indexed[image][key] then return Art.indexed[image][key] end
+    if Art.indexed[image][key] then
+        local cached=Art.indexed[image][key];indexClock=indexClock+1
+        if indexedUse[cached] then indexedUse[cached].age=indexClock end
+        return cached
+    end
     local g=love.graphics;local canvas=g.newCanvas(512,768)
     g.push("all");g.setCanvas(canvas);g.origin();g.setShader();g.setScissor();g.setBlendMode("alpha");g.clear()
     g.setColor(1,1,1,1);g.draw(image,0,0,0,512/image:getWidth(),768/image:getHeight())
@@ -46,6 +52,18 @@ function Art.withIndices(image,suit,rank)
     end
     index();g.push();g.translate(512,768);g.rotate(math.pi);index();g.pop();g.pop()
     canvas:setFilter("linear","linear");Art.indexed[image][key]=canvas;Art.generated[canvas]=true
+    indexClock=indexClock+1;indexedUse[canvas]={base=image,key=key,age=indexClock}
+    local count,oldest,age=0,nil,math.huge
+    for cached,entry in pairs(indexedUse) do
+        count=count+1
+        if cached~=canvas and entry.age<age then oldest,age=cached,entry.age end
+    end
+    local limit=require('src.touch_input').lowPower and 16 or 64
+    if count>limit and oldest then
+        local entry=indexedUse[oldest];local index=Art.indexed[entry.base]
+        if index and index[entry.key]==oldest then index[entry.key]=nil end
+        indexedUse[oldest]=nil -- Active death/flight references stay valid until their animations finish.
+    end
     return canvas
 end
 return Art

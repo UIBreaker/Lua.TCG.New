@@ -124,7 +124,7 @@ require("src.nen_audio").register({registerProcedural=function(name,data,cue)
 end},true)
 local order=require("config.nen_vfx_config").order
 assert(count==#order*25)
-assert(bakedCount==#order*15,"all outcome tiers must have verified baked assets")
+assert(bakedCount==#order*25,"all attack phases must have verified baked assets")
 local minimum=math.huge
 local problems=signalProblems
 local function check(ok,id,label,ratio)

@@ -3,6 +3,10 @@ local Catalog = require("config.audio_catalog")
 local Assets = require("src.runtime_assets")
 local pools, voices, loops, failed, lastPlayed, variations = {}, {}, {}, {}, {}, {}
 local proceduralCues={}
+local fileCues,fileBytes,fileUsed={},{},{}
+local cacheBytes,cacheClock,mobileCache=0,0,false
+local CACHE_BUDGET=16*1048576
+local warmQueue,warmSet={},{}
 local volumes = {master=1, sfx=.8, music=.8, ambience=.65}
 local enabled, focused = false, true
 local duck, quietRemaining = 1, 0
@@ -51,12 +55,63 @@ function Sound.stopAll()
     voices = {}
     for key,l in pairs(loops) do release(l.source);loops[key]=nil end
     quietRemaining, Sound.quietUntil, duck = 0, 0, 1
+    warmQueue,warmSet={},{}
 end
+local function trimFiles(target,keep)
+    prune()
+    while cacheBytes>target do
+        local oldest
+        for name in pairs(fileBytes) do
+            local active=false
+            for _,source in ipairs(pools[name] or {}) do if source:isPlaying() then active=true;break end end
+            if name~=keep and not active and (not oldest or fileUsed[name]<fileUsed[oldest]) then oldest=name end
+        end
+        if not oldest then break end
+        for _,source in ipairs(pools[oldest]) do release(source) end
+        pools[oldest]=nil;cacheBytes=cacheBytes-fileBytes[oldest];fileBytes[oldest]=nil;fileUsed[oldest]=nil
+    end
+end
+local function loadFile(name)
+    cacheClock=cacheClock+1;fileUsed[name]=cacheClock
+    if pools[name] then return true end
+    local cue=fileCues[name];if not cue then return false end
+    local ok,source=pcall(love.audio.newSource,Assets.audio(cue.path),'static')
+    if not ok then failed[name]=tostring(source);return false end
+    local pool={source}
+    for i=2,POOL_SIZE do local success,copy=pcall(source.clone,source);if success then pool[#pool+1]=copy end end
+    pools[name]=pool;fileBytes[name]=math.ceil(source:getDuration()*128000);cacheBytes=cacheBytes+fileBytes[name]
+    if mobileCache then trimFiles(CACHE_BUDGET,name) end
+    return true
+end
+function Sound.registerFileCue(name,cue)
+    if not enabled then return false end
+    fileCues[name]=cue;proceduralCues[name]=cue
+    if not mobileCache then return loadFile(name) end
+    return true
+end
+local function warm(name)
+    if mobileCache and fileCues[name] and not pools[name] and not warmSet[name] and #warmQueue<48 then
+        warmQueue[#warmQueue+1]=name;warmSet[name]=true
+    end
+end
+function Sound.prepareAttack(id,tier)
+    local suffix=tier==3 and '_extreme' or tier==2 and '_strong' or ''
+    for _,kind in ipairs({'charge','impact','release','armor_break','finisher','armored_finisher','boss_finisher','boss_armored_finisher'}) do
+        warm('nen_'..id..'_'..kind..suffix)
+    end
+    warm('nen_'..id..'_beat')
+end
+function Sound.prepareRewards(rarity)
+    for _,phase in ipairs({'charge','open','receive','collect'}) do warm('reward_'..phase..'_'..rarity) end
+end
+function Sound.trimMemory() warmQueue,warmSet={},{};prune();trimFiles(0) end
 function Sound.init()
     Sound.stopAll()
     for _,pool in pairs(pools) do for _,source in ipairs(pool) do release(source) end end
     pools, failed, lastPlayed, variations = {}, {}, {}, {}
     proceduralCues={}
+    fileCues,fileBytes,fileUsed={},{},{};cacheBytes,cacheClock=0,0
+    mobileCache=require('src.touch_input').lowPower==true
     enabled = love and love.audio and love.audio.newSource ~= nil or false
     if not enabled then return false end
     local complete = true
@@ -93,6 +148,8 @@ function Sound.registerProcedural(name,data,cue)
     local pool={source}
     for i=2,POOL_SIZE do local success,copy=pcall(source.clone,source);if success then pool[#pool+1]=copy end end
     pools[name]=pool;proceduralCues[name]=cue
+    if fileBytes[name] then cacheBytes=cacheBytes-fileBytes[name];fileBytes[name]=nil end
+    fileCues[name]=nil
     return true
 end
 function Sound.setMasterVolume(value)
@@ -170,7 +227,7 @@ function Sound.setMenuMusicEnabled(shouldPlay)
     if not l.source:isPlaying() then l.source:play() end
     return true
 end
-function Sound.has(name) return pools[aliases[name] or name]~=nil end
+function Sound.has(name) name=aliases[name] or name;return pools[name]~=nil or fileCues[name]~=nil end
 function Sound.rewardPitch()
     prune()
     for i=#voices,1,-1 do
@@ -217,6 +274,7 @@ end
 function Sound.play(name,pitch)
     name=aliases[name] or name
     if not enabled or not focused or volumes.master<=0 or volumes.sfx<=0 then return false end
+    if fileCues[name] and not loadFile(name) then return false end
     local pool,c=pools[name],proceduralCues[name] or Catalog.cues[name]
     if not pool or not c then return false end
     local time=now()
@@ -292,6 +350,13 @@ function Sound.update(dt,state,game,paused,menuMode,scene)
     if not focused then return end
     dt=math.max(0,dt or 0)
     prune()
+    local deadline=now()+.001
+    for _=1,2 do
+        local name=table.remove(warmQueue,1);if not name then break end
+        warmSet[name]=nil;loadFile(name)
+        if now()>=deadline then break end
+    end
+    if mobileCache then trimFiles(CACHE_BUDGET) end
     quietRemaining=math.max(0,quietRemaining-dt)
     local targetDuck=quietRemaining>0 and .14 or 1
     local time=now()
@@ -323,6 +388,9 @@ function Sound.stats()
     local loopCount,cueCount=0,0
     for _ in pairs(loops) do loopCount=loopCount+1 end
     for _ in pairs(pools) do cueCount=cueCount+1 end
-    return {voices=#voices,maxVoices=MAX_VOICES,loops=loopCount,maxLoops=MAX_LOOPS,cues=cueCount,duck=duck,limiter=limiter}
+    local registered=cueCount
+    for name in pairs(fileCues) do if not pools[name] then registered=registered+1 end end
+    return {voices=#voices,maxVoices=MAX_VOICES,loops=loopCount,maxLoops=MAX_LOOPS,cues=registered,
+        loadedCues=cueCount,cachedAudioBytes=cacheBytes,audioCacheBudget=CACHE_BUDGET,duck=duck,limiter=limiter}
 end
 return Sound

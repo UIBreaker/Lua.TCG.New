@@ -40,3 +40,5 @@ lovec.exe tests/optimized_package <absolute-path-to-game.love>
 `tests/runtime_assets_smoke.lua` kiểm tra OGG/PCM, khoảng peak và art không có nguồn. `tests/optimized_package` mount gói thật, decode mọi tranh/âm thanh, xác nhận 405 outcome được đọc từ file thay vì tổng hợp lại, khởi tạo mixer đủ 823 cue và phát thử. Scoring audit 38 bộ, kiểm tra save/vé/bậc SPN/mobile và audio runtime gốc đều qua.
 
 Chưa đo FPS/RAM hoặc đánh giá nghe trên điện thoại thật. Giảm dung lượng tải không đồng nghĩa giảm tương ứng bộ nhớ PCM sau decode. Lỗi cài APK từng báo ở 0.136.0 vẫn chưa có mã lỗi Android để kết luận nguyên nhân.
+
+Bổ sung beta 0.138.2: [tối ưu khởi động, FPS và RAM](MOBILE_PERFORMANCE_0.138.2.md).

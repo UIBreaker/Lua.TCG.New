@@ -39,7 +39,7 @@ function love.load(args)
             cues=cues+1
         end})
         love.sound.newSoundData=decode
-        assert(cues==675 and rendered==270,'Baked effects unexpectedly synthesized')
+        assert(cues==675 and rendered==0,'Baked effects unexpectedly synthesized')
         local Sound=require('src.sound')
         assert(Sound.init(),'Mixer could not initialize compressed cues')
         assert(Sound.stats().cues==823,'Missing mixer cues')
@@ -48,7 +48,7 @@ function love.load(args)
         for _,state in ipairs({'menu','playing','shop','defeat'}) do Sound.update(.02,state,game,false) end
         assert(Sound.stats().loops>0 and Sound.stats().loops<=6,'Compressed music/ambience streams')
         Sound.stopAll()
-        print(('Optimized package PASS: %d canonical artworks, %d decodable audio files, %d cues, 405 baked outcomes loaded'):format(count,audio,cues))
+        print(('Optimized package PASS: %d canonical artworks, %d decodable audio files, %d cues, 675 baked attack phases registered'):format(count,audio,cues))
     end,debug.traceback)
     if not ok then print(err) end
     love.event.quit(ok and 0 or 1)

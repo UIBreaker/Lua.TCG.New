@@ -10,9 +10,21 @@ function A.rarity(reward)
     return "common",1
 end
 function A.cue(phase,reward) return "reward_"..phase.."_"..A.rarity(reward) end
-function A.play(phase,reward,pitch) return require("src.sound").play(A.cue(phase,reward),pitch or 1) end
+function A.play(phase,reward,pitch)
+    local sound=require("src.sound")
+    if sound.prepareRewards then sound.prepareRewards(A.rarity(reward)) end
+    return sound.play(A.cue(phase,reward),pitch or 1)
+end
 function A.register(sound)
     if not love or not love.sound or not love.sound.newSoundData then return end
+    if sound.registerFileCue and love.filesystem then
+        local ok,baked=pcall(require,"config.reward_audio_baked")
+        local complete=ok
+        if ok then for _,cue in pairs(baked) do
+            if not love.filesystem.getInfo(require("src.runtime_assets").audio(cue.path)) then complete=false;break end
+        end end
+        if complete then for name,cue in pairs(baked) do sound.registerFileCue(name,cue) end;return end
+    end
     local rate,tau=32000,math.pi*2
     for level,id in ipairs(A.order) do for phaseIndex,phase in ipairs({"charge","open","receive","collect"}) do
         local charging=phase=="charge"

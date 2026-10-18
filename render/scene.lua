@@ -3,6 +3,7 @@ local C = require("config.visual_config")
 local Weather = require("render.weather")
 local Scene = { definitions = Definitions }
 function Scene.load(art)
+    require('render.static_blur').clear()
     Scene.art = art; Scene.textures={}; Scene.time=0
     for _,definition in pairs(Definitions.scenes) do
         for _,layer in ipairs(definition.layers or Definitions.layers) do
@@ -28,15 +29,15 @@ local function imageCover(image,brightness,tint)
     g.setColor(brightness*tint[1],brightness*tint[2],brightness*tint[3],1)
     g.draw(image,(1280-w*fit)/2,(720-h*fit)/2,0,fit,fit)
 end
-local function drawLayer(layer,particleCap)
+local function drawLayer(layer,particleCap,blurred)
     local g,d,p,t=love.graphics,Scene.definition,Scene.preset,Scene.time
     local image=layer.texture and Scene.textures[layer.texture]
     local b=layer.brightness or 1; local tint=layer.tint or {1,1,1}
     g.setColor(tint[1]*b,tint[2]*b,tint[3]*b,1)
-    if image then imageCover(image,b,tint)
+    if image then imageCover(blurred or image,b,tint)
     elseif layer.kind=="base" then
         image=d.video and Scene.art.menuVideo or Scene.art[d.base] or Scene.art.background
-        if image then imageCover(image,d.brightness*b,tint) end
+        if image then imageCover(blurred or image,d.brightness*b,tint) end
     elseif layer.kind=="arches" then
         -- A separate distant silhouette, never a duplicate of the base painting.
         for _,x in ipairs({215,1000}) do
@@ -91,6 +92,7 @@ local function drawLayer(layer,particleCap)
 end
 function Scene.drawSingle(layer,camera,quality,depthShader)
     local g=love.graphics
+    local blurred
     g.push("all"); camera.apply(C.enabled and layer.parallaxFactor or 0)
     g.translate(640,360); g.scale(layer.scale or 1); g.translate(-640,-360)
     g.translate(layer.offset[1],layer.offset[2])
@@ -99,11 +101,15 @@ function Scene.drawSingle(layer,camera,quality,depthShader)
             (Scene.definition.video and Scene.art.menuVideo or Scene.art[Scene.definition.base] or Scene.art.background)
         -- Video uses LÖVE's YCbCr decoder shader, not the image Texel() DOF pass.
         if texture and not texture:typeOf("Video") then
-            depthShader:send("texel",{1/texture:getWidth(),1/texture:getHeight()})
-            depthShader:send("radius",layer.blurAmount); g.setShader(depthShader)
+            if layer.kind=='base' then blurred=require('render.static_blur').get(texture,layer.blurAmount,depthShader) end
+            if blurred then g.setShader() end
+            if not blurred then
+                depthShader:send("texel",{1/texture:getWidth(),1/texture:getHeight()})
+                depthShader:send("radius",layer.blurAmount); g.setShader(depthShader)
+            end
         end
     end
-    drawLayer(layer,quality.particles); g.pop()
+    drawLayer(layer,quality.particles,blurred); g.pop()
 end
 function Scene.draw(stage,camera,quality,depthShader)
     local g=love.graphics

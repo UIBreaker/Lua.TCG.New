@@ -16,13 +16,15 @@ function E.load()
     if E.shader then
         -- Warm the material pipeline during load, before the first ultimate.
         local g=love.graphics;local old=g.getCanvas();g.push("all")
-        local warmOK,canvas=pcall(g.newCanvas,1280,720)
+        local mobile=require('src.touch_input').lowPower
+        local warmOK,canvas=pcall(g.newCanvas,mobile and 16 or 1280,mobile and 16 or 720)
         if warmOK then
             g.setCanvas(canvas);g.setShader(E.shader);g.setColor(1,1,1,1)
             E.shader:send("screenCenter",{4,4});E.shader:send("pixelScale",1)
             E.shader:send("clock",0);E.shader:send("charge",1)
             for material=1,8 do E.shader:send("material",material);g.rectangle("fill",0,0,8,8) end
             local ready,err=pcall(function()
+                if mobile then return end
                 local attacks=require("src.hand_attacks")
                 local ranks={high_card={14},pair={8,8},two_pair={8,8,11,11},three_of_a_kind={8,8,8},
                     straight={7,8,9,10,11},flush={2,5,8,11,14},full_house={8,8,8,11,11},four_of_a_kind={8,8,8,8},straight_flush={10,11,12,13,14}}

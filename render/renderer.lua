@@ -11,6 +11,7 @@ local R = { config=C, scene=Scene, camera=Camera, lighting=Lighting, post=Post,
 function R.setQuality(name)
     R.quality=C.qualities[name] and name or C.quality
     local q=C.qualities[R.quality]
+    if not q.dof then require('render.static_blur').clear() end
     local w,h=math.floor(1280*q.worldScale),math.floor(720*q.worldScale)
     if R.world and R.world:getWidth()==w and R.world:getHeight()==h then return end
     if R.world then R.world:release() end

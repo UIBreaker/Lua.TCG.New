@@ -4,6 +4,7 @@ Frame.color = {0.66, 0.55, 0.35, 1}
 Frame.metal = {0.085, 0.075, 0.060, 1}
 Frame.rimWidth = 2
 local meshes = {}
+local meshOrder={}
 
 local function outline(x, y, w, h, inset)
     local bevel = math.min(w, h) * 0.06
@@ -15,21 +16,25 @@ local function outline(x, y, w, h, inset)
 end
 
 function Frame.image(image, x, y, w, h)
-    if not image then return end
-    local key = tostring(w) .. ":" .. tostring(h)
+    if not image or w<=0 or h<=0 then return end
+    local ratio=h/w
+    local key = tostring(ratio)
     local mesh = meshes[key]
     if not mesh then
-        local points, vertices = outline(0, 0, w, h), {{w/2,h/2,0.5,0.5,1,1,1,1}}
+        local points, vertices = outline(0, 0, 1, ratio), {{.5,ratio/2,0.5,0.5,1,1,1,1}}
         for i=1,16,2 do
-            vertices[#vertices+1] = {points[i],points[i+1],points[i]/w,points[i+1]/h,1,1,1,1}
+            vertices[#vertices+1] = {points[i],points[i+1],points[i],points[i+1]/ratio,1,1,1,1}
         end
         vertices[#vertices+1] = vertices[2]
         mesh = love.graphics.newMesh(vertices, "fan", "static")
         meshes[key] = mesh
+        meshOrder[#meshOrder+1]=key
+        if #meshOrder>64 then local old=table.remove(meshOrder,1);meshes[old]:release();meshes[old]=nil end
     end
     mesh:setTexture(image)
-    love.graphics.draw(mesh, x, y)
+    love.graphics.draw(mesh, x, y,0,w,w)
 end
+function Frame.meshCount() return #meshOrder end
 
 -- Ancient metal mounts with sparse, readable ornament; every tier has its own profile.
 Frame.styles = {
@@ -103,6 +108,7 @@ function Frame.drawSockets(x,y,w,h,card,alpha)
 end
 
 local rimPaths={}
+local rimOrder={}
 local function rimPath(w,h,inset)
     local key=w..":"..h..":"..inset
     if rimPaths[key] then return rimPaths[key] end
@@ -112,7 +118,9 @@ local function rimPath(w,h,inset)
         local length=((p.points[j]-p.points[i])^2+(p.points[j+1]-p.points[i+1])^2)^.5
         p.lengths[#p.lengths+1]=length;p.total=p.total+length
     end
-    rimPaths[key]=p;return p
+    rimPaths[key]=p;rimOrder[#rimOrder+1]=key
+    if #rimOrder>128 then rimPaths[table.remove(rimOrder,1)]=nil end
+    return p
 end
 local function rimPoint(path,phase)
     local distance=(phase%1)*path.total
@@ -213,6 +221,7 @@ function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
     g.pop()
 end
 
+local facet={1.08,.82,.61,.47,.42,.59,.84,1.13}
 function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
     local g = love.graphics
     alpha = (alpha or card and card.alpha or 1) * (highlight and highlight[4] or 1)
@@ -221,9 +230,8 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
     local style = Frame.styles[tier]
     local size = math.min(w,h)
     local unit = math.max(0.6, math.min(1.6, size/128))
-    local outer, inner = outline(x,y,w,h), outline(x,y,w,h,tier==1 and Frame.rimWidth or (1.8+tier*.23)*unit)
-    g.push("all"); g.setShader()
-    local facet={1.08,.82,.61,.47,.42,.59,.84,1.13}
+    g.push("all");g.translate(x,y);x,y=0,0;g.setShader()
+    local outer, inner = rimPath(w,h,0).points, rimPath(w,h,tier==1 and Frame.rimWidth or (1.8+tier*.23)*unit).points
     for i=1,16,2 do
         local j = i == 15 and 1 or i+2
         if tier==1 then g.setColor(Frame.metal[1],Frame.metal[2],Frame.metal[3],alpha)
@@ -241,22 +249,23 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
         color[3]*(1-mix)+(highlight and highlight[3] or 0)*mix
     local stroke = (highlight and 2 or math.max(0.8,math.min(1.6,w*0.012))) + (tier-1)*0.10
     g.setColor(r,b,c,alpha); g.setLineWidth(stroke)
-    g.polygon("line",outline(x,y,w,h,0.75))
+    g.polygon("line",rimPath(w,h,.75).points)
     if tier == 1 then Frame.drawSockets(x,y,w,h,card,alpha);g.pop(); return end
     g.setColor(.018,.025,.038,alpha*.95);g.setLineWidth(unit)
     g.polygon("line",inner)
     if tier>=3 then
         g.setColor(r,b,c,alpha*.60);g.setLineWidth(.7*unit)
-        g.polygon("line",outline(x,y,w,h,4.5*unit))
+        g.polygon("line",rimPath(w,h,4.5*unit).points)
     end
     if tier>=7 then
         g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha*.35)
-        g.setLineWidth(.65*unit);g.polygon("line",outline(x,y,w,h,7.5*unit))
+        g.setLineWidth(.65*unit);g.polygon("line",rimPath(w,h,7.5*unit).points)
     end
     local bevel, reach = size*0.06,size*(0.055+0.012*tier)
     g.setLineWidth(math.max(0.75,unit))
-    for _, corner in ipairs({{x,y,1,1},{x+w,y,-1,1},{x,y+h,1,-1},{x+w,y+h,-1,-1}}) do
-        g.push(); g.translate(corner[1],corner[2]); g.scale(corner[3],corner[4])
+    for corner=1,4 do
+        local right,bottom=corner%2==0,corner>2
+        g.push();g.translate(right and w or 0,bottom and h or 0);g.scale(right and -1 or 1,bottom and -1 or 1)
         g.setColor(r,b,c,alpha)
         g.line(3*unit,bevel+reach,3*unit,bevel+2*unit,bevel+2*unit,3*unit,bevel+reach,3*unit)
         if tier >= 3 then
@@ -290,8 +299,8 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
     end
     local radius=(tier>=8 and 4 or tier>=5 and 3 or 2)*unit
     if tier>=3 then
-        for _,edge in ipairs({{y,1},{y+h,-1}}) do
-            local cy,sign=edge[1],edge[2]
+        for edge=1,2 do
+            local cy,sign=edge==1 and y or y+h,edge==1 and 1 or -1
             local cx=x+w/2
             if tier>=5 then
                 g.push();g.translate(cx,cy);g.scale(unit,unit*sign)
@@ -313,8 +322,8 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
         end
     end
     if tier>=6 and not (card and card.suit) then
-        for _,edge in ipairs({{x,1},{x+w,-1}}) do
-            local cx,sign=edge[1],edge[2]
+        for edge=1,2 do
+            local cx,sign=edge==1 and x or x+w,edge==1 and 1 or -1
             g.setColor(r*.4,b*.4,c*.4,alpha)
             g.polygon("fill",cx+sign*2*unit,y+h/2-18*unit,cx+sign*11*unit,y+h/2,
                 cx+sign*2*unit,y+h/2+18*unit,cx+sign*5*unit,y+h/2)

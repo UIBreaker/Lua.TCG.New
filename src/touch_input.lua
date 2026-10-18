@@ -6,6 +6,7 @@ T.fillScreen = T.nativeMobile
 T.lowPower = T.nativeMobile
     or not not (love and love.filesystem and love.filesystem.getInfo("mobile_build.flag"))
 for _, value in ipairs(arg or {}) do
+    if value == '--test-mobile-cache' then T.lowPower = true end
     if value == "--capture-mobile-fullscreen" then T.fillScreen, T.lowPower, T.previewMobile = true, true, true end
 end
 local finger, hooks, mousePosition

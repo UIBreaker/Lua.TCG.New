@@ -26,6 +26,21 @@ function Art.path(key)
         and "assets/cards/"..key..".png" or "assets/scene/enemies/"..key..".png"
 end
 function Art.load()
+    if require('src.touch_input').lowPower then
+        local valid={}
+        for _,list in ipairs({Art.normal,Art.bosses}) do for _,key in ipairs(list) do valid[key]=true end end
+        setmetatable(Art.images,{__index=function(images,key)
+            if not valid[key] then return nil end
+            local image=require('src.continental_art').get(key)
+            local path=Art.path(key)
+            if not image and love.filesystem.getInfo(path) then
+                local ok,value=pcall(love.graphics.newImage,path)
+                if ok then image=value;image:setFilter('linear','linear') end
+            end
+            rawset(images,key,image or false);return image
+        end})
+        return
+    end
     for _, list in ipairs({ Art.normal, Art.bosses }) do
         for _, key in ipairs(list) do
             local path = Art.path(key)

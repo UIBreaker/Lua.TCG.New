@@ -1,0 +1,16 @@
+phase,ms,rss_mib,texture_mib,lua_mib
+before_load,0.000,227.8,0.0,34.5
+src.ui.initFonts,229.321,295.6,0.0,37.1
+src.enemy_art.load,24.227,342.1,31.2,37.1
+src.sound.init,4840.922,551.0,31.2,60.2
+ui.collection_book.prepare,8.377,495.6,35.6,11.9
+render.scene.load,0.030,495.6,35.6,11.9
+render.renderer.load,68.680,512.6,53.4,13.9
+src.card_effects.load,19.021,523.5,53.4,14.7
+menu_ready,5298.627,523.5,53.4,14.7
+menu_mean_frame,2.935,568.2,62.0,19.4
+menu_p95_frame,3.658,568.2,62.0,19.4
+battle_mean_frame,4.916,598.4,100.7,8.7
+battle_p95_frame,6.487,598.4,100.7,8.7
+shop_mean_frame,4.435,608.1,110.2,14.9
+shop_p95_frame,6.163,608.1,110.2,14.9

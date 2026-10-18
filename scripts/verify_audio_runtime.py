@@ -56,6 +56,7 @@ try:
     ''')
     if args.bake_outcomes:
         os.makedirs("assets/audio/nen_outcomes", exist_ok=True)
+        os.makedirs("assets/audio/reward_cues", exist_ok=True)
         run('assert(loadfile("scripts/bake_attack_outcomes.lua"))()')
     elif not args.render:
         run('assert(loadfile("tests/audio_capture.lua"))();love.load()')

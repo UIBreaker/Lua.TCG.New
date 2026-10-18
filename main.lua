@@ -2473,7 +2473,10 @@ function love.load()
     love.graphics.printf = function(value, ...)
         return nativePrintf(UI.localizeText(value), ...)
     end
-    for key, path in pairs({ background = "assets/scene/shrine_lowpoly.png", humanContinent = "assets/scene/expedition_human.png", expeditionShip = "assets/scene/expedition_ship.png", mysteriousCoast = "assets/scene/expedition_coast.png", menuWorld = "assets/scene/menu_world_v2.png", menuLogo = "assets/scene/menu_logo_v2.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }) do
+    local imagePaths={ background = "assets/scene/shrine_lowpoly.png", humanContinent = "assets/scene/expedition_human.png", expeditionShip = "assets/scene/expedition_ship.png", mysteriousCoast = "assets/scene/expedition_coast.png", menuWorld = "assets/scene/menu_world_v2.png", menuLogo = "assets/scene/menu_logo_v2.png", enemySmall = "assets/scene/enemy_small_lowpoly.png", enemyElite = "assets/scene/enemy_elite_lowpoly.png", enemyBoss = "assets/scene/enemy_boss_lowpoly.png", chest = "assets/scene/treasure_chest.png" }
+    if Touch.lowPower then require("src.lazy_images").install(battleArt,imagePaths)
+    else
+    for key, path in pairs(imagePaths) do
         if love.filesystem.getInfo(path) then
             local ok, image = pcall(love.graphics.newImage, path)
             if ok then
@@ -2481,6 +2484,7 @@ function love.load()
                 battleArt[key] = image
             end
         end
+    end
     end
     EnemyArt.load()
     local menuVideoPath = "assets/scene/menu_background.ogv"
@@ -2563,6 +2567,13 @@ function love.load()
             end
         end
     end
+    if Touch.lowPower then collectgarbage("collect") end
+end
+
+function love.lowmemory()
+    Sound.trimMemory()
+    require('render.static_blur').clear()
+    collectgarbage('collect')
 end
 
 function love.resize(w, h)
@@ -3357,7 +3368,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.138.1", 48, 185)
+    g.print("beta 0.138.2", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)

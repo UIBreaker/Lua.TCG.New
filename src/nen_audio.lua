@@ -270,6 +270,14 @@ function A.register(sound,forceRender)
                 for tier=1,kind=="beat" and 1 or 3 do
                     local suffix=tier==2 and "_strong" or tier==3 and "_extreme" or ""
                     local name="nen_"..id.."_"..kind..suffix
+                    local registered=false
+                    if baked[name] and sound.registerFileCue then
+                        local path=require("src.runtime_assets").audio(baked[name].path)
+                        if love.filesystem and love.filesystem.getInfo(path) then
+                            sound.registerFileCue(name,baked[name]);registered=true
+                        end
+                    end
+                    if not registered then
                     local data,cue
                     if baked[name] then
                         local ok,decoded=pcall(love.sound.newSoundData,require("src.runtime_assets").audio(baked[name].path))
@@ -278,6 +286,7 @@ function A.register(sound,forceRender)
                     if not data then data,cue=render(score,kind,tier,index) end
                     sound.registerProcedural(name,data,cue)
                     if data.release then data:release() end
+                    end
                 end
             end
         end

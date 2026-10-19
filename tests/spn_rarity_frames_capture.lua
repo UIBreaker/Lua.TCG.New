@@ -11,7 +11,8 @@ function T.verify()
         local maxLevel=require("config.card_ability_data").maxEvolutionLevel
         card.evolutionLevel=math.min(tier-1,maxLevel)
         card.temporaryAbilityLevels=math.max(0,tier-1-maxLevel)
-        assert(Frame.tier(card)==tier,"playing frame must follow permanent and temporary evolution")
+        local shown,overflow=Frame.tier(card)
+        assert(shown==math.min(tier,10) and overflow==math.max(0,tier-10),"playing frame must follow permanent and temporary evolution")
         return card
     end
     for _,size in ipairs({{46,69},{82,118},{200,300}}) do
@@ -28,7 +29,8 @@ function T.verify()
             g.pop();return canvas:newImageData()
         end
         for _,playing in ipairs({false,true}) do
-        for tier,rarity in ipairs(D.RARITIES) do
+        for tier=1,#D.RARITIES+(playing and 1 or 0) do
+            local rarity=D.RARITIES[math.min(tier,#D.RARITIES)]
             local card=playing and playingCard(tier) or {id="spirit_ward",rarity=rarity.id}
             local first=render(card,.2,false);local second=render(card,1.9,false)
             assert((first:getString()~=second:getString())==(tier>=2),"rarity motion progression: "..rarity.id)
@@ -51,8 +53,8 @@ function T.verify()
             first:release();second:release()
         end
         end
+        for _,card in ipairs({{id="spirit_ward",rarity="supreme"},playingCard(11)}) do
         Visual.quality="LOW"
-        local card={id="spirit_ward",rarity="supreme"}
         local first=render(card,.2,false);local second=render(card,1.9,false)
         assert(first:getString()~=second:getString(),"LOW must retain high-tier frame motion")
         first:release();second:release();Visual.quality=quality
@@ -60,6 +62,7 @@ function T.verify()
         first=render(card,.2,false);second=render(card,1.9,false)
         assert(first:getString()==second:getString(),"disabled effects must freeze frame")
         first:release();second:release();Visual.enabled=enabled
+        end
         canvas:release()
     end
     local actual=Frame.drawEnergy
@@ -87,7 +90,7 @@ function T.verify()
             else UI.drawPatronCard({id="spirit_ward",rarity=rarity.id},x,y,200,300) end
             g.setFont(UI.fonts.medium);g.setColor(rarity.color);g.print(rarity.code,x,y+311)
             g.setFont(UI.fonts.small);g.setColor(.91,.93,.96,1)
-            g.print(playing and (i==10 and "Tiến hóa 8 + 1 tạm thời" or "Tiến hóa "..(i-1)) or rarity.name,x,y+339)
+            g.print(playing and ("Tiến hóa "..(i-1)) or rarity.name,x,y+339)
         end
         UI.CardPhysics.resume();g.pop()
     end

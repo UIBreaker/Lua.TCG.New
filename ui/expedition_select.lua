@@ -3,7 +3,44 @@ local Run = require("src.run_manager")
 local Art = require("src.enemy_art")
 local Boss = require("src.boss_abilities")
 local S = {}
+function S.drawBlood(game,UI,mx,my)
+    local g=love.graphics;local buttons={};local run=game.run;local red={.87,.34,.38,1}
+    local Chrome=require("ui.combat_chrome");local Core=require("ui.components.core")
+    local function text(value,x,y,w,font,color,align) Core.text(value,x,y,w,font or UI.fonts.small,color or {0.94,0.93,0.88,1},align) end
+    local function button(id,label,x,y,w,h)
+        local b={id=id,text=label,x=x,y=y,w=w,h=h,color={.22,.09,.12,1},font=UI.fonts.small}
+        UI.drawButton(b,mx>=x and mx<=x+w and my>=y and my<=y+h);buttons[#buttons+1]=b
+    end
+    g.push("all")
+    Chrome.panel(24,22,1232,76,red)
+    text("LÃNH ĐỊA MÁU · HÀNH TRÌNH KHÉP KÍN",43,39,920,UI.fonts.large,red)
+    text(string.format("TRẬN %d / 8 · SINH LỰC %.1f / %g · ĐỘ KHÓ ×2 NHÁNH CHÍNH (ẢI %d)",run.areaStage,game.playerHp or 0,game.maxPlayerHp or 100,run.difficultyCap or run.ante),45,77,1030,UI.fonts.tiny)
+    button("open_pause_menu","TÙY CHỌN",1104,36,130,43)
+    for stage=1,8 do
+        local x=24+(stage-1)*156;local active=stage==run.areaStage
+        Chrome.panel(x,116,140,62,active and red or {.40,.34,.35,1})
+        text(stage==8 and "08 · VƯƠNG HUYẾT" or string.format("ẢI %02d",stage),x+8,126,124,UI.fonts.small,active and red or {.69,.64,.62,1},"center")
+        text(stage<run.areaStage and "ĐÃ VƯỢT QUA" or active and "ĐANG ĐỐI MẶT" or "CHƯA ĐẾN",x+8,153,124,UI.fonts.tiny,nil,"center")
+    end
+    Chrome.panel(24,199,1232,402,red)
+    local blind=Run.getCurrentBlind(run);local m=Run.createBlindMonster(blind,game,true)
+    local image=Art.image(m,{})
+    if image then
+        g.setColor(1,1,1,1);local Frame=require("ui.components.card_frame")
+        Frame.image(image,86,226,224,336);Frame.draw(86,226,224,336,nil,nil,m)
+    end
+    text(m.name,355,232,840,UI.fonts.large,red)
+    text(m.title,358,280,830,UI.fonts.small)
+    text(string.format("MÁU %g   ·   SÁT THƯƠNG %g",m.maxHp,m.attack),358,324,830,UI.fonts.medium,{.94,.76,.47,1})
+    text(m.desc,358,375,820,UI.fonts.medium)
+    text("Không thể dùng giấy phép để rời đi.\nPhần thưởng boss: chọn 1 trong 3 SPN có chỉ số ×4.\nHạ boss để trở lại đúng hành trình trước khi chạm tượng.",358,495,820,UI.fonts.small,{.72,.69,.68,1})
+    button("open_backpack","CHUẨN BỊ BALO",24,630,290,54)
+    button("open_deck_viewer","XEM BỘ BÀI",328,630,250,54)
+    button("fight_blind",run.areaStage==8 and "ĐỐI MẶT VƯƠNG HUYẾT" or "BƯỚC VÀO TRẬN",834,630,422,54)
+    g.pop();return buttons
+end
 function S.draw(game, UI, mx, my)
+    if game.run and game.run.regionId=="blood_domain" then return S.drawBlood(game,UI,mx,my) end
     local g, buttons = love.graphics, {}
     local run=game.run; if not run then return buttons end
     local region=E.region(run.ante,run.regionId)

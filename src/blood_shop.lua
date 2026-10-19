@@ -2,7 +2,7 @@ local B={chance=.30,power=5,priceFactor=8,smallCount=8,largeCount=16}
 function B.isMode(mode) return mode=="blood_small" or mode=="blood_large" end
 function B.powerOf(item)
     if type(item)~="table" then return 1 end
-    return math.max(item.bloodPower==5 and 5 or 1,(item.voidPower==5 or item.voidPower==10) and item.voidPower or 1)
+    return math.max(item.bloodPower==5 and 5 or 1,(item.voidPower==5 or item.voidPower==10) and item.voidPower or 1,item.bloodDomainPower==4 and 4 or 1)*(item.statuePower or 1)
 end
 function B.clone(value)
     if type(value)~="table" then return value end

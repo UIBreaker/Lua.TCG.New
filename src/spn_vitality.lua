@@ -25,7 +25,7 @@ function V.finish(game)
                     local gain=math.floor(armor*rate/100)
                     game.playerArmor=0;game.playerShield=0
                     game.maxPlayerHp=(game.maxPlayerHp or 100)+gain
-                    game.playerHp=math.min(game.maxPlayerHp,(game.playerHp or 100)+gain)
+                    require("src.player_health").heal(game,gain)
                     total=total+gain
                     game.spnFeedback=game.spnFeedback or {}
                     game.spnFeedback[#game.spnFeedback+1]={deity=physical,slot=slot,text="GIÁP HÓA SINH · +"..gain.." MÁU TỐI ĐA / HP"}

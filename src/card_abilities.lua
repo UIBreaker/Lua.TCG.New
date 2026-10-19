@@ -93,7 +93,7 @@ function A.takeFeedback(game)
     local result=ctx.feedback or {}; ctx.feedback={}; return result
 end
 local function armor(game,n) game.playerArmor=math.min(Data.armorCap,(game.playerArmor or game.playerShield or 0)+n); game.playerShield=game.playerArmor end
-local function heal(game,percent) game.playerHp=math.min(game.maxPlayerHp or 100,(game.playerHp or 100)+(game.maxPlayerHp or 100)*percent/100) end
+local function heal(game,percent) require("src.player_health").heal(game,(game.maxPlayerHp or 100)*percent/100) end
 local function gold(game,n) game.gold=(game.gold or 0)+n end
 local function contains(list,c) for _,v in ipairs(list or {}) do if v==c then return true end end return false end
 local function lowest(cards,except,suit)
@@ -143,7 +143,7 @@ function A.handSize(game,base)
             end
         end
     end
-    return math.max(1,(base or game.maxHandSize or 3)+bonus)
+    return require("src.human_bosses").handSize(game,math.max(1,(base or game.maxHandSize or 3)+bonus))
 end
 function A.handStart(game)
     require("src.spn_basics").bind(game)

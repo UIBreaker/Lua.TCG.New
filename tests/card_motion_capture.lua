@@ -48,6 +48,30 @@ function love.load()
         assert(Frame.tier(card)==card.evolutionLevel+1,"temporary rim must return to permanent tier")
     end
     P.resume();g.pop();save(canvas,"docs/playing_card_rarity_frames.png");canvas:release()
+    canvas=g.newCanvas(960,440)
+    local evolutionVideo=os.getenv("POKER_EVOLUTION_VIDEO")
+    local originalClock=UI.Polish.time
+    for frame=0,(evolutionVideo and 95 or 0) do
+    UI.Polish.time=1.3+frame/24
+    g.push("all");g.setCanvas(canvas);g.origin();g.clear(.015,.023,.038,1)
+    g.setFont(UI.fonts.medium);g.setColor(.96,.85,.60,1);g.print("QUÂN BÀI · TIẾN HÓA ĐẾN CẤP 10",36,16)
+    P.suspend()
+    local previous
+    for level=8,10 do
+        local card=require("src.deck").newCard(3,"hearts");card.evolutionLevel=level
+        local x=55+(level-8)*300
+        UI.drawCard(card,x,60,200,300)
+        g.setCanvas();local pixels=canvas:newImageData(1,1,x,60,200,300);g.setCanvas(canvas)
+        local bytes=pixels:getString();assert(bytes~=previous,"levels 8/9/10 must have distinct visible frames")
+        previous=bytes;pixels:release()
+        g.setFont(UI.fonts.medium);g.setColor(.96,.85,.60,1)
+        g.printf("Cấp "..level.." · "..({[8]="VH",[9]="TT",[10]="TT+1"})[level],x-25,375,250,"center")
+    end
+    P.resume();g.pop()
+    if frame==0 then save(canvas,"docs/playing_card_evolution_10.png") end
+    if evolutionVideo then save(canvas,evolutionVideo..string.format("/frame_%03d.png",frame)) end
+    end
+    UI.Polish.time=originalClock;canvas:release()
     local surface=P.wrap(function(card,x,y,w,h)
         local faceX,faceY=g.transformPoint(x,y)
         local art=UI.getCardImage("hearts",3)

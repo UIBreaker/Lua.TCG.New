@@ -43,7 +43,7 @@ function Inventory.useBed(game,index,target)
         local maximum=game.maxPlayerHp or 100
         if (game.playerHp or maximum)>=maximum then return false end
         local before=game.playerHp or maximum
-        game.playerHp=maximum
+        require("src.player_health").heal(game,maximum-before)
         require("src.potions").emit(game,"rest","NGHỈ NGƠI · HỒI +"..(maximum-before).." HP",maximum-before)
     end
     table.remove(game.consumables,index)
@@ -62,7 +62,7 @@ function Inventory.useUtility(game,index)
         local maximum=game.maxPlayerHp or 100
         if (game.playerHp or maximum)>=maximum then return false end
         local before=game.playerHp or maximum
-        game.playerHp=math.min(maximum,before+(card.healAmt or 25)*require("src.spn_alchemy").multiplier(game,card))
+        require("src.player_health").heal(game,(card.healAmt or 25)*require("src.spn_alchemy").multiplier(game,card))
         require("src.potions").emit(game,"heal","HỒI +"..(game.playerHp-before).." HP",game.playerHp-before)
     elseif card.category=="armor_potion" then
         local cap=require("config.card_ability_data").armorCap

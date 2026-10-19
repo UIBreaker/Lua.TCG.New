@@ -235,6 +235,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage
         blind.difficultyAnte=difficulty
     end
     blinds[1].status = "current"
+    if regionId=="blood_domain" then return require("src.ancient_statue").blinds(blinds,a,areaStage,difficulty) end
     return blinds
 end
 
@@ -273,8 +274,10 @@ end
 function RunManager.createBlindMonster(blind, gameState, preview)
     local isBoss = (blind.type == "boss")
     local isElite = (blind.type == "big")
-    local encounterCount = ((blind.difficultyAnte or blind.ante) - 1) * 3 + blind.index
-    local atk = Monster.getAttackByEncounter(encounterCount, isBoss, isElite)
+    local encounterIndex=blind.regionId=="blood_domain" and (isBoss and 3 or isElite and 2 or 1) or blind.index
+    local encounterCount = ((blind.difficultyAnte or blind.ante) - 1) * 3 + encounterIndex
+    local power=blind.bloodDomainMultiplier or 1
+    local atk = Monster.getAttackByEncounter(encounterCount, isBoss, isElite)*power
     local m = {
         round = blind.ante,
         difficultyAnte = blind.difficultyAnte or blind.ante,
@@ -285,7 +288,8 @@ function RunManager.createBlindMonster(blind, gameState, preview)
         maxHp = blind.hp,
         damageLagHp = blind.hp,
         attack = atk,
-        attackSpeed = preview and 1 or Monster.rollAttackSpeed(encounterCount),
+        attackSpeed = (preview and 1 or Monster.rollAttackSpeed(encounterCount))*power,
+        bloodDomainMultiplier=blind.bloodDomainMultiplier,
         intent = {
             type = "attack",
             value = atk,
@@ -410,6 +414,10 @@ function RunManager.completeCurrentBlind(run, gameState)
         if blind.status == "completed" then return false end
         blind.status = "completed"
         run.stats.blindsWon = (run.stats.blindsWon or 0) + 1
+        if run.regionId=="blood_domain" then
+            if gameState then require("src.ancient_statue").complete(gameState) end
+            return false
+        end
         local completedAnte = blind.ante or run.ante
         if blind.type=="boss" and not run.difficultyCap then
             run.regionStagesWon=run.regionStagesWon or {}
@@ -454,6 +462,7 @@ function RunManager.advanceBlind(run, gameState)
     if not run then return false end
     local current = RunManager.getCurrentBlind(run)
     if not current or current.status ~= "completed" then return false, "incomplete" end
+    if run.regionId=="blood_domain" and gameState then return require("src.ancient_statue").advance(gameState) end
     run.shopsVisitedInAnte = (run.shopsVisitedInAnte or 0) + 1
 
     if run.currentBlindIndex < 3 then
@@ -473,6 +482,7 @@ function RunManager.advanceBlind(run, gameState)
 end
 
 function RunManager.beginTravel(game,source,index,returnState)
+    if game.bloodDomain then return false,"Phải đánh bại Vương Huyết để rời lãnh địa." end
     local item=game[source] and game[source][index]
     if not game.run or not item or item.id~="cons_travel_permit" then return false,"Không có giấy phép." end
     if returnState~="shop" and returnState~="BLIND_SELECT" and returnState~="victory" and returnState~="playing" then return false,"Chưa thể dùng giấy phép ở màn hình này." end

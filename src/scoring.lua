@@ -93,6 +93,7 @@ end
 
 local function acceptsEquipmentBuff(card, monster)
     if card.exhausted or card.destroyed then return false end
+    if monster and monster.bossData and monster.bossData.humanBoss==4 and Boss.passiveEnabled(monster) and card.rank>=11 and card.rank<=13 then return false end
     return not (monster and Boss.passiveEnabled(monster) and not isSpade(card)
         and (monster.lockedFaction==card.suit or monster.lockedRoyals and card.rank>=11 and card.rank<=13))
 end
@@ -416,6 +417,10 @@ function Scoring.calculate(handInfo, deities, context)
         if isSpade(card) then
             isPillarLocked = false
             card.faceDown = false
+        end
+        if context and context.monster and context.monster.bossData and context.monster.bossData.humanBoss==4
+            and Boss.passiveEnabled(context.monster) and card.rank>=11 and card.rank<=13 then
+            isPillarLocked=true;debuffReason="TRIỀU ĐÌNH · J/Q/K BỊ VÔ HIỆU HÓA"
         end
 
         if card.exhausted then

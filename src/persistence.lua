@@ -136,6 +136,7 @@ local function snapshotRun(run)
         result.blinds[i] = {
             status = blind.status,
             tagId = blind.tag and blind.tag.id or nil,
+            debuff = blind.debuff and blind.debuff.humanBoss and {id=blind.debuff.id,humanBoss=blind.debuff.humanBoss,encounterToken=blind.debuff.encounterToken} or nil,
         }
     end
     return result
@@ -167,6 +168,14 @@ local function restoreRun(saved, faction)
     run.blinds = RunManager.generateAnteBlinds(run.ante, run.selectedFaction,run.regionId,run.areaStage,run.difficultyCap)
     for i, blind in ipairs(run.blinds) do
         local savedBlind = saved.blinds and saved.blinds[i]
+        if i==3 and run.regionId=="human" and savedBlind and savedBlind.debuff and savedBlind.debuff.humanBoss then
+            local definition=require("config.human_boss_data").byId[savedBlind.debuff.id]
+            if definition then
+                local data={};for k,v in pairs(definition) do data[k]=v end
+                data.encounterToken=savedBlind.debuff.encounterToken
+                blind.debuff=data;blind.name=data.name;blind.color=data.color
+            end
+        end
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
         if blind.status ~= "completed" then blind.status = i == run.currentBlindIndex and "current" or "upcoming" end
     end
@@ -245,6 +254,7 @@ function Persistence.makeSnapshot(game, activeState)
             or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
             or (activeState == "shop" and "shop")
             or (activeState == "barter" and game.barterEvent and "barter")
+            or (activeState == "blood_statue" and (game.ancientStatue or game.bloodDomain) and "blood_statue")
             or (activeState == "void" and game.voidEvent and "void")
             or "BLIND_SELECT",
         game = savedGame,
@@ -335,6 +345,7 @@ function Persistence.restoreSnapshot(snapshot)
     require("src.void_tickets").count(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
     if game.barterEvent then require("src.barter").restore(game) end
+    require("src.ancient_statue").restore(game)
     game.regionRecognitions=game.regionRecognitions or {}
     if game.run.travelPermit and snapshot.game.run.travelRulesVersion~=2 then
         local found=false

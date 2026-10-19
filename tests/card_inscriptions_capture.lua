@@ -10,7 +10,8 @@ function T.verify()
     local cards={}
     for i=1,10 do
         local card=Deck.newCard(({2,10,11,12,13,14,7,10,12,14})[i],({"hearts","diamonds","clubs","spades"})[(i-1)%4+1])
-        card.evolutionLevel=math.min(8,i-1);card.temporaryAbilityLevels=math.max(0,i-9)
+        local cap=require("config.card_ability_data").maxEvolutionLevel
+        card.evolutionLevel=math.min(cap,i-1);card.temporaryAbilityLevels=math.max(0,i-1-cap)
         card.speedBonus=speeds[i]-Deck.getAttackSpeed(card.rank);card.baseChips=damages[i]
         assert(I.statTier("speed",Deck.getCardAttackSpeed(card))==i and I.statTier("damage",card.baseChips)==i)
         cards[i]=card

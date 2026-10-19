@@ -15,6 +15,7 @@ local prices
 local function title(item) return item.name or item.characterName or ((item.rankName or tostring(item.rank or ""))..(item.suitSymbol or "")) end
 local function itemStamp(item)
     local fields={"id","rank","baseRank","suit","baseChips","bonusBaseChips","speedBonus","maxSockets","unlockedSockets","allowDuplicateEquipment","rarity","baseRarity","baseRarityTier","evolutionLevel","edition","editionPower","enchantment","enchantmentPower","bloodPower","voidPower","seal","sealPower","enhancement","healAmt","armorAmt","permanentSpeed","investment","amount","resource","cost","potionPermanentDamage","potionPermanentMult","spnPermanentDamage"}
+    fields[#fields+1]="bloodDomainPower";fields[#fields+1]="statuePower";fields[#fields+1]="statueSpeedPenalty"
     local stamp={};for _,field in ipairs(fields) do stamp[field]=item[field] end
     stamp.acquisitionCost=item.acquisitionCost
     stamp.equipments={};for _,eq in ipairs(item.equipments or {}) do stamp.equipments[#stamp.equipments+1]=itemStamp(eq) end
@@ -128,6 +129,7 @@ function T.create(game)
     T.initiate(game);return e
 end
 function T.roll(game)
+    if game.bloodDomain then return false end
     local run=game.run
     if not run or run.ante%2~=0 or run.currentBlindIndex~=3 or not run.blinds or not run.blinds[3] or run.blinds[3].status~="completed" then return false end
     local key=run.ante..":"..(run.regionId or "human");game.barterChecked=game.barterChecked or {}

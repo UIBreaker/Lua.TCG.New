@@ -17,11 +17,12 @@ for stage=1,80 do
     for _,type in ipairs({"small","big","boss"}) do
         local g,b=start(stage,type=="boss",type=="big")
         local expected=Group.count(stage,type=="boss",type=="big")
+        if require("src.human_bosses").number(g.monster)==8 then expected=3 end
         assert(#g.enemies==expected and expected>=1 and expected<=3)
         local hp,atk=0.0,0
         for i,m in ipairs(g.enemies) do
             assert(m.groupIndex==i and m.group==g.enemies)
-            hp=hp+(m.enemyInventory and m.enemyInventory.base.maxHp or m.hp);atk=atk+m.attack
+            if not m.humanCaptive then hp=hp+(m.enemyInventory and m.enemyInventory.base.maxHp or m.hp);atk=atk+m.attack end
             if stage>40 then assert(m.creatureCard and m.cardRank>=2 and m.cardRank<=13 and m.enemyAbility) end
         end
         assert(math.abs(hp-b.hp)<=math.max(1e-7,b.hp*1e-14),"squad must preserve encounter HP budget")

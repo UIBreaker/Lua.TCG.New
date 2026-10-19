@@ -81,6 +81,7 @@ function L.stats(m)
     return result
 end
 function L.start(m)
+    if m.bloodSovereign then m.enemyInventory=nil;return end
     local old=m.enemyInventory
     local base=old and old.base or {maxHp=m.maxHp,armor=m.creatureArmor or 0}
     m.enemyInventory=L.generate(m);m.enemyInventory.base=base
@@ -96,8 +97,10 @@ function L.attack(m)
     return math.floor((m.attack or 12)*(1+L.stats(m).damage))
 end
 function L.speed(m)
-    if not m.enemyInventory then return math.min(999,m.attackSpeed or 1) end
-    return math.min(999,math.max(1,math.floor((m.attackSpeed or 1)*(1+L.stats(m).speed))))
+    if m.bloodSovereign then return math.max(1,m.attackSpeed or 1) end
+    local cap=999*(m.bloodDomainMultiplier or 1)
+    if not m.enemyInventory then return math.min(cap,m.attackSpeed or 1) end
+    return math.min(cap,math.max(1,math.floor((m.attackSpeed or 1)*(1+L.stats(m).speed))))
 end
 local function effect(m,kind,stat)
     if not magic(m) then return 0 end

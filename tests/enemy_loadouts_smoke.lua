@@ -17,15 +17,17 @@ for stage=1,80 do for _,kind in ipairs({"small","big","boss"}) do
     local blind=Run.generateAnteBlinds(stage)[kind=="small" and 1 or kind=="big" and 2 or 3]
     C.start(g,Run.createBlindMonster(blind,g),stage)
     for _,m in ipairs(g.enemies) do
+        if not m.humanCaptive then
         local bag=assert(m.enemyInventory)
         assert(bag.spent<=bag.budget and #bag.equipment<=L.profile(m).slots)
         local state=R.getState();local nextBag=L.generate(m)
         assert(R.getState()==state and nextBag.equipment[1].id==bag.equipment[1].id,"loadouts are stable and RNG-neutral")
         local stats=L.stats(m)
         for key,value in pairs(stats) do assert(value>=0 and value<=L.config.caps[key]) end
-        assert(m.maxHp>=bag.base.maxHp and m.maxHp<=bag.base.maxHp*1.2)
+        local vitality=require("src.human_bosses").number(m)==1 and 1.5 or 1
+        assert(m.maxHp>=bag.base.maxHp and m.maxHp<=bag.base.maxHp*1.2*vitality)
         assert(A.attack(m)>=m.attack and A.attack(m)<=m.attack*1.4)
-        assert(A.speed(m)<=999 and m.creatureArmor<=m.maxHp*.5)
+        assert((A.speed(m)<=999 or require("src.human_bosses").number(m)==2) and m.creatureArmor<=m.maxHp*(require("src.human_bosses").number(m)==6 and 1 or .5))
         if bag.equipment[1].edition then counts.edition=counts.edition+1 end
         if bag.seal then counts.seal=counts.seal+1 end
         if bag.spn then counts.spn=counts.spn+1 end
@@ -34,6 +36,7 @@ for stage=1,80 do for _,kind in ipairs({"small","big","boss"}) do
         for _,item in ipairs(bag.equipment) do assert(#L.describeItem(item).desc>0) end
         if bag.seal then assert(#L.describeItem(bag.seal).desc>0) end
         if bag.spn then assert(#L.describeItem(bag.spn).desc>0) end
+        end
     end
 end end
 for key,n in pairs(counts) do assert(n>0,"missing generated "..key) end
@@ -96,6 +99,7 @@ for _,kind in ipairs({"small","big","boss"}) do
     g=Game.new("red_deck");g.playerHp=500;g.maxPlayerHp=500
     C.start(g,Run.createBlindMonster(Run.generateAnteBlinds(20)[kind=="small" and 1 or kind=="big" and 2 or 3],g),20)
     for _,enemy in ipairs(g.enemies) do
+        g.playerArmor=1 -- Human Fortress explicitly requires armor before its shield can be damaged.
         local hp=enemy.hp;local armor=enemy.creatureArmor
         if kind=="small" then M.takeDamage(enemy,500000);assert(enemy.hp==0,"500K can one-shot stage-20 normal opponents")
         else M.takeDamage(enemy,hp+armor+1);assert(enemy.hp==0,"a strong build can always exceed gear durability") end

@@ -369,7 +369,7 @@ function Deck.peekCardAttackSpeed(card,game)
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
     local basics=require("src.spn_basics")
     local spiritSpeed=basics.speed(game or basics.cardGames[card])
-    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed+spiritSpeed))
+    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed+spiritSpeed-(card.statueSpeedPenalty or 0)-(card.humanSpeedPenalty or 0)))
 end
 
 function Deck.getCardAttackSpeed(card)
@@ -597,6 +597,9 @@ function Deck.cloneCard(card)
     newC.rankName = Deck.RANK_NAMES[newC.rank] or tostring(newC.rank)
     newC.bloodPower = card.bloodPower
     newC.voidPower = card.voidPower
+    newC.statuePower=card.statuePower
+    newC.statueSpeedPenalty=card.statueSpeedPenalty
+    newC.humanSpeedPenalty=card.humanSpeedPenalty
     newC.editionPower = card.editionPower
     newC.speedBonus = math.max(0, tonumber(card.speedBonus) or 0)
     Deck.getCardAttackSpeed(newC)
@@ -681,7 +684,7 @@ function Deck.devourCard(targetCard, sacrificedCard, gameState)
         end
         if gameState then
             require("src.card_abilities").destroy(gameState,sacrificedCard)
-            gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100) + 20)
+            require("src.player_health").heal(gameState,20)
             gameState.discardsRemaining = (gameState.discardsRemaining or 3) + 2
             if gameState.persistentDeck then
                 for idx, c in ipairs(gameState.persistentDeck) do

@@ -104,7 +104,7 @@ function A.commitHand(game,slot,result,preview)
     if result.grantPermanentSpeedSmall then
         local reward=require("src.shop").healingItem("upper","cons_speed_small").consumable
         local power=result.grantPermanentSpeedSmallPower or 1
-        if power>1 then reward.voidPower=power end
+        if power==4 then reward.bloodDomainPower=4 elseif power>1 then reward.voidPower=power end
         reward.permanentSpeed=true
         reward.desc="Chọn một lá đang trên tay: +"..(3*power).." tốc đánh vĩnh viễn (tối đa 999)."
         giveConsumable(game,reward)
@@ -165,7 +165,7 @@ function A.guard(game,damage)
         if deity.id=="spirit_last_pact" and hp>0 and damage>=hp then
             if not state.used then
                 local keep=math.min(game.maxPlayerHp or 100,5*require("src.blood_shop").powerOf(deity))
-                game.playerHp=math.max(hp,keep);damage=game.playerHp-keep
+                require("src.player_health").heal(game,math.max(0,keep-hp));damage=game.playerHp-keep
                 state.used=true;store(game,slot,state)
                 notice(game,deity,slot,"GIAO KÈO · CÒN "..keep.." HP")
             elseif not state.legendaryUsed and D.getRarityTier(deity)>=5 then
@@ -185,7 +185,7 @@ function A.guard(game,damage)
                     end
                     require("src.combat").cleanupDestroyedCards(game)
                     state.legendaryUsed=true;store(game,slot,state)
-                    game.playerHp=game.maxPlayerHp or 100;damage=0
+                    require("src.player_health").heal(game,(game.maxPlayerHp or 100)-(game.playerHp or 0));damage=0
                     notice(game,deity,slot,"GIAO KÈO BẬC L · HỒI ĐẦY HP · HIẾN TẾ 5 LÁ")
                 end
             end

@@ -1,6 +1,6 @@
 # 🃏 LUA.TCG — Poker Roguelike
 
-**beta 0.139.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
+**beta 0.140.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
@@ -23,10 +23,16 @@ Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài v�
 | :---: | :---: |
 | ![Thông tin khả năng, tiến hóa và trang bị của quân bài](docs/screenshots/0.75.3/card-inspector.png) | ![Tra cứu các nhóm nội dung trong bộ sưu tập](docs/screenshots/0.75.3/collection.png) |
 
+## Mới trong beta 0.140.0
+
+- **Tượng Cổ**: sự kiện hiến máu đổi nâng cấp/ngẫu nhiên; lưu lựa chọn và tiến độ.
+- **Lãnh Địa Máu**: nhánh bí mật tám trận, tám loại địch và boss Vương Huyết; thắng chọn một SPN có sức mạnh ×4 rồi quay lại hành trình chính. Xem [quy tắc](docs/ANCIENT_STATUE.md).
+- **10 boss nhân loại** với nội tại, kỹ năng và tranh riêng; chọn boss và kết quả ảnh hưởng bộ bài được giữ qua lưu/tải. Xem [danh mục boss](docs/HUMAN_BOSSES.md).
+- Nâng trần tiến hóa quân bài lên **10**; thêm 21 tranh/nền Continental và khung cấp cao.
+
 ## Mới trong beta 0.139.0
 
 - Ba SPN: **Song Quang Hội Tụ**, **Kẻ Dệt Số**, **Sứ Giả Khảo Luyện**; công thức AURA và nhiệm vụ tiến hóa riêng, hỗ trợ lưu/tải.
 - **Mũi Thép** (+5 Sát thương), **Mảnh Hổ Phách** (+1 Cường hóa), công thức chế tạo và nguồn hàng cập nhật.
 - Âm thanh/hiệu ứng đánh hụt riêng; nâng cấp khung, chữ số, hốc khảm và kho đồ địch.
 - Giữ các tối ưu khởi động, RAM và tài nguyên từ beta 0.138.2.
-

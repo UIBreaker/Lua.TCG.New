@@ -1,0 +1,86 @@
+[
+  {
+    "id": "blood_leech",
+    "group": "enemy",
+    "name": "Đỉa Chúa Huyết Hồ",
+    "ability": "Hút Sinh Mệnh: hồi HP theo sát thương, sử dụng dự trữ hồi máu hữu hạn.",
+    "source": "src/ancient_statue.lua",
+    "concept": "A single enormous armored lamprey-like blood leech rising upright in a coiled S-shape from a shallow dark crimson lake, leathery charcoal skin and broad bone-ivory carapace plates, a circular non-gory tooth-ring mouth surrounded by restrained red vapor drawn inward to symbolize life siphoning. Broken basalt stepping stones in foreground, distant ruined Western abbey and dim copper eclipse. Creature fills most of the portrait, visually distinct from a wolf, knight or humanoid oracle.",
+    "file": "assets/cards/continental/enemy/blood_leech.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. A single enormous armored lamprey-like blood leech rising upright in a coiled S-shape from a shallow dark crimson lake, leathery charcoal skin and broad bone-ivory carapace plates, a circular non-gory tooth-ring mouth surrounded by restrained red vapor drawn inward to symbolize life siphoning. Broken basalt stepping stones in foreground, distant ruined Western abbey and dim copper eclipse. Creature fills most of the portrait, visually distinct from a wolf, knight or humanoid oracle.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-a46b32a4-fcee-426f-8bb8-7d40ca7442f3.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "blood_executioner",
+    "group": "enemy",
+    "name": "Đao Phủ Huyết Ngục",
+    "ability": "Mùi Máu Yếu: tăng 35% sát thương khi người chơi còn dưới 40% HP tối đa.",
+    "source": "src/ancient_statue.lua",
+    "concept": "One towering hooded undead Western executioner, broad hunched silhouette with a heavy bone-colored iron mask, weathered black leather apron over antique bronze armor, holding an immense crescent-headed execution axe angled diagonally across his body. Three restrained crimson glints along the axe edge evoke a finishing blow against a weakened foe. Cracked basalt prison bridge, sparse broken iron shackles, distant Gothic gate, ash-gray and oxblood cloth. Menacing full figure, not a king and no crown, no victim or gore.",
+    "file": "assets/cards/continental/enemy/blood_executioner.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One towering hooded undead Western executioner, broad hunched silhouette with a heavy bone-colored iron mask, weathered black leather apron over antique bronze armor, holding an immense crescent-headed execution axe angled diagonally across his body. Three restrained crimson glints along the axe edge evoke a finishing blow against a weakened foe. Cracked basalt prison bridge, sparse broken iron shackles, distant Gothic gate, ash-gray and oxblood cloth. Menacing full figure, not a king and no crown, no victim or gore.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-65419f21-cc57-4696-bb6a-2b08edfb16df.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "blood_weaver",
+    "group": "enemy",
+    "name": "Nhện Dệt Huyết Chú",
+    "ability": "Tơ Độc Huyết Chú: đòn gây HP thực thêm 2 Độc, tối đa 6, giảm 1 sau mỗi tay.",
+    "source": "src/ancient_statue.lua",
+    "concept": "One giant elegant blood-silk spider, eight clearly articulated black obsidian legs spread around a pale bone-ivory faceted abdomen carrying a contained red crystal, poised over a single taut crimson web stretched between eroded Gothic pillars. Fine web strands converge into a readable scarlet magical knot beneath its fangs to suggest lingering venom. Shadowy ruined chapel above dark red water, controlled red glow. Entire spider readable, no humanoid rider, no gore.",
+    "file": "assets/cards/continental/enemy/blood_weaver.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One giant elegant blood-silk spider, eight clearly articulated black obsidian legs spread around a pale bone-ivory faceted abdomen carrying a contained red crystal, poised over a single taut crimson web stretched between eroded Gothic pillars. Fine web strands converge into a readable scarlet magical knot beneath its fangs to suggest lingering venom. Shadowy ruined chapel above dark red water, controlled red glow. Entire spider readable, no humanoid rider, no gore.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-8e065e7e-f4b5-4527-b84d-bd63c20df559.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "blood_gargoyle",
+    "group": "enemy",
+    "name": "Thạch Quỷ Huyết Dực",
+    "ability": "Tái Kết Huyết Thạch: một lần mỗi trận, sống lại với 25% HP.",
+    "source": "src/ancient_statue.lua",
+    "concept": "One ancient winged basalt gargoyle in a crouched guardian pose on a broken Gothic buttress, enormous folded batlike wings making a distinct broad triangular silhouette. Worn stone body with large bone-ivory armor plates, one broad glowing crimson repair seam across its chest, several stone fragments hovering very close to the seam to symbolize a single resurrection. Ruined Western throne courtyard and pale eclipse in distance, antique gold edge light, dark crimson mist. One creature, no crown, no axe, no gore.",
+    "file": "assets/cards/continental/enemy/blood_gargoyle.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One ancient winged basalt gargoyle in a crouched guardian pose on a broken Gothic buttress, enormous folded batlike wings making a distinct broad triangular silhouette. Worn stone body with large bone-ivory armor plates, one broad glowing crimson repair seam across its chest, several stone fragments hovering very close to the seam to symbolize a single resurrection. Ruined Western throne courtyard and pale eclipse in distance, antique gold edge light, dark crimson mist. One creature, no crown, no axe, no gore.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-9a7409df-833e-4fea-8c7e-2862e3bf6fa3.png",
+      "mode": "built-in image_gen"
+    }
+  }
+]

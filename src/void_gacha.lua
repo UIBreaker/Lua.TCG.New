@@ -34,6 +34,7 @@ local function playingCard(rank,suit,power)
     return card
 end
 function G.enterIfDue(game,forceEntry)
+    if game.bloodDomain then return false end
     local run=game.run
     if not run or run.ante%10~=0 or run.currentBlindIndex~=3 or not run.blinds or run.blinds[3].status~="completed" then return false end
     local key=run.ante..":"..(run.regionId or "human");game.voidVisited=game.voidVisited or {}

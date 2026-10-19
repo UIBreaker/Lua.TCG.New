@@ -1,13 +1,16 @@
 -- Presentation-only asset selection. Boss data can change after monster creation.
 local Art = { images = {}, cards = {} }
 Art.normal = { "forest_goblin", "lava_golem", "swamp_wraith", "frost_wolf", "desert_scorpion", "ancient_skeleton" }
+Art.blood={"blood_hound","blood_sentinel","blood_oracle","blood_leech","blood_executioner","blood_weaver","blood_gargoyle","blood_sovereign"}
 Art.bosses = {
     "lock_royals", "black_tax_collector", "the_water", "memory_eater", "the_arm",
     "gatekeeper", "the_hook", "max_3_cards", "the_needle", "the_fish",
     "echo_knight", "taxman", "gem_devourer", "executioner", "faceless",
 }
+for _,d in ipairs(require("config.human_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
 function Art.key(monster)
     if not monster then return nil end
+    if monster.isBoss and monster.bossData and monster.bossData.humanBoss then return monster.bossData.artKey end
     if monster.neutralHuman then return "human_"..monster.cardRank end
     if monster.human then return monster.cardSuit .. "_" .. require("src.expedition").rankName(monster.cardRank) end
     if monster.artKey then return monster.artKey end
@@ -20,7 +23,8 @@ function Art.key(monster)
     end
 end
 function Art.path(key)
-    if key and key:match("^human_%d+$") then return "assets/cards/continental/enemy/"..key..".png" end
+    if key and key:match("^blood_") then return "assets/cards/continental/enemy/"..key..".png" end
+    if key and key:match("^human_") then return "assets/cards/continental/enemy/"..key..".png" end
     local human = key and key:match("^(%a+)_([%dJQKA]+)$")
     return (human and (human=="hearts" or human=="diamonds" or human=="clubs" or human=="spades"))
         and "assets/cards/"..key..".png" or "assets/scene/enemies/"..key..".png"
@@ -28,7 +32,7 @@ end
 function Art.load()
     if require('src.touch_input').lowPower then
         local valid={}
-        for _,list in ipairs({Art.normal,Art.bosses}) do for _,key in ipairs(list) do valid[key]=true end end
+        for _,list in ipairs({Art.normal,Art.bosses,Art.blood}) do for _,key in ipairs(list) do valid[key]=true end end
         setmetatable(Art.images,{__index=function(images,key)
             if not valid[key] then return nil end
             local image=require('src.continental_art').get(key)
@@ -41,7 +45,7 @@ function Art.load()
         end})
         return
     end
-    for _, list in ipairs({ Art.normal, Art.bosses }) do
+    for _, list in ipairs({ Art.normal, Art.bosses, Art.blood }) do
         for _, key in ipairs(list) do
             local path = Art.path(key)
             local continental=require("src.continental_art").get(key)

@@ -10,7 +10,7 @@ function HUD.draw(data,fonts,mx,my,pressed)
  local stat=fonts.hudStat or small
  Chrome.panel(12,10,1256,60)
  Chrome.crest(42,40,20,T.colors.gold)
- Chrome.title("ẢI "..(data.ante or 1).." · TRẬN "..(data.round or 1),69,29,149,title,T.colors.gold)
+ Chrome.title(data.encounterLabel or ("ẢI "..(data.ante or 1).." · TRẬN "..(data.round or 1)),69,29,149,title,T.colors.gold)
  Chrome.well(230,14,194,51,T.colors.gold)
  Chrome.well(430,16,81,47,T.colors.gold)
  Chrome.well(523,16,125,47,T.colors.gold)

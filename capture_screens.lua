@@ -60,6 +60,18 @@ local function buyFocused(x, y)
 end
 
 function Capture.update(gameRef, callbacks)
+    for _,value in ipairs(arg or {}) do if value=="--capture-human-boss-combat" then
+        local ok,err=xpcall(function() require("tests.human_boss_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("HUMAN BOSS RUNTIME FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do
+        if value=="--test-ancient-statue" then
+            local ok,err=xpcall(function() require("tests.ancient_statue_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("STATUE CAPTURE FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+    end
     for _,value in ipairs(arg or {}) do
         if value=="--test-target-clarity" then
             local ok,err=xpcall(function() require("tests.target_clarity_capture").update(gameRef,callbacks) end,debug.traceback)

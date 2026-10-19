@@ -75,7 +75,7 @@ function T.apply(g,c,p,x)
     g.playerArmor=math.max(0,(g.playerArmor or g.playerShield or 0)-(out.armorCost or 0))
     local allowedHeal=math.min(out.heal,math.max(0,12-ledger.heal))
     local actualHeal=math.min(allowedHeal,math.max(0,s.maxHp-(g.playerHp or s.hp)))
-    g.playerHp=math.min(s.maxHp,(g.playerHp or s.hp)+actualHeal);ledger.heal=ledger.heal+allowedHeal
+    require("src.player_health").heal(g,actualHeal);ledger.heal=ledger.heal+allowedHeal
     if d.suit=="heart" then out.armor=out.armor+allowedHeal-actualHeal end
     local armor=math.min(out.armor,math.max(0,24-ledger.armor))
     g.playerArmor=math.min(Data.armorCap,g.playerArmor+armor);g.playerShield=g.playerArmor;ledger.armor=ledger.armor+armor

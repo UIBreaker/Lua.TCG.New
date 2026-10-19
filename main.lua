@@ -1,4 +1,12 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do
+    if a=="--test-human-bosses" then
+        love.filesystem.setIdentity("poker_roguelike_human_boss_tests")
+        local ok,err=xpcall(function() require("tests.human_bosses_smoke") end,debug.traceback)
+        if not ok then print(err) end;os.exit(ok and 0 or 1)
+    end
+    if a=="--capture-human-bosses" then require("tests.human_boss_gallery");return end
+end
 for _, a in ipairs(arg or {}) do
     if a=="--test-shop-vouchers" then
         local failed=false
@@ -167,6 +175,10 @@ io.stdout:setvbuf("no")
 local isCaptureMode = false
 local chestAnimationCaptureMode = false
 for _, a in ipairs(arg or {}) do
+    if a=="--capture-human-boss-combat" then
+        isCaptureMode=true;love.filesystem.setIdentity("poker_roguelike_human_boss_runtime")
+        function love.errorhandler(message) print("HUMAN BOSS UI ERROR: "..tostring(message));return function() return 1 end end
+    end
     if a=="--capture-card-description" then isCaptureMode=true end
     if a == "--test-chest-expansion" then
         function love.load() require("tests.chest_expansion_render").run() end
@@ -201,6 +213,10 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-barter" then
         isCaptureMode = true
         function love.errorhandler(message) print("BARTER UI ERROR: "..tostring(message));return function() return 1 end end
+    end
+    if a=="--test-ancient-statue" then
+        isCaptureMode=true
+        function love.errorhandler(message) print("STATUE UI ERROR: "..tostring(message));return function() return 1 end end
     end
     if a=="--test-void-gacha" then
         isCaptureMode=true
@@ -1497,7 +1513,7 @@ local function useConsumable(idx)
     if c.id == "cons_vitality" then
         local bonus=(c.hpBonus or 20)*require("src.blood_shop").powerOf(c)
         game.maxPlayerHp=(game.maxPlayerHp or 100)+bonus
-        game.playerHp=math.min(game.maxPlayerHp,(game.playerHp or 100)+bonus)
+        require("src.player_health").heal(game,bonus)
         table.remove(game.consumables,idx)
         Sound.play("round_win")
         saveRunAtSafePoint()
@@ -1840,6 +1856,7 @@ local function startEnemyAttack(phase, speed, done, played)
             if hit.action=="damage" then ft.text="+"..hit.value.." ST";ft.color={1,.65,.35} end
             if hit.action=="equip" then ft.text="ĐỔI TRANG BỊ";ft.color={1,.85,.5} end
             if hit.action=="accuracy" then ft.text="ĐÒN KẾ: TRÚNG 100%";ft.color={1,.85,.5} end
+            if hit.action=="human_skill" then ft.text=hit.label;ft.color={.85,.55,1} end
             if hit.action=="equip" and hit.label then ft.text=hit.label end
             Sound.play("spn_trigger",.85)
             return
@@ -1996,7 +2013,7 @@ local function playSelectedHand()
         end
         if scoreResult.healHp and scoreResult.healHp > 0 then
             local maxHp = game.maxPlayerHp or 100
-            game.playerHp = math.min(maxHp, (game.playerHp or 100) + scoreResult.healHp)
+            require("src.player_health").heal(game,scoreResult.healHp)
         end
         if scoreResult.hpCost and scoreResult.hpCost > 0 then
             game.playerHp = math.max(0, (game.playerHp or 100) - scoreResult.hpCost)
@@ -3380,7 +3397,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.139.0", 48, 185)
+    g.print("beta 0.140.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3979,6 +3996,7 @@ local function drawBattleHud(m, mx, my)
     local turn=anim.enemyTurn
     local contact=turn and not turn.reducedMotion and EnemyAttack.contact(turn) or 0
     local hudButtons = UI.components.TopHUD.draw({
+        encounterLabel=game.bloodDomain and ("HUYẾT · "..game.run.areaStage.." / 8") or nil,
         ante = (game.run and game.run.ante) or game.act or 1,
         round = (game.run and game.run.currentBlindIndex) or game.round or 1,
         hp = game.playerHp, maxHp = game.maxPlayerHp, gold = game.gold or 0, souls = game.souls or 0,
@@ -6289,6 +6307,9 @@ function love.draw()
     elseif state=="barter" then
         buttons={}
         require("ui.barter").draw(game,buttons,toVirtual(love.mouse.getPosition()))
+    elseif state=="blood_statue" then
+        buttons={}
+        require("ui.ancient_statue").draw(game,buttons,toVirtual(love.mouse.getPosition()))
     elseif state=="void" then
         buttons={}
         require("ui.void_gacha").draw(game,buttons,toVirtual(love.mouse.getPosition()))
@@ -6588,6 +6609,9 @@ local function handlePlayingMousepressed(mx, my, button)
 end
 
 function UI.continueAfterMarket()
+    if game.pendingAncientStatue then
+        require("src.ancient_statue").create(game);state="blood_statue";lastActiveState=state;saveRunAtSafePoint();return true
+    end
     if game.run then
         local continues,reason=RunManager.advanceBlind(game.run,game)
         if not continues and reason=="victory" then state="victory";Sound.play("round_win")
@@ -6598,6 +6622,11 @@ function UI.continueAfterMarket()
         state="map";Sound.play("card_deal")
     end
     return true
+end
+
+function UI.afterCombatDestination()
+    if game.bloodDomain and game.bloodDomain.choices then return "blood_statue" end
+    return require("src.void_gacha").enterIfDue(game) and "void" or "shop"
 end
 
 local function handleShopMousepressed(mx, my, button)
@@ -7969,7 +7998,7 @@ function love.mousepressed(x, y, button, istouch)
                             Shop.resetReroll(shopData)
                             Shop.enterAfterCombat(game)
                             Shop.refresh(shopData, game)
-                            state = require("src.void_gacha").enterIfDue(game) and "void" or "shop"
+                            state = UI.afterCombatDestination()
                             cashOutAnim.state = "EXIT"
                             game.pendingVictoryReward = nil
                             RewardSystem.openNextPack(game, shopData)
@@ -7991,6 +8020,18 @@ function love.mousepressed(x, y, button, istouch)
                 local result=require("ui.void_gacha").press(game,btn)
                 if result=="leave" then game.voidEvent=nil;state="shop";lastActiveState=state;RewardSystem.openNextPack(game,shopData) end
                 if result then saveRunAtSafePoint();Sound.play("card_deal") end
+                return
+            end
+        end
+    elseif state=="blood_statue" then
+        if button~=1 then return end
+        for _,btn in ipairs(buttons) do
+            if not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local result=require("ui.ancient_statue").press(game,btn)
+                if result=="leave" or result=="claimed" then UI.continueAfterMarket()
+                elseif result=="entered" then state="BLIND_SELECT";lastActiveState=state;saveRunAtSafePoint()
+                elseif result then saveRunAtSafePoint() end
+                if result then Sound.play("card_deal") end
                 return
             end
         end
@@ -8534,7 +8575,7 @@ function love.keypressed(key, scancode)
                 Shop.resetReroll(shopData)
                 Shop.enterAfterCombat(game)
                 Shop.refresh(shopData, game)
-                state = require("src.void_gacha").enterIfDue(game) and "void" or "shop"
+                state = UI.afterCombatDestination()
                 cashOutAnim.state = "EXIT"
                 game.pendingVictoryReward = nil
                 RewardSystem.openNextPack(game, shopData)

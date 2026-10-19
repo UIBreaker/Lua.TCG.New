@@ -326,6 +326,7 @@ function Deities.getDescription(deity)
     local spell=require("src.spn_enchantments").get(deity.enchantment)
     if spell then text=text.."\nPHÙ PHÉP · "..spell.name..": "..require("src.blood_shop").describe(spell.desc,deity.enchantmentPower or 1) end
     if deity.bloodPower then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
+    if deity.bloodDomainPower then text=text.."\nLÃNH ĐỊA MÁU ×4 · Chỉ số hiệu quả gấp 4." end
     if deity.voidPower then text=text.."\nTHE VOID ×"..deity.voidPower.." · Chỉ số hiệu quả gấp "..deity.voidPower.."." end
     return text
 end

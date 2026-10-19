@@ -71,9 +71,9 @@ function A.start(m)
 end
 function A.speed(m)
     local buffs=m.combatBuffs or {}
-    local speed=math.min(999,require("src.enemy_loadout").speed(m)+((buffs.speed or {}).value or 0))
+    local speed=math.min(m.bloodSovereign and math.huge or 999*(m.bloodDomainMultiplier or 1),require("src.enemy_loadout").speed(m)+((buffs.speed or {}).value or 0))
     speed=buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
-    return math.max(1,speed-(m.spnStolenSpeed or 0))
+    return require("src.human_bosses").speed(m,math.max(1,speed-(m.spnStolenSpeed or 0)))
 end
 function A.attack(m)
     return require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0)
@@ -149,14 +149,19 @@ function A.plan(game,m,turn)
     local function attack()
         local echo=Loadout.attackBonus(m)
         local value=A.attack(m)+A.attackBonus(game,m)+echo
+        value=require("src.human_bosses").attack(game,m,value)
         m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")
             ..(((m.enemyInventory or {}).guaranteedAttacks or 0)>0 and " · Trúng 100%" or "")}
         return m.intent
     end
     if resources.mustAttack then return attack() end
+    local humanIntent=require("src.human_bosses").intent(game,m)
+    if humanIntent then m.intent=humanIntent;return humanIntent end
     if m.enemyInventory then
         local value=A.attack(m)+A.attackBonus(game,m)+Loadout.attackBonus(m)
+        value=require("src.human_bosses").attack(game,m,value)
         local armor=game.playerArmor or game.playerShield or 0
+        if require("src.human_bosses").number(m)==6 then armor=0 end
         local chance=(m.enemyInventory.guaranteedAttacks or 0)>0 and 1 or require("src.combat").getHitChance(A.speed(m),game.lastPlayerAttackSpeed)
         if (game.playerHp or math.huge)<=value-math.min(armor,value*(1-Loadout.pierce(m))) and chance>=.8
             and not (game.potionCombat or {}).evasion then return attack() end
@@ -263,7 +268,8 @@ function A.attackBonus(game,m)
         for _,ally in ipairs(require("src.enemy_group").members(game)) do if ally~=m and ally.hp>0 then alive=alive+1 end end
     end
     local hungry=m.creatureKind=="forest_goblin" and (game.gold or 0)==0 and 0.15 or 0
-    return math.floor((m.attack or 0)*(0.2*alive+hungry))
+    local execution=m.bloodExecutioner and (game.playerHp or 100)<(game.maxPlayerHp or 100)*.4 and .35 or 0
+    return math.floor((m.attack or 0)*(0.2*alive+hungry+execution))
 end
 function A.afterAttack(game,m,damage)
     if not m.enemyAbility then return end

@@ -72,7 +72,7 @@ function DebugTools.clearScene(game)
     -- Keep owned cards/resources; discard pending actions from the abandoned scene.
     for _, key in ipairs({"currentNodeId", "currentEvent", "eventOutcomeText", "monster", "enemies",
         "pendingVictoryReward", "pendingRoundRewardChoice", "pendingRewardEquipment", "pendingShopEquipment",
-        "pendingSoulShop", "pendingBloodShop", "pendingBarter", "barterEvent", "voidEvent",
+        "pendingSoulShop", "pendingBloodShop", "pendingBarter", "barterEvent", "voidEvent", "pendingAncientStatue", "ancientStatue", "bloodDomain",
         "soulDestroyConsumable", "potionVictoryPending", "abilityCombat", "abilityHand", "bossCombat",
         "spnAttack", "enemyActed", "enemyActionPhases", "advancedCombat", "advancedHand"}) do game[key] = nil end
     game.soulDestroyActive = false

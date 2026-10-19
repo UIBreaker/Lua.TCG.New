@@ -844,9 +844,9 @@ function Shop.buyItem(shop, itemIndex, gameState)
             gameState.maxHandSize = (gameState.maxHandSize or 3) + 1
         elseif item.voucherId == "v_vitality" then
             gameState.maxPlayerHp = (gameState.maxPlayerHp or 100) + p.hp
-            gameState.playerHp = math.min(gameState.maxPlayerHp, (gameState.playerHp or 100) + p.hp)
+            require("src.player_health").heal(gameState,p.hp)
         elseif item.voucherId == "v_apothecary" then
-            gameState.playerHp=math.min(gameState.maxPlayerHp or 100,(gameState.playerHp or 100)+p.heal)
+            require("src.player_health").heal(gameState,p.heal)
         elseif item.voucherId == "v_second_chance" then
             gameState.maxDiscards = (gameState.maxDiscards or 3) + p.discards
             gameState.discardsRemaining = (gameState.discardsRemaining or 0) + p.discards
@@ -888,7 +888,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
         end
         Shop.payItem(item,gameState)
         local healVal = item.healAmt or 25
-        gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100) + healVal)
+        require("src.player_health").heal(gameState,healVal)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
         return true, "Đã hồi phục +" .. healVal .. " HP sinh lực!"
@@ -1386,9 +1386,13 @@ function Shop.enterSoulShop(gameState)
 end
 
 function Shop.enterAfterCombat(gameState)
+    if gameState.bloodDomain then
+        gameState.shopMode="small";gameState.pendingSoulShop=false;return
+    end
     gameState.bloodShopNotice=nil
     local blood=Blood.roll(gameState)
     if require("src.barter").roll(gameState) then gameState.pendingBarter=true end
+    if require("src.ancient_statue").roll(gameState) then gameState.pendingAncientStatue=true end
     if Shop.enterSoulShop(gameState) then gameState.pendingBloodShop=blood or gameState.pendingBloodShop
     else gameState.shopMode=blood or Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)] end
     gameState.soulDestroyActive=false
@@ -1456,7 +1460,7 @@ function Shop.destroyCard(gameState, targetCard)
         end
     end
     Souls.award(gameState, targetCard, rewards.multiplier)
-    gameState.playerHp = math.min(gameState.maxPlayerHp or 100, (gameState.playerHp or 100)+rewards.heal)
+    require("src.player_health").heal(gameState,rewards.heal)
     gameState.gold = (gameState.gold or 0)+rewards.gold
     gameState.soulDestroyActive = false
     table.remove(gameState.consumables, consumableIndex)

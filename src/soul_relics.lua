@@ -143,7 +143,7 @@ function R.guard(g,damage)
                 local used=s.used[key]==true and 1 or tonumber(s.used[key]) or 0
                 local power=require("src.blood_shop").powerOf(eq)
                 if eq.id=="soul_phoenix_lantern" and used<power then
-                    s.used[key]=used+1;g.playerHp=math.max(1,math.floor((g.maxPlayerHp or 100)*math.min(1,.5*power)))
+                    s.used[key]=used+1;require("src.player_health").revive(g,math.max(1,math.floor((g.maxPlayerHp or 100)*math.min(1,.5*power))))
                     report(g,card,eq,"CHẶN CHÍ TỬ · HỒI SINH",equipmentIndex);return 0
                 end
             end

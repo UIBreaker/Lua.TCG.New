@@ -91,6 +91,7 @@ local function targetCard(game, op)
 end
 function Boss.handStart(game)
     local m=game.monster; local s=Boss.state(m); if not s then return end
+    if require("src.human_bosses").number(m) then require("src.human_bosses").handStart(game);return end
     local a=m.bossData.active
     if Boss.passiveEnabled(m) then
         if s.releasedHands then
@@ -117,6 +118,9 @@ end
 function Boss.activeDescription(m)
     local s=Boss.state(m); local a=m and m.bossData and m.bossData.active
     if not a then return "" end
+    if m.bossData.humanBoss==3 and m.humanBossState and m.humanBossState.required then
+        return a.description.." Chỉ trúng: "..m.humanBossState.required.vnName
+    end
     local desc=a.description:gsub("{amount}",tostring(a.amount))
     if a.op=="heal" then
         local r=require("src.enemy_abilities").resources(m)
@@ -133,6 +137,7 @@ function Boss.isSlotLocked(game, kind, slot)
     return s and s.slotLock and s.slotLock.kind==kind and s.slotLock.slot==slot and s.slotLock.untilHand>=s.handIndex or false
 end
 function Boss.isAbilityDisabled(game, card)
+    if game and card and require("src.human_bosses").disabled(game,card) then return true end
     if not game or not game.monster or (game.monster.hp or 0)<=0 then return false end
     local s=Boss.state(game and game.monster)
     return s and card.abilityDisabledUntil and card.abilityDisabledUntil>=s.handIndex or false
@@ -178,6 +183,8 @@ local function applyActive(game,a,s)
 end
 function Boss.handEnd(game)
     local m=game.monster; local s=Boss.state(m); if not s or (m.hp or 0)<=0 then return end
+    if require("src.human_bosses").number(m) then s.handIndex=s.handIndex+1;s.actionBlocked=nil;return end
+    require("src.player_health").bloodTurn(game)
     if Boss.key(m)=="black_tax_collector" and Boss.passiveEnabled(m) then
         if (game.gold or 0)>=Boss.config.taxThreshold then game.gold=math.max(0,game.gold-Boss.config.tax)
         elseif (game.gold or 0)==0 then s.debt=math.min(Boss.config.debtCap,s.debt+1) end
@@ -246,6 +253,13 @@ function Boss.afterScore(game,cards)
 end
 function Boss.describe(m)
     local s=Boss.state(m); if not s then return m and m.desc or "" end
+    if m.bossData.humanBoss then
+        local used=m.bossData.humanBoss==9 and m.humanBossState and m.humanBossState.receipt.executionUsed
+        return "NỘI TẠI · "..m.name.."\n"..m.bossData.desc
+            ..(not Boss.passiveEnabled(m) and "\nNỘI TẠI ĐANG BỊ PHONG ẤN" or "")
+            .."\nKỸ NĂNG · "..m.bossData.active.name.."\n"..Boss.activeDescription(m)
+            ..(used and "\nĐÃ DÙNG · 1 / 1" or m.bossData.humanBoss==9 and "\nCÒN · 1 / 1 LẦN" or "\nKÍCH HOẠT THEO ĐÒN ĐÁNH / SÁT THƯƠNG")
+    end
     local active=m.bossData.active
     return "NỘI TẠI · "..(m.bossData.title or m.bossData.name).."\n"..Boss.passiveDescription(m)
         ..(not Boss.passiveEnabled(m) and ("\nVÔ HIỆU · "..math.max(0,s.passiveUntil-s.handIndex+1).." tay") or "")

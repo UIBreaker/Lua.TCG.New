@@ -155,7 +155,7 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
                 local intent=m.intent or {}
                 local names={attack="Tấn công",armor="Gia cố",speed="Tăng tốc",heal="Hồi máu",damage="Cường hóa",equip="Đổi đồ",equip_spn="Triệu hồi SPN",consume="Dùng tiêu hao"}
                 local to=intent.targetIndex and intent.targetIndex~=i and (" · #"..intent.targetIndex) or ""
-                local label=(names[intent.type] or "Tấn công")..to
+                local label=(intent.type=="human_skill" and "Đoạn Mệnh · 1 lần" or names[intent.type] or "Tấn công")..to
                 if (m.spnFrozen or 0)>0 then label="ĐÓNG BĂNG · "..m.spnFrozen.." LƯỢT"
                 elseif #(m.spnAuraBurns or {})>0 then label="THIÊU ĐỐT · "..#m.spnAuraBurns.." NGUỒN" end
                 g.setColor(.009,.019,.027,.93);g.rectangle("fill",x-9,y+h+31,w+18,20,3,3)
@@ -167,6 +167,11 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
                 local image=UI.getConsumableImage({id="cons_bed"})
                 if image then g.setColor(1,1,1,1);UI.CardFrame.image(image,x+w-30,y+h-46,28,42);UI.drawCardBorder(x+w-30,y+h-46,28,42) end
         end
+    end
+    local notice=require("src.human_bosses").notice(game)
+    if notice then
+        g.setColor(.012,.025,.034,.97);g.rectangle("fill",340,397,580,23,4,4)
+        Chrome.title(notice,352,402,556,UI.fonts.tiny,gold,"center")
     end
     if (game.enemyPoison or 0)>0 then
         Chrome.panel(250,82,138,26,{.54,.89,.45})

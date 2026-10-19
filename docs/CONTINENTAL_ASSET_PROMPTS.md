@@ -5762,3 +5762,104 @@ Prompt: Create ONE production SPN game card artwork, full-bleed portrait PNG 102
 Output: assets/cards/continental/spn/spirit_trial_emissary.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_trial_emissary.jpg — 512×768.
 
 Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c1c0a0ec-5b09-46bc-a323-6c3f08755403.png (built-in image_gen).
+
+## 2026-10-19 — Tượng Cổ và Lãnh Địa Máu
+
+Bảy tranh mới tạo bằng built-in image_gen. Prompt nguyên văn, concept, đường dẫn nguồn và file đích lưu trong `docs/BLOOD_DOMAIN_ASSETS.json`, đồng bộ `docs/asset_manifest.json`.
+
+- Utility: `ancient_statue` — tượng đá bịt mắt nhận máu qua bát hiến tế.
+- Enemy: `blood_hound`, `blood_sentinel`, `blood_oracle`, `blood_sovereign` — ba loài canh giữ và Vương Huyết; PNG dọc 2:3, tràn viền, khung/rank do runtime.
+- Scene: `blood_domain_outer`, `blood_domain_throne` — hồ huyết thạch và thánh điện, nền ngang 1672×941, sân trống cho combat.
+
+Cơ chế và kiểm tra: `docs/ANCIENT_STATUE.md`.
+
+## 2026-10-19 — Bổ sung đủ tám địch Lãnh Địa Máu
+
+Bốn tranh mới, bốn concept khác nhau, tạo bằng built-in image_gen: Đỉa Chúa Huyết Hồ (`blood_leech`), Đao Phủ Huyết Ngục (`blood_executioner`), Nhện Dệt Huyết Chú (`blood_weaver`), Thạch Quỷ Huyết Dực (`blood_gargoyle`). Thay các loài bị lặp ở ải 4–7.
+
+PNG dọc 1024×1536 lưu tại `assets/cards/continental/enemy/`; không vẽ rank, chất hoặc khung lên tranh. Prompt nguyên văn và nguồn ảnh lưu tại `docs/BLOOD_ENEMY_EXPANSION_ASSETS.json`, đồng bộ `docs/BLOOD_DOMAIN_ASSETS.json` và `docs/asset_manifest.json`.
+
+Ảnh kiểm tra tám lá thực tế: `docs/blood_enemies_roster.png`.
+
+
+# 2026-10-19 — Human boss roster, stages 1–20
+
+## Thống Soái Huyết Mạch / human_vital_marshal
+
+Concept: Massive human bronze-armored life-siphoning marshal
+
+Prompt: Create ONE production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Cinematic painterly Western dark fantasy expedition matching the Continental reference artwork in this conversation; antique gold, muted earth, navy shadows, controlled glow, medium detail and a strong single readable silhouette. Human boss 1: the Vital Marshal, a massive living human warlord in weathered bronze plate and deep burgundy cloth, broad chest and a prominent engraved alchemical heart vessel strapped over his breastplate. He drives a long poleaxe into the ground; restrained warm red life-energy curls from the axe back into his own chest, visibly sealing a crack in his armor. His physical bulk communicates 50% additional vitality, his returning life energy communicates healing on his attacks. Rural Western stone fortress and rolling grassland at amber dusk behind him. Three-quarter full figure, dominant subject, face human, no undead or blood-domain monarch, no crown necessary. Do not draw any text, letters, digits, suits, card indices, badges, card borders, UI, logos or watermarks. No East Asian motifs or architecture, no dense tiny ornament, no excessive particles. This is a fresh unique boss asset, not recoloring an existing character.
+
+Output: assets/cards/continental/enemy/human_vital_marshal.png
+
+## Kẻ Cướp Gió / human_wind_reaver
+
+Concept: A lean human duelist in a weathered blue-gray travelling coat and silver leather armor, two curved short sabers, striding across a ruined stone bridge. A single cyan ribbon of stolen wind coils from a pale afterimage into the duelist's wrist and trailing cloak. Strong diagonally advancing silhouette and restrained motion streaks convey extreme speed and theft of initiative. Overcast green highland, distant Western towers. Face clearly human, not an ice monster.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A lean human duelist in a weathered blue-gray travelling coat and silver leather armor, two curved short sabers, striding across a ruined stone bridge. A single cyan ribbon of stolen wind coils from a pale afterimage into the duelist's wrist and trailing cloak. Strong diagonally advancing silhouette and restrained motion streaks convey extreme speed and theft of initiative. Overcast green highland, distant Western towers. Face clearly human, not an ice monster.
+
+Output: assets/cards/continental/enemy/human_wind_reaver.png
+
+## Thẩm Phán Thệ Ước / human_oath_judge
+
+Concept: An imposing human oath judge in an austere ivory and charcoal mantle standing before a ruined Western courthouse arch. He holds a broad ceremonial sword upright and a small antique brass balance whose one pan carries a single luminous geometric formation of smooth blank stones, the other tips away with two falling blank tablets. A binding golden line under his feet communicates that only the prescribed formation is accepted. One dominant figure, solemn readable silhouette, no writing on tablets or parchment.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: An imposing human oath judge in an austere ivory and charcoal mantle standing before a ruined Western courthouse arch. He holds a broad ceremonial sword upright and a small antique brass balance whose one pan carries a single luminous geometric formation of smooth blank stones, the other tips away with two falling blank tablets. A binding golden line under his feet communicates that only the prescribed formation is accepted. One dominant figure, solemn readable silhouette, no writing on tablets or parchment.
+
+Output: assets/cards/continental/enemy/human_oath_judge.png
+
+## Nhiếp Chính Mặt Nạ / human_court_puppeteer
+
+Concept: A human court regent with a smooth half-mask, dark violet Renaissance-style Western clothing and a restrained antique gold collar. One raised gloved hand threads three fine violet puppet cords through a broken crown, a scepter and a courtier's mask floating at chest level; the symbols are physical objects, not poker icons or text. Pale blank faces hang inert in distant shadow, suggesting royal figures silenced and transformed. Ruined Western ballroom opening onto dusk hills, one dominant regent silhouette.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human court regent with a smooth half-mask, dark violet Renaissance-style Western clothing and a restrained antique gold collar. One raised gloved hand threads three fine violet puppet cords through a broken crown, a scepter and a courtier's mask floating at chest level; the symbols are physical objects, not poker icons or text. Pale blank faces hang inert in distant shadow, suggesting royal figures silenced and transformed. Ruined Western ballroom opening onto dusk hills, one dominant regent silhouette.
+
+Output: assets/cards/continental/enemy/human_court_puppeteer.png
+
+## Giám Ngục Thiết Luật / human_hand_gaoler
+
+Concept: A stocky human prison warden in blackened steel armor, a massive iron key in one hand and a hinged iron hand-clamp with five pronounced fingers in the other. Narrow cage bars and a contracted hanging cage frame his silhouette without forming a border. The five-finger restraint visually communicates shrinking hand capacity and punishing larger hands. Sandstone Western fortress prison courtyard, warm bone-gold light and cold navy shadows, no prisoners as focal figures.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A stocky human prison warden in blackened steel armor, a massive iron key in one hand and a hinged iron hand-clamp with five pronounced fingers in the other. Narrow cage bars and a contracted hanging cage frame his silhouette without forming a border. The five-finger restraint visually communicates shrinking hand capacity and punishing larger hands. Sandstone Western fortress prison courtyard, warm bone-gold light and cold navy shadows, no prisoners as focal figures.
+
+Output: assets/cards/continental/enemy/human_hand_gaoler.png
+
+## Pháo Đài Nhân Thế / human_bastion
+
+Concept: A towering human fortress knight with a monumental rectangular steel tower shield as large as his torso, heavily layered plate and a long narrow armor-piercing lance held beside it. The shield has a large translucent blue inner layer like thick defensive glass and a simple fortress relief, no glyph text. A few deep impact scars leave the shield intact, while the needle lance points toward the viewer to imply bypassing opposing armor. Western mountain citadel, bronze and steel blue, single unmistakable defensive silhouette.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A towering human fortress knight with a monumental rectangular steel tower shield as large as his torso, heavily layered plate and a long narrow armor-piercing lance held beside it. The shield has a large translucent blue inner layer like thick defensive glass and a simple fortress relief, no glyph text. A few deep impact scars leave the shield intact, while the needle lance points toward the viewer to imply bypassing opposing armor. Western mountain citadel, bronze and steel blue, single unmistakable defensive silhouette.
+
+Output: assets/cards/continental/enemy/human_bastion.png
+
+## Kẻ Bẻ Hồn / human_spirit_breaker
+
+Concept: A severe human exorcist in weathered ivory and muted violet travel robes over light armor, holding a cracked lantern-shaped spirit reliquary. His other hand snaps a single spectral violet chain; one small clearly supernatural guardian silhouette dissolves into the broken reliquary. This is a hostile human soul-breaker destroying and degrading guardians, not a monster or recolored knight. Ruined Western roadside chapel, dusk sky, one clear main figure, controlled sparse spectral effects.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A severe human exorcist in weathered ivory and muted violet travel robes over light armor, holding a cracked lantern-shaped spirit reliquary. His other hand snaps a single spectral violet chain; one small clearly supernatural guardian silhouette dissolves into the broken reliquary. This is a hostile human soul-breaker destroying and degrading guardians, not a monster or recolored knight. Ruined Western roadside chapel, dusk sky, one clear main figure, controlled sparse spectral effects.
+
+Output: assets/cards/continental/enemy/human_spirit_breaker.png
+
+## Chủ Nhân Xiềng Bạc / human_chain_binder
+
+Concept: A charismatic human silver-chain commander in dark emerald and antique gold armor, holding two broad silver shackles outward. Two subdued translucent human expedition silhouettes, one on each side far behind him, are visibly tethered by the two chains; they remain secondary and unarmed enough not to steal focus. His two distinct fetters communicate capturing two player allies and releasing surviving captives when defeated. Mossy Western stone arena at dawn, strong main commander silhouette, restrained green-silver light.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A charismatic human silver-chain commander in dark emerald and antique gold armor, holding two broad silver shackles outward. Two subdued translucent human expedition silhouettes, one on each side far behind him, are visibly tethered by the two chains; they remain secondary and unarmed enough not to steal focus. His two distinct fetters communicate capturing two player allies and releasing surviving captives when defeated. Mossy Western stone arena at dawn, strong main commander silhouette, restrained green-silver light.
+
+Output: assets/cards/continental/enemy/human_chain_binder.png
+
+## Đao Phủ Đoạn Mệnh / human_last_executioner
+
+Concept: A human executioner with a dark leather hood and heavy weathered iron cuirass, one huge broad execution sword held across his body. His other hand locks a small discarded-card-shaped wooden tray with an iron bar; a single blank rectangular parchment token is cut cleanly in two by the blade's edge, conveying one permanent deletion and no discards. Western gallows square with distant stone ramparts, desaturated crimson cloth and bone-gold dawn, no gore, no written symbols.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human executioner with a dark leather hood and heavy weathered iron cuirass, one huge broad execution sword held across his body. His other hand locks a small discarded-card-shaped wooden tray with an iron bar; a single blank rectangular parchment token is cut cleanly in two by the blade's edge, conveying one permanent deletion and no discards. Western gallows square with distant stone ramparts, desaturated crimson cloth and bone-gold dawn, no gore, no written symbols.
+
+Output: assets/cards/continental/enemy/human_last_executioner.png
+
+## Chủ Hội Kim Quyền / human_gilded_broker
+
+Concept: A human merchant warlord in a tailored dark navy coat, antique gold armor and a heavy practical money belt. He weighs a stack of worn gold coins on a small brass merchant scale, while a single relic dagger and stoppered potion vanish into an open iron-bound trade chest at his feet. His confident silhouette communicates growing stronger with the player's wealth and forcibly selling their supplies. Medieval Western port counting house open to a misty harbor, warm gold versus blue-gray, no numbers, documents without writing.
+
+Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human merchant warlord in a tailored dark navy coat, antique gold armor and a heavy practical money belt. He weighs a stack of worn gold coins on a small brass merchant scale, while a single relic dagger and stoppered potion vanish into an open iron-bound trade chest at his feet. His confident silhouette communicates growing stronger with the player's wealth and forcibly selling their supplies. Medieval Western port counting house open to a misty harbor, warm gold versus blue-gray, no numbers, documents without writing.
+
+Output: assets/cards/continental/enemy/human_gilded_broker.png

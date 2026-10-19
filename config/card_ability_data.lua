@@ -1,6 +1,6 @@
 -- Continental 52: resource tactics resolve once before initiative, never on retriggers.
 local Data = {
-    maxEvolutionLevel=8, maxRetriggerDepth=4, maxCopyDepth=3,
+    maxEvolutionLevel=10, maxRetriggerDepth=4, maxCopyDepth=3,
     maxTriggersPerHand=128, maxRetriggersPerCard=8, armorCap=999,
     tacticsVersion=2, goldPerHand=3, goldPerCombat=12, speedPerHand=3,
     definitions={}, order={},

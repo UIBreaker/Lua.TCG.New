@@ -126,7 +126,7 @@ function A.resolve(game,attackHit)
     c.maxHp=(c.maxHp or 0)+maxGain;game.maxPlayerHp=(game.maxPlayerHp or 100)+maxGain
     local hp=game.playerHp or game.maxPlayerHp
     local overflow=math.max(0,hp+(b.heal or 0)-game.maxPlayerHp)
-    game.playerHp=math.min(game.maxPlayerHp,hp+(b.heal or 0))
+    require("src.player_health").heal(game,b.heal or 0)
     local gold=math.min((b.gold or 0)+math.min(overflow,b.overflow or 0),math.max(0,30-(c.gold or 0)))
     c.gold=(c.gold or 0)+gold;game.gold=(game.gold or 0)+gold
     local armor=(b.armor or 0)+((game.monster.hp or 0)<=0 and (b.killArmor or 0) or 0)

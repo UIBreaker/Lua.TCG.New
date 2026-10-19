@@ -11534,6 +11534,375 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-c1c0a0ec-5b09-46bc-a323-6c3f08755403.png",
         "mode": "built-in image_gen"
       }
+    },
+    {
+      "id": "ancient_statue",
+      "group": "utility",
+      "name": "Tượng Cổ",
+      "ability": "Hiến 10% máu hiện tại nhận một trong 10 kết quả; ≤10% HP tối đa vào lãnh địa.",
+      "source": "src/ancient_statue.lua",
+      "concept": "Portrait 2:3 full-bleed card illustration. An ancient blindfolded weathered stone woman holding a shallow offering bowl, one thin crimson stream floating upward into a crack in the stone chest. Abandoned Western woodland shrine, quiet mist and roots, solemn ominous bargain, a single clear statue as main subject.",
+      "file": "assets/cards/continental/utility/ancient_statue.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Production PNG for Continental dark-fantasy expedition game, cinematic painterly Western fantasy, strong readable silhouettes, medium detail, aged stone, bone ivory and antique gold with restrained oxblood crimson accent and cool navy shadows. No text, letters, numbers, ranks, poker suit symbols, frames, UI, logos, watermark, East Asian motifs, dense filigree or blown-out glow. Portrait 2:3 full-bleed card illustration. An ancient blindfolded weathered stone woman holding a shallow offering bowl, one thin crimson stream floating upward into a crack in the stone chest. Abandoned Western woodland shrine, quiet mist and roots, solemn ominous bargain, a single clear statue as main subject.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-7951cc04-56e3-4ef3-91a6-243305421405.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "blood_hound",
+      "group": "enemy",
+      "name": "Huyết Khuyển",
+      "ability": "Lãnh Địa Máu · 8 trận",
+      "source": "src/ancient_statue.lua",
+      "concept": "A lean obsidian-skinned hunting hound with bone-plated shoulders, red mist drifting from its mouth, prowling across a broken basalt causeway over a dark crimson lake. Full creature visible, taut alert silhouette.",
+      "file": "assets/cards/continental/enemy/blood_hound.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE portrait 2:3 PNG, full-bleed production enemy card illustration for Continental dark-fantasy expedition game. Cinematic painterly Western fantasy, medium detail, one powerful readable subject, dark basalt blood-domain setting, bone ivory and antique gold with oxblood crimson accent and cool navy shadow, restrained red magic light, no gore. NO text, letters, numbers, poker suits, ranks, frame, UI, logo or watermark. No East Asian motifs or dense ornament. A lean obsidian-skinned hunting hound with bone-plated shoulders, red mist drifting from its mouth, prowling across a broken basalt causeway over a dark crimson lake. Full creature visible, taut alert silhouette.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-6777866d-5e11-4648-b722-9843a8ac8877.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "blood_sentinel",
+      "group": "enemy",
+      "name": "Vệ Binh Huyết Thạch",
+      "ability": "Lãnh Địa Máu · 8 trận",
+      "source": "src/ancient_statue.lua",
+      "concept": "An ancient hollow Western plate-armored sentinel, spear planted in cracked black stone, a dim crimson spirit glowing inside the empty helmet, dark red cloth, ruined abbey gateway behind. Full figure, heavy shield, clear silhouette.",
+      "file": "assets/cards/continental/enemy/blood_sentinel.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE portrait 2:3 PNG, full-bleed production enemy card illustration for Continental dark-fantasy expedition game. Cinematic painterly Western fantasy, medium detail, one powerful readable subject, dark basalt blood-domain setting, bone ivory and antique gold with oxblood crimson accent and cool navy shadow, restrained red magic light, no gore. NO text, letters, numbers, poker suits, ranks, frame, UI, logo or watermark. No East Asian motifs or dense ornament. An ancient hollow Western plate-armored sentinel, spear planted in cracked black stone, a dim crimson spirit glowing inside the empty helmet, dark red cloth, ruined abbey gateway behind. Full figure, heavy shield, clear silhouette.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-5f8bd877-be9c-47e7-b67c-4bb35f560f30.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "blood_oracle",
+      "group": "enemy",
+      "name": "Tiên Tri Huyết Vụ",
+      "ability": "Lãnh Địa Máu · 8 trận",
+      "source": "src/ancient_statue.lua",
+      "concept": "A blind veiled oracle levitating one red crystal above an ancient offering bowl, tattered ivory cloak, face obscured, abandoned Gothic chapel and crimson mist behind. One solemn imposing figure.",
+      "file": "assets/cards/continental/enemy/blood_oracle.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE portrait 2:3 PNG, full-bleed production enemy card illustration for Continental dark-fantasy expedition game. Cinematic painterly Western fantasy, medium detail, one powerful readable subject, dark basalt blood-domain setting, bone ivory and antique gold with oxblood crimson accent and cool navy shadow, restrained red magic light, no gore. NO text, letters, numbers, poker suits, ranks, frame, UI, logo or watermark. No East Asian motifs or dense ornament. A blind veiled oracle levitating one red crystal above an ancient offering bowl, tattered ivory cloak, face obscured, abandoned Gothic chapel and crimson mist behind. One solemn imposing figure.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-233c7019-67ff-44ec-b957-c2a49706c597.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "blood_sovereign",
+      "group": "enemy",
+      "name": "Vương Huyết",
+      "ability": "Hồi máu thực tế của người chơi nhân đôi HP/tốc/ST boss; cuối lượt mất 2% HP hiện tại.",
+      "source": "src/ancient_statue.lua",
+      "concept": "The Blood Sovereign final boss: an immense ancient crowned revenant king in black basalt plate armor and bone-ivory mantle, one large chalice in his gauntlet pulling a thin ribbon of red life essence toward his chest, a heavy ceremonial sword in the other hand. Full imposing silhouette, hollow crimson eye slits, ruined Western throne hall and a pale eclipse behind. Powerful and terrifying, controlled crimson rim light, not gore.",
+      "file": "assets/cards/continental/enemy/blood_sovereign.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE portrait 2:3 PNG, full-bleed production enemy card illustration for Continental dark-fantasy expedition game. Cinematic painterly Western fantasy, medium detail, one powerful readable subject, dark basalt blood-domain setting, bone ivory and antique gold with oxblood crimson accent and cool navy shadow, restrained red magic light, no gore. NO text, letters, numbers, poker suits, ranks, frame, UI, logo or watermark. No East Asian motifs or dense ornament. The Blood Sovereign final boss: an immense ancient crowned revenant king in black basalt plate armor and bone-ivory mantle, one large chalice in his gauntlet pulling a thin ribbon of red life essence toward his chest, a heavy ceremonial sword in the other hand. Full imposing silhouette, hollow crimson eye slits, ruined Western throne hall and a pale eclipse behind. Powerful and terrifying, controlled crimson rim light, not gore.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-8a1469b0-a875-44e4-bf02-e209b9f8c12b.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "blood_leech",
+      "group": "enemy",
+      "name": "Đỉa Chúa Huyết Hồ",
+      "ability": "Hút Sinh Mệnh: hồi HP theo sát thương, sử dụng dự trữ hồi máu hữu hạn.",
+      "source": "src/ancient_statue.lua",
+      "concept": "A single enormous armored lamprey-like blood leech rising upright in a coiled S-shape from a shallow dark crimson lake, leathery charcoal skin and broad bone-ivory carapace plates, a circular non-gory tooth-ring mouth surrounded by restrained red vapor drawn inward to symbolize life siphoning. Broken basalt stepping stones in foreground, distant ruined Western abbey and dim copper eclipse. Creature fills most of the portrait, visually distinct from a wolf, knight or humanoid oracle.",
+      "file": "assets/cards/continental/enemy/blood_leech.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. A single enormous armored lamprey-like blood leech rising upright in a coiled S-shape from a shallow dark crimson lake, leathery charcoal skin and broad bone-ivory carapace plates, a circular non-gory tooth-ring mouth surrounded by restrained red vapor drawn inward to symbolize life siphoning. Broken basalt stepping stones in foreground, distant ruined Western abbey and dim copper eclipse. Creature fills most of the portrait, visually distinct from a wolf, knight or humanoid oracle.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-a46b32a4-fcee-426f-8bb8-7d40ca7442f3.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "blood_executioner",
+      "group": "enemy",
+      "name": "Đao Phủ Huyết Ngục",
+      "ability": "Mùi Máu Yếu: tăng 35% sát thương khi người chơi còn dưới 40% HP tối đa.",
+      "source": "src/ancient_statue.lua",
+      "concept": "One towering hooded undead Western executioner, broad hunched silhouette with a heavy bone-colored iron mask, weathered black leather apron over antique bronze armor, holding an immense crescent-headed execution axe angled diagonally across his body. Three restrained crimson glints along the axe edge evoke a finishing blow against a weakened foe. Cracked basalt prison bridge, sparse broken iron shackles, distant Gothic gate, ash-gray and oxblood cloth. Menacing full figure, not a king and no crown, no victim or gore.",
+      "file": "assets/cards/continental/enemy/blood_executioner.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One towering hooded undead Western executioner, broad hunched silhouette with a heavy bone-colored iron mask, weathered black leather apron over antique bronze armor, holding an immense crescent-headed execution axe angled diagonally across his body. Three restrained crimson glints along the axe edge evoke a finishing blow against a weakened foe. Cracked basalt prison bridge, sparse broken iron shackles, distant Gothic gate, ash-gray and oxblood cloth. Menacing full figure, not a king and no crown, no victim or gore.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-65419f21-cc57-4696-bb6a-2b08edfb16df.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "blood_weaver",
+      "group": "enemy",
+      "name": "Nhện Dệt Huyết Chú",
+      "ability": "Tơ Độc Huyết Chú: đòn gây HP thực thêm 2 Độc, tối đa 6, giảm 1 sau mỗi tay.",
+      "source": "src/ancient_statue.lua",
+      "concept": "One giant elegant blood-silk spider, eight clearly articulated black obsidian legs spread around a pale bone-ivory faceted abdomen carrying a contained red crystal, poised over a single taut crimson web stretched between eroded Gothic pillars. Fine web strands converge into a readable scarlet magical knot beneath its fangs to suggest lingering venom. Shadowy ruined chapel above dark red water, controlled red glow. Entire spider readable, no humanoid rider, no gore.",
+      "file": "assets/cards/continental/enemy/blood_weaver.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One giant elegant blood-silk spider, eight clearly articulated black obsidian legs spread around a pale bone-ivory faceted abdomen carrying a contained red crystal, poised over a single taut crimson web stretched between eroded Gothic pillars. Fine web strands converge into a readable scarlet magical knot beneath its fangs to suggest lingering venom. Shadowy ruined chapel above dark red water, controlled red glow. Entire spider readable, no humanoid rider, no gore.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-8e065e7e-f4b5-4527-b84d-bd63c20df559.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "blood_gargoyle",
+      "group": "enemy",
+      "name": "Thạch Quỷ Huyết Dực",
+      "ability": "Tái Kết Huyết Thạch: một lần mỗi trận, sống lại với 25% HP.",
+      "source": "src/ancient_statue.lua",
+      "concept": "One ancient winged basalt gargoyle in a crouched guardian pose on a broken Gothic buttress, enormous folded batlike wings making a distinct broad triangular silhouette. Worn stone body with large bone-ivory armor plates, one broad glowing crimson repair seam across its chest, several stone fragments hovering very close to the seam to symbolize a single resurrection. Ruined Western throne courtyard and pale eclipse in distance, antique gold edge light, dark crimson mist. One creature, no crown, no axe, no gore.",
+      "file": "assets/cards/continental/enemy/blood_gargoyle.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Create ONE production enemy card artwork, portrait 2:3 PNG 1024x1536, full-bleed illustration only. Continental Relic Card Design: cinematic painterly Western dark-fantasy expedition, medium detail, one clear large creature silhouette readable at thumbnail size. Same Blood Dominion world as basalt Gothic abbey ruins, dark crimson lake, bone ivory, antique gold, slate navy shadows, restrained red rim light. Texture and cinematic atmosphere, controlled glow, not gory. No text, letters, digits, ranks, poker suits, frames, badges, UI, logos, watermark, East Asian motifs or dense filigree. One ancient winged basalt gargoyle in a crouched guardian pose on a broken Gothic buttress, enormous folded batlike wings making a distinct broad triangular silhouette. Worn stone body with large bone-ivory armor plates, one broad glowing crimson repair seam across its chest, several stone fragments hovering very close to the seam to symbolize a single resurrection. Ruined Western throne courtyard and pale eclipse in distance, antique gold edge light, dark crimson mist. One creature, no crown, no axe, no gore.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-9a7409df-833e-4fea-8c7e-2862e3bf6fa3.png",
+        "mode": "built-in image_gen"
+      }
+    },
+    {
+      "id": "human_vital_marshal",
+      "group": "enemy",
+      "name": "Thống Soái Huyết Mạch",
+      "source": "config/human_boss_data.lua",
+      "concept": "Massive human bronze-armored life-siphoning marshal",
+      "file": "assets/cards/continental/enemy/human_vital_marshal.png",
+      "prompt": "Create ONE production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Cinematic painterly Western dark fantasy expedition matching the Continental reference artwork in this conversation; antique gold, muted earth, navy shadows, controlled glow, medium detail and a strong single readable silhouette. Human boss 1: the Vital Marshal, a massive living human warlord in weathered bronze plate and deep burgundy cloth, broad chest and a prominent engraved alchemical heart vessel strapped over his breastplate. He drives a long poleaxe into the ground; restrained warm red life-energy curls from the axe back into his own chest, visibly sealing a crack in his armor. His physical bulk communicates 50% additional vitality, his returning life energy communicates healing on his attacks. Rural Western stone fortress and rolling grassland at amber dusk behind him. Three-quarter full figure, dominant subject, face human, no undead or blood-domain monarch, no crown necessary. Do not draw any text, letters, digits, suits, card indices, badges, card borders, UI, logos or watermarks. No East Asian motifs or architecture, no dense tiny ornament, no excessive particles. This is a fresh unique boss asset, not recoloring an existing character.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-ce4adaa9-25bc-457a-9300-57bd8dc3b8cb.png"
+      },
+      "ability": "Máu tối đa +50% so với Boss của ải hiện tại. Mỗi đòn tấn công hồi 5% HP tối đa; dùng dự trữ hồi hữu hạn."
+    },
+    {
+      "id": "human_wind_reaver",
+      "group": "enemy",
+      "name": "Kẻ Cướp Gió",
+      "source": "config/human_boss_data.lua",
+      "concept": "A lean human duelist in a weathered blue-gray travelling coat and silver leather armor, two curved short sabers, striding across a ruined stone bridge. A single cyan ribbon of stolen wind coils from a pale afterimage into the duelist's wrist and trailing cloak. Strong diagonally advancing silhouette and restrained motion streaks convey extreme speed and theft of initiative. Overcast green highland, distant Western towers. Face clearly human, not an ice monster.",
+      "file": "assets/cards/continental/enemy/human_wind_reaver.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A lean human duelist in a weathered blue-gray travelling coat and silver leather armor, two curved short sabers, striding across a ruined stone bridge. A single cyan ribbon of stolen wind coils from a pale afterimage into the duelist's wrist and trailing cloak. Strong diagonally advancing silhouette and restrained motion streaks convey extreme speed and theft of initiative. Overcast green highland, distant Western towers. Face clearly human, not an ice monster.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-9fb364a6-c71e-47a9-a3f8-7b06481b36fe.png"
+      },
+      "ability": "Tốc đánh tối thiểu gấp đôi lá nhanh nhất đang trên tay bạn, kể cả vượt 999. Đánh trúng: cướp vĩnh viễn 2 tốc từ lá nhanh nhất bạn đã chọn chơi."
+    },
+    {
+      "id": "human_oath_judge",
+      "group": "enemy",
+      "name": "Thẩm Phán Thệ Ước",
+      "source": "config/human_boss_data.lua",
+      "concept": "An imposing human oath judge in an austere ivory and charcoal mantle standing before a ruined Western courthouse arch. He holds a broad ceremonial sword upright and a small antique brass balance whose one pan carries a single luminous geometric formation of smooth blank stones, the other tips away with two falling blank tablets. A binding golden line under his feet communicates that only the prescribed formation is accepted. One dominant figure, solemn readable silhouette, no writing on tablets or parchment.",
+      "file": "assets/cards/continental/enemy/human_oath_judge.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: An imposing human oath judge in an austere ivory and charcoal mantle standing before a ruined Western courthouse arch. He holds a broad ceremonial sword upright and a small antique brass balance whose one pan carries a single luminous geometric formation of smooth blank stones, the other tips away with two falling blank tablets. A binding golden line under his feet communicates that only the prescribed formation is accepted. One dominant figure, solemn readable silhouette, no writing on tablets or parchment.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-86733682-d7d5-48c6-af17-d8344dcc71f8.png"
+      },
+      "ability": "Chỉ tay bài được chỉ định mới đánh trúng; chọn từ các tay đã mở khóa đủ sức chứa hiện tại. Đánh trúng: lập tức bỏ ngẫu nhiên 2 lá còn trên tay bạn."
+    },
+    {
+      "id": "human_court_puppeteer",
+      "group": "enemy",
+      "name": "Nhiếp Chính Mặt Nạ",
+      "source": "config/human_boss_data.lua",
+      "concept": "A human court regent with a smooth half-mask, dark violet Renaissance-style Western clothing and a restrained antique gold collar. One raised gloved hand threads three fine violet puppet cords through a broken crown, a scepter and a courtier's mask floating at chest level; the symbols are physical objects, not poker icons or text. Pale blank faces hang inert in distant shadow, suggesting royal figures silenced and transformed. Ruined Western ballroom opening onto dusk hills, one dominant regent silhouette.",
+      "file": "assets/cards/continental/enemy/human_court_puppeteer.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human court regent with a smooth half-mask, dark violet Renaissance-style Western clothing and a restrained antique gold collar. One raised gloved hand threads three fine violet puppet cords through a broken crown, a scepter and a courtier's mask floating at chest level; the symbols are physical objects, not poker icons or text. Pale blank faces hang inert in distant shadow, suggesting royal figures silenced and transformed. Ruined Western ballroom opening onto dusk hills, one dominant regent silhouette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-0ab91774-5fae-4b1d-893a-24f7f941bdfe.png"
+      },
+      "ability": "Vô hiệu hóa J, Q, K: không gây sát thương và không kích hoạt khả năng/trang bị. Đánh trúng: biến một lá trên tay thành J/Q/K và khóa nó. Chỉ tồn tại trong trận này."
+    },
+    {
+      "id": "human_hand_gaoler",
+      "group": "enemy",
+      "name": "Giám Ngục Thiết Luật",
+      "source": "config/human_boss_data.lua",
+      "concept": "A stocky human prison warden in blackened steel armor, a massive iron key in one hand and a hinged iron hand-clamp with five pronounced fingers in the other. Narrow cage bars and a contracted hanging cage frame his silhouette without forming a border. The five-finger restraint visually communicates shrinking hand capacity and punishing larger hands. Sandstone Western fortress prison courtyard, warm bone-gold light and cold navy shadows, no prisoners as focal figures.",
+      "file": "assets/cards/continental/enemy/human_hand_gaoler.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A stocky human prison warden in blackened steel armor, a massive iron key in one hand and a hinged iron hand-clamp with five pronounced fingers in the other. Narrow cage bars and a contracted hanging cage frame his silhouette without forming a border. The five-finger restraint visually communicates shrinking hand capacity and punishing larger hands. Sandstone Western fortress prison courtyard, warm bone-gold light and cold navy shadows, no prisoners as focal figures.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-356f6801-10fc-40b6-a2f7-dd46dc7bb7c5.png"
+      },
+      "ability": "Giảm 1 ô sức chứa tay bài, tối thiểu còn 1 ô. Sát thương đòn đánh nhân số lá đang trên tay bạn; cầm 5 lá nhận ×5 ST."
+    },
+    {
+      "id": "human_bastion",
+      "group": "enemy",
+      "name": "Pháo Đài Nhân Thế",
+      "source": "config/human_boss_data.lua",
+      "concept": "A towering human fortress knight with a monumental rectangular steel tower shield as large as his torso, heavily layered plate and a long narrow armor-piercing lance held beside it. The shield has a large translucent blue inner layer like thick defensive glass and a simple fortress relief, no glyph text. A few deep impact scars leave the shield intact, while the needle lance points toward the viewer to imply bypassing opposing armor. Western mountain citadel, bronze and steel blue, single unmistakable defensive silhouette.",
+      "file": "assets/cards/continental/enemy/human_bastion.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A towering human fortress knight with a monumental rectangular steel tower shield as large as his torso, heavily layered plate and a long narrow armor-piercing lance held beside it. The shield has a large translucent blue inner layer like thick defensive glass and a simple fortress relief, no glyph text. A few deep impact scars leave the shield intact, while the needle lance points toward the viewer to imply bypassing opposing armor. Western mountain citadel, bronze and steel blue, single unmistakable defensive silhouette.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-379df026-0f1a-4e23-a007-062e96cd0f6a.png"
+      },
+      "ability": "Đầu trận có giáp đặc biệt bằng 100% HP hiện tại. Bạn phải có giáp để phá lớp này, kể cả sát thương chuẩn. Đòn đánh bỏ qua giáp của bạn, gây sát thương thẳng vào HP."
+    },
+    {
+      "id": "human_spirit_breaker",
+      "group": "enemy",
+      "name": "Kẻ Bẻ Hồn",
+      "source": "config/human_boss_data.lua",
+      "concept": "A severe human exorcist in weathered ivory and muted violet travel robes over light armor, holding a cracked lantern-shaped spirit reliquary. His other hand snaps a single spectral violet chain; one small clearly supernatural guardian silhouette dissolves into the broken reliquary. This is a hostile human soul-breaker destroying and degrading guardians, not a monster or recolored knight. Ruined Western roadside chapel, dusk sky, one clear main figure, controlled sparse spectral effects.",
+      "file": "assets/cards/continental/enemy/human_spirit_breaker.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A severe human exorcist in weathered ivory and muted violet travel robes over light armor, holding a cracked lantern-shaped spirit reliquary. His other hand snaps a single spectral violet chain; one small clearly supernatural guardian silhouette dissolves into the broken reliquary. This is a hostile human soul-breaker destroying and degrading guardians, not a monster or recolored knight. Ruined Western roadside chapel, dusk sky, one clear main figure, controlled sparse spectral effects.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-b77c6eff-f189-4d05-a143-fddff26b6b18.png"
+      },
+      "ability": "Đầu trận tiêu hủy vĩnh viễn một SPN ngẫu nhiên của bạn, gồm cả SPN trong balo. Mỗi lần Boss thực mất HP: giảm vĩnh viễn một bậc của một SPN ngẫu nhiên; tối thiểu Thường."
+    },
+    {
+      "id": "human_chain_binder",
+      "group": "enemy",
+      "name": "Chủ Nhân Xiềng Bạc",
+      "source": "config/human_boss_data.lua",
+      "concept": "A charismatic human silver-chain commander in dark emerald and antique gold armor, holding two broad silver shackles outward. Two subdued translucent human expedition silhouettes, one on each side far behind him, are visibly tethered by the two chains; they remain secondary and unarmed enough not to steal focus. His two distinct fetters communicate capturing two player allies and releasing surviving captives when defeated. Mossy Western stone arena at dawn, strong main commander silhouette, restrained green-silver light.",
+      "file": "assets/cards/continental/enemy/human_chain_binder.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A charismatic human silver-chain commander in dark emerald and antique gold armor, holding two broad silver shackles outward. Two subdued translucent human expedition silhouettes, one on each side far behind him, are visibly tethered by the two chains; they remain secondary and unarmed enough not to steal focus. His two distinct fetters communicate capturing two player allies and releasing surviving captives when defeated. Mossy Western stone arena at dawn, strong main commander silhouette, restrained green-silver light.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-34896ee2-17e6-4894-a1bd-8e0d35fbb7e9.png"
+      },
+      "ability": "Đầu trận bắt tối đa 2 lá trên tay thành đồng minh. Hạ Boss trước để cứu chúng; đồng minh chết thì mất vĩnh viễn lá gốc. Đánh trúng: giảm vĩnh viễn 1 cấp tiến hóa một lá còn trên tay, không giảm dưới 0."
+    },
+    {
+      "id": "human_last_executioner",
+      "group": "enemy",
+      "name": "Đao Phủ Đoạn Mệnh",
+      "source": "config/human_boss_data.lua",
+      "concept": "A human executioner with a dark leather hood and heavy weathered iron cuirass, one huge broad execution sword held across his body. His other hand locks a small discarded-card-shaped wooden tray with an iron bar; a single blank rectangular parchment token is cut cleanly in two by the blade's edge, conveying one permanent deletion and no discards. Western gallows square with distant stone ramparts, desaturated crimson cloth and bone-gold dawn, no gore, no written symbols.",
+      "file": "assets/cards/continental/enemy/human_last_executioner.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human executioner with a dark leather hood and heavy weathered iron cuirass, one huge broad execution sword held across his body. His other hand locks a small discarded-card-shaped wooden tray with an iron bar; a single blank rectangular parchment token is cut cleanly in two by the blade's edge, conveying one permanent deletion and no discards. Western gallows square with distant stone ramparts, desaturated crimson cloth and bone-gold dawn, no gore, no written symbols.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-4c99b64d-a7e5-409b-9e3f-ee8d0a77b408.png"
+      },
+      "ability": "Lượt bỏ bài khi vào trận bằng 0. Dùng một lần mỗi trận, thay lượt đánh: tiêu hủy vĩnh viễn một lá ngẫu nhiên trên tay."
+    },
+    {
+      "id": "human_gilded_broker",
+      "group": "enemy",
+      "name": "Chủ Hội Kim Quyền",
+      "source": "config/human_boss_data.lua",
+      "concept": "A human merchant warlord in a tailored dark navy coat, antique gold armor and a heavy practical money belt. He weighs a stack of worn gold coins on a small brass merchant scale, while a single relic dagger and stoppered potion vanish into an open iron-bound trade chest at his feet. His confident silhouette communicates growing stronger with the player's wealth and forcibly selling their supplies. Medieval Western port counting house open to a misty harbor, warm gold versus blue-gray, no numbers, documents without writing.",
+      "file": "assets/cards/continental/enemy/human_gilded_broker.png",
+      "prompt": "Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human merchant warlord in a tailored dark navy coat, antique gold armor and a heavy practical money belt. He weighs a stack of worn gold coins on a small brass merchant scale, while a single relic dagger and stoppered potion vanish into an open iron-bound trade chest at his feet. His confident silhouette communicates growing stronger with the player's wealth and forcibly selling their supplies. Medieval Western port counting house open to a misty harbor, warm gold versus blue-gray, no numbers, documents without writing.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a12b8a-3db0-7b62-9f71-e75603bbdbdf\\exec-2e42909d-7bcc-416c-afce-49c13f9199bd.png"
+      },
+      "ability": "Mỗi 10 vàng của bạn lúc đầu trận tạo một lần ×1.5 vào ngẫu nhiên HP, ST hoặc tốc của Boss. Mỗi lần gây mất HP cho bạn: bán một món ngẫu nhiên trong balo, trả giá bán thường vào vàng của bạn."
     }
   ],
   "scene_backgrounds": [
@@ -11596,6 +11965,48 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-a88c40c7-f40a-49fd-8204-23ce7089210f.png",
         "mode": "built-in image_gen"
       }
+    },
+    {
+      "id": "blood_outer",
+      "group": "event_background",
+      "name": "Hồ Huyết Thạch",
+      "ability": "Lãnh Địa Máu · 8 trận",
+      "source": "src/ancient_statue.lua",
+      "concept": "Landscape 16:9 combat background, full painting. A secret Blood Dominion: broad clear black basalt causeway above a calm dark crimson lake, distant broken Western abbey arches and enormous eroded monoliths, pale eclipsed moon, burgundy mist, cold navy twilight and restrained copper rim light. Foreground arena broad, uncluttered and empty for runtime enemy cards. No people or creatures. Not gore, blood is abstract magical dark red water.",
+      "file": "assets/scene/events/blood_domain_outer.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Production PNG for Continental dark-fantasy expedition game, cinematic painterly Western fantasy, strong readable silhouettes, medium detail, aged stone, bone ivory and antique gold with restrained oxblood crimson accent and cool navy shadows. No text, letters, numbers, ranks, poker suit symbols, frames, UI, logos, watermark, East Asian motifs, dense filigree or blown-out glow. Landscape 16:9 combat background, full painting. A secret Blood Dominion: broad clear black basalt causeway above a calm dark crimson lake, distant broken Western abbey arches and enormous eroded monoliths, pale eclipsed moon, burgundy mist, cold navy twilight and restrained copper rim light. Foreground arena broad, uncluttered and empty for runtime enemy cards. No people or creatures. Not gore, blood is abstract magical dark red water.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-30087bc8-9015-4a2d-9e24-b46bd0fd4f01.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "id": "blood_throne",
+      "group": "event_background",
+      "name": "Thánh Điện Vương Huyết",
+      "ability": "Lãnh Địa Máu · 8 trận",
+      "source": "src/ancient_statue.lua",
+      "concept": "Landscape 16:9 combat background, full painting. The Blood Sovereign's inner sanctum: vast roofless Western Gothic throne hall carved from basalt, symmetrical eroded arches, distant empty bone throne, dark crimson pools at sides and a central clear broad stone fighting floor. Pale eclipse high overhead, muted burgundy atmospheric haze, antique gold edge light, cinematic depth. No characters, no gore, no writing.",
+      "file": "assets/scene/events/blood_domain_throne.png",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Use case: stylized-concept. Production PNG for Continental dark-fantasy expedition game, cinematic painterly Western fantasy, strong readable silhouettes, medium detail, aged stone, bone ivory and antique gold with restrained oxblood crimson accent and cool navy shadows. No text, letters, numbers, ranks, poker suit symbols, frames, UI, logos, watermark, East Asian motifs, dense filigree or blown-out glow. Landscape 16:9 combat background, full painting. The Blood Sovereign's inner sanctum: vast roofless Western Gothic throne hall carved from basalt, symmetrical eroded arches, distant empty bone throne, dark crimson pools at sides and a central clear broad stone fighting floor. Pale eclipse high overhead, muted burgundy atmospheric haze, antique gold edge light, cinematic depth. No characters, no gore, no writing.",
+      "status": "generated",
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-dc90a781-2aed-4f93-af64-b9cebb267050.png",
+        "mode": "built-in image_gen"
+      },
+      "dimensions": [
+        1672,
+        941
+      ]
     }
   ],
   "scene_characters": [
@@ -11621,8 +12032,8 @@
     }
   ],
   "completion": {
-    "generated": 470,
-    "total": 470,
+    "generated": 481,
+    "total": 481,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

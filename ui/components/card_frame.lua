@@ -202,7 +202,8 @@ end
 function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
     if not card or card.faceDown then return end
     if not (card.rank and card.suit) and not Deities.CATALOG[card.deityId or card.id] then return end
-    local tier=Frame.tier(card)
+    local tier,overflow=Frame.tier(card)
+    local ascended=card.rank and card.suit and overflow>0
     if tier<2 or alpha<=0 then return end
     local visual=require("config.visual_config")
     local moving=visual.enabled and not reduced
@@ -229,8 +230,8 @@ function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
         g.setLineWidth((4+tier*.35)*unit);g.polygon("line",path.points)
         tint(.10+pulse*.26);g.setLineWidth(.8*unit);g.polygon("line",path.points)
     end
-    local streams=tier>=10 and 4 or tier>=8 and 3 or tier>=5 and 2 or 1
-    if low then streams=math.min(streams,2) end
+    local streams=ascended and 6 or tier>=10 and 4 or tier>=8 and 3 or tier>=5 and 2 or 1
+    if low then streams=math.min(streams,ascended and 3 or 2) end
     local segments=low and 5 or 8+tier
     local tail=.035+tier*.008
     for stream=1,streams do
@@ -283,6 +284,29 @@ function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
             star(p[1],p[2],(2+pulse*(tier>=9 and 3 or 1.5))*unit,.35+pulse*.6)
         end
     end
+    if ascended then
+        local burst=moving and math.max(0,math.sin(t*2.4))^6 or .3
+        -- Four radiant seals stay on the rim, leaving the portrait and labels clear.
+        for _,p in ipairs({{w/2,10*unit},{w/2,h-10*unit},{9*unit,h*.48},{w-9*unit,h*.48}}) do
+            local angle=t*.65
+            local radius=(3.6+burst*2)*unit
+            tint(.35+burst*.5,.65);g.setLineWidth(.85*unit)
+            g.arc("line","open",p[1],p[2],radius,angle,angle+math.pi*1.4,20)
+            g.arc("line","open",p[1],p[2],radius+unit,-angle,-angle+math.pi,16)
+            for ray=1,(low and 4 or 8) do
+                local a=ray*math.pi*2/(low and 4 or 8)+angle
+                tint(.2+burst*.65,.45)
+                g.line(p[1]+math.cos(a)*radius*.65,p[2]+math.sin(a)*radius*.65,
+                    p[1]+math.cos(a)*(radius+1.5*unit),p[2]+math.sin(a)*(radius+1.5*unit))
+            end
+            star(p[1],p[2],(2+burst*1.5)*unit,.65+burst*.3)
+        end
+        if not low then
+            local phase=(t*.55)%1
+            tint(math.sin(phase*math.pi)^3*.42,.55);g.setLineWidth(1.2*unit)
+            g.polygon("line",outline(0,0,w,h,(8+phase*6)*unit))
+        end
+    end
     g.pop()
 end
 
@@ -292,11 +316,12 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
     alpha = (alpha or card and card.alpha or 1) * (highlight and highlight[4] or 1)
     if alpha<=0 then return end
     local tier, overflow = Frame.tier(card)
+    local ascended=card and card.rank and card.suit and overflow>0
     local style = Frame.styles[tier]
     local size = math.min(w,h)
     local unit = math.max(0.6, math.min(1.6, size/128))
     g.push("all");g.translate(x,y);x,y=0,0;g.setShader()
-    local outer, inner = rimPath(w,h,0).points, rimPath(w,h,tier==1 and Frame.rimWidth or (1.8+tier*.23)*unit).points
+    local outer, inner = rimPath(w,h,0).points, rimPath(w,h,tier==1 and Frame.rimWidth or (ascended and 7 or 1.8+tier*.23)*unit).points
     for i=1,16,2 do
         local j = i == 15 and 1 or i+2
         if tier==1 then g.setColor(Frame.metal[1],Frame.metal[2],Frame.metal[3],alpha)
@@ -398,6 +423,37 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
             g.setColor(r,b,c,alpha);g.setLineWidth(unit)
             g.line(cx+sign*2*unit,y+h/2-18*unit,cx+sign*11*unit,y+h/2,cx+sign*2*unit,y+h/2+18*unit)
             gem(cx+sign*6*unit,y+h/2,radius)
+        end
+    end
+    if ascended then
+        -- White-gold exoskeleton and winged crown distinguish level 10 even without motion.
+        g.setColor(.98,.70,.22,alpha);g.setLineWidth(1.4*unit)
+        g.polygon("line",rimPath(w,h,3*unit).points)
+        g.setColor(1,.98,.84,alpha*.9);g.setLineWidth(.7*unit)
+        g.polygon("line",rimPath(w,h,6.4*unit).points)
+        for _,side in ipairs({1,-1}) do
+            g.push();g.translate(side==1 and 0 or w,h*.48);g.scale(unit*side,unit)
+            g.setColor(.16,.10,.045,alpha)
+            g.polygon("fill",2,-32,10,-21,7,-14,16,-7,13,0,16,7,7,14,10,21,2,32)
+            g.setColor(1,.76,.31,alpha)
+            for i=-2,2 do
+                local yy=i*10
+                g.polygon("fill",2,yy-7,12-math.abs(i)*2,yy-3,7,yy+5,3,yy+8)
+                g.setColor(1,.97,.80,alpha*.85);g.line(3,yy-5,10-math.abs(i)*2,yy-2,5,yy+4)
+                g.setColor(1,.76,.31,alpha)
+            end
+            g.pop()
+        end
+        for _,edge in ipairs({1,-1}) do
+            g.push();g.translate(w/2,edge==1 and 0 or h);g.scale(unit,unit*edge)
+            g.setColor(.17,.105,.035,alpha)
+            g.polygon("fill",-24,2,-16,8,-12,3,-6,10,0,2,6,10,12,3,16,8,24,2,17,16,0,22,-17,16)
+            g.setColor(1,.80,.36,alpha)
+            g.polygon("fill",-22,3,-15,10,-12,6,-6,13,0,5,6,13,12,6,15,10,22,3,15,14,0,19,-15,14)
+            g.setColor(1,.99,.84,alpha);g.setLineWidth(.9)
+            g.line(-22,3,-15,10,-12,6,-6,13,0,5,6,13,12,6,15,10,22,3)
+            g.pop()
+            gem(w/2,edge==1 and 12*unit or h-12*unit,4*unit)
         end
     end
     Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)

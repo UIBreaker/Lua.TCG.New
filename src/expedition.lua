@@ -28,6 +28,9 @@ end
 -- A legacy ship segment is retained only for callers/saves without route data.
 E.legacyVoyage={id="voyage",name="HẢI TRÌNH VIỄN CHINH",background="expeditionShip",preset="ICE",color={0.36,0.76,0.87}}
 E.byId.voyage=E.legacyVoyage
+E.byId.blood_domain={id="blood_domain",name="LÃNH ĐỊA MÁU",short="LÃNH ĐỊA MÁU",preset="VOLCANIC",color={.83,.25,.31},eventOnly=true,objective="Vượt 8 trận, hạ Vương Huyết và chọn một SPN ×4 để trở về."}
+E.backgroundPaths.bloodOuter="assets/scene/events/blood_domain_outer.png"
+E.backgroundPaths.bloodThrone="assets/scene/events/blood_domain_throne.png"
 E.recognitionIds={"hearts","diamonds","clubs","spades"}
 function E.recognitionCard(id)
     local r=E.byId[id];if not r or not r.suit then return end
@@ -46,7 +49,7 @@ function E.hasTravelPermit(game)
     return false
 end
 function E.canEnter(game,id)
-    local r=E.byId[id];if not r or id=="voyage" then return false,"Điểm đến không hợp lệ." end
+    local r=E.byId[id];if not r or id=="voyage" or r.eventOnly then return false,"Điểm đến không hợp lệ." end
     for _,required in ipairs(r.requiresRecognitions or {}) do
         if not (game.regionRecognitions or {})[required] then return false,"Cần đủ 4 công nhận Cơ, Rô, Chuồn, Bích ("..E.recognitionCount(game).."/4)." end
     end
@@ -81,6 +84,7 @@ function E.region(stage,regionId)
 end
 function E.area(stage,regionId)
     local region=E.region(stage,regionId)
+    if region.id=="blood_domain" then return {index=stage<=4 and 1 or 2,name=stage<=4 and "Hồ Huyết Thạch" or "Thánh Điện Vương Huyết",background=stage<=4 and "bloodOuter" or "bloodThrone",preset="VOLCANIC",first=1,last=8} end
     local localStage=math.max(1,tonumber(stage) or 1)
     local index=math.floor(((localStage-1)%20)/5)+1
     return {index=index,name=region.areas and region.areas[index] or region.name,
@@ -90,6 +94,7 @@ end
 function E.rankName(rank) return ({[11]="J",[12]="Q",[13]="K",[14]="A"})[rank] or tostring(rank) end
 function E.shipBoss(stage) return E.shipBosses[(stage-21)%#E.shipBosses+1] end
 function E.bossData(stage, definitions, fallback,regionId)
+    if E.region(stage,regionId).id=="human" then return require("src.human_bosses").roll(stage) end
     if E.region(stage,regionId).id~="voyage" then return fallback end
     local captain=E.shipBoss(stage)
     local base=definitions[captain.key] or fallback
@@ -105,6 +110,7 @@ function E.decorate(m, stage, encounter,regionId,areaStage)
     m.stage=stage or 1
     local region=E.region(m.stage,regionId or m.regionId)
     m.regionId=region.id;m.areaStage=areaStage or m.areaStage or (region.id=="voyage" and m.stage or ((m.stage-1)%20)+1)
+    if region.id=="blood_domain" then return require("src.ancient_statue").decorate(m,m.areaStage) end
     if region.id=="unknown" then
         m.human=false;m.neutralHuman=nil
         local creatures={
@@ -130,6 +136,7 @@ function E.decorate(m, stage, encounter,regionId,areaStage)
         m.human=true;m.neutralHuman=true;m.cardSuit=nil;m.cardRank=rank;m.kingdom="NHÂN LOẠI"
         m.creatureCard=nil;m.enemyAbility=nil;m.creatureKind=nil
         m.artKey="human_"..rank;m.name=E.humanNames[rank-1]
+        if m.isBoss and m.bossData and m.bossData.humanBoss then m.artKey=m.bossData.artKey;m.name=m.bossData.name end
         m.title="LỤC ĐỊA CON NGƯỜI • CẤP "..E.rankName(rank).." • VÔ CHẤT"
         m.desc=m.bossData and m.bossData.desc or "Đoàn thám hiểm độc lập của nhân loại. Lá bài vô chất, không thuộc bốn vương quốc."
         m.color=region.color;return m

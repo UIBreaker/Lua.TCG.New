@@ -87,7 +87,8 @@ function D.resolve(item,game)
             text=text.."\nVai trò Q: +"..(.1*power).." hệ số; +"..(15*count*power).." ST và +"..(2*count*power).." Cường hóa từ "..count.." trang bị hiện tại (+"..(15*power).." ST / +"..(2*power).." Cường hóa mỗi món)."
         elseif item.rank==13 then text=text.."\nVai trò K: +"..(25*power).." ST và +"..(5*power).." Cường hóa."
         elseif item.rank==14 then text=text.."\nVai trò A: +"..(15*power).." ST." end
-        if power>1 then text=text.."\n"..(item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Chỉ số hiệu quả gấp "..power.."." end
+        if power>1 then text=text.."\n"..(item.statuePower and "TƯỢNG CỔ ×"..power or item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Chỉ số hiệu quả gấp "..power.."." end
+        if (item.statueSpeedPenalty or 0)>0 then text=text.."\nLỜI NGUYỀN TƯỢNG CỔ · −"..item.statueSpeedPenalty.." Tốc vĩnh viễn (tối thiểu Tốc 1)." end
         local state=item.abilityState or {}
         if state.tacticCharge then text=text.."\nTích hiện tại: "..state.tacticCharge end
         if state.hearts then text=text.."\nTâm hiện tại: "..state.hearts.." / "..(A.params(item).maxStacks or 0) end

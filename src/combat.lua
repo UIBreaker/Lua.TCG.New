@@ -75,6 +75,7 @@ function Combat.resolvePlayerAttack(game, aura,roll)
         require("src.potions").emit(game,"accuracy","ĐÁNH TRÚNG 100%",nil,target)
     end
     if attackEffects.guaranteeHit then roll={hitChance=1,missed=false} end
+    if require("src.human_bosses").rejectHand(game) then roll={hitChance=0,missed=true,humanOath=true} end
     if roll.missed then
         local sync=require("src.chest_expansion").sync
         for _,source in ipairs(attackEffects.afterstorms or {}) do
@@ -154,12 +155,13 @@ end
 
 function Combat.getOutcome(game)
     if not game or not game.monster then return "continue" end
-    if game.playerHp and game.playerHp <= 0 then return "defeat" end
+    if game.playerHp and game.playerHp <= 0 then require("src.human_bosses").finish(game);return "defeat" end
+    if require("src.human_bosses").victory(game) then return "victory" end
     if Group.alive(Group.members(game))==0 then return "victory" end
     local noCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) == 0
     local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
         and game.monster.bossData.debuffId == "the_needle" and Boss.passiveEnabled(game.monster)
-    if game.handsRemaining and game.handsRemaining <= 0 and (noCards or handLimitIsFinal) then return "defeat" end
+    if game.handsRemaining and game.handsRemaining <= 0 and (noCards or handLimitIsFinal) then require("src.human_bosses").finish(game);return "defeat" end
     return "continue"
 end
 
@@ -194,6 +196,8 @@ local function resolveOneAttack(game,playerSpeed)
     end
 
     if not Boss.beforeAttack(game) then return {attack=0,absorbed=0,damage=0,killedPlayer=false,blocked=true} end
+    local humanAction=require("src.human_bosses").action(game,monster)
+    if humanAction then return humanAction end
     local inventoryAction=require("src.enemy_loadout").action(monster,game)
     if inventoryAction then return inventoryAction end
     local support=EnemyAbilities.support(game,monster)
@@ -217,6 +221,8 @@ local function resolveOneAttack(game,playerSpeed)
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
         and (game.playerHp or 100)<(game.maxPlayerHp or 100)*Boss.config.executionThreshold
     if execution then attack=attack*Boss.config.executionMultiplier end
+    attack=require("src.human_bosses").attack(game,monster,attack)
+    execution=execution or require("src.human_bosses").number(monster)==6
     local incomingAttack=attack
     local phantomAbsorbed
     attack,phantomAbsorbed=require("src.spn_elements").absorb(game,attack)
@@ -271,6 +277,7 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
             local attack=resolveOneAttack(game,playerSpeed)
             if attack then
                 game.enemyActed[m]=true
+                require("src.human_bosses").afterAttack(game,m,attack)
                 require("src.enemy_loadout").afterAction(m,attack.action,attack.blocked)
                 EnemyAbilities.finishAction(game,m,attack)
                 if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
@@ -323,6 +330,7 @@ end
 
 function Combat.start(game, monster, round)
     assert(game and monster, "Combat.start requires game state and monster")
+    require("src.human_bosses").finish(game)
     game.round = round or 1
     game.monster = monster
     game.spnBasicArmorGranted=nil
@@ -336,12 +344,12 @@ function Combat.start(game, monster, round)
     local heal=require("src.shop").voucherParams("v_apothecary",game).heal
     local before=game.playerHp or 100
     if heal>0 and before>0 then
-        game.playerHp=math.min(game.maxPlayerHp or 100,before+heal)
+        require("src.player_health").heal(game,heal)
         if game.playerHp>before then require("src.potions").emit(game,"heal","DƯỢC SƯ · +"..(game.playerHp-before).." HP",game.playerHp-before) end
     end
     game.spnOpeningAttackUsed=nil
     for i,m in ipairs(game.enemies) do
-        if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount) end
+        if i>1 then m.attackSpeed=require("src.monster").rollAttackSpeed(m.encounterCount)*(m.bloodDomainMultiplier or 1) end
         EnemyAbilities.start(m)
         require("src.enemy_loadout").start(m)
     end
@@ -351,6 +359,7 @@ function Combat.start(game, monster, round)
     game.advancedHand=nil;game.advancedCombat={gold=0,maxHp=0,speed=0};game.advancedFeedback=nil
     game.depthCombat = {values={}}
     Boss.start(game)
+    require("src.human_bosses").start(game)
     game.handsRemaining = game.maxHands
     game.playerArmor = 0
     game.playerShield = 0
@@ -456,6 +465,8 @@ function Combat.start(game, monster, round)
     end
     Abilities.handStart(game)
     require("src.spn_foundations").openingSpeed(game)
+    require("src.human_bosses").opening(game)
+    for _,enemy in ipairs(game.enemies) do EnemyAbilities.plan(game,enemy) end
     return { slaughterChips = slaughterChips }
 end
 

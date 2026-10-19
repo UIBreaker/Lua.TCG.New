@@ -269,9 +269,12 @@ function Monster.takeDamage(monster, rawDamage, trueDamage)
         actualDamage = monster.bossData.modifyDamage(rawDamage)
     end
 
-    if not trueDamage then actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage) end
+    local handled
+    actualDamage,handled=require("src.human_bosses").armor(monster,actualDamage)
+    if not handled and not trueDamage then actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage) end
     monster.hp = math.max(0, monster.hp - actualDamage)
     require("src.enemy_abilities").revive(monster)
+    require("src.human_bosses").afterDamage(monster,hpBefore)
 
     if monster.hasBed and monster.hp>0 and monster.hp<hpBefore then
         monster.bedHeal=(monster.maxHp or hpBefore)-monster.hp

@@ -81,18 +81,31 @@ end
 assert(registered==52)
 print("52 abilities: registration, real trigger, tooltip, stronger evolution, identity and old/new saves passed")
 do
-    assert(A.config.maxEvolutionLevel==8)
+    assert(A.config.maxEvolutionLevel==10)
     local c=card(2,"hearts",7)
     local g=game({c})
     assert(A.evolve(g,c) and c.evolutionLevel==8 and g.persistentDeck[1].evolutionLevel==8)
-    assert(not A.evolve(g,c),"level 8 must reject further evolution")
-    assert(not A.upgrade(g,c,100,false) and c.evolutionLevel==8,"bulk upgrade must respect level 8 cap")
+    for level=9,10 do
+        local before=A.params(c)
+        assert(A.evolve(g,c) and c.evolutionLevel==level and g.persistentDeck[1].evolutionLevel==level)
+        local after=A.params(c);local changed=false
+        for k,v in pairs(before) do if after[k]~=v then changed=true end end
+        assert(changed,"new evolution levels must improve ability parameters")
+        local tier,overflow=require("ui.components.card_frame").tier(c)
+        assert(tier==10 and overflow==level-9,"new levels must use TT / TT+1 frames")
+    end
+    assert(not A.evolve(g,c),"level 10 must reject further evolution")
+    assert(not A.upgrade(g,c,100,false) and c.evolutionLevel==10,"bulk upgrade must respect level 10 cap")
     g.run=Run.newRun("red_deck")
     local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
-    assert(restored.persistentDeck[1].evolutionLevel==8,"save/load must retain level 8")
+    assert(restored.persistentDeck[1].evolutionLevel==10,"save/load must retain level 10")
+    local capped=card(2,"hearts",8);local bulk=game({capped})
+    assert(A.upgrade(bulk,capped,100,false) and capped.evolutionLevel==10,"bulk upgrade from old cap must stop at 10")
+    local forged=Persistence.makeSnapshot(g,"shop");forged.game.persistentDeck[1].evolutionLevel=999
+    assert(assert(Persistence.restoreSnapshot(forged)).persistentDeck[1].evolutionLevel==10,"restore must clamp above new cap")
     local _,body=Description.resolve(c,g)
-    assert(body:find("8 / 8",1,true),"card tooltip must display new cap")
-    print("Evolution cap PASS: 7 to 8, copies on hand/deck, reject overflow, save/load and tooltip")
+    assert(body:find("10 / 10",1,true),"card tooltip must display new cap")
+    print("Evolution cap PASS: 7 through 10, stronger abilities, TT/TT+1 frames, hand/deck copies, bulk cap, save/load and tooltip")
 end
 local function play(g,cards,info,decisions)
     info=info or Poker.evaluate(cards)

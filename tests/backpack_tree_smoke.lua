@@ -20,7 +20,7 @@ for _,recipe in ipairs(B.recipes) do
   local found=false;for _,v in ipairs(Tree.upgrades(part.id)) do if v.id==recipe.id then found=true end end;assert(found)
  end
 end
-local parts=Tree.ingredients("gem_blast");assert(parts[2].id=="basic_spur" and parts[2].count==2)
+local parts=Tree.ingredients("gem_blast");assert(parts[2].id=="basic_amber" and parts[2].count==2)
 Tree.history={};Tree.select("crafted_guard");Tree.mouse("bag_node_basic_plate");assert(Tree.id=="basic_plate" and #Tree.history==1)
 assert(Tree.mouse("bag_tree_back") and Tree.id=="crafted_guard")
 local previous=Tree.id;Tree.select("soul_crown",true);assert(Tree.id==previous)

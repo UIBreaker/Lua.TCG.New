@@ -1,6 +1,6 @@
 -- Backpack receipts store an ID and actual investment; legacy ID-only saves remain valid.
 local B = {basic={}, recipes={}, definitions={}}
-local colors={heal={.35,.85,.55,1},armor={.4,.7,.95,1},speed={.35,.9,.9,1},gold={.95,.78,.35,1}}
+local colors={heal={.35,.85,.55,1},armor={.4,.7,.95,1},speed={.35,.9,.9,1},gold={.95,.78,.35,1},chips={.95,.55,.3,1},mult={.95,.4,.3,1}}
 local rows={
  {"basic_bandage","Băng Vải",2,"heal",1,"A rolled linen bandage tied with a green cord on a mossy expedition table, forest ruins behind"},
  {"basic_herb","Rễ Sinh Lực",3,"heal",2,"One thick medicinal root with two green leaves in a wooden bowl on a forest camp stone"},
@@ -14,6 +14,8 @@ local rows={
  {"basic_pouch","Túi Đồng",5,"gold",1,"One small worn brown leather coin purse with a few antique copper coins on a desert caravan table"},
  {"basic_weight","Quả Cân",10,"gold",2,"One large brass merchant scale weight beside two antique coins on a bone gold desert market slab"},
  {"basic_stamp","Con Dấu Buôn",15,"gold",3,"One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post"},
+ {"basic_steel_tip","Mũi Thép",3,"chips",5,"One broad triangular forged steel spearhead against a basalt anvil, ruined Western volcanic fortress at dawn"},
+ {"basic_amber","Mảnh Hổ Phách",4,"mult",1,"One rough honey amber shard in a simple bronze band on a mossy workbench, ancient forest and ruined Western arch behind"},
 }
 local big={
  {"crafted_guard","Áo Hộ Mệnh",2,{"basic_bandage","basic_plate"},{heal=2,armor=4},"A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone"},
@@ -25,8 +27,8 @@ local big={
 }
 local function description(p)
  local parts={}
- for _,r in ipairs({"heal","armor","speed","gold"}) do
-  if p[r] then parts[#parts+1]="+"..p[r].." "..({heal="HP",armor="Giáp",speed="Tốc đánh",gold="Vàng"})[r] end
+ for _,r in ipairs({"chips","mult","heal","armor","speed","gold"}) do
+  if p[r] then parts[#parts+1]="+"..p[r].." "..({chips="Sát thương",mult="Cường hóa",heal="HP",armor="Giáp",speed="Tốc đánh",gold="Vàng"})[r] end
  end
  local summary=table.concat(parts," · ")
  return summary..(p.speed and (p.heal or p.armor or p.gold) and ". Tốc khi gắn; chỉ số khác khi lá tính điểm." or p.speed and " cho lá được gắn." or " khi lá tính điểm."),summary
@@ -34,7 +36,7 @@ end
 local function add(id,name,cost,p,concept,basic)
  local desc,summary=description(p)
  local d={id=id,name=name,cost=cost,slotsNeeded=1,rarity=basic and "common" or "uncommon",basic=basic,crafted=not basic,params=p,concept=concept,
-  color=colors[p.gold and "gold" or p.speed and "speed" or p.armor and "armor" or "heal"],attackSpeed=p.speed or 0,desc=desc,statSummary=summary:gsub("Tốc đánh","Tốc")}
+  color=colors[p.chips and "chips" or p.mult and "mult" or p.gold and "gold" or p.speed and "speed" or p.armor and "armor" or "heal"],attackSpeed=p.speed or 0,desc=desc,statSummary=summary:gsub("Tốc đánh","Tốc")}
 
  d.onCardScore=function(_,_,index,context)
   if index==0 then return nil end
@@ -44,7 +46,7 @@ local function add(id,name,cost,p,concept,basic)
    gold=math.min(gold,math.max(0,6*(context.bloodEquipmentPower or 1)-(context.basicEquipmentGold or 0)))
    context.basicEquipmentGold=(context.basicEquipmentGold or 0)+gold
   end
-  return {healHp=p.heal,addArmor=p.armor,addGold=gold,message=name}
+  return {addChips=p.chips,addMult=p.mult,healHp=p.heal,addArmor=p.armor,addGold=gold,message=name}
  end
  B.definitions[#B.definitions+1]=d
  if basic then B.basic[#B.basic+1]=id end

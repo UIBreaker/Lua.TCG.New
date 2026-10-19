@@ -500,9 +500,9 @@ local function marketStock(shop, gameState)
         shop.items[#shop.items+1]={id=permit.id,category=permit.category,consumable=permit,name=permit.name,
             desc=permit.desc,color=permit.color,cost=2000,subtitle="GIẤY TỜ VIỄN CHINH"}
     elseif mode == "equipment" then
-        local basics = require("src.basic_equipment").basic
+        local basics = shuffle(copyList(require("src.basic_equipment").basic))
         for slot=1,4 do
-            shop.items[#shop.items+1]=equipmentOffer(Equipment.ITEMS[basics[(slot-1)*3+Rng.random(3)]])
+            shop.items[#shop.items+1]=equipmentOffer(Equipment.ITEMS[basics[slot]])
         end
         local pool = {}
         for id,eq in pairs(Equipment.ITEMS) do
@@ -720,11 +720,11 @@ function Shop.refresh(shop, gameState)
         end
     end
 
-    -- One offer from each basic resource. Clearance can offer any non-soul equipment.
-    local basics=require("src.basic_equipment").basic
+    -- Rotate the whole material pool without duplicates, including offensive components.
+    local basics=shuffle(copyList(require("src.basic_equipment").basic))
     local chosen={[eq1.id]=true}
     for slot=1,4 do
-        local eq=Equipment.ITEMS[basics[(slot-1)*3+Rng.random(3)]];chosen[eq.id]=true
+        local eq=Equipment.ITEMS[basics[slot]];chosen[eq.id]=true
         shop.items[#shop.items+1]={section="basic",bay=slot,category="equipment",equipment=eq,
             name=eq.name,desc=eq.desc,color=eq.color,cost=eq.cost,originalCost=eq.cost,backpack=true,subtitle=eq.name}
     end

@@ -425,6 +425,7 @@ function Combat.start(game, monster, round)
     end
 
     require("src.spn_pacts").prepare(game)
+    require("src.spn_trials").prepare(game)
     Abilities.start(game)
     local maxHandSize = isFaction(game, "elaris") and ((game.maxHandSize or 3) + 1) or (game.maxHandSize or 3)
     local dealOrder = 0

@@ -48,6 +48,7 @@ function T.verify()
     require("tests.card_frame_motion").verify()
     require("tests.spn_rarity_badges_capture").verify()
     require("tests.spn_rarity_frames_capture").verify()
+    require("tests.card_inscriptions_capture").verify()
 end
 
 return T

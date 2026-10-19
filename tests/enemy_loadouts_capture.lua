@@ -13,9 +13,20 @@ local function click(x,y,button)
     love.mousepressed((w-1280*s)/2+x*s,(h-720*s)/2+y*s,button or 1)
     love.mousereleased((w-1280*s)/2+x*s,(h-720*s)/2+y*s,button or 1)
 end
+local function move(x,y)
+    local w,h=love.graphics.getDimensions();local scale=math.min(w/1280,h/720)
+    love.mouse.setPosition((w-1280*scale)/2+x*scale,(h-720*scale)/2+y*scale)
+end
 local function shot(name)
     love.graphics.captureScreenshot(function(data)
-        local f=assert(io.open("docs/enemy_loadout_"..name..".png","wb"))
+        local f,err
+        -- Retry short-lived Windows file locks when replacing a previous capture.
+        for attempt=1,10 do
+            f,err=io.open("docs/enemy_loadout_"..name..".png","wb")
+            if f then break end
+            love.timer.sleep(.05)
+        end
+        assert(f,err)
         f:write(data:encode("png"):getString());f:close()
     end)
 end
@@ -97,16 +108,22 @@ function T.update(game,cb)
         elseif T.step==1 then
             local x,y,w,h=require("ui.enemy_formation").bagRect(1,#game.enemies)
             click(x+w/2,y+h/2);assert(cb.getInspector()==game.monster,"bag button opens actual enemy inventory")
+            move(1000,40)
             T.step=2;T.deadline=now+.35
         elseif T.step==2 then
             love.keypressed("space");assert(cb.getInspector()==game.monster and not anim.active,"inventory traps combat shortcuts")
             shot((spec.stage==1 and "starter" or spec.meters and "meters" or spec.kind).."_inventory");T.step=3;T.deadline=now+.1
+            if spec.kind=="supplies" then
+                move(1150,185)
+                T.step=5;T.deadline=now+.2
+            end
+        elseif T.step==5 then
+            shot("supplies_detail");T.step=3;T.deadline=now+.1
         elseif T.step==3 then
             love.wheelmoved(0,-2);love.keypressed("escape")
             assert(not cb.getInspector(),"Escape closes enemy inventory")
             local hx,hy,hw,hh=require("ui.enemy_formation").bagRect(1,#game.enemies)
             click(hx-45,hy+hh/2);assert(not cb.getInspector(),"nameplate selects a target; the bag opens inventory")
-            love.keypressed("escape")
             local x,y,w,h=require("src.enemy_group").rect(1,#game.enemies)
             click(x+w/2,y+h/2,2);assert(cb.getInspector()==game.monster,"right click opens the same inventory")
             T.step=4;T.deadline=now+.2

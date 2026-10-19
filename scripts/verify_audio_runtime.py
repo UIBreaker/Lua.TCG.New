@@ -91,7 +91,7 @@ try:
             local Sound=require("src.sound")
             local expected=0
             for _ in pairs(require("config.audio_catalog").cues) do expected=expected+1 end
-            expected=expected+#require("config.nen_vfx_config").order*25
+            expected=expected+#require("config.nen_vfx_config").order*28
             expected=expected+#require("src.reward_audio").order*4
             assert(Sound.currentTrack=="menu" and Sound.stats().cues==expected)
             local actualButtons

@@ -48,6 +48,7 @@ end
 function A.enter(a,phase)
     a.phase=phase
     if a.nen then Nen.enter(a,phase);return end
+    if phase=="MISS" then require("src.sound").play("nen_"..a.profile.id.."_miss");return end
     a.beat=0
     if phase=="ENERGY_CONVERSION" then a.charge,a.orbit=0,0;a.launch={} end
     if phase=="ATTACK" then
@@ -368,7 +369,7 @@ heads.crossfire=function(g,a,x,y,angle,p)
     g.setColor(a.color[1],a.color[2],a.color[3],0.6);g.circle("line",x,y,5+a.intensity*4)
 end
 function A.draw(a,phase,p,impactAge)
-    if a.missed then impactAge=nil end
+    if a.missed then require("src.miss_feedback").draw(a,a.missAge);return end
     if a.nen then require("render.nen_effects").draw(a,phase,p,impactAge);return end
     local g=love.graphics
     g.push("all")

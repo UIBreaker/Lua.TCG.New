@@ -96,12 +96,10 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
     g.push("all");g.setShader();g.setBlendMode("alpha")
     local Style=require("ui.backpack_style");local Chrome=require("ui.combat_chrome")
     local hovered=not locked and F.targetAt(game,mx,my)
-    local targetIndex
     for i,m in ipairs(list) do
         local x,y,w,h=G.rect(i,#list);local target=m==game.monster;local alive=m.hp>0
         local moving=turn and turn.attackers[turn.index]==m and turn.phase~="pause"
         local c=target and gold or hovered==m and cyan or {0.68,0.76,0.82,1}
-        if target and alive then targetIndex=i end
         if turn and turn.attackers[turn.index]==m then
             c={1,0.67,0.34}
         end
@@ -169,13 +167,6 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
                 local image=UI.getConsumableImage({id="cons_bed"})
                 if image then g.setColor(1,1,1,1);UI.CardFrame.image(image,x+w-30,y+h-46,28,42);UI.drawCardBorder(x+w-30,y+h-46,28,42) end
         end
-    end
-    if targetIndex then
-        local name=game.monster.name or "Đối thủ"
-        g.setColor(.008,.018,.026,.97);g.rectangle("fill",340,424,580,23,4,4)
-        Core.color(gold);g.setLineWidth(1);g.line(350,424,910,424)
-        Chrome.title("MỤC TIÊU #"..targetIndex.." · "..name,352,428,366,UI.fonts.tiny,gold)
-        Chrome.title(locked and "ĐANG GIẢI QUYẾT" or "Nhấp địch để đổi mục tiêu",716,428,192,UI.fonts.tiny,{.86,.91,.95},"right")
     end
     if (game.enemyPoison or 0)>0 then
         Chrome.panel(250,82,138,26,{.54,.89,.45})

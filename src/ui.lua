@@ -3,10 +3,13 @@ local ContinentalArt = require("src.continental_art")
 UI.CardFrame = require("ui.components.card_frame")
 function UI.drawCardBorder(x,y,w,h,highlight,alpha,card)
     local function draw(a,b,c,d)
-        UI.CardFrame.draw(a,b,c,d,highlight,alpha,card,UI.Polish and UI.Polish.time or 0,UI.Polish and UI.Polish.reducedMotion)
-        if card and card.rank and not card.faceDown and UI.drawPlayingMetadata then
+        local time,reduced=UI.Polish and UI.Polish.time or 0,UI.Polish and UI.Polish.reducedMotion
+        local metadata=card and card.rank and not card.faceDown and UI.drawPlayingMetadata
+        UI.CardFrame.draw(a,b,c,d,highlight,alpha,card,time,reduced,metadata)
+        if metadata then
             love.graphics.push("all");love.graphics.translate(a,b)
             UI.drawPlayingMetadata(card,c,d,true);love.graphics.pop()
+            UI.CardFrame.drawSockets(a,b,c,d,card,(alpha or card.alpha or 1)*(highlight and highlight[4] or 1),time,reduced)
         end
     end
     if card and UI.CardPhysics and UI.CardPhysics.drawAttached(card,draw) then return end
@@ -369,53 +372,16 @@ function UI.drawSuitSymbol(suit, cx, cy, size, customColor)
     love.graphics.pop()
 end
 
-local function drawCardSpeedBadge(card, w, h)
-    local g = love.graphics
-    local badgeW, badgeH = math.min(34, w * 0.40), math.min(19, h * 0.16)
-    local bx, by = w - badgeW - 8, 8
-    g.setColor(0.035, 0.055, 0.07, 0.92)
-    UI.drawRoundedRect("fill", bx, by, badgeW, badgeH, 4)
-    g.setColor(UI.COLORS.goldYellow)
-    g.polygon("fill", bx + 5, by + 3, bx + 10, by + 3, bx + 8, by + 7,
-        bx + 12, by + 7, bx + 5, by + badgeH - 3, bx + 7, by + 9, bx + 3, by + 9)
-    g.setColor(UI.COLORS.textLight)
-    g.setFont(UI.fonts.tiny)
-    g.printf(tostring(Deck.getCardAttackSpeed(card)), bx + 13, by + 1, badgeW - 14, "center")
-end
-
 -- Metadata is painted AFTER the rim and shares the card's transform/material.
 local function drawPlayingMetadata(card,w,h,showDamage)
+    if card.faceDown or (card.alpha or 1)<=0 then return end
     local g=love.graphics
     g.push("all");g.scale(w/128,h/192)
     local alpha=card.alpha or 1
-    g.setColor(.96,.94,.85,alpha)
-    g.polygon("fill",8,8,32,8,32,43,8,49)
-    local red=card.suit=="hearts" or card.suit=="diamonds" or card.suit=="valoria" or card.suit=="aurelia"
-    g.setColor(red and {.69,.10,.13,alpha} or {.06,.13,.22,alpha})
-    g.setFont(UI.fonts.regular)
-    g.printf(tostring(card.rankName or Deck.RANK_NAMES[card.rank] or card.rank),8,8,24,"center")
     local d=UI.Abilities.definition(card)
-    local glyph=({heart="♥",diamond="♦",club="♣",spade="♠"})[d and d.suit] or card.suitSymbol or "?"
-    g.setFont(UI.fonts.small);g.printf(glyph,8,29,24,"center")
-    -- Swallowtail flag: speed replaces the old badge hidden under corner ornament.
-    g.setColor(.035,.055,.07,alpha)
-    g.polygon("fill",83,8,120,8,120,38,102,32,83,38)
-    g.setColor(UI.COLORS.goldYellow);g.setFont(UI.fonts.tiny)
-    g.printf("TỐC",83,9,37,"center")
-    g.setColor(1,1,1,alpha);g.setFont(UI.fonts.small)
-    g.printf(string.format("%g",Deck.getCardAttackSpeed(card)),83,20,37,"center")
+    require("ui.components.card_inscriptions").draw(UI,card,d,showDamage)
     if card.allowDuplicateEquipment then
         g.setColor(.83,.59,1,alpha);g.setFont(UI.fonts.tiny);g.printf("PL",35,31,44,"center")
-    end
-    if d then
-        g.setColor(.025,.035,.045,alpha*.9);g.rectangle("fill",8,145,112,17,3)
-        local name=d.characterName:match("^(.-) ·") or d.characterName
-        g.setColor(.96,.94,.85,alpha);g.setFont(UI.fonts.tiny);g.printf(name,10,147,108,"center")
-    end
-    if showDamage then
-        g.setColor(.035,.055,.07,alpha*.95);g.rectangle("fill",8,166,48,18,3)
-        g.setColor(1,.88,.64,alpha);g.setFont(UI.fonts.tiny)
-        g.printf("ST "..tostring(card.baseChips or Deck.getChipValue(card.rank)),8,167,48,"center")
     end
     if card.seal then UI.SealEmblems.draw(card.seal,107,58,13,alpha) end
     g.pop()
@@ -517,14 +483,6 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
         g.setColor(accent)
         g.setFont(UI.fonts.regular)
         g.print(rank, w - UI.fonts.regular:getWidth(rank) - 8, h - 24)
-        if card.baseChips then
-            g.setColor(accent)
-            UI.drawRoundedRect("fill", 6, h - 26, 32, 19, 4)
-            g.setColor(UI.COLORS.textLight)
-            g.setFont(UI.fonts.tiny)
-            g.printf("+" .. tostring(card.baseChips), 6, h - 23, 32, "center")
-        end
-        drawCardSpeedBadge(card, w, h)
     end
     drawCardEditionRim(card, w, h, selected and UI.COLORS.cardSelectedBorder or hovered and UI.COLORS.chipsBlue)
     g.pop()

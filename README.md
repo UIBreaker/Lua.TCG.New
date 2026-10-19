@@ -1,13 +1,13 @@
 # 🃏 LUA.TCG — Poker Roguelike
 
-**beta 0.83.3** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
+**beta 0.139.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
 ## 📥 Tải về và chơi
 
 - **Windows 64-bit:** vào [Releases beta 0.83.3](https://github.com/UIBreaker/Lua.TCG.New/releases/tag/v0.83.3), tải `LUA-TCG-0.83.3-Windows-x64.zip`, giải nén toàn bộ rồi mở `LUA-TCG.exe`. Không cần cài Lua/LÖVE.
-- **Android — cài trực tiếp:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases), chọn bản Android có số phiên bản cao nhất và tải file `LUA-TCG-<phiên bản>-Android.apk` trong **Assets**. Mở file rồi chọn **Cập nhật** nếu đã cài game; không gỡ bản cũ để giữ save. Mở **Terra Suit** và kiểm tra số phiên bản trên menu. Không cần cài LÖVE; chơi offline. Android 6 trở lên, máy ARM 32/64-bit; APK hiện khoảng 151 MiB. Nếu Android yêu cầu, cho phép trình duyệt/trình quản lý tệp cài ứng dụng từ nguồn này; có thể tắt lại sau khi cài.
+- **Android — cài trực tiếp:** vào [Releases](https://github.com/UIBreaker/Lua.TCG.New/releases), chọn bản Android có số phiên bản cao nhất và tải file `LUA-TCG-<phiên bản>-Android.apk` trong **Assets**. Mở file rồi chọn **Cập nhật** nếu đã cài game; không gỡ bản cũ để giữ save. Mở **Terra Suit** và kiểm tra số phiên bản trên menu. Không cần cài LÖVE; chơi offline. Android 6 trở lên, máy ARM 32/64-bit; Dung lượng từng bản được ghi trong Releases. Nếu Android yêu cầu, cho phép trình duyệt/trình quản lý tệp cài ứng dụng từ nguồn này; có thể tắt lại sau khi cài.
 - **Android và iPhone — trình duyệt:** mở [trang chơi web](https://uibreaker.github.io/Lua.TCG.New/), xoay ngang máy và bấm **BẮT ĐẦU CHƠI**. Trang đã được xuất bản bằng GitHub Pages; không cần cài Lua/LÖVE.
 - **Android có LÖVE 11.5:** tải `LUA-TCG-0.75.3-Mobile.love` trong Releases và mở bằng LÖVE. File `.love` không phải APK hay ứng dụng iPhone cài trực tiếp.
 
@@ -38,6 +38,13 @@ Trên điện thoại: chạm chọn, rê chọn nhiều, giữ 0,5 giây xem/d�
 | Soi chi tiết lá bài | Bộ sưu tập |
 | :---: | :---: |
 | ![Thông tin khả năng, tiến hóa và trang bị của quân bài](docs/screenshots/0.75.3/card-inspector.png) | ![Tra cứu các nhóm nội dung trong bộ sưu tập](docs/screenshots/0.75.3/collection.png) |
+
+## Mới trong beta 0.139.0
+
+- Ba SPN: **Song Quang Hội Tụ**, **Kẻ Dệt Số**, **Sứ Giả Khảo Luyện**; công thức AURA và nhiệm vụ tiến hóa riêng, hỗ trợ lưu/tải.
+- **Mũi Thép** (+5 Sát thương), **Mảnh Hổ Phách** (+1 Cường hóa), công thức chế tạo và nguồn hàng cập nhật.
+- Âm thanh/hiệu ứng đánh hụt riêng; nâng cấp khung, chữ số, hốc khảm và kho đồ địch.
+- Giữ các tối ưu khởi động, RAM và tài nguyên từ beta 0.138.2.
 
 ## ✨ Tính năng hiện có
 

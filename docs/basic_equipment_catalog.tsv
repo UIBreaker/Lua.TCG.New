@@ -10,6 +10,8 @@ basic_feather	Lông Gió	+3 Tốc đánh cho lá được gắn.	One long silver
 basic_pouch	Túi Đồng	+1 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.	One small worn brown leather coin purse with a few antique copper coins on a desert caravan table	5
 basic_weight	Quả Cân	+2 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.	One large brass merchant scale weight beside two antique coins on a bone gold desert market slab	10
 basic_stamp	Con Dấu Buôn	+3 Vàng khi lá tính điểm. Vàng từ trang bị thường: tối đa 6 mỗi tay.	One simple bronze merchant seal stamp beside an unlettered wax seal and coins in a ruined western caravan post	15
+basic_steel_tip	Mũi Thép	+5 Sát thương khi lá tính điểm.	One broad triangular forged steel spearhead against a basalt anvil, ruined Western volcanic fortress at dawn	3
+basic_amber	Mảnh Hổ Phách	+1 Cường hóa khi lá tính điểm.	One rough honey amber shard in a simple bronze band on a mossy workbench, ancient forest and ruined Western arch behind	4
 crafted_guard	Áo Hộ Mệnh	+2 HP · +4 Giáp khi lá tính điểm.	A sturdy green padded expedition vest reinforced by iron plates, on a mossy western ruin stone	12
 crafted_runner	Ủng Hồi Sức	+2 HP · +1 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.	One pair of worn forest green leather walking boots with silver laces and a medicinal herb pouch, at a forest trail	15
 crafted_bulwark	Giáp Hành Quân	+8 Giáp · +2 Tốc đánh. Tốc khi gắn; chỉ số khác khi lá tính điểm.	One broad leather and steel expedition cuirass with a wind swept blue cloak in a cold mountain pass	35

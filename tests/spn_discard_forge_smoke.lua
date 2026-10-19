@@ -53,5 +53,5 @@ g=game();g.deities={};g.gold=100
 local shop={items={{category="deity",deity=D.CATALOG.spirit_discard_forge,cost=4}}}
 assert(require("src.shop").buyItem(shop,1,g) and #g.backpackDeities==1)
 assert(require("src.loadout").move(g,"spn","reserve",1,1,false));assert(discard(g,{6,9,15})==10)
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN discard forge PASS: flat single reward, arithmetic multi average, evolution/rounding, damage snapshots/upgrades, free/blood/forced/preview, caps, locks/reserves/mimic and save")

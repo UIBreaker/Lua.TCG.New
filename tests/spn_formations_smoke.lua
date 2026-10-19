@@ -111,6 +111,6 @@ for _,row in ipairs(require("src.spn_formations").entries) do
     assert(require("src.loadout").move(g,"spn","reserve",1,1,false));assert(D.evolve(g.deities[1]))
     local loaded=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")));assert(loaded.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN formations PASS: exact marching hand/heal/evolution; five-card first-in-play-order full card repeats/no base or hand-SPN repeats/cap/A/J/Q/K/preview; percent heal; per-card local damage/equipment/SPN/evolution; exclusive four-kind suit branches/wild/aliases; locks/reserves/shop/save")
 return true

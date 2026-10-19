@@ -50,6 +50,7 @@ local function render(s,kind,tier,index)
     if boss then duration=duration+.30+(tier-1)*.35 end
     local victoryAt=.65+(tier-1)*.45
     if boss then duration=math.max(duration,victoryAt+3.2+(tier-1)*.05) end
+    if kind=="miss" then duration=({.34,.54,.78})[tier] end
     local count=math.floor(duration*rate)
     local left,right={},{}
     for i=1,count do left[i],right[i]=0,0 end
@@ -192,6 +193,23 @@ local function render(s,kind,tier,index)
             event(s.material,.035,.23,s.tone*s.notes[#s.notes],.35,.72,1.12,.001,.065)
             event(s.material,.095,.20,s.tone*1.5,.24,-.72,.80,.004,.075)
         end
+    elseif kind=="miss" then
+        local spread=({.28,.56,.86})[tier]
+        event("wind",0,duration,s.body*3,.24+(tier-1)*.11,-spread,1.8,.008,duration*.20)
+        event("wind",.035+(tier-1)*.025,duration*.75,s.body*2,.16+(tier-1)*.09,spread,.32,.010,duration*.23)
+        for j,at in ipairs(s.rhythm) do
+            local pan=j%2==0 and spread or -spread
+            event(s.material,.018+at*(.36+(tier-1)*.22),duration*.65,s.tone*s.notes[j]*1.20,
+                (.48+(tier-1)*.10)/math.sqrt(#s.rhythm),pan,.38,.004,duration*.20)
+            if tier>=2 then
+                event(s.material,.13+at*.48,duration*.58,s.tone*s.notes[j]*.72,
+                    (.23+(tier-2)*.12)/math.sqrt(#s.rhythm),-pan,.62,.012,duration*.27)
+            end
+            if tier==3 then
+                event(s.material,.32+at*.60,duration*.48,s.tone*s.notes[j]*1.5,
+                    .24/math.sqrt(#s.rhythm),pan,.48,.016,duration*.32)
+            end
+        end
     elseif kind=="charge" then
         event("body",0,duration,s.body*1.2,.17+(tier-1)*.055,0,1.35,.016,duration*4,true)
         event(s.material,0,duration,s.tone*.5,.40+(tier-1)*.08,-.32,1.45+(tier-1)*.25,.012,duration*3,true)
@@ -242,20 +260,20 @@ local function render(s,kind,tier,index)
         peak=math.max(peak,abs(left[i]),abs(right[i]))
     end
     local ceiling=impact and (.70+(tier-1)*.04) or kind=="charge" and (.46+(tier-1)*.08)
-        or kind=="release" and (.60+(tier-1)*.08) or .62
+        or kind=="release" and (.60+(tier-1)*.08) or kind=="miss" and ({.44,.58,.70})[tier] or .62
     local data=love.sound.newSoundData(count,rate,16,2)
     local gain=ceiling/math.max(.001,peak)
     for i=1,count do data:setSample(i-1,1,left[i]*gain);data:setSample(i-1,2,right[i]*gain) end
     return data,{gain=impact and math.min(1,.86+(tier-1)*.06+(finish and .02 or 0)) or kind=="charge" and (tier==3 and .73 or tier==2 and .63 or .48)
-            or kind=="release" and (.54+(tier-1)*.11) or .35,
-        priority=impact and 5 or kind=="release" and 4 or kind=="charge" and tier>=2 and 4 or 3,
+            or kind=="release" and (.54+(tier-1)*.11) or kind=="miss" and ({.48,.64,.80})[tier] or .35,
+        priority=impact and 5 or kind=="release" and 4 or kind=="miss" and 4 or kind=="charge" and tier>=2 and 4 or 3,
         cooldown=kind=="beat" and .035 or .06,peak=ceiling,maxPitch=(kind=="charge" or kind=="release") and 4 or nil,
-        duck=impact and (boss and (tier==3 and .14 or tier==2 and .30 or .46)
+        duck=kind=="miss" and .80 or impact and (boss and (tier==3 and .14 or tier==2 and .30 or .46)
             or tier==3 and (finish and .22 or fracture and .25 or .30) or tier==2 and .46 or .62)
             or kind=="release" and (tier==3 and .38 or tier==2 and .55 or .75)
             or kind=="charge" and tier>=2 and (tier==3 and .72 or .84) or nil,
         bossVictory=boss and 1 or nil,
-        duckDuration=impact and (boss and (tier==3 and 3.90 or tier==2 and 2.70 or 1.80)
+        duckDuration=kind=="miss" and .09 or impact and (boss and (tier==3 and 3.90 or tier==2 and 2.70 or 1.80)
             or tier==3 and (finish and .55 or fracture and .42 or .34) or tier==2 and .21 or .12)
             or kind=="release" and .10 or kind=="charge" and duration or nil}
 end
@@ -266,7 +284,7 @@ function A.register(sound,forceRender)
     for index,id in ipairs(C.order) do
         if C.hands[id].ready then
             local score=assert(A.profiles[id],"Missing attack score: "..id)
-            for _,kind in ipairs({"charge","release","beat","impact","armor_break","finisher","armored_finisher","boss_finisher","boss_armored_finisher"}) do
+            for _,kind in ipairs({"charge","release","beat","impact","armor_break","finisher","armored_finisher","boss_finisher","boss_armored_finisher","miss"}) do
                 for tier=1,kind=="beat" and 1 or 3 do
                     local suffix=tier==2 and "_strong" or tier==3 and "_extreme" or ""
                     local name="nen_"..id.."_"..kind..suffix

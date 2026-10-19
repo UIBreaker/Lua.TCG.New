@@ -96,7 +96,7 @@ local function warm(name)
 end
 function Sound.prepareAttack(id,tier)
     local suffix=tier==3 and '_extreme' or tier==2 and '_strong' or ''
-    for _,kind in ipairs({'charge','impact','release','armor_break','finisher','armored_finisher','boss_finisher','boss_armored_finisher'}) do
+    for _,kind in ipairs({'charge','impact','release','miss','armor_break','finisher','armored_finisher','boss_finisher','boss_armored_finisher'}) do
         warm('nen_'..id..'_'..kind..suffix)
     end
     warm('nen_'..id..'_beat')

@@ -100,5 +100,5 @@ for _,id in ipairs({shield,frost,fire}) do
     assert(require("src.loadout").move(g,"spn","reserve",1,1,false));D.evolve(g.deities[1])
     loaded=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")));assert(loaded.deities[1].id==id and loaded.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN elements PASS: persistent phantom ledger/no heal/armor/depletion/overflow/locks, hidden blood purchases/reroll, targeted zero-damage opening freeze/evolution/initiative, exact AURA split/burn two rounds/evolution/victory, copies/reserve/preview/RNG/shop/save")

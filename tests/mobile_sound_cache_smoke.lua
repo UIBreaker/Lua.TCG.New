@@ -21,7 +21,9 @@ love={filesystem={getInfo=function() return true end},timer={getTime=function() 
     audio={newSource=function(path) loads=loads+1;clock=clock+.002;return source(path) end,setVolume=function() end}}
 package.loaded['src.sound']=nil;package.loaded['src.runtime_assets']=nil
 local S=require('src.sound');assert(S.init());local stats=S.stats()
-assert(stats.cues==823 and stats.loadedCues==108 and stats.cachedAudioBytes==0,'mobile startup only loads common SFX')
+local common=0;for _ in pairs(require("config.audio_catalog").cues) do common=common+1 end
+local expected=common+#require("config.nen_vfx_config").order*28+#require("src.reward_audio").order*4
+assert(stats.cues==expected and stats.loadedCues==common and stats.cachedAudioBytes==0,'mobile startup only loads common SFX')
 assert(S.play('nen_high_card_impact'))
 for _,id in ipairs(require('config.nen_vfx_config').order) do
     if id~='high_card' then clock=clock+1;assert(S.play('nen_'..id..'_impact'));S.stopCue('nen_'..id..'_impact') end
@@ -40,4 +42,4 @@ assert(loads==prepared,'prepared attack must not allocate Sources at playback')
 S.trimMemory();S.init();assert(S.stats().cachedAudioBytes==0,'repeat initialization releases cache')
 love=previousLove;T.lowPower=low
 package.loaded['src.sound']=nil;package.loaded['src.runtime_assets']=nil
-print('Mobile sound cache PASS: no startup synthesis, 715 deferred cues, active voices, bounded eviction, prewarm/no playback allocation, reload and trim')
+print('Mobile sound cache PASS: no startup synthesis, 796 deferred cues, active voices, bounded eviction, prewarm/no playback allocation, reload and trim')

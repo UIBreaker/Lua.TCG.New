@@ -115,6 +115,16 @@ function Capture.update(gameRef, callbacks)
             if not ok then print("SPN formations UI FAIL: "..tostring(err));love.event.quit(1) end
             return
         end
+        if value=="--test-spn-aura-ui" then
+            local ok,err=xpcall(function() require("tests.spn_aura_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN Aura UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value=="--test-spn-trials-ui" then
+            local ok,err=xpcall(function() require("tests.spn_trials_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN trials UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
     end
     for _,value in ipairs(arg or {}) do
         if value=="--capture-vouchers" then
@@ -216,7 +226,11 @@ function Capture.update(gameRef, callbacks)
         if value == "--test-inventory-rail" then return require("tests.inventory_rail_capture").update(gameRef,callbacks) end
     end
     for _,value in ipairs(arg or {}) do
-        if value=="--capture-backpack-qol" then
+        if value=="--capture-basic-offense" then
+            local ok,err=pcall(require("tests.basic_offense_capture").update,gameRef,callbacks)
+            if not ok then print("BASIC OFFENSE UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        elseif value=="--capture-backpack-qol" then
             local ok,err=pcall(require("tests.backpack_qol_capture").update,gameRef,callbacks)
             if not ok then print("BACKPACK QOL FAIL: "..tostring(err));love.event.quit(1) end
             return

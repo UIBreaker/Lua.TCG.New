@@ -5,6 +5,7 @@ local baked=require("config.attack_outcome_audio")
 local bakedCount=0
 local victories={}
 local signalProblems={}
+local misses={}
 require("src.nen_audio").register({registerProcedural=function(name,data,cue)
     assert(name:match("^nen_.*_.*$") and cue.gain>0 and cue.gain<=1)
     assert(data:getChannelCount()==2 and data:getSampleRate()==32000,"stereo Nen at 32kHz")
@@ -68,6 +69,14 @@ require("src.nen_audio").register({registerProcedural=function(name,data,cue)
     for i,v in ipairs(bins) do features[i]=v/math.max(.00001,sum) end
     for i,v in ipairs(bands) do features[#bins+i]=v/math.max(.00001,bandTotal) end
     local charge=name:match("^nen_(.-)_charge")
+    local miss=name:match("^nen_(.-)_miss")
+    if miss then
+        misses[miss]=misses[miss] or {};misses[miss][level]={features=features,
+            energy=total*cue.gain^2,rms=math.sqrt(total/data:getSampleCount())*cue.gain,
+            width=side/math.max(.00001,total),late=late*cue.gain^2}
+        assert(cue.priority==4 and cue.duck>=.75 and not cue.bossVictory,"miss is a swish, never a hit or victory")
+        assert(math.abs(data:getDuration()-({.34,.54,.78})[level])<.0001 and cue.peak<=.701,"controlled tiered miss tail")
+    end
     local release=name:match("^nen_(.-)_release")
     if charge then
         charges[charge]=charges[charge] or {}
@@ -123,8 +132,8 @@ require("src.nen_audio").register({registerProcedural=function(name,data,cue)
     count=count+1
 end},true)
 local order=require("config.nen_vfx_config").order
-assert(count==#order*25)
-assert(bakedCount==#order*25,"all attack phases must have verified baked assets")
+assert(count==#order*28)
+assert(bakedCount==#order*28,"all attack phases must have verified baked assets")
 local minimum=math.huge
 local problems=signalProblems
 local function check(ok,id,label,ratio)
@@ -178,6 +187,13 @@ for i,id in ipairs(order) do
             assert(boss.duration>=ordinary.duration+({.299,.649,.999})[tier],"boss tiers need their own ending")
         end
     end
+    for tier=2,3 do
+        local a,b=misses[id][tier-1],misses[id][tier]
+        check(b.energy>a.energy*1.5,id,"miss needs clearly greater energy at tier "..tier,b.energy/a.energy)
+        check(b.rms>a.rms*1.10,id,"miss needs greater presence at tier "..tier,b.rms/a.rms)
+        check(b.width>a.width*1.15,id,"miss needs a wider pass at tier "..tier,b.width/a.width)
+    end
+    check(misses[id][3].late>misses[id][2].late*2,id,"extreme miss needs a lingering material echo",misses[id][3].late/misses[id][2].late)
     for j=1,i-1 do
         for tier=1,3 do
             local other=impacts[order[j]][tier].features
@@ -198,6 +214,9 @@ for i,id in ipairs(order) do
             local victoryDistance=0
             for k,v in ipairs(victories[id][tier]) do victoryDistance=victoryDistance+(v-victories[order[j]][tier][k])^2 end
             check(math.sqrt(victoryDistance)>.012,id,"victory loses its identity against "..order[j].." at tier "..tier,math.sqrt(victoryDistance))
+            local missDistance=0
+            for k,v in ipairs(misses[id][tier].features) do missDistance=missDistance+(v-misses[order[j]][tier].features[k])^2 end
+            check(math.sqrt(missDistance)>.015,id,"miss loses its identity against "..order[j].." at tier "..tier,math.sqrt(missDistance))
         end
     end
 end

@@ -35,8 +35,10 @@ function Feel.start(anim, result, ui, deities, initialHp, enemy, handId,context)
     append(q, "ENTRY", context.reducedMotion and 0.08 or t.lift + t.travel + math.max(0, #anim.playedCards - 1) * t.stagger)
     local base = result.steps[1]
     append(q, "HAND_REVEAL", t.hand, base, 1)
-    append(q, "BASE_DAMAGE", t.base, base, 1)
-    append(q, "BASE_ENHANCE", t.base, base, 1)
+    if not result.writtenAura then
+        append(q, "BASE_DAMAGE", t.base, base, 1)
+        append(q, "BASE_ENHANCE", t.base, base, 1)
+    end
     for i = 2, #result.steps do
         local st = result.steps[i]
         if st.type ~= "final_score" and not (st.equipment and (st.type=="armor_gain" or st.type=="heal_hp") and st.cardIndex) then
@@ -174,18 +176,24 @@ local function trigger(anim, st)
     s.fromChips, s.fromMult = beforeChips, beforeMult
     s.toChips = st.resultingChips or (beforeChips + (st.addedChips or 0))
     s.toMult = st.resultingMult or ((beforeMult + (st.addedMult or 0)) * (st.type == "deity_hand" and (st.xMult or 1) or 1))
+    if s.result.writtenAura then s.toChips,s.toMult=0,0 end
     anim.displayFlatDamage = anim.displayFlatDamage + (st.addedDamage or st.addFlatDamage or 0)
     anim.displayAuraEditionMultiplier = anim.displayAuraEditionMultiplier * (st.auraMultiplier or 1)
     -- Card XMult is additive and capped by the calculator; hand SPN XMult is already in resultingMult.
     local beforeX = anim.displayXMult
     if st.cardXMultTotal then anim.displayXMult = st.cardXMultTotal end
     s.multiply = (st.xMult or 1) > 1 or (st.xChips or 1)~=1 or (st.xAura or 1)>1 or (st.auraMultiplier or 1) > 1 or anim.displayXMult > beforeX
+    if s.result.writtenAura then s.multiply=(st.xAura or 1)>1 or (st.auraMultiplier or 1)>1 end
     anim.bounceScale.chips = s.toChips ~= beforeChips and C.pulse.damage or 1
     anim.bounceScale.mult = s.toMult ~= beforeMult and (s.multiply and C.pulse.multiply or C.pulse.enhance) or 1
     local popupY=y-(cardIndex and 94 or 52)
-    link(s, st.addedChips or 0, "ST", x, popupY, 70, 229, C.color.damage)
-    link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 229, C.color.enhance)
-    link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 148, 329, C.color.aura)
+    if not s.result.writtenAura then
+        link(s, st.addedChips or 0, "ST", x, popupY, 70, 229, C.color.damage)
+        link(s, st.addedMult or 0, "C.H", x, popupY+21, 176, 229, C.color.enhance)
+        link(s, st.addedDamage or st.addFlatDamage or 0, "ST CỐ ĐỊNH", x, popupY-21, 148, 329, C.color.aura)
+    elseif st.writtenAura then
+        link(s, st.writtenAura, "AURA GHI THẲNG", x, popupY, 148, 329, C.color.aura)
+    end
     if st.type=="equipment_trigger" or st.type=="seal_trigger" or st.type=="deity_enchantment" then
         local rows={{st.addArmor,"GIÁP",{0.4,0.75,1,1}},{st.healHp,"HP",{0.4,0.95,0.6,1}},{st.addGold,"VÀNG",C.color.aura}}
         local offset=0
@@ -215,6 +223,7 @@ local function trigger(anim, st)
         anim.stepLog = (st.card.rankName or "") .. (st.card.suitSymbol or "") .. ": +"
             .. s.ui.formatNumber(st.addedChips or 0) .. " Sát thương / +"
             .. s.ui.formatNumber(st.addedMult or 0) .. " Cường hóa"
+        if s.result.writtenAura then anim.stepLog=(st.card.rankName or tostring(st.card.rank)).." · GHÉP SỐ AURA" end
     end
     play(s, st.slotIndex and "spn_trigger" or st.type=="equipment_trigger" and "equip"
         or s.multiply and "multiply" or (s.toMult ~= beforeMult and "enhance" or "damage"))
@@ -250,6 +259,7 @@ local function enter(anim, ev)
         -- Authoritative final snapshots, including every cap/rounding/extra-damage conversion.
         s.fromChips, s.fromMult = anim.displayChips, anim.displayMult
         s.toChips, s.toMult = s.result.totalChips, s.result.totalMult
+        if s.result.writtenAura then s.toChips,s.toMult=0,0 end
         anim.displayXMult = s.result.cardXMultTotal or 1
         anim.displayAuraEditionMultiplier = s.result.auraEditionMultiplier or 1
         anim.displayFlatDamage = s.result.flatDamageBonus or 0
@@ -289,10 +299,18 @@ local function enter(anim, ev)
         anim.stepCategory, anim.stepLog = "ĐÁNH TRÚNG", "Năng lượng chạm quái"
         -- Hand impact hook owns this beat.
     elseif ev.kind == "SETTLE" then anim.stepCategory = "ỔN ĐỊNH" end
+    if s.missed then anim.stepCategory,anim.stepLog="ĐÁNH HỤT","Đòn đánh lướt qua mục tiêu" end
 end
 
 function Feel.formula(s)
     local r, fmt = s.result, s.ui.formatNumber
+    if r.writtenAura then
+        local text="GHÉP "..r.writtenDigits.." → "..fmt(r.writtenAura).." AURA"
+        if (r.auraEditionMultiplier or 1)~=1 then text=text.." ×"..string.format("%.2f",r.auraEditionMultiplier).." AURA" end
+        if (r.spnAuraMultiplier or 1)~=1 then text=text.." ×"..string.format("%.2f",r.spnAuraMultiplier).." AURA tổng" end
+        if (r.auraDebtTotal or 0)>0 then text=text.." - "..fmt(r.auraDebtTotal).." nợ AURA" end
+        return text.." = "..fmt(r.finalScore)
+    end
     local text = fmt(r.totalChips) .. " × " .. fmt(r.totalMult)
     if (r.cardXMultTotal or 1) ~= 1 then text = text .. " × " .. string.format("%.2f", r.cardXMultTotal) end
     -- Keep both floors used by Scoring.calculate (rawScore, then converted score).
@@ -343,6 +361,7 @@ function Feel.update(anim, dt, fast)
         s.age, dt = s.age + consumed, dt - consumed
         s.time=s.time+consumed
         s.cameraAge=math.min(s.attack.nen and Nen.config.camera.duration+.10 or Attacks.config.camera.duration,s.cameraAge+consumed)
+        if s.attack.missAge then s.attack.missAge=s.attack.missAge+consumed end
         for index,age in pairs(anim.cardHit or {}) do
             age=age+consumed;anim.cardHit[index]=age<t.cardPulse and age or nil
         end
@@ -409,6 +428,9 @@ function Feel.damageApplied(anim, hp, actualDamage,missed,armor,outcome)
     s.missed=missed;s.attack.missed=missed
     if missed then
         anim.hitStop=0;s.cameraAge=10
+        s.attack.missAge=0;s.attack.reducedMotion=s.reducedMotion
+        Attacks.enter(s.attack,"MISS")
+        s.events[#s.events].duration=math.max(s.events[#s.events].duration,require("src.miss_feedback").duration(s.attack))
         anim.stepCategory,anim.stepLog="ĐÁNH HỤT","Mục tiêu né được đòn đánh"
     else
         outcome=outcome or {armorBroken=s.armorBefore>0 and s.armorTarget<=0,finisher=s.hpBefore>0 and s.hpTarget<=0,
@@ -450,7 +472,8 @@ end
 
 function Feel.enemyReaction(anim)
     local s = anim.sequence
-    if not s or s.missed then return 0, 1, 0 end
+    if not s then return 0, 1, 0 end
+    if s.missed then return require("src.miss_feedback").pose(s.attack,s.attack.missAge) end
     if s.attack.nen then return Nen.reaction(s.attack,s.cameraAge) end
     local p = clamp(s.cameraAge / Attacks.config.camera.duration, 0, 1)
     local hit = (1 - p)^2

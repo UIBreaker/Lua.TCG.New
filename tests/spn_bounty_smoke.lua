@@ -92,5 +92,5 @@ restored=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")))
 assert(B.bonus(restored).extraRolls==2 and B.bonus(restored).rareWeightPct==150)
 Config.tables.bounty_test=nil
 voidConfig.ticketChance=ticketChance
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN bounty PASS: extra real grants, exact rare/evolved weights, chest inheritance/no recursive quantity, all boss tables, caps/copies/blood, no skip/reserve/locked effect, replay/save/fast-forward/RNG/shop")

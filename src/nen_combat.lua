@@ -68,6 +68,9 @@ function N.enter(a,phase)
     if phase=="ENEMY_IMPACT" then
         sound.play("nen_"..a.profile.id.."_"..(a.contactKind or "impact")..weight,1.05-(n.tier-1)*.11)
     end
+    if phase=="MISS" then
+        sound.play("nen_"..a.profile.id.."_miss"..weight,1.05-(n.tier-1)*.11)
+    end
 end
 function N.update(a,phase,p)
     local n=a.nen;n.stage=phase;n.phaseProgress=p

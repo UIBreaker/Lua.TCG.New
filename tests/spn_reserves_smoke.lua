@@ -111,6 +111,6 @@ for _,row in ipairs(R.entries) do
     assert(require("src.loadout").move(g,"spn","reserve",1,1,false));assert(D.evolve(g.deities[1]))
     loaded=assert(P.restoreSnapshot(P.makeSnapshot(g,"shop")));assert(loaded.deities[1].evolutionLevel==1)
 end
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN reserves PASS: destruction growth/offerings/cocoons/phantom/shop/locks/copies/save; remaining discards; exact direct gold coefficient including zero/fractions; dynamic evolved held capacity/draws; original-held single repeats/shared cap/preview/shop/evolution")
 return true

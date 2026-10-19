@@ -152,6 +152,7 @@ function A.handStart(game)
     Boss.handStart(game)
 end
 function A.beginHand(game, handInfo, played, decisions)
+    require("src.spn_trials").prepare(game)
     require("src.spn_basics").bind(game,played)
     local ctx={game=game,handInfo=handInfo,scoring=handInfo.scoringCards,played=played,
         active={},full=#(game.hand or {})>=A.handSize(game),play=combat(game).playIndex+1,
@@ -281,6 +282,7 @@ end
 function A.finishHand(game)
     local ctx=game.abilityHand; if not ctx or ctx.finished then return end
     ctx.finished=true
+    require("src.spn_trials").handEnd(game,ctx.handInfo)
     A.applyDecisions(game,"after")
     -- Returned instances leave the discard pile; they are never duplicated.
     for _,card in ipairs(ctx.scoring) do

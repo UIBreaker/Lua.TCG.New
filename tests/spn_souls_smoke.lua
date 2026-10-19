@@ -85,5 +85,5 @@ g,card=game({"spirit_dawn_reaper","spirit_soul_choir"},2);value=Souls.value(card
 local saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 assert(saved.souls==5*value and #saved.persistentDeck==1 and saved.deities[1].onDiscard and saved.deities[2].onHandScored)
 assert(saved.deities[1].evolutionLevel==2 and bonus(score(saved))==saved.souls*2)
-assert(#D.getRandomShopPool({},99)==96)
+assert(#D.getRandomShopPool({},99)==99)
 print("SPN souls PASS: opening single discard, triple/full soul value, evolving yield, permanent destruction, one receipt, discard order, held-soul Mult, preview/spending order, locks and save/load")

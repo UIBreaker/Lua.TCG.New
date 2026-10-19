@@ -1078,7 +1078,8 @@ end
     -- ♦️ Trật Tự Hoàng Kim: K♦ Đế Vương Mua Chuộc (Bribe)
     local bribeDollarsSpent = 0
     local availableGold = (context and context.gold) or (context and context.gameState and context.gameState.gold) or 0
-    if hasKingOfDiamonds and context and context.monster and availableGold > 0 then
+    if hasKingOfDiamonds and context and context.monster and availableGold > 0
+        and not require("src.spn_aura").isWriting(deities,abilityGame) then
         local currentChips = baseChips + bonusChips
         local currentMult = baseMult + bonusMult
         local currentProjScore = math.floor((currentChips * currentMult+localEditionAura) * xMultTotal * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus
@@ -1190,6 +1191,9 @@ end
                     local cardXMult = (res.xMult or 1.0)^(res.xMultRepeats or 1)
                     local chipFactor = res.xChips or 1
                     spnAuraMultiplier=spnAuraMultiplier*(res.xAura or 1)
+                    if res.writtenAura and (not spnContext.writtenAura or res.writtenAura>spnContext.writtenAura) then
+                        spnContext.writtenAura,spnContext.writtenDigits=res.writtenAura,res.writtenDigits
+                    end
                     auraDebtTotal=auraDebtTotal+(res.auraTax or 0)
 
                     spnContext.soulsAvailable=math.max(0,spnContext.soulsAvailable-(res.soulCost or 0))
@@ -1243,6 +1247,8 @@ end
                         xMult = cardXMult,
                         xChips = chipFactor,
                         xAura = res.xAura or 1,
+                        writtenAura = res.writtenAura,
+                        writtenDigits = res.writtenDigits,
                         addArmor = res.addArmor or 0,
                         healHp = res.addHealHp or 0,
                         bonusGold = res.addGold or 0,
@@ -1359,6 +1365,9 @@ end
     local rawScore = math.floor(totalChips * totalMult * cardXMultTotal)
     local localAuraBonus=(localEditionAura+deityEditionAura)*cardXMultTotal
     local finalScore = math.max(0,(math.floor((rawScore+localAuraBonus) * (1 + totalExtraDamagePct) * auraEditionMultiplier) + flatDamageBonus + auraDebtTotal)*spnAuraMultiplier-auraDebtTotal)
+    if spnContext.writtenAura then
+        finalScore=math.max(0,math.floor(spnContext.writtenAura*auraEditionMultiplier*spnAuraMultiplier)-auraDebtTotal)
+    end
     local finalCombinedXMult = cardXMultTotal
 
     table.insert(steps, {
@@ -1374,8 +1383,11 @@ end
         spnAuraMultiplier = spnAuraMultiplier,
         auraDebtTotal = auraDebtTotal,
         finalScore = finalScore,
+        writtenAura = spnContext.writtenAura,
+        writtenDigits = spnContext.writtenDigits,
         bonusGold = bonusGoldAwarded,
-        message = totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. (auraEditionMultiplier > 1 and (" × " .. string.format("%.2f", auraEditionMultiplier) .. " Aura") or "") .. (flatDamageBonus > 0 and (" + " .. flatDamageBonus .. " sát thương cố định") or "") .. " = " .. finalScore .. " Sát thương!"
+        message = spnContext.writtenAura and ("GHÉP "..spnContext.writtenDigits.." → "..spnContext.writtenAura.." AURA · ×"..spnAuraMultiplier.." AURA tổng = "..finalScore)
+            or totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. (auraEditionMultiplier > 1 and (" × " .. string.format("%.2f", auraEditionMultiplier) .. " Aura") or "") .. (flatDamageBonus > 0 and (" + " .. flatDamageBonus .. " sát thương cố định") or "") .. " = " .. finalScore .. " Sát thương!"
     })
 
     Depth.finish(context,handInfo)
@@ -1390,6 +1402,8 @@ end
         cardXMultTotal = cardXMultTotal,
         rawScore = rawScore,
         finalScore = finalScore,
+        writtenAura = spnContext.writtenAura,
+        writtenDigits = spnContext.writtenDigits,
         flatDamageBonus = flatDamageBonus,
         localAuraBonus = localAuraBonus,
         auraEditionMultiplier = auraEditionMultiplier,

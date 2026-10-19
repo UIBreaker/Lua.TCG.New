@@ -4,7 +4,7 @@ local D=require("src.deck")
 local Shop=require("src.shop")
 local c=D.newCard(2,"clubs")
 local g={gold=100,backpackEquipment={"basic_bandage","basic_plate","basic_lace"},persistentDeck={c}}
-assert(#B.basic==12 and #B.recipes==60)
+assert(#B.basic==14 and #B.recipes==60)
 assert(B.craft(g,B.recipes[1]));assert(g.gold==96 and B.count(g,"crafted_guard")==1 and B.count(g,"basic_bandage")==0)
 local before=#g.backpackEquipment;assert(not B.craft(g,B.recipes[1]));assert(#g.backpackEquipment==before and g.gold==96)
 local base=D.getCardAttackSpeed(c);assert(B.attach(g,1,c));assert(D.getCardAttackSpeed(c)==base+1)
@@ -61,9 +61,9 @@ for id,item in pairs(E.ITEMS) do
 end
 assert(covered==60)
 -- Repeated ingredients require actual quantities; failures spend nothing.
-local repeated={gold=100,backpackEquipment={"basic_plate","basic_spur"}}
+local repeated={gold=100,backpackEquipment={"basic_plate","basic_amber"}}
 assert(not B.craft(repeated,B.byResult.gem_blast));assert(repeated.gold==100 and #repeated.backpackEquipment==2)
-repeated.backpackEquipment[3]="basic_spur";assert(B.craft(repeated,B.byResult.gem_blast))
+repeated.backpackEquipment[3]="basic_amber";assert(B.craft(repeated,B.byResult.gem_blast))
 local noFee={gold=0,backpackEquipment={"basic_bandage","basic_plate"}};assert(not B.craft(noFee,B.recipes[1]));assert(#noFee.backpackEquipment==2)
 -- A free offer is genuinely free, one-use, and keeps its zero resale basis through save/attach/detach.
 local free=Shop.discountedEquipment(E.ITEMS.void_catalyst,1,0)
@@ -89,7 +89,8 @@ local recipeDoc=assert(io.open("docs/equipment_recipe_catalog.tsv","wb"))
 recipeDoc:write("id\tname\ttier\tingredients\tfee\tcraft_cost\tshop_cost\treason\n")
 for _,r in ipairs(B.recipes) do local names={};for _,id in ipairs(r.ingredients) do names[#names+1]=E.ITEMS[id].name end;recipeDoc:write(table.concat({r.id,E.ITEMS[r.id].name,r.tier,table.concat(names," + "),r.fee,r.craftCost,E.ITEMS[r.id].cost,r.reason},"\t"),"\n") end
 recipeDoc:close()
-print("Backpack PASS: 12 basics, all 60 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
+print("Backpack PASS: 14 basics, all 60 ordinary recipes, recursive reachability/prices, atomic quantity/fee checks, free purchase/save/attach/detach resale, cap, purchases and equal card dimensions")
+require("tests.basic_offense_smoke")
 require("tests.backpack_qol_smoke")
 require("tests.consumable_stacks_smoke")
 require("tests.equipment_transfer_smoke")

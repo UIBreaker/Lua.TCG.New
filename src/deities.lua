@@ -279,6 +279,8 @@ require("src.spn_elements").register(Deities)
 require("src.spn_predators").register(Deities)
 require("src.spn_reserves").register(Deities)
 require("src.spn_formations").register(Deities)
+require("src.spn_aura").register(Deities)
+require("src.spn_trials").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]

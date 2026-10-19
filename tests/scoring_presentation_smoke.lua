@@ -28,8 +28,8 @@ local function run(result,cards,deities,fps,fast)
             end
         end
         if ev and ev.kind=="FORMULA" then
-            assert(math.abs(a.displayChips-result.totalChips)<0.001, "damage must match before reconciliation")
-            assert(math.abs(a.displayMult-result.totalMult)<0.001, "enhance must match before reconciliation")
+            assert(math.abs(a.displayChips-(result.writtenAura and 0 or result.totalChips))<0.001, "damage must match before reconciliation")
+            assert(math.abs(a.displayMult-(result.writtenAura and 0 or result.totalMult))<0.001, "enhance must match before reconciliation")
             afterTriggers=true
         end
         if ev and ev.kind=="AURA_COUNT" and a.sequence.age>0 then
@@ -48,7 +48,7 @@ local function run(result,cards,deities,fps,fast)
         assert(time<30,"sequence should finish")
     end
     assert(hits==1 and countSeen and afterTriggers)
-    assert(a.displayChips==result.totalChips and a.displayMult==result.totalMult)
+    assert(a.displayChips==(result.writtenAura and 0 or result.totalChips) and a.displayMult==(result.writtenAura and 0 or result.totalMult))
     assert(a.displayAura==result.finalScore)
     assert(math.abs(a.sequence.hpTrail-a.sequence.hpTarget)<0.001,"HP trail settles before unlock")
     assert(Feel.update(a,1)==nil,"never re-apply damage")
@@ -102,4 +102,14 @@ do
         run(result,game.hand,game.deities,60,false);run(result,game.hand,game.deities,144,true)
     end
 end
-print("Scoring presentation: 24 real hands + editions/equipment/SPN, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and all three Nen Lab tiers passed")
+do
+    local cards={Deck.newCard(2,"spades"),Deck.newCard(2,"hearts")}
+    for _,card in ipairs(cards) do card.disableFactionPassives=true end
+    for _,deities in ipairs({{Deities.CATALOG.spirit_aura_bifurcation},{Deities.CATALOG.spirit_numeral_weaver,Deities.CATALOG.spirit_aura_bifurcation}}) do
+        local result=Scoring.calculate(assert(Poker.evaluate(cards)),deities,{})
+        local text=Feel.formula({result=result,ui=ui});assert(text:find("AURA",1,true))
+        if result.writtenAura then assert(result.finalScore==44 and text:find("GHÉP 22",1,true) and not text:find("ST cố định",1,true)) end
+        run(result,cards,deities,60,false);run(result,cards,deities,144,true)
+    end
+end
+print("Scoring presentation: real hands + editions/equipment/SPN + direct Aura writing, 30/60/120/144 FPS, Normal/Fast, 100..1e15 AURA, one impact, HP settle and Nen Lab passed")

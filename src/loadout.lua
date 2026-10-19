@@ -110,6 +110,7 @@ function L.move(game,kind,source,index,destination,inCombat)
     if not destination then item.loadoutSlot=nil;reserve[#reserve+1]=item
     elseif source=="reserve" and other then other.loadoutSlot=nil;reserve[#reserve+1]=other end
     if kind=="spn" and inCombat and destination then require("src.spn_pacts").prepare(game) end
+    if kind=="spn" and inCombat and destination then require("src.spn_trials").prepare(game) end
     return true,destination and "Đã đổi ô trang bị." or "Đã cất lại vào balo."
 end
 return L

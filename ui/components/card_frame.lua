@@ -60,51 +60,115 @@ function Frame.tier(card)
 end
 
 function Frame.socketPosition(index,w,h)
-    local inset=math.min(w,h)*0.046
+    local inset=math.min(w,h)*0.06
     local positions={{inset,inset},{w-inset,inset},{w-inset,h-inset},{inset,h-inset},
         {w/2,inset},{w-inset,h/2},{w/2,h-inset},{inset,h/2}}
     return positions[index][1],positions[index][2]
 end
 
-function Frame.socketGem(cx,cy,radius,color,alpha,pulse,linked)
+function Frame.socketGem(cx,cy,radius,color,alpha,pulse,linked,tier,time,reduced,mountTier)
     local g=love.graphics
     alpha,pulse=alpha or 1,pulse or 0
-    g.setColor(0.018,0.026,0.038,alpha)
-    g.circle("fill",cx,cy,radius*1.35,8)
-    g.setLineWidth(math.max(0.7,radius*0.25))
-    g.setColor(0.53,0.59,0.63,alpha*(color and 0.9 or 0.45))
-    g.circle("line",cx,cy,radius*1.22,8)
+    if alpha<=0 or radius<=0 then return end
+    tier=math.max(1,math.min(8,tier or 1))
+    local visual=require("config.visual_config")
+    local moving=visual.enabled and not reduced
+    local t=moving and (time or 0) or 0
+    pulse=moving and pulse or 0
+    local low=visual.quality=="LOW"
+    local style=Frame.styles[mountTier or tier]
+    local metal=style.metal
+    local breath=moving and (.5+.5*math.sin(t*(1.8+tier*.18)+cx*.09+cy*.07)) or .3
+    local strength=linked and .72 or 1
+    g.push("all");g.translate(cx,cy)
+    local function tint(a,white)
+        white=white or 0
+        g.setColor((color[1]*(1-white)+white)*strength,(color[2]*(1-white)+white)*strength,
+            (color[3]*(1-white)+white)*strength,alpha*a)
+    end
+    if color then
+        for band=2,1,-1 do
+            tint((.045+tier*.009+breath*.025+pulse*.10)/band)
+            g.circle("fill",0,0,radius*(1.25+band*.19),16)
+        end
+    end
+    g.setColor(.009,.015,.023,alpha);g.circle("fill",0,0,radius*1.32,8)
+    g.setLineWidth(math.max(.55,radius*.22))
+    g.setColor(metal[1],metal[2],metal[3],alpha*.95);g.circle("line",0,0,radius*1.17,8)
+    g.setColor(1,.96,.84,alpha*.65);g.arc("line","open",0,0,radius*1.18,math.pi,math.pi*1.75,8)
+    g.setColor(.09,.07,.04,alpha*.85);g.arc("line","open",0,0,radius*1.18,0,math.pi*.75,8)
     if not color then
-        g.setColor(0.17,0.22,0.27,alpha*0.8);g.circle("fill",cx,cy,radius*0.65,4)
-        return
+        g.setColor(.10,.14,.18,alpha);g.circle("fill",0,0,radius*.69,8)
+        g.setColor(.29,.36,.41,alpha*.9);g.setLineWidth(math.max(.5,radius*.13))
+        g.line(-radius*.35,0,radius*.35,0);g.line(0,-radius*.35,0,radius*.35)
+        g.pop();return
     end
-    if pulse>0 then
-        g.setColor(color[1],color[2],color[3],alpha*pulse*0.25)
-        g.circle("fill",cx,cy,radius*(1.8+pulse),12)
+    local r=radius*.84
+    tint(1);g.polygon("fill",0,-r,r,0,0,r,-r,0)
+    tint(.85,.68);g.polygon("fill",0,-r,0,0,-r,0)
+    g.setColor(.015,.03,.05,alpha*.6);g.polygon("fill",0,0,r,0,0,r)
+    tint(.95,.85);g.circle("fill",-r*.20,-r*.35,math.max(.4,r*.15),8)
+    -- Four visible prongs distinguish a mounted jewel from a free-floating particle.
+    g.setLineWidth(math.max(.6,radius*.17))
+    g.setColor(metal[1],metal[2],metal[3],alpha)
+    for i=0,3 do
+        local angle=math.pi*.25+i*math.pi*.5
+        g.line(math.cos(angle)*radius*.76,math.sin(angle)*radius*.76,
+            math.cos(angle)*radius*1.08,math.sin(angle)*radius*1.08)
     end
-    local strength=linked and 0.65 or 1
-    g.setColor(color[1]*strength,color[2]*strength,color[3]*strength,alpha)
-    g.polygon("fill",cx,cy-radius,cx+radius,cy,cx,cy+radius,cx-radius,cy)
-    g.setColor(1,1,1,alpha*0.6)
-    g.polygon("fill",cx,cy-radius,cx,cy,cx-radius,cy)
-    g.setColor(0.01,0.025,0.045,alpha*0.45)
-    g.polygon("fill",cx,cy,cx+radius,cy,cx,cy+radius)
-    g.setColor(1,1,1,alpha*(0.7+pulse*0.3))
-    g.circle("fill",cx-radius*0.2,cy-radius*0.4,math.max(0.5,radius*0.18),6)
+    if tier>=2 or pulse>0 then
+        g.setLineWidth(math.max(.55,radius*.13));tint(.45+breath*.3+pulse*.2,.25)
+        local angle=t*(.8+tier*.12)
+        g.arc("line","open",0,0,radius*1.42,angle,angle+math.pi*(.4+tier*.08),12)
+        if tier>=5 then g.arc("line","open",0,0,radius*1.56,-angle,-angle+math.pi*.65,12) end
+    end
+    if tier>=3 then
+        local count=low and 2 or math.min(6,tier-1)
+        for i=1,count do
+            local angle=t*(.5+tier*.07)+i*math.pi*2/count
+            local orbit=radius*(tier>=6 and 1.55 or 1.40)
+            local px,py=math.cos(angle)*orbit,math.sin(angle)*orbit
+            local size=math.max(.25,radius*(.10+breath*.07))
+            tint(.65+breath*.3,.65);g.polygon("fill",px-size,py,px,py-size,px+size,py,px,py+size)
+        end
+    end
+    if tier>=6 or pulse>0 then
+        local burst=math.max(pulse,moving and math.max(0,math.sin(t*2.2+cx*.1+cy*.13))^8 or .12)
+        local rays=low and 4 or 8
+        g.setLineWidth(math.max(.5,radius*.12));tint(.15+burst*.7,.45)
+        for i=1,rays do
+            local angle=i*math.pi*2/rays+t*.17
+            local inner=radius*1.05;local outer=radius*(1.3+burst*.30)
+            g.line(math.cos(angle)*inner,math.sin(angle)*inner,math.cos(angle)*outer,math.sin(angle)*outer)
+        end
+        if tier>=8 or pulse>0 then
+            tint(.08+burst*.3,.6);g.circle("line",0,0,radius*(1.1+burst*.50),16)
+        end
+    end
+    if linked then
+        tint(.85,.5);g.setLineWidth(math.max(.6,radius*.14))
+        g.ellipse("line",-radius*.22,radius*.6,radius*.32,radius*.18,12)
+        g.ellipse("line",radius*.22,radius*.6,radius*.32,radius*.18,12)
+    end
+    g.pop()
 end
 
-function Frame.drawSockets(x,y,w,h,card,alpha)
-    if not card or not card.rank or not card.suit then return end
+function Frame.drawSockets(x,y,w,h,card,alpha,time,reduced)
+    alpha=alpha or card and card.alpha or 1
+    if not card or card.faceDown or not card.rank or not card.suit or alpha<=0 then return end
     local E=require("src.equipment")
+    love.graphics.push("all");love.graphics.setShader()
     local entries=E.getSocketEntries(card)
-    local radius=math.min(w,h)*0.023
+    local radius=math.min(w,h)*0.025
     for i=1,E.getMaxSlots(card) do
         local cx,cy=Frame.socketPosition(i,w,h)
         local entry=entries[i]
         local color=entry and E.getTierColor(entry.equipment)
         local pulse=entry and require("src.card_effects").getEquipmentPulse(card,entry.equipmentIndex) or 0
-        Frame.socketGem(x+cx,y+cy,radius,color,alpha,pulse,entry and entry.linked)
+        Frame.socketGem(x+cx,y+cy,radius,color,alpha,pulse,entry and entry.linked,
+            entry and E.getTier(entry.equipment) or 1,(time or 0)+i*.37,reduced,Frame.tier(card))
     end
+    love.graphics.pop()
 end
 
 local rimPaths={}
@@ -136,7 +200,8 @@ local function rimPoint(path,phase)
 end
 
 function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
-    if not card or card.faceDown or not Deities.CATALOG[card.deityId or card.id] then return end
+    if not card or card.faceDown then return end
+    if not (card.rank and card.suit) and not Deities.CATALOG[card.deityId or card.id] then return end
     local tier=Frame.tier(card)
     if tier<2 or alpha<=0 then return end
     local visual=require("config.visual_config")
@@ -222,7 +287,7 @@ function Frame.drawEnergy(x,y,w,h,card,alpha,time,reduced)
 end
 
 local facet={1.08,.82,.61,.47,.42,.59,.84,1.13}
-function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
+function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSockets)
     local g = love.graphics
     alpha = (alpha or card and card.alpha or 1) * (highlight and highlight[4] or 1)
     if alpha<=0 then return end
@@ -250,7 +315,10 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
     local stroke = (highlight and 2 or math.max(0.8,math.min(1.6,w*0.012))) + (tier-1)*0.10
     g.setColor(r,b,c,alpha); g.setLineWidth(stroke)
     g.polygon("line",rimPath(w,h,.75).points)
-    if tier == 1 then Frame.drawSockets(x,y,w,h,card,alpha);g.pop(); return end
+    if tier == 1 then
+        if not skipSockets then Frame.drawSockets(x,y,w,h,card,alpha,time,reduced) end
+        g.pop(); return
+    end
     g.setColor(.018,.025,.038,alpha*.95);g.setLineWidth(unit)
     g.polygon("line",inner)
     if tier>=3 then
@@ -341,7 +409,7 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced)
             g.line(x+w/2+dx,y+h-16*unit,x+w/2+dx,y+h-14*unit)
         end
     end
-    Frame.drawSockets(x,y,w,h,card,alpha)
+    if not skipSockets then Frame.drawSockets(x,y,w,h,card,alpha,time,reduced) end
     g.pop()
 end
 

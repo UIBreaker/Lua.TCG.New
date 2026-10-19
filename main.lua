@@ -212,6 +212,8 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-spn-predators-ui" then isCaptureMode = true end
     if a == "--test-spn-reserves-ui" then isCaptureMode = true end
     if a == "--test-spn-formations-ui" then isCaptureMode = true end
+    if a == "--test-spn-aura-ui" then isCaptureMode = true end
+    if a == "--test-spn-trials-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -2407,6 +2409,16 @@ function love.load()
             if not ok then print("SPN formations art FAIL: "..tostring(err)) end
             love.event.quit(ok and 0 or 1);return
         end
+        if argument=="--test-spn-aura-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_aura_bifurcation","spirit_numeral_weaver"},"docs/spn_aura_runtime.png") end)
+            if not ok then print("SPN Aura art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
+        end
+        if argument=="--test-spn-trials-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_trial_emissary"},"docs/spn_trials_runtime.png") end)
+            if not ok then print("SPN trials art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
+        end
         if argument=="--test-spn-reserves-art" then
             local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_ashen_legacy","spirit_unspent_fury","spirit_gilded_weight","spirit_open_horizon","spirit_lone_procession"},"docs/spn_reserves_runtime.png") end)
             if not ok then print("SPN reserves art FAIL: "..tostring(err)) end
@@ -3368,7 +3380,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.138.2", 48, 185)
+    g.print("beta 0.139.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4010,6 +4022,8 @@ local function drawBattleInfoPanel(m, eval)
     if scoring and finished and anim.playerAttackResult and anim.playerAttackResult.frozen then detail="Đóng băng mục tiêu · 0 sát thương" end
     UI.components.HandInfoPanel.draw({
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
+        writtenAura = scoring and anim.scoringData and anim.scoringData.writtenAura,
+        writtenAuraFactor = scoring and anim.scoringData and anim.scoringData.spnAuraMultiplier,
         scoring = scoring, enemyName = (m and m.name) or "Không rõ",
         turnTransition = not scoring and ((game.handsRemaining or 0) <= 0
             or anim.enemyTurn and anim.enemyTurn.order == nil),

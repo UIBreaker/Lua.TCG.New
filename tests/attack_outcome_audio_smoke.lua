@@ -49,7 +49,7 @@ for _,id in ipairs(require("config.nen_vfx_config").order) do
         local authored=Feel.damageApplied(anim,enemy.hp,damage,c.missed,enemy.creatureArmor,c.outcome)
         local suffix=tier==3 and "_extreme" or tier==2 and "_strong" or ""
         if c.missed then
-            assert(#plays==0 and not authored,"misses must have no contact or outcome sound")
+            assert(#plays==1 and plays[1].name=="nen_"..id.."_miss"..suffix and not authored,"a miss must have one swish, no hit or finishing sound")
         else
             assert(#plays==1 and plays[1].name=="nen_"..id.."_"..c.kind..suffix,"one combined authored contact: "..id.."/"..c.kind)
             assert(math.abs(plays[1].pitch-(1.05-(tier-1)*.11))<.00001,"same contact pitch as its power tier")

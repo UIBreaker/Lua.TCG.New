@@ -23,7 +23,8 @@ function Panel.draw(UI,card,x,y,w,h)
         local color=eq and E.getTierColor(eq) or UI.COLORS.textMuted
         g.setColor(0.035,0.055,0.071,0.98);g.rectangle("fill",sx,sy,cw,ch,7,7)
         Core.color(color,eq and 0.45 or 0.17);g.setLineWidth(1);g.rectangle("line",sx+0.5,sy+0.5,cw-1,ch-1,7,7)
-        Frame.socketGem(sx+15,sy+15,4,eq and color,1,0,entry and entry.linked)
+        Frame.socketGem(sx+15,sy+15,4,eq and color,1,0,entry and entry.linked,
+            eq and E.getTier(eq) or 1,UI.Polish.time,UI.Polish.reducedMotion,Frame.tier(card))
         Core.text(string.format("%02d",i).." · "..positions[i],sx+27,sy+7,cw-37,UI.fonts.tiny,UI.COLORS.textMuted)
         if eq then
             local image=UI.getEquipmentImage(eq.id)

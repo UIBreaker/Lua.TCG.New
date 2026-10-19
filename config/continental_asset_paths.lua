@@ -1,4 +1,6 @@
 return {
+    ["basic_steel_tip"] = "assets/cards/continental/itm/basic_steel_tip.png",
+    ["basic_amber"] = "assets/cards/continental/itm/basic_amber.png",
     ["spirit_galefang"] = "assets/cards/continental/spn/spirit_galefang.png",
     ["spirit_thunderpulse"] = "assets/cards/continental/spn/spirit_thunderpulse.png",
     ["spirit_slow_colossus"] = "assets/cards/continental/spn/spirit_slow_colossus.png",
@@ -522,4 +524,7 @@ return {
     ["spirit_breath_of_mercy"] = "assets/cards/continental/spn/spirit_breath_of_mercy.png",
     ["spirit_fourfold_edge"] = "assets/cards/continental/spn/spirit_fourfold_edge.png",
     ["spirit_quartet_oath"] = "assets/cards/continental/spn/spirit_quartet_oath.png",
+    ["spirit_aura_bifurcation"] = "assets/cards/continental/spn/spirit_aura_bifurcation.png",
+    ["spirit_numeral_weaver"] = "assets/cards/continental/spn/spirit_numeral_weaver.png",
+    ["spirit_trial_emissary"] = "assets/cards/continental/spn/spirit_trial_emissary.png",
 }

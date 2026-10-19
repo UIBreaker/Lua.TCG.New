@@ -5,7 +5,7 @@ function love.load()
     assert(loadfile("tests/nen_audio_smoke.lua"))()
     assert(loadfile("tests/reward_audio_smoke.lua"))()
     for _,name in ipairs({"audio_smoke","menu_music_smoke","enemy_attack_presentation_smoke",
-        "action_vfx_juice_smoke","scoring_presentation_smoke","hand_vfx_smoke","bed_explosion_smoke","reward_ceremony_smoke","attack_outcome_audio_smoke","reward_audio_routing_smoke"}) do
+        "action_vfx_juice_smoke","scoring_presentation_smoke","hand_vfx_smoke","miss_feedback_smoke","bed_explosion_smoke","reward_ceremony_smoke","attack_outcome_audio_smoke","reward_audio_routing_smoke"}) do
         local ok,err=pcall(function() assert(loadfile("tests/"..name..".lua"))() end)
         love=realLove
         package.loaded["src.sound"]=nil
@@ -29,7 +29,7 @@ function love.load()
             "armor_break","armor_break_strong","armor_break_extreme","finisher","finisher_strong","finisher_extreme",
             "armored_finisher","armored_finisher_strong","armored_finisher_extreme",
             "boss_finisher","boss_finisher_strong","boss_finisher_extreme",
-            "boss_armored_finisher","boss_armored_finisher_strong","boss_armored_finisher_extreme"}) do
+            "boss_armored_finisher","boss_armored_finisher_strong","boss_armored_finisher_extreme","miss","miss_strong","miss_extreme"}) do
             assert(S.play("nen_"..id.."_"..kind));S.stopAll();nenCount=nenCount+1
         end
     end
@@ -102,6 +102,7 @@ function love.load()
     local victoryShowcase=love.sound.newSoundData(rate*32,rate,16,2)
     local rewardShowcase=love.sound.newSoundData(rate*40,rate,16,2)
     local rewardFlow=love.sound.newSoundData(rate*16,rate,16,2)
+    local missShowcase=love.sound.newSoundData(rate*24,rate,16,2)
     local function pitched(target,start,data,gain,pitch,limit)
         local offset=math.floor(start*rate)
         local n=math.min(math.floor((data:getSampleCount()-1)/pitch),target:getSampleCount()-offset)
@@ -121,6 +122,11 @@ function love.load()
     local positions={}
     for i,id in ipairs(handOrder) do positions[id]=(i-1)*2 end
     require("src.nen_audio").register({registerProcedural=function(name,data,cue)
+        local missHand=name:match("^nen_(.-)_miss")
+        if missHand and compare[missHand] then
+            local level=name:match("_extreme$") and 3 or name:match("_strong$") and 2 or 1
+            pitched(missShowcase,(compare[missHand]-1)*6+(level-1)*2+.05,data,cue.gain*.8,1.05-(level-1)*.11)
+        end
         local bossHand=name:match("^nen_(.-)_boss_armored_finisher")
         local armored=bossHand~=nil
         if not bossHand then bossHand=name:match("^nen_(.-)_boss_finisher") end
@@ -246,12 +252,14 @@ function love.load()
     wav("boss_victory_showcase",victoryShowcase:getString())
     wav("reward_rarity_showcase",rewardShowcase:getString())
     wav("boss_reward_flow",rewardFlow:getString())
+    wav("miss_showcase",missShowcase:getString())
     preview:release();signatures:release();weights:release();showcase:release();extremes:release()
     launchShowcase:release();fullExtremes:release()
     outcomeShowcase:release();outcomeExtremes:release()
     bossShowcase:release();bossExtremes:release()
     victoryShowcase:release()
     rewardShowcase:release();rewardFlow:release()
+    missShowcase:release()
     for _,path in ipairs({"main.lua","conf.lua","src/sound.lua","src/scoring_presentation.lua","src/enemy_attack_presentation.lua","ui/audio_settings.lua","config/audio_catalog.lua"}) do
         local fn,err=loadfile(path);assert(fn,err)
     end

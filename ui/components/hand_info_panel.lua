@@ -93,14 +93,18 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  Core.text(data.scoring and "ĐANG TÍNH AURA" or "CHỌN THẾ ĐÁNH",x+18,y+45,w-36,f.detail,Theme.colors.muted)
 
  Core.textLine(data.handName or "Chọn bài để xem",x+16,y+76,w-32,f.body,Theme.colors.text,"left",f.label)
- for _,v in ipairs({{x+12,"SÁT THƯƠNG",data.chips,"cyan","damage",data.chipsBounce},
-  {x+116,"CƯỜNG HÓA",data.mult,"red","power",data.multBounce}}) do
+ local metrics=data.writtenAura and {{x+12,"GHÉP SỐ",data.writtenAura,"gold","aura",data.chipsBounce},
+  {x+116,"×AURA",data.writtenAuraFactor or 1,"gold","aura",data.multBounce}}
+  or {{x+12,"SÁT THƯƠNG",data.chips,"cyan","damage",data.chipsBounce},
+  {x+116,"CƯỜNG HÓA",data.mult,"red","power",data.multBounce}}
+ for _,v in ipairs(metrics) do
   Chrome.well(v[1],y+108,94,68,Theme.colors[v[4]])
   drawMetric(v[1],y+108,94,68,v[2],data.scoring and fmt(v[3] or 0) or nil,v[4],v[5],f,v[6])
  end
  if data.scoring then
   local formula=fmt(data.chips or 0).." × "..fmt(data.mult or 0)
    ..((data.xMult or 1)>1 and " × "..string.format("%.2f",data.xMult) or "")
+  if data.writtenAura then formula="GHI THẲNG AURA" end
   Core.textLine(formula,x+16,y+181,w-32,f.detail,Theme.colors.muted,"center")
   Chrome.panel(x+12,y+206,w-24,100,Theme.colors.gold)
   Chrome.crest(x+44,y+252,21,Theme.colors.gold)

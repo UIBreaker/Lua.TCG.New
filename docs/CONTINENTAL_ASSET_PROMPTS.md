@@ -5702,3 +5702,63 @@ Prompt: Create ONE production SPN card illustration, portrait PNG 1024x1536, ful
 Output: assets/cards/continental/spn/spirit_quartet_oath.png
 
 Generation source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-dc65de6f-f1f6-4336-9d42-a4c7bd3631d1.png
+
+
+## 2026-10-19 — Basic offensive equipment (built-in image_gen)
+
+### Mũi Thép / basic_steel_tip
+
+Ability: +5 Sát thương khi lá tính điểm.
+
+Concept: One broad triangular forged steel spearhead against a basalt anvil, ruined Western volcanic fortress at dawn
+
+Prompt: Use case: stylized-concept. Create ONE production game equipment card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic painterly Western dark-fantasy expedition, matching Continental Relic Card Design: tangible practical relic, medium detail, strong silhouette readable at 64px, atmospheric lost-continent scenery, restrained highlights. Subject: one broad triangular forged steel spearhead, unattached to a shaft, standing diagonally against a rough dark anvil on a basalt workshop ledge. Large sharpened silver edges and dark hammered central ridge; a simple socket base and a short red cloth scrap below. This is a basic affordable weapon component that adds damage, no elaborate legendary ornament. Background: softly receding ruined Western fortress and volcanic highland at orange dawn, navy shadows. Foreground spearhead fills most of the lower two thirds, entire silhouette visible with breathing room. No characters, no additional weapons. No text, letters, numbers, ranks, suits, badges, UI, card frame, outer border, logos, watermark. No East Asian architecture or motifs, no dense filigree, no floating sparks or excessive magic glow.
+
+Output: assets/cards/continental/itm/basic_steel_tip.png — [1024, 1536]
+
+Generator source: C:/Users/Nhật Nam/.codex/generated_images/01a11661-670e-7523-a58b-e2030b598800/exec-e8656512-61eb-4c5e-8b5a-e0e8ffe67c79.png (built-in image_gen).
+
+### Mảnh Hổ Phách / basic_amber
+
+Ability: +1 Cường hóa khi lá tính điểm.
+
+Concept: One rough honey amber shard in a simple bronze band on a mossy workbench, ancient forest and ruined Western arch behind
+
+Prompt: Use case: stylized-concept. Create ONE production game equipment card illustration, full-bleed portrait 2:3 PNG 1024x1536. Cinematic painterly Western dark-fantasy expedition, matching Continental Relic Card Design: one tangible practical relic, medium detail, strong silhouette readable at 64px, atmospheric lost-continent scenery, controlled cinematic highlights. Subject: one palm-sized rough honey amber shard with a simple dark bronze band holding its lower half, resting upright on a mossy stone field workbench. The amber has a single subdued warm inner ember and broad translucent planes, suggesting a basic focus that amplifies a scored card's power. Affordable unrefined component, not a legendary jewel or elaborate pendant; no chain. Main amber fills central lower two thirds, entire object silhouette visible. Background: deep green ancient forest, a huge weathered tree root and softly receding ruined Western stone arch under misty morning light. Emerald forest and antique bronze palette, a restrained amber-orange focal accent. No characters, other relics, text, letters, numbers, ranks, suits, badges, UI, card frame, outer border, logos or watermark. No East Asian motifs, no dense filigree, no noisy particles, no excessive glow or blown-out highlights.
+
+Output: assets/cards/continental/itm/basic_amber.png — [1024, 1536]
+
+Generator source: C:/Users/Nhật Nam/.codex/generated_images/01a11661-670e-7523-a58b-e2030b598800/exec-7c620959-172f-4ef1-a046-6d36a3e6f732.png (built-in image_gen).
+
+
+### Song Quang Hội Tụ / spirit_aura_bifurcation — 2026-10-19
+
+Ability: Mỗi tay nhân ×2 tổng AURA, gồm sát thương cố định; tiến hóa ×2,5, ×3.
+
+Prompt: Create ONE full-bleed portrait 2:3 PNG 1024x1536 production SPN card illustration. Cinematic painterly Western dark-fantasy expedition, Continental lost-world style, strong silhouette readable at 64px, moderate detail, controlled glow. Subject: a single enormous supernatural winged void manta made of violet shadow hovering above a ruined Western stone bridge, its central chest holding one compact antique-gold energy orb which divides into two identical golden streams from its symmetrical wings and reunites as a larger radiant sphere below. The concept is doubling total aura energy, not physical weapons or speed. Quiet violet eclipse sky and distant continental cliff ruins, deep navy shadows, restrained antique gold focal light, no overexposure. One primary entity. No text, letters, numerals, mathematical symbols, card frames, borders, UI, badges, suits, logos, watermark. No East Asian motifs, no dense ornament or particle noise.
+
+Output: assets/cards/continental/spn/spirit_aura_bifurcation.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_aura_bifurcation.jpg — 512×768.
+
+Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-468cee8c-1b65-4f7c-9c66-f5e24389a29f.png (built-in image_gen).
+
+
+### Kẻ Dệt Số / spirit_numeral_weaver — 2026-10-19
+
+Ability: Ghép rank các quân đã chơi theo thứ tự thành AURA trực tiếp, thay công thức điểm thường; vẫn nhận ×AURA. Tiến hóa tăng hệ số số ghép.
+
+Prompt: Create ONE full-bleed portrait 2:3 PNG 1024x1536 production SPN card illustration. Cinematic painterly Western dark-fantasy expedition matching Continental lost-world cards. Strong clear silhouette, medium detail, controlled glow readable at 64px. Subject: a single otherworldly hooded ivory-and-antique-gold oracle with a dark featureless face, floating in the ruined arches of an ancient Western desert observatory. Its long spectral fingers arrange five broad weathered stone tablets in a clear horizontal sequence in the lower center; the tablets have NO writing or symbols. A single fine golden thread runs successively from left tablet through all five and pours into one dense violet-gold energy orb, conveying that ordered pieces become one number and directly one aura. Dramatic but quiet scene, bone desert and old gold palette with restrained violet energy, dusk navy background. Entire entity and main tablets visible, elegant large forms, avoid tiny detail. No text, glyphs, letters, numbers, math symbols, ranks, suits, card frames, borders, UI, logos or watermark. No East Asian architecture or costume, no dense ornament, no particle noise.
+
+Output: assets/cards/continental/spn/spirit_numeral_weaver.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_numeral_weaver.jpg — 512×768.
+
+Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-ede015e4-fd8c-4aac-a79c-ea097952ed37.png (built-in image_gen).
+
+
+### Sứ Giả Khảo Luyện / spirit_trial_emissary — 2026-10-19
+
+Ability: Cần ít nhất 3 thế đã mở. Mỗi trận yêu cầu 2 thế khác nhau đã mở; hoàn thành tiến hóa ngẫu nhiên đúng 1 SPN trang bị lên 1 cấp, có thể trúng chính nó. Mỗi bản một thưởng/trận.
+
+Prompt: Create ONE production SPN game card artwork, full-bleed portrait PNG 1024x1536, 2:3. Cinematic painterly Western dark-fantasy expedition in a mysterious lost continent, medium detail and strong readable silhouette at 64px. Main subject: one towering supernatural examiner guardian, an elegant faceless antique-gold and forest-green spectral knight hovering above a weathered Western stone stair. The guardian extends two open hands over two distinct broad stone trial gates below; one gate contains a solitary expedition warrior silhouette, the other a coordinated small column of expedition silhouettes. Two restrained green-gold streams rise from both completed gates and unite into a single ascending awakened spirit above the knight's breast, expressing completing two different combat formations to evolve one companion. Quiet ancient forest and ruined Western arches in background, emerald shadows, bone stone, antique gold with controlled warm light. One clear primary entity, no dense micro-detail. No written text, glyphs, letters, numbers, ranks, suits, badges, UI, frame, outer border, logo or watermark. No East Asian motifs, no calligraphy, no noisy particles, no overexposed glow.
+
+Output: assets/cards/continental/spn/spirit_trial_emissary.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_trial_emissary.jpg — 512×768.
+
+Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-c1c0a0ec-5b09-46bc-a323-6c3f08755403.png (built-in image_gen).

@@ -39,16 +39,17 @@ function love.load(args)
             cues=cues+1
         end})
         love.sound.newSoundData=decode
-        assert(cues==675 and rendered==0,'Baked effects unexpectedly synthesized')
+        assert(cues==#require("config.nen_vfx_config").order*28 and rendered==0,'Baked effects unexpectedly synthesized')
         local Sound=require('src.sound')
         assert(Sound.init(),'Mixer could not initialize compressed cues')
-        assert(Sound.stats().cues==823,'Missing mixer cues')
+        local common=0;for _ in pairs(require('config.audio_catalog').cues) do common=common+1 end
+        assert(Sound.stats().cues==common+cues+#require('src.reward_audio').order*4,'Missing mixer cues')
         assert(Sound.play('nen_high_card_armor_break') and Sound.play('card_deal'))
         local game={playerHp=100,maxPlayerHp=100,monster={stage=1}}
         for _,state in ipairs({'menu','playing','shop','defeat'}) do Sound.update(.02,state,game,false) end
         assert(Sound.stats().loops>0 and Sound.stats().loops<=6,'Compressed music/ambience streams')
         Sound.stopAll()
-        print(('Optimized package PASS: %d canonical artworks, %d decodable audio files, %d cues, 675 baked attack phases registered'):format(count,audio,cues))
+        print(('Optimized package PASS: %d canonical artworks, %d decodable audio files, %d cues, all baked attack phases registered'):format(count,audio,cues))
     end,debug.traceback)
     if not ok then print(err) end
     love.event.quit(ok and 0 or 1)

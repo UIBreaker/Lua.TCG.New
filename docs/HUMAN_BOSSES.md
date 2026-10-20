@@ -1,12 +1,12 @@
 # Mười Boss của Lục Địa Con Người
 
-Màn Boss tại mỗi ải địa phương 1–20 chọn ngẫu nhiên một trong mười thủ lĩnh. Không thay đối thủ thường/tinh anh và không thay bộ Boss của các vương quốc, hải trình, Bí Ẩn hoặc Lãnh Địa Máu. Trở lại khu vực Con Người vẫn dùng bộ này, kể cả chỉ số ải toàn hành trình đã vượt 20. Boss đã chọn và mã trận được giữ khi lưu/tải; chọn Boss dùng nhánh ngẫu nhiên riêng từ seed run, không tiêu các lượt random của thuốc, SPN hay thưởng.
+Màn Boss tại mỗi ải địa phương 1–20 chọn ngẫu nhiên từ các thủ lĩnh đã tới mốc xuất hiện. Boss 1/5 từ ải 1; Boss 3 từ 4; Boss 4/9 từ 5; Boss 2/6 từ 6; Boss 7/8 từ 8; Boss 10 từ 10. Từ ải 10 có đủ cả mười. Không thay bộ Boss của các vương quốc, hải trình, Bí Ẩn hoặc Lãnh Địa Máu. Trở lại khu vực Con Người vẫn dùng bộ này, kể cả chỉ số ải toàn hành trình đã vượt 20. Boss đã chọn và mã trận được giữ khi lưu/tải; chọn Boss dùng nhánh ngẫu nhiên riêng từ seed run, không tiêu các lượt random của thuốc, SPN hay thưởng.
 
 | # | Boss | Nội tại | Kỹ năng |
 | --- | --- | --- | --- |
 | 1 | Thống Soái Huyết Mạch | HP tối đa +50% sau chỉ số của ải/trang bị. | Mỗi lần thử tấn công, kể cả hụt: hồi 5% HP tối đa. Dùng chung dự trữ hồi của Boss (60% HP tối đa trong trận), không hồi vô hạn. |
 | 2 | Kẻ Cướp Gió | Tốc tối thiểu ×2 lá nhanh nhất đang cầm/đang chơi; ngoại lệ cho phép vượt 999. | Đánh trúng: cướp 2 tốc vĩnh viễn từ lá nhanh nhất trong nhóm người chơi đã chọn đánh; tốc lá không dưới 1. Boss nhận phần tốc đã cướp. |
-| 3 | Thẩm Phán Thệ Ước | Mỗi đầu tay chỉ định một thế đã mở khóa và đủ sức chứa tay hiện tại. Thế khác luôn hụt, kể cả có bảo đảm chính xác. | Đánh trúng, kể cả bị giáp hấp thụ: lập tức bỏ tối đa 2 lá còn giữ; vẫn chạy sự kiện bỏ bài như bình thường. |
+| 3 | Thẩm Phán Thệ Ước | Mỗi đầu tay chỉ định một thế đã mở khóa, đủ sức chứa và ghép được từ các lá đang cầm. Thế khác luôn hụt, kể cả có bảo đảm chính xác. | Đánh trúng, kể cả bị giáp hấp thụ: lập tức bỏ tối đa 2 lá còn giữ; vẫn chạy sự kiện bỏ bài như bình thường. |
 | 4 | Nhiếp Chính Mặt Nạ | J/Q/K không tính điểm riêng, không kích hoạt khả năng hoặc trang bị; áp dụng cả Bích. | Đánh trúng: biến một lá còn giữ thành J/Q/K. Chỉ biến bản trong trận, không sửa rank gốc; khôi phục khi rời/kết thúc trận. |
 | 5 | Giám Ngục Thiết Luật | Sức chứa tay −1, tối thiểu 1; không sửa chỉ số sức chứa vĩnh viễn. | ST đòn đánh nhân số lá thực đang giữ tại lúc đánh, tối thiểu ×1; năm lá là ×5. |
 | 6 | Pháo Đài Nhân Thế | Lớp giáp đầu trận =100% HP hiện tại, tạo một lần. Chưa có giáp thì mọi sát thương, kể cả chuẩn, không phá được lớp này. | Đánh xuyên giáp người chơi nhưng không xóa giáp đang có. Các chặn độc lập như thuốc né/HP ảo vẫn hoạt động. |
@@ -24,6 +24,8 @@ Hạ tốc, mất SPN, hạ bậc, bán đồ và hủy bài sửa đúng vật 
 Boss 3 hiện yêu cầu thế bài ngay dưới đội hình. Boss 6 hiện thông báo cần giáp khi bạn chưa đáp ứng điều kiện. Bảng trái hiển thị nội tại đúng Boss; rê vào phần này xem đầy đủ kỹ năng. Các mất mát và thay đổi chỉ số có thông báo BOSS trong trận.
 
 HP/tấn công/trang bị vẫn dựa vào ải hiện tại. Chỉ Boss 2 đọc tốc người chơi và Boss 10 đọc vàng theo nội tại đã yêu cầu. Các số cực lớn giữ hữu hạn trong miền số của engine; không thêm chặn sát thương chí tử. Boss 6 có điều kiện phá giáp riêng như mô tả.
+
+Thông số nền theo vai trò: Boss 2 có 80% HP / 80% ST nền; Boss 5 có 90% HP / 65% ST nền trước khi nhân số lá; Boss 6 có 90% HP / 90% ST nền trước lớp giáp bằng HP. Boss ở ải 1–3 có 85% ST nền để bù giai đoạn chưa có đủ công cụ. Nội tại +50% HP của Boss 1 vẫn giữ nguyên. Hiệu chỉnh áp dụng sau trang bị, không nhân chồng khi bắt đầu lại trận.
 
 ## Tranh và mã nguồn
 

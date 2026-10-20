@@ -15,7 +15,7 @@ Shop.MARKETS = {
     small = {name="SHOP NHỎ", note="Quầy tổng hợp · SPN, trang bị, quân bài, đặc quyền, rương và tiêu hao", color={.35,.82,.78,1}},
     consumable = {name="SHOP TIÊU HAO", note="Thẻ lẻ từ mọi rương tiêu hao · Giá cao hơn giá rương 20%, làm tròn lên", color={.74,.48,.94,1}},
     equipment = {name="SHOP TRANG BỊ", note="4 nguyên liệu cơ bản + 4 trang bị lớn · Mua để cất vào balo", color={.95,.73,.35,1}},
-    spn = {name="SHOP SPN", note="Chỉ bán SPN · Ngẫu nhiên đủ 10 bậc từ Thường đến Tối Thượng", color={.53,.75,.98,1}},
+    spn = {name="SHOP SPN", note="Bậc cao mở dần: E ải 3 · L ải 6 · M ải 10 · T/UQ ải 15 · VH/TT sau ải 20", color={.53,.75,.98,1}},
     medicine = {name="SHOP THUỐC", note="Hồi phục, giáp, tốc đánh và 8 thuốc chiến thuật · Hai ngăn thuốc", color={.38,.88,.57,1}},
     cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
     large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
@@ -49,9 +49,10 @@ local function basicHandsUnlocked(gameState)
 end
 Shop.FREE_OFFER_CHANCE = 0.08
 Shop.SALE_MULTIPLIER = 0.65
-Shop.PRICE_MULTIPLIER = 3
+Shop.PRICE_MULTIPLIER = 4
+Shop.SPN_STAGE_GATES = {epic=3,legendary=6,mythic=10,transcendent=15,unique=15,eternal=21,supreme=21}
 function Shop.discountedEquipment(eq,bay,roll)
-    local free=(roll or Rng.random())<Shop.FREE_OFFER_CHANCE
+    local free=(roll or Rng.random())<Shop.FREE_OFFER_CHANCE and (eq.basic or (eq.craftTier or 99)<=1)
     return {section="discount",bay=bay,category="equipment",equipment=eq,name=eq.name,
         desc=Equipment.getDescription(eq),color=eq.color,originalCost=eq.cost,
         cost=free and 0 or math.max(1,math.floor(eq.cost*Shop.SALE_MULTIPLIER)),
@@ -310,8 +311,8 @@ end
 function Shop.new()
     return {
         items = {},
-        baseRerollCost = 2,
-        rerollCost = 2,
+        baseRerollCost = 5,
+        rerollCost = 5,
         currentPackOpening = nil,
         lastPackTypes = {},
     }
@@ -319,7 +320,7 @@ end
 
 function Shop.resetReroll(shop)
     if not shop then return end
-    shop.rerollCost = shop.baseRerollCost or 2
+    shop.baseRerollCost, shop.rerollCost = 5, 5
     shop.rerollCount = 0
     shop.welcomeRerollUsed = false
     shop.welcomeRerollsUsed = 0
@@ -332,7 +333,7 @@ function Shop.getRerollCost(shop, gameState)
         or (shop.welcomeRerollsUsed or (shop.welcomeRerollUsed and 1 or 0)) < Shop.voucherParams("v_welcome",gameState).rolls then
         return 0
     end
-    return math.max(1,(shop.rerollCost or 2)-Shop.voucherParams("v_discount",gameState).discount)
+    return math.max(1,(shop.rerollCost or 5)-Shop.voucherParams("v_discount",gameState).discount)
 end
 
 -- Reprice existing stock as well as future rerolls, without stacking discounts.
@@ -353,10 +354,15 @@ local function cloneDeity(deity)
     return clone
 end
 
-local function rollSpnRarity()
-    local roll, cumulative = Rng.random(), 0
+local function rollSpnRarity(game)
+    local stage=game and game.run and game.run.ante or 1
+    local total=0
+    for _,r in ipairs(Deities.RARITIES) do
+        if stage>=(Shop.SPN_STAGE_GATES[r.id] or 1) then total=total+(Shop.SPN_RARITY_WEIGHTS[r.id] or 0) end
+    end
+    local roll, cumulative = Rng.random()*total, 0
     for _, rarity in ipairs(Deities.RARITIES) do
-        cumulative = cumulative + (Shop.SPN_RARITY_WEIGHTS[rarity.id] or 0)
+        cumulative = cumulative + (stage>=(Shop.SPN_STAGE_GATES[rarity.id] or 1) and (Shop.SPN_RARITY_WEIGHTS[rarity.id] or 0) or 0)
         if roll < cumulative then return rarity end
     end
     return Deities.RARITIES[1]
@@ -445,19 +451,54 @@ function Shop.playingCardOffer(card)
         editionName=edition and edition.shopLabel, icon=card.suitSymbol, color=card.color}
 end
 
-local function priceStock(shop)
+-- Recipe fees are paid once; only raw materials use the retail multiplier.
+function Shop.craftingCost(id)
+    local eq=Equipment.ITEMS[id]
+    if eq.basic then return math.ceil(eq.cost*Shop.PRICE_MULTIPLIER) end
+    local recipe=require("src.basic_equipment").byResult[id]
+    local cost=recipe.fee
+    for _,ingredient in ipairs(recipe.ingredients) do cost=cost+Shop.craftingCost(ingredient) end
+    return cost
+end
+function Shop.priceItem(item,game)
+    if item.starterOffer then return 12 end
+    if item.currency=="souls" then return math.ceil(item.cost*2) end
+    if item.currency=="blood" then
+        local price=math.ceil(item.cost*2)
+        local c=item.consumable
+        if c and c.category=="heal" then price=math.max(price,(c.healAmt or 25)+1) end
+        if c and c.category=="bed" then price=math.max(price,(game and game.maxPlayerHp or 100)+1) end
+        return price
+    end
+    local eq=item.equipment
+    if eq and not eq.basic and not eq.soulOnly then
+        local full=math.ceil(Shop.craftingCost(eq.id)*1.35)
+        if item.free then return 0,full end
+        return item.sale and math.max(1,math.floor(full*Shop.SALE_MULTIPLIER)) or full,item.originalCost and full
+    end
+    local multiplier=Shop.PRICE_MULTIPLIER
+    if item.deity and Shop.SPN_STAGE_GATES[item.deity.rarity] then multiplier=6 end
+    if item.consumable and item.consumable.category=="heal" then multiplier=3 end
+    return math.ceil(item.cost*multiplier),item.originalCost and math.ceil(item.originalCost*multiplier)
+end
+local function priceStock(shop,game)
     for _, item in ipairs(shop.items) do
-        item.cost = math.ceil(item.cost * Shop.PRICE_MULTIPLIER)
-        if item.originalCost then item.originalCost = math.ceil(item.originalCost * Shop.PRICE_MULTIPLIER) end
+        item.cost,item.originalCost=Shop.priceItem(item,game)
     end
 end
 
 local function finishStock(shop, gameState)
+    if shop.mode=="small" and gameState.run and gameState.run.stats.blindsWon==1 and not gameState.run.stats.starterGearPurchased then
+        local offer=equipmentOffer(Equipment.ITEMS.gem_blast)
+        offer.starterOffer=true;offer.section="stall";offer.bay=1
+        offer.subtitle="TIẾP TẾ · 1 LẦN/RUN"
+        shop.items[1]=offer
+    end
     -- The card stall rolls all nine editions before calculating its price and labels.
     if shop.mode~="cards" then
         for _, item in ipairs(shop.items) do CardEffects.rollShopItem(item) end
     end
-    priceStock(shop)
+    priceStock(shop,gameState)
     Shop.applyVoucherStock(shop, gameState)
 end
 
@@ -478,11 +519,13 @@ local function marketStock(shop, gameState)
             local kind=(i-1)%8+1;local offer
             if kind==1 then
                 local d=Deities.getRandomShopPool(Loadout.ownedDeities(gameState),1)[1]
-                if d then d=cloneDeity(d);Deities.setRarity(d,rollSpnRarity().id)
+                if d then d=cloneDeity(d);Deities.setRarity(d,rollSpnRarity(gameState).id)
                     offer={id=d.id,category="deity",deity=d,name=d.name,cost=math.ceil((d.cost or 4)*(Shop.SPN_RARITY_PRICE_MULTIPLIERS[d.rarity] or 1)),color=d.color} end
             elseif kind==2 then offer=equipmentOffer(Equipment.ITEMS[gear[Rng.random(#gear)]])
             elseif kind==3 then offer=Shop.playingCardOffer(randomStandardCard())
-            elseif kind==4 then offer=Shop.healingItem("stall",Shop.POTIONS[Rng.random(#Shop.POTIONS)].id)
+            elseif kind==4 then
+                local pool={};for _,p in ipairs(Shop.POTIONS) do if p.category~="bed" then pool[#pool+1]=p end end
+                offer=Shop.healingItem("stall",pool[Rng.random(#pool)].id)
             elseif kind==5 and #vouchers>0 then
                 local v=table.remove(vouchers,Rng.random(#vouchers))
                 offer=Shop.voucherOffer(v,gameState,5)
@@ -513,7 +556,7 @@ local function marketStock(shop, gameState)
     elseif mode == "spn" then
         for _, definition in ipairs(Deities.getRandomShopPool(Loadout.ownedDeities(gameState), 6)) do
             local d = cloneDeity(definition)
-            local rarity = rollSpnRarity()
+            local rarity = rollSpnRarity(gameState)
             Deities.setRarity(d, rarity.id)
             d.cost=math.ceil((tonumber(d.cost) or 4)*Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity.id])
             shop.items[#shop.items+1]={id=d.id, category="deity", deity=d, name=d.name,
@@ -586,7 +629,7 @@ function Shop.refresh(shop, gameState)
             utility.currency = "souls"
             shop.items[#shop.items+1] = utility
         end
-        priceStock(shop)
+        priceStock(shop,gameState)
         return
     end
 
@@ -599,7 +642,7 @@ function Shop.refresh(shop, gameState)
     local availableDeities = Deities.getRandomShopPool(Loadout.ownedDeities(gameState), 1)
     if #availableDeities > 0 then
         local d = cloneDeity(availableDeities[1])
-        local rarity = rollSpnRarity()
+        local rarity = rollSpnRarity(gameState)
         Deities.setRarity(d, rarity.id)
         d.cost = math.ceil((tonumber(d.cost) or 4) * (Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity.id] or 1))
         local dColor = rarity.color or { 0.95, 0.85, 0.35, 1 }
@@ -856,6 +899,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     elseif item.category == "equipment" then
         Shop.payItem(item,gameState)
+        if item.starterOffer then gameState.run.stats.starterGearPurchased=true end
         local eq = item.equipment
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -1250,7 +1294,7 @@ function Shop.reroll(shop, gameState, refresh)
     end
     gameState.gold = gameState.gold - cost
     shop.rerollCount = (shop.rerollCount or 0) + 1
-    shop.rerollCost = (shop.rerollCost or 2) + 1 + shop.rerollCount
+    shop.rerollCost = (shop.rerollCost or 5) + 1 + shop.rerollCount
     refreshShop(shop, gameState)
     Sound.play("shop_reroll")
     return true
@@ -1386,15 +1430,26 @@ function Shop.enterSoulShop(gameState)
 end
 
 function Shop.enterAfterCombat(gameState)
+    gameState.pendingCompanionShop=nil
+    if gameState.run and gameState.run.stats.blindsWon==1 then
+        gameState.shopMode="small"
+        gameState.pendingCompanionShop=Shop.AFTER_COMBAT_MARKETS[Rng.random(2,#Shop.AFTER_COMBAT_MARKETS)]
+        return
+    end
     if gameState.bloodDomain then
-        gameState.shopMode="small";gameState.pendingSoulShop=false;return
+        gameState.shopMode="small";gameState.pendingSoulShop=false
+        gameState.pendingCompanionShop=Shop.AFTER_COMBAT_MARKETS[Rng.random(2,#Shop.AFTER_COMBAT_MARKETS)]
+        return
     end
     gameState.bloodShopNotice=nil
     local blood=Blood.roll(gameState)
     if require("src.barter").roll(gameState) then gameState.pendingBarter=true end
     if require("src.ancient_statue").roll(gameState) then gameState.pendingAncientStatue=true end
     if Shop.enterSoulShop(gameState) then gameState.pendingBloodShop=blood or gameState.pendingBloodShop
-    else gameState.shopMode=blood or Shop.AFTER_COMBAT_MARKETS[Rng.random(#Shop.AFTER_COMBAT_MARKETS)] end
+    else
+        gameState.shopMode="small"
+        gameState.pendingCompanionShop=blood or Shop.AFTER_COMBAT_MARKETS[Rng.random(2,#Shop.AFTER_COMBAT_MARKETS)]
+    end
     gameState.soulDestroyActive=false
     gameState.soulDestroyConsumable=nil
 end
@@ -1407,6 +1462,10 @@ function Shop.leave(shop, gameState)
         Shop.resetReroll(shop)
         Shop.refresh(shop,gameState)
         return "shop"
+    end
+    if gameState.shopMode=="small" and gameState.pendingCompanionShop then
+        gameState.shopMode=gameState.pendingCompanionShop;gameState.pendingCompanionShop=nil
+        Shop.resetReroll(shop);Shop.refresh(shop,gameState);return "shop"
     end
     if gameState.shopMode=="large" and gameState.pendingBloodShop then
         gameState.shopMode=gameState.pendingBloodShop;gameState.pendingBloodShop=nil

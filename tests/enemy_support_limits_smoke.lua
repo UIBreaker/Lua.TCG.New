@@ -85,6 +85,7 @@ local ok,err=xpcall(function()
     bag.base.maxHp=1000;bag.equipment={};bag.seal=nil;bag.spn=nil
     bag.backpack={equipment={{id="ward_stone",kind="equipment",power=1}},
         consumables={{id="healing_potion",kind="consumable",pct=.12}}}
+    A.resources(m).charges={} -- Isolate potion/swap spacing from the smarter emergency heal priority.
     assert(step(g,m).action=="heal" and A.resources(m).healingLeft==230)
     assert(step(g,m).action=="attack" and step(g,m).action=="equip")
     assert(A.resources(m).healingLeft==230 and A.resources(m).armorLeft==400)

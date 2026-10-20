@@ -1,0 +1,7 @@
+profile,policy,completed,seeds,mean_stages,campaign_fights
+weak,greedy,0,40,0.55,171
+weak,tactical,0,40,0.9,220
+normal,greedy,0,40,0.55,170
+normal,tactical,0,40,1.15,250
+strong,greedy,0,40,0.875,209
+strong,tactical,0,40,1.4,283

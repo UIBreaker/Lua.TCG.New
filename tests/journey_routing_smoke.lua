@@ -43,7 +43,8 @@ for _,r in ipairs(E.regions) do
                 assert(member.cardRank>=2 and member.cardRank<=13)
                 if r.id=="human" then
                     assert(member.human and member.neutralHuman and member.cardSuit==nil)
-                    assert(member.artKey=="human_"..member.cardRank and Art.key(member)==member.artKey)
+                    local expectedArt=member.isBoss and member.bossData and member.bossData.humanBoss and member.bossData.artKey or "human_"..member.cardRank
+                    assert(member.artKey==expectedArt and Art.key(member)==expectedArt)
                 elseif r.suit then assert(member.human and not member.neutralHuman and member.cardSuit==r.suit)
                 else assert(not member.human and member.creatureCard and member.enemyAbility) end
                 checked=checked+1
@@ -87,14 +88,14 @@ assert(#g.backpackConsumables==reserved and #g.pendingJourneyRewards==documents 
 local saved=Persistence.makeSnapshot(g,"BLIND_SELECT")
 local restored,state=Persistence.restoreSnapshot(assert(Persistence.decode(Persistence.encode(saved))))
 assert(state=="BLIND_SELECT" and restored.run.ante==56 and restored.run.difficultyCap==40 and restored.run.blinds[1].hp==baseline[1].hp)
-local gold=g.gold;assert(travel(g,"sell") and g.gold==gold+1000 and g.run.ante==56 and g.run.difficultyCap==40)
+local gold=g.gold;assert(travel(g,"sell") and g.gold==gold+250 and g.run.ante==56 and g.run.difficultyCap==40)
 assert(not E.hasTravelPermit(g));restored=Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"BLIND_SELECT"))
 assert(not E.hasTravelPermit(restored),"Spent permit must never respawn on reload")
 local Shop=require("src.shop")
-g.shopMode="consumable";g.gold=5999
+g.shopMode="consumable";g.gold=7999
 local shop=Shop.new();Shop.refresh(shop,g)
-local index;for i,item in ipairs(shop.items) do if item.id=="cons_travel_permit" then index=i;assert(item.cost==6000) end end
-assert(index and not Shop.buyItem(shop,index,g));g.gold=6000;assert(Shop.buyItem(shop,index,g) and g.gold==0)
+local index;for i,item in ipairs(shop.items) do if item.id=="cons_travel_permit" then index=i;assert(item.cost==8000) end end
+assert(index and not Shop.buyItem(shop,index,g));g.gold=8000;assert(Shop.buyItem(shop,index,g) and g.gold==0)
 assert(travel(g,"diamonds") and g.run.ante==56 and not g.run.difficultyCap and g.run.blinds[1].difficultyAnte==56)
 for _,id in ipairs({"diamonds","clubs","spades"}) do
     assert(g.run.regionId==id);completeRegion(g)

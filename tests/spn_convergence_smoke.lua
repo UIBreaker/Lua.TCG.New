@@ -67,7 +67,9 @@ for _,row in ipairs(S.entries) do
     if D.CATALOG[row[1]].accumulationMechanic then
         growing=growing+1;g=game(row[1])
         local function grow()
-            if row[1]=="spirit_parity" then Combat.resolveMonsterAttack(g)
+            if row[1]=="spirit_parity" then
+                g.monster.intent={type="attack"} -- Isolate damage growth from the tactical support plan.
+                Combat.resolveMonsterAttack(g)
             elseif row[1]=="spirit_hour_product" then require("src.card_abilities").discard(g,{Deck.newCard(3,"hearts")})
             else score(g) end
         end

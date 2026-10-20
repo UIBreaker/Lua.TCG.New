@@ -278,7 +278,7 @@ Deck.STARTER_DECKS = {
         id = "red_deck",
         name = "Bộ Bài Đỏ",
         color = { 0.88, 0.16, 0.20, 1 },
-        desc = "Bắt đầu với 1 lá bài ngẫu nhiên trong bộ chuẩn 52 lá.",
+        desc = "Bắt đầu với 5 lá ngẫu nhiên, đủ Cơ–Rô–Chuồn–Bích. Rút 3 lá lên tay khi vào trận.",
     },
 }
 
@@ -463,20 +463,28 @@ end
 Deck.DEFAULT_HAND_SIZE = 3
 
 function Deck.createRedStarterDeck()
-    local suit = Deck.FACTION_ORDER[Rng.random(#Deck.FACTION_ORDER)]
-    local rank = Rng.random(2, 14)
-    local card = Deck.newCard(rank, suit)
-    card.disableFactionPassives = true
-    card.starterDeckId = "red_deck"
-    card.isWildSuit = false
-    card.isDualRankAce = false
-    card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
-    card.unlockedSockets = require("src.equipment").MAX_SLOTS
-    return { card }
+    local cards = {}
+    for _, suit in ipairs(Deck.FACTION_ORDER) do
+        cards[#cards + 1] = Deck.newCard(Rng.random(2, 14), suit)
+    end
+    local suitIndex = Rng.random(#Deck.FACTION_ORDER)
+    local rank = Rng.random(2, 13)
+    -- Select from the twelve ranks not already present in the repeated suit.
+    if rank >= cards[suitIndex].rank then rank = rank + 1 end
+    cards[#cards + 1] = Deck.newCard(rank, Deck.FACTION_ORDER[suitIndex])
+    for _, card in ipairs(cards) do
+        card.disableFactionPassives = true
+        card.starterDeckId = "red_deck"
+        card.isWildSuit = false
+        card.isDualRankAce = false
+        card.suitName = Deck.STANDARD_SUIT_NAMES[card.suit] or card.suitName
+        card.unlockedSockets = require("src.equipment").MAX_SLOTS
+    end
+    return Deck.shuffle(cards)
 end
 
 -- Create the selected starter deck. Legacy faction decks remain readable for
--- old saves; new Red Deck runs begin with a single random standard card.
+-- old saves; new Red Deck runs begin with five cards covering all four suits.
 function Deck.createStarterDeck(suit)
     if suit == "red_deck" then return Deck.createRedStarterDeck() end
     local cards = {

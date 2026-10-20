@@ -39,97 +39,117 @@ function S.drawBlood(game,UI,mx,my)
     button("fight_blind",run.areaStage==8 and "ĐỐI MẶT VƯƠNG HUYẾT" or "BƯỚC VÀO TRẬN",834,630,422,54)
     g.pop();return buttons
 end
+local Chrome=require("ui.combat_chrome")
+local Core=require("ui.components.core")
+local Theme=require("ui.theme")
+local Group=require("src.enemy_group")
+function S.preview(blind,game)
+    local m=Run.createBlindMonster(blind,game,true)
+    local count=Group.count(blind.difficultyAnte or blind.ante,blind.type=="boss",blind.type=="big")
+    local passive=Boss.passiveDescription(m)
+    if passive=="" then passive=m.enemyAbility and m.enemyAbility.desc or "Không có nội tại đặc biệt được công bố." end
+    local active=m.bossData and m.bossData.active
+    local action=active and Boss.activeDescription(m) or "Đánh thường và sử dụng trang bị theo tình hình trận đấu."
+    local cadence=active and ("Mỗi "..((active.cooldown or 0)+1).." tay") or "Theo lượt chiến đấu"
+    return {monster=m,count=count,passive=passive,action=action,active=active,cadence=cadence,
+        detail={encounterPreview=true,hoverKey=blind,name=m.name,desc="MÁU NỀN ĐỘI HÌNH · "..blind.hp.." HP\nSÁT THƯƠNG NỀN · "..m.attack.."\nĐỘI HÌNH · "..count.." đối thủ\nTHƯỞNG · +"..blind.baseReward.." Vàng\n\nNỘI TẠI\n"..passive.."\n\n"..(active and active.name or "HÀNH ĐỘNG").." · "..cadence.."\n"..action.."\n\nChỉ số nền chưa gồm trang bị và hiệu ứng trong trận. Tốc đánh được xác định khi vào trận."}}
+end
 function S.draw(game, UI, mx, my)
     if game.run and game.run.regionId=="blood_domain" then return S.drawBlood(game,UI,mx,my) end
-    local g, buttons = love.graphics, {}
-    local run=game.run; if not run then return buttons end
+    local g,buttons=love.graphics,{}
+    local run=game.run;if not run then return buttons end
     local region=E.region(run.ante,run.regionId)
     local localStage=run.areaStage or run.ante
     local area=E.area(localStage,region.id)
-    local gold, muted, white = {0.92,0.77,0.49}, {0.63,0.70,0.74}, {0.93,0.94,0.90}
+    local gold,muted,white=Theme.colors.gold,Theme.colors.muted,Theme.colors.text
     local function text(value,x,y,w,font,color,align)
-        g.setFont(UI.fonts[font] or UI.fonts.small); g.setColor(color or white)
-        g.printf(value,x,y,w,align or "left")
+        Core.text(value,x,y,w,UI.fonts[font] or UI.fonts.small,color or white,align)
     end
-    local function panel(x,y,w,h,color,alpha)
-        g.setColor(0.025,0.045,0.061,alpha or 0.94); g.rectangle("fill",x,y,w,h,12,12)
-        g.setColor(color[1],color[2],color[3],0.55);g.setLineWidth(1);g.rectangle("line",x,y,w,h,12,12)
+    local function button(id,label,x,y,w,h,variant)
+        local b={id=id,text=label,x=x,y=y,w=w,h=h,variant=variant or "gold",font=UI.fonts.small}
+        buttons[#buttons+1]=b;Chrome.button(UI,b,mx,my)
     end
-    local function button(id,label,x,y,w,h,color)
-        local b={id=id,text=label,x=x,y=y,w=w,h=h,color=color,font=UI.fonts.small}
-        buttons[#buttons+1]=b; UI.drawButton(b,mx>=x and mx<=x+w and my>=y and my<=y+h)
+    local function excerpt(value,x,y,w,lines,color)
+        local font=UI.fonts.tiny
+        local _,wrapped=font:getWrap(value,w)
+        for i=1,math.min(lines,#wrapped) do
+            local line=wrapped[i]
+            if i==lines and #wrapped>lines then line=line.."…" end
+            Core.textLine(line,x,y+(i-1)*16,w,font,color or white)
+        end
     end
     g.push("all")
-    g.setColor(0.015,0.024,0.035,0.42);g.rectangle("fill",0,0,1280,720)
-    panel(24,18,1232,76,gold)
-    text("NHẬT KÝ VIỄN CHINH",44,29,600,"large",gold)
-    text("TỔNG HÀNH TRÌNH "..run.ante.."  /  "..(region.suit and "ĐỐI THỦ ĐỒNG CHẤT" or region.id=="human" and "ĐOÀN ĐỘC LẬP • VÔ CHẤT" or "KHÁM PHÁ LỤC ĐỊA"),46,65,700,"tiny",muted)
-    button("open_handbook","SỔ TAY",872,32,108,46,{0.17,0.29,0.29,1})
-    button("open_backpack","BALO",753,32,108,46,{.28,.24,.16,1})
-    button("open_deck_viewer","BỘ BÀI",991,32,108,46,{0.19,0.27,0.36,1})
-    button("open_pause_menu","TÙY CHỌN",1110,32,126,46,{0.22,0.25,0.30,1})
-    -- Persistent route: chapter boundaries and objectives are always visible.
+    g.setColor(.008,.015,.022,.48);g.rectangle("fill",0,0,1280,720)
+    Chrome.panel(24,16,1232,70)
+    Chrome.crest(56,50,22,gold)
+    Chrome.title("NHẬT KÝ VIỄN CHINH",88,27,636,UI.fonts.bookHeading or UI.fonts.large,gold)
+    text("ẢI "..run.ante.." · "..(region.suit and "ĐỐI THỦ ĐỒNG CHẤT" or region.id=="human" and "ĐOÀN ĐỘC LẬP · VÔ CHẤT" or "KHÁM PHÁ LỤC ĐỊA"),89,62,630,"tiny",muted)
+    button("open_backpack","BALO",753,29,108,43)
+    button("open_handbook","SỔ TAY",872,29,108,43,"cyan")
+    button("open_deck_viewer","BỘ BÀI",991,29,108,43)
+    button("open_pause_menu","TÙY CHỌN",1110,29,126,43,"purple")
     for i=1,4 do
-        local x=24+(i-1)*312
-        local active=area.index==i
-        panel(x,108,296,64,active and region.color or muted,active and 0.94 or 0.78)
-        text(string.format("0%d  %s",i,(region.areas or {})[i] or "MIỀN ĐẤT CHƯA KHÁM PHÁ"),x+12,120,272,"small",active and region.color or muted)
-        text(string.format("ẢI %02d — %02d",(run.regionStartAnte or run.ante-localStage+1)+(i-1)*5,(run.regionStartAnte or run.ante-localStage+1)+i*5-1)..(active and "   /   ĐANG KHÁM PHÁ" or area.index>i and "   /   ĐÃ ĐI QUA" or "   /   CHƯA ĐẾN"),x+12,148,272,"tiny",muted)
+        local x=24+(i-1)*312;local current=area.index==i
+        Chrome.well(x,99,296,49,current and region.color or Theme.colors.metal)
+        Core.textLine(string.format("%02d · %s",i,(region.areas or {})[i] or "MIỀN ĐẤT CHƯA KHÁM PHÁ"),x+12,108,272,UI.fonts.small,current and gold or muted)
+        text(string.format("ẢI %02d–%02d",(run.regionStartAnte or run.ante-localStage+1)+(i-1)*5,(run.regionStartAnte or run.ante-localStage+1)+i*5-1).." · "..(current and "ĐANG KHÁM PHÁ" or area.index>i and "ĐÃ VƯỢT" or "CHƯA ĐẾN"),x+12,130,272,"tiny",muted)
     end
-    panel(24,186,1232,82,region.color,0.89)
-    text("ẢI "..string.format("%02d",run.ante).."  /  "..region.name,44,197,800,"medium",region.color)
-    text(run.difficultyCap and ("ĐÃ CHINH PHỤC · GIỮ ĐỘ KHÓ ẢI "..run.difficultyCap.." · Dùng giấy phép trong balo để rời đi lúc cần.") or region.objective,44,229,910,"small",white)
-    text(E.hasTravelPermit(game) and (E.unlimitedTravel(game) and "GIẤY PHÉP: VÔ HẠN" or "GIẤY PHÉP: TRONG BALO") or "GIẤY PHÉP: MỐC 20",974,204,260,"small",gold,"right")
-    text(region.id=="unknown" and "KHÁM PHÁ VÔ TẬN" or "4 KHU VỰC • 20 ẢI",994,235,240,"tiny",muted,"right")
-    -- Three encounter dossiers. Only the current fight can be started.
+    Chrome.panel(24,160,1232,66,region.color)
+    Chrome.title("ẢI "..string.format("%02d",run.ante).." / "..region.name,43,171,850,UI.fonts.bookChapter or UI.fonts.medium,gold)
+    Core.textLine(run.difficultyCap and ("Giữ độ khó ải "..run.difficultyCap.." · Dùng giấy phép trong balo để rời đi.") or region.objective,44,201,905,UI.fonts.tiny,muted)
+    text(E.hasTravelPermit(game) and (E.unlimitedTravel(game) and "GIẤY PHÉP VÔ HẠN" or "ĐÃ CÓ GIẤY PHÉP") or "GIẤY PHÉP · MỐC 20",966,175,267,"small",gold,"right")
+    text("3 TRẬN / ẢI · "..(region.id=="unknown" and "VÔ TẬN" or "20 ẢI"),966,203,267,"tiny",muted,"right")
+    S.previews={}
     for i,blind in ipairs(run.blinds) do
-        local x,y,w,h=24+(i-1)*416,282,400,340
-        local current=blind.status=="current"
-        local done=blind.status=="completed"
-        local c=current and region.color or muted
-        panel(x,y,w,h,c,current and 0.96 or 0.90)
-        g.setColor(c[1],c[2],c[3],current and 1 or 0.35);g.rectangle("fill",x+15,y+1,w-30,3)
-        text(string.format("0%d / %s",i,({"ĐỐI THỦ","TINH ANH","THỦ LĨNH"})[i]),x+18,y+14,w-36,"small",c)
-        local m=Run.createBlindMonster(blind,game,true)
-        -- Preview rendering must not consume combat RNG.
-        local img=Art.image(m,{})
-        if img then
-            local iw,ih=img:getDimensions();local fit=math.min(112/iw,155/ih)
-            g.setColor(1,1,1,done and 0.45 or current and 1 or 0.68)
-            local Frame=require("ui.components.card_frame")
-            local bx=x+24+(112-iw*fit)/2
-            Frame.image(img,bx,y+50,iw*fit,ih*fit);Frame.draw(bx,y+50,iw*fit,ih*fit,nil,nil,m)
+        local x,y,w,h=24+(i-1)*416,240,400,390
+        local current,done=blind.status=="current",blind.status=="completed"
+        local accent=current and gold or Theme.colors.metal
+        Chrome.panel(x,y,w,h,accent)
+        text(string.format("%02d · %s",i,({"ĐỐI THỦ","TINH ANH","THỦ LĨNH"})[i]),x+17,y+15,190,"small",i==3 and Theme.colors.red or gold)
+        text(done and "ĐÃ THẮNG" or current and "SẴN SÀNG" or "CHƯA MỞ",x+222,y+16,160,"tiny",done and Theme.colors.green or current and gold or muted,"right")
+        Chrome.rule(x+18,y+39,w-36,accent)
+        local p=S.preview(blind,game);S.previews[i]=p
+        local m=p.monster
+        local image=Art.image(m,{})
+        if image then
+            g.setColor(1,1,1,done and .5 or 1)
+            UI.CardFrame.image(image,x+19,y+53,94,141)
+            UI.CardFrame.draw(x+19,y+53,94,141,nil,nil,m)
         end
-        text(m.neutralHuman and "NHÂN LOẠI • VÔ CHẤT" or blind.kingdom and ("VƯƠNG QUỐC "..blind.kingdom:upper()) or "SINH VẬT BÍ ẨN",x+153,y+52,228,"tiny",muted)
-        text(blind.name,x+153,y+73,228,"medium",white)
-        text("HP  "..UI.formatNumber(blind.hp),x+153,y+145,228,"small",region.color)
-        text("CHIẾN LỢI PHẨM  +$"..blind.baseReward,x+153,y+174,228,"tiny",gold)
-        local count=require("src.enemy_group").count(blind.difficultyAnte or blind.ante,i==3,i==2)
-        text("ĐỘI HÌNH  "..count.." ĐỐI THỦ",x+153,y+196,228,"tiny",muted)
-        g.setColor(c[1],c[2],c[3],0.2);g.line(x+18,y+217,x+w-18,y+217)
-        if blind.debuff then
-            text("NỘI TẠI • "..UI.truncateUtf8(Boss.passiveDescription(m) or blind.debuff.desc,94),x+18,y+228,w-36,"tiny",muted)
-            local active=blind.debuff.active
-            if active then text("CHIÊU • "..active.name.." / mỗi "..(active.cooldown+1).." tay",x+18,y+264,w-36,"tiny",gold) end
+        local nameFont=UI.fonts.regular
+        local _,nameLines=nameFont:getWrap(m.name,249)
+        if #nameLines>2 then nameFont=UI.fonts.small end
+        Core.text(m.name,x+132,y+54,249,nameFont,white)
+        Core.textLine(m.neutralHuman and "NHÂN LOẠI · VÔ CHẤT" or m.kingdom and m.kingdom:upper() or "SINH VẬT BÍ ẨN",x+132,y+102,249,UI.fonts.tiny,muted)
+        local stats={{"MÁU NỀN ĐỘI",UI.formatNumber(blind.hp),Theme.colors.red},{"ST NỀN ĐỘI",UI.formatNumber(m.attack),Theme.colors.cyan},{"ĐỐI THỦ",p.count,white},{"THƯỞNG VÀNG","+"..blind.baseReward,gold}}
+        for n,stat in ipairs(stats) do
+            local tx=x+130+(n-1)%2*126;local ty=y+124+math.floor((n-1)/2)*43
+            Chrome.well(tx,ty,122,39,stat[3])
+            text(stat[1],tx+9,ty+5,104,"tiny",muted)
+            text(stat[2],tx+9,ty+20,104,"small",stat[3],"right")
+        end
+        Chrome.rule(x+18,y+215,w-36,accent)
+        text("NỘI TẠI",x+19,y+227,w-38,"tiny",gold)
+        excerpt(p.passive,x+19,y+247,w-38,2,muted)
+        Core.textLine(p.active and (p.active.name.." · "..p.cadence) or "HÀNH ĐỘNG",x+19,y+285,w-38,UI.fonts.tiny,p.active and Theme.colors.red or gold)
+        excerpt(p.action,x+19,y+305,w-38,2,white)
+        if mx>=x+12 and mx<=x+w-12 and my>=y+45 and my<=y+337 then UI.descriptionCandidate=p.detail end
+        if current then button("fight_blind","VÀO TRẬN",x+18,y+342,w-36,34,"cyan")
         else
-            text(i==1 and "Thắng trận để tích lũy vàng và mở trận tinh anh." or "Đối thủ mạnh hơn. Thắng để tiến đến thử thách thủ lĩnh.",x+18,y+233,w-36,"small",muted)
+            text(done and "HOÀN THÀNH" or "THẮNG TRẬN TRƯỚC ĐỂ MỞ",x+18,y+352,w-36,"small",done and Theme.colors.green or muted,"center")
         end
-        if current then button("fight_blind","VÀO TRẬN",x+18,y+h-48,w-36,34,{0.18,0.48,0.39,1})
-        else text(done and "ĐÃ CHIẾN THẮNG" or "HOÀN THÀNH TRẬN TRƯỚC ĐỂ MỞ",x+18,y+h-41,w-36,"small",done and {0.44,0.80,0.59} or muted,"center") end
     end
-    panel(24,636,1232,66,gold)
-    local count=20
+    Chrome.panel(24,643,1232,60)
+    text("TUYẾN HÀNH TRÌNH",43,655,230,"tiny",gold)
+    text("HP "..(game.playerHp or 100).."/"..(game.maxPlayerHp or 100).." · "..(game.gold or 0).." Vàng · "..#(game.persistentDeck or {}).." lá",43,678,235,"tiny",muted)
     local block=region.id=="unknown" and (1+math.floor((localStage-1)/20)*20) or 1
-    text("TUYẾN HÀNH TRÌNH",44,646,240,"tiny",gold)
-    for j=1,count do
+    for j=1,20 do
         local stage=block+j-1;local x=283+(j-1)*39
-        g.setColor(stage<localStage and 0.32 or region.color[1],stage<localStage and 0.65 or region.color[2],stage<localStage and 0.49 or region.color[3],stage<=localStage and 0.9 or 0.22)
-        g.rectangle("fill",x,654,30,28,5,5)
-        text(tostring((run.regionStartAnte or run.ante-localStage+1)+stage-1),x,661,30,"tiny",stage==localStage and white or muted,"center")
+        Chrome.well(x,657,30,29,stage==localStage and gold or stage<localStage and Theme.colors.green or Theme.colors.metal)
+        text(tostring((run.regionStartAnte or run.ante-localStage+1)+stage-1),x,664,30,"tiny",stage==localStage and gold or muted,"center")
     end
-    text("HP "..(game.playerHp or 100).."/"..(game.maxPlayerHp or 100).."   •   $"..(game.gold or 0).."   •   "..#(game.persistentDeck or {}).." LÁ",44,674,240,"tiny",muted)
-    text("3 TRẬN / ẢI",1085,663,150,"small",muted,"right")
-    g.pop()
-    return buttons
+    text("Rê chuột lên địch",1073,656,162,"tiny",muted,"right")
+    text("để xem đầy đủ",1073,678,162,"tiny",muted,"right")
+    g.pop();return buttons
 end
 return S

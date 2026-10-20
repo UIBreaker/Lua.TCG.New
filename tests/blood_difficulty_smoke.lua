@@ -41,5 +41,5 @@ for _,route in ipairs({{ante=2,region="human",area=2},{ante=80,region="hearts",a
 end
 local legacy=GS.new();legacy.run=Run.newRun("red_deck");legacy.run.currentBlindIndex=3;legacy.run.blinds[3].status="completed"
 S.enter(legacy);legacy.run.difficultyCap=nil
-legacy=reload(legacy,"BLIND_SELECT");assert(legacy.run.difficultyCap==1 and Run.getCurrentBlind(legacy.run).hp==42)
+legacy=reload(legacy,"BLIND_SELECT");assert(legacy.run.difficultyCap==1 and Run.getCurrentBlind(legacy.run).hp==200)
 print("Blood difficulty PASS: x2 HP/attack/rolled speed for all eight stages and squad members, frozen main-route anchor/cap, save/load and legacy migration, one reward, exact return route without x2 leaking")

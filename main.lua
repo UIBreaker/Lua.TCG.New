@@ -1,4 +1,14 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do if a=="--test-campaign-balance" then
+    love.filesystem.setIdentity("poker_roguelike_balance_tests")
+    local ok,err=xpcall(function() require("tests.campaign_balance_smoke") end,debug.traceback)
+    if not ok then print(err) end;os.exit(ok and 0 or 1)
+end end
+for _,a in ipairs(arg or {}) do if a=="--simulate-campaign-balance" then
+    love.filesystem.setIdentity("poker_roguelike_balance_sim")
+    local ok,err=xpcall(function() require("tests.campaign_balance_sim") end,debug.traceback)
+    if not ok then print(err) end;os.exit(ok and 0 or 1)
+end end
 for _,a in ipairs(arg or {}) do
     if a=="--test-human-bosses" then
         love.filesystem.setIdentity("poker_roguelike_human_boss_tests")
@@ -325,6 +335,7 @@ local treasureRewards = {}
 local isDeckViewerOpen = false
 local deckViewerFilter = "all" -- "all", "rank", "suit", "equipped"
 local deckViewerPage = 1
+local DeckViewer = require("ui.deck_viewer")
 
 -- Main Menu & Pause Menu State
 local menuMode = "title" -- "title", "deck_select"
@@ -990,7 +1001,7 @@ local function startNewGame(chosenDeck)
     UI.backpackUseReturn=nil
     isHandbookOpen = false
 
-    -- Red Deck begins with one card sampled uniformly from the standard 52.
+    -- Red Deck begins with five random standard cards covering all four suits.
     game.persistentDeck = Deck.createStarterDeck(game.starterDeckId)
     Deck.restoreDeck(game.persistentDeck)
     game.masterDeck = game.persistentDeck
@@ -3397,7 +3408,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.140.0", 48, 185)
+    g.print("beta 0.141.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -3825,7 +3836,7 @@ local function drawFactionSelect()
 
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf("Bắt đầu với 1 lá bài ngẫu nhiên; mở rộng bộ bài trong hành trình.", 0, 85, V_WIDTH, "center")
+    love.graphics.printf("Bắt đầu với 5 lá ngẫu nhiên đủ 4 chất; rút 3 lá lên tay khi vào trận.", 0, 85, V_WIDTH, "center")
 
     -- 4 Faction Selection Cards (Grimdark Archetypes)
     local factions = {
@@ -3912,7 +3923,7 @@ local function drawFactionSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Khởi đầu với 1 lá ngẫu nhiên. Đánh bại BOSS để chọn thêm Hộ Linh!", 0, V_HEIGHT - 35, V_WIDTH, "center")
+    love.graphics.printf("Khởi đầu với 5 lá ngẫu nhiên đủ 4 chất. Đánh bại BOSS để chọn thêm Hộ Linh!", 0, V_HEIGHT - 35, V_WIDTH, "center")
 end
 
 local function drawStarterDeckSelect()
@@ -3953,7 +3964,7 @@ local function drawStarterDeckSelect()
 
     love.graphics.setFont(UI.fonts.small)
     love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("1 lá ban đầu • Thu thập thêm bài trong hành trình • Tốc đánh từ 1 đến 999", 0, V_HEIGHT - 50, V_WIDTH, "center")
+    love.graphics.printf("5 lá ban đầu đủ 4 chất • Tay bài 3 lá • Thu thập thêm bài trong hành trình", 0, V_HEIGHT - 50, V_WIDTH, "center")
 end
 local function drawMenu()
     if menuMode == "title" then
@@ -4934,20 +4945,17 @@ local function getDeckViewerFilteredCards()
             table.insert(filtered, card)
         end
     end
-    return filtered
+    return DeckViewer.sortCards(filtered)
 end
 
 local function getDeckViewerCardAt(mx, my, modalX, modalY)
     local cards = getDeckViewerFilteredCards()
-    local first = (deckViewerPage - 1) * 32 + 1
-    for sourceIndex = first, math.min(#cards, first + 31) do
+    local first = (deckViewerPage - 1) * DeckViewer.pageSize + 1
+    for sourceIndex = first, math.min(#cards, first + DeckViewer.pageSize - 1) do
         local visibleIndex = sourceIndex - first + 1
-        local col = (visibleIndex - 1) % 8
-        local row = math.floor((visibleIndex - 1) / 8)
-        local cx = modalX + 24 + col * 84
-        local cy = modalY + 128 + row * 118
+        local cx, cy, cw, ch = DeckViewer.cardRect(visibleIndex, modalX, modalY)
         if UI.CardPhysics.hit(cards[sourceIndex], mx, my,
-            mx >= cx and mx <= cx + 74 and my >= cy and my <= cy + 108) then
+            mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch) then
             return cards[sourceIndex]
         end
     end
@@ -4965,17 +4973,14 @@ local function drawDeckViewerModal()
     local modalX = (V_WIDTH - modalW) / 2
     local modalY = (V_HEIGHT - modalH) / 2
 
-    -- Modal background & border
-    love.graphics.setColor(0.10, 0.12, 0.16, 0.98)
-    UI.drawRoundedRect("fill", modalX, modalY, modalW, modalH, 12)
-    love.graphics.setLineWidth(2.5)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    UI.drawRoundedRect("line", modalX, modalY, modalW, modalH, 12)
-
-    -- Header
-    love.graphics.setFont(UI.fonts.large)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.print(game.soulDestroyActive and "NGHI LỄ TIÊU HỦY · CHỌN MỘT LÁ BÀI" or "TOÀN BỘ BỘ BÀI HIỆN TẠI & BẢNG BÍ TỊCH", modalX + 24, modalY + 18)
+    local Chrome = require("ui.combat_chrome")
+    local Theme = require("ui.theme")
+    local Core = require("ui.components.core")
+    Chrome.panel(modalX, modalY, modalW, modalH, Theme.colors.gold)
+    Chrome.crest(modalX + 45, modalY + 40, 23, Theme.colors.gold, "cards")
+    Chrome.title(game.soulDestroyActive and "NGHI LỄ TIÊU HỦY" or "BỘ BÀI HIỆN TẠI",
+        modalX + 80, modalY + 15, 730, UI.fonts.bookTitle or UI.fonts.large, Theme.colors.gold)
+    Chrome.rule(modalX + 22, modalY + 78, modalW - 44, Theme.colors.gold)
 
     -- Close button
     local closeBtn = {
@@ -4985,10 +4990,10 @@ local function drawDeckViewerModal()
         y = modalY + 15,
         w = 140,
         h = 38,
-        color = UI.COLORS.btnDiscard,
-        font = UI.fonts.regular,
+        variant = "gold",
+        font = UI.fonts.small,
     }
-    UI.drawButton(closeBtn, mx >= closeBtn.x and mx <= closeBtn.x + closeBtn.w and my >= closeBtn.y and my <= closeBtn.y + closeBtn.h)
+    Chrome.button(UI, closeBtn, mx, my, juice.buttonPressedId)
 
     if state == "shop" then
         UI.Polish.goldPosition=UI.Polish.config.viewerGold
@@ -5022,23 +5027,22 @@ local function drawDeckViewerModal()
 
     end
 
-    -- Left Column: Cards (Width 680)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("Tổng cộng: " .. #allCards .. " lá  (Rô ♦: " .. suitCounts.aurelia .. " | Tép ♣: " .. suitCounts.elaris .. " | Bích ♠: " .. suitCounts.vharos .. " | Cơ ♥: " .. suitCounts.valoria .. " | Đã khảm: " .. equippedCount .. " lá)", modalX + 24, modalY + 58)
-
-    local cardsPerPage = 32
+    Core.text(#allCards .. " lá trong bộ · " .. equippedCount .. " lá đã khảm trang bị", modalX + 80, modalY + 55, 670, UI.fonts.tiny, Theme.colors.muted)
+    Chrome.well(modalX + 18, modalY + 151, 684, 457, Theme.colors.gold)
+    require("ui.backpack_style").compass(modalX + 360, modalY + 382, 165, Theme.colors.gold, 0.035, 0)
+    local cardsPerPage = DeckViewer.pageSize
     local totalPages = math.max(1, math.ceil(#filteredCards / cardsPerPage))
     deckViewerPage = math.max(1, math.min(deckViewerPage, totalPages))
-    local pagePrev = { id = "deck_page_prev", text = "‹", x = modalX + 570, y = modalY + 50, w = 34, h = 26, color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = deckViewerPage <= 1 }
-    local pageNext = { id = "deck_page_next", text = "›", x = modalX + 654, y = modalY + 50, w = 34, h = 26, color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = deckViewerPage >= totalPages }
-    table.insert(buttons, pagePrev)
-    table.insert(buttons, pageNext)
-    UI.drawButton(pagePrev, not pagePrev.disabled and mx >= pagePrev.x and mx <= pagePrev.x + pagePrev.w and my >= pagePrev.y and my <= pagePrev.y + pagePrev.h)
-    UI.drawButton(pageNext, not pageNext.disabled and mx >= pageNext.x and mx <= pageNext.x + pageNext.w and my >= pageNext.y and my <= pageNext.y + pageNext.h)
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf(deckViewerPage .. "/" .. totalPages, modalX + 604, modalY + 57, 50, "center")
+    local pagePrev = {id="deck_page_prev",text="‹",x=modalX+538,y=modalY+614,w=38,h=28,variant="gold",font=UI.fonts.small,disabled=deckViewerPage<=1}
+    local pageNext = {id="deck_page_next",text="›",x=modalX+656,y=modalY+614,w=38,h=28,variant="gold",font=UI.fonts.small,disabled=deckViewerPage>=totalPages}
+    local sortBtn = {id="deck_sort",text=DeckViewer.sort=="rank" and "Xếp: Hạng ↓" or "Xếp: Chất",x=modalX+548,y=modalY+89,w=146,h=24,variant="gold",font=UI.fonts.tiny}
+    for _, btn in ipairs({pagePrev,pageNext,sortBtn}) do
+        table.insert(buttons,btn)
+        Chrome.button(UI,btn,mx,my,juice.buttonPressedId)
+    end
+    Core.text("Trang " .. deckViewerPage .. "/" .. totalPages,modalX+578,modalY+621,76,UI.fonts.tiny,UI.COLORS.textLight,"center")
+    Core.text(#filteredCards .. " lá phù hợp",modalX+24,modalY+94,220,UI.fonts.tiny,UI.COLORS.textLight)
+    Core.text("Nhấn bài: xem chi tiết · Cuộn: đổi trang",modalX+24,modalY+621,500,UI.fonts.tiny,UI.COLORS.textMuted)
 
     -- Filter Tabs
     local filterTabs = {
@@ -5050,32 +5054,24 @@ local function drawDeckViewerModal()
         { id = "equipped", text = "Đã Khảm (" .. equippedCount .. ")" },
     }
     local tabStartX = modalX + 24
-    local tabY = modalY + 86
+    local tabY = modalY + 113
     local tabW = 108
     local tabH = 30
 
     for idx, tab in ipairs(filterTabs) do
         local tx = tabStartX + (idx - 1) * (tabW + 6)
         local isSelected = (deckViewerFilter == tab.id)
-        local isHovered = (mx >= tx and mx <= tx + tabW and my >= tabY and my <= tabY + tabH)
+        Chrome.button(UI, {id="deck_filter_" .. tab.id, text=tab.text, x=tx, y=tabY,
+            w=tabW, h=tabH, selected=isSelected, variant="gold", font=UI.fonts.tiny}, mx, my, juice.buttonPressedId)
+        if isSelected then
+            love.graphics.setColor(Theme.colors.gold)
+            love.graphics.setLineWidth(2)
+            love.graphics.line(tx + 19, tabY + tabH - 3, tx + tabW - 19, tabY + tabH - 3)
+        end
 
-        love.graphics.setColor(isSelected and UI.COLORS.btnPlay or (isHovered and { 0.25, 0.35, 0.45, 1 } or { 0.18, 0.22, 0.28, 1 }))
-        UI.drawRoundedRect("fill", tx, tabY, tabW, tabH, 5)
-        love.graphics.setColor(isSelected and UI.COLORS.goldYellow or { 0.35, 0.45, 0.55, 0.8 })
-        UI.drawRoundedRect("line", tx, tabY, tabW, tabH, 5)
-
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(tab.text, tx, tabY + 8, tabW, "center")
     end
 
     -- Draw Filtered Cards Grid
-    local cardGridX = modalX + 24
-    local cardGridY = modalY + 128
-    local cw = 74
-    local ch = 108
-    local cgap = 10
-    local cols = 8
     local hoveredDeckCard = nil
 
     local firstCard = (deckViewerPage - 1) * cardsPerPage + 1
@@ -5083,31 +5079,20 @@ local function drawDeckViewerModal()
     for sourceIndex = firstCard, lastCard do
         local c = filteredCards[sourceIndex]
         local i = sourceIndex - firstCard + 1
-        local col = (i - 1) % cols
-        local row = math.floor((i - 1) / cols)
-        local cx = cardGridX + col * (cw + cgap)
-        local cy = cardGridY + row * (ch + cgap)
-
+        local cx, cy, cw, ch = DeckViewer.cardRect(i, modalX, modalY)
         if cy + ch <= modalY + modalH - 20 then
             local isHov = (mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch)
             if isHov then hoveredDeckCard = c end
 
             c.hovered = isHov
-            local driftY = math.sin(((juice and juice.ambientTimer) or 0) * 1.1 + i * 0.57) * 1.8
-            local driftR = math.sin(((juice and juice.ambientTimer) or 0) * 0.72 + i * 0.41) * 0.006
-            love.graphics.push()
-            love.graphics.translate(cx + cw / 2, cy + ch / 2 + driftY)
-            love.graphics.rotate(driftR)
-            love.graphics.translate(-cw / 2, -ch / 2)
-            if not (state == "shop" and UI.Polish.hiddenOwned(c)) then UI.drawCard(c, 0, 0, cw, ch) end
-            love.graphics.pop()
+            if not (state == "shop" and UI.Polish.hiddenOwned(c)) then UI.drawCard(c, cx, cy, cw, ch) end
         end
     end
 
-    -- Divider Line
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(UI.COLORS.panelBorder)
-    love.graphics.line(modalX + 710, modalY + 70, modalX + 710, modalY + modalH - 25)
+    if #filteredCards == 0 then
+        Core.text("Không có lá bài trong nhóm này",modalX+52,modalY+330,614,UI.fonts.medium,UI.COLORS.textLight,"center")
+        Core.text("Chọn Tất cả hoặc một chất khác để tiếp tục.",modalX+52,modalY+366,614,UI.fonts.small,UI.COLORS.textMuted,"center")
+    end
 
     -- Right Column: Poker Hand Books / Progression
     local rightX = modalX + 725
@@ -5147,63 +5132,7 @@ local function drawDeckViewerModal()
         love.graphics.printf("Thu mua bằng 50% giá trị lá bài, tính cả tiến hóa, ấn bản và trang bị.\n\nTrang bị đang gắn được bán cùng lá. Tháo và cất vào balo trước nếu muốn giữ lại.\n\nBộ bài phải giữ ít nhất một lá.\n\nNhấn BÁN để xác nhận; chuột phải hoặc đóng để hủy chọn.",rightX,modalY+180,rightW,"left")
         return
     end
-    love.graphics.print("BẢNG BÍ TỊCH CÁC TAY BÀI", rightX, modalY + 65)
-
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print("Chỉ các Thế Đánh đã mở khóa mới có thể đánh ra và tạo Aura!", rightX, modalY + 92)
-
-    -- List of Poker Hands
-    local handList = {
-        { id = "high_card", name = "KỴ SĨ TIÊN PHONG", poker = "High Card", req = 1, base = "5 Chip x 1 Mult" },
-        { id = "pair", name = "CẶP HỘ VỆ", poker = "Đôi (Pair)", req = 2, base = "10 Chip x 2 Mult" },
-        { id = "two_pair", name = "HAI CÁNH TẤN CÔNG", poker = "Hai Đôi (Two Pair)", req = 4, base = "20 Chip x 2 Mult" },
-        { id = "three_of_a_kind", name = "MŨI GIÁO BA NGƯỜI", poker = "Sám Cô (3 of a Kind)", req = 3, base = "30 Chip x 3 Mult" },
-        { id = "straight", name = "ĐƯỜNG HÀNH QUÂN", poker = "Sảnh (Straight)", req = 5, base = "30 Chip x 4 Mult" },
-        { id = "flush", name = "CHUNG MỘT NGỌN CỜ", poker = "Thùng (Flush)", req = 5, base = "35 Chip x 4 Mult" },
-        { id = "full_house", name = "PHÁO ĐÀI NĂM NGƯỜI", poker = "Cù Lũ (Full House)", req = 5, base = "40 Chip x 4 Mult" },
-        { id = "four_of_a_kind", name = "BỐN TRỤ THÀNH TRÌ", poker = "Tứ Quý (4 of a Kind)", req = 4, base = "60 Chip x 7 Mult" },
-        { id = "straight_flush", name = "MŨI GIÁO HOÀNG GIA", poker = "Thùng Phá Sảnh", req = 5, base = "100 Chip x 8 Mult" },
-    }
-
-    local handItemY = modalY + 115
-    local handItemH = 52
-
-    for idx, h in ipairs(handList) do
-        local hy = handItemY + (idx - 1) * (handItemH + 6)
-        local isUnlocked = (game.unlockedHands[h.id] == true)
-
-        love.graphics.setColor(isUnlocked and { 0.14, 0.20, 0.16, 0.9 } or { 0.14, 0.15, 0.18, 0.7 })
-        UI.drawRoundedRect("fill", rightX, hy, rightW, handItemH, 6)
-
-        love.graphics.setLineWidth(1)
-        love.graphics.setColor(isUnlocked and UI.COLORS.hpGreen or { 0.3, 0.35, 0.4, 0.5 })
-        UI.drawRoundedRect("line", rightX, hy, rightW, handItemH, 6)
-
-        -- Hand Title
-        love.graphics.setFont(UI.fonts.small)
-        love.graphics.setColor(isUnlocked and UI.COLORS.goldYellow or UI.COLORS.textMuted)
-        love.graphics.print(h.name .. " (" .. h.poker .. ")", rightX + 12, hy + 8)
-
-        -- Hand stats include the current permanent level, not only base values.
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.setColor(UI.COLORS.textLight)
-        local handType = Poker.HAND_TYPES[h.id]
-        local level = (game.handLevels and game.handLevels[h.id]) or 1
-        local stats = handType and Poker.getHandStats(handType, level)
-        local statText = stats and (stats.chips .. " Chips × " .. stats.mult .. " Mult") or h.base
-        love.graphics.print("Lv." .. level .. "  •  Cần " .. h.req .. " lá  •  " .. statText, rightX + 12, hy + 28)
-
-        if isUnlocked then
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.hpGreen)
-            love.graphics.printf("[ĐÃ MỞ]", rightX + rightW - 90, hy + 16, 80, "right")
-        else
-            love.graphics.setFont(UI.fonts.tiny)
-            love.graphics.setColor(UI.COLORS.multRed)
-            love.graphics.printf("[CHƯA MỞ]", rightX + rightW - 120, hy + 16, 110, "right")
-        end
-    end
+    DeckViewer.drawHands(UI, game, rightX, modalY, rightW)
 
     -- Use the same complete description as shop, hand and reward cards.
     if hoveredDeckCard then UI.descriptionCandidate = hoveredDeckCard end
@@ -5824,7 +5753,7 @@ local function drawShopState(beginLayer)
     -- 1. [Ván Kế Tiếp] Button
     local btnNextRound = {
         id = "leave_shop",
-        text = shopData.soulMode and "SHOP LỚN →" or "ẢI TIẾP →",
+        text = shopData.soulMode and "SHOP LỚN →" or game.shopMode=="small" and game.pendingCompanionShop and "SHOP KÈM →" or "ẢI TIẾP →",
         x = 32,
         y = 653,
         w = 136,
@@ -7488,7 +7417,7 @@ local function handleModalsMousepressed(mx, my, button)
 
         -- Filter tabs
         local tabStartX = modalX + 24
-        local tabY = modalY + 86
+        local tabY = modalY + 113
         local tabW = 108
         local tabH = 30
         local filterIds = { "all", "aurelia", "elaris", "vharos", "valoria", "equipped" }
@@ -7502,15 +7431,21 @@ local function handleModalsMousepressed(mx, my, button)
             end
         end
 
-        if mx >= modalX + 570 and mx <= modalX + 604 and my >= modalY + 50 and my <= modalY + 76 then
-            deckViewerPage = math.max(1, deckViewerPage - 1)
-            Sound.play("card_slide")
-            return true
-        elseif mx >= modalX + 654 and mx <= modalX + 688 and my >= modalY + 50 and my <= modalY + 76 then
-            local pages = math.max(1, math.ceil(#getDeckViewerFilteredCards() / 32))
-            deckViewerPage = math.min(pages, deckViewerPage + 1)
-            Sound.play("card_slide")
-            return true
+        for _, btn in ipairs(buttons) do
+            if (btn.id == "deck_page_prev" or btn.id == "deck_page_next" or btn.id == "deck_sort")
+                and mx >= btn.x and mx <= btn.x+btn.w and my >= btn.y and my <= btn.y+btn.h then
+                if not btn.disabled then
+                    if btn.id == "deck_sort" then
+                        DeckViewer.sort = DeckViewer.sort == "rank" and "suit" or "rank"
+                        deckViewerPage = 1
+                    else
+                        local pages = math.max(1, math.ceil(#getDeckViewerFilteredCards()/DeckViewer.pageSize))
+                        deckViewerPage = math.max(1,math.min(pages,deckViewerPage+(btn.id=="deck_page_prev" and -1 or 1)))
+                    end
+                    Sound.play("card_slide")
+                end
+                return true
+            end
         end
 
         local card = getDeckViewerCardAt(mx, my, modalX, modalY)
@@ -8629,6 +8564,14 @@ function love.wheelmoved(x, y)
     end
     if UI.ExpandedInventory.open then
         local mx,my=toVirtual(love.mouse.getPosition());UI.ExpandedInventory.wheel(y,mx,my);return
+    end
+    if isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
+        local mx,my = toVirtual(love.mouse.getPosition())
+        if mx>=68 and mx<=752 and my>=118 and my<=677 and y~=0 then
+            local pages=math.max(1,math.ceil(#getDeckViewerFilteredCards()/DeckViewer.pageSize))
+            deckViewerPage=math.max(1,math.min(pages,deckViewerPage-(y>0 and 1 or -1)))
+        end
+        return
     end
     if UI.Description.wheelmoved(y) then return end
     if state=="barter" and not isPauseMenuOpen and not isSettingsOpen then

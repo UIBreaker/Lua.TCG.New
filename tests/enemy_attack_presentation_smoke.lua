@@ -37,6 +37,7 @@ end
 local g=Game.new("red_deck")
 local m=Monster.create(1,false,false,1);m.stage=3
 Combat.start(g,m,3)
+for _,enemy in ipairs(g.enemies) do enemy.intent={type="attack"} end -- Isolate lethal attack cancellation from support planning.
 g.playerHp=1;g.playerArmor=0;g.playerShield=0
 local hits=0
 local s=assert(P.start(g,nil,nil,function() hits=hits+1 end,function() end))

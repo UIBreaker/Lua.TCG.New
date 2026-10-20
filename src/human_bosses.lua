@@ -2,7 +2,7 @@ local Data=require("config.human_boss_data")
 local R=require("src.rng")
 local H={definitions=Data.list}
 local testMode=false
-for _,a in ipairs(arg or {}) do if a:match("^%-%-test") or a:match("^%-%-capture") then testMode=true end end
+for _,a in ipairs(arg or {}) do if a:match("^%-%-test") or a:match("^%-%-capture") or a=="--simulate-campaign-balance" then testMode=true end end
 function H.number(m) return m and m.isBoss and m.bossData and m.bossData.humanBoss end
 function H.primary(g)
     for _,m in ipairs(g.enemies or {g.monster}) do if H.number(m) then return m end end
@@ -15,11 +15,14 @@ local function emit(g,message)
 end
 function H.roll(stage)
     -- Encounter selection must not consume a potion/SPN reward's pending RNG roll.
-    local seed=math.max(1,stage or 1)
+    local level=math.max(1,stage or 1)
+    local seed=level
     local state=tostring(R.getState())
     for i=1,#state do seed=(seed*131+state:byte(i))%2147483647 end
     seed=(seed*48271)%2147483647
-    local source=Data.list[seed%#Data.list+1];local d={}
+    local pool={}
+    for _,definition in ipairs(Data.list) do if (definition.firstStage or 1)<=level then pool[#pool+1]=definition end end
+    local source=pool[seed%#pool+1];local d={}
     for k,v in pairs(source) do d[k]=v end
     d.encounterToken=(seed*48271)%2147483647
     return d
@@ -59,6 +62,10 @@ function H.start(g)
     if not g.humanBossReceipt or g.humanBossReceipt.token~=token then g.humanBossReceipt={token=token} end
     m.humanBossState={game=g,receipt=g.humanBossReceipt,forms={},stolen=0}
     local s=m.humanBossState
+    local hpScale=m.bossData.hpScale or 1
+    m.maxHp=math.max(1,math.floor(m.maxHp*hpScale));m.hp=m.maxHp;m.damageLagHp=m.hp
+    m.creatureArmor=math.floor((m.creatureArmor or 0)*hpScale)
+    m.creatureArmorMax=math.floor((m.creatureArmorMax or 0)*hpScale)
     if n==1 then m.maxHp=math.floor(m.maxHp*1.5);m.hp=m.maxHp;m.damageLagHp=m.hp
     elseif n==6 then m.creatureArmor=m.hp;m.creatureArmorMax=m.hp
     elseif n==7 and not s.receipt.spiritDestroyed then
@@ -70,7 +77,7 @@ function H.start(g)
         end
         s.receipt.spiritDestroyed=true;save(g)
     elseif n==10 then
-        local counts=s.receipt.goldStacks or {0,0,0};local remaining=s.receipt.goldStacks and 0 or math.floor(math.max(0,g.gold or 0)/10)
+        local counts=s.receipt.goldStacks or {0,0,0};local remaining=s.receipt.goldStacks and 0 or math.min(6,math.floor(math.max(0,g.gold or 0)/10))
         s.gold=s.receipt.startGold or g.gold or 0;s.receipt.startGold=s.gold
         while remaining>0 do
             local batch=math.max(1,math.floor(remaining/300));local index=R.random(3)
@@ -127,9 +134,20 @@ function H.handStart(g)
     for _,c in ipairs(g.hand or {}) do if s.forms[c.id] then applyForm(c,s.forms[c.id]) end end
     if H.number(m)==3 and m.hp>0 and passive(m) then
         local choices={};local limit=require("src.card_abilities").handSize(g,g.maxHandSize)
-        for _,hand in ipairs(require("src.poker").ALL_HANDS_ORDERED) do
+        local Poker=require("src.poker");local reachable={high_card=true}
+        -- Bound oversized potion hands; every offered pattern still has a real playable subset.
+        local size=math.min(10,#(g.hand or {}))
+        for mask=1,2^size-1 do
+            local cards={}
+            for index=1,size do if math.floor(mask/2^(index-1))%2==1 then cards[#cards+1]=g.hand[index] end end
+            if #cards<=math.min(5,limit) then
+                local info=Poker.evaluate(cards,g.unlockedHands,g.handLevels)
+                if info then reachable[info.type.id]=true end
+            end
+        end
+        for _,hand in ipairs(Poker.ALL_HANDS_ORDERED) do
             if (g.unlockedHands or {}).high_card==nil and hand.id=="high_card" or (g.unlockedHands or {})[hand.id] then
-                if (hand.requiredCards or 1)<=limit then choices[#choices+1]=hand end
+                if reachable[hand.id] and (hand.requiredCards or 1)<=limit then choices[#choices+1]=hand end
             end
         end
         s.required=#choices>0 and choices[R.random(#choices)] or require("src.poker").HAND_TYPES.HIGH_CARD

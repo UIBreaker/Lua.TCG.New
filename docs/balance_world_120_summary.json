@@ -1,0 +1,36 @@
+{
+  "encounters": 10953,
+  "positions": 360,
+  "probes": [
+    {
+      "region": "human",
+      "n": 1800,
+      "timeouts": 0
+    },
+    {
+      "region": "hearts",
+      "n": 1800,
+      "timeouts": 9
+    },
+    {
+      "region": "diamonds",
+      "n": 1800,
+      "timeouts": 8
+    },
+    {
+      "region": "clubs",
+      "n": 1800,
+      "timeouts": 6
+    },
+    {
+      "region": "spades",
+      "n": 1800,
+      "timeouts": 26
+    },
+    {
+      "region": "unknown_first20",
+      "n": 1800,
+      "timeouts": 16
+    }
+  ]
+}

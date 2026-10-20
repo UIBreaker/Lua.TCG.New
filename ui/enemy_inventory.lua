@@ -31,8 +31,8 @@ end
 local function accent(owned)
     return owned and (owned.kind=="spn" and purple or owned.kind=="seal" and blue or owned.kind=="consumable" and green) or gold
 end
-local function tile(UI,entry,x,y,reserve)
-    local owned=entry.owned;local w,h=174,reserve and 158 or 230
+local function tile(UI,entry,x,y,reserve,width)
+    local owned=entry.owned;local w,h=width or 174,reserve and 158 or 230
     local mx,my=UI.virtualMouseX or -1,UI.virtualMouseY or -1
     local hover=owned and mx>=x and mx<=x+w and my>=y and my<=y+h
     local color=accent(owned)
@@ -112,7 +112,8 @@ function I.draw(UI,m,buttons)
     local spn=(bag.backpack.spns or {})[1] or bag.stowedSpn
     if spn then supplies[#supplies+1]={owned=spn,label=bag.stowedSpn and "SPN ĐÃ CẤT" or "SPN DỰ TRỮ"} end
     for _,owned in ipairs(bag.backpack.consumables) do supplies[#supplies+1]={owned=owned,label="DÙNG MỘT LẦN"} end
-    for index,entry in ipairs(supplies) do hovered=tile(UI,entry,310+(index-1)*190,365,true) or hovered end
+    local reserveWidth=#supplies>5 and (934-16*(#supplies-1))/#supplies or 174
+    for index,entry in ipairs(supplies) do hovered=tile(UI,entry,310+(index-1)*(reserveWidth+16),365,true,reserveWidth) or hovered end
     if #supplies==0 then
         Style.panel(310,365,934,158,gold,false)
         Style.glyph("bag",354,439,18,muted)

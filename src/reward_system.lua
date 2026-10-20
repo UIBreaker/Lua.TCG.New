@@ -90,6 +90,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
         factionBonus = factionBonus,
         bossVictoryBonus = bossVictoryBonus,
         totalGold = totalGold,
+        victoryRecovery = not wasSkip and gameState.abilityCombat and gameState.abilityCombat.victoryRecovery or 0,
     }
 end
 
@@ -747,7 +748,9 @@ function RewardSystem.draw(anim, width, height, mx, my, buttons, game)
     end
     g.setColor(gold); g.polygon("fill", cx - 15, cy - 9, cx - 7, cy - 2, cx, cy - 15, cx + 7, cy - 2, cx + 15, cy - 9, cx + 12, cy + 10, cx - 12, cy + 10)
     g.setColor(0.99, 0.88, 0.59); g.rectangle("fill", cx - 11, cy + 13, 22, 3, 1)
-    g.setFont(UI.fonts.tiny); g.setColor(muted); g.print("LỄ TRAO THƯỞNG", x + 110, y + 24)
+    g.setFont(UI.fonts.tiny); g.setColor(muted)
+    local recovery=anim.breakdown.victoryRecovery or 0
+    g.print("LỄ TRAO THƯỞNG"..(recovery>0 and "  ·  NGHỈ NGƠI +"..recovery.." HP" or ""), x + 110, y + 24)
     g.setFont(UI.fonts.title); g.setColor(gold)
     local entrance = (anim.reducedMotion or anim.skipped) and 1 or Motion.settle(anim.timer,Config.presentation.enter)
     g.push(); g.translate(x + 108, y + 43 + (1 - entrance) * 8); g.scale(0.96 + entrance * 0.04)

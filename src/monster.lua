@@ -156,10 +156,11 @@ for _, d in pairs(Monster.DISRUPTIVE_BOSSES) do BossAbilities.attach(d) end
 for id, d in pairs(BossAbilities.newDefinitions) do Monster.DISRUPTIVE_BOSSES[id] = BossAbilities.attach(d) end
 local DISRUPTIVE_KEYS = { "the_needle", "the_water", "the_hook", "the_fish", "the_arm", "black_tax_collector", "memory_eater", "gatekeeper" }
 
--- Calculate Monster HP: Room 1 = 21 HP, each subsequent encounter grows by +50%.
+Monster.BASE_HP = 100
+-- Each subsequent encounter grows by +50% from the opening HP.
 function Monster.getHpByEncounter(encounterCount, isBoss, isElite)
     local n = math.max(1, encounterCount or 1)
-    local baseHp = math.floor(21 * (1.5 ^ (n - 1)) + 0.5)
+    local baseHp = math.floor(Monster.BASE_HP * (1.5 ^ (n - 1)) + 0.5)
 
     if isBoss then
         return math.floor(baseHp * 2.0)

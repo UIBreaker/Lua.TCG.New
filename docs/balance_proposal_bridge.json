@@ -1,0 +1,1835 @@
+{
+  "source": "docs/balance_proposal_bridge.csv",
+  "encounters": 15703,
+  "campaigns": [
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "0.55",
+      "campaign_fights": "171",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 1 boss 0": 15,
+        "stage 1 boss 1": 9,
+        "stage 2 boss 1": 10,
+        "stage 3 boss 5": 2,
+        "stage 3 boss 1": 2,
+        "stage 2 boss 5": 1,
+        "stage 4 boss 1": 1
+      }
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "0.9",
+      "campaign_fights": "220",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 4 boss 5": 1,
+        "stage 1 boss 1": 11,
+        "stage 3 boss 5": 1,
+        "stage 1 boss 0": 5,
+        "stage 2 boss 1": 8,
+        "stage 3 boss 1": 7,
+        "stage 2 boss 0": 1,
+        "stage 3 boss 0": 1,
+        "stage 4 boss 0": 1,
+        "stage 1 boss 5": 3,
+        "stage 4 boss 1": 1
+      }
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "0.55",
+      "campaign_fights": "170",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 1 boss 0": 15,
+        "stage 1 boss 1": 9,
+        "stage 2 boss 1": 10,
+        "stage 3 boss 1": 2,
+        "stage 3 boss 5": 1,
+        "stage 3 boss 0": 1,
+        "stage 2 boss 5": 1,
+        "stage 4 boss 1": 1
+      }
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "1.15",
+      "campaign_fights": "250",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 4 boss 5": 1,
+        "stage 1 boss 1": 11,
+        "stage 4 boss 3": 2,
+        "stage 1 boss 0": 5,
+        "stage 2 boss 1": 8,
+        "stage 3 boss 1": 7,
+        "stage 4 boss 0": 2,
+        "stage 1 boss 5": 3,
+        "stage 10 boss 6": 1
+      }
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "0.875",
+      "campaign_fights": "209",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 1 boss 0": 15,
+        "stage 1 boss 1": 9,
+        "stage 2 boss 1": 9,
+        "stage 4 boss 3": 1,
+        "stage 9 boss 3": 1,
+        "stage 3 boss 5": 1,
+        "stage 3 boss 0": 1,
+        "stage 3 boss 1": 2,
+        "stage 8 boss 5": 1
+      }
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "completed": "0",
+      "seeds": "40",
+      "mean_stages": "1.4",
+      "campaign_fights": "283",
+      "win_percent": 0.0,
+      "wilson95": [
+        0,
+        8.8
+      ],
+      "failures": {
+        "stage 5 boss 5": 1,
+        "stage 1 boss 1": 11,
+        "stage 11 boss 8": 1,
+        "stage 1 boss 0": 5,
+        "stage 4 boss 3": 2,
+        "stage 2 boss 1": 5,
+        "stage 3 boss 1": 9,
+        "stage 6 boss 3": 1,
+        "stage 1 boss 5": 3,
+        "stage 2 boss 5": 1,
+        "stage 8 boss 5": 1
+      }
+    }
+  ],
+  "probes": [
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 1,
+      "win_percent": 50.0,
+      "turns": 10.97,
+      "aura": 44,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.6
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 2,
+      "win_percent": 75.8,
+      "turns": 7.47,
+      "aura": 111,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 7.3
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 3,
+      "win_percent": 70.8,
+      "turns": 7.16,
+      "aura": 290,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 10.4
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 4,
+      "win_percent": 48.3,
+      "turns": 5.57,
+      "aura": 442,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 7.4
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 5,
+      "win_percent": 58.3,
+      "turns": 5.09,
+      "aura": 996,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.7
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 6,
+      "win_percent": 53.3,
+      "turns": 7.06,
+      "aura": 884,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 11.7
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 7,
+      "win_percent": 28.3,
+      "turns": 5.49,
+      "aura": 1264,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.4
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 8,
+      "win_percent": 21.7,
+      "turns": 6.84,
+      "aura": 1349,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.1
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 9,
+      "win_percent": 22.5,
+      "turns": 6.09,
+      "aura": 2497,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.8
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 10,
+      "win_percent": 9.2,
+      "turns": 5.14,
+      "aura": 3293,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.9
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 11,
+      "win_percent": 10.8,
+      "turns": 5.87,
+      "aura": 4180,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.9
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 12,
+      "win_percent": 10.0,
+      "turns": 6.2,
+      "aura": 8050,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 4.7
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 13,
+      "win_percent": 10.0,
+      "turns": 6.65,
+      "aura": 9828,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.3
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 14,
+      "win_percent": 4.2,
+      "turns": 5.14,
+      "aura": 16190,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.4
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 15,
+      "win_percent": 2.5,
+      "turns": 5.3,
+      "aura": 20601,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.4
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 16,
+      "win_percent": 0.8,
+      "turns": 5.07,
+      "aura": 27777,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 17,
+      "win_percent": 0.8,
+      "turns": 5.28,
+      "aura": 35289,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 18,
+      "win_percent": 0,
+      "turns": 4.81,
+      "aura": 42804,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 19,
+      "win_percent": 0,
+      "turns": 5.99,
+      "aura": 56340,
+      "timeouts": 1,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "stage": 20,
+      "win_percent": 0,
+      "turns": 4.23,
+      "aura": 91624,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 1,
+      "win_percent": 65.8,
+      "turns": 9.34,
+      "aura": 60,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.2
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 2,
+      "win_percent": 85.8,
+      "turns": 6.2,
+      "aura": 127,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.3
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 3,
+      "win_percent": 74.2,
+      "turns": 6.37,
+      "aura": 306,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.4
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 4,
+      "win_percent": 70.8,
+      "turns": 5.88,
+      "aura": 515,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 8.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 5,
+      "win_percent": 73.3,
+      "turns": 4.82,
+      "aura": 1152,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.3
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 6,
+      "win_percent": 65.0,
+      "turns": 7.33,
+      "aura": 961,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.7
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 7,
+      "win_percent": 44.2,
+      "turns": 6.15,
+      "aura": 1287,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 2.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 8,
+      "win_percent": 33.3,
+      "turns": 7.47,
+      "aura": 1363,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 4.8
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 9,
+      "win_percent": 25.0,
+      "turns": 7.03,
+      "aura": 2587,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.1
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 10,
+      "win_percent": 20.0,
+      "turns": 6.21,
+      "aura": 3412,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.3
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 11,
+      "win_percent": 15.0,
+      "turns": 6.84,
+      "aura": 4365,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.3
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 12,
+      "win_percent": 15.0,
+      "turns": 6.97,
+      "aura": 8141,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 13,
+      "win_percent": 10.0,
+      "turns": 7.51,
+      "aura": 9788,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.1
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 14,
+      "win_percent": 5.8,
+      "turns": 6.07,
+      "aura": 15564,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.3
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 15,
+      "win_percent": 0.8,
+      "turns": 6.08,
+      "aura": 19280,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.1
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 16,
+      "win_percent": 0.8,
+      "turns": 6.18,
+      "aura": 27174,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 17,
+      "win_percent": 0.8,
+      "turns": 6.5,
+      "aura": 32843,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 18,
+      "win_percent": 0,
+      "turns": 5.74,
+      "aura": 37768,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 19,
+      "win_percent": 0,
+      "turns": 6.96,
+      "aura": 56479,
+      "timeouts": 1,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "stage": 20,
+      "win_percent": 0,
+      "turns": 5.26,
+      "aura": 85146,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.0
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 1,
+      "win_percent": 50.0,
+      "turns": 10.97,
+      "aura": 44,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.6
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 2,
+      "win_percent": 79.2,
+      "turns": 6.66,
+      "aura": 120,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 8.3
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 3,
+      "win_percent": 75.0,
+      "turns": 6.29,
+      "aura": 337,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.6
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 4,
+      "win_percent": 68.3,
+      "turns": 5.28,
+      "aura": 539,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 8.0
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 5,
+      "win_percent": 78.3,
+      "turns": 4.56,
+      "aura": 1422,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.9
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 6,
+      "win_percent": 72.5,
+      "turns": 6.12,
+      "aura": 1502,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 16.4
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 7,
+      "win_percent": 62.5,
+      "turns": 5.24,
+      "aura": 2179,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.1
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 8,
+      "win_percent": 62.5,
+      "turns": 6.67,
+      "aura": 2625,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.5
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 9,
+      "win_percent": 64.2,
+      "turns": 5.96,
+      "aura": 5143,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 9.2
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 10,
+      "win_percent": 55.0,
+      "turns": 5.31,
+      "aura": 8212,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.1
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 11,
+      "win_percent": 55.8,
+      "turns": 6,
+      "aura": 10618,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 4.1
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 12,
+      "win_percent": 58.3,
+      "turns": 6.75,
+      "aura": 22218,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.8
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 13,
+      "win_percent": 55.8,
+      "turns": 5.78,
+      "aura": 36410,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.3
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 14,
+      "win_percent": 60.8,
+      "turns": 5.99,
+      "aura": 55461,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 9.4
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 15,
+      "win_percent": 41.7,
+      "turns": 7.57,
+      "aura": 65926,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 6.1
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 16,
+      "win_percent": 33.3,
+      "turns": 6.42,
+      "aura": 115790,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.5
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 17,
+      "win_percent": 42.5,
+      "turns": 7.03,
+      "aura": 151511,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.6
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 18,
+      "win_percent": 30.8,
+      "turns": 7.76,
+      "aura": 184709,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.9
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 19,
+      "win_percent": 26.7,
+      "turns": 8.34,
+      "aura": 278215,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.2
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "stage": 20,
+      "win_percent": 25.8,
+      "turns": 7.07,
+      "aura": 459302,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.4
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 1,
+      "win_percent": 65.8,
+      "turns": 9.34,
+      "aura": 60,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.2
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 2,
+      "win_percent": 87.5,
+      "turns": 5.68,
+      "aura": 135,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 12.9
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 3,
+      "win_percent": 85.8,
+      "turns": 5.89,
+      "aura": 343,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 4,
+      "win_percent": 82.5,
+      "turns": 5.03,
+      "aura": 581,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 11.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 5,
+      "win_percent": 85.8,
+      "turns": 4.35,
+      "aura": 1442,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 16.6
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 6,
+      "win_percent": 80.0,
+      "turns": 5.8,
+      "aura": 1539,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 20.6
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 7,
+      "win_percent": 73.3,
+      "turns": 5.07,
+      "aura": 2220,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.5
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 8,
+      "win_percent": 71.7,
+      "turns": 6.61,
+      "aura": 2653,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 6.0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 9,
+      "win_percent": 70.0,
+      "turns": 6.15,
+      "aura": 5368,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 10.4
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 10,
+      "win_percent": 61.7,
+      "turns": 5.73,
+      "aura": 7903,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.8
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 11,
+      "win_percent": 62.5,
+      "turns": 6.45,
+      "aura": 10865,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 5.0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 12,
+      "win_percent": 63.3,
+      "turns": 6.67,
+      "aura": 22346,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 15.6
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 13,
+      "win_percent": 64.2,
+      "turns": 5.66,
+      "aura": 37062,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.9
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 14,
+      "win_percent": 61.7,
+      "turns": 6.11,
+      "aura": 52611,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 11.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 15,
+      "win_percent": 50.0,
+      "turns": 7.58,
+      "aura": 65063,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 8.0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 16,
+      "win_percent": 43.3,
+      "turns": 6.61,
+      "aura": 116819,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.9
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 17,
+      "win_percent": 48.3,
+      "turns": 7.69,
+      "aura": 144474,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 3.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 18,
+      "win_percent": 35.0,
+      "turns": 7.97,
+      "aura": 188828,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 7.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 19,
+      "win_percent": 28.3,
+      "turns": 8.53,
+      "aura": 275071,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.1
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "stage": 20,
+      "win_percent": 25.8,
+      "turns": 7.33,
+      "aura": 447609,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 2.0
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 1,
+      "win_percent": 50.0,
+      "turns": 10.97,
+      "aura": 44,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 0.6
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 2,
+      "win_percent": 85.0,
+      "turns": 6.07,
+      "aura": 127,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 9.9
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 3,
+      "win_percent": 85.0,
+      "turns": 5.84,
+      "aura": 386,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.7
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 4,
+      "win_percent": 87.5,
+      "turns": 4.47,
+      "aura": 689,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 13.5
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 5,
+      "win_percent": 87.5,
+      "turns": 3.54,
+      "aura": 1943,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 25.9
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 6,
+      "win_percent": 85.0,
+      "turns": 5,
+      "aura": 2232,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 25.0
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 7,
+      "win_percent": 82.5,
+      "turns": 3.66,
+      "aura": 3635,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 9.7
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 8,
+      "win_percent": 85.0,
+      "turns": 4.62,
+      "aura": 5358,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 19.2
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 9,
+      "win_percent": 85.0,
+      "turns": 4.65,
+      "aura": 10451,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 18.4
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 10,
+      "win_percent": 90.0,
+      "turns": 3.62,
+      "aura": 18862,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 16.0
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 11,
+      "win_percent": 85.8,
+      "turns": 4.1,
+      "aura": 27146,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 15.3
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 12,
+      "win_percent": 91.7,
+      "turns": 4.03,
+      "aura": 70558,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 36.8
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 13,
+      "win_percent": 93.3,
+      "turns": 2.92,
+      "aura": 113438,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 19.1
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 14,
+      "win_percent": 90.0,
+      "turns": 3.39,
+      "aura": 187651,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 37.9
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 15,
+      "win_percent": 89.2,
+      "turns": 3.73,
+      "aura": 284569,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 35.6
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 16,
+      "win_percent": 87.5,
+      "turns": 3.17,
+      "aura": 535630,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 30.1
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 17,
+      "win_percent": 94.2,
+      "turns": 3.31,
+      "aura": 767483,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 27.3
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 18,
+      "win_percent": 84.2,
+      "turns": 4.81,
+      "aura": 967991,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 30.0
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 19,
+      "win_percent": 90.0,
+      "turns": 3.66,
+      "aura": 1825522,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.5
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "stage": 20,
+      "win_percent": 89.2,
+      "turns": 3.49,
+      "aura": 3109058,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 39.8
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 1,
+      "win_percent": 65.8,
+      "turns": 9.34,
+      "aura": 60,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 1.2
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 2,
+      "win_percent": 91.7,
+      "turns": 5.36,
+      "aura": 142,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 13.6
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 3,
+      "win_percent": 90.0,
+      "turns": 5.5,
+      "aura": 377,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 15.8
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 4,
+      "win_percent": 92.5,
+      "turns": 4.49,
+      "aura": 683,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 14.0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 5,
+      "win_percent": 94.2,
+      "turns": 3.37,
+      "aura": 1947,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 26.2
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 6,
+      "win_percent": 87.5,
+      "turns": 4.92,
+      "aura": 2162,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 25.0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 7,
+      "win_percent": 85.8,
+      "turns": 3.62,
+      "aura": 3577,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 10.8
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 8,
+      "win_percent": 88.3,
+      "turns": 4.68,
+      "aura": 5344,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 21.1
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 9,
+      "win_percent": 86.7,
+      "turns": 4.64,
+      "aura": 10235,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 20.7
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 10,
+      "win_percent": 92.5,
+      "turns": 3.7,
+      "aura": 17285,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 17.0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 11,
+      "win_percent": 90.8,
+      "turns": 4.2,
+      "aura": 26042,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 15.8
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 12,
+      "win_percent": 93.3,
+      "turns": 3.87,
+      "aura": 61833,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 40.7
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 13,
+      "win_percent": 94.2,
+      "turns": 2.9,
+      "aura": 107664,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 19.4
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 14,
+      "win_percent": 91.7,
+      "turns": 3.44,
+      "aura": 170024,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 38.5
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 15,
+      "win_percent": 90.0,
+      "turns": 3.77,
+      "aura": 259872,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 36.2
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 16,
+      "win_percent": 90.0,
+      "turns": 3.19,
+      "aura": 495340,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 30.5
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 17,
+      "win_percent": 95.8,
+      "turns": 3.29,
+      "aura": 696037,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 28.2
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 18,
+      "win_percent": 84.2,
+      "turns": 4.57,
+      "aura": 854608,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 32.2
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 19,
+      "win_percent": 91.7,
+      "turns": 3.42,
+      "aura": 1788720,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 16.0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "stage": 20,
+      "win_percent": 90.8,
+      "turns": 3.63,
+      "aura": 3032153,
+      "timeouts": 0,
+      "oneshot_per_landed_hit": 38.3
+    }
+  ],
+  "bosses": [
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 14.1,
+      "turns": 5.8
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 0,
+      "turns": 3.21
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 7.3,
+      "turns": 5.06
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 4.7,
+      "turns": 4.73
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 16.4,
+      "turns": 6.07
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 6.9,
+      "turns": 4.56
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 0,
+      "turns": 4.33
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 0,
+      "turns": 2.45
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 12.3,
+      "turns": 4.71
+    },
+    {
+      "profile": "weak",
+      "policy": "greedy",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 2.2,
+      "turns": 3.98
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 25.6,
+      "turns": 6.51
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 1.6,
+      "turns": 4.14
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 18.8,
+      "turns": 6.09
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 3.1,
+      "turns": 5.56
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 26.6,
+      "turns": 6.34
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 8.3,
+      "turns": 5.53
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 0,
+      "turns": 5.77
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 0,
+      "turns": 3.26
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 17.8,
+      "turns": 5.67
+    },
+    {
+      "profile": "weak",
+      "policy": "tactical",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 2.2,
+      "turns": 4.98
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 21.8,
+      "turns": 6.72
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 7.9,
+      "turns": 3.17
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 24.0,
+      "turns": 7.02
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 15.6,
+      "turns": 6.36
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 28.1,
+      "turns": 6.62
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 18.1,
+      "turns": 6.51
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 23.3,
+      "turns": 5.92
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 4.8,
+      "turns": 2.83
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 34.2,
+      "turns": 5.51
+    },
+    {
+      "profile": "normal",
+      "policy": "greedy",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 17.4,
+      "turns": 5.33
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 32.7,
+      "turns": 7.08
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 17.5,
+      "turns": 4.08
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 31.2,
+      "turns": 7.03
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 14.1,
+      "turns": 7.12
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 40.6,
+      "turns": 6.64
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 27.8,
+      "turns": 7.36
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 28.3,
+      "turns": 7.52
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 2.4,
+      "turns": 3.86
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 42.5,
+      "turns": 6.3
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 21.7,
+      "turns": 6.09
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 51.9,
+      "turns": 6.33
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 19.0,
+      "turns": 3
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 68.8,
+      "turns": 4.84
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 43.8,
+      "turns": 5.19
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 57.8,
+      "turns": 6.11
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 77.8,
+      "turns": 4.33
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 90.0,
+      "turns": 3.92
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 52.4,
+      "turns": 2.83
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 87.7,
+      "turns": 3.47
+    },
+    {
+      "profile": "strong",
+      "policy": "greedy",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 84.8,
+      "turns": 3.22
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 1,
+      "n": 156,
+      "win_percent": 63.5,
+      "turns": 6.48
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 2,
+      "n": 63,
+      "win_percent": 41.3,
+      "turns": 3.46
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 3,
+      "n": 96,
+      "win_percent": 77.1,
+      "turns": 4.83
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 4,
+      "n": 64,
+      "win_percent": 48.4,
+      "turns": 6.08
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 5,
+      "n": 128,
+      "win_percent": 67.2,
+      "turns": 6.02
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 6,
+      "n": 72,
+      "win_percent": 86.1,
+      "turns": 4.47
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 7,
+      "n": 60,
+      "win_percent": 93.3,
+      "turns": 3.98
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 8,
+      "n": 42,
+      "win_percent": 57.1,
+      "turns": 3.24
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 9,
+      "n": 73,
+      "win_percent": 91.8,
+      "turns": 3.55
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "boss": 10,
+      "n": 46,
+      "win_percent": 80.4,
+      "turns": 3.3
+    }
+  ]
+}

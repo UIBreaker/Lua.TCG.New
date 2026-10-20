@@ -1,0 +1,494 @@
+{
+  "opening": [
+    {
+      "hp": 100,
+      "policy": "greedy",
+      "n": 200,
+      "first_wins": 200,
+      "stage_wins": 50,
+      "first_hp_median": 100.0,
+      "first_hands_median": 12.0,
+      "first_hands_max": 31,
+      "timeouts": 0
+    },
+    {
+      "hp": 100,
+      "policy": "tactical",
+      "n": 200,
+      "first_wins": 200,
+      "stage_wins": 107,
+      "first_hp_median": 100.0,
+      "first_hands_median": 4.5,
+      "first_hands_max": 20,
+      "timeouts": 0
+    }
+  ],
+  "wealth": [
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 1,
+      "gold_median": 12.0,
+      "souls_median": 1.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 2,
+      "gold_median": 21.0,
+      "souls_median": 2.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 3,
+      "gold_median": 42.0,
+      "souls_median": 6.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 6,
+      "gold_median": 85.0,
+      "souls_median": 15.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 9,
+      "gold_median": 129.0,
+      "souls_median": 24.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 12,
+      "gold_median": 173.0,
+      "souls_median": 32.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 30,
+      "gold_median": 434.5,
+      "souls_median": 83.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 0,
+      "fight": 60,
+      "gold_median": 872.0,
+      "souls_median": 168.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 1,
+      "gold_median": 14.0,
+      "souls_median": 1.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 2,
+      "gold_median": 25.0,
+      "souls_median": 2.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 3,
+      "gold_median": 49.0,
+      "souls_median": 6.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 6,
+      "gold_median": 99.0,
+      "souls_median": 15.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 9,
+      "gold_median": 148.0,
+      "souls_median": 24.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 12,
+      "gold_median": 198.0,
+      "souls_median": 32.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 30,
+      "gold_median": 496.0,
+      "souls_median": 83.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "save",
+      "unused": 2,
+      "fight": 60,
+      "gold_median": 993.0,
+      "souls_median": 168.0,
+      "spent_mean": 0,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 1,
+      "gold_median": 4.0,
+      "souls_median": 1.0,
+      "spent_mean": 6.6,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 2,
+      "gold_median": 8.0,
+      "souls_median": 2.0,
+      "spent_mean": 8.76,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 3,
+      "gold_median": 12.0,
+      "souls_median": 6.0,
+      "spent_mean": 25.68,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 6,
+      "gold_median": 16.0,
+      "souls_median": 15.0,
+      "spent_mean": 57.12,
+      "strong_bought_mean": 0
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 9,
+      "gold_median": 20.0,
+      "souls_median": 24.0,
+      "spent_mean": 90.26,
+      "strong_bought_mean": 0.01
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 12,
+      "gold_median": 22.0,
+      "souls_median": 32.0,
+      "spent_mean": 127.25,
+      "strong_bought_mean": 0.01
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 30,
+      "gold_median": 21.0,
+      "souls_median": 39.0,
+      "spent_mean": 363.93,
+      "strong_bought_mean": 1.21
+    },
+    {
+      "policy": "shopper",
+      "unused": 0,
+      "fight": 60,
+      "gold_median": 23.0,
+      "souls_median": 28.0,
+      "spent_mean": 759.54,
+      "strong_bought_mean": 3.55
+    }
+  ],
+  "offers": [
+    {
+      "group": "card_evolution2",
+      "currency": "gold",
+      "period": "early",
+      "n": 237,
+      "price_min": 64,
+      "price_median": 80,
+      "price_max": 156,
+      "affordable_pct": 32.07,
+      "free_pct": 0
+    },
+    {
+      "group": "card_evolution2",
+      "currency": "gold",
+      "period": "late",
+      "n": 1327,
+      "price_min": 64,
+      "price_median": 72,
+      "price_max": 156,
+      "affordable_pct": 100,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_other",
+      "currency": "blood",
+      "period": "early",
+      "n": 63,
+      "price_min": 192,
+      "price_median": 560,
+      "price_max": 1968,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_other",
+      "currency": "blood",
+      "period": "late",
+      "n": 329,
+      "price_min": 192,
+      "price_median": 576,
+      "price_max": 1968,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_other",
+      "currency": "gold",
+      "period": "early",
+      "n": 2234,
+      "price_min": 0,
+      "price_median": 79.0,
+      "price_max": 342,
+      "affordable_pct": 44.23,
+      "free_pct": 0.63
+    },
+    {
+      "group": "gear_other",
+      "currency": "gold",
+      "period": "late",
+      "n": 11159,
+      "price_min": 0,
+      "price_median": 80,
+      "price_max": 342,
+      "affordable_pct": 98.49,
+      "free_pct": 0.65
+    },
+    {
+      "group": "gear_tier4_plus",
+      "currency": "blood",
+      "period": "early",
+      "n": 28,
+      "price_min": 1104,
+      "price_median": 3336.0,
+      "price_max": 5472,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_tier4_plus",
+      "currency": "blood",
+      "period": "late",
+      "n": 95,
+      "price_min": 1104,
+      "price_median": 2624,
+      "price_max": 5472,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_tier4_plus",
+      "currency": "gold",
+      "period": "early",
+      "n": 663,
+      "price_min": 114,
+      "price_median": 362,
+      "price_max": 827,
+      "affordable_pct": 0.9,
+      "free_pct": 0
+    },
+    {
+      "group": "gear_tier4_plus",
+      "currency": "gold",
+      "period": "late",
+      "n": 3595,
+      "price_min": 114,
+      "price_median": 362,
+      "price_max": 827,
+      "affordable_pct": 67.09,
+      "free_pct": 0
+    },
+    {
+      "group": "soul_relic",
+      "currency": "blood",
+      "period": "early",
+      "n": 26,
+      "price_min": 384,
+      "price_median": 480.0,
+      "price_max": 640,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "soul_relic",
+      "currency": "blood",
+      "period": "late",
+      "n": 104,
+      "price_min": 352,
+      "price_median": 480.0,
+      "price_max": 672,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "soul_relic",
+      "currency": "souls",
+      "period": "early",
+      "n": 3000,
+      "price_min": 44,
+      "price_median": 60.0,
+      "price_max": 84,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "soul_relic",
+      "currency": "souls",
+      "period": "late",
+      "n": 17000,
+      "price_min": 44,
+      "price_median": 60.0,
+      "price_max": 84,
+      "affordable_pct": 75.66,
+      "free_pct": 0
+    },
+    {
+      "group": "spn_epic_plus",
+      "currency": "blood",
+      "period": "early",
+      "n": 4,
+      "price_min": 192,
+      "price_median": 192.0,
+      "price_max": 192,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "spn_epic_plus",
+      "currency": "blood",
+      "period": "late",
+      "n": 49,
+      "price_min": 192,
+      "price_median": 192,
+      "price_max": 512,
+      "affordable_pct": 0,
+      "free_pct": 0
+    },
+    {
+      "group": "spn_epic_plus",
+      "currency": "gold",
+      "period": "early",
+      "n": 30,
+      "price_min": 72,
+      "price_median": 72.0,
+      "price_max": 72,
+      "affordable_pct": 100,
+      "free_pct": 0
+    },
+    {
+      "group": "spn_epic_plus",
+      "currency": "gold",
+      "period": "late",
+      "n": 894,
+      "price_min": 72,
+      "price_median": 72.0,
+      "price_max": 432,
+      "affordable_pct": 100,
+      "free_pct": 0
+    }
+  ],
+  "access": [
+    {
+      "group": "spn_epic_plus",
+      "multiplier": "current",
+      "routes": 200,
+      "ever_affordable_pct": 97.5,
+      "first_affordable_fight_median": 18,
+      "affordable_by_fight9_pct": 14.5,
+      "ever_free_pct": 0.0
+    },
+    {
+      "group": "gear_tier4_plus",
+      "multiplier": "current",
+      "routes": 200,
+      "ever_affordable_pct": 100.0,
+      "first_affordable_fight_median": 18.0,
+      "affordable_by_fight9_pct": 3.0,
+      "ever_free_pct": 0.0
+    },
+    {
+      "group": "soul_relic",
+      "multiplier": "current",
+      "routes": 200,
+      "ever_affordable_pct": 100.0,
+      "first_affordable_fight_median": 18.0,
+      "affordable_by_fight9_pct": 0.0,
+      "ever_free_pct": 0.0
+    },
+    {
+      "group": "card_evolution2",
+      "multiplier": "current",
+      "routes": 200,
+      "ever_affordable_pct": 99.5,
+      "first_affordable_fight_median": 16,
+      "affordable_by_fight9_pct": 23.0,
+      "ever_free_pct": 0.0
+    }
+  ],
+  "shopper": {
+    "routes": 200,
+    "strong_mean": 3.55,
+    "free_strong_mean": 0,
+    "ever_free_strong_pct": 0,
+    "early_any_strong_pct": 0.5
+  },
+  "counts": {
+    "opening_fights": 1018,
+    "economy_rows": 36000,
+    "offers": 592387
+  }
+}

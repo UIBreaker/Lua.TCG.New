@@ -49,21 +49,25 @@ assert(Shop.getDestructionRewards(g,g.persistentDeck[1]).heal==0)
 g=game();shop=Shop.new();buy(g,"v_welcome",shop);buy(g,"v_welcome",shop)
 g.freeRerolls=1;local gold=g.gold
 assert(Shop.reroll(shop,g) and g.freeRerolls==0 and not shop.welcomeRerollUsed)
-for i=1,2 do assert(Shop.getRerollCost(shop,g)==0 and Shop.reroll(shop,g) and g.gold==gold and shop.rerollCost==2) end
-assert(Shop.getRerollCost(shop,g)==2)
-assert(Shop.reroll(shop,g) and g.gold==gold-2 and Shop.getRerollCost(shop,g)==4)
+for i=1,2 do assert(Shop.getRerollCost(shop,g)==0 and Shop.reroll(shop,g) and g.gold==gold and shop.rerollCost==5) end
+assert(Shop.getRerollCost(shop,g)==5)
+assert(Shop.reroll(shop,g) and g.gold==gold-5 and Shop.getRerollCost(shop,g)==7)
 buy(g,"v_welcome",shop);assert(Shop.getRerollCost(shop,g)==0)
-assert(Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==4)
+assert(Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==7)
 Shop.resetReroll(shop);assert(Shop.getRerollCost(shop,g)==0)
 shop.mode="blood_small";assert(Shop.getRerollCost(shop,g)==20)
 shop.mode="large";shop.soulMode=true;g.soulRerollCount=0;assert(Shop.getRerollCost(shop,g)==5)
 
 g=game();shop=Shop.new();shop.rerollCost=10
+assert(Shop.getRerollCost(shop,g)==10)
+g.gold=9;local stock=shop.items
+assert(not Shop.reroll(shop,g) and g.gold==9 and shop.items==stock and not shop.rerollCount)
+g.gold=100000
 buy(g,"v_discount",shop);assert(Shop.getRerollCost(shop,g)==8)
 buy(g,"v_discount",shop);assert(Shop.getRerollCost(shop,g)==6)
 Shop.resetReroll(shop);Shop.refresh(shop,g);assert(Shop.getRerollCost(shop,g)==1)
-assert(Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==1)
 assert(Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==3)
+assert(Shop.reroll(shop,g) and Shop.getRerollCost(shop,g)==6)
 buy(g,"v_pack_discount",shop);buy(g,"v_pack_discount",shop)
 for i=1,2 do
     Shop.applyVoucherStock(shop,g)
@@ -100,7 +104,7 @@ g=game();g.vouchers.v_hand_plus=true;g.maxHands=4;g.handsRemaining=4
 buy(g,"v_hand_plus");assert(Shop.voucherLevel("v_hand_plus",g)==2 and g.maxHands==5)
 g.vouchers.v_vitality={bloodPower=5};g.maxPlayerHp=200;g.playerHp=100
 buy(g,"v_vitality");assert(Shop.voucherPower("v_vitality",g)==6 and g.maxPlayerHp==225)
-g.playerHp=1000;g.maxPlayerHp=1000;buy(g,"v_hand_plus",nil,5)
+g.playerHp=10000;g.maxPlayerHp=10000;buy(g,"v_hand_plus",nil,5)
 assert(Shop.voucherLevel("v_hand_plus",g)==3 and Shop.voucherPower("v_hand_plus",g)==7 and g.maxHands==10)
 local restored=assert(Persistence.restoreSnapshot(Persistence.decode(Persistence.encode(Persistence.makeSnapshot(g,"shop")))))
 assert(restored.maxHands==10 and Shop.voucherLevel("v_hand_plus",restored)==3 and Shop.voucherPower("v_hand_plus",restored)==7)

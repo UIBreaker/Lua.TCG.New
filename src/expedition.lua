@@ -58,7 +58,7 @@ end
 function E.travelPermit()
     return {id="cons_travel_permit",category="travel_permit",type="TRAVEL_PERMIT",name="Giấy Phép Di Chuyển",
         rarity="rare",cost=2000,color={.53,.78,.94,1},
-        desc="Chọn khu vực để rời đi lúc cần, kể cả khi đang chiến đấu và không có hành động đang xử lý. Mỗi chuyến tiêu hao một giấy phép; đủ 4 công nhận Cơ, Rô, Chuồn, Bích thì dùng không giới hạn, không mất lá. Bí ẩn yêu cầu đủ 4 công nhận. Ở lại giữ nguyên giấy phép và giữ độ khó tại mốc đã chinh phục. Có thể bán lấy 1.000 vàng."}
+        desc="Chọn khu vực để rời đi lúc cần, kể cả khi đang chiến đấu và không có hành động đang xử lý. Mỗi chuyến tiêu hao một giấy phép; đủ 4 công nhận Cơ, Rô, Chuồn, Bích thì dùng không giới hạn, không mất lá. Bí ẩn yêu cầu đủ 4 công nhận. Ở lại giữ nguyên giấy phép và giữ độ khó tại mốc đã chinh phục. Có thể bán lấy 250 vàng."}
 end
 E.humanNames={"Tân Binh Lữ Hành","Trinh Sát Biên Cương","Xạ Thủ Thạch Kiều","Vệ Binh Khiên Thép","Dược Sư Dã Chiến","Kiếm Sĩ Lãng Du","Công Binh Hội Thợ","Lão Binh Thành Cổ","Thống Lĩnh Thương Đoàn","Đội Trưởng Độc Lập","Nữ Công Tước Hội Đồng","Đại Thủ Lĩnh Nhân Loại"}
 E.kingdoms = {

@@ -27,10 +27,12 @@ local ok,err=xpcall(function()
     local Run=require("src.run_manager")
     local seen={}
     local oldState=R.getState()
+    assert(H.roll(0).humanBoss,"invalid low stage inputs still use the opening boss pool")
     for sample=1,200 do
         local stage=(sample-1)%20+1;R.seed(1000+sample);local state=R.getState()
         local blind=Run.generateAnteBlinds(stage,nil,"human",stage)[3]
         assert(blind.debuff.humanBoss and blind.name==blind.debuff.name)
+        assert(stage>=(blind.debuff.firstStage or 1),"counter bosses cannot spawn before their preparation tier")
         assert(R.getState()==state,"boss selection must be RNG-neutral to combat reward rolls")
         seen[blind.debuff.humanBoss]=true
     end
@@ -41,6 +43,26 @@ local ok,err=xpcall(function()
     end
     assert(Run.generateAnteBlinds(40,nil,"human",7)[3].debuff.humanBoss,"returning to the human region uses its local roster")
     R.random=fixed
+    local capacityGame,capacityBoss=fixture(3)
+    capacityGame.unlockedHands={high_card=true,pair=true,straight=true,flush=true}
+    capacityGame.hand={D.newCard(2,"clubs"),D.newCard(5,"hearts"),D.newCard(9,"spades")}
+    R.random=function(a,b) return b or a end
+    H.handStart(capacityGame)
+    assert(capacityBoss.humanBossState.required.id=="high_card","judge must not demand an unconstructible unlocked pattern")
+    capacityGame.hand[3]=D.newCard(2,"hearts")
+    R.random=fixed
+    H.handStart(capacityGame)
+    assert(capacityBoss.humanBossState.required.id=="pair","judge can still demand an available unlocked pair")
+    R.random=fixed
+    local savedGame=G.new("red_deck");savedGame.run=Run.newRun()
+    savedGame.run.ante=6;savedGame.run.areaStage=6
+    savedGame.run.blinds=Run.generateAnteBlinds(6,nil,"human",6)
+    local chosen={};for k,v in pairs(H.definitions[2]) do chosen[k]=v end;chosen.encounterToken=123456
+    savedGame.run.blinds[3].debuff=chosen
+    local hp=Run.calculateBlindHp(6,"boss")
+    savedGame.run.blinds[3].hp=hp
+    local loadedGame=P.restoreSnapshot(P.makeSnapshot(savedGame,"BLIND_SELECT"))
+    assert(loadedGame.run.blinds[3].hp==hp and loadedGame.run.blinds[3].debuff.id==chosen.id,"saved boss identity and role HP cannot mismatch after reload")
     local g,m=fixture(1)
     local base=math.floor(m.enemyInventory.base.maxHp*(1+require("src.enemy_loadout").stats(m).hp))
     assert(m.maxHp==math.floor(base*1.5))
@@ -124,6 +146,9 @@ local ok,err=xpcall(function()
     hit=C.resolveMonsterAttack(g,nil,nil,m)
     assert(hit.damage>0 and #g.backpackConsumables==0 and g.gold>20)
     local snapshot=P.makeSnapshot(g,"playing");assert(snapshot.game.humanBossReceipt and not snapshot.game.monster)
+    g,m=fixture(10,function(state) state.gold=1000000 end)
+    local capped=m.humanBossState.goldStacks
+    assert(capped[1]+capped[2]+capped[3]==6,"wealth scaling is capped even for very rich builds")
     print("Human bosses: all 10 mechanics, finite healing, uncapped double speed, permanent theft/deletion/devolution, forced hands/discards, temporary court forms, hand capacity, gated armor/pierce, hostage rescue and gold/sales passed")
 end,debug.traceback)
 R.random=random

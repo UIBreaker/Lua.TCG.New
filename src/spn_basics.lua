@@ -6,7 +6,7 @@ local B={entries={
 }}
 local D
 -- Keep battle context outside cards so clones/saves cannot capture the entire game.
-B.cardGames=setmetatable({},{__mode="k"})
+B.cardGames=setmetatable({},{__mode="kv"}) -- Preview games own their cards; weak values avoid retaining that cycle in LuaJIT.
 function B.register(deities)
     D=deities
     for _,row in ipairs(B.entries) do

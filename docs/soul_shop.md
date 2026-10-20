@@ -1,6 +1,6 @@
 # Chợ Linh Hồn
 
-Quân bài không bán lấy vàng. Giá mua mọi món trong các shop tăng thêm 200% so với giá gốc, tức bằng 300% giá gốc; phí đổi hàng giữ riêng. Ô tiêu hao shop thường có Lá Tiêu Hủy (12 vàng), Bình Máu (12 vàng), Bình Máu Lớn (21 vàng), Bình Giáp Nhỏ (9 vàng), Bình Giáp Lớn (18 vàng), Tốc Đánh Nhỏ (9 vàng), Tốc Đánh Lớn (24 vàng), Cái Giường (27 vàng) và các thuốc chiến đấu. Mua cất vào ô tiêu hao; chuột phải để dùng một lần. Hồi máu không vượt HP tối đa; đầy HP thì giữ thẻ. Thuốc giáp theo trần giáp hiện tại của game, đạt trần thì giữ thẻ; nên dùng trong trận vì giáp reset khi bắt đầu trận mới. Lá Tiêu Hủy dùng trong shop: chọn và xác nhận hủy một quân bài; giữ ít nhất một lá. Đóng màn chọn không mất thẻ. Shop linh hồn bán Lá Tiêu Hủy giá 12 LH.
+Quân bài không bán lấy vàng. Chợ Linh Hồn dùng hệ số giá ×2; shop vàng dùng giá theo nhóm trong [báo cáo cân bằng](BALANCE_APPLIED_REPORT.md). Phí đổi hàng giữ riêng. Ô tiêu hao shop thường có Lá Tiêu Hủy (16 vàng), Bình Máu (12 vàng), Bình Máu Lớn (21 vàng), Bình Giáp Nhỏ (12 vàng), Bình Giáp Lớn (24 vàng), Tốc Đánh Nhỏ (12 vàng), Tốc Đánh Lớn (32 vàng), Cái Giường (36 vàng) và các thuốc chiến đấu. Mua cất vào ô tiêu hao; chuột phải để dùng một lần. Hồi máu không vượt HP tối đa; đầy HP thì giữ thẻ. Thuốc giáp theo trần giáp hiện tại của game, đạt trần thì giữ thẻ; nên dùng trong trận vì giáp reset khi bắt đầu trận mới. Lá Tiêu Hủy dùng trong shop: chọn và xác nhận hủy một quân bài; giữ ít nhất một lá. Đóng màn chọn không mất thẻ. Shop linh hồn bán Lá Tiêu Hủy giá 8 LH.
 
 Mọi lần tiêu hủy quân bài (chiến đấu, tự hủy, phép biến đổi, nuốt bài, nghi lễ) đều thưởng linh hồn một lần, kể cả khi cùng lá tồn tại ở nhiều cọc. Hộ Linh bị Ankh/Hex tiêu hủy cũng trả linh hồn. Dùng tiêu hao bình thường và bán SPN/tiêu hao không phải tiêu hủy.
 
@@ -10,15 +10,15 @@ Sau thưởng mỗi boss, game vào Chợ Linh Hồn với giao diện tím riê
 
 | Di vật | Giá LH | Hốc | Hiệu ứng khi tính điểm |
 |---|---:|---:|---|
-| Kiếm Diệt Thế | 96 | 2 | +120 Sát thương, +35% sát thương |
-| Vương Miện Hư Không | 84 | 2 | +30 Cường hóa |
-| Khiên Thành Trì | 66 | 1 | +30 Giáp, +60 Sát thương |
-| Tim Cổ Thụ | 72 | 1 | Hồi 18 HP |
-| Đồng Hồ Tận Thế | 90 | 2 | +80 Sát thương, +20 Cường hóa |
+| Kiếm Diệt Thế | 64 | 2 | +120 Sát thương, +35% sát thương |
+| Vương Miện Hư Không | 56 | 2 | +30 Cường hóa |
+| Khiên Thành Trì | 44 | 1 | +30 Giáp, +60 Sát thương |
+| Tim Cổ Thụ | 48 | 1 | Hồi 18 HP |
+| Đồng Hồ Tận Thế | 60 | 2 | +80 Sát thương, +20 Cường hóa |
 
 Giáp vẫn theo trần giáp hiện tại của game; các hệ số theo chất hiện có vẫn áp dụng. Tất cả 15 di vật chỉ xuất hiện trong Chợ Linh Hồn, không vào pool shop vàng/rương ngẫu nhiên.
 
-Thẻ hỗ trợ: **Tiến Hóa 36 LH**, **Tăng Tốc Đơn 18 LH**, **Tăng Tốc Đội 30 LH**, **Sinh Lực Vĩnh Cửu 30 LH (+20 máu tối đa và hồi 20 HP)**. Mua cất vào ô tiêu hao (ban đầu 3); Tiến Hóa có thể dùng trong shop, các lá tăng tốc dùng trong trận. Mỗi thẻ bán một lần mỗi lần bày hàng; có thể mua lại sau đổi hàng.
+Thẻ hỗ trợ: **Tiến Hóa 24 LH**, **Tăng Tốc Đơn 12 LH**, **Tăng Tốc Đội 20 LH**, **Sinh Lực Vĩnh Cửu 20 LH (+20 máu tối đa và hồi 20 HP)**. Mua cất vào ô tiêu hao (ban đầu 3); Tiến Hóa có thể dùng trong shop, các lá tăng tốc dùng trong trận. Mỗi thẻ bán một lần mỗi lần bày hàng; có thể mua lại sau đổi hàng.
 
 Nền riêng `assets/scene/soul_bazaar.png` tạo bằng built-in image_gen; có chuyển động nhẹ và đốm linh hồn. Prompt trong `soul_background_prompt.md`.
 
@@ -42,27 +42,27 @@ Shop bày 5 trang bị ngẫu nhiên từ bộ 15 di vật. Không có nút chuy
 
 | Trang bị | Giá LH | Hốc | Cơ chế |
 |---|---:|---:|---|
-| Đèn Tro Bất Diệt | 114 | 2 | Khi còn trên tay: chặn sát thương chí tử và hồi 50% máu tối đa. Một lần mỗi trận. |
-| Chuông Đông Cứng | 102 | 2 | Khi tính điểm: đóng băng 2 đòn đánh địch kế tiếp. Một lần mỗi trận. |
-| La Bàn Khe Nứt | 78 | 1 | Mỗi tay tính điểm: kéo lá rank cao nhất còn trong bộ vào tay, vượt giới hạn cầm bài. |
-| Xích Vòng Luân Hồi | 90 | 1 | Sau khi tính điểm: lá mang xích trở lại tay thay vì nằm trong cọc bỏ. |
-| Gương Song Vọng | 108 | 2 | Mỗi tay tính điểm: tái kích hoạt 2 lần cho mỗi lá kề trái/phải trong vùng tính điểm. |
-| Bút Ký Khởi Nguyên | 120 | 2 | Khi tính điểm: tiến hóa vĩnh viễn +1 cấp cho đồng đội ít tiến hóa nhất đang tính điểm. Một lần mỗi trận. |
-| Neo Câm Lặng | 96 | 2 | Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss đến hết 2 tay bài kế tiếp. Một lần mỗi trận. |
-| Chén Độc Vĩnh Dạ | 84 | 1 | Khi tính điểm: đầu 3 đòn đánh của mục tiêu, độc gây sát thương bằng 8% máu tối đa địch. Không cộng dồn; làm mới thời hạn. |
-| Khế Ước Người Gặt | 90 | 1 | Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận. Không cộng dồn nhiều khế ước. |
-| Lăng Kính Hoàng Hôn | 126 | 2 | Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly. Một lần mỗi trận. |
+| Đèn Tro Bất Diệt | 228 | 2 | Khi còn trên tay: chặn sát thương chí tử và hồi 50% máu tối đa. Một lần mỗi trận. |
+| Chuông Đông Cứng | 204 | 2 | Khi tính điểm: đóng băng 2 đòn đánh địch kế tiếp. Một lần mỗi trận. |
+| La Bàn Khe Nứt | 156 | 1 | Mỗi tay tính điểm: kéo lá rank cao nhất còn trong bộ vào tay, vượt giới hạn cầm bài. |
+| Xích Vòng Luân Hồi | 60 | 1 | Sau khi tính điểm: lá mang xích trở lại tay thay vì nằm trong cọc bỏ. |
+| Gương Song Vọng | 216 | 2 | Mỗi tay tính điểm: tái kích hoạt 2 lần cho mỗi lá kề trái/phải trong vùng tính điểm. |
+| Bút Ký Khởi Nguyên | 240 | 2 | Khi tính điểm: tiến hóa vĩnh viễn +1 cấp cho đồng đội ít tiến hóa nhất đang tính điểm. Một lần mỗi trận. |
+| Neo Câm Lặng | 64 | 2 | Khi tính điểm: tắt cả kỹ năng chủ động và nội tại boss đến hết 2 tay bài kế tiếp. Một lần mỗi trận. |
+| Chén Độc Vĩnh Dạ | 56 | 1 | Khi tính điểm: đầu 3 đòn đánh của mục tiêu, độc gây sát thương bằng 8% máu tối đa địch. Không cộng dồn; làm mới thời hạn. |
+| Khế Ước Người Gặt | 60 | 1 | Sau lần tính điểm đầu: mỗi kẻ địch chết cho +3 linh hồn đến hết trận. Không cộng dồn nhiều khế ước. |
+| Lăng Kính Hoàng Hôn | 252 | 2 | Tính điểm cùng ít nhất 3 chất: nâng ấn bản chính lá này vĩnh viễn, Thường → Foil → Holo → Poly. Một lần mỗi trận. |
 
 Tiến hóa và ấn bản được đồng bộ về lá gốc, lưu cùng run. Hồi sinh cần giữ lá trên tay. Tái kích hoạt tuân theo giới hạn chống vòng lặp của game. Độc đi qua hệ thống sát thương/giáp của quái; kẻ địch tái sinh chỉ trả linh hồn khi chết hẳn. Mỗi món có tranh riêng tại `assets/cards/continental/itm/`; prompt chính xác trong `soul_relic_art_prompts.json` và `CONTINENTAL_ASSET_PROMPTS.md`.
 
 ## Mở rộng ô không giới hạn
 
-**Khế Ước Dung Linh 54 LH** thêm một ô SPN. **Túi Không Gian 36 LH** thêm một ô tiêu hao. Hai lá đều mua vào kho tiêu hao rồi chuột phải dùng một lần. Mở rộng cộng dồn không giới hạn, tồn tại và được lưu suốt run; run mới trở về 5 ô SPN và 3 ô tiêu hao. Reroll bổ sung lại hai lá để có thể tiếp tục mua và mở rộng. Ấn bản Negative của SPN vẫn cộng ô riêng.
+**Khế Ước Dung Linh 108 LH** thêm một ô SPN. **Túi Không Gian 72 LH** thêm một ô tiêu hao. Hai lá đều mua vào kho tiêu hao rồi chuột phải dùng một lần. Mở rộng cộng dồn không giới hạn, tồn tại và được lưu suốt run; run mới trở về 5 ô SPN và 3 ô tiêu hao. Reroll bổ sung lại hai lá để có thể tiếp tục mua và mở rộng. Ấn bản Negative của SPN vẫn cộng ô riêng.
 
 Rê chuột vào khu SPN hoặc tiêu hao rồi cuộn để xem các ô tiếp theo. Sức chứa đã mở áp dụng cả shop, rương, phần thưởng tự động và các lá phép tạo tiêu hao. Shop bày bảy thẻ hỗ trợ/nghi lễ trên một hàng; tranh mới giữ phong cách Continental. Prompt và nguồn ảnh tại `slot_potion_art_prompts.json`.
 # Giường và tốc đánh trong shop thường
 
-Ô tiêu hao của shop thường có thể xuất hiện Tốc Đánh Nhỏ ($9, +3 tốc đánh), Tốc Đánh Lớn ($24, +10 tốc đánh), Cái Giường ($27) và các thuốc khác. Hai lá tốc đánh chọn một quân bài trên tay; hủy chọn giữ lá.
+Ô tiêu hao của shop thường có thể xuất hiện Tốc Đánh Nhỏ ($18, +3 tốc đánh), Tốc Đánh Lớn ($48, +10 tốc đánh), Cái Giường ($54) và các thuốc khác. Hai lá tốc đánh chọn một quân bài trên tay; hủy chọn giữ lá.
 
 Giường hồi đầy HP theo máu tối đa hiện tại khi dùng trong shop. Trong chiến đấu, chuột phải mở bảng chọn: ngủ cho bản thân hồi đầy HP rồi bỏ toàn bộ lượt hiện tại (mọi quái còn sống được hành động), hoặc đặt giường lên một quái còn sống. Mỗi quái giữ một giường; nếu mất HP mà vẫn sống, quái dùng giường hồi đầy HP. Đòn sát thương bị chặn hoàn toàn không tiêu hao giường; quái chết không được cứu.
 

@@ -12,9 +12,13 @@ function T.update(game,cb)
     if love.timer.getTime()<deadline then return end
     if step==0 then
         cb.startNewGame("red_deck");check(game)
+        assert(#game.persistentDeck==5 and game.maxHandSize==3)
+        local suits={};for _,card in ipairs(game.persistentDeck) do suits[card.suit]=true end
+        for _,suit in ipairs(Deck.FACTION_ORDER) do assert(suits[suit]) end
         local loaded=P.restoreSnapshot(P.makeSnapshot(game,"BLIND_SELECT"));check(loaded)
         T.first=game.consumables[1]
         cb.startMonsterEncounter(1,false);check(game)
+        assert(#game.hand==3 and #game.deck==2 and game.monster.hp==100)
     elseif step==1 then
         love.mouse.setPosition(2,2)
         love.graphics.captureScreenshot(function(data)

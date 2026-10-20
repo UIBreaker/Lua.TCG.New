@@ -38,6 +38,7 @@ late.monster.enemyInventory=nil -- Isolate stage damage from percentage equipmen
 late.monster.attack=90;late.monster.enemyAbility=nil;late.monster.creatureKind=nil
 late.playerHp=100;late.maxPlayerHp=100;late.playerArmor=10;late.playerShield=10
 late.hand={};late.deities={}
+late.monster.intent={type="attack"} -- Isolate raw damage from the preplanned support action.
 local hit=Combat.resolveMonsterAttack(late)
 assert(hit.absorbed==10 and hit.damage==80 and late.playerHp==20)
 late.monster.attack=500;late.playerArmor=0;late.playerShield=0

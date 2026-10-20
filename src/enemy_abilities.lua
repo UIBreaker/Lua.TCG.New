@@ -65,7 +65,7 @@ end
 function A.start(m)
     m.enemyActions=0;m.reassembled=false
     m.actionTurns=0;m.combatBuffs={};m.spnStolenSpeed=nil
-    m.enemyResources=nil
+    m.enemyResources=nil;m.enemyObservedDamage=nil
     m.creatureArmor=0;m.creatureArmorMax=0
     if m.creatureKind=="lava_golem" then m.creatureArmor=math.max(1,math.floor(m.maxHp*0.12));m.creatureArmorMax=m.creatureArmor end
 end
@@ -111,32 +111,60 @@ local function armorCap(target)
     return math.max(1,math.floor(target.maxHp*.50))
 end
 
+function A.playerSpeed(game,m)
+    if game.lastPlayerAttackSpeed then return game.lastPlayerAttackSpeed end
+    local fastest=0
+    for _,card in ipairs(game.hand or {}) do
+        fastest=math.max(fastest,require("src.deck").peekCardAttackSpeed(card,game))
+    end
+    return fastest>0 and fastest or A.speed(m)
+end
+
+-- Earlier squad members reserve their announced buff; planning never spends it.
+function A.pendingSupport(game,m,target,kind)
+    for _,ally in ipairs(require("src.enemy_group").members(game)) do
+        local intent=ally.intent or {}
+        if ally.hp>0 and (ally.groupIndex or 1)<(m.groupIndex or 1)
+            and (intent.type==kind or intent.type=="consume" and intent.effect==kind)
+            and (intent.team or intent.targetIndex==(target.groupIndex or 1)) then return true end
+    end
+    return false
+end
+
+function A.canSave(target,value)
+    local threat=target.enemyObservedDamage
+    return not threat or threat<target.hp+(target.creatureArmor or 0)+value
+end
+
 local function tacticalSupport(game,m)
     local C=require("src.combat");local role=m.enemyInventory.role
-    local playerSpeed=game.lastPlayerAttackSpeed or A.speed(m)
-    local best,score=nil,0
+    local playerSpeed=A.playerSpeed(game,m)
+    local ownDamage=math.max(1,A.attack(m)*C.getHitChance(A.speed(m),playerSpeed))
+    local best,score=nil,45
     local strongest=1
     for _,ally in ipairs(require("src.enemy_group").members(game)) do if ally.hp>0 then strongest=math.max(strongest,A.attack(ally)) end end
     for _,target in ipairs(require("src.enemy_group").members(game)) do if target.hp>0 then
         local hp=target.hp/target.maxHp;local r=A.resources(target)
-        for _,kind in ipairs({"heal","armor","speed","damage"}) do if A.canSupport(m,kind) then
+        for _,kind in ipairs({"heal","armor","speed","damage"}) do if A.canSupport(m,kind) and not A.pendingSupport(game,m,target,kind) then
             local value=A.buffAmount(target,kind,m);local rank=0
             local active=(target.combatBuffs or {})[kind]
             if kind=="heal" then
                 value=math.min(value,target.maxHp-target.hp,r.healingLeft)
-                if hp<=.65 then rank=80+(1-hp)*40+(role=="Quân y" and 10 or 0) end
+                if hp<=.65 and A.canSave(target,value) then rank=80+(1-hp)*40+(role=="Quân y" and 10 or 0) end
             elseif kind=="armor" then
                 value=math.min(value,armorCap(target)-(target.creatureArmor or 0),r.armorLeft)
                 rank=25+(1-hp)*30+(role=="Hộ vệ" and 25 or 0)-40*(target.creatureArmor or 0)/target.maxHp
+                if not A.canSave(target,value) then rank=0
+                elseif target.enemyObservedDamage and not A.canSave(target,0) then rank=110 end
             elseif not active then
                 local hit=C.getHitChance(A.speed(target),playerSpeed)
                 if kind=="speed" then
                     local gain=C.getHitChance(A.speed(target)+value,playerSpeed)-hit
                     rank=15+gain*120+15*A.attack(target)/strongest
-                        +(A.speed(target)<=playerSpeed and A.speed(target)+value>playerSpeed and 25 or 0)
-                else rank=20+20*hit+15*A.attack(target)/strongest+(role=="Đấu sĩ" and 10 or 0) end
+                        +(A.speed(target)<=playerSpeed and A.speed(target)+value>playerSpeed and 65 or 0)
+                else rank=15+math.min(90,35*math.sqrt(2*value*hit/ownDamage)) end
             end
-            if value>0 and rank>score then score=rank;best={kind=kind,target=target,value=value} end
+            if value>0 and rank>score then score=rank;best={kind=kind,target=target,value=value,score=rank} end
         end end
     end end
     return best
@@ -162,15 +190,16 @@ function A.plan(game,m,turn)
         value=require("src.human_bosses").attack(game,m,value)
         local armor=game.playerArmor or game.playerShield or 0
         if require("src.human_bosses").number(m)==6 then armor=0 end
-        local chance=(m.enemyInventory.guaranteedAttacks or 0)>0 and 1 or require("src.combat").getHitChance(A.speed(m),game.lastPlayerAttackSpeed)
+        local chance=(m.enemyInventory.guaranteedAttacks or 0)>0 and 1 or require("src.combat").getHitChance(A.speed(m),A.playerSpeed(game,m))
         if (game.playerHp or math.huge)<=value-math.min(armor,value*(1-Loadout.pierce(m))) and chance>=.8
             and not (game.potionCombat or {}).evasion then return attack() end
+        if Loadout.attackBonus(m)>0 and chance>=.8 and not (game.potionCombat or {}).evasion then return attack() end
     end
     local choice=m.enemyInventory and tacticalSupport(game,m)
-    local rescue=choice and choice.kind=="heal" and choice.target~=m and choice.target.hp/choice.target.maxHp<=.35
-    local reserve=not rescue and Loadout.plan(m,game)
+    local reserve=Loadout.plan(m,game)
+    if choice and reserve and choice.score>=(reserve.score or 0) then reserve=nil end
     if reserve then m.intent=reserve;return reserve end
-    if turn%2==1 and not rescue then return attack()
+    if not m.enemyInventory and turn%2==1 then return attack()
     else
         if m.enemyInventory then
             if not choice then return attack() end

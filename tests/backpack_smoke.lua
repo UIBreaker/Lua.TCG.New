@@ -66,12 +66,13 @@ assert(not B.craft(repeated,B.byResult.gem_blast));assert(repeated.gold==100 and
 repeated.backpackEquipment[3]="basic_amber";assert(B.craft(repeated,B.byResult.gem_blast))
 local noFee={gold=0,backpackEquipment={"basic_bandage","basic_plate"}};assert(not B.craft(noFee,B.recipes[1]));assert(#noFee.backpackEquipment==2)
 -- A free offer is genuinely free, one-use, and keeps its zero resale basis through save/attach/detach.
-local free=Shop.discountedEquipment(E.ITEMS.void_catalyst,1,0)
+assert(Shop.discountedEquipment(E.ITEMS.void_catalyst,1,0).cost>0)
+local free=Shop.discountedEquipment(E.ITEMS.gem_blast,1,0)
 assert(free.cost==0 and Shop.discountedEquipment(E.ITEMS.basic_plate,1,.079).cost==0)
 assert(Shop.discountedEquipment(E.ITEMS.basic_plate,1,.08).cost>0)
 local zero=G.new();zero.gold=0;zero.persistentDeck={D.newCard(3,"hearts")}
 local offers={items={free}};assert(Shop.buyItem(offers,1,zero));assert(zero.gold==0 and B.resale(zero.backpackEquipment[1])==0)
-assert(not Shop.buyItem(offers,1,zero));zero=assert(P.restoreSnapshot(P.makeSnapshot(zero,"shop")));assert(B.count(zero,"void_catalyst")==1 and B.resale(zero.backpackEquipment[1])==0);assert(B.attach(zero,1,zero.persistentDeck[1]))
+assert(not Shop.buyItem(offers,1,zero));zero=assert(P.restoreSnapshot(P.makeSnapshot(zero,"shop")));assert(B.count(zero,"gem_blast")==1 and B.resale(zero.backpackEquipment[1])==0);assert(B.attach(zero,1,zero.persistentDeck[1]))
 zero=assert(P.restoreSnapshot(P.makeSnapshot(zero,"shop")));assert(B.detach(zero,zero.persistentDeck[1],1));assert(B.resale(zero.backpackEquipment[1])==0)
 local cheap={gold=4,backpackEquipment={}};B.store(cheap,E.ITEMS.basic_plate,0);B.store(cheap,E.ITEMS.basic_bandage,0)
 assert(B.craft(cheap,B.recipes[1]));assert(B.investment(cheap.backpackEquipment[1])==4 and B.resale(cheap.backpackEquipment[1])==1)

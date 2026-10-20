@@ -31,6 +31,10 @@ function T.update(game,cb)
         local phase=(step-1)%5
         if phase==0 then
             game.shopMode=mode;game.consumables={};game.deities={};game.backpackConsumables={};game.backpackDeities={};UI.Polish.clearFocus();cb.openShop()
+            if mode=="small" then
+                game.run.stats.blindsWon=1;game.run.stats.starterGearPurchased=nil;cb.openShop()
+                assert(cb.getShopData().items[1].starterOffer,"first small shop includes starter gear")
+            end
             assert(cb.getShopData().mode==mode)
             if mode=="cards" then
                 local card=cb.getShopData().items[1].card
@@ -101,13 +105,16 @@ function T.update(game,cb)
     elseif step==stallSteps+8 then love.keypressed("return")
     elseif step==stallSteps+9 then
         local _,state=cb.getRunState();assert(state=="shop" and not cb.getShopData().soulMode and game.shopMode~="large")
-        T.mode=game.shopMode;T.gold=game.gold;click(button(cb,"reroll"))
+        T.mode=game.shopMode;T.gold=game.gold;T.rerollCost=Shop.getRerollCost(cb.getShopData(),game);click(button(cb,"reroll"))
     elseif step==stallSteps+10 then
-        assert(game.shopMode==T.mode and cb.getShopData().mode==T.mode and game.gold==T.gold-2)
+        assert(game.shopMode==T.mode and cb.getShopData().mode==T.mode and game.gold==T.gold-T.rerollCost)
         click(button(cb,"leave_shop"))
     elseif step==stallSteps+11 then
+        local _,state=cb.getRunState();assert(state=="shop" and game.shopMode~="small" and not game.pendingCompanionShop)
+        click(button(cb,"leave_shop"))
+    elseif step==stallSteps+12 then
         local _,state=cb.getRunState();assert(state=="BLIND_SELECT")
-        print("Shop markets UI PASS: 6 distinct loaded interiors, visible shelf hitboxes, stable stands after 6 real purchases, upgraded card bought intact, cash-out mouse/keyboard, soul -> large -> next stage, reroll preserves type")
+        print("Shop markets UI PASS: 6 interiors/purchases, boss soul -> large preserved, normal small -> companion -> next fight, reroll preserves type")
         love.event.quit(0)
     end
     step=step+1;deadline=love.timer.getTime()+.7

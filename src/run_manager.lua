@@ -147,14 +147,15 @@ RunManager.BOSS_KEYS = {
 }
 
 -- HP formula:
--- Small Blind: round(21 * (1.71 ^ (Ante - 1)))
+-- Give ordinary builds time to assemble before the regional endgame.
 -- Big Blind: round(1.5 * Small HP)
 -- Boss Blind: round(2.0 * Small HP)
 function RunManager.calculateBlindHp(ante, blindType)
     local a = math.max(1, ante or 1)
-    local smallHp = 21
-    for _ = 2, a do
-        smallHp = math.floor(smallHp * 1.71 + 0.5)
+    local smallHp = Monster.BASE_HP
+    for step = 2, a do
+        local growth=step<=5 and 1.50 or step<=20 and 1.45 or 1.50
+        smallHp = math.floor(smallHp * growth + 0.5)
     end
 
     if blindType == "small" then
@@ -519,8 +520,8 @@ function RunManager.resolveTravel(run,gameState,action)
     if request and (not gameState[source] or not gameState[source][index] or gameState[source][index].id~="cons_travel_permit") then return false,"missing_permit" end
     if source and (action=="sell" or not Expedition.unlimitedTravel(gameState)) then table.remove(gameState[source],index) end
     if action=="sell" then
-        gameState.gold=(gameState.gold or 0)+1000
-        run.stats.totalGoldEarned=(run.stats.totalGoldEarned or 0)+1000
+        gameState.gold=(gameState.gold or 0)+250
+        run.stats.totalGoldEarned=(run.stats.totalGoldEarned or 0)+250
         run.stats.permitsSold=(run.stats.permitsSold or 0)+1
     else
         run.stats.journeys=(run.stats.journeys or 0)+1

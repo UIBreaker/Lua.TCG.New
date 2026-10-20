@@ -34,7 +34,7 @@ function T.update(game,cb)
     local now=love.timer.getTime()
     if not T.started then
         T.index=T.index+1;local spec=cases[T.index]
-        if not spec then R.random=T.random;print("Enemy inventory runtime passed: actual bag/right clicks, 1920/960 UI with five reserves, equip/potion/SPN/accuracy contact and 500K one-shot scoring");love.event.quit(0);return end
+        if not spec then R.random=T.random;print("Enemy inventory runtime passed: actual bag/right clicks, 1920/960 UI with five reserves, equip/potion/SPN/accuracy contact and lethal one-shot scoring");love.event.quit(0);return end
         cb.startNewGame("red_deck");cb.startMonsterEncounter(1,false)
         local stage=spec.stage or 20
         game.run.ante=stage;game.run.areaStage=stage
@@ -77,7 +77,8 @@ function T.update(game,cb)
             assert(m.intent.type==(spec.kind=="spn" and "equip_spn" or "consume"))
             cb.selectCardIndex(1);cb.playSelectedHand()
         elseif spec.kind=="oneshot" then
-            game.hand[1].baseChips=500000;game.hand[1].speedBonus=50
+            T.lethalDamage=m.hp+(m.creatureArmor or 0)+1
+            game.hand[1].baseChips=T.lethalDamage;game.hand[1].speedBonus=50
             T.target=m;cb.selectCardIndex(1);cb.playSelectedHand()
         end
         return
@@ -97,7 +98,7 @@ function T.update(game,cb)
         if T.checked and state=="playing" and not anim.enemyTurn and not anim.active then T.started=nil end
     elseif spec.kind=="oneshot" then
         if anim.sequence and anim.sequence.damageApplied and not T.checked then
-            assert(anim.damageDealt>=500000 and T.target.hp==0,"500K actual Poker score must one-shot a stage-20 geared opponent")
+            assert(anim.damageDealt>=T.lethalDamage and T.target.hp==0,"a lethal Poker score must one-shot a stage-20 geared opponent")
             shot("oneshot");T.checked=true
         end
         if T.checked and not anim.active and not anim.enemyTurn then T.started=nil end

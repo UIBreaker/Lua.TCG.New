@@ -30,7 +30,7 @@ end
 -- Buy with souls; upgrade the selected persistent identity and every live copy.
 local g=G.new();local c=D.newCard(9,"elaris");g.persistentDeck={c,D.newCard(3,"valoria")};g.masterDeck=g.persistentDeck
 g.hand={D.cloneCard(c)};g.deck={D.cloneCard(c)};g.discardPile={D.cloneCard(c)}
-g.shopMode="soul";g.souls=240
+g.shopMode="soul";g.souls=160
 local shop=Shop.new();Shop.refresh(shop,g)
 assert(#Shop.SOUL_SUPPORT==8 and #shop.items==14)
 for _,id in ipairs({"cons_socket","cons_rulebreak"}) do

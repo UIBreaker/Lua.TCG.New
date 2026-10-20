@@ -66,6 +66,9 @@ function Combat.resolvePlayerAttack(game, aura,roll)
         game.spnAttack=nil;require("src.advanced_hands").resolve(game,false)
         return 0,false,{}, {hitChance=1,missed=false,frozen=true}
     end
+    for _,enemy in ipairs(Group.members(game)) do
+        enemy.enemyObservedDamage=math.max(0,aura or 0)
+    end
     roll=roll or Combat.rollPlayerAttack(game)
     local attackEffects=game.spnAttack or {}
     game.spnAttack=nil

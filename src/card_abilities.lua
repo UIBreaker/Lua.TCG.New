@@ -317,6 +317,13 @@ function A.combatWin(game)
     local ctx={goldBeforeInterest=game.gold or 0}
     A.dispatch(game,"combat_win",allCards(game),ctx)
     require("src.spn_vitality").finish(game)
+    -- A modest rest between fights keeps attrition from requiring a healing build.
+    local stage=game.monster and (game.monster.difficultyAnte or game.monster.stage) or 1
+    local boss=false
+    for _,m in ipairs(require("src.enemy_group").members(game)) do if m.isBoss then boss=true;break end end
+    local recovery=stage<=5 and (boss and .40 or .20) or (boss and .30 or .15)
+    local restored=require("src.player_health").heal(game,math.floor((game.maxPlayerHp or 100)*recovery))
+    combat(game).victoryRecovery=restored
 end
 function A.discard(game,cards,context)
     if context and context.playerDiscard and not context.preview then

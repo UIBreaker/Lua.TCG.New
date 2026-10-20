@@ -24,6 +24,8 @@ end
 expected.cons_travel_permit=true
 for _=1,3000 do
     Shop.enterAfterCombat(game)
+    assert(game.shopMode=="small" and game.pendingCompanionShop and game.pendingCompanionShop~="small")
+    if _%2==0 then assert(Shop.leave(shop,game)=="shop") end
     types[game.shopMode]=true
     assert(game.shopMode~="large" and game.shopMode~="soul")
     Shop.refresh(shop,game)
@@ -35,7 +37,7 @@ for _=1,3000 do
         assert(#shop.items==8)
     elseif shop.mode=="consumable" then
         assert(#shop.items==8)
-        assert(shop.items[8].id=="cons_travel_permit" and shop.items[8].cost==6000)
+        assert(shop.items[8].id=="cons_travel_permit" and shop.items[8].cost==8000)
         for _,item in ipairs(shop.items) do assert(item.consumable and expected[item.id]);consumables[item.id]=true end
     elseif shop.mode=="equipment" then
         assert(#shop.items==8)
@@ -69,7 +71,7 @@ for _=1,3000 do
 end
 for _,mode in ipairs(Shop.AFTER_COMBAT_MARKETS) do assert(types[mode],mode) end
 assert(spnOffers>0 and rarities.common/spnOffers>0.5)
-assert(rarities.uncommon and rarities.rare and highSpnOffers>0 and highSpnOffers/spnOffers<0.15)
+assert(rarities.uncommon and rarities.rare and highSpnOffers==0)
 for id in pairs(expected) do assert(consumables[id],"Missing retail card: "..id) end
 for id,eq in pairs(E.ITEMS) do if not eq.soulOnly then assert(equipment[id],"Missing equipment: "..id) end end
 
@@ -84,7 +86,13 @@ assert(state=="shop" and loaded.shopMode=="consumable" and loaded.backpackConsum
 for _,mode in ipairs(Shop.AFTER_COMBAT_MARKETS) do
     game.shopMode=mode;Shop.resetReroll(shop);Shop.refresh(shop,game)
     local before=game.gold
-    assert(Shop.reroll(shop,game) and game.gold==before-2 and game.shopMode==mode and shop.mode==mode)
+    local paid=0
+    for _,cost in ipairs({5,7,10}) do
+        assert(Shop.getRerollCost(shop,game)==cost)
+        paid=paid+cost
+        assert(Shop.reroll(shop,game) and game.gold==before-paid and game.shopMode==mode and shop.mode==mode)
+    end
+    assert(Shop.getRerollCost(shop,game)==14)
     local saved=P.restoreSnapshot(P.makeSnapshot(game,"shop"));assert(saved.shopMode==mode)
 end
 

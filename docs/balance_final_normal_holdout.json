@@ -1,0 +1,54 @@
+{
+  "sources": [
+    "docs/balance_final_normal_holdout.csv"
+  ],
+  "fights": 597,
+  "campaigns": [
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "runs": 20,
+      "cleared": {
+        "1": 17,
+        "5": 14,
+        "10": 8,
+        "20": 3,
+        "40": 0,
+        "60": 0,
+        "80": 0,
+        "100": 0,
+        "120": 0
+      },
+      "mean_stages": 9,
+      "mean_region1_stages": 8.6,
+      "max_stages": 28,
+      "region1_percent": 15.0,
+      "region1_wilson95": [
+        5.2,
+        36.0
+      ],
+      "failures": {
+        "1:0": 2,
+        "2:1": 1,
+        "8:5": 1,
+        "11:2": 1,
+        "21:0": 2,
+        "7:2": 1,
+        "5:4": 1,
+        "7:0": 1,
+        "6:2": 1,
+        "18:8": 1,
+        "1:1": 1,
+        "18:1": 1,
+        "12:5": 1,
+        "29:0": 1,
+        "9:4": 1,
+        "11:10": 1,
+        "3:1": 1,
+        "9:2": 1
+      },
+      "timeouts": 0
+    }
+  ],
+  "probes": []
+}

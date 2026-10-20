@@ -109,7 +109,7 @@ function DebugTools.grantCollectionItem(game, shop, category, item, targetCard)
     elseif category == "vouchers" then
         local grant = Shop.new()
         grant.items = {{ category = "voucher", voucherId = id, cost = 0, name = item.name }}
-        grant.baseRerollCost, grant.rerollCost = shop.baseRerollCost or 2, shop.rerollCost or 2
+        grant.baseRerollCost, grant.rerollCost = shop.baseRerollCost or 5, shop.rerollCost or 5
         local ok, message = Shop.buyItem(grant, 1, game)
         if ok then
             shop.baseRerollCost, shop.rerollCost = grant.baseRerollCost, grant.rerollCost

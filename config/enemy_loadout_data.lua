@@ -1,6 +1,6 @@
 -- Enemy adapters use the existing card identities/art with percentage effects.
 return {
-    caps={hp=.20,damage=.40,speed=.20,armor=.20,heal=.08},
+    caps={hp=.40,damage=.80,speed=.60,armor=.30,heal=.08},
     editions={
         foil={name="Foil",power=.10,color={.65,.85,1}},
         holographic={name="Holographic",power=.20,color={.75,.55,1}},

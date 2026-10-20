@@ -268,6 +268,11 @@ function Capture.update(gameRef, callbacks)
         end
     end
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-encounter-preview" then
+            local ok,err=pcall(require("tests.encounter_preview_capture").update,gameRef,callbacks)
+            if not ok then print("ENCOUNTER PREVIEW FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
         if value=="--test-card-inspector" then
             local ok,err=pcall(require("tests.card_inspector_capture").update,gameRef,callbacks)
             if not ok then print("CARD INSPECTOR FAIL: "..tostring(err));love.event.quit(1) end
@@ -334,6 +339,11 @@ function Capture.update(gameRef, callbacks)
         end
     end
     for _,value in ipairs(arg or {}) do
+        if value=="--capture-deck-viewer" then
+            local ok,err=pcall(require("tests.deck_viewer_capture").update,gameRef,callbacks)
+            if not ok then print("DECK VIEWER FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
         if value=="--capture-combat-ui" then
             local ok,err=pcall(require("tests.combat_ui_capture").update,gameRef,callbacks)
             if not ok then print("COMBAT UI FAIL: "..tostring(err));love.event.quit(1) end

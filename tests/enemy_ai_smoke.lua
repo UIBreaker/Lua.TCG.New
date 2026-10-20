@@ -21,7 +21,7 @@ for stage=1,80 do for encounter,kind in ipairs({"normal","elite","boss"}) do
     local m={stage=stage,isBoss=kind=="boss",isElite=kind=="elite",groupIndex=1,encounterCount=stage*3+encounter}
     local state=R.getState();local inv=L.generate(m)
     assert(R.getState()==state and inv.spent<=inv.budget)
-    assert(#inv.backpack.consumables<=(m.isBoss and 3 or m.isElite and 2 or 1))
+    assert(#inv.backpack.consumables<=L.profile(m).supplies)
     if stage<4 then assert(#inv.backpack.consumables==0) end
     for _,item in ipairs(inv.backpack.consumables) do
         generated[item.id]=true;assert(#L.describeItem(item).desc>0)
@@ -33,7 +33,8 @@ assert(spares>0 and normalSpn>0,"rare SPN reserves must reach regular late-stage
 
 -- Select a useful later slot, not the first item; previews are pure.
 bag.backpack.consumables={{id="healing_potion",kind="consumable",pct=.12},{id="cons_damage",kind="consumable",pct=.25}}
-for i=1,10 do assert(A.plan(g,a).itemIndex==2 and #bag.backpack.consumables==2 and A.attack(b)==100) end
+for i=1,10 do assert(L.plan(a,g).itemIndex==2 and #bag.backpack.consumables==2 and A.attack(b)==100) end
+a.intent=L.plan(a,g)
 local hit=C.resolveMonsterAttack(g,nil,nil,a)
 assert(hit.action=="damage" and hit.target==b and hit.value==25 and A.attack(b)==125 and #bag.backpack.consumables==1)
 assert(A.plan(g,a).type=="attack","consumables cannot form a support chain")
@@ -45,7 +46,7 @@ assert(A.plan(g,a).type=="heal" and a.intent.targetIndex==2)
 hit=C.resolveMonsterAttack(g,nil,nil,a);assert(hit.value==200 and b.hp==300 and #bag.backpack.consumables==1)
 
 -- Buff the actual damage dealer; speed is chosen when it crosses initiative/accuracy.
-g,a,b,bag=fixture();bag.role="Đấu sĩ";a.actionTurns=1
+g,a,b,bag=fixture();bag.role="Đấu sĩ";a.actionTurns=1;g.lastPlayerAttackSpeed=1
 assert(A.plan(g,a).type=="damage" and a.intent.targetIndex==2)
 bag.role="Quân y";g.lastPlayerAttackSpeed=11
 assert(A.plan(g,a).type=="speed" and a.intent.targetIndex==2)
@@ -70,11 +71,13 @@ assert(A.speed(a)==8 and A.speed(b)==10)
 -- Healing/armor items obey existing shared defensive reserves, including stale intentions.
 for _,case in ipairs({{id="healing_potion",effect="heal",left="healingLeft"},{id="armor_potion_small",effect="armor",left="armorLeft"}}) do
     g,a,b,bag=fixture();a.hp=100;A.resources(a)[case.left]=7
+    A.resources(a).charges={}
     bag.backpack.consumables={{id=case.id,kind="consumable",pct=.25}}
     assert(A.plan(g,a).type=="consume")
     hit=C.resolveMonsterAttack(g,nil,nil,a)
     assert(hit.action==case.effect and hit.value==7 and A.resources(a)[case.left]==0)
     g,a,b,bag=fixture();a.hp=100
+    A.resources(a).charges={}
     bag.backpack.consumables={{id=case.id,kind="consumable",pct=.25}}
     A.plan(g,a);A.resources(a)[case.left]=0
     hit=C.resolveMonsterAttack(g,nil,nil,a)
@@ -106,6 +109,7 @@ assert(hit.missed and hit.hitChance==0 and bag.guaranteedAttacks==0,"one-attack 
 -- SPN equipment uses an announced action and one slot, without refilling resources.
 g,a,b,bag=fixture();bag.spn={id="spirit_ember",kind="spn",power=1}
 bag.backpack.spns={{id="spirit_echo",kind="spn",power=1}};A.resources(a).healingLeft=17
+A.resources(a).charges={} -- This scenario isolates reserve summoning, not squad buff priority.
 assert(A.plan(g,a).type=="equip_spn" and bag.spn.id=="spirit_ember")
 a.spnSleep=1;assert(C.resolveMonsterAttack(g,nil,nil,a).blocked and #bag.backpack.spns==1)
 hit=C.resolveMonsterAttack(g,nil,nil,a)
@@ -118,5 +122,56 @@ bag.backpack.spns={{id="spirit_echo",kind="spn",power=1}}
 assert(L.plan(a,g)==nil,"sealed magic cannot summon a reserve SPN")
 a.intent={type="equip_spn"}
 hit=L.action(a,g);assert(hit.blocked and #bag.backpack.spns==1 and not bag.spn)
+
+-- Late squads have real equipment builds, rather than just one weak item.
+local early=L.generate({stage=1,groupIndex=1})
+for _,kind in ipairs({"normal","elite","boss"}) do
+    local late=L.generate({stage=20,groupIndex=1,isBoss=kind=="boss",isElite=kind=="elite"})
+    assert(late.budget>early.budget and #late.equipment==3 and late.equipment[1].edition=="polychrome")
+    assert(late.seal and #late.backpack.consumables>0 and late.spent<=late.budget)
+end
+
+-- Useful squad support can open a fight; a lone fighter does not lose an attack to a weak buff.
+g,a,b,bag=fixture();g.lastPlayerAttackSpeed=1;bag.role="Đấu sĩ"
+assert(A.plan(g,a,1).type=="damage" and a.intent.targetIndex==2)
+g.enemies={a};a.group=g.enemies
+assert(A.plan(g,a,1).type=="attack")
+bag.backpack.consumables={{id="cons_damage",kind="consumable",pct=.25}}
+assert(A.plan(g,a,1).type=="attack","a weak self buff should not replace a stronger immediate attack")
+
+-- Two supporters reserve different buffs even while planning the next round.
+g,a,b,bag=fixture();g.lastPlayerAttackSpeed=1;bag.role="Đấu sĩ"
+local striker={name="Carry",hp=1000,maxHp=1000,attack=200,attackSpeed=10,groupIndex=3}
+A.start(striker);striker.group=g.enemies;g.enemies[3]=striker
+assert(A.plan(g,a).type=="damage" and a.intent.targetIndex==3)
+g.enemyActed={[a]=true,[b]=true}
+local coordinated=A.plan(g,b)
+assert(not(coordinated.type=="damage" and coordinated.targetIndex==3),"announced buffs must not be duplicated by squadmates")
+
+-- Stock can rescue allies, not only the owner, and executes only at contact.
+g,a,b,bag=fixture();A.resources(a).charges={};b.hp=100
+bag.backpack.consumables={{id="healing_potion",kind="consumable",pct=.12}}
+assert(A.plan(g,a).targetIndex==2 and b.hp==100 and #bag.backpack.consumables==1)
+hit=C.resolveMonsterAttack(g,nil,nil,a)
+assert(hit.action=="heal" and hit.target==b and b.hp==220 and #bag.backpack.consumables==0)
+
+-- Threat memory uses an observed attack only; it resets and never reads the next scoring result.
+g,a,b,bag=fixture();a.hp=100;b.hp=100
+C.resolvePlayerAttack(g,2000,{missed=true,hitChance=.05})
+assert(a.enemyObservedDamage==2000 and b.enemyObservedDamage==2000)
+local desperate=A.plan(g,a)
+assert(desperate.type~="heal" and desperate.type~="armor","do not waste a turn on recovery too small to survive the known attack")
+A.start(a);assert(not a.enemyObservedDamage)
+
+-- Changing gear preserves boss vitality and cannot replenish defense or chain support.
+g,a,b,bag=fixture();a.maxHp=1500;a.hp=400
+bag.backpack.equipment={{id="ward_stone",kind="equipment",power=1}}
+a.intent={type="equip"};A.resources(a).mustAttack=true
+assert(L.action(a,g).blocked and #bag.backpack.equipment==1)
+A.resources(a).mustAttack=false;local defense=A.resources(a).armorLeft
+hit=L.action(a,g)
+assert(hit.action=="equip" and a.maxHp==1500 and a.hp==400 and A.resources(a).armorLeft==defense-150)
+a.intent={type="equip"}
+assert(L.action(a,g).blocked,"an empty announced swap cannot turn into a surprise attack")
 print("Enemy AI passed: six useful consumables, 240 budgeted loadouts, rare reserve SPNs, pure planning, rescue/kill/initiative priorities, finite contact effects and one-attack accuracy")
 return true

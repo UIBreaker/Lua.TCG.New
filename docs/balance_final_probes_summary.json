@@ -1,0 +1,176 @@
+{
+  "sources": [
+    "docs/balance_final_world_probes.csv",
+    "docs/balance_final_strong_probes.csv"
+  ],
+  "fights": 2628,
+  "campaigns": [
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "runs": 3,
+      "cleared": {
+        "1": 2,
+        "5": 2,
+        "10": 1,
+        "20": 0,
+        "40": 0,
+        "60": 0,
+        "80": 0,
+        "100": 0,
+        "120": 0
+      },
+      "mean_stages": 7.33,
+      "max_stages": 15,
+      "region1_percent": 0.0,
+      "region1_wilson95": [
+        0.0,
+        56.2
+      ],
+      "failures": {
+        "16:10": 1,
+        "1:1": 1,
+        "8:8": 1
+      },
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "runs": 3,
+      "cleared": {
+        "1": 2,
+        "5": 2,
+        "10": 1,
+        "20": 1,
+        "40": 1,
+        "60": 1,
+        "80": 1,
+        "100": 1,
+        "120": 1
+      },
+      "mean_stages": 43,
+      "max_stages": 120,
+      "region1_percent": 33.3,
+      "region1_wilson95": [
+        6.1,
+        79.2
+      ],
+      "failures": {
+        "10:10": 1,
+        "1:1": 1
+      },
+      "timeouts": 0
+    }
+  ],
+  "probes": [
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "human",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 97.8,
+      "timeouts": 0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "hearts",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 96.1,
+      "timeouts": 0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "diamonds",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 94.4,
+      "timeouts": 0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "clubs",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 73.3,
+      "timeouts": 0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "spades",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 50.6,
+      "timeouts": 0
+    },
+    {
+      "profile": "normal",
+      "policy": "tactical",
+      "region": "unknown",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 14.4,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "human",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 98.9,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "hearts",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 100,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "diamonds",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 100,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "clubs",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 100,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "spades",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 100,
+      "timeouts": 0
+    },
+    {
+      "profile": "strong",
+      "policy": "tactical",
+      "region": "unknown",
+      "fights": 180,
+      "positions": 60,
+      "win_percent": 100,
+      "timeouts": 0
+    }
+  ]
+}

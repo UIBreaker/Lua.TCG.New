@@ -43,6 +43,7 @@ function View.model(item,title,body,expanded)
         m.stats={damage=item.baseChips or require("src.deck").getChipValue(item.rank),speed=require("src.deck").getCardAttackSpeed(item)}
     elseif body:match("^SPN · ") or item.deityId then m.badge="SPN";m.accent=Theme.colors.cyan
     elseif body:match("^ITM · ") then m.badge="TRANG BỊ";m.accent=Theme.colors.green
+    elseif item.encounterPreview then m.badge="ĐỐI THỦ · XEM TRƯỚC";m.accent=Theme.colors.gold
     elseif item.packType then m.badge="RƯƠNG BÀI";m.accent=Theme.colors.gold
     elseif item.voucherId or tostring(item.id):match("^v_") then m.badge="ĐẶC QUYỀN";m.accent=Theme.colors.green end
     local primary,warnings,additions,details={},{},{},{}

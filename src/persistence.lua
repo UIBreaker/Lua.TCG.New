@@ -378,6 +378,8 @@ function Persistence.restoreSnapshot(snapshot)
     game.souls = math.max(0, tonumber(game.souls) or 0)
     local markets=require("src.shop").MARKETS
     game.shopMode = markets[game.shopMode] and game.shopMode or "small"
+    if not markets[game.pendingCompanionShop] or game.pendingCompanionShop=="small"
+        or game.pendingCompanionShop=="large" or game.pendingCompanionShop=="soul" then game.pendingCompanionShop=nil end
     game.soulDestroyActive = false
     if game.pendingRewardEquipment then game.pendingRewardEquipment = restoreEquipment(game.pendingRewardEquipment) end
     if restoredState == "victory" and not game.run.victory then restoredState = "BLIND_SELECT" end

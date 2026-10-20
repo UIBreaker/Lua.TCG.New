@@ -76,7 +76,7 @@ Chỉnh hệ số, trần và danh mục tại `config/enemy_loadout_data.lua`; 
 
 - `lovec.exe . --test-enemy-loadouts`: 240 trận thực và 240 bộ đồ theo ải; ngân sách/trần, sáu tiêu hao, SPN dự trữ hiếm, cứu đồng đội/kết liễu/chủ lực/thứ tự hành động, chọn ô hữu dụng, dự trữ hữu hạn, chính xác một đòn, phong ấn, one-shot, không RNG phụ, tách kho đồ, khởi động lại và save.
 - `lovec.exe . --test-combat-tactics`: chính xác, buff, đội hình, nhịp tiếp xúc, thế bài nâng cao và hiệu ứng; tái hiện đánh 7 ST / hồi 7 HP, số lần hỗ trợ từng cấp, dự trữ chung, chờ hồi, bắt buộc tấn công và không làm mới trong trận.
-- `lovec.exe . --capture-enemy-loadouts`: mở/đóng bằng các thao tác thật ở 1920 và 960, thẻ đồ/khung mô tả khi rê chuột, balo đủ năm món, đổi đồ/uống thuốc/triệu hồi SPN ở contact, đòn Poker 500K hạ mục tiêu thật. Ảnh `docs/enemy_loadout_*.png` cách ly save người chơi.
+- `lovec.exe . --capture-enemy-loadouts`: mở/đóng bằng các thao tác thật ở 1920 và 960, thẻ đồ/khung mô tả khi rê chuột, balo đủ năm món, đổi đồ/uống thuốc/triệu hồi SPN ở contact, đòn Poker vượt HP cộng giáp hạ mục tiêu thật. Ảnh `docs/enemy_loadout_*.png` cách ly save người chơi.
 - Hồi quy Continental 52: khả năng bài, Boss, giường, editions và SPN qua; `tests/soul_shop_smoke.lua:133` còn lỗi fixture Ankh/Hex cũ. Đã xác nhận cùng lỗi khi dùng mã combat trước thay đổi này.
 
 ![Kho đồ Boss](enemy_loadout_boss_inventory.png)

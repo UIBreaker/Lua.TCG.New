@@ -71,10 +71,10 @@ function T.update(game,cb)
     elseif s==24 then shot("mysterious_101")
     elseif s==25 then T.basePermits=#game.backpackConsumables;game.shopMode="consumable";cb.openShop()
     elseif s==26 then
-        assert(cb.getShopData().items[8].cost==6000);T.gold=game.gold;shot("shop");click(button(cb,"buy_8"))
+        assert(cb.getShopData().items[8].cost==8000);T.gold=game.gold;shot("shop");click(button(cb,"buy_8"))
     elseif s==27 then click(UI.Polish.button(game));T.step=28;T.deadline=love.timer.getTime()+3;return
     elseif s==28 then
-        assert(game.gold==T.gold-6000 and game.backpackConsumables[#game.backpackConsumables].id=="cons_travel_permit")
+        assert(game.gold==T.gold-8000 and game.backpackConsumables[#game.backpackConsumables].id=="cons_travel_permit")
         love.keypressed("i")
     elseif s==29 then click(button(cb,"bag_tab_consumable"))
     elseif s==30 then
@@ -102,7 +102,7 @@ function T.update(game,cb)
     elseif s==48 then click(UI.Backpack.cells[1],2)
     elseif s==49 then click(button(cb,"travel_clubs"));assert(not game.monster and game.run.ante==101 and game.run.stats.blindsWon==T.wins and #game.backpackConsumables==T.basePermits+1)
     elseif s==50 then shot("combat_travel")
-    else print("Travel UI PASS: earned permit stays in bag, stage 21 frozen at 20, four certificates and infinite permit, real 6000-gold purchase, stay/cancel and reusable travel from combat; capture prefix "..T.prefix);love.event.quit(0);return end
+    else print("Travel UI PASS: earned permit stays in bag, stage 21 frozen at 20, four certificates and infinite permit, real 8000-gold purchase, stay/cancel and reusable travel from combat; capture prefix "..T.prefix);love.event.quit(0);return end
     T.step=s+1;T.deadline=love.timer.getTime()+((s==0 or s==4 or s==5 or s==25) and 1.1 or .45)
 end
 return T

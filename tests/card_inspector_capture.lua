@@ -48,15 +48,25 @@ function T.update(game,cb)
         UI.Backpack.show();UI.Backpack.tab="cards"
         for _,suit in ipairs(Deck.SUIT_ORDER) do for rank=2,14 do
             local m=I.model(Deck.newCard(rank,suit),game)
-            assert(#m.rows>0 and #m.equipment==4 and m.title:find(require("src.card_abilities").definition(m.item).name,1,true))
+            assert(#m.rows>0 and #m.equipment==1 and m.equipment[1].kind=="empty" and m.title:find(require("src.card_abilities").definition(m.item).name,1,true))
+            assert(m.rows[1].text:find(require("src.card_abilities").description(m.item),1,true),"complete primary ability retained")
         end end
+        local linked=Deck.newCard(7,"clubs");linked.equipments={E.ITEMS.void_catalyst}
+        local linkedModel=I.model(linked,game)
+        assert(#linkedModel.equipment==2 and linkedModel.equipment[1].text==E.getDescription(E.ITEMS.void_catalyst),"two-socket equipment appears once with full effect")
     elseif step==1 then
         local r=UI.Backpack.cellRect(1);pointer(r.x+r.w/2,r.y+r.h/2,2)
         assert(cb.getInspector()==T.simple)
     elseif step==2 then
-        checkLayout();assert(I.current.item==T.simple and #I.current.equipment==4)
+        checkLayout();assert(I.current.item==T.simple and #I.current.equipment==2 and I.current.equipment[2].kind=="empty")
         assert(T.frame.w==210 and T.frame.h==315,"Portrait rim must follow the enlarged face, not the backpack card")
         assert(I.current.equipment[1].text==E.getDescription(E.ITEMS.basic_chain))
+        local rules=0
+        for _,r in ipairs(I.current.rows) do
+            if r.kind=="rules" then rules=rules+1 end
+        end
+        assert(rules==1,"activation rules are grouped into one section")
+        assert(I.current.rows[1].kind=="primary" and I.current.rows[2].kind=="next","current and next ability come first")
         assert(I.current.equipment[1].label:find(" · T",1,true) and I.current.equipment[1].label:find("1 hốc",1,true))
         pointer(20,690);shot("playing_card")
     elseif step==3 then
@@ -64,6 +74,12 @@ function T.update(game,cb)
         cb.openInspector(T.long)
     elseif step==4 then
         checkLayout();assert(I.columns[1].maxScroll>0 and I.columns[2].maxScroll>0 and #I.current.equipment==8)
+        local foundState=false
+        for _,r in ipairs(I.current.rows) do
+            if r.kind=="state" and r.text:find("Tích hiện tại: 4",1,true) then foundState=true end
+            if r.kind=="rules" then assert(not r.text:find("Tích hiện tại:",1,true),"live state must not be mixed into global rules") end
+        end
+        assert(foundState,"live state remains visible in its own section")
         for i,r in ipairs(I.current.equipment) do assert(r.text==E.getDescription(T.long.equipments[i])) end
         pointer(600,400);love.wheelmoved(0,-999)
         assert(I.scroll[1]==I.columns[1].maxScroll and I.scroll[2]==0)
@@ -91,10 +107,21 @@ function T.update(game,cb)
         cb.openInspector(require("src.shop").healingItem(nil,"cons_armor_break").consumable)
     elseif step==11 then
         checkLayout();shot("potion")
+    elseif step==12 then
+        cb.openInspector(T.long)
+        love.window.setMode(960,540,{resizable=true});love.resize(960,540)
+    elseif step==13 then
+        checkLayout();shot("960")
+        pointer(600,400);love.keypressed("end");assert(I.scroll[1]==I.columns[1].maxScroll)
+    elseif step==14 then
+        pointer(1200,47,1);assert(not cb.getInspector())
+        cb.openInspector(T.simple)
+    elseif step==15 then
+        checkLayout()
         local n,coins=#game.persistentDeck,game.gold
         pointer(400,200,1);assert(cb.getInspector() and #game.persistentDeck==n and game.gold==coins)
         love.keypressed("escape");assert(not cb.getInspector() and UI.Backpack.open)
-        print("Card inspector PASS: fullscreen bounds, real backpack entry, all 52 abilities, complete 8-item effects, upgrades/modifiers/state, independent wheel + keyboard scrolling, SPN enchantments, equipment, potions, close/input isolation")
+        print("Card inspector PASS: fullscreen bounds, real backpack entry, all 52 abilities, complete 8-item effects, upgrades/modifiers/state, independent wheel + keyboard scrolling, SPN enchantments, equipment, potions, grouped rules/empty sockets, 960 input, close/input isolation")
         love.event.quit(0)
     end
     step=step+1;deadline=love.timer.getTime()+(step==1 and 1.6 or .4)

@@ -1,4 +1,8 @@
 return {
+    ["kingdom_heart_entity"] = "assets/cards/continental/enemy/kingdom_heart_entity.png",
+    ["kingdom_diamond_entity"] = "assets/cards/continental/enemy/kingdom_diamond_entity.png",
+    ["kingdom_club_entity"] = "assets/cards/continental/enemy/kingdom_club_entity.png",
+    ["kingdom_spade_entity"] = "assets/cards/continental/enemy/kingdom_spade_entity.png",
     ["ancient_statue"] = "assets/cards/continental/utility/ancient_statue.png",
     ["blood_hound"] = "assets/cards/continental/enemy/blood_hound.png",
     ["blood_sentinel"] = "assets/cards/continental/enemy/blood_sentinel.png",

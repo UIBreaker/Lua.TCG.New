@@ -73,10 +73,10 @@ function A.speed(m)
     local buffs=m.combatBuffs or {}
     local speed=math.min(m.bloodSovereign and math.huge or 999*(m.bloodDomainMultiplier or 1),require("src.enemy_loadout").speed(m)+((buffs.speed or {}).value or 0))
     speed=buffs.slow and math.max(1,math.floor(speed*(1-buffs.slow.value))) or speed
-    return require("src.human_bosses").speed(m,math.max(1,speed-(m.spnStolenSpeed or 0)))
+    return require("src.human_bosses").speed(m,math.max(1,speed-(m.spnStolenSpeed or 0)))*require("src.kingdom_bosses").factor(m)
 end
 function A.attack(m)
-    return require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0)
+    return (require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0))*require("src.kingdom_bosses").factor(m)
 end
 
 local actionNames={armor="Gia cố",speed="Tăng tốc",damage="Cường hóa",heal="Hồi máu"}

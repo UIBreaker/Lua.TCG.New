@@ -16,8 +16,8 @@ function Bag.cellRect(slot)
 end
 local tabs={{"spn","SPN ĐỒNG HÀNH"},{"consumable","TIÊU HAO"},{"equipment","TRANG BỊ"},{"cards","BỘ BÀI"},{"craft","BÀN GHÉP"},{"journey","CÔNG NHẬN"}}
 local function inside(x,y,r) return x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h end
-function Bag.show() Bag.open=true;Bag.page=Q.state(Bag).page;Bag.selected=nil;Bag.selectedSource=nil;Bag.drag=nil;Bag.message=nil;Bag.pending=nil;Bag.pendingItem=nil;Bag.searchFocus=false;Bag.searchSelectAll=false;Bag.lastClick=nil;Bag.cells={};Bag.loadoutSlots={};Bag.buttons={};require("src.ui").Polish.clearFocus() end
-function Bag.close() if Bag.pending then Bag.cancelEquip() end;Q.state(Bag).page=Bag.page;Bag.open=false;Bag.searchFocus=false;love.keyboard.setTextInput(false);Bag.drag=nil;Bag.pending=nil;Bag.pendingItem=nil;require("src.ui").Polish.clearFocus() end
+function Bag.show() Bag.cardPicker=nil;Bag.open=true;Bag.page=Q.state(Bag).page;Bag.selected=nil;Bag.selectedSource=nil;Bag.drag=nil;Bag.message=nil;Bag.pending=nil;Bag.pendingItem=nil;Bag.searchFocus=false;Bag.searchSelectAll=false;Bag.lastClick=nil;Bag.cells={};Bag.loadoutSlots={};Bag.buttons={};require("src.ui").Polish.clearFocus() end
+function Bag.close() Bag.cardPicker=nil;if Bag.pending then Bag.cancelEquip() end;Q.state(Bag).page=Bag.page;Bag.open=false;Bag.searchFocus=false;love.keyboard.setTextInput(false);Bag.drag=nil;Bag.pending=nil;Bag.pendingItem=nil;require("src.ui").Polish.clearFocus() end
 function Bag.list(game)
  local list={}
  if Bag.tab=="spn" then
@@ -42,7 +42,9 @@ end
 local function label(UI,s,x,y,w,size,color,align)
  love.graphics.setFont(UI.fonts[size or "small"]);love.graphics.setColor(color or UI.COLORS.textLight);love.graphics.printf(s,x,y,w,align or "left")
 end
+local pickerControls={bag_close=true,bag_search=true,bag_search_clear=true,bag_sort=true,bag_filter=true,bag_prev=true,bag_next=true,bag_tab_cards=true}
 local function button(UI,buttons,id,s,x,y,w,h,mx,my,disabled,size)
+ if Bag.cardPicker and not pickerControls[id] then disabled=true end
  local b={id=id,text=s,x=x,y=y,w=w,h=h,font=UI.fonts[size or "small"],color=UI.COLORS.btnSpecial,disabled=disabled}
  buttons[#buttons+1]=b;UI.drawButton(b,inside(mx,my,b));return b
 end
@@ -392,6 +394,7 @@ end
 function Bag.textinput(text) return Q.text(Bag,text) end
 function Bag.key(key)
  if not Bag.open then return false end
+ if Bag.cardPicker and tonumber(key) and not Bag.searchFocus then return true end
  if require("src.ui").Polish.busy() then return true end
  local ctrl=love.keyboard.isDown("lctrl","rctrl")
  if ctrl and key=="f" then if Bag.tab=="craft" then Tree.overview=false end;Bag.searchFocus=true;love.keyboard.setTextInput(true);return true end

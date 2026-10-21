@@ -17,6 +17,7 @@ for _,fps in ipairs({30,60,120,144}) do
     local c=Deck.newCard(2,"hearts")
     if spn then c={};for k,v in pairs(require("src.deities").getStarterDeity("valoria")) do c[k]=v end end
     c.evolutionLevel=0
+    if spn then c.evolutionCredits=1 end -- Owned SPNs now need a boss-earned evolution credit.
     local item=Run.createEvolutionCard()
     local game={persistentDeck=spn and {} or {c},hand={},deities=spn and {c} or {},consumables={item},gold=22,handsRemaining=3}
     local calls=0;assert(Modal.openEvolution(game,item,function() calls=calls+1 end))

@@ -75,7 +75,7 @@ local offers={items={free}};assert(Shop.buyItem(offers,1,zero));assert(zero.gold
 assert(not Shop.buyItem(offers,1,zero));zero=assert(P.restoreSnapshot(P.makeSnapshot(zero,"shop")));assert(B.count(zero,"gem_blast")==1 and B.resale(zero.backpackEquipment[1])==0);assert(B.attach(zero,1,zero.persistentDeck[1]))
 zero=assert(P.restoreSnapshot(P.makeSnapshot(zero,"shop")));assert(B.detach(zero,zero.persistentDeck[1],1));assert(B.resale(zero.backpackEquipment[1])==0)
 local cheap={gold=4,backpackEquipment={}};B.store(cheap,E.ITEMS.basic_plate,0);B.store(cheap,E.ITEMS.basic_bandage,0)
-assert(B.craft(cheap,B.recipes[1]));assert(B.investment(cheap.backpackEquipment[1])==4 and B.resale(cheap.backpackEquipment[1])==1)
+assert(B.craft(cheap,B.recipes[1]));assert(B.investment(cheap.backpackEquipment[1])==4 and B.resale(cheap.backpackEquipment[1])==2)
 local Display=require("ui.shop_display")
 local _,_,sw,sh=Display.position({section="upper",category="deity"},1,0)
 for _,kind in ipairs({"basic","discount"}) do local _,_,w,h=Display.position({section=kind,bay=1},1,0);assert(w==sw and h==sh) end

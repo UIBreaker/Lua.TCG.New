@@ -95,7 +95,9 @@ local function inventory(game,buttons,side,mx,my)
         end
         art(entry,tx+28,ty+5,64,96)
         paragraph(name(entry.item),tx+3,ty+104,115,2,UI.fonts.tiny,C.text)
-        line((wanted and "Họ cần · " or "~ ")..T.value(entry.kind,entry.item).." vàng",tx+3,ty+133,115,nil,wanted and C.green or C.gold,"center")
+        local quote=T.quoteValue(game,entry.kind,entry.item,side)
+        local price=side=="npc" and math.ceil(quote) or math.floor(quote)
+        line((wanted and "Họ cần · " or "~ ")..price.." vàng",tx+3,ty+133,115,nil,wanted and C.green or C.gold,"center")
         if selected then
             Core.color(C.green);love.graphics.circle("fill",tx+104,ty+14,9)
             text("✓",tx+96,ty+6,17,UI.fonts.small,C.charcoal,"center")

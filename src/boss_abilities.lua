@@ -110,6 +110,8 @@ function Boss.handStart(game)
         local c=targetCard(game,a.op)
         s.targetId=c and c.id; s.targetName=c and ((c.rankName or "")..(c.suitSymbol or "")) or "không có mục tiêu"
         s.telegraph=Boss.activeDescription(m)..((a.op:find("silence") or a.op=="face") and (" · Mục tiêu: "..s.targetName) or "")
+        game.spnFeedback=game.spnFeedback or {}
+        game.spnFeedback[#game.spnFeedback+1]={deity={name=m.name},slot=0,kind="boss",text="SẮP DÙNG "..a.name.." · "..s.telegraph}
     end
     if Boss.passiveEnabled(m) and (Boss.key(m)=="faceless" or Boss.key(m)=="the_fish") then
         for _,c in ipairs(game.hand or {}) do c.faceDown=true end
@@ -137,10 +139,22 @@ function Boss.isSlotLocked(game, kind, slot)
     return s and s.slotLock and s.slotLock.kind==kind and s.slotLock.slot==slot and s.slotLock.untilHand>=s.handIndex or false
 end
 function Boss.isAbilityDisabled(game, card)
+    if require("src.kingdom_bosses").disabled(game,card) then return true end
     if game and card and require("src.human_bosses").disabled(game,card) then return true end
     if not game or not game.monster or (game.monster.hp or 0)<=0 then return false end
     local s=Boss.state(game and game.monster)
     return s and card.abilityDisabledUntil and card.abilityDisabledUntil>=s.handIndex or false
+end
+-- Shared by scoring and the face overlay, including the exceptions to faction immunity.
+function Boss.scoreBlockReason(monster,card)
+    if not monster or (monster.hp or 0)<=0 or not card then return end
+    if require("src.kingdom_bosses").blocked(monster,card) then return "PHONG ẤN · "..(monster.bossData.suitName or card.suitName or card.suit) end
+    if not Boss.passiveEnabled(monster) then return end
+    if monster.bossData and monster.bossData.humanBoss==4 and card.rank>=11 and card.rank<=13 then return "TRIỀU ĐÌNH · KHÓA J/Q/K" end
+    local immune=not card.disableFactionPassives and (card.suit=="spades" or card.suit=="vharos" or card.suit=="iron_axiom")
+    if immune then return end
+    if monster.lockedFaction and card.suit==monster.lockedFaction then return "KHÓA CHẤT · "..(card.suitName or card.suit) end
+    if monster.lockedRoyals and card.rank>=11 and card.rank<=13 then return "TRẢM VƯƠNG · KHÓA J/Q/K" end
 end
 function Boss.allowRetriggerAbility(game, card)
     local m=game.monster; local s=Boss.state(m)
@@ -179,6 +193,8 @@ local function applyActive(game,a,s)
         if A.canSupport(m,"heal") and A.heal(m,a.amount)>0 then A.spendSupport(m,"heal") end
     elseif op=="damage" then s.pendingDamage=(s.pendingDamage or 0)+a.amount
     elseif op=="repeat_penalty" then s.repeatHand=game.lastPlayedHandId; s.repeatUntil=s.handIndex+1 end
+    game.spnFeedback=game.spnFeedback or {}
+    game.spnFeedback[#game.spnFeedback+1]={deity={name=m.name},slot=0,kind="boss",text=a.name.." · "..Boss.activeDescription(m)}
     s.cycle=s.cycle+1
 end
 function Boss.handEnd(game)
@@ -220,6 +236,7 @@ function Boss.handEnd(game)
     end
 end
 function Boss.passiveDescription(m)
+    if require("src.kingdom_bosses").isEntity(m) then return m.bossData.desc..(m.kingdomBossState and ("\n"..require("src.kingdom_bosses").notice(m)) or "") end
     local key=Boss.key(m);local c=Boss.config
     if key=="black_tax_collector" then return "Cuối tay: lấy tối đa "..c.tax.." Vàng nếu có ít nhất "..c.taxThreshold..". Hết Vàng: +1 Nợ (tối đa "..c.debtCap.."); mỗi Nợ thêm "..c.debtDamage.." sát thương Tịch Thu." end
     if key=="gatekeeper" then return "Đầu tay có hơn "..c.gateThreshold.." lá: mỗi lá dư tăng "..c.gateAttackPerCard.." tấn công trong tay đó; không giảm kích thước tay." end

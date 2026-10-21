@@ -136,7 +136,7 @@ local function snapshotRun(run)
         result.blinds[i] = {
             status = blind.status,
             tagId = blind.tag and blind.tag.id or nil,
-            debuff = blind.debuff and blind.debuff.humanBoss and {id=blind.debuff.id,humanBoss=blind.debuff.humanBoss,encounterToken=blind.debuff.encounterToken} or nil,
+            debuff = sanitize(blind.debuff),
         }
     end
     return result
@@ -174,6 +174,14 @@ local function restoreRun(saved, faction)
                 local data={};for k,v in pairs(definition) do data[k]=v end
                 data.encounterToken=savedBlind.debuff.encounterToken
                 blind.debuff=data;blind.name=data.name;blind.color=data.color
+            end
+        elseif i==3 and savedBlind and savedBlind.debuff then
+            local stored=savedBlind.debuff
+            local definition=require("config.kingdom_boss_data").byId[stored.id] or RunManager.BOSS_DEBUFFS[stored.id] or require("src.monster").DISRUPTIVE_BOSSES[stored.id]
+            if definition then
+                local data={};for k,v in pairs(definition) do data[k]=v end
+                for k,v in pairs(stored) do data[k]=v end
+                blind.debuff=data;blind.name=data.name or blind.name;blind.color=data.color or blind.color
             end
         end
         blind.status = savedBlind and savedBlind.status or (i == run.currentBlindIndex and "current" or "upcoming")
@@ -233,6 +241,7 @@ local function restoreDeity(savedDeity)
     end
     require("src.spn_convergence").migrate(deity)
     require("src.spn_enchantments").migrateDeity(deity)
+    deity.desc=Deities.getDescription(deity)
     return deity
 end
 

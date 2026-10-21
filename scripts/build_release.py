@@ -11,7 +11,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "c4f04e185033a7c9fbefa9be3bec88c41a90421b"
-VERSION = "0.142.0"
+VERSION = "0.143.0"
 
 
 def runtime_files(root):

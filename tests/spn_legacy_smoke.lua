@@ -23,11 +23,11 @@ local function bonus(result,id)
 end
 local g=game({"spirit_meteor_solitude"});local h=hand({3})
 assert(L.canPlay(g,1) and not L.canPlay(g,2) and not L.canPlay(g,5))
-assert(bonus(score(g,h),"spirit_meteor_solitude")==1000)
+assert(bonus(score(g,h),"spirit_meteor_solitude")==100)
 assert(bonus(score(g,hand({3,3})),"spirit_meteor_solitude")==0)
 assert(bonus(score(g,hand({2,5})),"spirit_meteor_solitude")==0,"unscored played cards count too")
 for level=1,8 do
-    D.evolve(g.deities[1]);local expected=1000*2^level
+    D.evolve(g.deities[1]);local expected=100*2^level
     assert(bonus(score(g,h,true),"spirit_meteor_solitude")==expected and bonus(score(g,h),"spirit_meteor_solitude")==expected)
     assert(D.getDescription(g.deities[1]):find(tostring(math.floor(expected)),1,true))
 end
@@ -80,7 +80,7 @@ Souls.awardKills(g);assert(D.getCount(g.deities)==3 and D.getMaxSlots(g)==8,"cop
 
 g=game({"spirit_meteor_solitude"});D.evolve(g.deities[1]);D.evolve(g.deities[1])
 saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")));saved.monster=g.monster
-assert(not L.canPlay(saved,2) and bonus(score(saved,h),"spirit_meteor_solitude")==4000)
+assert(not L.canPlay(saved,2) and bonus(score(saved,h),"spirit_meteor_solitude")==400)
 local state=Rng.getState();score(saved,h,true);assert(Rng.getState()==state and D.getCount(saved.deities)==1)
 assert(#D.getRandomShopPool({},99)==99)
 print("SPN legacy PASS: boss-only sacrifice/copies, one kill receipt, deep owned upgrades, full/negative/overflow slots, save/load, no hatch recursion, single-card restriction and doubling evolution")

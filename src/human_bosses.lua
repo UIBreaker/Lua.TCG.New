@@ -8,10 +8,11 @@ function H.primary(g)
     for _,m in ipairs(g.enemies or {g.monster}) do if H.number(m) then return m end end
 end
 local function passive(m) return require("src.boss_abilities").passiveEnabled(m) end
-local function emit(g,message)
+local function emit(g,message,target)
     g.enemyFeedback=message
     g.spnFeedback=g.spnFeedback or {}
-    g.spnFeedback[#g.spnFeedback+1]={deity={name="BOSS"},slot=0,text=message}
+    local name=target and (target.name or (target.rankName or "Lá bài")..(target.suitSymbol or ""))
+    g.spnFeedback[#g.spnFeedback+1]={deity=not target and {name="BOSS"} or nil,card=target,title=name and "BOSS → "..name,slot=0,kind="boss",text=message}
 end
 function H.roll(stage)
     -- Encounter selection must not consume a potion/SPN reward's pending RNG roll.
@@ -73,6 +74,8 @@ function H.start(g)
         if #targets>0 then
             local target=targets[R.random(#targets)]
             if target.reserve then table.remove(target.list,target.index) else target.list[target.index]=nil end
+            g.spnFeedback=g.spnFeedback or {}
+            g.spnFeedback[#g.spnFeedback+1]={deity=target.item,slot=target.reserve and 0 or target.index,kind="destroy",text="BẺ HỒN · Boss tiêu hủy vĩnh viễn SPN"..(target.reserve and " trong balo" or " đang trang bị")}
             emit(g,"BẺ HỒN · MẤT VĨNH VIỄN "..(target.item.name or target.item.id))
         end
         s.receipt.spiritDestroyed=true;save(g)
@@ -225,7 +228,7 @@ function H.action(g,m)
     s.receipt.executionUsed=true
     local label="ĐOẠN MỆNH · KHÔNG CÒN MỤC TIÊU"
     if #g.hand>0 then
-        local c=g.hand[R.random(#g.hand)];destroy(g,c);emit(g,"ĐOẠN MỆNH · MẤT VĨNH VIỄN "..(c.rankName or "lá bài"))
+        local c=g.hand[R.random(#g.hand)];destroy(g,c);emit(g,"ĐOẠN MỆNH · MẤT VĨNH VIỄN "..(c.rankName or "lá bài")..(c.suitSymbol or ""),c)
         label="TIÊU HỦY VĨNH VIỄN 1 LÁ"
     end
     save(g)
@@ -250,7 +253,10 @@ function H.afterDamage(m,before)
     if H.number(m)==7 and m.hp<before and m.humanBossState
         and not (m.bossState and m.bossState.activeUntil>=m.bossState.handIndex) then
         local g=m.humanBossState.game;local choices=deityTargets(g)
-        if #choices>0 and downgradeDeity(choices[R.random(#choices)].item) then emit(g,"BÀO MÒN LINH HỒN · SPN GIẢM 1 BẬC");save(g) end
+        if #choices>0 then
+            local target=choices[R.random(#choices)].item
+            if downgradeDeity(target) then emit(g,"BÀO MÒN LINH HỒN · SPN GIẢM 1 BẬC",target);save(g) end
+        end
     end
 end
 function H.afterAttack(g,m,result)
@@ -269,7 +275,7 @@ function H.afterAttack(g,m,result)
         if target then
             local stolen=math.min(2,require("src.deck").peekCardAttackSpeed(target,g)-1)
             require("src.chest_expansion").sync(g,target,function(c) c.humanSpeedPenalty=(c.humanSpeedPenalty or 0)+stolen;require("src.deck").getCardAttackSpeed(c) end)
-            s.stolen=s.stolen+stolen;emit(g,"ĐOẠT PHONG · -"..stolen.." TỐC VĨNH VIỄN");save(g)
+            s.stolen=s.stolen+stolen;emit(g,"ĐOẠT PHONG · -"..stolen.." TỐC VĨNH VIỄN",target);save(g)
             g.lastPlayerAttackSpeed=require("src.combat").getAverageAttackSpeed(g.abilityHand.played,g)
         end
     elseif n==3 then
@@ -282,12 +288,12 @@ function H.afterAttack(g,m,result)
         local choices={};for _,c in ipairs(g.hand) do if not c.humanCourtForm then choices[#choices+1]=c end end
         if #choices==0 then return end
         local c=choices[R.random(#choices)];local rank=R.random(11,13);s.forms[c.id]=rank
-        applyForm(c,rank);emit(g,"MẶT NẠ · BIẾN THÀNH "..require("src.deck").RANK_NAMES[rank])
+        applyForm(c,rank);emit(g,"MẶT NẠ · BIẾN THÀNH "..require("src.deck").RANK_NAMES[rank],c)
     elseif n==8 and #g.hand>0 then
         local choices={};for _,c in ipairs(g.hand) do if (c.evolutionLevel or 0)>0 then choices[#choices+1]=c end end
         if #choices==0 then return end
         local c=choices[R.random(#choices)]
-        require("src.card_abilities").upgrade(g,c,-1,false);emit(g,"XIỀNG SUY TÀN · -1 CẤP TIẾN HÓA");save(g)
+        require("src.card_abilities").upgrade(g,c,-1,false);emit(g,"XIỀNG SUY TÀN · -1 CẤP TIẾN HÓA",c);save(g)
     elseif n==10 and result.damage>0 then
         local choices={}
         for _,key in ipairs({"backpackEquipment","backpackConsumables","backpackDeities"}) do for index,item in ipairs(g[key] or {}) do

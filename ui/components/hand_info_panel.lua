@@ -143,6 +143,7 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
    ..(a and " · "..a.name.." / "..(bs and bs.activeCountdown or 1).." tay" or "")
    ..(bs and bs.cancelNextActive>0 and " · Đã phong ấn" or "")
   if data.boss.bloodSovereign then trait="Bạn hồi HP: boss ×2 Máu / Tốc / ST.\nCuối lượt: −2% HP hiện tại." end
+  if data.boss.bossData.kingdomEntity then trait=require("src.kingdom_bosses").notice(data.boss) end
   if data.boss.bossData.humanBoss then
    trait=data.boss.bossData.desc
    local s=data.boss.humanBossState

@@ -33,7 +33,8 @@ function T.update(game,cb)
         local i;for n,c in ipairs(Modal.current.cards) do if c==game.deities[1] then i=n end end
         press("target",assert(i));stage=4;age=0
     elseif stage==4 and age>0.2 then
-        assert(Modal.current.selected==game.deities[1]);shot("patron");stage=4.5;age=0
+        assert(Modal.current.selected==game.deities[1] and press("confirm").disabled and #game.consumables==1)
+        shot("patron");stage=4.5;age=0
     elseif stage==4.5 and age>0.2 then
         press("tab_cards");stage=5;age=0
     elseif stage==5 and age>0.2 then

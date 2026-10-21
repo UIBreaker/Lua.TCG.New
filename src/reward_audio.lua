@@ -39,7 +39,10 @@ function A.register(sound)
                 local envelope=(1-math.exp(-t/(slow and .028 or .0015)))*math.exp(-t/(length*(slow and .60 or .24)))
                     *math.min(1,(length-t)*rate/128)
                 local a=tau*f*t
-                local v=(math.sin(a)+.27*math.sin(a*(metal and 2.76 or 2))+.13*math.sin(a*(metal and 4.13 or 3)))*envelope*amp
+                local v=(math.sin(a+.012*math.sin(t*27))
+                    +.30*math.sin(a*(metal and 2.756 or 2.003))*math.exp(-t*7)
+                    +.16*math.sin(a*(metal and 5.404 or 3.009))*math.exp(-t*18)
+                    +.07*math.sin(a*(metal and 8.933 or 4.013))*math.exp(-t*32))*envelope*amp
                 local pos=start+i+1
                 l[pos]=l[pos]+v*math.sqrt(1-pan);r[pos]=r[pos]+v*math.sqrt(1+pan)
             end
@@ -54,6 +57,13 @@ function A.register(sound)
             local envelope=charging and (.16+.84*t/duration)*(1-math.exp(-t/.02))
                 or math.exp(-t/(phase=="open" and .065 or .022))
             local wood=(low*2+air*.45)*envelope*(phase=="open" and .85 or .28)
+            if not charging then
+                -- A latch, lid and settling metal precede the rarity's musical answer.
+                local at=phase=="open" and .052 or phase=="collect" and .012 or .028
+                local u=math.max(0,t-at)
+                local contact=(1-math.exp(-u*1800))*math.exp(-u/(phase=="open" and .045 or .018))
+                wood=wood+((n-air)*.22+low*.8+math.sin(tau*165*u)*.20)*contact
+            end
             l[i],r[i]=wood,wood
         end
         for j,note in ipairs(notes) do

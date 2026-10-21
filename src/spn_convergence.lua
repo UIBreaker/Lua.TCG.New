@@ -2,7 +2,7 @@ local S={entries={
     {"spirit_primeval_product","Cổ Linh Bồi Tụ","addChips",2,"Mỗi lá đã chơi thêm 1 tầng vĩnh viễn trong chuyến đi; mỗi tầng +{value} Sát thương. Tính cả lá không ghi điểm."},
     {"spirit_parity","Lưỡng Cực","addMult",10,"Mỗi lần bị địch đánh mất HP: tích lũy vĩnh viễn +{value} Sát thương và +{value} Cường hóa cho lá này, không giới hạn."},
     {"spirit_extremes","Vết Nứt Vô Cực","addChips",1,"Mỗi tay thêm 5 vết nứt; mỗi HP thực mất do đòn quái thêm 1 vết. Mỗi vết thêm {value} Sát thương tính điểm; mỗi 100 vết thêm 1 Cường hóa. Giữ suốt chuyến đi."},
-    {"spirit_hour_product","Đồng Hồ Vô Tận","addMult",2,"Mỗi lần bỏ bài: lá này tích lũy vĩnh viễn +{value} Cường hóa, không giới hạn."},
+    {"spirit_hour_product","Đồng Hồ Vô Tận","addMult",0.5,"Mỗi lần bỏ bài: lá này tích lũy vĩnh viễn +{value} Cường hóa, không giới hạn."},
     {"spirit_number_grave","Mộ Chữ Số","addFlatDamage",6,"Chôn tối đa 15 Giáp hiện tại của mục tiêu mỗi tay; mỗi Giáp bị chôn thêm {value} sát thương cố định vào AURA. Giáp thực sự bị lấy đi."},
     {"spirit_reverse_stair","Bậc Thang Ngược","xMult",0.25,"Tại ô này, hoán đổi toàn bộ Sát thương và Cường hóa đang có, rồi ×{factor} Cường hóa. Các SPN phía sau tính trên hai trục đã đảo."},
     {"spirit_three_moons","Nhịp Sao Rơi","addHealHp",1,"Chơi 1 lá: đốt Giáp đang có, hồi {value} HP mỗi Giáp. Chơi 3 lá: +{value} sát thương cố định mỗi HP thiếu. Chơi 5 lá: đổi 1 lượt bỏ để cả bầy quái ngủ 1 đòn. Tính cả lá không ghi điểm."},
@@ -134,23 +134,30 @@ function S.commit(game,slot,result)
     if result.addPortalPct then memory.portal=result.addPortalPct end
     if result.addDebtGuard then memory.ward=result.addDebtGuard end
 end
+local function growthNotice(game,owned,slot,text)
+    game.spnFeedback=game.spnFeedback or {}
+    game.spnFeedback[#game.spnFeedback+1]={deity=game.deities[slot],slot=slot,text=text}
+end
 function S.enemyDamage(game,damage)
     if damage<=0 then return end
-    visit(game,function(owned)
+    visit(game,function(owned,slot)
         if owned.id=="spirit_extremes" then
             owned.spnGrowth={cracks=(owned.spnGrowth and owned.spnGrowth.cracks or 0)+damage}
             owned.desc=D.getDescription(owned)
+            growthNotice(game,owned,slot,"TÍCH LŨY +"..damage.." VẾT NỨT · Tổng "..owned.spnGrowth.cracks)
         elseif owned.id=="spirit_parity" then
             owned.spnGrowth={hits=(owned.spnGrowth and owned.spnGrowth.hits or 0)+1}
             owned.desc=D.getDescription(owned)
+            growthNotice(game,owned,slot,"TÍCH LŨY +1 ĐÒN · Tổng "..owned.spnGrowth.hits)
         end
     end)
 end
 function S.discard(game)
-    visit(game,function(owned)
+    visit(game,function(owned,slot)
         if owned.id=="spirit_hour_product" then
             owned.spnGrowth={discards=(owned.spnGrowth and owned.spnGrowth.discards or 0)+1}
             owned.desc=D.getDescription(owned)
+            growthNotice(game,owned,slot,"BỎ BÀI · +1 TẦNG · Tổng "..owned.spnGrowth.discards.." lần bỏ")
         end
     end)
 end
@@ -159,6 +166,7 @@ function S.guard(game,damage)
         if owned.id=="spirit_missing_orbit" and (memory.ward or 0)>0 then
             local avoided=math.min(damage,memory.ward);damage=damage-avoided
             memory.ward=nil;memory.debt=avoided
+            if avoided>0 then growthNotice(game,owned,slot,"NÉ "..avoided.." ST · Nợ AURA tay sau: "..avoided) end
         end
     end)
     return damage

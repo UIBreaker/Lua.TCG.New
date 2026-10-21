@@ -74,7 +74,12 @@ function M.each(game,list,slot,fn,locked)
         local gameList=game and game.deities
         local previous=gameList and gameList[slot]
         list[slot]=effective;if gameList then gameList[slot]=effective end
+        local feedbackStart=game and #(game.spnFeedback or {}) or 0
         local ok,err=pcall(fn,effective)
+        -- Feedback belongs to the equipped copier, not its temporary effect proxy.
+        if game then for j=feedbackStart+1,#(game.spnFeedback or {}) do
+            local event=game.spnFeedback[j];if event.deity==effective then event.deity=physical end
+        end end
         if list[slot]==effective then list[slot]=physical end
         if gameList and gameList~=list and gameList[slot]==effective then gameList[slot]=previous end
         if effective.spnGrowth then

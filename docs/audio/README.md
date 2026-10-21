@@ -1,5 +1,15 @@
 # Continental audio
 
+## Nâng cấp chất âm — 21/10/2026
+
+SFX chung chuyển sang tiếng tiếp xúc nhiều lớp: giấy có các lượt sột soạt không đều và tiếng chạm bàn tắt nhanh; UI có tiếng gỗ gọn; tiền/kim loại dùng các mode cộng hưởng phi điều hòa tắt dần theo tần số; va chạm có thân trầm, tiếng nứt và mảnh vụn; phép thuật có hơi gió và cộng hưởng rung nhẹ. Không tăng gain tổng để tạo cảm giác mạnh giả. Nhạc và ambience giữ nguyên bản phối.
+
+Đòn Niệm thêm transient cho thân đòn, kim loại ngân theo mode, lưỡi thép có tiếng xé, pháo có đầu nổ, đá có hạt vỡ, quân hiệu có hơi và băng có các mảnh cộng hưởng tắt nhanh. Phần thưởng thêm chốt khóa/nắp rương/tiếng kim loại lắng xuống theo phase, bồi âm tắt dần và rung nhẹ cho chuỗi nốt. Giữ nhịp motif của 27 thế và 10 bậc hiếm, mốc gây sát thương, gain, giới hạn peak và cache mobile hiện có.
+
+Đã rebuild 142 WAV SFX chung/biến thể, 756 cue Niệm và 40 cue thưởng. Kiểm tra bằng decoder/OpenAL thật: PCM Niệm và thưởng khớp chính xác synthesizer, ba cấp lực và bản sắc từng thế, routing theo FPS/tốc độ, mixer/limiter, không cấp phát source khi phát; kiểm tra cache mobile và màn cài đặt/input thật đều qua. Các preview bên dưới đã cập nhật. Đây là kiểm tra tín hiệu và tích hợp; cân âm cảm nhận trên loa/tai nghe vẫn cần người chơi đánh giá.
+
+Nghe nhanh: `continental_preview.wav` cho thao tác và SFX chung; `nen_cinematic_preview.wav` cho đòn đánh trên nền nhạc; `boss_reward_flow.wav` cho kết liễu → khải hoàn → mở rương → nhận vật phẩm.
+
 Phiên bản đòn đánh có bản sắc riêng: 108 hiệu ứng file + 756 hiệu ứng stereo cho 27 thế Niệm + 40 cue thưởng cho 10 bậc hiếm, thêm 34 bản thu biến thể cho 17 âm thường lặp; 9 vòng nhạc soạn bằng DSP và 10 lớp âm môi trường. Giữ bản menu có sẵn. Các file mới là tác phẩm procedural của project, không lấy sample bên thứ ba. Game chỉ cần LÖVE; NumPy chỉ dùng khi xây dựng lại tài nguyên.
 
 ## Trong game

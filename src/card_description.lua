@@ -97,7 +97,8 @@ function D.resolve(item,game)
         if state.guardUsed then text=text.."\nVí Cứu Mệnh: đã dùng trong vòng." end
         if game and Boss.isAbilityDisabled(game,item) then text=text.."\nKHẢ NĂNG VÔ HIỆU trong tay này." end
         local monster=game and game.monster
-        if monster and Boss.passiveEnabled(monster) and (monster.lockedFaction==item.suit or monster.lockedRoyals and item.rank>=11 and item.rank<=13) then text=text.."\nBOSS KHÓA TÍNH ĐIỂM: 0 ST / 0 Cường hóa từ lá này." end
+        local blocked=Boss.scoreBlockReason(monster,item)
+        if blocked then text=text.."\n"..blocked.." · Không ghi điểm từ lá này." end
         local bs=game and Boss.state(game.monster)
         if bs and bs.forgottenCard==item.id then text=text.."\nQUÊN LÃNG: lần lặp kế tiếp chỉ còn điểm, không chạy khả năng." end
         text=text.."\nHỐC TRANG BỊ · "..Equipment.getUsedSlots(item).." / "..Equipment.getMaxSlots(item)

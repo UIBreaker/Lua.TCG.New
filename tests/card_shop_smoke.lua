@@ -114,8 +114,8 @@ for _,mode in ipairs({"normal","small","consumable","equipment","spn","medicine"
 end
 assert(not Shop.sellCard())
 seller.shopMode="cards"
-local price=math.floor((4+12+8+Equipment.ITEMS.gem_fire.cost)/2)
-assert(Shop.getCardSellPrice(sold)==price and Shop.getCardSellPrice(kept)==2)
+local price=math.floor(((4+12+8)*Shop.PRICE_MULTIPLIER+Shop.getMarketValue(Equipment.ITEMS.gem_fire,"equipment"))*.6)
+assert(Shop.getCardSellPrice(sold)==price and Shop.getCardSellPrice(kept)==9)
 local forged=Deck.cloneCard(sold);forged.evolutionLevel=100;forged.equipments={{cost=99999}}
 local ok,paid=Shop.sellCard(seller,forged)
 assert(ok and paid==price and seller.gold==10+price,"Use the owned card's value, not caller-supplied upgrades")

@@ -338,6 +338,7 @@ function Combat.start(game, monster, round)
     game.monster = monster
     game.spnBasicArmorGranted=nil
     game.enemies=Group.build(monster)
+    require("src.kingdom_bosses").start(game)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}
@@ -389,6 +390,13 @@ function Combat.start(game, monster, round)
             game.playerShield = game.playerArmor
             game.discardsRemaining = game.discardsRemaining + (result and result.addDiscards or 0)
             game.handsRemaining = game.handsRemaining + (result and result.addHands or 0)
+            if result then
+                local parts={}
+                for _,p in ipairs({{"addArmor","GIÁP"},{"addDiscards","LƯỢT BỎ"},{"addHands","LƯỢT ĐÁNH"}}) do
+                    if (result[p[1]] or 0)>0 then parts[#parts+1]="+"..result[p[1]].." "..p[2] end
+                end
+                if #parts>0 then game.spnFeedback[#game.spnFeedback+1]={deity=game.deities[slot],slot=slot,text="VÀO TRẬN · "..table.concat(parts," · ")} end
+            end
         end
         end)
     end

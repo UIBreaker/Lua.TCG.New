@@ -83,7 +83,7 @@ g.selectedFaction="red_deck";g.gold=0;assert(Shop.interest(g)==0)
 g.gold=1000;buy(g,"v_altar");buy(g,"v_altar")
 local reward=Reward.calculate({baseReward=3},g)
 assert(reward.voucherBonus==4 and Reward.calculate({baseReward=3},g,true).voucherBonus==0)
-assert(Shop.getSacrificePrice({cost=4},"consumable",g)==2,"No buy/sell gold loop from Tro Vàng")
+assert(Shop.getSacrificePrice({cost=4,acquisitionCost=4},"consumable",g)==2,"No buy/sell gold loop from Tro Vàng")
 local animation=Reward.newAnimation(reward)
 local total=0;for _,line in ipairs(animation.lines) do total=total+line.valNum end
 assert(total==reward.totalGold)

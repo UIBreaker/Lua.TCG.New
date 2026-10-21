@@ -11,13 +11,14 @@ local reasons={guard="Tôi cần thuốc và đồ phòng hộ để vượt vù
 local function copy(item) return Blood.clone(item) end
 local function encode(item) return require("src.persistence").encode(item) end
 local function integer(n) return type(n)=="number" and n==n and n>=0 and n<math.huge and n==math.floor(n) end
-local prices
 local function title(item) return item.name or item.characterName or ((item.rankName or tostring(item.rank or ""))..(item.suitSymbol or "")) end
 local function itemStamp(item)
     local fields={"id","rank","baseRank","suit","baseChips","bonusBaseChips","speedBonus","maxSockets","unlockedSockets","allowDuplicateEquipment","rarity","baseRarity","baseRarityTier","evolutionLevel","edition","editionPower","enchantment","enchantmentPower","bloodPower","voidPower","seal","sealPower","enhancement","healAmt","armorAmt","permanentSpeed","investment","amount","resource","cost","potionPermanentDamage","potionPermanentMult","spnPermanentDamage"}
     fields[#fields+1]="bloodDomainPower";fields[#fields+1]="statuePower";fields[#fields+1]="statueSpeedPenalty"
     local stamp={};for _,field in ipairs(fields) do stamp[field]=item[field] end
     stamp.acquisitionCost=item.acquisitionCost
+    stamp.acquisitionMarketValue=item.acquisitionMarketValue
+    stamp.evolutionCredits=item.evolutionCredits
     stamp.equipments={};for _,eq in ipairs(item.equipments or {}) do stamp.equipments[#stamp.equipments+1]=itemStamp(eq) end
     if item.card then stamp.card=itemStamp(item.card) end
     return encode(stamp)
@@ -35,26 +36,7 @@ function T.role(kind,item)
 end
 function T.value(kind,item)
     if kind=="resource" then return item.amount*(item.resource=="voidTickets" and 1 or 3) end
-    local Shop=require("src.shop")
-    if not prices then
-        prices={}
-        for _,catalog in ipairs({Shop.POTIONS,Shop.getRetailConsumables(),Shop.SOUL_SUPPORT}) do
-            for _,entry in ipairs(catalog) do prices[entry.id]=entry.cost end
-        end
-    end
-    local value=item.cost or prices[item.id] or 5
-    if kind=="card" then
-        value=Shop.playingCardOffer(item).cost+math.max(0,item.bonusBaseChips or 0)*.2
-            +math.max(0,item.speedBonus or 0)*2+math.max(0,item.potionPermanentMult or 0)*3
-            +math.max(0,E.getMaxSlots(item)-4)*4
-    elseif kind=="spn" then
-        local rarity=D.RARITIES[D.getRarityTier(item)].id
-        value=(item.cost or 4)*(Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity] or 1)+(item.evolutionLevel or 0)*8
-        if item.edition then value=value+10 end
-        if item.enchantment then value=value+8 end
-    end
-    if item.id=="cons_travel_permit" then value=2000 end
-    return math.max(1,math.ceil(value*Blood.powerOf(item)))
+    return require("src.shop").getMarketValue(item,kind)
 end
 local function resource(id,amount)
     return {id="barter_"..id,resource=id,amount=amount,name=(id=="souls" and "Linh Hồn" or "Vé The Void").." ×"..amount,
@@ -108,14 +90,15 @@ function T.create(game)
         filters={player="all",npc="all"},pages={player=1,npc=1},amounts={}}
     game.barterEvent=e;T.clear(game)
     local ids={};for id in pairs(D.CATALOG) do ids[#ids+1]=id end;table.sort(ids)
+    local Shop=require("src.shop")
     for _=1,4 do
-        local item=copy(D.CATALOG[ids[Rng.random(#ids)]]);local tier=Rng.random(4)
-        item.rarity=D.RARITIES[tier].id;item.baseRarity=item.rarity;item.baseRarityTier=tier;item.evolutionLevel=Rng.random(0,2)
+        local item=copy(D.CATALOG[ids[Rng.random(#ids)]])
+        item.evolutionLevel=0;item.evolutionCredits=0;D.setRarity(item,Shop.rollSpnRarity(game).id)
         addStock(e,"spn",item)
     end
     ids={};for id in pairs(E.ITEMS) do ids[#ids+1]=id end;table.sort(ids)
     for _=1,4 do addStock(e,"equipment",E.instance(ids[Rng.random(#ids)])) end
-    local Shop=require("src.shop");local retail=Shop.getRetailConsumables()
+    local retail=Shop.getRetailConsumables()
     for _=1,5 do local offer=retail[Rng.random(#retail)];local item=copy(offer.consumable);item.cost=offer.cost;addStock(e,"consumable",item) end
     for _,id in ipairs({"healing_potion","armor_potion_small","cons_draw"}) do
         local offer=Shop.healingItem(nil,id);local item=copy(offer.consumable);item.cost=offer.cost;addStock(e,"consumable",item)
@@ -193,15 +176,22 @@ local function picked(game,draft)
     if #result.player==0 and draft.playerGold==0 or #result.npc==0 and draft.npcGold==0 then return nil,"Mỗi bên cần đưa vật phẩm hoặc vàng lên bàn." end
     table.sort(stamps);result.stamp=table.concat(stamps,"|")..encode(draft)..encode(game.barterEvent.amounts);return result
 end
+function T.quoteValue(game,kind,item,side)
+    local e=game.barterEvent
+    if side=="npc" then return T.value(kind,item)*(1.12+e.temper*.01) end
+    local demand=T.role(kind,item)==e.need and 1.25 or 1
+    local duplicates=0
+    for _,held in ipairs(e.stock) do if held.kind==kind and held.item.id==item.id then duplicates=duplicates+1 end end
+    local basis=kind=="resource" and T.value(kind,item) or require("src.shop").getResaleBasis(item,kind)
+    return basis*.72*demand/(1+duplicates*.25)
+end
 function T.valuation(game,draft)
     local entries,msg=picked(game,draft);if not entries then return nil,msg end
     local e=game.barterEvent;local give,take=0,0
     for _,entry in ipairs(entries.player) do
-        local demand=T.role(entry.kind,entry.item)==e.need and 1.25 or 1
-        local duplicates=0;for _,held in ipairs(e.stock) do if held.kind==entry.kind and held.item.id==entry.item.id then duplicates=duplicates+1 end end
-        give=give+T.value(entry.kind,entry.item)*.72*demand/(1+duplicates*.25)
+        give=give+T.quoteValue(game,entry.kind,entry.item,"player")
     end
-    for _,entry in ipairs(entries.npc) do take=take+T.value(entry.kind,entry.item)*(1.12+e.temper*.01) end
+    for _,entry in ipairs(entries.npc) do take=take+T.quoteValue(game,entry.kind,entry.item,"npc") end
     entries.give=math.floor(give);entries.take=math.ceil(take);entries.balance=entries.give+draft.playerGold-entries.take-draft.npcGold;return entries
 end
 local function counterFor(game,draft)
@@ -311,8 +301,12 @@ local function removePlayer(game,entries)
     end
     game.masterDeck=game.persistentDeck;game.selectedIndices={}
 end
-local function grant(game,entry)
+local function grant(game,entry,budget)
     local item=copy(entry.item)
+    if entry.kind~="resource" then
+        item.acquisitionCost=math.min(T.value(entry.kind,item),budget)
+        item.acquisitionMarketValue=T.value(entry.kind,item)
+    end
     if entry.kind=="spn" then Loadout.storeDeity(game,item)
     elseif entry.kind=="equipment" then Basic.store(game,item,item.acquisitionCost or item.investment or 0)
     elseif entry.kind=="card" then Deck.addCardToDeck(game,item)
@@ -332,7 +326,12 @@ function T.accept(game)
     for _,entry in ipairs(entries.player) do receipt.given[#receipt.given+1]=title(entry.item) end
     for _,entry in ipairs(entries.npc) do receipt.received[#receipt.received+1]=title(entry.item) end
     removePlayer(game,entries.player)
-    for _,entry in ipairs(entries.npc) do grant(game,entry) end
+    local total=0
+    for _,entry in ipairs(entries.npc) do total=total+T.value(entry.kind,entry.item) end
+    local budget=math.max(0,entries.give+e.draft.playerGold-e.draft.npcGold)
+    for _,entry in ipairs(entries.npc) do
+        grant(game,entry,math.floor(budget*T.value(entry.kind,entry.item)/total))
+    end
     for i=#e.stock,1,-1 do if e.draft.npc[e.stock[i].key] then table.remove(e.stock,i) end end
     for _,entry in ipairs(entries.player) do addStock(e,entry.kind,entry.item) end
     game.gold=(game.gold or 0)-e.draft.playerGold+e.draft.npcGold;e.gold=e.gold+e.draft.playerGold-e.draft.npcGold

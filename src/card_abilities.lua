@@ -227,7 +227,7 @@ end
 function A.destroy(game,card,ctx,soulMultiplier)
     if not card or card.destructionNotified then return false end
     card.destroyed=true; card.destructionNotified=true
-    if card.edition=="void" or card.visualEffect=="void" then
+    if (card.edition=="void" or card.visualEffect=="void") and not require("src.kingdom_bosses").disabled(game,card) then
         local d=A.definition(card)
         local x=ctx or game.abilityHand or {game=game,handInfo={type={id="high_card"}},
             scoring={},scored={},played={},active={},queue={},returns={},repeats={},
@@ -313,6 +313,9 @@ end
 function A.combatWin(game)
     if combat(game).won then return end
     combat(game).won=true
+    for _,enemy in ipairs(require("src.enemy_group").members(game)) do
+        require("src.deities").awardBossEvolution(game,enemy)
+    end
     A.roundEnd(game)
     local ctx={goldBeforeInterest=game.gold or 0}
     A.dispatch(game,"combat_win",allCards(game),ctx)

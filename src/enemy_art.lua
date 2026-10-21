@@ -8,6 +8,7 @@ Art.bosses = {
     "echo_knight", "taxman", "gem_devourer", "executioner", "faceless",
 }
 for _,d in ipairs(require("config.human_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
+for _,d in ipairs(require("config.kingdom_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
 function Art.key(monster)
     if not monster then return nil end
     if monster.isBoss and monster.bossData and monster.bossData.humanBoss then return monster.bossData.artKey end
@@ -23,6 +24,7 @@ function Art.key(monster)
     end
 end
 function Art.path(key)
+    if key and key:match("^kingdom_") then return "assets/cards/continental/enemy/"..key..".png" end
     if key and key:match("^blood_") then return "assets/cards/continental/enemy/"..key..".png" end
     if key and key:match("^human_") then return "assets/cards/continental/enemy/"..key..".png" end
     local human = key and key:match("^(%a+)_([%dJQKA]+)$")

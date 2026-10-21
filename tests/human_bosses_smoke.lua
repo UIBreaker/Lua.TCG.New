@@ -31,17 +31,18 @@ local ok,err=xpcall(function()
     for sample=1,200 do
         local stage=(sample-1)%20+1;R.seed(1000+sample);local state=R.getState()
         local blind=Run.generateAnteBlinds(stage,nil,"human",stage)[3]
-        assert(blind.debuff.humanBoss and blind.name==blind.debuff.name)
+        assert((blind.debuff.humanBoss or blind.debuff.kingdomEntity) and blind.name==blind.debuff.name)
         assert(stage>=(blind.debuff.firstStage or 1),"counter bosses cannot spawn before their preparation tier")
         assert(R.getState()==state,"boss selection must be RNG-neutral to combat reward rolls")
-        seen[blind.debuff.humanBoss]=true
+        if blind.debuff.humanBoss then seen[blind.debuff.humanBoss]=true end
     end
     for i=1,10 do assert(seen[i],"all ten human bosses must be selectable") end
     R.setState(oldState)
     for _,region in ipairs({"hearts","diamonds","clubs","spades","unknown"}) do
         assert(not Run.generateAnteBlinds(5,nil,region,5)[3].debuff.humanBoss,"human roster must not leak into "..region)
     end
-    assert(Run.generateAnteBlinds(40,nil,"human",7)[3].debuff.humanBoss,"returning to the human region uses its local roster")
+    local returning=Run.generateAnteBlinds(40,nil,"human",7)[3].debuff
+    assert(returning.humanBoss or returning.kingdomEntity,"returning to human uses its roster plus roaming entities")
     R.random=fixed
     local capacityGame,capacityBoss=fixture(3)
     capacityGame.unlockedHands={high_card=true,pair=true,straight=true,flush=true}

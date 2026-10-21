@@ -166,7 +166,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage
     local bKey = RunManager.BOSS_KEYS[((difficulty - 1) % #RunManager.BOSS_KEYS) + 1]
     local bossDebuff = RunManager.BOSS_DEBUFFS[bKey] or RunManager.BOSS_DEBUFFS.the_needle
 
-    bossDebuff = Expedition.bossData(difficulty, Monster.DISRUPTIVE_BOSSES, bossDebuff,regionId)
+    bossDebuff = Expedition.bossData(difficulty, Monster.DISRUPTIVE_BOSSES, bossDebuff,regionId,areaStage)
 
     local blinds = {
         {
@@ -213,7 +213,7 @@ function RunManager.generateAnteBlinds(ante, starterFaction, regionId, areaStage
 
     for i, blind in ipairs(blinds) do
         local identity = Expedition.decorate({isBoss=i==3, isElite=i==2, bossData=blind.debuff}, a, (a-1)*3+i,regionId,areaStage)
-        if identity.human then
+        if identity.human or identity.bossData and identity.bossData.kingdomEntity then
             blind.name, blind.title, blind.color = identity.name, identity.title, identity.color
             blind.cardSuit, blind.cardRank, blind.kingdom = identity.cardSuit, identity.cardRank, identity.kingdom
         end
@@ -306,7 +306,7 @@ function RunManager.createEvolutionCard()
         id = "cons_evolution",
         category = "evolution",
         name = "Tiến Hóa",
-        desc = "Chọn lá bài để nâng +1 cấp thông số khả năng, không đổi rank/chất; hoặc nâng một SPN lên bậc kế tiếp.",
+        desc = "Chọn quân bài để nâng +1 cấp khả năng, không đổi rank/chất; hoặc nâng SPN đang trang bị lên 1 bậc, tiêu 1 lượt tiến hóa của SPN đó. Mỗi Boss thắng khi đang trang bị cho SPN thêm 1 lượt; không đủ lượt thì giữ lá Tiến Hóa.",
         icon = "✦",
         color = { 0.72, 0.42, 0.96, 1 },
     }

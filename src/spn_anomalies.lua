@@ -33,9 +33,15 @@ function A.takeFeedback(game)
     local result=game.spnFeedback or {};game.spnFeedback={};return result
 end
 function A.showFeedback(game,anim)
-    for _,event in ipairs(A.takeFeedback(game)) do
-        table.insert(anim.floatingTexts,{text=event.deity.name.." · "..event.text,
-            color={0.65,0.8,1},x=640,y=400-event.slot*20,alpha=2})
+    local events=A.takeFeedback(game)
+    if #events>0 then require("src.sound").play("spn_trigger") end
+    for _,event in ipairs(events) do
+        require("src.combat_notices").push(game,event)
+        if require("src.combat_notices").game==game and event.kind~="destroy" then require("src.combat_notices").activate(event.deity,event.text) end
+        if event.deity then require("src.card_effects").triggerScorePulse(event.deity) end
+        if event.slot and event.slot>0 and event.kind~="destroy" then
+            anim.deityHit=anim.deityHit or {};anim.deityHit[event.slot]=0
+        end
     end
 end
 local function active(game,visit,locked)

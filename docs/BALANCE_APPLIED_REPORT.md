@@ -1,5 +1,7 @@
 # Cân bằng đã áp dụng và kiểm chứng lại
 
+**Cập nhật SPN 21/10/2026:** [Giảm sức mạnh, shop chỉ C–L và lượt tiến hóa kiếm từ boss](SPN_BALANCE_2026_10_21.md). Các số liệu bên dưới chưa chạy lại cho các thay đổi này.
+
 **Cập nhật 21/10/2026:** ba trận ải 1 là 50/100/150 HP, nền HP bắt đầu 50 và các ải sau tăng theo đường cong hiện có (trận lớn ×2, boss ×3); hai ô SPN/trang bị của Shop Nhỏ đổi chỗ theo mỗi reroll thành công; lễ trao thưởng bỏ rương quân bài, giữ quân bài lẻ. Số liệu mô phỏng bên dưới thuộc cấu hình ngày 20/10, chưa chạy lại cho thay đổi này.
 
 Ngày: 20/10/2026. Chạy bằng LÖVE 11.5, dùng RNG, chấm điểm, AI và chiến đấu thật của game. Báo cáo này thay thế kết luận của [đợt 150 HP / giá ×6](BALANCE_AUDIT_NEW.md).

@@ -55,11 +55,14 @@ g.deities[5].spnGrowth.cracks=99
 local hundred=effect(g);assert(hundred.addChips==104 and hundred.addMult==1,"100 cracks add one Mult")
 g=game("spirit_hour_product")
 assert(not effect(g))
+require("src.card_abilities").discard(g,{Deck.newCard(3,"hearts")})
+assert(effect(g).addMult==.5 and score(g).bonusMult==.5,"fractional Mult is retained in actual scoring")
+g=game("spirit_hour_product")
 for i=1,3 do require("src.card_abilities").discard(g,{Deck.newCard(3,"hearts")}) end
-assert(g.deities[5].spnGrowth.discards==3 and effect(g).addMult==6)
+assert(g.deities[5].spnGrowth.discards==3 and effect(g).addMult==1.5)
 preview=score(g,nil,true);assert(g.deities[5].spnGrowth.discards==3)
 assert(score(g).finalScore==preview.finalScore and g.handsRemaining==3)
-D.evolve(g.deities[5]);assert(D.scaleEffect(g.deities[5],effect(g)).addMult==9)
+D.evolve(g.deities[5]);assert(D.scaleEffect(g.deities[5],effect(g)).addMult==2.25)
 
 -- Persistent growth survives a new battle, reordering, evolution, copies and saves.
 local growing=0

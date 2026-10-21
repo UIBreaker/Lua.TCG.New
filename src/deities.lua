@@ -86,6 +86,45 @@ function Deities.evolve(deity)
     return true, badge
 end
 
+function Deities.getEvolutionCredits(deity)
+    return math.max(0,math.floor(tonumber(deity and deity.evolutionCredits) or 0))
+end
+
+function Deities.useEvolutionCard(game,deity,power)
+    local equipped=false
+    for slot=1,Deities.getMaxSlots(game) do
+        if game.deities and game.deities[slot]==deity then equipped=true;break end
+    end
+    local count=math.min(Deities.getEvolutionCredits(deity),math.max(1,math.floor(power or 1)))
+    if not equipped or count==0 then return false,"Trang bị SPN và cùng nó thắng Boss để nhận lượt tiến hóa." end
+    local badge
+    for _=1,count do local ok;ok,badge=Deities.evolve(deity);if not ok then return false end end
+    deity.evolutionCredits=Deities.getEvolutionCredits(deity)-count
+    deity.desc=Deities.getDescription(deity)
+    return true,badge,count
+end
+
+function Deities.awardBossEvolution(game,enemy)
+    if not enemy or not enemy.isBoss or (enemy.hp or 1)>0 or enemy.spnEvolutionAwarded then return 0 end
+    enemy.spnEvolutionAwarded=true
+    local run=game.run
+    if run then
+        local key=table.concat({run.regionId or "human",run.ante or 1,run.areaStage or run.ante or 1,run.currentBlindIndex or 3,enemy.encounterCount or 0},":")
+        game.spnEvolutionBossReceipts=game.spnEvolutionBossReceipts or {}
+        if game.spnEvolutionBossReceipts[key] then return 0 end
+        game.spnEvolutionBossReceipts[key]=true
+    end
+    local count,seen=0,{}
+    for slot=1,Deities.getMaxSlots(game) do
+        local owned=game.deities and game.deities[slot]
+        if owned and not seen[owned] then
+            seen[owned]=true;owned.evolutionCredits=Deities.getEvolutionCredits(owned)+1
+            owned.desc=Deities.getDescription(owned);count=count+1
+        end
+    end
+    return count
+end
+
 function Deities.scaleEffect(deity, result)
     local multiplier = effectMultiplier(deity)
     if not result or multiplier==1 then return require("src.blood_shop").effect(result,require("src.blood_shop").powerOf(deity)) end
@@ -328,7 +367,7 @@ function Deities.getDescription(deity)
     if deity.bloodPower then text=text.."\nHUYẾT LUYỆN ×5 · Chỉ số hiệu quả gấp 5." end
     if deity.bloodDomainPower then text=text.."\nLÃNH ĐỊA MÁU ×4 · Chỉ số hiệu quả gấp 4." end
     if deity.voidPower then text=text.."\nTHE VOID ×"..deity.voidPower.." · Chỉ số hiệu quả gấp "..deity.voidPower.."." end
-    return text
+    return text.."\nLƯỢT TIẾN HÓA TỪ BOSS · "..Deities.getEvolutionCredits(deity)
 end
 for _, row in ipairs(tacticalEntries) do
     local entry = Deities.CATALOG[row[1]]
@@ -397,9 +436,11 @@ function Deities.getMaxSlots(gameState)
     return math.max(maxSlots,occupiedMax)
 end
 
-function Deities.destroyDeity(game,slot,inCombat,physical)
+function Deities.destroyDeity(game,slot,inCombat,physical,reason)
     if not game.deities or not game.deities[slot] then return false end
     physical=physical or game.deities[slot]
+    game.spnFeedback=game.spnFeedback or {}
+    game.spnFeedback[#game.spnFeedback+1]={deity=physical,slot=slot,kind="destroy",text=reason or "SPN đã bị tiêu hủy bởi hiệu ứng; ô này được giải phóng."}
     if inCombat then require("src.spn_predators").destroyed(game,physical) end
     game.deities[slot]=nil
     if game.spnCombat then game.spnCombat[physical]=nil end
@@ -415,6 +456,7 @@ function Deities.addDeity(gameState, deity, preferredSlot)
 
     local instance = {}
     for key, value in pairs(deity) do instance[key] = value end
+    instance.evolutionCredits=0
 
     if preferredSlot and preferredSlot >= 1 and preferredSlot <= maxSlots and not gameState.deities[preferredSlot] then
         gameState.deities[preferredSlot] = instance

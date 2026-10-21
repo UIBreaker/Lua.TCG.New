@@ -76,7 +76,7 @@ function T.update(g,cb)
   g.persistentDeck={};g.maxHandSize=3
   for i=1,8 do g.persistentDeck[i]=Deck.newCard(i+1,"hearts") end
   cb.startMonsterEncounter(1,false)
-  spn=copy(Deities.CATALOG.spirit_ember);spn.evolutionLevel=0
+  spn=copy(Deities.CATALOG.spirit_ember);spn.evolutionLevel=0;spn.evolutionCredits=1
   g.deities={spn,copy(Deities.CATALOG.spirit_blade)};g.abilityApproved={};g.potionCombat={};g.potionFeedback={};Potion.active={}
   local enemy=g.monster;enemy.hp=1000000;enemy.maxHp=1000000;enemy.damageLagHp=1000000
   enemy.armor=0;enemy.creatureArmor=0;enemy.attack=0;enemy.attackSpeed=0;enemy.intent={type="attack",value=0}

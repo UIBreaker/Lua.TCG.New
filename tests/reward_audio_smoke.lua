@@ -1,6 +1,12 @@
 local A=require("src.reward_audio")
+local baked=require("config.reward_audio_baked")
 local count,signatures,banks=0,{},{}
 A.register({registerProcedural=function(name,data,cue)
+    local entry=assert(baked[name],"missing baked reward: "..name)
+    local decoded=love.sound.newSoundData(entry.path)
+    assert(decoded:getString()==data:getString(),name.." baked PCM is stale; rebuild outcomes")
+    decoded:release()
+    for key,value in pairs(cue) do assert(entry[key]==value,name.." stale mixer metadata: "..key) end
     local phase,id=name:match("^reward_(.-)_([^_]+)$")
     local peak,energy,width,signature=0,0,0,0
     local bins={};for i=1,24 do bins[i]=0 end

@@ -93,6 +93,7 @@ end
 
 local function acceptsEquipmentBuff(card, monster)
     if card.exhausted or card.destroyed then return false end
+    if require("src.kingdom_bosses").blocked(monster,card) then return false end
     if monster and monster.bossData and monster.bossData.humanBoss==4 and Boss.passiveEnabled(monster) and card.rank>=11 and card.rank<=13 then return false end
     return not (monster and Boss.passiveEnabled(monster) and not isSpade(card)
         and (monster.lockedFaction==card.suit or monster.lockedRoyals and card.rank>=11 and card.rank<=13))
@@ -142,7 +143,7 @@ function Scoring.calculate(handInfo, deities, context)
     local permanentDamageAwards={}
     for _,list in ipairs({handInfo.scoringCards or {},handInfo.unscoredCards or {}}) do
         for _,c in ipairs(list) do
-            local seal=Deck.normalizeSeal(c.seal)
+            local seal=not require("src.kingdom_bosses").blocked(context.monster,c) and Deck.normalizeSeal(c.seal)
             if seal=="seal_bounty" and not seenBounties[c.id or c] then
                 seenBounties[c.id or c]=true;hasBountySeal=true
                 bountySealGold=bountySealGold+Deck.SEALS.seal_bounty.params.gold*(c.sealPower or 1)
@@ -400,29 +401,9 @@ function Scoring.calculate(handInfo, deities, context)
         end
         if not job then break end
         local idx, card = job.index, job.card
-        -- Check Boss Debuffs: locked faction or locked royals (Trảm Vương)
-        local isPillarLocked = false
-        local debuffReason = "KHÓA BÀI"
-        if context and context.monster and Boss.passiveEnabled(context.monster) then
-            if context.monster.lockedFaction and (card.suit == context.monster.lockedFaction) then
-                isPillarLocked = true
-                debuffReason = "KHÓA PHÁI: Phe " .. (card.suitName or card.suit) .. " bị vô hiệu hóa (0c / 0m)!"
-            elseif context.monster.lockedRoyals and (card.rank >= 11 and card.rank <= 13) then
-                isPillarLocked = true
-                debuffReason = "TRẢM VƯƠNG: Bài Hoàng Gia (" .. card.rankName .. ") bị vô hiệu hóa (0c / 0m)!"
-            end
-        end
-
-        -- ♠️ Thiết Quân Thứ: Chỉ Số Thép - Miễn nhiễm 100% với debuff của Boss (không bị khóa, không bị úp mặt)
-        if isSpade(card) then
-            isPillarLocked = false
-            card.faceDown = false
-        end
-        if context and context.monster and context.monster.bossData and context.monster.bossData.humanBoss==4
-            and Boss.passiveEnabled(context.monster) and card.rank>=11 and card.rank<=13 then
-            isPillarLocked=true;debuffReason="TRIỀU ĐÌNH · J/Q/K BỊ VÔ HIỆU HÓA"
-        end
-
+        local debuffReason=Boss.scoreBlockReason(context.monster,card)
+        local isPillarLocked=debuffReason~=nil
+        if isSpade(card) then card.faceDown=false end
         if card.exhausted then
             table.insert(steps, {
                 type = "card_scored",
@@ -1135,7 +1116,7 @@ end
 
     local heldMult=1
     for _,card in ipairs(context.hand) do
-        local seal=Deck.normalizeSeal(card.seal)
+        local seal=not require("src.kingdom_bosses").blocked(context.monster,card) and Deck.normalizeSeal(card.seal)
         if seal=="seal_purifying" then
             local amount=math.floor(((abilityGame and abilityGame.maxPlayerHp) or context.maxPlayerHp or 100)*0.10)*(card.sealPower or 1)
             sealHeldArmor=sealHeldArmor+amount

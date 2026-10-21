@@ -47,9 +47,11 @@ function Modal.confirm()
     for k,v in pairs(c) do before[k]=v end
     local success
     if m.mode=="card_upgrade" then success=require("src.inventory").useCardUpgrade(m.game,index,c)
+    elseif not A.definition(c) then
+        success=Deities.useEvolutionCard(m.game,c,require("src.blood_shop").powerOf(m.consumable))
     else
         for _=1,require("src.blood_shop").powerOf(m.consumable) do
-            local ok=A.definition(c) and A.evolve(m.game,c) or not A.definition(c) and Deities.evolve(c)
+            local ok=A.evolve(m.game,c)
             success=success or ok
         end
     end

@@ -5,27 +5,31 @@ local tau,rate=math.pi*2,32000
 local sin,exp,abs=math.sin,math.exp,math.abs
 
 local function material(kind,t,phase,air,low,noise)
-    if kind=="body" then return sin(phase)+.28*sin(phase*2)+low*.7 end
+    if kind=="body" then return sin(phase)+.28*sin(phase*2)+low*.7+air*exp(-t*95)*.48 end
     if kind=="wind" then return air*2.4+low*1.7+sin(phase)*.12 end
     if kind=="lance" then return air*1.7+sin(phase)*.20+sin(phase*3.11)*.14 end
     if kind=="metal" or kind=="coin" or kind=="forge" then
-        return sin(phase)*.65+sin(phase*2.76)*.25+sin(phase*4.13)*.09+air*exp(-t*90)*.6
+        return sin(phase)*.60+sin(phase*2.756)*.29*exp(-t*9)
+            +sin(phase*5.404)*.15*exp(-t*24)+sin(phase*8.933)*.06*exp(-t*45)+air*exp(-t*90)*.8
     end
-    if kind=="blade" then return (air-low)*2+sin(phase)*.19+noise*exp(-t*110)*.30 end
+    if kind=="blade" then return (air-low)*2+sin(phase)*.16+sin(phase*3.87)*exp(-t*35)*.12+noise*exp(-t*110)*.45 end
     if kind=="shot" then return air*exp(-t*70)*2.4+sin(phase)*.32+sin(phase*2.3)*.11 end
     if kind=="hoof" then return low*2.6+sin(phase)*.75+air*exp(-t*80)*.7 end
     if kind=="banner" then return air*2.8+low*1.2+sin(phase)*.17*(.6+.4*sin(t*31)) end
-    if kind=="cannon" then return low*5+sin(phase)*.8+air*exp(-t*38)*1.6 end
-    if kind=="pillar" or kind=="earth" then return low*3.7+sin(phase)*.85+air*(.3+.7*sin(t*83)^8) end
-    if kind=="royal" or kind=="army" then return sin(phase)*.7+sin(phase*2)*.23+sin(phase*3)*.14+sin(phase*4)*.07 end
+    if kind=="cannon" then return low*5+sin(phase)*.8+air*exp(-t*38)*1.6+noise*exp(-t*140)*.55 end
+    if kind=="pillar" or kind=="earth" then return low*3.7+sin(phase)*.85+air*(.3+.7*sin(t*83)^8)+noise*exp(-t*65)*.3 end
+    if kind=="royal" or kind=="army" then
+        return sin(phase+.018*sin(t*29))*.7+sin(phase*2)*.23+sin(phase*3)*.14+sin(phase*4)*.07+air*.12
+    end
     if kind=="lightning" then
-        return air*(.3+1.7*math.max(0,sin(t*611))^8)+sin(phase)*.25*sin(t*137)+noise*exp(-t*110)*.6
+        return air*(.3+1.7*math.max(0,sin(t*611))^8)+sin(phase)*.25*sin(t*137)+noise*exp(-t*110)*.9
     end
     if kind=="growth" then return sin(phase)*.70+sin(phase*2)*.19+sin(phase*3)*.09+low*.25 end
     if kind=="star" or kind=="map" then return sin(phase)*.65+sin(phase*2.01)*.2+air*exp(-t*120)*.40 end
     if kind=="sun" then return sin(phase)*.45+sin(phase*1.5)*.22+air*.65 end
     if kind=="ice" or kind=="prism" then
-        return sin(phase)*.55+sin(phase*1.93)*.27+sin(phase*3.07)*.13+air*(kind=="ice" and 1.2 or .28)*exp(-t*40)
+        return sin(phase)*.55+sin(phase*1.93)*.27*exp(-t*3)+sin(phase*3.07)*.13*exp(-t*12)
+            +sin(phase*5.81)*.09*exp(-t*30)+air*(kind=="ice" and 1.6 or .40)*exp(-t*40)
     end
     if kind=="blood" then return low*3.6+sin(phase)*.65+air*.6*(.4+.6*sin(t*54)^2) end
     if kind=="obsidian" then return (air-low)*1.7*(.2+.8*sin(t*127)^6)+low*2+sin(phase)*.4 end

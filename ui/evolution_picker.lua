@@ -29,7 +29,7 @@ function Picker.draw(UI,m,mx,my)
     g.setColor(0.27,0.24,0.39,1);g.setLineWidth(1);g.rectangle("line",54,32,1172,656,10,10)
     text(UI,"NÂNG CẤP VĨNH VIỄN",84,55,700,"tiny",violet)
     text(UI,title,84,80,700,"large")
-    text(UI,upgrade and "Chọn quân bài, xem thay đổi rồi xác nhận. Hiệu ứng giữ suốt run." or "Nâng khả năng của một lá. Giữ nguyên bậc và chất.",84,120,1050,"small",muted)
+    text(UI,upgrade and "Chọn quân bài, xem thay đổi rồi xác nhận. Hiệu ứng giữ suốt run." or "Quân bài nâng khả năng; SPN tăng bậc bằng lượt kiếm được khi cùng thắng Boss.",84,120,1050,"small",muted)
     if m.ritual then mx,my=-1000,-1000 end
     m.buttons={};m.cardRects={}
     local function button(id,label,x,y,w,h,index,disabled,active)
@@ -73,16 +73,17 @@ function Picker.draw(UI,m,mx,my)
         text(UI,name,848,210,324,"medium")
         local maximum=require("src.equipment").getMaxSlots(c)
         local gain=require("src.blood_shop").powerOf(m.consumable)
+        if not upgrade and not d then gain=math.min(gain,Deities.getEvolutionCredits(c)) end
         local nextSockets=math.min(require("src.equipment").SOCKET_CAP,maximum+gain)
         local nextLevel=d and math.min(A.config.maxEvolutionLevel,(c.evolutionLevel or 0)+gain) or (c.evolutionLevel or 0)+gain
-        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..nextSockets.." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..nextLevel) or ("Nâng thêm "..gain.." bậc Hộ Linh"),848,245,324,"small",violet)
+        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..nextSockets.." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..nextLevel) or ("Lượt còn: "..Deities.getEvolutionCredits(c).." · Nâng +"..gain.." bậc"),848,245,324,"small",violet)
         local before=d and A.description(c) or Deities.getDescription(c)
         local after
         if upgrade then
             before="Trang bị: "..require("src.equipment").getUsedSlots(c).." / "..maximum.." hốc đang dùng.\n"..(c.allowDuplicateEquipment and "Có thể gắn trang bị trùng loại." or "Mỗi loại trang bị chỉ được gắn một món.")
             after=sockets and ("Thêm tối đa "..gain.." hốc trang bị vĩnh viễn: "..nextSockets.." hốc. Tối đa 8 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
         elseif d then after=A.description(c,nextLevel+(c.temporaryAbilityLevels or 0))
-        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=nextLevel;after=Deities.getDescription(copy) end
+        else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=nextLevel;copy.evolutionCredits=Deities.getEvolutionCredits(c)-gain;after=Deities.getDescription(copy) end
         text(UI,"HIỆN TẠI",848,291,324,"tiny",muted)
         description(UI,before,848,315,324,95,muted)
         g.setColor(0.24,0.26,0.34,1);g.line(848,422,1172,422)
@@ -98,7 +99,9 @@ function Picker.draw(UI,m,mx,my)
     if m.page<pages then button("next","→",524,628,46,38) end
     local confirmText=m.ritual and (m.ritual.contacted and (upgrade and "ĐÃ HOÀN TẤT NGHI LỄ" or "ĐÃ TIẾN HÓA") or "ĐANG HỢP NHẤT…")
         or (upgrade and "XÁC NHẬN NGHI LỄ" or "XÁC NHẬN TIẾN HÓA")
-    button("confirm",confirmText,824,624,372,46,nil,not c,true)
+    local locked=c and not upgrade and not A.definition(c) and Deities.getEvolutionCredits(c)==0
+    if locked then confirmText="CẦN CÙNG SPN THẮNG BOSS" end
+    button("confirm",confirmText,824,624,372,46,nil,not c or locked,true)
     Motion.draw(UI,m)
     g.pop()
 end

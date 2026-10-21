@@ -202,6 +202,8 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-shop-motion" then isCaptureMode = true end
     if a == "--test-card-drag" then isCaptureMode = true end
     if a == "--test-target-clarity" then isCaptureMode = true end
+    if a == "--test-game-speed" then isCaptureMode = true end
+    if a == "--test-combat-notices" then isCaptureMode = true end
     if a == "--test-hand-chest-motion" then isCaptureMode = true;chestAnimationCaptureMode=true end
     if a == "--test-combat-motion" then isCaptureMode = true end
     if a == "--test-enemy-motion" then isCaptureMode = true end
@@ -224,6 +226,10 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-barter" then
         isCaptureMode = true
         function love.errorhandler(message) print("BARTER UI ERROR: "..tostring(message));return function() return 1 end end
+    end
+    if a=="--test-kingdom-bosses" then
+        isCaptureMode=true
+        function love.errorhandler(message) print("KINGDOM UI ERROR: "..tostring(message));return function() return 1 end end
     end
     if a=="--test-ancient-statue" then
         isCaptureMode=true
@@ -370,6 +376,7 @@ local settings = {
     musicVolume = 0.8,
     ambienceVolume = 0.65,
     fastScoring = false,
+    gameSpeed = 1,
     fullscreen = false,
     crtEnabled = false,
     debugEnabled = false,
@@ -1747,7 +1754,7 @@ local function applyPendingEvolutionAt(mx, my, currentState)
                 return true
             end
 
-            local evolved, badge = Deities.evolve(deity)
+            local evolved, badge = Deities.useEvolutionCard(game,deity,require("src.blood_shop").powerOf(pendingEvolutionCard))
             if evolved then
                 local card = table.remove(game.consumables, cardIndex)
                 pendingEvolutionCard = nil
@@ -1757,6 +1764,9 @@ local function applyPendingEvolutionAt(mx, my, currentState)
                     color = { 0.82, 0.70, 1, 1 }, x = x + w / 2, y = y - 8, alpha = 2.5,
                 })
                 Sound.play("xmult_boom")
+            else
+                table.insert(anim.floatingTexts,{text=badge,color={1,.45,.4,1},x=x+w/2,y=y-8,alpha=2.5})
+                Sound.play("cant_afford")
             end
             return true
         end
@@ -2296,6 +2306,7 @@ UI.applyCombatWinRewards=function(scoreResult)
                 local r = effectiveDeity.onRoundWin(game, effectiveDeity)
                 r = Deities.scaleEffect(effectiveDeity, r)
                 if r and r.addGold then deityBonus = deityBonus + r.addGold end
+                if r then require("src.combat_notices").push(game,{deity=d,slot=di,text=r.message or ("THẮNG TRẬN · +"..(r.addGold or 0).." VÀNG")}) end
                 if r and r.message then
                     local msg = d.isCopyDeity and (d.name .. " (Sao chép): " .. r.message) or r.message
                     table.insert(anim.floatingTexts, {
@@ -2309,7 +2320,7 @@ UI.applyCombatWinRewards=function(scoreResult)
             end
             end)
             if d.extinct then
-                Deities.destroyDeity(game,di,true,d)
+                Deities.destroyDeity(game,di,true,d,"ĐÃ DÙNG HẾT · SPN kết thúc hiệu lực sau trận")
             end
         end
     end
@@ -2538,6 +2549,7 @@ function love.load()
         end
     end
     settings = Persistence.loadSettings(settings)
+    require("src.game_speed").normalize(settings)
     if Touch.nativeMobile then settings.fullscreen = true end
     for _, value in ipairs(arg or {}) do
         if value == "--capture-mobile-fullscreen" then
@@ -2619,6 +2631,7 @@ end
 
 function love.resize(w, h)
     require("ui.combat_chrome").resize()
+    require("render.static_blur").clear()
     -- setMode clears derived canvases; rebuild them from the retained source art.
     require("src.continental_art").indexed=setmetatable({}, {__mode="k"})
     require("ui.enemy_card").cache={}
@@ -2695,7 +2708,9 @@ local function updateCaptureMode()
         getScoringState = function() return anim, state end,
         previewPlayerDefeat = beginPlayerDefeat,
         endPlayerTurn = endPlayerTurn,
-        setScoringSpeed = function(fast) settings.fastScoring = fast end,
+        setScoringSpeed = function(fast) require("src.game_speed").set(settings,fast and 2 or 1) end,
+        setGameSpeed = function(speed) require("src.game_speed").set(settings,speed) end,
+        getGameSpeed = function() return settings.gameSpeed end,
         setReducedMotion = function(reduced) settings.reducedMotion = reduced end,
         setMenuMode = function(m) menuMode = m end,
         setCaptureState = function(value) state = value end,
@@ -2746,10 +2761,11 @@ Sound.updateGame = function(dt)
     Sound.update(dt, state, game, isPauseMenuOpen or isSettingsOpen, menuMode, Renderer.scene)
 end
 
-function love.update(dt)
+function love.update(dt,realDt)
+    realDt=realDt or dt
     if isDebugOpen then
-        Touch.update(dt)
-        UI.components.Button.update(dt)
+        Touch.update(realDt)
+        UI.components.Button.update(realDt)
         updateCaptureMode()
         return
     end
@@ -2788,8 +2804,8 @@ function love.update(dt)
             Surfaces.warmCatalogStep()
         end
     end
-    Touch.update(dt)
-    UI.components.Button.update(dt)
+    Touch.update(realDt)
+    UI.components.Button.update(realDt)
     if handDrag.active and handInputBlocked() then
         UI.CardPhysics.release()
         handDrag.active, handDrag.isDragging, handDrag.cardIndex = false, false, nil
@@ -2806,8 +2822,8 @@ function love.update(dt)
         UI.BedExplosion.pending=false
         anim.hitStop=math.max(anim.hitStop or 0,UI.BedExplosion.config.hitStop)
     end
-    if state=="playing" then
-        require("src.souls").awardKills(game)
+    if state=="playing" or state=="scoring" then
+        if state=="playing" then require("src.souls").awardKills(game) end
         require("src.spn_anomalies").showFeedback(game,anim)
     end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
@@ -2827,7 +2843,12 @@ function love.update(dt)
     UI.Polish.reducedMotion=settings.reducedMotion
     Renderer.update(dt, (state == "defeating" or (state == "gameover" and DeathVFX.kind == "player")) and "playing" or state,
         Renderer.sceneContext(state,game), not anim.enemyTurn and not anim.counterAttackStarted and anim.sequence or nil, cameraX, cameraY, monsterMotion.attack / 0.42, cashOutAnim, DeathVFX)
-    Sound.updateGame(dt)
+    Sound.updateGame(realDt)
+    if state=="blood_statue" and not isPauseMenuOpen and not isSettingsOpen then
+        local result=require("ui.ancient_statue").update(game,dt)
+        if result=="entered" then state="BLIND_SELECT";lastActiveState=state end
+        if result then saveRunAtSafePoint() end
+    end
     if state == "defeating" then
         if DeathVFX.age > DeathVFX.stop then monsterMotion.attack = math.max(0,monsterMotion.attack-dt) end
         juice.ambientTimer = juice.ambientTimer + dt
@@ -2836,11 +2857,12 @@ function love.update(dt)
         return
     end
     local physicsMx, physicsMy = toVirtual(love.mouse.getPosition())
-    UI.CardPhysics.update(dt, physicsMx, physicsMy)
+    UI.CardPhysics.update(realDt, physicsMx, physicsMy)
     CardEffects.update(dt)
+    require("src.combat_notices").update(dt,game,state,settings.reducedMotion,isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isDeckViewerOpen)
     Feedback.updateVfx(dt)
     UI.Polish.update(dt, settings.fastScoring, state, shopData)
-    UI.Description.update(dt)
+    UI.Description.update(realDt)
     if state=="void" and require("ui.void_gacha").update(dt,game) then saveRunAtSafePoint() end
     UI.AbilityUI.update(dt,settings.fastScoring,settings.reducedMotion)
     if UI.backpackUseReturn then
@@ -2865,8 +2887,8 @@ function love.update(dt)
                 if fx then spawnShopFx("destroy",{category="card",card=notice.card},fx.x,fx.y,r.w,r.h) end
             end
         end
-        for i=math.max(1,#notices-2),#notices do
-            table.insert(anim.floatingTexts,{text=notices[i].message,color=UI.COLORS.goldYellow,x=640,y=195+(i-math.max(1,#notices-2))*22,alpha=1.4})
+        for _,notice in ipairs(notices) do
+            require("src.combat_notices").push(game,{card=notice.card,text=notice.message,kind=notice.kind})
         end
     end
     anim.consumableUseCooldown = math.max(0, anim.consumableUseCooldown - dt)
@@ -2971,7 +2993,7 @@ function love.update(dt)
             local idle = settings.reducedMotion and 0 or math.sin(juice.ambientTimer * 1.35 + i * 0.82) * 0.85
             ty = ty + idle
             tangle = tangle + (settings.reducedMotion and 0 or math.sin(juice.ambientTimer * 1.25 + i * 0.67) * 0.008)
-            local launched=UI.HandMotion.update(c, tx, ty, tangle or 0, dt, false,
+            local launched=UI.HandMotion.update(c, tx, ty, tangle or 0, realDt, false,
                 c.hovered and not (handDrag.active and handDrag.cardIndex == i and handDrag.isDragging))
             if launched then Sound.play("card_draw",math.min(1.18,0.92+i*0.035)) end
         end
@@ -3388,6 +3410,7 @@ end
 --------------------------------------------------------------------------------
 -- DRAW FUNCTIONS
 --------------------------------------------------------------------------------
+love.update=require("src.game_speed").wrap(love.update,function() return settings end)
 
 local function drawMainMenu()
     local g = love.graphics
@@ -3409,7 +3432,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.142.0", 48, 185)
+    g.print("beta 0.143.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -5180,142 +5203,16 @@ end
 local SOCKETING_PAGE_SIZE = 10
 
 local function getSocketingCardRect(pageIndex)
-    local cols = 5
-    local cardW, cardH = 104, 150
-    local gapX, gapY = 34, 48
-    local totalW = cols * cardW + (cols - 1) * gapX
-    local startX = (V_WIDTH - totalW) / 2
-    local col = (pageIndex - 1) % cols
-    local row = math.floor((pageIndex - 1) / cols)
-    return startX + col * (cardW + gapX), 198 + row * (cardH + gapY), cardW, cardH
+    return require("ui.socketing").cardRect(pageIndex)
 end
 
 local function drawSocketingView()
-    local winW, winH = love.graphics.getDimensions()
     Renderer.veil()
-
-    local mx, my = toVirtual(love.mouse.getPosition())
+    local mx,my=toVirtual(love.mouse.getPosition())
     if anim.socketingApplication then mx,my=-1000,-1000 end
-    local equipment = pendingEquipment
-    if not equipment then return end
-
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(UI.COLORS.goldYellow)
-    love.graphics.printf("KHẢM TRANG BỊ VÀO BỘ BÀI", 0, 22, V_WIDTH, "center")
-
-    -- Equipment summary panel
-    local panelX, panelY, panelW, panelH = 225, 62, 830, 104
-    local eqColor = equipment.color or UI.COLORS.goldYellow
-    love.graphics.setColor(0.10, 0.12, 0.17, 0.96)
-    UI.drawRoundedRect("fill", panelX, panelY, panelW, panelH, 10)
-    love.graphics.setLineWidth(2)
-    love.graphics.setColor(eqColor)
-    UI.drawRoundedRect("line", panelX, panelY, panelW, panelH, 10)
-
-    local eqImg = UI.getEquipmentImage(equipment.id)
-    if eqImg then
-        love.graphics.setColor(1, 1, 1, 1)
-        local iw, ih = eqImg:getDimensions()
-        require("ui.card_surfaces").image(equipment, panelX + 30, panelY + 12, 56, 80, eqImg)
-    else
-        love.graphics.setColor(eqColor[1], eqColor[2], eqColor[3], 0.22)
-        love.graphics.circle("fill", panelX + 58, panelY + panelH / 2, 34)
-        love.graphics.setColor(eqColor)
-        love.graphics.circle("line", panelX + 58, panelY + panelH / 2, 34)
-        love.graphics.setFont(UI.fonts.large)
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(equipment.icon or "◆", panelX + 24, panelY + 31, 68, "center")
-    end
-
-    love.graphics.setFont(UI.fonts.medium)
-    love.graphics.setColor(eqColor)
-    love.graphics.print(equipment.name, panelX + 112, panelY + 14)
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.printf(equipment.desc or "", panelX + 112, panelY + 44, panelW - 136, "left")
-    local slotsNeeded = equipment.slotsNeeded or 1
-    local rarityText = equipment.rarity == "legendary" and "HUYỀN THOẠI" or "TRANG BỊ"
-    love.graphics.setFont(UI.fonts.tiny)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.print(rarityText .. "  •  Cần " .. slotsNeeded .. " hốc  •  Lá có Phá Luật được gắn trùng loại", panelX + 112, panelY + 78)
-
-    local allCards = getAllDeckCards()
-    local totalPages = math.max(1, math.ceil(#allCards / SOCKETING_PAGE_SIZE))
-    socketingPage = math.max(1, math.min(socketingPage, totalPages))
-    local firstCard = (socketingPage - 1) * SOCKETING_PAGE_SIZE + 1
-    local lastCard = math.min(#allCards, firstCard + SOCKETING_PAGE_SIZE - 1)
-
-    for _, c in ipairs(allCards) do c.hovered = false end
-    for deckIndex = firstCard, lastCard do
-        local c = allCards[deckIndex]
-        local pageIndex = deckIndex - firstCard + 1
-        local cx, cy, cardW, cardH = getSocketingCardRect(pageIndex)
-        local isHovered = (mx >= cx and mx <= cx + cardW and my >= cy and my <= cy + cardH)
-        local canAttach, reason = Equipment.canAttach(c, equipment)
-        if anim.socketingApplication and anim.socketingApplication.target==c then canAttach=true end
-
-        c.hovered = isHovered
-        UI.drawCard(c, cx, cy, cardW, cardH)
-
-        if not canAttach then
-            love.graphics.setColor(0.08, 0.04, 0.06, 0.58)
-            UI.drawRoundedRect("fill", cx, cy, cardW, cardH, 8)
-            love.graphics.setLineWidth(2)
-            love.graphics.setColor(UI.COLORS.multRed)
-            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.multRed, nil, c)
-            love.graphics.setFont(UI.fonts.medium)
-            love.graphics.printf(reason and reason:find("cùng loại") and "ĐÃ CÓ" or "THIẾU Ô", cx, cy + cardH / 2 - 12, cardW, "center")
-        elseif isHovered then
-            love.graphics.setLineWidth(3)
-            love.graphics.setColor(UI.COLORS.hpGreen)
-            UI.drawCardBorder(cx, cy, cardW, cardH, UI.COLORS.hpGreen, nil, c)
-        end
-
-        local usedSlots = Equipment.getUsedSlots(c)
-        local freeSlots = Equipment.getMaxSlots(c) - usedSlots
-        love.graphics.setColor(canAttach and 0.10 or 0.20, canAttach and 0.20 or 0.08, canAttach and 0.16 or 0.10, 0.95)
-        UI.drawRoundedRect("fill", cx, cy + cardH + 5, cardW, 24, 5)
-        love.graphics.setColor(canAttach and UI.COLORS.hpGreen or UI.COLORS.multRed)
-        UI.drawRoundedRect("line", cx, cy + cardH + 5, cardW, 24, 5)
-        love.graphics.setFont(UI.fonts.tiny)
-        love.graphics.printf(usedSlots .. "/" .. Equipment.getMaxSlots(c) .. " ô  •  còn " .. freeSlots, cx, cy + cardH + 10, cardW, "center")
-    end
-
-    buttons = {}
-    love.graphics.setFont(UI.fonts.small)
-    love.graphics.setColor(UI.COLORS.textMuted)
-    love.graphics.printf("Nhấp vào lá còn đủ ô để khảm  •  Trang " .. socketingPage .. "/" .. totalPages .. "  •  " .. #allCards .. " lá trong bộ bài", 0, 590, V_WIDTH, "center")
-    if socketingMessage then
-        love.graphics.setColor(UI.COLORS.multRed)
-        love.graphics.printf(socketingMessage, 0, 614, V_WIDTH, "center")
-    end
-
-    local btnPrev = {
-        id = "socket_prev", text = "← TRANG TRƯỚC", x = 250, y = 642, w = 190, h = 44,
-        color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = socketingPage <= 1,
-    }
-    local btnSkip = {
-        id = "skip_socket",
-        text = "BỎ QUA TRANG BỊ",
-        x = (V_WIDTH - 260) / 2,
-        y = 642,
-        w = 260,
-        h = 44,
-        color = UI.COLORS.btnNormal,
-        font = UI.fonts.regular,
-    }
-    local btnNext = {
-        id = "socket_next", text = "TRANG SAU →", x = 840, y = 642, w = 190, h = 44,
-        color = UI.COLORS.btnNormal, font = UI.fonts.small, disabled = socketingPage >= totalPages,
-    }
-    table.insert(buttons, btnPrev)
-    table.insert(buttons, btnSkip)
-    table.insert(buttons, btnNext)
-    for _, btn in ipairs(buttons) do
-        if anim.socketingApplication then btn.disabled=true end
-        local hovered = mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h
-        UI.drawButton(btn, hovered and not btn.disabled, false)
-    end
+    if not pendingEquipment then return end
+    buttons,socketingPage=require("ui.socketing").draw(UI,pendingEquipment,getAllDeckCards(),socketingPage,
+        socketingMessage,mx,my,anim.socketingApplication)
 end
 
 local function generateTreasureRewards()
@@ -5651,14 +5548,14 @@ local function drawSettingsModal()
     love.graphics.setColor(UI.COLORS.goldYellow)
     love.graphics.printf(volPct, modalX + 340, row1Y + 7, 70, "center")
 
-    -- 2. Fast Scoring Speed Option
+    -- 2. Game speed
     local row2Y = modalY + 138
     love.graphics.setFont(UI.fonts.regular)
     love.graphics.setColor(UI.COLORS.textLight)
-    love.graphics.print("Tốc Độ Aura:", modalX + 35, row2Y + 6)
+    love.graphics.print("Tốc Độ Game:", modalX + 35, row2Y + 6)
 
-    local speedText = settings.fastScoring and "Siêu Tốc (2x)" or "Bình Thường (1x)"
-    local btnSpeed = { id = "setting_speed", text = speedText, x = modalX + 300, y = row2Y, w = 150, h = 34, color = settings.fastScoring and UI.COLORS.xmultGold or UI.COLORS.btnNormal, font = UI.fonts.small }
+    local speedText = ({[1]="Chậm · ×1",[2]="Nhanh · ×2",[4]="Siêu tốc · ×4"})[settings.gameSpeed]
+    local btnSpeed = { id = "setting_speed", text = speedText, x = modalX + 300, y = row2Y, w = 150, h = 34, color = settings.gameSpeed>1 and UI.COLORS.xmultGold or UI.COLORS.btnNormal, font = UI.fonts.small }
     table.insert(buttons, btnSpeed)
     UI.drawButton(btnSpeed, mx >= btnSpeed.x and mx <= btnSpeed.x + btnSpeed.w and my >= btnSpeed.y and my <= btnSpeed.y + btnSpeed.h, juice.buttonPressedId == btnSpeed.id)
 
@@ -6152,7 +6049,7 @@ function love.draw()
         or isCollectionOpen and 10 or isSettingsOpen and 9 or isPauseMenuOpen and 8
         or inspectCardModal and 7 or isHandbookOpen and 6 or isDeckViewerOpen and 5
         or UI.ExpandedInventory.open and state == "playing" and 4
-        or UI.Backpack.open and (state == "shop" or state == "playing") and 3
+        or UI.Backpack.open and (state == "shop" or state == "playing" or state == "blood_statue") and 3
         or state == "shop" and isShopTransferOpen and 2 or packOpening and 1 or 0
     local function beginLayer(layer)
         UI.drawPointerBlocked = layer < topLayer
@@ -6263,11 +6160,12 @@ function love.draw()
     end
 
     UI.CardPhysics.suspend()
+    if state=="playing" or state=="scoring" or state=="CASH_OUT" then require("src.combat_notices").draw(UI,game) end
     drawShopFx()
     if state == "chest" or state == "treasure" then drawChestReveal() end
     UI.CardPhysics.resume()
 
-    if (state=="shop" or state=="playing" or state=="BLIND_SELECT") and UI.Backpack.open then
+    if (state=="shop" or state=="playing" or state=="BLIND_SELECT" or state=="blood_statue") and UI.Backpack.open then
         beginLayer(3)
         local bx,by=toVirtual(love.mouse.getPosition())
         UI.Backpack.draw(UI,game,buttons,bx,by,drawConsumableSlot,state)
@@ -6325,7 +6223,8 @@ function love.draw()
         }
         table.insert(buttons, btnMenu)
         local isH = (mx >= btnMenu.x and mx <= btnMenu.x + btnMenu.w and my >= btnMenu.y and my <= btnMenu.y + btnMenu.h)
-        UI.drawButton(btnMenu, isH, juice.buttonPressedId == btnMenu.id)
+        if state=="socketing" then require("ui.combat_chrome").button(UI,btnMenu,mx,my,juice.buttonPressedId)
+        else UI.drawButton(btnMenu, isH, juice.buttonPressedId == btnMenu.id) end
     end
 
     if isDebugOpen then
@@ -7040,7 +6939,7 @@ local function handleModalsMousepressed(mx, my, button)
                         Sound.play("ui_click")
                         return true
                     elseif btn.id == "setting_speed" then
-                        settings.fastScoring = not settings.fastScoring
+                        require("src.game_speed").cycle(settings)
                         saveSettings()
                         Sound.play("ui_click")
                         return true
@@ -7507,6 +7406,14 @@ UI.Backpack.handle=function(mx,my,button)
             end
         end,
         target=function(c)
+            if state=="blood_statue" and UI.Backpack.cardPicker then
+                if game.ancientStatue and c.rank and not c.destroyed then
+                    for _,owned in ipairs(game.persistentDeck or {}) do if owned==c then
+                        game.ancientStatue.selectedId=c.id;UI.Backpack.close();Sound.play("card_deal");saveRunAtSafePoint();return true
+                    end end
+                end
+                return true
+            end
             if not pendingEditionCard then return false end
             local storedIndex
             for i,item in ipairs(game.consumables or {}) do if item==pendingEditionCard then storedIndex=i;break end end
@@ -7604,7 +7511,7 @@ function love.mousepressed(x, y, button, istouch)
         end
         UI.Polish.clearFocus()
     end
-    if (state=="shop" or state=="playing" or state=="BLIND_SELECT") and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
+    if (state=="shop" or state=="playing" or state=="BLIND_SELECT" or state=="blood_statue") and UI.Backpack.open and not inspectCardModal and not isDeckViewerOpen and not isPauseMenuOpen and not isSettingsOpen then
         for _,b in ipairs(buttons) do
             if button==1 and b.id=="open_pause_menu" and mx>=b.x and mx<=b.x+b.w and my>=b.y and my<=b.y+b.h then
                 handleModalsMousepressed(mx,my,button);return
@@ -8160,7 +8067,7 @@ function love.mousepressed(x, y, button, istouch)
                 local before = UI.Polish.snapshot(game)
                 local success, msg = Equipment.attach(c, pendingEquipment)
                 if success then
-                    local application=UI.Polish.changed(UI, game, before, pendingEquipment,{x=255,y=74,w=56,h=80})
+                    local application=UI.Polish.changed(UI, game, before, pendingEquipment,require("ui.socketing").equipmentRect)
                     if application then
                         application.target=c
                         application.rect={x=cx,y=cy,w=cardW,h=cardH}
@@ -8579,7 +8486,7 @@ function love.wheelmoved(x, y)
         local mx,my=toVirtual(love.mouse.getPosition())
         if require("ui.barter").wheel(game,y,mx,my) then return end
     end
-    if (state=="shop" or state=="playing") and UI.Backpack.open and not inspectCardModal and not isSettingsOpen then
+    if (state=="shop" or state=="playing" or state=="blood_statue") and UI.Backpack.open and not inspectCardModal and not isSettingsOpen then
         local mx,my=toVirtual(love.mouse.getPosition())
         if UI.Backpack.wheel(mx,my,y) then return end
     end

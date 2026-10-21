@@ -21,11 +21,11 @@ for stage=1,40 do
         local state=Rng.getState()
         local m=Run.createBlindMonster(b,g,true)
         assert(Rng.getState()==state,"preview cannot consume RNG")
-        assert(m.human and m.cardRank>=2 and m.cardRank<=13 and m.stage==stage)
+        assert((m.human or m.bossData and m.bossData.kingdomEntity) and m.cardRank>=2 and m.cardRank<=13 and m.stage==stage)
         local f=assert(io.open(Art.path(Art.key(m)),"rb"));f:close()
         local _,d=Scene.resolve("playing",m)
         assert(d.base==E.area(m.areaStage,m.regionId).background)
-        if stage>20 and m.isBoss then
+        if stage>20 and m.isBoss and not m.bossData.kingdomEntity then
             assert(m.bossData.active and m.bossData.active.cooldown==1)
             assert(m.bossData~=Run.BOSS_DEBUFFS[m.bossData.debuffId],"ship variants must not mutate shared bosses")
             g.monster=m;Boss.start(g)

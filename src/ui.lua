@@ -11,6 +11,7 @@ function UI.drawCardBorder(x,y,w,h,highlight,alpha,card)
             UI.drawPlayingMetadata(card,c,d,true);love.graphics.pop()
             UI.CardFrame.drawSockets(a,b,c,d,card,(alpha or card.alpha or 1)*(highlight and highlight[4] or 1),time,reduced)
         end
+        require("src.combat_notices").overlay(UI,card,a,b,c,d)
     end
     if card and UI.CardPhysics and UI.CardPhysics.drawAttached(card,draw) then return end
     draw(x,y,w,h)
@@ -447,6 +448,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     end
     if card.faceDown then
         UI.drawCardBack(0, 0, w, h, card.alpha)
+        require("src.combat_notices").overlay(UI,card,0,0,w,h)
         g.pop()
         return
     end
@@ -1256,6 +1258,8 @@ function UI.drawPatronCard(d, x, y, w, h, isHovered, isPressed, isDropTarget, co
         UI.virtualMouseX, UI.virtualMouseY)
     g.push("all")
     g.translate(x + w / 2, y + h / 2)
+    local reaction,raise=require("src.combat_notices").pose(d)
+    g.translate(0,raise);g.rotate(reaction)
     g.scale(s)
     g.translate(-w / 2, -h / 2)
     UI.CardPhysics.capture(d, 0, 0, w, h)

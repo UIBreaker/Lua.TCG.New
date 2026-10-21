@@ -21,6 +21,7 @@ function GameState.resetRun(game, faction)
     game.depthCombat = nil
     game.advancedHand=nil;game.advancedCombat=nil;game.advancedFeedback=nil
     game.soulDestroyedIds = {}
+    game.spnEvolutionBossReceipts = {}
     game.soulRerollCount = 0
     game.soulShopStock = nil
     game.soulRelicCombat = nil

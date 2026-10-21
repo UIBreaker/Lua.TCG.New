@@ -15,7 +15,7 @@ Shop.MARKETS = {
     small = {name="SHOP NHỎ", note="Quầy tổng hợp · SPN, trang bị, quân bài, đặc quyền, rương và tiêu hao", color={.35,.82,.78,1}},
     consumable = {name="SHOP TIÊU HAO", note="Thẻ lẻ từ mọi rương tiêu hao · Giá cao hơn giá rương 20%, làm tròn lên", color={.74,.48,.94,1}},
     equipment = {name="SHOP TRANG BỊ", note="4 nguyên liệu cơ bản + 4 trang bị lớn · Mua để cất vào balo", color={.95,.73,.35,1}},
-    spn = {name="SHOP SPN", note="Bậc cao mở dần: E ải 3 · L ải 6 · M ải 10 · T/UQ ải 15 · VH/TT sau ải 20", color={.53,.75,.98,1}},
+    spn = {name="SHOP SPN", note="Chỉ bán C–L · Bậc cao hiếm hơn, đắt hơn · E từ ải 3 · L từ ải 6", color={.53,.75,.98,1}},
     medicine = {name="SHOP THUỐC", note="Hồi phục, giáp, tốc đánh và 8 thuốc chiến thuật · Hai ngăn thuốc", color={.38,.88,.57,1}},
     cards = {name="SHOP QUÂN BÀI", note="52 quân bài · Tiến hóa cấp 1–2 · Chỉ trang bị cơ bản · 9 ấn bản", color={.92,.64,.48,1}},
     large = {name="SHOP LỚN", note="Thương hội lớn · Trạm tiếp tế sau chợ linh hồn", color={.95,.78,.35,1}},
@@ -50,7 +50,7 @@ end
 Shop.FREE_OFFER_CHANCE = 0.08
 Shop.SALE_MULTIPLIER = 0.65
 Shop.PRICE_MULTIPLIER = 4
-Shop.SPN_STAGE_GATES = {epic=3,legendary=6,mythic=10,transcendent=15,unique=15,eternal=21,supreme=21}
+Shop.SPN_STAGE_GATES = {epic=3,legendary=6}
 function Shop.discountedEquipment(eq,bay,roll)
     local free=(roll or Rng.random())<Shop.FREE_OFFER_CHANCE and (eq.basic or (eq.craftTier or 99)<=1)
     return {section="discount",bay=bay,category="equipment",equipment=eq,name=eq.name,
@@ -157,9 +157,7 @@ Shop.ADVANCED_HAND_CHEST = {packType="hand_styles_advanced",name="RƯƠNG THẾ 
 Shop.PACK_CATALOG[#Shop.PACK_CATALOG+1]=Shop.ADVANCED_HAND_CHEST
 
 Shop.SPN_RARITY_WEIGHTS = {
-    common = 0.6134, uncommon = 0.20, rare = 0.10, epic = 0.05,
-    legendary = 0.02, mythic = 0.01, transcendent = 0.005, unique = 0.001,
-    eternal = 0.0005, supreme = 0.0001,
+    common = 0.68, uncommon = 0.22, rare = 0.075, epic = 0.02, legendary = 0.005,
 }
 Shop.SPN_RARITY_PRICE_MULTIPLIERS = {
     common = 1, uncommon = 1.5, rare = 2, epic = 3,
@@ -368,6 +366,8 @@ local function rollSpnRarity(game)
     return Deities.RARITIES[1]
 end
 
+Shop.rollSpnRarity=rollSpnRarity
+
 local function randomStandardCard()
     local printed = Shop.STANDARD_CARDS[Rng.random(#Shop.STANDARD_CARDS)]
     return Deck.newCard(printed.rank, printed.suit)
@@ -426,7 +426,7 @@ local function playingCardValue(card)
 end
 
 function Shop.getCardSellPrice(card)
-    return math.max(1,math.floor(playingCardValue(card)/2))
+    return math.floor(Shop.getResaleBasis(card,"card")*.6)
 end
 
 function Shop.playingCardOffer(card)
@@ -481,6 +481,61 @@ function Shop.priceItem(item,game)
     if item.consumable and item.consumable.category=="heal" then multiplier=3 end
     return math.ceil(item.cost*multiplier),item.originalCost and math.ceil(item.originalCost*multiplier)
 end
+-- Owned items carry catalog costs, not the final retail offer price.
+local marketConsumables
+function Shop.getMarketValue(item,kind)
+    if not item then return 0 end
+    local value
+    if kind=="deity" or kind=="spn" then
+        local rarity=Deities.RARITIES[Deities.getRarityTier(item)].id
+        local base=Deities.CATALOG[item.id]
+        local cost=math.ceil((base and base.cost or item.cost or 4)*(Shop.SPN_RARITY_PRICE_MULTIPLIERS[rarity] or 1))
+        value=Shop.priceItem({cost=cost,deity={rarity=rarity}})
+        value=value+(item.edition and 40 or 0)+(item.enchantment and 32 or 0)
+    elseif kind=="equipment" then
+        local eq=Equipment.ITEMS[item.id] or item
+        value=eq.soulOnly and (eq.cost or 0)*2*3 or Shop.priceItem({cost=eq.cost,equipment=eq})
+    elseif kind=="card" then
+        value=Shop.priceItem(Shop.playingCardOffer(item))
+        for _,eq in ipairs(item.equipments or {}) do
+            value=value-(eq.cost or 0)*Shop.PRICE_MULTIPLIER+Shop.getMarketValue(eq,"equipment")
+        end
+        value=value+math.max(0,item.bonusBaseChips or 0)*.8+math.max(0,item.speedBonus or 0)*8
+            +math.max(0,item.potionPermanentMult or 0)*12+math.max(0,Equipment.getMaxSlots(item)-4)*16
+    else
+        if not marketConsumables then
+            marketConsumables={}
+            for _,catalog in ipairs({Shop.POTIONS,Shop.getRetailConsumables(),Shop.SOUL_SUPPORT}) do
+                for _,offer in ipairs(catalog) do marketConsumables[offer.id]=offer.cost end
+            end
+        end
+        value=Shop.priceItem({cost=marketConsumables[item.id] or item.cost or 4,consumable=item})
+    end
+    return math.max(1,math.ceil(value*Blood.powerOf(item)))
+end
+
+function Shop.getResaleBasis(item,kind)
+    local market=Shop.getMarketValue(item,kind)
+    if kind=="card" then
+        for _,eq in ipairs(item.equipments or {}) do
+            if eq.acquisitionCost~=nil then
+                local full=Shop.getMarketValue(eq,"equipment")
+                market=market-math.max(0,full-eq.acquisitionCost)
+            end
+        end
+        market=math.max(0,market)
+    end
+    if item.acquisitionCost==nil then return market end -- Older saves and earned loot.
+    if item.acquisitionCost<=0 then return 0 end
+    local upgrades=math.max(0,market-(item.acquisitionMarketValue or market))
+    return math.min(market,item.acquisitionCost+upgrades)
+end
+
+local function purchaseReceipt(owned,offer,kind)
+    owned.acquisitionCost=(offer.currency=="blood" or offer.currency=="souls") and 0 or offer.cost
+    owned.acquisitionMarketValue=Shop.getMarketValue(owned,kind)
+end
+
 local function priceStock(shop,game)
     for _, item in ipairs(shop.items) do
         item.cost,item.originalCost=Shop.priceItem(item,game)
@@ -827,7 +882,11 @@ function Shop.buyItem(shop, itemIndex, gameState)
         gameState.soulShopPurchased[item.id] = true
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
-        if item.category == "equipment" then return true, "open_socketing", item.equipment end
+        if item.category == "equipment" then
+            local eq=Blood.clone(item.equipment);purchaseReceipt(eq,item,"equipment")
+            return true, "open_socketing", eq
+        end
+        purchaseReceipt(item.consumable,item,"consumable")
         Loadout.storeConsumable(gameState,item.consumable)
         return true, "Đã cất "..item.name.." vào balo. Kéo lên ô trang bị để mang vào trận."
     end
@@ -843,6 +902,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     if item.consumable then
         Shop.payItem(item,gameState)
+        purchaseReceipt(item.consumable,item,"consumable")
         Loadout.storeConsumable(gameState,item.consumable)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -851,6 +911,7 @@ function Shop.buyItem(shop, itemIndex, gameState)
 
     if item.category == "deity" then
         Shop.payItem(item,gameState)
+        purchaseReceipt(item.deity,item,"deity")
         Loadout.storeDeity(gameState, item.deity)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -912,10 +973,12 @@ function Shop.buyItem(shop, itemIndex, gameState)
             require("src.basic_equipment").store(gameState,eq,item.currency=="blood" and 0 or item.cost)
             return true,"Đã cất "..eq.name.." vào balo."
         end
+        eq=Blood.clone(eq);purchaseReceipt(eq,item,"equipment")
         return true, "open_socketing", eq
 
     elseif item.category == "card" then
         Shop.payItem(item,gameState)
+        purchaseReceipt(item.card,item,"card")
         Deck.addCardToDeck(gameState, item.card)
         table.remove(shop.items, itemIndex)
         Sound.play("shop_buy")
@@ -1309,10 +1372,8 @@ function Shop.reroll(shop, gameState, refresh)
 end
 
 function Shop.getSacrificePrice(item, kind, gameState)
-    if kind == "deity" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
-    elseif kind == "consumable" then
-        return math.max(1, math.floor(((item and item.cost) or 4) / 2))
+    if kind == "deity" or kind == "consumable" then
+        return math.floor(Shop.getResaleBasis(item or {},kind)*.6)
     elseif kind == "card" then
         return math.max(1, math.floor(((item and item.sellValue) or 1)))
     end

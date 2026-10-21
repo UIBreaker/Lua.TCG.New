@@ -91,7 +91,7 @@ function B.investment(entry)
  if type(entry)=="table" then return entry.investment or 0 end
  local d=require("src.equipment").ITEMS[entry];return d and (d.legacyCost or d.cost) or 0
 end
-function B.resale(entry) return math.floor(B.investment(entry)/3) end
+function B.resale(entry) return math.floor(B.investment(entry)*.6) end
 function B.store(game,item,cost)
  game.backpackEquipment=game.backpackEquipment or {}
  game.backpackEquipment[#game.backpackEquipment+1]={id=item.id,investment=math.max(0,cost or 0),bloodPower=item.bloodPower,voidPower=item.voidPower}

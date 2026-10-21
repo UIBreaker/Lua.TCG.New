@@ -5,7 +5,7 @@ local D
 L.entries={
     {"spirit_legacy_cocoon","Kén Kế Thừa","bossCopies",1,
         "Khi hạ Boss: tự tiêu hủy, tạo {value} bản sao của 1 SPN khác đang giữ ngẫu nhiên, giữ nâng cấp và vượt giới hạn ô. Mỗi cấp thêm 1 bản sao."},
-    {"spirit_meteor_solitude","Độc Kích Thiên Thạch","addChips",1000,
+    {"spirit_meteor_solitude","Độc Kích Thiên Thạch","addChips",100,
         "Khi hoạt động, chỉ được đánh 1 lá mỗi tay. Tay đúng 1 lá: +{value} Sát thương. Mỗi cấp tiến hóa nhân đôi Sát thương này."},
 }
 local function clone(value,seen)
@@ -67,10 +67,10 @@ function L.bossDefeated(game,enemy)
         if #pool>0 and game.deities[cocoon.slot]==cocoon.owned then
             local source=pool[Rng.random(#pool)]
             local count=D.scaleEffect(cocoon.owned,{bossCopies=1}).bossCopies
-            D.destroyDeity(game,cocoon.slot,true,cocoon.physical)
+            D.destroyDeity(game,cocoon.slot,true,cocoon.physical,"KÉN NỞ · chuyển hóa thành bản sao SPN kế thừa")
             if game.spnCombat then game.spnCombat[cocoon.owned]=nil end
             for i=1,count do
-                local copy=clone(source);copy.desc=D.getDescription(copy)
+                local copy=clone(source);copy.evolutionCredits=0;copy.desc=D.getDescription(copy)
                 local slot=cocoon.slot
                 if i>1 then slot=1;while game.deities[slot] do slot=slot+1 end end
                 -- This reward bypasses the ordinary shop capacity check.

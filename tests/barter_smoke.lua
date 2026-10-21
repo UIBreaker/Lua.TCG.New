@@ -1,3 +1,4 @@
+require("tests.economy_resale_smoke")
 local T=require("src.barter")
 local G=require("src.game_state")
 local Run=require("src.run_manager")

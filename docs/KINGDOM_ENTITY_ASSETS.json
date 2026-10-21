@@ -1,0 +1,86 @@
+[
+  {
+    "id": "kingdom_heart_entity",
+    "group": "enemy",
+    "name": "Chủ Tể Tro Tim",
+    "ability": "Vô hiệu hóa quân bài cùng chất; mỗi lá đúng chất trên tay người chơi tăng 10% tốc đánh và 10% sát thương cho boss. Boss tự do có thể xuất hiện ở mọi vùng chính, không cố định ở ải 20.",
+    "source": "config/kingdom_boss_data.lua",
+    "concept": "Valoria's hidden entity: a towering hollow obsidian armor colossus suspended above cracked volcanic stone, a broad fragmented shoulder mantle and an empty furnace-like cavity in the chest, face concealed inside a smooth charred iron visor. One gauntlet closes around three small blank red parchment rectangles, their light extinguished as thin ember ribbons flow into the chest and along a sweeping cloak, suggesting it seals enemy cards and gains speed and striking power from them. Distant Western basalt fortress and restrained lava orange, oxblood fabric, ash haze. One commanding dark silhouette, no flames obscuring the figure.",
+    "file": "assets/cards/continental/enemy/kingdom_heart_entity.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. ONE production boss card artwork, full-bleed portrait 2:3 PNG 1024x1536. Continental cinematic painterly Western dark-fantasy expedition, one large mysterious nonhuman entity with a clear silhouette readable when small, medium detail, atmospheric landscape depth, antique-gold accents and navy shadows, restrained magic. No text, letters, digits, poker suits or ranks, UI, frames, borders, badges, logo, watermark, East Asian architecture/motifs, dense filigree or blown-out highlights. Each figure is an eerie supernatural ruler, not a normal human adventurer. Valoria's hidden entity: a towering hollow obsidian armor colossus suspended above cracked volcanic stone, a broad fragmented shoulder mantle and an empty furnace-like cavity in the chest, face concealed inside a smooth charred iron visor. One gauntlet closes around three small blank red parchment rectangles, their light extinguished as thin ember ribbons flow into the chest and along a sweeping cloak, suggesting it seals enemy cards and gains speed and striking power from them. Distant Western basalt fortress and restrained lava orange, oxblood fabric, ash haze. One commanding dark silhouette, no flames obscuring the figure.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-bfeceba4-42fc-494f-867f-c49631fb0534.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "kingdom_diamond_entity",
+    "group": "enemy",
+    "name": "Kẻ Nuốt Hoàng Kim",
+    "ability": "Vô hiệu hóa quân bài cùng chất; mỗi lá đúng chất trên tay người chơi tăng 10% tốc đánh và 10% sát thương cho boss. Boss tự do có thể xuất hiện ở mọi vùng chính, không cố định ở ải 20.",
+    "source": "config/kingdom_boss_data.lua",
+    "concept": "Aurelia's mysterious entity: an immense faceless floating sandstone sphinx-like guardian with a long abstract serpentine lower body of suspended stone segments and a large antique-brass circular collar. One massive crystal-and-bronze claw crushes three small blank ochre parchment rectangles into golden dust; the dust travels into a faceted amber core and horizontal sand currents around the entity to suggest stolen power and speed. Western desert expedition ruins, immense eroded sandstone arches and fossil dunes, bone ivory and antique gold, cool deep navy shadows. Not a human king, no Egyptian written symbols, no eastern motifs.",
+    "file": "assets/cards/continental/enemy/kingdom_diamond_entity.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. ONE production boss card artwork, full-bleed portrait 2:3 PNG 1024x1536. Continental cinematic painterly Western dark-fantasy expedition, one large mysterious nonhuman entity with a clear silhouette readable when small, medium detail, atmospheric landscape depth, antique-gold accents and navy shadows, restrained magic. No text, letters, digits, poker suits or ranks, UI, frames, borders, badges, logo, watermark, East Asian architecture/motifs, dense filigree or blown-out highlights. Each figure is an eerie supernatural ruler, not a normal human adventurer. Aurelia's mysterious entity: an immense faceless floating sandstone sphinx-like guardian with a long abstract serpentine lower body of suspended stone segments and a large antique-brass circular collar. One massive crystal-and-bronze claw crushes three small blank ochre parchment rectangles into golden dust; the dust travels into a faceted amber core and horizontal sand currents around the entity to suggest stolen power and speed. Western desert expedition ruins, immense eroded sandstone arches and fossil dunes, bone ivory and antique gold, cool deep navy shadows. Not a human king, no Egyptian written symbols, no eastern motifs.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-e4dd56fd-bd06-4a62-87a9-310f7efe2c82.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "kingdom_club_entity",
+    "group": "enemy",
+    "name": "Cội Rễ Lãng Quên",
+    "ability": "Vô hiệu hóa quân bài cùng chất; mỗi lá đúng chất trên tay người chơi tăng 10% tốc đánh và 10% sát thương cho boss. Boss tự do có thể xuất hiện ở mọi vùng chính, không cố định ở ải 20.",
+    "source": "config/kingdom_boss_data.lua",
+    "concept": "Elaris's mysterious entity: an enormous ancient antlered root spirit, hollow torso made of broad twisted weathered oak and moss-covered standing stones, a faceless dark cavity under a crown of thick bare branching antlers. Three small blank green parchment rectangles are trapped individually inside thick root loops near one huge wooden palm, their light draining into restrained emerald veins running through the limbs; a few broad flowing leaf ribbons imply gathering speed. Quiet overgrown Western woodland abbey and immense forest tree behind. Clear tree-guardian silhouette, rich forest green and weathered bronze, controlled emerald rim light.",
+    "file": "assets/cards/continental/enemy/kingdom_club_entity.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. ONE production boss card artwork, full-bleed portrait 2:3 PNG 1024x1536. Continental cinematic painterly Western dark-fantasy expedition, one large mysterious nonhuman entity with a clear silhouette readable when small, medium detail, atmospheric landscape depth, antique-gold accents and navy shadows, restrained magic. No text, letters, digits, poker suits or ranks, UI, frames, borders, badges, logo, watermark, East Asian architecture/motifs, dense filigree or blown-out highlights. Each figure is an eerie supernatural ruler, not a normal human adventurer. Elaris's mysterious entity: an enormous ancient antlered root spirit, hollow torso made of broad twisted weathered oak and moss-covered standing stones, a faceless dark cavity under a crown of thick bare branching antlers. Three small blank green parchment rectangles are trapped individually inside thick root loops near one huge wooden palm, their light draining into restrained emerald veins running through the limbs; a few broad flowing leaf ribbons imply gathering speed. Quiet overgrown Western woodland abbey and immense forest tree behind. Clear tree-guardian silhouette, rich forest green and weathered bronze, controlled emerald rim light.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-841aa84f-2870-446d-b3db-365691e46742.png",
+      "mode": "built-in image_gen"
+    }
+  },
+  {
+    "id": "kingdom_spade_entity",
+    "group": "enemy",
+    "name": "Bóng Vương Băng Tịch",
+    "ability": "Vô hiệu hóa quân bài cùng chất; mỗi lá đúng chất trên tay người chơi tăng 10% tốc đánh và 10% sát thương cho boss. Boss tự do có thể xuất hiện ở mọi vùng chính, không cố định ở ải 20.",
+    "source": "config/kingdom_boss_data.lua",
+    "concept": "Vharos's mysterious entity: a tall faceless spectral monarch with two immense folded raven-like ice wings, draped in a single broad torn navy mantle, body tapering into cold mist above a frozen stone causeway. One long black-silver hand holds three small blank blue parchment rectangles suspended in a cage of thick ice bars; cold blue luminous threads drain from those rectangles into a large dark glacial gem at its chest, while a sweeping icy wake suggests growing speed and force. Distant ruined Western ice citadel under a restrained violet eclipse, cold blue, bone ivory and antique silver. One majestic silhouette, no visible human face, no crown of tiny filigree.",
+    "file": "assets/cards/continental/enemy/kingdom_spade_entity.png",
+    "previous_paths": [],
+    "redesigned_from_existing": false,
+    "prompt": "Use case: stylized-concept. ONE production boss card artwork, full-bleed portrait 2:3 PNG 1024x1536. Continental cinematic painterly Western dark-fantasy expedition, one large mysterious nonhuman entity with a clear silhouette readable when small, medium detail, atmospheric landscape depth, antique-gold accents and navy shadows, restrained magic. No text, letters, digits, poker suits or ranks, UI, frames, borders, badges, logo, watermark, East Asian architecture/motifs, dense filigree or blown-out highlights. Each figure is an eerie supernatural ruler, not a normal human adventurer. Vharos's mysterious entity: a tall faceless spectral monarch with two immense folded raven-like ice wings, draped in a single broad torn navy mantle, body tapering into cold mist above a frozen stone causeway. One long black-silver hand holds three small blank blue parchment rectangles suspended in a cage of thick ice bars; cold blue luminous threads drain from those rectangles into a large dark glacial gem at its chest, while a sweeping icy wake suggests growing speed and force. Distant ruined Western ice citadel under a restrained violet eclipse, cold blue, bone ivory and antique silver. One majestic silhouette, no visible human face, no crown of tiny filigree.",
+    "status": "generated",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "generation": {
+      "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-b1805062-4355-4993-91f7-061734fc88f5.png",
+      "mode": "built-in image_gen"
+    }
+  }
+]

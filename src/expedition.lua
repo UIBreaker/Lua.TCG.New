@@ -93,7 +93,11 @@ function E.area(stage,regionId)
 end
 function E.rankName(rank) return ({[11]="J",[12]="Q",[13]="K",[14]="A"})[rank] or tostring(rank) end
 function E.shipBoss(stage) return E.shipBosses[(stage-21)%#E.shipBosses+1] end
-function E.bossData(stage, definitions, fallback,regionId)
+function E.bossData(stage, definitions, fallback,regionId,areaStage)
+    if E.region(stage,regionId).id~="blood_domain" then
+        local entity=require("config.kingdom_boss_data").roll(stage)
+        if entity then return entity end
+    end
     if E.region(stage,regionId).id=="human" then return require("src.human_bosses").roll(stage) end
     if E.region(stage,regionId).id~="voyage" then return fallback end
     local captain=E.shipBoss(stage)
@@ -111,6 +115,13 @@ function E.decorate(m, stage, encounter,regionId,areaStage)
     local region=E.region(m.stage,regionId or m.regionId)
     m.regionId=region.id;m.areaStage=areaStage or m.areaStage or (region.id=="voyage" and m.stage or ((m.stage-1)%20)+1)
     if region.id=="blood_domain" then return require("src.ancient_statue").decorate(m,m.areaStage) end
+    if m.isBoss and m.bossData and m.bossData.kingdomEntity then
+        m.human=false;m.neutralHuman=nil;m.creatureCard=true;m.creatureKind=nil
+        m.artKey=m.bossData.artKey;m.name=m.bossData.name;m.desc=m.bossData.desc
+        m.cardSuit=m.bossData.entitySuit;m.cardRank=13;m.color=m.bossData.color
+        m.title=m.bossData.title;m.enemyAbility={name="Phong Ấn "..m.bossData.suitName,desc=m.desc}
+        return m
+    end
     if region.id=="unknown" then
         m.human=false;m.neutralHuman=nil
         local creatures={

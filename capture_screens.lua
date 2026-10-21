@@ -60,6 +60,21 @@ local function buyFocused(x, y)
 end
 
 function Capture.update(gameRef, callbacks)
+    for _,value in ipairs(arg or {}) do if value=="--test-game-speed" then
+        local ok,err=xpcall(function() require("tests.game_speed_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("GAME SPEED FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do if value=="--test-combat-notices" then
+        local ok,err=xpcall(function() require("tests.combat_notices_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("COMBAT NOTICES FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do if value=="--test-kingdom-bosses" then
+        local ok,err=xpcall(function() require("tests.kingdom_boss_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("Kingdom entity capture FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
     for _,value in ipairs(arg or {}) do if value=="--capture-human-boss-combat" then
         local ok,err=xpcall(function() require("tests.human_boss_capture").update(gameRef,callbacks) end,debug.traceback)
         if not ok then print("HUMAN BOSS RUNTIME FAIL: "..tostring(err));love.event.quit(1) end
@@ -271,6 +286,16 @@ function Capture.update(gameRef, callbacks)
         if value=="--capture-encounter-preview" then
             local ok,err=pcall(require("tests.encounter_preview_capture").update,gameRef,callbacks)
             if not ok then print("ENCOUNTER PREVIEW FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value=="--capture-socketing-ui" then
+            local ok,err=pcall(require("tests.socketing_ui_capture").update,gameRef,callbacks)
+            if not ok then print("SOCKETING UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value=="--capture-statue-ritual" then
+            local ok,err=xpcall(function() require("tests.statue_ritual_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("STATUE RITUAL FAIL: "..tostring(err));love.event.quit(1) end
             return
         end
         if value=="--test-card-inspector" then

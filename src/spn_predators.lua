@@ -67,7 +67,7 @@ function T.scored(game,slot,source,result)
     local growth=source.spnGrowth or {};local victim=game.deities and game.deities[slot+1]
     if victim and victim~=game.deities[slot] and not require("src.boss_abilities").isSlotLocked(game,"spn",slot+1) then
         local gain=D.scaleEffect(source,{addOfferingMult=.5}).addOfferingMult
-        if D.destroyDeity(game,slot+1,true) then
+        if D.destroyDeity(game,slot+1,true,nil,"HIẾN TẾ bởi "..source.name.." · đổi lấy hệ số Cường hóa") then
             growth.offeringMult=(growth.offeringMult or 0)+gain;source.spnGrowth=growth
             notice(game,source,slot,"HIẾN TẾ "..victim.name.." · +"..gain.." HỆ SỐ")
         end

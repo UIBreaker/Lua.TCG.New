@@ -53,7 +53,7 @@ for _,stage in ipairs({1,3,6,10,15,21}) do
         for seed=1,60 do
             Rng.seed(seed);local shop=Shop.new();Shop.refresh(shop,g)
             for _,item in ipairs(shop.items) do if item.deity then
-                assert(stage>=(Shop.SPN_STAGE_GATES[item.deity.rarity] or 1),"premature SPN "..item.deity.rarity)
+                assert(require("src.deities").getRarityTier(item.deity)<=5 and stage>=(Shop.SPN_STAGE_GATES[item.deity.rarity] or 1),"premature SPN "..item.deity.rarity)
             end end
         end
     end

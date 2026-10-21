@@ -5863,3 +5863,11 @@ Concept: A human merchant warlord in a tailored dark navy coat, antique gold arm
 Prompt: Create ONE unique production game enemy boss illustration, portrait 2:3 PNG 1024x1536, full bleed. Match Continental cinematic painterly Western dark-fantasy expedition artwork: medium detail, atmospheric depth, one clear primary silhouette readable at card size, restrained luminous effects, antique gold and navy shadows. Fresh original asset, never a recolor. No text, lettering, digits, poker suits/ranks/indices, badges, UI, card border, frame, logos or watermark. No East Asian architecture/motifs, dense filigree or particle clutter. Boss concept: A human merchant warlord in a tailored dark navy coat, antique gold armor and a heavy practical money belt. He weighs a stack of worn gold coins on a small brass merchant scale, while a single relic dagger and stoppered potion vanish into an open iron-bound trade chest at his feet. His confident silhouette communicates growing stronger with the player's wealth and forcibly selling their supplies. Medieval Western port counting house open to a misty harbor, warm gold versus blue-gray, no numbers, documents without writing.
 
 Output: assets/cards/continental/enemy/human_gilded_broker.png
+
+## 2026-10-21 — Bốn thực thể phong ấn vương quốc
+
+Bốn tranh boss mới tạo bằng built-in image_gen, PNG dọc 1024×1536, tràn viền; chữ, bậc K, chất và khung do runtime vẽ. Vương quốc Cơ: Chủ Tể Tro Tim (`kingdom_heart_entity`); Rô: Kẻ Nuốt Hoàng Kim (`kingdom_diamond_entity`); Chuồn: Cội Rễ Lãng Quên (`kingdom_club_entity`); Bích: Bóng Vương Băng Tịch (`kingdom_spade_entity`).
+
+Prompt nguyên văn, concept, PNG đích tại `assets/cards/continental/enemy/` và nguồn ảnh nằm trong `docs/KINGDOM_ENTITY_ASSETS.json`, đồng bộ `docs/asset_manifest.json`. Hình tượng phong ấn lá trắng, hút linh lực vào lõi và chuyển động của áo/cát/lá/gió băng gắn với cơ chế vô hiệu chất và tăng tốc/sát thương.
+
+Cơ chế: `docs/KINGDOM_ENTITIES.md`. QA: `docs/kingdom_entity_roster.png` và `docs/kingdom_entity_combat_1.png` tới `docs/kingdom_entity_combat_4.png`.

@@ -52,7 +52,7 @@ function E.absorb(game,amount,inCombat)
         p.owner.phantomSpent=(p.owner.phantomSpent or 0)+taken;remaining=remaining-taken
         if taken>0 then notice(game,p.owner,p.slot,"MÁU ẢO -"..string.format("%g",taken)) end
         if p.owner.phantomSpent>=p.capacity then
-            D.destroyDeity(game,p.slot,inCombat~=false,p.owner)
+            D.destroyDeity(game,p.slot,inCombat~=false,p.owner,"MÁU ẢO ĐÃ CẠN · tự hủy sau khi hấp thụ sát thương")
             notice(game,p.owner,p.slot,"MÁU ẢO CẠN · TỰ HỦY")
         end
     end

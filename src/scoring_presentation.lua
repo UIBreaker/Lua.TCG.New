@@ -162,6 +162,7 @@ local function trigger(anim, st)
         anim.deityHit=anim.deityHit or {}
         anim.deityHit[st.slotIndex]=anim.deityHit[st.slotIndex] or 0
         Effects.triggerScorePulse(st.deity or s.deities[st.slotIndex])
+        require("src.combat_notices").activate(st.deity or s.deities[st.slotIndex],st.message)
     elseif cardIndex then
         anim.cardBounce[cardIndex] = {scaleX = 1, scaleY = 1}
         anim.cardHit[cardIndex] = anim.cardHit[cardIndex] or 0 -- Consecutive effects on one card share its current lift.

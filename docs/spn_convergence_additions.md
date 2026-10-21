@@ -9,7 +9,7 @@ Tích số nghĩa là **tích lũy: càng đánh lâu, lá càng mạnh**. Thi�
 | **Cổ Linh Bồi Tụ** | Mỗi lá đã chơi thêm một tầng; +2 Sát thương mỗi tầng, áp dụng cả phần vừa tích. | Chơi nhiều lá, kể cả lá không tính điểm. Sau 10 lá đã đánh: +20; sau 50 lá: +100. Có thể nuôi trước rồi dùng tay nhỏ mạnh hơn về sau. |
 | **Lưỡng Cực** | Mỗi tay +1 điện; đổi ưu thế chẵn/lẻ thêm một điện. Hệ số Cường hóa = 1 + 0.04 × điện. | Xen kẽ bộ bài thiên chẵn và thiên lẻ để nuôi nhanh gấp đôi. Hòa số chẵn/lẻ vẫn +1 điện nhưng không đổi cực. Đếm mọi lá đã chơi; J/Q/K/A là 11/12/13/14. |
 | **Vết Nứt Vô Cực** | Mỗi tay +5 vết nứt; mỗi HP thực mất do đòn quái +1 vết. Mỗi vết +1 sát thương cố định vào AURA. | Nuôi bằng thời gian và thương tích thật, kết hợp hồi phục để chuyển mất máu thành lực đánh lâu dài. Giáp hấp thụ và lượng sát thương vượt HP còn lại không tăng vết. Không tính tự trả HP. |
-| **Đồng Hồ Vô Tận** | Mỗi tay +1 cát; mỗi bốn cát thêm một nhịp và hồi đúng một lượt đánh. Mỗi nhịp +2 Cường hóa vĩnh viễn. | Kéo dài trận và xây nhịp qua nhiều trận; mốc cát được giữ khi sang trận mới. Tiến hóa tăng Cường hóa mỗi nhịp, không biến lượt hồi thành số lẻ. |
+| **Đồng Hồ Vô Tận** | Mỗi lần bỏ bài tích lũy vĩnh viễn +0,5 Cường hóa. | Giữ số lần bỏ bài khi sang trận và lưu/tải; tiến hóa nhân hiệu lực mỗi lần bỏ theo quy tắc SPN. Cập nhật 21/10/2026. |
 
 Không tự xóa tích số khi đổi trận, đổi ô hoặc tiến hóa. Save/load giữ tích số trên từng bản SPN sở hữu. Mua một bản mới bắt đầu từ 0; mỗi bản có tiến độ riêng. Phần đã tích không bị giảm bởi việc đổi cực hoặc thay đổi tay bài. Các lá bị khóa không nuôi thêm trong thời gian khóa. Xem trước không nuôi tích số.
 

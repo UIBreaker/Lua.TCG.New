@@ -17,7 +17,13 @@ end
 local function touch(cb,n)
     local Rng=require("src.rng");local original=Rng.random
     Rng.random=function(a,b) if not a then return .99 elseif b then return a else return n end end
-    local ok,err=pcall(function() click(button(cb,"statue_touch")) end);Rng.random=original;assert(ok,err)
+    local ok,err=pcall(function()
+        click(button(cb,"statue_touch"))
+        local V=require("ui.ancient_statue")
+        local result=V.update(cb.getRunState(),2.1)
+        if result=="entered" then cb.setCaptureState("BLIND_SELECT")
+        else V.press(cb.getRunState(),{id="statue_continue"}) end
+    end);Rng.random=original;assert(ok,err)
 end
 function T.update(game,cb)
     T.started=T.started or love.timer.getTime();assert(love.timer.getTime()-T.started<80,"Statue capture timeout "..T.step)
@@ -34,6 +40,12 @@ function T.update(game,cb)
     elseif step==1 then click(button(cb,"leave_shop") or button(cb,"next_round"))
     elseif step==2 then
         local _,state=cb.getRunState();assert(state=="blood_statue");click(button(cb,"statue_select"))
+        T.step=2.5;T.deadline=love.timer.getTime()+.65;return
+    elseif step==2.5 then
+        local Bag=require("src.ui").Backpack
+        assert(Bag.open and Bag.cardPicker)
+        click(Bag.cellRect(1))
+        T.step=3;T.deadline=love.timer.getTime()+.65;return
     elseif step==3 then shot("offering");touch(cb,4)
     elseif step==4 then assert(game.playerHp==90);shot("blessing");click(button(cb,"statue_rates"))
     elseif step==5 then shot("rates");click(button(cb,"statue_rates_close"))

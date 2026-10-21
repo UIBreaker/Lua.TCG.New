@@ -156,19 +156,22 @@ for _, d in pairs(Monster.DISRUPTIVE_BOSSES) do BossAbilities.attach(d) end
 for id, d in pairs(BossAbilities.newDefinitions) do Monster.DISRUPTIVE_BOSSES[id] = BossAbilities.attach(d) end
 local DISRUPTIVE_KEYS = { "the_needle", "the_water", "the_hook", "the_fish", "the_arm", "black_tax_collector", "memory_eater", "gatekeeper" }
 
-Monster.BASE_HP = 100
--- Each subsequent encounter grows by +50% from the opening HP.
+Monster.BASE_HP = 50
+function Monster.getBlindHp(stage, blindType)
+    local hp=Monster.BASE_HP
+    for step=2,math.max(1,stage or 1) do
+        hp=math.floor(hp*(step<=5 and 1.50 or step<=20 and 1.45 or 1.50)+.5)
+    end
+    local multiplier=blindType=="boss" and 3 or blindType=="big" and 2 or 1
+    return math.floor(hp*multiplier+.5)
+end
+
+-- Both campaign and encounter previews share the same three-fight stage curve.
 function Monster.getHpByEncounter(encounterCount, isBoss, isElite)
     local n = math.max(1, encounterCount or 1)
-    local baseHp = math.floor(Monster.BASE_HP * (1.5 ^ (n - 1)) + 0.5)
-
-    if isBoss then
-        return math.floor(baseHp * 2.0)
-    elseif isElite then
-        return math.floor(baseHp * 1.5)
-    else
-        return baseHp
-    end
+    local index=(n-1)%3+1
+    local kind=isBoss and "boss" or isElite and "big" or index==3 and "boss" or index==2 and "big" or "small"
+    return Monster.getBlindHp(math.floor((n-1)/3)+1,kind)
 end
 
 function Monster.rollAttackSpeed(encounterCount)

@@ -18,3 +18,6 @@ jobs:
         run: xvfb-run -a love . --test-poker
       - name: Run feature suite
         run: xvfb-run -a love . --test-features
+      - name: Check preview memory retention
+        timeout-minutes: 2
+        run: xvfb-run -a love tests/scoring_audit tests.preview_memory_smoke

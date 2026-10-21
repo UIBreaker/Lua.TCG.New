@@ -148,24 +148,9 @@ RunManager.BOSS_KEYS = {
 
 -- HP formula:
 -- Give ordinary builds time to assemble before the regional endgame.
--- Big Blind: round(1.5 * Small HP)
--- Boss Blind: round(2.0 * Small HP)
+-- Big Blind: 2 * Small HP; Boss Blind: 3 * Small HP.
 function RunManager.calculateBlindHp(ante, blindType)
-    local a = math.max(1, ante or 1)
-    local smallHp = Monster.BASE_HP
-    for step = 2, a do
-        local growth=step<=5 and 1.50 or step<=20 and 1.45 or 1.50
-        smallHp = math.floor(smallHp * growth + 0.5)
-    end
-
-    if blindType == "small" then
-        return smallHp
-    elseif blindType == "big" then
-        return math.floor(smallHp * 1.5 + 0.5)
-    elseif blindType == "boss" then
-        return math.floor(smallHp * 2.0 + 0.5)
-    end
-    return smallHp
+    return Monster.getBlindHp(ante,blindType)
 end
 
 -- Generate 3 blinds for a given Ante

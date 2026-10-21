@@ -9,7 +9,7 @@ function Audit.run(bot)
     local Group=require("src.enemy_group")
     local R=require("src.rng")
     local seeds,prefix=200,"docs/balance_audit"
-    assert(Shop.PRICE_MULTIPLIER==4 and Run.calculateBlindHp(1,"small")==100,"audit must start from the shipped balance")
+    assert(Shop.PRICE_MULTIPLIER==4 and Run.calculateBlindHp(1,"small")==50,"audit must start from the shipped balance")
     for _,v in ipairs(arg or {}) do
         seeds=tonumber(v:match("^%-%-sim%-seeds=(%d+)$")) or seeds
         prefix=v:match("^%-%-sim%-out=(.+)$") or prefix
@@ -19,7 +19,7 @@ function Audit.run(bot)
         local f=assert(io.open(prefix..suffix..".csv","w"));f:write(table.concat(rows,"\n"),"\n");f:close()
     end
     local opening={"opening_hp,policy,seed,encounter,won,hp,turns,hits,misses,aura_mean,timeout"}
-    for _,hp in ipairs({100}) do for _,smart in ipairs({false,true}) do
+    for _,hp in ipairs({50}) do for _,smart in ipairs({false,true}) do
         local wins={0,0,0}
         for seed=1,seeds do
             local g=bot.newGame(80000+seed)

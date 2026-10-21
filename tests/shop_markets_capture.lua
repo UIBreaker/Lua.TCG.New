@@ -33,7 +33,7 @@ function T.update(game,cb)
             game.shopMode=mode;game.consumables={};game.deities={};game.backpackConsumables={};game.backpackDeities={};UI.Polish.clearFocus();cb.openShop()
             if mode=="small" then
                 game.run.stats.blindsWon=1;game.run.stats.starterGearPurchased=nil;cb.openShop()
-                assert(cb.getShopData().items[1].starterOffer,"first small shop includes starter gear")
+                assert(cb.getShopData().items[2].starterOffer,"first small shop includes starter gear in the equipment bay")
             end
             assert(cb.getShopData().mode==mode)
             if mode=="cards" then

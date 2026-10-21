@@ -18,7 +18,7 @@ function T.update(game,cb)
         local loaded=P.restoreSnapshot(P.makeSnapshot(game,"BLIND_SELECT"));check(loaded)
         T.first=game.consumables[1]
         cb.startMonsterEncounter(1,false);check(game)
-        assert(#game.hand==3 and #game.deck==2 and game.monster.hp==100)
+        assert(#game.hand==3 and #game.deck==2 and game.monster.hp==50)
     elseif step==1 then
         love.mouse.setPosition(2,2)
         love.graphics.captureScreenshot(function(data)

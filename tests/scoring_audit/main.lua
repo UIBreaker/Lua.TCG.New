@@ -1,7 +1,7 @@
 -- Run gameplay regressions in the same LuaJIT runtime as the game.
 function love.load(args)
     local suites = #args > 0 and args or {
-        "tests.scoring_runtime_smoke", "tests.spn_enchantments_smoke", "tests.spectral_persistence_smoke",
+        "tests.scoring_runtime_smoke", "tests.preview_memory_smoke", "tests.spn_enchantments_smoke", "tests.spectral_persistence_smoke",
         "tests.soul_market_smoke", "tests.equipment_sockets_smoke", "tests.spn_snapshot_smoke",
         "tests.equipment_tiers_smoke", "tests.equipment_feedback_smoke",
         "tests.soul_relics_smoke", "tests.chest_depth_smoke", "tests.chest_expansion_smoke",

@@ -488,11 +488,16 @@ local function priceStock(shop,game)
 end
 
 local function finishStock(shop, gameState)
+    if shop.mode=="small" and gameState.smallShopSwapped and shop.items[1].category=="deity" and shop.items[2].category=="equipment" then
+        shop.items[1],shop.items[2]=shop.items[2],shop.items[1]
+        shop.items[1].bay,shop.items[2].bay=1,2
+    end
     if shop.mode=="small" and gameState.run and gameState.run.stats.blindsWon==1 and not gameState.run.stats.starterGearPurchased then
+        local bay=shop.items[1].category=="equipment" and 1 or 2
         local offer=equipmentOffer(Equipment.ITEMS.gem_blast)
-        offer.starterOffer=true;offer.section="stall";offer.bay=1
+        offer.starterOffer=true;offer.section="stall";offer.bay=bay
         offer.subtitle="TIẾP TẾ · 1 LẦN/RUN"
-        shop.items[1]=offer
+        shop.items[bay]=offer
     end
     -- The card stall rolls all nine editions before calculating its price and labels.
     if shop.mode~="cards" then
@@ -1255,7 +1260,10 @@ function Shop.skipPack(shop, gameState)
 end
 
 function Shop.reroll(shop, gameState, refresh)
-    local refreshShop = refresh or Shop.refresh
+    local function refreshShop(s,g)
+        if s.mode=="small" then g.smallShopSwapped=not g.smallShopSwapped end
+        (refresh or Shop.refresh)(s,g)
+    end
     if Blood.isMode(shop.mode) then
         local cost=Shop.getRerollCost(shop,gameState)
         if not Shop.canAfford({cost=cost,currency="blood"},gameState) then return false,"Đổi hàng cần "..cost.." HP và phải giữ lại 1 HP." end
@@ -1430,6 +1438,7 @@ function Shop.enterSoulShop(gameState)
 end
 
 function Shop.enterAfterCombat(gameState)
+    gameState.smallShopSwapped=false
     gameState.pendingCompanionShop=nil
     if gameState.run and gameState.run.stats.blindsWon==1 then
         gameState.shopMode="small"

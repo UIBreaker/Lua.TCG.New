@@ -24,10 +24,16 @@ assert(Reward.weighted({{id = "a", weight = 0}}, function() return 0 end) == "go
 for tableId, data in pairs(C.tables) do
     local total = 0
     for _, entry in ipairs(data.entries) do
-        assert(C.definitions[entry.id] and entry.id ~= "spn_pack", tableId)
+        assert(C.definitions[entry.id] and entry.id ~= "spn_pack" and entry.id ~= "card_pack", tableId)
         total = total + entry.weight
     end
     assert(total > 0)
+end
+assert(C.definitions.playing_card.type == "PLAYING_CARD")
+for _,tableId in ipairs({"normal_enemy","boss","memory","silver_chest"}) do
+    local single=false
+    for _,entry in ipairs(C.tables[tableId].entries) do if entry.id=="playing_card" and entry.weight>0 then single=true end end
+    assert(single,tableId.." must still award individual playing cards")
 end
 local g = game()
 local breakdown = Reward.calculate(blind, g)

@@ -33,7 +33,7 @@ end
 for i=2,#Shop.AFTER_COMBAT_MARKETS do assert(seen[Shop.AFTER_COMBAT_MARKETS[i]],"every companion market can appear") end
 local g,shop=fresh(1)
 Shop.enterAfterCombat(g);Shop.refresh(shop,g)
-assert(shop.items[1].starterOffer)
+assert(shop.items[2].starterOffer and shop.items[1].category=="deity")
 local companion=g.pendingCompanionShop
 assert(Shop.reroll(shop,g) and g.pendingCompanionShop==companion,"reroll preserves companion choice")
 g.pendingBarter=true

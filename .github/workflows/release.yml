@@ -30,6 +30,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y love xvfb
       - name: Test touch and gameplay
         run: |
+          timeout 120s xvfb-run -a love tests/scoring_audit tests.preview_memory_smoke
           xvfb-run -a love . --test-feature-parity
           xvfb-run -a love . --test-touch
           xvfb-run -a love . --test-poker

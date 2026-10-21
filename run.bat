@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title Poker Roguelike Launcher
 echo Dang khoi dong Poker Roguelike Demo voi LOVE 11.5...
 

@@ -25,6 +25,7 @@ function GameState.resetRun(game, faction)
     game.soulShopStock = nil
     game.soulRelicCombat = nil
     game.shopMode = "normal"
+    game.smallShopSwapped = false
     game.pendingCompanionShop = nil
     game.pendingSoulShop = false
     game.pendingBloodShop=nil;game.bloodShopChecked={};game.bloodShopNotice=nil

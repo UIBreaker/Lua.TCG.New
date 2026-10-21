@@ -1,6 +1,6 @@
 # Cửa hàng trên hành trình
 
-Ván mới bắt đầu với bộ 5 lá ngẫu nhiên, không trùng rank/chất, luôn đủ Cơ–Rô–Chuồn–Bích; rút 3 lá lên tay và giữ 2 lá trong bộ. Địch đầu tiên ở ải 1 có 100 HP; máu các ải sau tiếp tục tăng từ mốc mới theo đường cong hiện có.
+Ván mới bắt đầu với bộ 5 lá ngẫu nhiên, không trùng rank/chất, luôn đủ Cơ–Rô–Chuồn–Bích; rút 3 lá lên tay và giữ 2 lá trong bộ. Địch đầu tiên ở ải 1 có 50 HP; Ba trận ải 1 là 50/100/150 HP; ải 2 là 75/150/225 HP. Mỗi ải tăng nền HP theo đường cong hiện có, trận lớn ×2 và boss ×3 nền HP. Lễ trao thưởng không sinh rương quân bài, kể cả trong rương lồng; quân bài lẻ vẫn có thể nhận.
 
 Mỗi lượt chơi mới được cấp sẵn vào 3 ô tiêu hao: 1 Bình Máu hồi 25 HP, 1 Bình Giáp Nhỏ tăng 8 Giáp và 1 Tốc Đánh Nhỏ tăng 3 tốc cho một lá trong trận. Có sẵn từ trận đầu tiên, chỉ cấp khi bắt đầu lượt chơi mới; chuyển trận hoặc tải save không cấp lại. Kiểm tra bằng `lovec.exe . --test-starter-supplies` (không ghi save/settings của người chơi).
 
@@ -24,7 +24,7 @@ Mua SPN/tiêu hao, giữ thẻ rương và nhận tiếp tế đều vào kho ba
 | Shop quân bài | 8 lá không trùng bậc/chất trên cùng kệ, lấy đều từ đủ 52 lá (2–A của Cơ/Rô/Chuồn/Bích). Có thể là bản thường hoặc kèm tiến hóa cấp 1–2, một trang bị **cơ bản** đã gắn, một trong 9 ấn bản. Các nâng cấp có thể đi cùng nhau; không có đồ lớn, đồ ghép hay di vật linh hồn. Mua thẳng vào bộ bài, giữ nguyên thuộc tính. |
 | Shop lớn | Giữ các quầy cũ: hàng tuyển chọn, nguyên liệu cơ bản, đặc quyền, rương, giảm giá. Chỉ mở sau chợ linh hồn trong luồng chơi. |
 
-Đổi hàng giữ nguyên loại cửa hàng. Phí cơ bản tại các shop dùng vàng bắt đầu từ 5 Vàng và tăng sau mỗi lượt trả phí: 5 → 7 → 10 → 14 → 19…; vào shop mới trở về 5. Đặc quyền giảm giá và lượt miễn phí vẫn áp dụng; lượt miễn phí không tăng phí. Shop Máu/Linh Hồn dùng chi phí theo tiền tệ riêng. Lưu game giữ loại shop đang mở; save cũ có shop `normal` được tiếp tục ở shop nhỏ. Nút thoát chợ linh hồn ghi rõ **SHOP LỚN →**.
+Đổi hàng giữ nguyên loại cửa hàng. Riêng Shop Nhỏ, ô SPN và ô trang bị đổi loại hàng cho nhau sau mỗi lần đổi hàng thành công, kể cả miễn phí; mua hàng hoặc tải lại không tự đổi loại. Ưu đãi Đá Tam Kích nằm ở ô trang bị theo vị trí hiện tại. Phí cơ bản tại các shop dùng vàng bắt đầu từ 5 Vàng và tăng sau mỗi lượt trả phí: 5 → 7 → 10 → 14 → 19…; vào shop mới trở về 5. Đặc quyền giảm giá và lượt miễn phí vẫn áp dụng; lượt miễn phí không tăng phí. Shop Máu/Linh Hồn dùng chi phí theo tiền tệ riêng. Lưu game giữ loại shop đang mở; save cũ có shop `normal` được tiếp tục ở shop nhỏ. Nút thoát chợ linh hồn ghi rõ **SHOP LỚN →**.
 
 Shop mở E từ ải 3, L từ 6, M từ 10, T/UQ từ 15, VH/TT từ 21; chuẩn hóa trọng số trong nhóm đã mở. SPN có mười bậc: **C → UC → R → E → L → M → T → UQ → VH → TT**. Hai bậc mới là **Vĩnh Hằng (VH)** và **Tối Thượng (TT)**; hệ số giá gốc lần lượt ×27 và ×40, trước hệ số giá chung của shop. Tiến hóa tiếp sau TT hiển thị TT+1, TT+2… Save cũ giữ nguyên cấp và sức mạnh: UQ+1 đổi nhãn thành VH, UQ+2 thành TT, UQ+3 thành TT+1. Huyết Khế Đổi Vận vẫn chỉ nâng SPN dưới UQ lên đúng UQ.
 
@@ -68,7 +68,7 @@ Biển tiệm treo và sổ quầy nằm bên trái, chừa phần giữa để 
 
 ## Kiểm tra
 
-- `lua tests/starting_balance_smoke.lua`: 200 bộ bài khởi đầu đủ 4 chất, 5 lá không trùng, tay bài 3 lá, địch đầu 100 HP và giữ nguyên sở hữu khi lưu/tải.
+- `lua tests/starting_balance_smoke.lua`: 200 bộ bài khởi đầu đủ 4 chất, 5 lá không trùng, tay bài 3 lá, địch đầu 50 HP và giữ nguyên sở hữu khi lưu/tải.
 - `lua tests/shop_price_balance_smoke.lua`: giá theo nhóm trên cả 10 chế độ shop, trừ tiền đúng giá hiển thị, nhãn giảm giá và đặc quyền rương.
 
 - `lua tests/loadout_smoke.lua`: mua khi ô chiến đấu đầy, trang bị/hoán đổi/cất, vị trí tiêu hao, SPN trong kho không kích hoạt, ô bị khóa/hết lượt, tiến hóa/ấn bản/callback SPN và save cũ/mới.

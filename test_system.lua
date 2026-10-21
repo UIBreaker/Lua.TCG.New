@@ -25,23 +25,23 @@ end
 log("=== RUNNING ROGUELIKE POKER SYSTEM TESTS ===")
 
 do
-    -- 1. Test Monster HP scaling (Encounter 1 = 100 HP, each subsequent encounter increases by 50% indefinitely)
+    -- 1. Test Monster HP scaling (Encounter 1 = 50 HP, each subsequent encounter increases by 50% indefinitely)
     local m1 = Monster.create(1, false, false, 1)
-    assert(m1.hp == 100, "Encounter 1 monster HP must be 100, got: " .. m1.hp)
-    assert(m1.maxHp == 100, "Encounter 1 monster maxHp must be 100")
+    assert(m1.hp == 50, "Encounter 1 monster HP must be 50, got: " .. m1.hp)
+    assert(m1.maxHp == 50, "Encounter 1 monster maxHp must be 100")
     assert(m1.attack == 4, "Encounter 1 monster attack must be 4, got: " .. m1.attack)
     assert(m1.intent ~= nil and m1.intent.value == 4, "Encounter 1 monster intent must be 4 DMG")
     assert(m1.attackSpeed >= 1 and m1.attackSpeed <= 999, "Monster attack speed must be within 1..999")
-    log("[PASS] 1. Encounter 1 Monster has 100 HP, 4 DMG and attack speed capped at 999: " .. m1.name)
+    log("[PASS] 1. Encounter 1 Monster has 50 HP, 4 DMG and attack speed capped at 999: " .. m1.name)
 
     local m2 = Monster.create(2, false, false, 2)
-    assert(m2.hp == 150, "Encounter 2 monster HP must be 225 (+50%), got: " .. m2.hp)
+    assert(m2.hp == 100, "Encounter 2 monster HP must be 225 (+50%), got: " .. m2.hp)
     local m3 = Monster.create(3, false, false, 3)
-    assert(m3.hp == 225, "Encounter 3 monster HP must be 338 (+50%), got: " .. m3.hp)
+    assert(m3.hp == 150, "Encounter 3 monster HP must be 338 (+50%), got: " .. m3.hp)
     local m4 = Monster.create(4, false, false, 4)
-    assert(m4.hp == 338, "Encounter 4 monster HP must be 506 (+50%), got: " .. m4.hp)
+    assert(m4.hp == 75, "Encounter 4 monster HP must be 506 (+50%), got: " .. m4.hp)
     local m5 = Monster.create(5, false, false, 5)
-    assert(m5.hp == 506, "Encounter 5 monster HP must be 759 (+50%), got: " .. m5.hp)
+    assert(m5.hp == 150, "Encounter 5 monster HP must be 759 (+50%), got: " .. m5.hp)
     log("[PASS] 2. Monster HP scaling (+50% each encounter) verified: 100 -> 150 -> 225 -> 338 -> 506 HP")
 
     -- 2. Test Boss creation with scaling
@@ -788,21 +788,21 @@ end
 
 -- 47. Test Ante & Blind HP Progression (8 Ante, each Small HP scales by 1.71, Big = 1.5x, Boss = 2.0x)
 do
-    local expectedSmallHps = {100,150,225,338,507,735,1066,1546}
+    local expectedSmallHps = {50,75,113,170,255,370,537,779}
     for a = 1, 8 do
         local sHp = RunManager.calculateBlindHp(a, "small")
         local expS = expectedSmallHps[a]
         assert(sHp == expS, "Ante " .. a .. " Small Blind HP mismatch: expected " .. expS .. ", got " .. sHp)
 
         local bHp = RunManager.calculateBlindHp(a, "big")
-        local expB = math.floor(expS * 1.5 + 0.5)
+        local expB = math.floor(expS * 2 + 0.5)
         assert(bHp == expB, "Ante " .. a .. " Big Blind HP mismatch: expected " .. expB .. ", got " .. bHp)
 
         local bossHp = RunManager.calculateBlindHp(a, "boss")
-        local expBoss = math.floor(expS * 2.0 + 0.5)
+        local expBoss = math.floor(expS * 3 + 0.5)
         assert(bossHp == expBoss, "Ante " .. a .. " Boss Blind HP mismatch: expected " .. expBoss .. ", got " .. bossHp)
     end
-    log("[PASS] 47. Ante & Blind HP Progression verified from 100 opening HP")
+    log("[PASS] 47. Ante & Blind HP Progression verified from 50 opening HP")
 end
 
 -- 48. Test RunManager.newRun and Blind Structure
@@ -1309,7 +1309,7 @@ end
 do
     log("--- Testing 3-Turn Turn-Based Combat Benchmark ---")
     local monster = Monster.create(1, false, false, 1)
-    assert(monster.hp == 100, "Encounter 1 monster HP must be 100, got: " .. monster.hp)
+    assert(monster.hp == 50, "Encounter 1 monster HP must be 50, got: " .. monster.hp)
     assert(monster.attack == 4, "Encounter 1 monster attack must be 4, got: " .. monster.attack)
     assert(monster.intent ~= nil and monster.intent.value == 4, "Monster intent must show 4 DMG")
     -- Keep a high-HP attack-order fixture so this test can focus on armor/heal math.
@@ -2219,7 +2219,7 @@ do
     -- Wanted Level scaling: +8% per level
     pactGame.wantedLevel = 3
     local mWanted = Monster.create(1, false, false, 1)
-    assert(mWanted.hp == 100, "Base monster HP is 100")
+    assert(mWanted.hp == 50, "Base monster HP is 50")
     log("[PASS] 90. Phase 5: 6 Pacts & Wanted Level mechanics verified 100%")
 end
 

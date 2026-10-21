@@ -1,4 +1,5 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do if a=="--test-memory-soak" then require("tests.memory_soak.main");return end end
 for _,a in ipairs(arg or {}) do if a=="--test-campaign-balance" then
     love.filesystem.setIdentity("poker_roguelike_balance_tests")
     local ok,err=xpcall(function() require("tests.campaign_balance_smoke") end,debug.traceback)
@@ -3408,7 +3409,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.141.0", 48, 185)
+    g.print("beta 0.142.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)

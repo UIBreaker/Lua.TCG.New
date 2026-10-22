@@ -43,7 +43,8 @@ function love.load(args)
         local Sound=require('src.sound')
         assert(Sound.init(),'Mixer could not initialize compressed cues')
         local common=0;for _ in pairs(require('config.audio_catalog').cues) do common=common+1 end
-        assert(Sound.stats().cues==common+cues+#require('src.reward_audio').order*4,'Missing mixer cues')
+        local timing=0;for _ in pairs(require('config.timing_audio_baked')) do timing=timing+1 end
+        assert(Sound.stats().cues==common+cues+#require('src.reward_audio').order*4+timing,'Missing mixer cues')
         assert(Sound.play('nen_high_card_armor_break') and Sound.play('card_deal'))
         local game={playerHp=100,maxPlayerHp=100,monster={stage=1}}
         for _,state in ipairs({'menu','playing','shop','defeat'}) do Sound.update(.02,state,game,false) end

@@ -26,7 +26,8 @@ for stage=1,80 do for _,kind in ipairs({"small","big","boss"}) do
         for key,value in pairs(stats) do assert(value>=0 and value<=L.config.caps[key]) end
         local vitality=(require("src.human_bosses").number(m)==1 and 1.5 or 1)*(m.bossData and m.bossData.hpScale or 1)
         assert(m.maxHp>=math.floor(bag.base.maxHp*vitality) and m.maxHp<=bag.base.maxHp*(1+L.config.caps.hp)*vitality)
-        assert(A.attack(m)>=math.floor(m.attack*L.damageScale(m)) and A.attack(m)<=m.attack*(1+L.config.caps.damage)*L.damageScale(m))
+        local gearAttack=L.attack(m) -- Gear caps exclude independent boss multipliers.
+        assert(gearAttack>=math.floor(m.attack*L.damageScale(m)) and gearAttack<=m.attack*(1+L.config.caps.damage)*L.damageScale(m))
         assert((A.speed(m)<=999 or require("src.human_bosses").number(m)==2) and m.creatureArmor<=m.maxHp*(require("src.human_bosses").number(m)==6 and 1 or .5))
         if bag.equipment[1].edition then counts.edition=counts.edition+1 end
         if bag.seal then counts.seal=counts.seal+1 end
@@ -102,6 +103,7 @@ for _,kind in ipairs({"small","big","boss"}) do
     for _,enemy in ipairs(g.enemies) do
         g.playerArmor=1 -- Human Fortress explicitly requires armor before its shield can be damaged.
         local hp=enemy.hp;local armor=enemy.creatureArmor
+        enemy.spnAbilitiesSealed=true -- Isolate gear from boss oneshot-rebirth passives.
         M.takeDamage(enemy,hp+armor+1)
         assert(enemy.hp==0,"damage exceeding HP and armor must still kill in one hit")
     end

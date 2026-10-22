@@ -137,6 +137,7 @@ function Sound.init()
     end
     require("src.nen_audio").register(Sound)
     require("src.reward_audio").register(Sound)
+    require("src.timing_audio").register(Sound)
     Sound.setMasterVolume(volumes.master)
     return complete
 end

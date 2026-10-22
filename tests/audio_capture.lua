@@ -24,6 +24,13 @@ function love.load()
         S.stopAll();count=count+1
     end
     local nenCount=0
+    for name,cue in pairs(require("config.timing_audio_baked")) do
+        assert(S.has(name),"registered timing cue: "..name)
+        assert(S.play(name),"real timing playback: "..name);S.stopAll()
+        local sample=love.sound.newSoundData(cue.path)
+        assert(sample:getChannelCount()==2 and sample:getDuration()>.2,name)
+        sample:release()
+    end
     for _,id in ipairs(require("config.nen_vfx_config").order) do
         for _,kind in ipairs({"charge","charge_strong","charge_extreme","release","release_strong","release_extreme","beat","impact","impact_strong","impact_extreme",
             "armor_break","armor_break_strong","armor_break_extreme","finisher","finisher_strong","finisher_extreme",

@@ -42,12 +42,16 @@ for _, a in ipairs(arg or {}) do
     if a=="--test-seals" then require("tests.seal_capture");return end
     if a=="--test-combat-tactics" then
         local failed=false
-        for _,name in ipairs({"tests.combat_tactics_smoke","tests.enemy_support_limits_smoke","tests.enemy_group_smoke",
+        for _,name in ipairs({"tests.combat_timing_smoke","tests.combat_tactics_smoke","tests.enemy_support_limits_smoke","tests.enemy_group_smoke",
             "tests.enemy_attack_presentation_smoke","tests.advanced_hands_smoke"}) do
             local ok,err=pcall(require,name)
             if not ok then failed=true;print(name.." FAIL: "..tostring(err)) end
         end
         os.exit(failed and 1 or 0)
+    end
+    if a=="--test-combat-timing" then
+        local ok,err=xpcall(function() require("tests.combat_timing_smoke") end,debug.traceback)
+        if not ok then print(err) end;os.exit(ok and 0 or 1)
     end
     if a == "--test-hand-motion" then
         require("tests.hand_motion_smoke"); require("tests.card_physics_smoke"); os.exit(0)
@@ -262,6 +266,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-enemy-attacks" then isCaptureMode = true end
     if a == "--test-play-turn-continuation" then isCaptureMode = true end
     if a == "--capture-combat-tactics" then isCaptureMode = true end
+    if a == "--capture-combat-timing" then isCaptureMode = true end
     if a == "--capture-enemy-loadouts" then isCaptureMode = true end
     if a == "--test-enemy-groups" then isCaptureMode = true end
     if a == "--test-evolution-ui" then isCaptureMode = true end
@@ -951,7 +956,8 @@ end
 
 local function initializeCombat(monster, round)
     UI.ScoringFeel.cancel(anim)
-    anim.active, anim.enemyTurn = false, nil
+    anim.active, anim.enemyTurn, anim.attackTiming, anim.playerTimingResult = false, nil, nil, nil
+    anim.parryVictoryPending=nil
     local result = Combat.start(game, monster, round)
     UI.HandMotion.reset()
     for i,card in ipairs(game.hand) do anim.prepareDrawAnimation(card,i) end
@@ -1869,6 +1875,7 @@ local function startEnemyAttack(phase, speed, done, played)
             if reaction.damage>0 then
                 local ft=Feedback.add(anim.floatingTexts,"damage",reaction.damage,m.screenX or UI.BATTLE_CENTER_X,212,UI.formatNumber)
                 ft.reducedMotion=settings.reducedMotion
+                if m.hp<=0 then DeathVFX.startEnemy(m,m.screenX or UI.BATTLE_CENTER_X,Renderer.quality,settings.reducedMotion) end
             end
         end
         if hit.action and hit.action~="attack" then
@@ -1888,7 +1895,9 @@ local function startEnemyAttack(phase, speed, done, played)
                 x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
             return
         elseif hit.blocked then
-            table.insert(anim.floatingTexts,{text="HÀNH ĐỘNG BỊ CHẶN",color={.4,.84,1},
+            table.insert(anim.floatingTexts,{text=(hit.reflectedAttack or 0)>0 and "TUYỆT KỸ · PHẢN ĐÒN ×100"
+                or (hit.parryArmor or 0)>0 and ("PHẢN THẾ · +"..hit.parryArmor.." GIÁP")
+                or hit.parried and "PARRY CHUẨN · CHẶN ĐÒN" or "HÀNH ĐỘNG BỊ CHẶN",color={.4,.84,1},
                 x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
             return
         end
@@ -1911,8 +1920,15 @@ local function startEnemyAttack(phase, speed, done, played)
         if (game.playerHp or 0) <= 0 then
             beginPlayerDefeat(played)
             Persistence.deleteRun()
-        else done() end
-    end, {reducedMotion=settings.reducedMotion})
+        elseif Combat.getOutcome(game)=="victory" then
+            anim.active=false;anim.playedCards={};state="playing"
+            UI.Abilities.finishHand(game)
+            anim.parryVictoryPending=true
+        else
+            EnemyGroup.ensureTarget(game)
+            done()
+        end
+    end, {reducedMotion=settings.reducedMotion,interactive=true})
     if anim.enemyTurn and phase=="before" then Feedback.emit("enemy_first",UI.BATTLE_CENTER_X,260) end
     return anim.enemyTurn ~= nil
 end
@@ -1920,7 +1936,7 @@ end
 local function playSelectedHand()
     if Renderer.transitionBusy(state,game) then return end
     if UI.HandMotion.busy(game.hand) then return end
-    if anim.enemyTurn then return end
+    if anim.enemyTurn or anim.attackTiming then return end
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
     local playedCards = getSelectedCards()
@@ -1993,7 +2009,7 @@ local function playSelectedHand()
         Sound.play("xmult_boom")
     end
 
-    local function beginScoring()
+    local function beginScoring(timing)
         -- Calculate scoring steps & equipment
         local context = {
             playerAttackSpeed = playerSpeed,
@@ -2078,6 +2094,7 @@ local function playSelectedHand()
         anim.monsterAttackedBeforePlayer = game.monsterAttackedBeforePlayer
         anim.counterAttackStarted = false
         anim.playerAttackResult=nil
+        anim.playerTimingResult=timing
         anim.monsterDefeated, anim.playerKilled, anim.earnedGold, anim.damageDealt = false, false, 0, 0
         anim.pitchStep, anim.cardBounce, anim.cardHit, anim.deityBounce = 0, {}, {}, {}
         anim.bounceScale = {chips = 1, mult = 1, xMult = 1, score = 1}
@@ -2092,9 +2109,14 @@ local function playSelectedHand()
         state = "scoring"
         Sound.play("card_play", 1.0)
     end
-    if not startEnemyAttack("before", playerSpeed, beginScoring, playedCards) then
+    local function timedScoring()
+        anim.active=true
+        anim.attackTiming=require("src.combat_timing").start("attack",playerSpeed,require("src.enemy_abilities").speed(game.monster))
+        anim.attackTiming.onDone=beginScoring
+    end
+    if not startEnemyAttack("before", playerSpeed, timedScoring, playedCards) then
         Feedback.emit("player_first",UI.BATTLE_CENTER_X,260)
-        beginScoring()
+        timedScoring()
     end
 end
 
@@ -2837,7 +2859,8 @@ function love.update(dt,realDt)
         require("src.spn_anomalies").showFeedback(game,anim)
     end
     if state=="playing" and game.monster and game.monster.hp<=0 and not DeathVFX.busy() then EnemyGroup.ensureTarget(game) end
-    if state=="playing" and (game.potionVictoryPending or (game.spnCombat or {}).victoryPending) and not DeathVFX.busy() and Combat.getOutcome(game)=="victory" then
+    if state=="playing" and (anim.parryVictoryPending or game.potionVictoryPending or (game.spnCombat or {}).victoryPending) and not DeathVFX.busy() and Combat.getOutcome(game)=="victory" then
+        anim.parryVictoryPending=nil
         UI.applyCombatWinRewards(nil)
         UI.finishCombatVictory()
     end
@@ -3172,9 +3195,18 @@ function love.update(dt,realDt)
     anim.impactFlash = math.max(0, (anim.impactFlash or 0) - dt)
     anim.screenFlash = math.max(0, (anim.screenFlash or 0) - dt)
     anim.screenDistortion = math.max(0, (anim.screenDistortion or 0) - dt)
+    if (anim.attackTiming or anim.enemyTurn) and (isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isDeckViewerOpen or inspectCardModal or isCollectionOpen) then return end
+    if anim.attackTiming then
+        local timing=anim.attackTiming
+        if require("src.combat_timing").update(timing,realDt) then
+            anim.attackTiming=nil
+            timing.onDone(timing.result)
+        end
+        return
+    end
     if anim.enemyTurn then
         local turn = anim.enemyTurn
-        if EnemyAttack.update(turn, game, motionDt, settings.fastScoring) then
+        if EnemyAttack.update(turn, game, motionDt, settings.fastScoring,realDt) then
             juice.meters.hp,juice.meters.armor=turn.hp,turn.armor
             anim.enemyTurn = nil
             turn.onDone()
@@ -3189,7 +3221,7 @@ function love.update(dt,realDt)
             if UI.BedExplosion.takeImpact() then st=anim.pendingBedScore;anim.pendingBedScore=nil end
         else
             st=UI.ScoringFeel.update(anim, deathStop and 0 or motionDt, settings.fastScoring)
-            if st and st.type=="final_score" then anim.playerAttackResult=Combat.rollPlayerAttack(game) end
+            if st and st.type=="final_score" then anim.playerAttackResult=Combat.rollPlayerAttack(game,anim.playerTimingResult) end
             if st and st.type=="final_score" and not anim.playerAttackResult.missed and #Combat.bedExplosions(game,st.finalScore)>0 then
                 anim.pendingBedScore=st
                 UI.BedExplosion.start(game.monster.screenX or UI.BATTLE_CENTER_X,410,Renderer.quality,Renderer.scene.weather)
@@ -3206,7 +3238,7 @@ function love.update(dt,realDt)
                     for _,enemy in ipairs(EnemyGroup.members(game)) do
                         beforeHit[#beforeHit+1]={enemy=enemy,hp=enemy.hp or 0,armor=enemy.creatureArmor or 0}
                     end
-                    local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult)
+                    local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult,anim.playerTimingResult)
                     local outcome={armorBroken=false,finisher=false,bossFinisher=false}
                     for _,before in ipairs(beforeHit) do
                         if before.hp>0 then
@@ -3442,7 +3474,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.144.0", 48, 185)
+    g.print("beta 0.145.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4353,6 +4385,7 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     -- 5. BALATRO ACTION BUTTONS ROW
     ----------------------------------------------------------------------------
+    if not (anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing) then
     local hasSelection = (#selectedCards >= 1 and #selectedCards <= getMaxSelectableCards())
     local actionY = 636
 
@@ -4448,6 +4481,7 @@ local function drawPlayingState()
     end
 
     ----------------------------------------------------------------------------
+    end
     -- 6. BOTTOM-RIGHT FACEDOWN DRAW DECK PILE
     ----------------------------------------------------------------------------
     local deckPileX,deckPileY,deckPileW,deckPileH = unpack(Layout.battle.deck)
@@ -6182,6 +6216,9 @@ function love.draw()
     end
     if UI.ExpandedInventory.open and state == "playing" then beginLayer(4) end
     UI.ExpandedInventory.drawBattle()
+    if state=="playing" or state=="scoring" then
+        require("src.combat_timing").draw(anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing,UI)
+    end
     if isDeckViewerOpen then
         beginLayer(5)
         drawDeckViewerModal()
@@ -6282,7 +6319,7 @@ function love.draw()
         or isHandbookOpen and "handbook" or isCollectionOpen and "collection" or isDeckViewerOpen and "deck"
         or isShopTransferOpen and "transfer" or packOpening or state
     local descriptionCandidate=UI.Description.candidate(UI.descriptionCandidate,descriptionContext)
-    if descriptionCandidate and not Renderer.transitionBusy(state,game) and not inspectCardModal and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and UI.Polish.tooltipAllowed(descriptionCandidate)
+    if descriptionCandidate and not anim.attackTiming and not anim.enemyTurn and not Renderer.transitionBusy(state,game) and not inspectCardModal and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and UI.Polish.tooltipAllowed(descriptionCandidate)
         and not UI.AbilityUI.current and not UI.CardPhysics.isHolding() then
         UI.Description.draw(UI, descriptionCandidate, UI.virtualMouseX or 0, UI.virtualMouseY or 0, game)
     end
@@ -7485,6 +7522,11 @@ UI.ExpandedInventory.callbacks={
 function love.mousepressed(x, y, button, istouch)
     if istouch then return end
     Touch.mouseInput()
+    if not isPauseMenuOpen and not isSettingsOpen and not inspectCardModal and not isHandbookOpen and not isDeckViewerOpen and not isCollectionOpen
+        and (anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing) then
+        if button==1 then require("src.combat_timing").press(anim.attackTiming or anim.enemyTurn.timing) end
+        return
+    end
     if isDebugOpen then
         local mx, my = toVirtual(x, y)
         return handleDebugMousepressed(mx, my, button)
@@ -8210,7 +8252,14 @@ function love.mousepressed(x, y, button, istouch)
     end
 end
 
-function love.keypressed(key, scancode)
+function love.keypressed(key, scancode, isrepeat)
+    if key~="escape" and not isPauseMenuOpen and not isSettingsOpen and not inspectCardModal and not isHandbookOpen and not isDeckViewerOpen and not isCollectionOpen
+        and (anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing) then
+        if not isrepeat and (key=="space" or key=="return" or key=="kpenter") then
+            require("src.combat_timing").press(anim.attackTiming or anim.enemyTurn.timing)
+        end
+        return
+    end
     if key=="escape" and anim.cardClick then anim.cardClick=nil;UI.CardPhysics.release() end
     if isDebugOpen then UI.Debug.key(key, scancode); return end
     if key~="escape" and key~="f7" and not isPauseMenuOpen and not isSettingsOpen and UI.sceneTransitionBusy() then return end
@@ -8832,6 +8881,13 @@ Touch.install({press=love.mousepressed,move=love.mousemoved,release=love.mousere
         deityDrag.active,deityDrag.isDragging=false,false
         juice.buttonPressedId=nil
     end})
-love.touchpressed = Touch.press
+love.touchpressed = function(id,x,y)
+    if (anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing) and not isPauseMenuOpen and not isSettingsOpen
+        and not inspectCardModal and not isHandbookOpen and not isDeckViewerOpen and not isCollectionOpen then
+        love.mousepressed(x,y,1)
+        return
+    end
+    Touch.press(id,x,y)
+end
 love.touchmoved = Touch.move
 love.touchreleased = Touch.release

@@ -156,7 +156,7 @@ for _, d in pairs(Monster.DISRUPTIVE_BOSSES) do BossAbilities.attach(d) end
 for id, d in pairs(BossAbilities.newDefinitions) do Monster.DISRUPTIVE_BOSSES[id] = BossAbilities.attach(d) end
 local DISRUPTIVE_KEYS = { "the_needle", "the_water", "the_hook", "the_fish", "the_arm", "black_tax_collector", "memory_eater", "gatekeeper" }
 
-Monster.BASE_HP = 50
+Monster.BASE_HP = 80
 function Monster.getBlindHp(stage, blindType)
     local hp=Monster.BASE_HP
     for step=2,math.max(1,stage or 1) do
@@ -176,20 +176,20 @@ end
 
 function Monster.rollAttackSpeed(encounterCount)
     local encounter = math.max(1, tonumber(encounterCount) or 1)
-    -- Enemy speed rises gently through a run, with room to grow up to 999.
-    local maximum = math.min(999, 11 + math.floor((encounter - 1) * 0.25))
-    return Rng.random(1, maximum)
+    local minimum = math.min(999, 8 + math.floor((encounter - 1) * 0.4))
+    local maximum = math.min(999, 22 + math.floor((encounter - 1) * 0.6))
+    return Rng.random(minimum, maximum)
 end
 
--- Counter-attack damage starts low and scales with each monster encounter.
+-- Timing and parries compensate for harder counter-attacks.
 function Monster.getAttackByEncounter(encounterCount, isBoss, isElite)
     local n = math.max(1, encounterCount or 1)
     if isBoss then
-        return 8 + math.floor((n - 1) * 3.0)
+        return 16 + math.floor((n - 1) * 4.8)
     elseif isElite then
-        return 6 + math.floor((n - 1) * 2.0)
+        return 12 + math.floor((n - 1) * 3.2)
     else
-        return 4 + math.floor((n - 1) * 1.5)
+        return 8 + math.floor((n - 1) * 2.4)
     end
 end
 

@@ -2,6 +2,7 @@ local Combat = require("src.combat")
 local Group = require("src.enemy_group")
 local Motion = require("src.motion")
 local Feedback = require("src.combat_feedback")
+local Timing = require("src.combat_timing")
 local P = { timing = { pause = 0.14, prepare = 0.40, strike = 0.18, recover = 0.56 } }
 local function smooth(p) return p*p*(3-2*p) end
 local function armor(game) return game.playerArmor or game.playerShield or 0 end
@@ -18,6 +19,7 @@ function P.start(game, phase, speed, onHit, onDone, options)
     return { attackers = attackers, index = 1, phase = "pause", age = 0,
         onHit = onHit, onDone = onDone, order = phase, speed = speed,
         reducedMotion = options and options.reducedMotion,
+        interactive = options and options.interactive,
         hp = Feedback.updateMeter(nil,game.playerHp,0), armor = Feedback.updateMeter(nil,armor(game),0) }
 end
 
@@ -25,6 +27,9 @@ local function nextPhase(s,game)
     s.age = 0
     if s.phase == "pause" then
         s.phase = "prepare";s.intent=s.attackers[s.index].intent
+        if s.interactive and (not s.intent or s.intent.type=="attack") then
+            s.timing=Timing.start("parry",s.speed or game.lastPlayerAttackSpeed,require("src.enemy_abilities").speed(s.attackers[s.index]))
+        end
         require("src.sound").play("enemy_prepare")
     elseif s.phase == "prepare" then
         s.phase = "strike"
@@ -33,7 +38,7 @@ local function nextPhase(s,game)
         s.phase = "recover"
         local before={}
         for _,m in ipairs(Group.members(game)) do before[m]={hp=m.hp,armor=m.creatureArmor or 0} end
-        s.result = Combat.resolveMonsterAttack(game, s.order, s.speed, s.attackers[s.index])
+        s.result = Combat.resolveMonsterAttack(game, s.order, s.speed, s.attackers[s.index],s.parryResult)
         s.reactions={}
         for m,values in pairs(before) do
             if m.hp<values.hp or (m.creatureArmor or 0)<values.armor then
@@ -50,13 +55,18 @@ local function nextPhase(s,game)
     elseif s.phase == "recover" then
         s.index = s.index + 1
         if (game.playerHp or 0) <= 0 or s.index > #s.attackers then return true end
-        s.phase = "pause";s.result=nil;s.intent=nil;s.reactions=nil
+        s.phase = "pause";s.result=nil;s.intent=nil;s.reactions=nil;s.parryResult=nil
     end
     return false
 end
 
-function P.update(s, game, dt, fast)
+function P.update(s, game, dt, fast, realDt)
     if s.finished then return true end
+    if s.timing then
+        if Timing.update(s.timing,realDt or dt) then
+            s.parryResult=s.timing.result;s.timing=nil
+        else return false end
+    end
     -- Carry short-frame remainders; clamp stalls just like the player's score queue.
     local left=math.max(0,math.min(dt,0.05))*(fast and 2 or 1)
     while left>0 do
@@ -69,7 +79,9 @@ function P.update(s, game, dt, fast)
             r.armor=Feedback.updateMeter(r.armor,m.creatureArmor,step,0.28)
         end
         if s.age>=P.timing[s.phase]-1e-9 then
+            if s.phase=="prepare" and s.timing then return false end
             if nextPhase(s,game) then s.finished=true;return true end
+            if s.timing then return false end
         end
     end
     return false

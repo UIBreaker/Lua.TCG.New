@@ -17,7 +17,9 @@ local function accuracy(attackerSpeed,targetSpeed)
     local chance=Combat.getHitChance(attackerSpeed,targetSpeed)
     return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
 end
-function Combat.rollPlayerAttack(game)
+function Combat.rollPlayerAttack(game,timing)
+    if timing and timing.forceMiss then return {hitChance=0,missed=true,timingMiss=true} end
+    if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate") then return {hitChance=1,missed=false,timing=timing} end
     if require("src.spn_elements").openingPower(game)>0 then return {hitChance=1,missed=false,frozen=true} end
     if (game.potionCombat or {}).accuracy or game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
@@ -58,7 +60,7 @@ function Combat.bedExplosions(game,aura,locked)
     return bedExplosions
 end
 
-function Combat.resolvePlayerAttack(game, aura,roll)
+function Combat.resolvePlayerAttack(game, aura,roll,timing)
     require("src.spn_basics").armor(game,false)
     local Monster = require("src.monster")
     local target = game.monster
@@ -69,15 +71,16 @@ function Combat.resolvePlayerAttack(game, aura,roll)
     for _,enemy in ipairs(Group.members(game)) do
         enemy.enemyObservedDamage=math.max(0,aura or 0)
     end
-    roll=roll or Combat.rollPlayerAttack(game)
+    roll=roll or Combat.rollPlayerAttack(game,timing)
     local attackEffects=game.spnAttack or {}
     game.spnAttack=nil
     if (game.potionCombat or {}).accuracy then
         roll={hitChance=1,missed=false}
         if (game.potionCombat.accuracyTurns or 1)<=1 then game.potionCombat.accuracy=nil;game.potionCombat.accuracyTurns=nil end
-        require("src.potions").emit(game,"accuracy","ĐÁNH TRÚNG 100%",nil,target)
+        require("src.potions").emit(game,"accuracy",timing and timing.forceMiss and "SA BẪY · ĐÁNH HỤT" or "ĐÁNH TRÚNG 100%",nil,target)
     end
     if attackEffects.guaranteeHit then roll={hitChance=1,missed=false} end
+    if timing and timing.forceMiss then roll={hitChance=0,missed=true,timingMiss=true} end
     if require("src.human_bosses").rejectHand(game) then roll={hitChance=0,missed=true,humanOath=true} end
     if roll.missed then
         local sync=require("src.chest_expansion").sync
@@ -91,6 +94,7 @@ function Combat.resolvePlayerAttack(game, aura,roll)
         require("src.advanced_hands").resolve(game,false)
         return 0,false,{},roll
     end
+    if timing then aura=math.floor(math.max(0,aura)*timing.multiplier+0.5) end
     local locked = {}
     for slot = 1, Deities.getMaxSlots(game) do locked[slot] = Boss.isSlotLocked(game, "spn", slot) end
     local bedExplosions=Combat.bedExplosions(game,aura,locked)
@@ -185,7 +189,7 @@ function Combat.getAverageAttackSpeed(cards,game,handInfo)
     return count > 0 and math.min(999,total/count+bonus) or 0
 end
 
-local function resolveOneAttack(game,playerSpeed)
+local function resolveOneAttack(game,playerSpeed,timing)
     local monster = game and game.monster
     if not monster or (monster.hp or 0) <= 0 then return nil end
     if require("src.spn_elements").frozen(game,monster) then
@@ -227,6 +231,17 @@ local function resolveOneAttack(game,playerSpeed)
     attack=require("src.human_bosses").attack(game,monster,attack)
     execution=execution or require("src.human_bosses").number(monster)==6
     local incomingAttack=attack
+    if timing and timing.reduction==1 then
+        local armorBefore=game.playerArmor or game.playerShield or 0
+        local reward=math.floor(incomingAttack*(timing.armorPct or 0))
+        game.playerArmor=math.max(armorBefore,math.min(Abilities.config.armorCap,armorBefore+reward))
+        game.playerShield=game.playerArmor
+        local reflectedAttack=incomingAttack*(timing.reflectMultiplier or 0)
+        local reflectedDamage=reflectedAttack>0 and require("src.monster").takeDamage(monster,reflectedAttack) or 0
+        return {attack=incomingAttack,absorbed=0,damage=0,killedPlayer=false,blocked=true,parried=true,
+            parryArmor=game.playerArmor-armorBefore,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,action="attack"}
+    end
+    attack=attack*(1-(timing and timing.reduction or 0))
     local phantomAbsorbed
     attack,phantomAbsorbed=require("src.spn_elements").absorb(game,attack)
     local armor = execution and 0 or (game.playerArmor or game.playerShield or 0)
@@ -269,7 +284,7 @@ local function resolveOneAttack(game,playerSpeed)
 end
 
 -- Each living enemy acts on its own side of the player's speed, exactly once.
-function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
+function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker,timing)
     if not game or not game.monster then return nil end
     if (not attacker and phase~="after") or not game.enemyActionPhases then Combat.beginEnemyTurn(game,playerSpeed) end
     local target=game.monster
@@ -277,11 +292,11 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
     for _,m in ipairs(Group.members(game)) do
         if (not attacker or m==attacker) and Combat.canEnemyAct(game,m,phase,playerSpeed) then
             game.monster=m
-            local attack=resolveOneAttack(game,playerSpeed)
+            local attack=resolveOneAttack(game,playerSpeed,attacker and timing or nil)
             if attack then
                 game.enemyActed[m]=true
                 require("src.human_bosses").afterAttack(game,m,attack)
-                require("src.enemy_loadout").afterAction(m,attack.action,attack.blocked)
+                require("src.enemy_loadout").afterAction(m,attack.action,attack.blocked and not attack.parried)
                 EnemyAbilities.finishAction(game,m,attack)
                 if not result then result={attack=0,absorbed=0,damage=0,attackerCount=0,playerSpeed=game.lastPlayerAttackSpeed or 0,monsterSpeed=0} end
                 result.attack=result.attack+attack.attack;result.absorbed=result.absorbed+attack.absorbed
@@ -289,6 +304,10 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker)
                 result.monsterSpeed=math.max(result.monsterSpeed,EnemyAbilities.speed(m))
                 result.killedPlayer=attack.killedPlayer
                 result.blocked=attack.blocked
+                result.parried=attack.parried
+                result.parryArmor=attack.parryArmor
+                result.reflectedAttack=attack.reflectedAttack
+                result.reflectedDamage=attack.reflectedDamage
                 result.missed=attack.missed;result.hitChance=attack.hitChance
                 result.action=attack.action;result.target=attack.target;result.value=attack.value;result.label=attack.label
             end

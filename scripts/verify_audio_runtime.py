@@ -93,6 +93,7 @@ try:
             for _ in pairs(require("config.audio_catalog").cues) do expected=expected+1 end
             expected=expected+#require("config.nen_vfx_config").order*28
             expected=expected+#require("src.reward_audio").order*4
+            for _ in pairs(require("config.timing_audio_baked")) do expected=expected+1 end
             assert(Sound.currentTrack=="menu" and Sound.stats().cues==expected)
             local actualButtons
             for i=1,60 do

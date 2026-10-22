@@ -22,10 +22,10 @@ for seed=1,200 do
     for _,suit in ipairs(Deck.FACTION_ORDER) do assert(suits[suit]) end
     game.run=Run.newRun("red_deck")
     local blind=Run.getCurrentBlind(game.run)
-    assert(blind.hp==50 and Monster.getHpByEncounter(1)==50)
+    assert(blind.hp==80 and Monster.getHpByEncounter(1)==80)
     Combat.start(game,Run.createBlindMonster(blind,game),1)
     assert(#game.hand==3 and #game.deck==2 and #game.persistentDeck==5)
-    assert(#game.enemies==1 and game.monster.hp==50 and game.monster.maxHp==50)
+    assert(#game.enemies==1 and game.monster.hp==80 and game.monster.maxHp==80)
     if seed==1 then
         local restored=P.restoreSnapshot(P.makeSnapshot(game,"playing"))
         assert(#restored.persistentDeck==5 and restored.maxHandSize==3)
@@ -35,7 +35,7 @@ for seed=1,200 do
 end
 local count=0;for _ in pairs(seen) do count=count+1 end
 assert(count==52,"every printed card remains reachable across seeded starts")
-assert(Monster.getHpByEncounter(2)==100 and Monster.getHpByEncounter(3)==150)
-assert(Run.calculateBlindHp(2,"small")==75)
-assert(Run.calculateBlindHp(1,"big")==100 and Run.calculateBlindHp(1,"boss")==150)
-print("Starting balance PASS: 200 random five-card decks, all four suits/52 identities, no duplicates, three drawn/two reserved, actual 50 HP first enemy, save ownership")
+assert(Monster.getHpByEncounter(2)==160 and Monster.getHpByEncounter(3)==240)
+assert(Run.calculateBlindHp(2,"small")==120)
+assert(Run.calculateBlindHp(1,"big")==160 and Run.calculateBlindHp(1,"boss")==240)
+print("Starting balance PASS: 200 random five-card decks, all four suits/52 identities, no duplicates, three drawn/two reserved, actual 80 HP first enemy, save ownership")

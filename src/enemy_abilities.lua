@@ -269,7 +269,7 @@ function A.support(game,m)
 end
 
 function A.finishAction(game,m,result)
-    if result and not result.blocked then
+    if result and (not result.blocked or result.parried) then
         local r=A.resources(m);r.actions=r.actions+1;r.mustAttack=result.action~="attack"
     end
     for kind,buff in pairs(m.combatBuffs or {}) do

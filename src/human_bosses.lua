@@ -67,6 +67,7 @@ function H.start(g)
     m.maxHp=math.max(1,math.floor(m.maxHp*hpScale));m.hp=m.maxHp;m.damageLagHp=m.hp
     m.creatureArmor=math.floor((m.creatureArmor or 0)*hpScale)
     m.creatureArmorMax=math.floor((m.creatureArmorMax or 0)*hpScale)
+    s.abilityBase={maxHp=m.maxHp,attack=m.attack,attackSpeed=m.attackSpeed,creatureArmor=m.creatureArmor or 0,creatureArmorMax=m.creatureArmorMax or 0}
     if n==1 then m.maxHp=math.floor(m.maxHp*1.5);m.hp=m.maxHp;m.damageLagHp=m.hp
     elseif n==6 then m.creatureArmor=m.hp;m.creatureArmorMax=m.hp
     elseif n==7 and not s.receipt.spiritDestroyed then
@@ -95,6 +96,7 @@ function H.start(g)
     m.enemyResources=nil
 end
 function H.speed(m,value)
+    if m.spnAbilitiesSealed then return value end
     local s=m.humanBossState
     if H.number(m)==2 and s and passive(m) then
         local highest=1
@@ -133,6 +135,7 @@ local function applyForm(c,form)
 end
 function H.handStart(g)
     local m=H.primary(g);if not m or not m.humanBossState then return end
+    if m.spnAbilitiesSealed then return end
     local s=m.humanBossState
     for _,c in ipairs(g.hand or {}) do if s.forms[c.id] then applyForm(c,s.forms[c.id]) end end
     if H.number(m)==3 and m.hp>0 and passive(m) then
@@ -167,8 +170,9 @@ function H.rejectHand(g)
 end
 function H.opening(g)
     local m=H.primary(g);if not m or not m.humanBossState then return end
+    if m.spnAbilitiesSealed then return end
     local s=m.humanBossState;local n=H.number(m)
-    if n==9 then g.discardsRemaining=0;g.spnDiscardCap=0 end
+    if n==9 then s.openingDiscards=g.discardsRemaining;s.openingDiscardCap=g.spnDiscardCap;g.discardsRemaining=0;g.spnDiscardCap=0 end
     if n~=8 then return end
     local Deck=require("src.deck")
     if not s.receipt.captives then
@@ -216,12 +220,14 @@ function H.victory(g)
     return false
 end
 function H.intent(g,m)
+    if m.spnAbilitiesSealed then return end
     local s=m.humanBossState
     if H.number(m)==9 and s and not s.receipt.executionUsed then
         return {type="human_skill",value=0,label="ĐOẠN MỆNH · Tiêu hủy vĩnh viễn 1 lá trên tay · 1 lần"}
     end
 end
 function H.action(g,m)
+    if m.spnAbilitiesSealed then return end
     if (m.intent or {}).type~="human_skill" then return end
     local s=m.humanBossState
     if not s or s.receipt.executionUsed then return {attack=0,absorbed=0,damage=0,blocked=true,action="human_skill",value=0,label="Đoạn Mệnh đã dùng"} end
@@ -235,6 +241,7 @@ function H.action(g,m)
     return {attack=0,absorbed=0,damage=0,killedPlayer=false,action="human_skill",target=m,value=0,label=label}
 end
 function H.attack(g,m,value)
+    if m.spnAbilitiesSealed then return value end
     if H.number(m)==5 then return value*math.max(1,#(g.hand or {})) end
     return value
 end
@@ -250,7 +257,7 @@ function H.afterDamage(m,before)
         local c=m.humanCaptive;local g=c.boss.humanBossState.game
         c.record.dead=true;destroy(g,c.card);save(g)
     end
-    if H.number(m)==7 and m.hp<before and m.humanBossState
+    if H.number(m)==7 and not m.spnAbilitiesSealed and m.hp<before and m.humanBossState
         and not (m.bossState and m.bossState.activeUntil>=m.bossState.handIndex) then
         local g=m.humanBossState.game;local choices=deityTargets(g)
         if #choices>0 then
@@ -260,6 +267,7 @@ function H.afterDamage(m,before)
     end
 end
 function H.afterAttack(g,m,result)
+    if m.spnAbilitiesSealed then return end
     local n=H.number(m);local s=m.humanBossState
     if not n or not s or result.blocked or result.action~="attack" then return end
     if n==1 then

@@ -227,7 +227,7 @@ end
 function A.destroy(game,card,ctx,soulMultiplier)
     if not card or card.destructionNotified then return false end
     card.destroyed=true; card.destructionNotified=true
-    if (card.edition=="void" or card.visualEffect=="void") and not require("src.kingdom_bosses").disabled(game,card) then
+    if (card.edition=="void" or card.visualEffect=="void") and not require("src.kingdom_bosses").disabled(game,card) and not require("src.free_human_bosses").disabled(game,card) then
         local d=A.definition(card)
         local x=ctx or game.abilityHand or {game=game,handInfo={type={id="high_card"}},
             scoring={},scored={},played={},active={},queue={},returns={},repeats={},
@@ -298,6 +298,7 @@ function A.finishHand(game)
     require("src.playing_card_tactics").hold(game,held)
     combat(game).tacticDiscarded=nil
     combat(game).previousHandType=ctx.handInfo.type.id
+    require("src.free_human_bosses").finishHand(game,ctx)
     Boss.handEnd(game)
     A.resolveBossDamage(game)
     require("src.enemy_abilities").handEnd(game)

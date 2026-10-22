@@ -144,11 +144,13 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
    ..(bs and bs.cancelNextActive>0 and " · Đã phong ấn" or "")
   if data.boss.bloodSovereign then trait="Bạn hồi HP: boss ×2 Máu / Tốc / ST.\nCuối lượt: −2% HP hiện tại." end
   if data.boss.bossData.kingdomEntity then trait=require("src.kingdom_bosses").notice(data.boss) end
+  if data.boss.bossData.freeHumanBoss then trait=require("src.free_human_bosses").notice(data.boss) end
   if data.boss.bossData.humanBoss then
    trait=data.boss.bossData.desc
    local s=data.boss.humanBossState
    if data.boss.bossData.humanBoss==3 and s and s.required then trait="CHỈ TRÚNG: "..s.required.vnName.."\nĐánh trúng: bỏ ngay 2 lá." end
   end
+  if data.boss.spnAbilitiesSealed then trait="VƯƠNG QUYỀN ĐÃ XÓA\nNội tại và chiêu thức vô hiệu đến hết trận." end
  end
  if data.isBoss or data.boss and data.boss.enemyAbility then
   Core.text(data.isBoss and "NỘI TẠI / KỸ NĂNG" or "ĐẶC ĐIỂM",x+16,traitY,w-32,f.detail,Theme.colors.gold)

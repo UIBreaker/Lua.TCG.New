@@ -15,6 +15,6 @@ function D.roll(stage)
     local state=tostring(require("src.rng").getState())
     for i=1,#state do seed=(seed*131+state:byte(i))%2147483647 end
     local index=((seed*48271)%2147483647)%16+1
-    return D.list[index]
+    return D.list[index] or require("config.free_human_boss_data").list[index-4]
 end
 return D

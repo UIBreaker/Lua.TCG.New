@@ -218,7 +218,7 @@ local function resolveOneAttack(game,playerSpeed)
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
     end
     local baseAttack = (monster.attack or 12)
-    local attack = EnemyAbilities.attack(monster) + EnemyAbilities.attackBonus(game,monster)+require("src.enemy_loadout").attackBonus(monster)
+    local attack = EnemyAbilities.attack(monster) + EnemyAbilities.attackBonus(game,monster)+require("src.enemy_loadout").attackBonus(monster)*require("src.free_human_bosses").attackFactor(monster)
     local bossState = Boss.state(monster)
     if bossState and Boss.passiveEnabled(monster) then attack=attack+(bossState.excess or 0)*Boss.config.gateAttackPerCard end
     local execution = Boss.key(monster)=="executioner" and Boss.passiveEnabled(monster)
@@ -339,6 +339,7 @@ function Combat.start(game, monster, round)
     game.spnBasicArmorGranted=nil
     game.enemies=Group.build(monster)
     require("src.kingdom_bosses").start(game)
+    require("src.free_human_bosses").start(game)
     game.enemyPoison=0;game.enemyFeedback=nil
     game.lastPlayerAttackSpeed=nil;game.enemyActed={};game.enemyActionPhases=nil
     game.spnCombat={};game.spnFeedback={}

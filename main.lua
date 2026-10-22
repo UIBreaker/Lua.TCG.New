@@ -227,7 +227,7 @@ for _, a in ipairs(arg or {}) do
         isCaptureMode = true
         function love.errorhandler(message) print("BARTER UI ERROR: "..tostring(message));return function() return 1 end end
     end
-    if a=="--test-kingdom-bosses" then
+    if a=="--test-kingdom-bosses" or a=="--test-free-human-bosses" or a=="--test-oneshot-boss" or a=="--test-rarity-boss" then
         isCaptureMode=true
         function love.errorhandler(message) print("KINGDOM UI ERROR: "..tostring(message));return function() return 1 end end
     end
@@ -247,6 +247,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-spn-formations-ui" then isCaptureMode = true end
     if a == "--test-spn-aura-ui" then isCaptureMode = true end
     if a == "--test-spn-trials-ui" then isCaptureMode = true end
+    if a == "--test-spn-boss-seal-ui" then isCaptureMode = true end
     if a == "--test-starter-supplies" then isCaptureMode = true end
     if a == "--test-card-shop-sale" then isCaptureMode = true end
     if a == "--test-battle-backpack" then isCaptureMode = true end
@@ -1929,6 +1930,10 @@ local function playSelectedHand()
     end
     local evalForChoices = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
     if not evalForChoices then return end
+    if require("src.free_human_bosses").handBlocked(game,evalForChoices.type.id) then
+        table.insert(anim.floatingTexts,{text="CẤM THẾ · "..(evalForChoices.type.vnName or evalForChoices.type.id).." ĐÃ BỊ KHÓA",color=UI.COLORS.goldYellow,x=640,y=430,alpha=2})
+        Sound.play("cant_afford");return
+    end
     if not game.abilityApproved then
         local choices = UI.Abilities.choices(game, evalForChoices, playedCards)
         if #choices > 0 then
@@ -2457,6 +2462,11 @@ function love.load()
         if argument=="--test-spn-trials-art" then
             local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_trial_emissary"},"docs/spn_trials_runtime.png") end)
             if not ok then print("SPN trials art FAIL: "..tostring(err)) end
+            love.event.quit(ok and 0 or 1);return
+        end
+        if argument=="--test-spn-boss-seal-art" then
+            local ok,err=pcall(function() require("tests.spn_art_smoke").verify({"spirit_crown_eraser"},"docs/spn_boss_seal_runtime.png") end)
+            if not ok then print("SPN boss seal art FAIL: "..tostring(err)) end
             love.event.quit(ok and 0 or 1);return
         end
         if argument=="--test-spn-reserves-art" then
@@ -3432,7 +3442,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.143.0", 48, 185)
+    g.print("beta 0.144.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -7389,6 +7399,18 @@ end
 UI.Backpack.handle=function(mx,my,button)
     UI.Backpack.mouse(UI,game,buttons,mx,my,button,{
         transfer=UI.Backpack.transfer,
+        destroySpn=function(source,index)
+            if state~="playing" or anim.enemyTurn or anim.active or UI.AbilityUI.current or pendingEvolutionCard or pendingSpeedCard or pendingEditionCard or DeathVFX.busy() then
+                UI.Backpack.message="Chờ đến lượt của bạn để tiêu hủy SPN.";return false
+            end
+            local ok,message=require("src.spn_boss_seal").destroy(game,source,index,true)
+            UI.Backpack.message=message
+            if not ok then Sound.play("cant_afford");return false end
+            UI.Backpack.selected=nil;UI.Backpack.selectedSource=nil;UI.Polish.clearFocus()
+            clearAllSelections();syncCardSelections()
+            require("src.spn_anomalies").showFeedback(game,anim);saveRunAtSafePoint()
+            return true
+        end,
         save=saveRunAtSafePoint,inspect=function(c) inspectCardModal=c end,
         cancel=function() pendingEditionCard=nil end,
         travel=function(i) if UI.openTravelPermit("backpackConsumables",i) then UI.Backpack.close() end end,

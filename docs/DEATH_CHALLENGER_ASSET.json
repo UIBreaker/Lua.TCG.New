@@ -1,0 +1,21 @@
+{
+  "id": "human_death_challenger",
+  "name": "Kẻ Thách Tử",
+  "group": "enemy",
+  "source": "config/free_human_boss_data.lua",
+  "file": "assets/cards/continental/enemy/human_death_challenger.png",
+  "ability": "Sát thương cơ bản ×5. Oneshot từ đầy máu: sát thương thực sau giảm trừ trở thành HP tối đa và HP hiện tại, sát thương boss ×3. Mỗi lượt cho người chơi +20% sát thương cộng dồn trong trận.",
+  "concept": "Human veteran duelist, fractured breastplate absorbs a lethal strike into an expanding golden core; beckoning gauntlet empowers the challenger.",
+  "prompt": "Use case: stylized-concept. ONE production enemy card illustration, full bleed portrait 2:3 PNG 1024x1536. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One intimidating clearly HUMAN veteran duelist, natural scarred face visible, short iron-gray hair, towering broad physique, battered dark antique-gold plate armor over a long ash-crimson cloak. He stands calmly on a cracked basalt Western ruined arena platform, enormous two-handed execution sword resting vertically beside him. A single diagonal strike has split his breastplate: golden energy flows INTO the fracture and expands a solid luminous heart-shaped core inside the armor, rebuilding plates outward, implying he absorbs a lethal single strike and becomes much stronger. One open gauntlet beckons an unseen challenger, a restrained golden ring of strengthening light extending toward the viewer to imply he empowers the opponent every turn. Bone ash, deep navy and antique gold palette, small oxblood accent, restrained controlled glow, strong silhouette and face readable at small sizes, medium detail. One principal character, atmospheric distant continental cliffs and ruined Western stone arches. No monsters, horns, skeletons, text, letters, numbers, ranks, poker suits, borders, fixed frame, UI, logo, watermark, East Asian motifs, crowded filigree or blown-out highlights. Asset concept: 'Kẻ Thách Tử' / Death's Challenger, cannot be killed by a one-shot from full HP; lethal damage becomes his new full maximum HP and triples his attack, starts with extremely high damage, grants opponent +20% damage each turn.",
+  "status": "generated",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "previous_paths": [],
+  "redesigned_from_existing": false,
+  "generation": {
+    "mode": "built-in image_gen",
+    "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-24c0f86f-894a-47f0-8ada-6ffe89cbec6f.png"
+  }
+}

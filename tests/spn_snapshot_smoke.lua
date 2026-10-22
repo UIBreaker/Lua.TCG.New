@@ -25,6 +25,7 @@ for id,def in pairs(D.CATALOG) do
     if def.stat=="copyActivations" then expected=def.values.value+1 end
     if def.stat=="repeatsPerLevel" then expected=def.values.value+1 end
     if def.stat=="uqChancePct" then expected=math.min(100,def.values.value*1.5) end
+    if id=="spirit_crown_eraser" then expected=5 end
     assert(math.abs(after[deity][def.stat]-expected)<0.00001,id.." scaling")
     P.applications={}
     P.changed(UI,game,before,{id="cons_evolution"},{x=0,y=0,w=64,h=88})

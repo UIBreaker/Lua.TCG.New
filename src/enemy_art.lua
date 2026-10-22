@@ -9,8 +9,10 @@ Art.bosses = {
 }
 for _,d in ipairs(require("config.human_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
 for _,d in ipairs(require("config.kingdom_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
+for _,d in ipairs(require("config.free_human_boss_data").list) do Art.bosses[#Art.bosses+1]=d.artKey end
 function Art.key(monster)
     if not monster then return nil end
+    if monster.bossData and monster.bossData.freeHumanBoss then return monster.bossData.artKey end
     if monster.isBoss and monster.bossData and monster.bossData.humanBoss then return monster.bossData.artKey end
     if monster.neutralHuman then return "human_"..monster.cardRank end
     if monster.human then return monster.cardSuit .. "_" .. require("src.expedition").rankName(monster.cardRank) end
@@ -60,6 +62,10 @@ function Art.load()
     end
 end
 function Art.image(monster, fallback)
+    if monster.bossData and monster.bossData.freeHumanBoss then
+        local image=require("src.continental_art").get(Art.key(monster)) or Art.images[Art.key(monster)]
+        return image and require("src.continental_art").withIndices(image,nil,monster.cardRank)
+    end
     if monster.neutralHuman then
         local image=require("src.continental_art").get(Art.key(monster))
         return image and require("src.continental_art").withIndices(image,nil,monster.cardRank)

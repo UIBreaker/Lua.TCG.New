@@ -11,6 +11,7 @@ local function gallery()
     Core.text("BOSS TỰ DO · PHONG ẤN CHẤT · MỖI LÁ ĐÚNG CHẤT TRÊN TAY: +10% TỐC VÀ SÁT THƯƠNG",30,71,1540,UI.fonts.small,{.7,.77,.8},"center")
     for i,def in ipairs(K.definitions) do
         local b=Run.generateAnteBlinds(40,"red_deck",def.entitySuit,20)[3]
+        b.debuff=def
         local m=Run.createBlindMonster(b,{},true);local image=assert(Art.image(m,{}),"Missing entity art: "..def.id)
         local x=24+(i-1)*396
         require("ui.combat_chrome").panel(x,115,364,748,def.color)

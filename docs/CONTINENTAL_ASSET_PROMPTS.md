@@ -5871,3 +5871,32 @@ Bốn tranh boss mới tạo bằng built-in image_gen, PNG dọc 1024×1536, tr
 Prompt nguyên văn, concept, PNG đích tại `assets/cards/continental/enemy/` và nguồn ảnh nằm trong `docs/KINGDOM_ENTITY_ASSETS.json`, đồng bộ `docs/asset_manifest.json`. Hình tượng phong ấn lá trắng, hút linh lực vào lõi và chuyển động của áo/cát/lá/gió băng gắn với cơ chế vô hiệu chất và tăng tốc/sát thương.
 
 Cơ chế: `docs/KINGDOM_ENTITIES.md`. QA: `docs/kingdom_entity_roster.png` và `docs/kingdom_entity_combat_1.png` tới `docs/kingdom_entity_combat_4.png`.
+
+## 2026-10-22 — Hai boss tự do hình người
+
+Quan Chấp Cấm Thế (`human_last_strategist`) đóng dấu niêm phong các sơ đồ chiến thuật đã dùng; Kẻ Gạch Tên (`human_ashen_archivist`) cạo đi dấu tiến hóa trên lá bài bị khóa. Hai nhân vật người có diện mạo riêng, phong cách Continental, tranh tràn viền 1024×1536, không chữ/khung/chất vẽ sẵn.
+
+Ảnh tạo bằng built-in image_gen, PNG tại `assets/cards/continental/enemy/`. Prompt nguyên văn, concept và nguồn ảnh: `docs/FREE_HUMAN_BOSS_ASSETS.json`. Cơ chế: `docs/FREE_HUMAN_BOSSES.md`. QA: `docs/free_human_boss_roster.png` và `docs/free_human_boss_combat_1.png`, `docs/free_human_boss_combat_2.png`.
+
+## 2026-10-22 — Kẻ Thách Tử
+
+Boss tự do hình người có giáp nứt hút đòn kết liễu vào lõi vàng, tay còn lại thách thức đối thủ. Concept gắn với chống oneshot từ đầy máu, tái lập HP và ×3 sát thương; ánh sáng ban sức mạnh cho đối thủ thể hiện +20% sát thương mỗi lượt.
+
+Ảnh tạo bằng built-in image_gen, PNG tràn viền 1024×1536: `assets/cards/continental/enemy/human_death_challenger.png`. Prompt, concept và nguồn ảnh: `docs/DEATH_CHALLENGER_ASSET.json`. Cơ chế: `docs/DEATH_CHALLENGER.md`. QA: `docs/oneshot_boss_before.png`, `docs/oneshot_boss_rebirth.png`.
+
+## 2026-10-22 — Giám Quan Tước Phẩm
+
+Boss tự do hình người tóc bạc, đóng ấn đồng phong tỏa một lá linh thể và tước hai mảnh tinh thể phẩm cấp khỏi lá khác. Concept thể hiện phong ấn một bậc SPN C–TT và hạ 2 bậc một SPN mỗi lượt. Phong cách Continental, ánh tím có kiểm soát, không chữ/chất/khung vẽ sẵn.
+
+Ảnh tạo bằng built-in image_gen, PNG 1024×1536: `assets/cards/continental/enemy/human_rank_inquisitor.png`. Prompt, concept, nguồn ảnh: `docs/RARITY_INQUISITOR_ASSET.json`. Cơ chế: `docs/RARITY_INQUISITOR.md`. QA: `docs/rarity_boss_sealed.png`, `docs/rarity_boss_downgrade.png`.
+
+
+### Kẻ Xóa Vương Quyền / spirit_crown_eraser — 2026-10-22
+
+Ability: Chủ động tiêu hủy trong Balo khi đánh Boss để vô hiệu nội tại và chiêu thức Boss đến hết trận. Cấp gốc +0; mỗi cấp tiến hóa +5 Sát thương và +5 Cường hóa khi trang bị.
+
+Prompt: Create one full-bleed portrait 2:3 PNG 1024x1536 game SPN illustration, cinematic painterly Western dark-fantasy expedition matching Continental lost-world art. One primary supernatural entity: a towering faceless silver-violet wraith dissolving its own spectral body as it closes both translucent hands around a floating antique-gold tyrant crown. The crown cracks and its two short magical flame plumes extinguish into dark stillness, conveying a self-sacrificing spirit erasing a boss's passive and active powers completely. The entity is the main subject, not a tangible relic close-up. Strong central silhouette, controlled restrained violet light, medium details readable at 64px, dark navy ruined Western throne hall opening onto continental cliffs at dusk. A few large gold fragments only, no busy particles, no excessive glow. Western fantasy, no East Asian motifs or calligraphy. No words, letters, glyphs, numerals, ranks, suits, badges, UI, border, card frame, logos, watermark.
+
+Output: assets/cards/continental/spn/spirit_crown_eraser.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_crown_eraser.jpg — 512×768.
+
+Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-55f52079-b3c2-4d4c-92e1-173962c6931e.png (built-in image_gen).

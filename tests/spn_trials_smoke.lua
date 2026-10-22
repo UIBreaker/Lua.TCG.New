@@ -64,6 +64,6 @@ for _,cards in ipairs({{g.hand[5]},{g.hand[1],g.hand[2],g.hand[3]}}) do
     A.finishHand(g);A.finishHand(g)
 end
 assert(t.done and levels(g)==1)
-assert(#D.getRandomShopPool({},999)==99)
+assert(#D.getRandomShopPool({},999)==100)
 print("SPN trials PASS: three-unlock gate, two distinct unlocked requests, any order, no duplicate progress, random equipped/self reward, one level once, copies/locks/reserve, preview/RNG, saved evolution and real hand lifecycle")
 return true

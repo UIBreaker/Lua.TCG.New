@@ -78,7 +78,7 @@ assert(factor(score(g),1)==1 and factor(score(g),2)==1,"locked council and its c
 g=game();own(g,"spirit_legend_council",1);own(g,"spirit_pebble",5,"legendary")
 g.monster.isBoss=true;g.monster.bossState={handIndex=1,passiveUntil=0,slotLock={kind="spn",slot=5,untilHand=1}}
 assert(factor(score(g))==2.5,"locked L remains physically equipped")
-local pool={};for _,entry in ipairs(D.getRandomShopPool({},99)) do pool[entry.id]=true end
+local pool={};for _,entry in ipairs(D.getRandomShopPool({},999)) do pool[entry.id]=true end
 for _,row in ipairs(T.entries) do
     assert(pool[row[1]])
     local buyer=game();buyer.gold=20
@@ -92,5 +92,5 @@ g=game();g.extraDeitySlots=10;own(g,"spirit_legend_council",1)
 own(g,"spirit_pebble",12,"legendary")
 assert(factor(score(g))==2.5,"L in expanded sparse equipped slots is counted")
 assert(not D.CATALOG.spirit_legend_council.onHandScored(hand),"empty context has no equipped L")
-assert(#D.getRandomShopPool({},99)==99)
+assert(#D.getRandomShopPool({},999)==100)
 print("SPN turns PASS: integer evolved start grants/reset/caps, reserves/mimic/save, exact L tiers/self, repeated products/evolution, physical equipped copies, locks and pure previews")

@@ -540,6 +540,7 @@ return {
     ["spirit_aura_bifurcation"] = "assets/cards/continental/spn/spirit_aura_bifurcation.png",
     ["spirit_numeral_weaver"] = "assets/cards/continental/spn/spirit_numeral_weaver.png",
     ["spirit_trial_emissary"] = "assets/cards/continental/spn/spirit_trial_emissary.png",
+    ["spirit_crown_eraser"] = "assets/cards/continental/spn/spirit_crown_eraser.png",
     ["human_vital_marshal"] = "assets/cards/continental/enemy/human_vital_marshal.png",
     ["human_wind_reaver"] = "assets/cards/continental/enemy/human_wind_reaver.png",
     ["human_oath_judge"] = "assets/cards/continental/enemy/human_oath_judge.png",
@@ -550,4 +551,8 @@ return {
     ["human_chain_binder"] = "assets/cards/continental/enemy/human_chain_binder.png",
     ["human_last_executioner"] = "assets/cards/continental/enemy/human_last_executioner.png",
     ["human_gilded_broker"] = "assets/cards/continental/enemy/human_gilded_broker.png",
+    ["human_last_strategist"] = "assets/cards/continental/enemy/human_last_strategist.png",
+    ["human_ashen_archivist"] = "assets/cards/continental/enemy/human_ashen_archivist.png",
+    ["human_death_challenger"] = "assets/cards/continental/enemy/human_death_challenger.png",
+    ["human_rank_inquisitor"] = "assets/cards/continental/enemy/human_rank_inquisitor.png",
 }

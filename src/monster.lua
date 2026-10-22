@@ -277,6 +277,7 @@ function Monster.takeDamage(monster, rawDamage, trueDamage)
     actualDamage,handled=require("src.human_bosses").armor(monster,actualDamage)
     if not handled and not trueDamage then actualDamage=require("src.enemy_abilities").reduceDamage(monster,actualDamage) end
     monster.hp = math.max(0, monster.hp - actualDamage)
+    require("src.free_human_bosses").absorbOneshot(monster,hpBefore,actualDamage)
     require("src.enemy_abilities").revive(monster)
     require("src.human_bosses").afterDamage(monster,hpBefore)
 

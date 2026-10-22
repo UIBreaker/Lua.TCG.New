@@ -177,7 +177,7 @@ local function restoreRun(saved, faction)
             end
         elseif i==3 and savedBlind and savedBlind.debuff then
             local stored=savedBlind.debuff
-            local definition=require("config.kingdom_boss_data").byId[stored.id] or RunManager.BOSS_DEBUFFS[stored.id] or require("src.monster").DISRUPTIVE_BOSSES[stored.id]
+            local definition=require("config.free_human_boss_data").byId[stored.id] or require("config.kingdom_boss_data").byId[stored.id] or RunManager.BOSS_DEBUFFS[stored.id] or require("src.monster").DISRUPTIVE_BOSSES[stored.id]
             if definition then
                 local data={};for k,v in pairs(definition) do data[k]=v end
                 for k,v in pairs(stored) do data[k]=v end

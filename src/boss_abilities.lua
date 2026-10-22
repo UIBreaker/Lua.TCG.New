@@ -46,12 +46,13 @@ function Boss.state(monster)
 end
 function Boss.passiveEnabled(monster)
     local s=Boss.state(monster)
-    return not monster or not monster.bossDebuffCleansed and (not s or s.passiveUntil < s.handIndex)
+    return not monster or not monster.spnAbilitiesSealed and not monster.bossDebuffCleansed and (not s or s.passiveUntil < s.handIndex)
 end
 function Boss.start(game)
     local m=game.monster
     if not m or not m.isBoss then return end
     Boss.attach(m.bossData)
+    m.spnAbilitiesSealed=nil
     m.bossState={handIndex=1,activeCountdown=1,activeState="telegraph",disabledPassiveTurns=0,
         passiveUntil=0,activeUntil=0,cancelNextActive=0,delayNextAction=0,skipNextAction=0,
         cycle=0,debt=0,forgotten={},baseLimits={hands=game.maxHands,discards=game.maxDiscards}}
@@ -91,6 +92,7 @@ local function targetCard(game, op)
 end
 function Boss.handStart(game)
     local m=game.monster; local s=Boss.state(m); if not s then return end
+    if m.spnAbilitiesSealed then return end
     if require("src.human_bosses").number(m) then require("src.human_bosses").handStart(game);return end
     local a=m.bossData.active
     if Boss.passiveEnabled(m) then
@@ -118,6 +120,7 @@ function Boss.handStart(game)
     end
 end
 function Boss.activeDescription(m)
+    if m and m.spnAbilitiesSealed then return "CHIÊU THỨC VÔ HIỆU ĐẾN HẾT TRẬN" end
     local s=Boss.state(m); local a=m and m.bossData and m.bossData.active
     if not a then return "" end
     if m.bossData.humanBoss==3 and m.humanBossState and m.humanBossState.required then
@@ -135,10 +138,13 @@ function Boss.activeDescription(m)
 end
 function Boss.isSlotLocked(game, kind, slot)
     if not game.monster or (game.monster.hp or 0)<=0 then return false end
+    if game.monster.spnAbilitiesSealed then return false end
+    if kind=="spn" and require("src.free_human_bosses").spnBlocked(game.monster,(game.deities or {})[slot]) then return true end
     local s=Boss.state(game.monster)
     return s and s.slotLock and s.slotLock.kind==kind and s.slotLock.slot==slot and s.slotLock.untilHand>=s.handIndex or false
 end
 function Boss.isAbilityDisabled(game, card)
+    if require("src.free_human_bosses").disabled(game,card) then return true end
     if require("src.kingdom_bosses").disabled(game,card) then return true end
     if game and card and require("src.human_bosses").disabled(game,card) then return true end
     if not game or not game.monster or (game.monster.hp or 0)<=0 then return false end
@@ -148,6 +154,7 @@ end
 -- Shared by scoring and the face overlay, including the exceptions to faction immunity.
 function Boss.scoreBlockReason(monster,card)
     if not monster or (monster.hp or 0)<=0 or not card then return end
+    if require("src.free_human_bosses").blocked(monster,card) then return "GẠCH TÊN · LÁ ĐÃ ĐÁNH TRONG ẢI" end
     if require("src.kingdom_bosses").blocked(monster,card) then return "PHONG ẤN · "..(monster.bossData.suitName or card.suitName or card.suit) end
     if not Boss.passiveEnabled(monster) then return end
     if monster.bossData and monster.bossData.humanBoss==4 and card.rank>=11 and card.rank<=13 then return "TRIỀU ĐÌNH · KHÓA J/Q/K" end
@@ -173,7 +180,8 @@ function Boss.beforeAttack(game)
 end
 local function applyActive(game,a,s)
     local m=game.monster; local op=a.op
-    if op=="tax_lock" then
+    if m.bossData.freeHumanBoss then require("src.free_human_bosses").active(game)
+    elseif op=="tax_lock" then
         s.slotLock={kind=s.cycle%2==0 and "consumable" or "spn",slot=1,untilHand=s.handIndex+1}
         s.pendingDamage=(s.pendingDamage or 0)+s.debt*Boss.config.debtDamage
     elseif op=="gate_lock" then
@@ -199,6 +207,7 @@ local function applyActive(game,a,s)
 end
 function Boss.handEnd(game)
     local m=game.monster; local s=Boss.state(m); if not s or (m.hp or 0)<=0 then return end
+    if m.spnAbilitiesSealed then require("src.player_health").bloodTurn(game);s.handIndex=s.handIndex+1;return end
     if require("src.human_bosses").number(m) then s.handIndex=s.handIndex+1;s.actionBlocked=nil;return end
     require("src.player_health").bloodTurn(game)
     if Boss.key(m)=="black_tax_collector" and Boss.passiveEnabled(m) then
@@ -269,6 +278,7 @@ function Boss.afterScore(game,cards)
     return true
 end
 function Boss.describe(m)
+    if m and m.spnAbilitiesSealed then return "VƯƠNG QUYỀN ĐÃ XÓA\nNỘI TẠI VÀ CHIÊU THỨC VÔ HIỆU ĐẾN HẾT TRẬN\nBoss vẫn tấn công thông thường." end
     local s=Boss.state(m); if not s then return m and m.desc or "" end
     if m.bossData.humanBoss then
         local used=m.bossData.humanBoss==9 and m.humanBossState and m.humanBossState.receipt.executionUsed

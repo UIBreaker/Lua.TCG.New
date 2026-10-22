@@ -25,7 +25,7 @@ for stage=1,40 do
         local f=assert(io.open(Art.path(Art.key(m)),"rb"));f:close()
         local _,d=Scene.resolve("playing",m)
         assert(d.base==E.area(m.areaStage,m.regionId).background)
-        if stage>20 and m.isBoss and not m.bossData.kingdomEntity then
+        if stage>20 and m.isBoss and not m.bossData.kingdomEntity and not m.bossData.freeHumanBoss then
             assert(m.bossData.active and m.bossData.active.cooldown==1)
             assert(m.bossData~=Run.BOSS_DEBUFFS[m.bossData.debuffId],"ship variants must not mutate shared bosses")
             g.monster=m;Boss.start(g)
@@ -58,7 +58,7 @@ run.ante=40;run.areaStage=20;run.currentBlindIndex=3;run.blinds=Run.generateAnte
 Run.completeCurrentBlind(run,g);assert(Run.advanceBlind(run,g) and run.ante==41)
 for _,b in ipairs(run.blinds) do
     local m=Run.createBlindMonster(b,g,true)
-    assert(not m.human and m.stage==41 and m.regionId=="unknown")
+    assert((not m.human or m.bossData and m.bossData.freeHumanBoss) and m.stage==41 and m.regionId=="unknown")
     local _,d=Scene.resolve("playing",m);assert(d.base=="mysteriousCoast")
 end
 local migrated=Persistence.makeSnapshot(g,"BLIND_SELECT")

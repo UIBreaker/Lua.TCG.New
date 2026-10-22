@@ -115,6 +115,13 @@ function E.decorate(m, stage, encounter,regionId,areaStage)
     local region=E.region(m.stage,regionId or m.regionId)
     m.regionId=region.id;m.areaStage=areaStage or m.areaStage or (region.id=="voyage" and m.stage or ((m.stage-1)%20)+1)
     if region.id=="blood_domain" then return require("src.ancient_statue").decorate(m,m.areaStage) end
+    if m.isBoss and m.bossData and m.bossData.freeHumanBoss then
+        m.human=true;m.neutralHuman=true;m.creatureCard=nil;m.creatureKind=nil
+        m.kingdom="VIỄN CHINH TỰ DO"
+        m.artKey=m.bossData.artKey;m.name=m.bossData.name;m.desc=m.bossData.desc
+        m.cardSuit=nil;m.cardRank=13;m.color=m.bossData.color;m.title=m.bossData.title
+        return m
+    end
     if m.isBoss and m.bossData and m.bossData.kingdomEntity then
         m.human=false;m.neutralHuman=nil;m.creatureCard=true;m.creatureKind=nil
         m.artKey=m.bossData.artKey;m.name=m.bossData.name;m.desc=m.bossData.desc

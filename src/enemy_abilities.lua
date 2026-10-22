@@ -76,7 +76,7 @@ function A.speed(m)
     return require("src.human_bosses").speed(m,math.max(1,speed-(m.spnStolenSpeed or 0)))*require("src.kingdom_bosses").factor(m)
 end
 function A.attack(m)
-    return (require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0))*require("src.kingdom_bosses").factor(m)
+    return (require("src.enemy_loadout").attack(m)+(((m.combatBuffs or {}).damage or {}).value or 0))*require("src.kingdom_bosses").factor(m)*require("src.free_human_bosses").attackFactor(m)
 end
 
 local actionNames={armor="Gia cố",speed="Tăng tốc",damage="Cường hóa",heal="Hồi máu"}
@@ -175,18 +175,18 @@ function A.plan(game,m,turn)
     local Loadout=require("src.enemy_loadout")
     local resources=A.resources(m)
     local function attack()
-        local echo=Loadout.attackBonus(m)
+        local echo=Loadout.attackBonus(m)*require("src.free_human_bosses").attackFactor(m)
         local value=A.attack(m)+A.attackBonus(game,m)+echo
         value=require("src.human_bosses").attack(game,m,value)
         m.intent={type="attack",value=value,label="Tấn công "..value.." ST"..(echo>0 and " · Vọng Âm" or "")
             ..(((m.enemyInventory or {}).guaranteedAttacks or 0)>0 and " · Trúng 100%" or "")}
         return m.intent
     end
-    if resources.mustAttack then return attack() end
+    if m.spnAbilitiesSealed or resources.mustAttack then return attack() end
     local humanIntent=require("src.human_bosses").intent(game,m)
     if humanIntent then m.intent=humanIntent;return humanIntent end
     if m.enemyInventory then
-        local value=A.attack(m)+A.attackBonus(game,m)+Loadout.attackBonus(m)
+        local value=A.attack(m)+A.attackBonus(game,m)+Loadout.attackBonus(m)*require("src.free_human_bosses").attackFactor(m)
         value=require("src.human_bosses").attack(game,m,value)
         local armor=game.playerArmor or game.playerShield or 0
         if require("src.human_bosses").number(m)==6 then armor=0 end
@@ -240,6 +240,7 @@ function A.plan(game,m,turn)
 end
 
 function A.support(game,m)
+    if m.spnAbilitiesSealed then return end
     local intent=m.intent or {};local kind=intent.type
     if not actionNames[kind] then return nil end
     local function exhausted(target)
@@ -286,12 +287,14 @@ function A.reduceDamage(m,damage)
     return damage-absorbed
 end
 function A.revive(m)
+    if m.spnAbilitiesSealed then return end
     if m.hp<=0 and m.creatureKind=="ancient_skeleton" and not m.reassembled then
         m.reassembled=true;m.hp=math.max(1,math.floor(m.maxHp*0.25));m.enemyFeedback="TÁI KẾT XƯƠNG"
         return true
     end
 end
 function A.attackBonus(game,m)
+    if m.spnAbilitiesSealed then return 0 end
     local alive=0
     if m.creatureKind=="frost_wolf" then
         for _,ally in ipairs(require("src.enemy_group").members(game)) do if ally~=m and ally.hp>0 then alive=alive+1 end end
@@ -301,6 +304,7 @@ function A.attackBonus(game,m)
     return math.floor((m.attack or 0)*(0.2*alive+hungry+execution))
 end
 function A.afterAttack(game,m,damage)
+    if m.spnAbilitiesSealed then return end
     if not m.enemyAbility then return end
     m.enemyActions=(m.enemyActions or 0)+1
     if m.creatureKind=="forest_goblin" and m.enemyActions%2==0 then game.gold=math.max(0,(game.gold or 0)-1)

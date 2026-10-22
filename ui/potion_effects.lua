@@ -2,7 +2,7 @@ local Potions=require("src.potions")
 local Lighting=require("render.lighting")
 local Motion=require("src.motion")
 local F={active={}}
-local colors={heal={.26,1,.53},armor={.26,.66,1},speed={.18,.91,1},rest={.64,1,.74}}
+local colors={heal={.26,1,.53},armor={.26,.66,1},speed={.18,.91,1},rest={.64,1,.74},rebirth={1,.74,.29},rank_drain={.77,.43,1}}
 for _,d in ipairs(Potions.definitions) do colors[d.kind]=d.color end
 local artIds={heal="healing_potion",armor="armor_potion_large",speed="cons_speed_large",rest="cons_bed"}
 for _,d in ipairs(Potions.definitions) do artIds[d.kind]=d.id end
@@ -35,7 +35,7 @@ function F.update(game,dt,reducedMotion,state,fast)
             elseif previous.age>.45 then previous.life=math.min(previous.life,previous.age+.3) end
         end
         event.age=0;event.reduced=reducedMotion
-        event.reactive=event.target and (event.kind=="accuracy" or event.kind=="evasion")
+        event.reactive=event.kind=="rebirth" or event.kind=="rank_drain" or event.target and (event.kind=="accuracy" or event.kind=="evasion")
             or event.kind=="gold_blood" and (event.value or 0)>0
         event.contactAt=(event.reactive or reducedMotion) and 0 or .42
         event.life=event.contactAt+1.5
@@ -136,6 +136,19 @@ local function motif(e,c,a)
         end
         if e.kind=="rest" then ring(x,y-32,30,{1,.88,.5},a,1,.3,math.pi*1.5)
         else stroke({x-18,y-15,x+18,y-15},c,a,4);stroke({x,y-33,x,y+3},c,a,4) end
+    elseif e.kind=="rank_drain" then
+        ring(x,y,100-burst*55,c,a,2,-t,tau*.88)
+        spiral(x,y,68,-t,c,a,true)
+        for i=1,2 do
+            local dx=(i*2-3)*29;local dy=t*55
+            stroke({x+dx,y-35+dy,x+dx+12,y-18+dy,x+dx,y+dy,x+dx-12,y-18+dy,x+dx,y-35+dy},c,a,2)
+        end
+    elseif e.kind=="rebirth" then
+        ring(x,y,52+burst*65,c,a,2,-t,tau*.88)
+        ring(x,y,42,c,a*.85,2,t*1.5,tau*.72)
+        spiral(x,y,78,t,c,a,true)
+        glow(x,y,32,c,a*.8)
+        for i=1,8 do local angle=i*tau/8+t*.4;spark(x+math.cos(angle)*72,y+math.sin(angle)*88,5,c,a) end
     elseif e.kind=="armor" then
         shield(x,y,c,a,62);ring(x,y,96,c,a*.7,1,t*.45,tau*.87)
         for i=0,5 do

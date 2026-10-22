@@ -264,6 +264,10 @@ function Bag.draw(UI,game,buttons,mx,my,drawConsumable,context)
    if Bag.tab=="consumable" and Bag.selectedSource~="equipped" and detail and detail.category=="travel_permit" then button(UI,buttons,"bag_use_permit","CHỌN ĐIỂM ĐẾN",594,641,330,38,mx,my) end
    button(UI,buttons,"bag_loadout_action",Bag.selectedSource=="equipped" and "CẤT VÀO BALO" or Bag.tab=="consumable" and "LẤY 1 LÁ VÀO Ô TRANG BỊ" or "TRANG BỊ VÀO Ô TRỐNG",243,641,337,38,mx,my,Bag.combat and (game.handsRemaining or 0)<=0)
    if Bag.tab=="consumable" and Bag.selectedSource=="equipped" and not require("src.void_tickets").isTicket(detail) then button(UI,buttons,"bag_use","DÙNG VẬT PHẨM",594,641,330,38,mx,my) end
+   if Bag.combat and Bag.tab=="spn" and detail and detail.id=="spirit_crown_eraser" then
+    local enabled=require("src.spn_boss_seal").canDestroy(game,Bag.selectedSource=="equipped" and "equipped" or "reserve",Bag.selected,true)
+    button(UI,buttons,"bag_destroy_spn","TIÊU HỦY · VÔ HIỆU BOSS",594,641,330,38,mx,my,not enabled)
+   end
   elseif Bag.tab=="equipment" and Bag.selected and (game.backpackEquipment or {})[Bag.selected] and not Bag.combat then
    button(UI,buttons,"bag_equip","GẮN VÀO LÁ BÀI",243,641,337,38,mx,my)
    button(UI,buttons,"bag_sell","BÁN · "..B.resale(game.backpackEquipment[Bag.selected]).." VÀNG",594,641,330,38,mx,my)
@@ -305,6 +309,8 @@ function Bag.mouse(UI,game,buttons,mx,my,mouse,callbacks)
   elseif b.id=="bag_filter" then Q.state(Bag).filter=Q.state(Bag).filter%(Bag.filterCount or 1)+1;Q.resetPage(Bag)
   elseif b.id=="bag_use" and Bag.tab=="consumable" and Bag.selectedSource=="equipped" then
    local _,index=Loadout.equipped(game,Bag.tab,Bag.selected);if index and callbacks.activate then callbacks.activate(index) end
+  elseif b.id=="bag_destroy_spn" and Bag.combat and Bag.tab=="spn" and callbacks.destroySpn then
+   callbacks.destroySpn(Bag.selectedSource=="equipped" and "equipped" or "reserve",Bag.selected)
   elseif b.id=="bag_redeem_ticket" then
    local source=Bag.selectedSource=="equipped" and "equipped" or "reserve"
    local index=Bag.selected

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "human_last_strategist",
+    "name": "Quan Chấp Cấm Thế",
+    "ability": "Mỗi thế đã mở khóa chỉ dùng một lần trong trận; khi hết thế được dùng mà Boss còn sống thì thua ngay.",
+    "concept": "A stern middle-aged human military magistrate with silver-streaked hair in a long midnight-blue officer coat and worn brass breastplate, standing in a ruined Western campaign hall. One hand holds a closed tactical folio, the other firmly presses a broad wax seal onto an array of blank parchment battle diagrams on a stone campaign table. Several already used diagrams are extinguished dark shapes beneath crimson wax while a single blank parchment remains lit. Calm merciless expression, full figure dominant, ash-blue stone arches and restrained ruby red sealing light. Communicate that every tactical formation can be used only once and exhausting all known formations is fatal.",
+    "prompt": "Use case: stylized-concept. Production enemy card art, portrait 2:3 PNG 1024x1536 full bleed. Cinematic painterly Western dark-fantasy expedition in the Continental world, one clearly HUMAN antagonist with natural human face, realistic anatomy, large readable silhouette, medium detail, antique gold and navy shadows, controlled magic. No monster, skeleton, horns, text, letters, numbers, poker suit symbols, frames, UI, border, logo or watermark. No East Asian motifs, no dense filigree. A stern middle-aged human military magistrate with silver-streaked hair in a long midnight-blue officer coat and worn brass breastplate, standing in a ruined Western campaign hall. One hand holds a closed tactical folio, the other firmly presses a broad wax seal onto an array of blank parchment battle diagrams on a stone campaign table. Several already used diagrams are extinguished dark shapes beneath crimson wax while a single blank parchment remains lit. Calm merciless expression, full figure dominant, ash-blue stone arches and restrained ruby red sealing light. Communicate that every tactical formation can be used only once and exhausting all known formations is fatal.",
+    "group": "enemy",
+    "source": "config/free_human_boss_data.lua",
+    "file": "assets/cards/continental/enemy/human_last_strategist.png",
+    "generated_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-de43794f-1acd-4cfd-9edf-bd2accc663b2.png",
+    "status": "completed",
+    "mode": "built-in image_gen"
+  },
+  {
+    "id": "human_ashen_archivist",
+    "name": "Kẻ Gạch Tên",
+    "ability": "Khóa các lá đã đánh trong cùng ải; mỗi lượt hạ vĩnh viễn 1 cấp tiến hóa của một lá bị khóa ngẫu nhiên, tối thiểu 0.",
+    "concept": "A sharp-featured human woman expedition archivist in dark weathered leather armor and a bone-ivory travelling cloak, face fully human and visible, with a heavy rectangular iron card archive strapped at her waist. Standing on steps of a ruined Western archive against glacial-blue dusk. She holds a fan of three blank parchment cards bound by one iron clasp in her left hand and scratches a single glowing golden mark off one card with a small engraving blade in the right, the weakened card shedding restrained amber dust. Clear threatening stance, commanding long coat silhouette, medium detail. Communicate permanent card suppression for the area and stripping one evolution level from a suppressed card each turn.",
+    "prompt": "Use case: stylized-concept. Production enemy card art, portrait 2:3 PNG 1024x1536 full bleed. Cinematic painterly Western dark-fantasy expedition in the Continental world, one clearly HUMAN antagonist with natural human face, realistic anatomy, large readable silhouette, medium detail, antique gold and navy shadows, controlled magic. No monster, skeleton, horns, text, letters, numbers, poker suit symbols, frames, UI, border, logo or watermark. No East Asian motifs, no dense filigree. A sharp-featured human woman expedition archivist in dark weathered leather armor and a bone-ivory travelling cloak, face fully human and visible, with a heavy rectangular iron card archive strapped at her waist. Standing on steps of a ruined Western archive against glacial-blue dusk. She holds a fan of three blank parchment cards bound by one iron clasp in her left hand and scratches a single glowing golden mark off one card with a small engraving blade in the right, the weakened card shedding restrained amber dust. Clear threatening stance, commanding long coat silhouette, medium detail. Communicate permanent card suppression for the area and stripping one evolution level from a suppressed card each turn.",
+    "group": "enemy",
+    "source": "config/free_human_boss_data.lua",
+    "file": "assets/cards/continental/enemy/human_ashen_archivist.png",
+    "generated_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-dcbca6ff-b6f7-4528-a8e8-16f60f872f0a.png",
+    "status": "completed",
+    "mode": "built-in image_gen"
+  }
+]

@@ -126,7 +126,9 @@ function D.resolve(item,game)
                 end
             end
         end
-        if game then for slot,c in pairs(game.deities or {}) do if c==item and Boss.isSlotLocked(game,"spn",slot) then text=text.."\nÔ SPN BỊ KHÓA trong tay này." end end end
+        if game and require("src.free_human_bosses").spnBlocked(game.monster,item) then
+            text=text.."\nPHONG ẤN BẬC · Boss vô hiệu hóa SPN bậc "..Deities.getRarityBadge(item)..". Đổi bậc sẽ kiểm tra lại ngay."
+        elseif game then for slot,c in pairs(game.deities or {}) do if c==item and Boss.isSlotLocked(game,"spn",slot) then text=text.."\nÔ SPN BỊ KHÓA trong tay này." end end end
         return item.name,text
     end
     if Equipment.ITEMS[item.id] then

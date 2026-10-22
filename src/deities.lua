@@ -86,6 +86,19 @@ function Deities.evolve(deity)
     return true, badge
 end
 
+function Deities.downgrade(deity,levels)
+    if type(deity)~="table" or not deity.id then return false,0 end
+    local _,_,base,level=rarityState(deity)
+    local before=base+level
+    local amount=math.max(0,math.floor(levels or 1))
+    local fromEvolution=math.min(level,amount)
+    level=level-fromEvolution;base=math.max(1,base-(amount-fromEvolution))
+    deity.baseRarityTier=base;deity.baseRarity=Deities.RARITIES[base].id;deity.evolutionLevel=level
+    deity.rarity=Deities.RARITIES[math.min(#Deities.RARITIES,base+level)].id
+    deity.desc=Deities.getDescription(deity)
+    return before>base+level,before-base-level
+end
+
 function Deities.getEvolutionCredits(deity)
     return math.max(0,math.floor(tonumber(deity and deity.evolutionCredits) or 0))
 end
@@ -139,6 +152,7 @@ function Deities.scaleEffect(deity, result)
     for key, value in pairs(result) do
         if type(key) == "string" and key:sub(1, 3) == "add" and type(value) == "number" then
             local scaled = value * multiplier
+            if deity.id=="spirit_crown_eraser" and (key=="addChips" or key=="addMult") then scaled=5*(deity.evolutionLevel or 0) end
             local def=Deities.CATALOG[deity.id]
             if def and def.doubleEvolution and key==def.stat then scaled=value*2^(2*(multiplier-1)) end
             if def and def.turnGrowth and key==def.stat then scaled=value+2*(multiplier-1) end
@@ -320,6 +334,7 @@ require("src.spn_reserves").register(Deities)
 require("src.spn_formations").register(Deities)
 require("src.spn_aura").register(Deities)
 require("src.spn_trials").register(Deities)
+require("src.spn_boss_seal").register(Deities)
 
 function Deities.getDescription(deity)
     local def=Deities.CATALOG[deity.id]
@@ -336,6 +351,7 @@ function Deities.getDescription(deity)
     if def.stat=="repeatsPerLevel" then value=math.min(128,math.floor(def.values.value+2*(effectMultiplier(deity)-1))) end
     if def.stat=="uqChancePct" then value=math.min(100,value) end
     if def.stat=="addPotionChancePct" then value=math.min(100,value) end
+    if deity.id=="spirit_crown_eraser" then value=5*(deity.evolutionLevel or 0) end
     value=value*require("src.blood_shop").powerOf(deity)
     if def.stat=="addTransmutePct" then value=math.min(90,value) end
     if def.stat=="addRedirectPct" then value=math.min(100,value) end

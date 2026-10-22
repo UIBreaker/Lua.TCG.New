@@ -46,7 +46,10 @@ function N.restriction(game,card)
         if Boss.isAbilityDisabled(game,card) then return "KHÓA KỸ NĂNG","Boss vô hiệu khả năng; vẫn tính chỉ số bài" end
         if card.faceDown then return "ÚP MẶT","Boss che mặt lá bài" end
     else
-        for slot,d in pairs(game.deities or {}) do if d==card and Boss.isSlotLocked(game,"spn",slot) then return "SPN BỊ KHÓA","Boss khóa ô SPN #"..slot end end
+        for slot,d in pairs(game.deities or {}) do if d==card and Boss.isSlotLocked(game,"spn",slot) then
+            if require("src.free_human_bosses").spnBlocked(game.monster,card) then return "PHONG ẤN BẬC","Boss vô hiệu hóa SPN bậc "..require("src.deities").getRarityBadge(card) end
+            return "SPN BỊ KHÓA","Boss khóa ô SPN #"..slot
+        end end
         for i,c in ipairs(game.consumables or {}) do if c==card and Boss.isSlotLocked(game,"consumable",c.loadoutSlot or i) then return "Ô BỊ KHÓA","Boss khóa ô tiêu hao" end end
     end
 end

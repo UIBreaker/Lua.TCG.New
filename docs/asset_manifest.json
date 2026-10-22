@@ -11987,6 +11987,114 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a10210-4fc0-7760-b277-afe44fa945b6\\exec-b1805062-4355-4993-91f7-061734fc88f5.png",
         "mode": "built-in image_gen"
       }
+    },
+    {
+      "id": "human_last_strategist",
+      "name": "Quan Chấp Cấm Thế",
+      "concept": "A stern middle-aged human military magistrate with silver-streaked hair in a long midnight-blue officer coat and worn brass breastplate, standing in a ruined Western campaign hall. One hand holds a closed tactical folio, the other firmly presses a broad wax seal onto an array of blank parchment battle diagrams on a stone campaign table. Several already used diagrams are extinguished dark shapes beneath crimson wax while a single blank parchment remains lit. Calm merciless expression, full figure dominant, ash-blue stone arches and restrained ruby red sealing light. Communicate that every tactical formation can be used only once and exhausting all known formations is fatal.",
+      "prompt": "Use case: stylized-concept. Production enemy card art, portrait 2:3 PNG 1024x1536 full bleed. Cinematic painterly Western dark-fantasy expedition in the Continental world, one clearly HUMAN antagonist with natural human face, realistic anatomy, large readable silhouette, medium detail, antique gold and navy shadows, controlled magic. No monster, skeleton, horns, text, letters, numbers, poker suit symbols, frames, UI, border, logo or watermark. No East Asian motifs, no dense filigree. A stern middle-aged human military magistrate with silver-streaked hair in a long midnight-blue officer coat and worn brass breastplate, standing in a ruined Western campaign hall. One hand holds a closed tactical folio, the other firmly presses a broad wax seal onto an array of blank parchment battle diagrams on a stone campaign table. Several already used diagrams are extinguished dark shapes beneath crimson wax while a single blank parchment remains lit. Calm merciless expression, full figure dominant, ash-blue stone arches and restrained ruby red sealing light. Communicate that every tactical formation can be used only once and exhausting all known formations is fatal.",
+      "group": "enemy",
+      "source": "config/free_human_boss_data.lua",
+      "file": "assets/cards/continental/enemy/human_last_strategist.png",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "ability": "Mỗi thế đã mở khóa chỉ dùng một lần trong trận; khi hết thế được dùng mà Boss còn sống thì thua ngay.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-de43794f-1acd-4cfd-9edf-bd2accc663b2.png"
+      },
+      "previous_paths": [],
+      "redesigned_from_existing": false
+    },
+    {
+      "id": "human_ashen_archivist",
+      "name": "Kẻ Gạch Tên",
+      "concept": "A sharp-featured human woman expedition archivist in dark weathered leather armor and a bone-ivory travelling cloak, face fully human and visible, with a heavy rectangular iron card archive strapped at her waist. Standing on steps of a ruined Western archive against glacial-blue dusk. She holds a fan of three blank parchment cards bound by one iron clasp in her left hand and scratches a single glowing golden mark off one card with a small engraving blade in the right, the weakened card shedding restrained amber dust. Clear threatening stance, commanding long coat silhouette, medium detail. Communicate permanent card suppression for the area and stripping one evolution level from a suppressed card each turn.",
+      "prompt": "Use case: stylized-concept. Production enemy card art, portrait 2:3 PNG 1024x1536 full bleed. Cinematic painterly Western dark-fantasy expedition in the Continental world, one clearly HUMAN antagonist with natural human face, realistic anatomy, large readable silhouette, medium detail, antique gold and navy shadows, controlled magic. No monster, skeleton, horns, text, letters, numbers, poker suit symbols, frames, UI, border, logo or watermark. No East Asian motifs, no dense filigree. A sharp-featured human woman expedition archivist in dark weathered leather armor and a bone-ivory travelling cloak, face fully human and visible, with a heavy rectangular iron card archive strapped at her waist. Standing on steps of a ruined Western archive against glacial-blue dusk. She holds a fan of three blank parchment cards bound by one iron clasp in her left hand and scratches a single glowing golden mark off one card with a small engraving blade in the right, the weakened card shedding restrained amber dust. Clear threatening stance, commanding long coat silhouette, medium detail. Communicate permanent card suppression for the area and stripping one evolution level from a suppressed card each turn.",
+      "group": "enemy",
+      "source": "config/free_human_boss_data.lua",
+      "file": "assets/cards/continental/enemy/human_ashen_archivist.png",
+      "status": "generated",
+      "mode": "built-in image_gen",
+      "ability": "Khóa các lá đã đánh trong cùng ải; mỗi lượt hạ vĩnh viễn 1 cấp tiến hóa của một lá bị khóa ngẫu nhiên, tối thiểu 0.",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-dcbca6ff-b6f7-4528-a8e8-16f60f872f0a.png"
+      },
+      "previous_paths": [],
+      "redesigned_from_existing": false
+    },
+    {
+      "id": "human_death_challenger",
+      "name": "Kẻ Thách Tử",
+      "group": "enemy",
+      "source": "config/free_human_boss_data.lua",
+      "file": "assets/cards/continental/enemy/human_death_challenger.png",
+      "ability": "Sát thương cơ bản ×5. Oneshot từ đầy máu: sát thương thực sau giảm trừ trở thành HP tối đa và HP hiện tại, sát thương boss ×3. Mỗi lượt cho người chơi +20% sát thương cộng dồn trong trận.",
+      "concept": "Human veteran duelist, fractured breastplate absorbs a lethal strike into an expanding golden core; beckoning gauntlet empowers the challenger.",
+      "prompt": "Use case: stylized-concept. ONE production enemy card illustration, full bleed portrait 2:3 PNG 1024x1536. Cinematic painterly Western dark-fantasy expedition in the established Continental world. One intimidating clearly HUMAN veteran duelist, natural scarred face visible, short iron-gray hair, towering broad physique, battered dark antique-gold plate armor over a long ash-crimson cloak. He stands calmly on a cracked basalt Western ruined arena platform, enormous two-handed execution sword resting vertically beside him. A single diagonal strike has split his breastplate: golden energy flows INTO the fracture and expands a solid luminous heart-shaped core inside the armor, rebuilding plates outward, implying he absorbs a lethal single strike and becomes much stronger. One open gauntlet beckons an unseen challenger, a restrained golden ring of strengthening light extending toward the viewer to imply he empowers the opponent every turn. Bone ash, deep navy and antique gold palette, small oxblood accent, restrained controlled glow, strong silhouette and face readable at small sizes, medium detail. One principal character, atmospheric distant continental cliffs and ruined Western stone arches. No monsters, horns, skeletons, text, letters, numbers, ranks, poker suits, borders, fixed frame, UI, logo, watermark, East Asian motifs, crowded filigree or blown-out highlights. Asset concept: 'Kẻ Thách Tử' / Death's Challenger, cannot be killed by a one-shot from full HP; lethal damage becomes his new full maximum HP and triples his attack, starts with extremely high damage, grants opponent +20% damage each turn.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-24c0f86f-894a-47f0-8ada-6ffe89cbec6f.png"
+      }
+    },
+    {
+      "id": "human_rank_inquisitor",
+      "group": "enemy",
+      "name": "Giám Quan Tước Phẩm",
+      "ability": "Chọn một bậc C–TT để vô hiệu hóa SPN thuộc bậc đó; mỗi lượt hạ vĩnh viễn 2 bậc một SPN ngẫu nhiên trên C, thấp nhất C.",
+      "source": "config/free_human_boss_data.lua",
+      "file": "assets/cards/continental/enemy/human_rank_inquisitor.png",
+      "concept": "A human silver-haired inquisitor seals one spectral card beneath a bronze nullification seal and removes two large crystal facets from another spirit card.",
+      "prompt": "Use case: stylized-concept. ONE production human boss card illustration, full-bleed portrait 2:3 PNG 1024x1536. Match Continental cinematic painterly Western dark-fantasy expedition, natural realistic human anatomy and a visible distinctly human face, one principal subject, strong silhouette readable at small size, medium detail, weathered antique gold accents, deep navy and controlled violet light. An austere silver-haired female inquisitor in a structured dark navy travelling coat and broad antique-brass shoulder plates stands in a ruined Western cathedral archive on a violet eclipse evening. One gloved hand holds a heavy circular bronze nullification seal over a single floating blank spectral parchment; the ghostly entity inside that parchment is darkened and bound by a broad violet band, indicating suppression of one chosen rarity class. Her other hand holds a small brass instrument removing TWO large glowing crystal facets from another blank spectral card, the two crystal fragments falling visibly away, indicating lowering a spirit's rank by two. Use a few broad shapes, not many little gems. Commanding calm expression, human face clear, no monster features. Atmospheric stone arches and distant continental cliffs, muted bone ivory stone. No text, letters, numerals, rank symbols, poker suits, logos, frame, border, badge, UI, watermark, East Asian motifs, dense microfiligree or overexposed glow. Concept: 'Giám Quan Tước Phẩm', a roaming human boss chooses one SPN rarity from Common to Supreme to silence for the battle and permanently lowers one non-Common owned spirit by two tiers every turn.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "generation": {
+        "mode": "built-in image_gen",
+        "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-6b9ce93f-849a-48ae-9e3c-6780a2087451.png"
+      }
+    },
+    {
+      "id": "spirit_crown_eraser",
+      "group": "spn",
+      "name": "Kẻ Xóa Vương Quyền",
+      "ability": "Chủ động tiêu hủy trong Balo khi đánh Boss để vô hiệu nội tại và chiêu thức Boss đến hết trận. Cấp gốc +0; mỗi cấp tiến hóa +5 Sát thương và +5 Cường hóa khi trang bị.",
+      "source": "src/spn_boss_seal.lua",
+      "concept": "A dissolving silver-violet wraith extinguishes a tyrant crown with both hands, sacrificing itself to erase boss powers.",
+      "file": "assets/cards/continental/spn/spirit_crown_eraser.png",
+      "runtime_file": "assets/cards/continental/runtime/spn/spirit_crown_eraser.jpg",
+      "previous_paths": [],
+      "redesigned_from_existing": false,
+      "prompt": "Create one full-bleed portrait 2:3 PNG 1024x1536 game SPN illustration, cinematic painterly Western dark-fantasy expedition matching Continental lost-world art. One primary supernatural entity: a towering faceless silver-violet wraith dissolving its own spectral body as it closes both translucent hands around a floating antique-gold tyrant crown. The crown cracks and its two short magical flame plumes extinguish into dark stillness, conveying a self-sacrificing spirit erasing a boss's passive and active powers completely. The entity is the main subject, not a tangible relic close-up. Strong central silhouette, controlled restrained violet light, medium details readable at 64px, dark navy ruined Western throne hall opening onto continental cliffs at dusk. A few large gold fragments only, no busy particles, no excessive glow. Western fantasy, no East Asian motifs or calligraphy. No words, letters, glyphs, numerals, ranks, suits, badges, UI, border, card frame, logos, watermark.",
+      "status": "generated",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "generation": {
+        "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-55f52079-b3c2-4d4c-92e1-173962c6931e.png",
+        "mode": "built-in image_gen"
+      }
     }
   ],
   "scene_backgrounds": [
@@ -12116,8 +12224,8 @@
     }
   ],
   "completion": {
-    "generated": 495,
-    "total": 495,
+    "generated": 500,
+    "total": 500,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

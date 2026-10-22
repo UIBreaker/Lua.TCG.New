@@ -93,7 +93,7 @@ end
 
 local function acceptsEquipmentBuff(card, monster)
     if card.exhausted or card.destroyed then return false end
-    if require("src.kingdom_bosses").blocked(monster,card) then return false end
+    if require("src.kingdom_bosses").blocked(monster,card) or require("src.free_human_bosses").blocked(monster,card) then return false end
     if monster and monster.bossData and monster.bossData.humanBoss==4 and Boss.passiveEnabled(monster) and card.rank>=11 and card.rank<=13 then return false end
     return not (monster and Boss.passiveEnabled(monster) and not isSpade(card)
         and (monster.lockedFaction==card.suit or monster.lockedRoyals and card.rank>=11 and card.rank<=13))
@@ -143,7 +143,7 @@ function Scoring.calculate(handInfo, deities, context)
     local permanentDamageAwards={}
     for _,list in ipairs({handInfo.scoringCards or {},handInfo.unscoredCards or {}}) do
         for _,c in ipairs(list) do
-            local seal=not require("src.kingdom_bosses").blocked(context.monster,c) and Deck.normalizeSeal(c.seal)
+            local seal=not require("src.kingdom_bosses").blocked(context.monster,c) and not require("src.free_human_bosses").blocked(context.monster,c) and Deck.normalizeSeal(c.seal)
             if seal=="seal_bounty" and not seenBounties[c.id or c] then
                 seenBounties[c.id or c]=true;hasBountySeal=true
                 bountySealGold=bountySealGold+Deck.SEALS.seal_bounty.params.gold*(c.sealPower or 1)
@@ -1116,7 +1116,7 @@ end
 
     local heldMult=1
     for _,card in ipairs(context.hand) do
-        local seal=not require("src.kingdom_bosses").blocked(context.monster,card) and Deck.normalizeSeal(card.seal)
+        local seal=not require("src.kingdom_bosses").blocked(context.monster,card) and not require("src.free_human_bosses").blocked(context.monster,card) and Deck.normalizeSeal(card.seal)
         if seal=="seal_purifying" then
             local amount=math.floor(((abilityGame and abilityGame.maxPlayerHp) or context.maxPlayerHp or 100)*0.10)*(card.sealPower or 1)
             sealHeldArmor=sealHeldArmor+amount
@@ -1354,6 +1354,8 @@ end
     if spnContext.writtenAura then
         finalScore=math.max(0,math.floor(spnContext.writtenAura*auraEditionMultiplier*spnAuraMultiplier)-auraDebtTotal)
     end
+    local challengeDamageFactor=require("src.free_human_bosses").playerDamageFactor(context.gameState)
+    if challengeDamageFactor~=1 then finalScore=math.floor(finalScore*challengeDamageFactor) end
     local finalCombinedXMult = cardXMultTotal
 
     table.insert(steps, {
@@ -1369,6 +1371,7 @@ end
         spnAuraMultiplier = spnAuraMultiplier,
         auraDebtTotal = auraDebtTotal,
         finalScore = finalScore,
+        challengeDamageFactor = challengeDamageFactor,
         writtenAura = spnContext.writtenAura,
         writtenDigits = spnContext.writtenDigits,
         bonusGold = bonusGoldAwarded,
@@ -1376,7 +1379,11 @@ end
             or totalChips .. " Chips × " .. totalMult .. " Mult" .. (finalCombinedXMult > 1.0 and (" × " .. string.format("%.2f", finalCombinedXMult) .. " XMult") or "") .. (auraEditionMultiplier > 1 and (" × " .. string.format("%.2f", auraEditionMultiplier) .. " Aura") or "") .. (flatDamageBonus > 0 and (" + " .. flatDamageBonus .. " sát thương cố định") or "") .. " = " .. finalScore .. " Sát thương!"
     })
 
+    if challengeDamageFactor~=1 then
+        steps[#steps].message=steps[#steps].message.." · KHIÊU CHIẾN ×"..string.format("%g",challengeDamageFactor)
+    end
     Depth.finish(context,handInfo)
+    if require("src.free_human_bosses").handBlocked(context.gameState,handInfo.type.id) then finalScore=0 end
     return {
         baseChips = baseChips,
         baseMult = baseMult,

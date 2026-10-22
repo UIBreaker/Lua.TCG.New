@@ -1,6 +1,6 @@
 # 🃏 LUA.TCG — Poker Roguelike
 
-**beta 0.143.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
+**beta 0.144.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
@@ -22,6 +22,13 @@ Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài v�
 | Soi chi tiết lá bài | Bộ sưu tập |
 | :---: | :---: |
 | ![Thông tin khả năng, tiến hóa và trang bị của quân bài](docs/screenshots/0.75.3/card-inspector.png) | ![Tra cứu các nhóm nội dung trong bộ sưu tập](docs/screenshots/0.75.3/collection.png) |
+
+## Mới trong beta 0.144.0
+
+- Bốn boss người tự do: **Quan Chấp Cấm Thế**, **Kẻ Gạch Tên**, **Kẻ Thách Tử**, **Giám Quan Tước Phẩm**; tranh và cơ chế riêng.
+- SPN **Kẻ Xóa Vương Quyền**: tiến hóa cộng +5 Sát thương/+5 Cường hóa mỗi cấp; chủ động tiêu hủy trong balo để phong ấn năng lực boss đến hết trận.
+- Đồng bộ khóa thế/quân/bậc SPN với dự báo điểm, sao chép, giao diện và lưu/tải.
+- Chi tiết: [boss tự do](docs/FREE_HUMAN_BOSSES.md), [SPN phong ấn boss](docs/SPN_BOSS_SEAL.md).
 
 ## Mới trong beta 0.143.0
 

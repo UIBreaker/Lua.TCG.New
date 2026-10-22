@@ -70,6 +70,21 @@ function Capture.update(gameRef, callbacks)
         if not ok then print("COMBAT NOTICES FAIL: "..tostring(err));love.event.quit(1) end
         return
     end end
+    for _,value in ipairs(arg or {}) do if value=="--test-rarity-boss" then
+        local ok,err=xpcall(function() require("tests.rarity_boss_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("RARITY BOSS FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do if value=="--test-oneshot-boss" then
+        local ok,err=xpcall(function() require("tests.oneshot_boss_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("ONESHOT BOSS FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do if value=="--test-free-human-bosses" then
+        local ok,err=xpcall(function() require("tests.free_human_boss_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("FREE HUMAN BOSS FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
     for _,value in ipairs(arg or {}) do if value=="--test-kingdom-bosses" then
         local ok,err=xpcall(function() require("tests.kingdom_boss_capture").update(gameRef,callbacks) end,debug.traceback)
         if not ok then print("Kingdom entity capture FAIL: "..tostring(err));love.event.quit(1) end
@@ -150,6 +165,11 @@ function Capture.update(gameRef, callbacks)
         if value=="--test-spn-trials-ui" then
             local ok,err=xpcall(function() require("tests.spn_trials_capture").update(gameRef,callbacks) end,debug.traceback)
             if not ok then print("SPN trials UI FAIL: "..tostring(err));love.event.quit(1) end
+            return
+        end
+        if value=="--test-spn-boss-seal-ui" then
+            local ok,err=xpcall(function() require("tests.spn_boss_seal_capture").update(gameRef,callbacks) end,debug.traceback)
+            if not ok then print("SPN boss seal UI FAIL: "..tostring(err));love.event.quit(1) end
             return
         end
     end

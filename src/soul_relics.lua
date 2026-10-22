@@ -137,7 +137,7 @@ function R.guard(g,damage)
     if damage<=0 or damage<(g.playerHp or 100) then return damage end
     local s=state(g)
     for _,card in ipairs(g.hand or {}) do
-        if not card.destroyed and not require("src.kingdom_bosses").disabled(g,card) then
+        if not card.destroyed and not require("src.kingdom_bosses").disabled(g,card) and not require("src.free_human_bosses").disabled(g,card) then
             for equipmentIndex,eq in ipairs(card.equipments or {}) do
                 local key=tostring(card.id or card)..":"..eq.id..":"..equipmentIndex
                 local used=s.used[key]==true and 1 or tonumber(s.used[key]) or 0

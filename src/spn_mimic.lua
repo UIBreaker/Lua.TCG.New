@@ -37,6 +37,7 @@ local function resolveRaw(list,slot,game,locked)
     return proxy,count
 end
 function M.resolve(list,slot,game,locked)
+    if locked and locked[slot] or game and Boss.isSlotLocked(game,"spn",slot) then return nil,0 end
     local source,count=resolveRaw(list,slot,game,locked)
     if not source then return nil,0 end
     local first

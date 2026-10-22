@@ -70,7 +70,7 @@ g.monster.bossState={handIndex=1,slotLock={kind="spn",slot=1,untilHand=1}};B.arm
 
 -- Ordinary shop ownership: buy/sell, persistent evolution, and no automatic grants.
 local Shop=require("src.shop")
-local pool={};for _,entry in ipairs(D.getRandomShopPool({},99)) do pool[entry.id]=true end
+local pool={};for _,entry in ipairs(D.getRandomShopPool({},999)) do pool[entry.id]=true end
 for _,row in ipairs(B.entries) do
     assert(pool[row[1]],"basic SPN belongs to the ordinary shop pool")
     g=game();g.gold=100
@@ -101,5 +101,5 @@ local fullShop={items={{category="deity",deity=D.CATALOG.spirit_coin_wisp,cost=4
 assert(Shop.buyItem(fullShop,1,g) and g.gold==96 and #fullShop.items==0 and g.backpackDeities[1].id=="spirit_coin_wisp")
 Combat.start(g,{hp=10000,maxHp=10000,attack=1,attackSpeed=1},3)
 assert(D.getCount(g.deities)==5 and D.getMaxSlots(g)==5,"battle adds no overflow slot")
-assert(#D.getRandomShopPool({},99)==99)
+assert(#D.getRandomShopPool({},999)==100)
 print("SPN basics PASS: held heal, all-played gold, dynamic/evolved/copied speed, pre-hit armor, locks/caps, normal shop buy/sell, persistent evolution, no automatic grants and save safety")

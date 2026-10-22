@@ -21,6 +21,7 @@ function love.load(args)
         "tests.spn_formations_smoke",
         "tests.spn_aura_smoke",
         "tests.spn_trials_smoke",
+        "tests.spn_boss_seal_smoke",
     }
     local failed = 0
     for _, name in ipairs(suites) do

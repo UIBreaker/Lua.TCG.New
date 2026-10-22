@@ -1,0 +1,21 @@
+{
+  "id": "human_rank_inquisitor",
+  "group": "enemy",
+  "name": "Giám Quan Tước Phẩm",
+  "ability": "Chọn một bậc C–TT để vô hiệu hóa SPN thuộc bậc đó; mỗi lượt hạ vĩnh viễn 2 bậc một SPN ngẫu nhiên trên C, thấp nhất C.",
+  "source": "config/free_human_boss_data.lua",
+  "file": "assets/cards/continental/enemy/human_rank_inquisitor.png",
+  "concept": "A human silver-haired inquisitor seals one spectral card beneath a bronze nullification seal and removes two large crystal facets from another spirit card.",
+  "prompt": "Use case: stylized-concept. ONE production human boss card illustration, full-bleed portrait 2:3 PNG 1024x1536. Match Continental cinematic painterly Western dark-fantasy expedition, natural realistic human anatomy and a visible distinctly human face, one principal subject, strong silhouette readable at small size, medium detail, weathered antique gold accents, deep navy and controlled violet light. An austere silver-haired female inquisitor in a structured dark navy travelling coat and broad antique-brass shoulder plates stands in a ruined Western cathedral archive on a violet eclipse evening. One gloved hand holds a heavy circular bronze nullification seal over a single floating blank spectral parchment; the ghostly entity inside that parchment is darkened and bound by a broad violet band, indicating suppression of one chosen rarity class. Her other hand holds a small brass instrument removing TWO large glowing crystal facets from another blank spectral card, the two crystal fragments falling visibly away, indicating lowering a spirit's rank by two. Use a few broad shapes, not many little gems. Commanding calm expression, human face clear, no monster features. Atmospheric stone arches and distant continental cliffs, muted bone ivory stone. No text, letters, numerals, rank symbols, poker suits, logos, frame, border, badge, UI, watermark, East Asian motifs, dense microfiligree or overexposed glow. Concept: 'Giám Quan Tước Phẩm', a roaming human boss chooses one SPN rarity from Common to Supreme to silence for the battle and permanently lowers one non-Common owned spirit by two tiers every turn.",
+  "status": "generated",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "previous_paths": [],
+  "redesigned_from_existing": false,
+  "generation": {
+    "mode": "built-in image_gen",
+    "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-6b9ce93f-849a-48ae-9e3c-6780a2087451.png"
+  }
+}

@@ -87,7 +87,7 @@ for _,path in ipairs({"chest","stored"}) do for _,d in ipairs(S.cards) do
         assert(original.suit=="aurelia" and g.hand[1].suit==original.suit and g.playerHp==77)
         assert(c[3].suit=="valoria" and c[5].suit=="valoria")
     elseif d.id=="spec_ouija" then
-        assert(original.rank==14 and original.baseRank==14 and original.baseChips==26 and g.hand[1].rank==14)
+        assert(original.rank==14 and original.baseRank==14 and original.baseChips==16 and g.hand[1].rank==14)
         assert(g.playerHp==76 and g.maxHandSize==size and c[3].rank==3)
     elseif d.id=="spec_rethread" then
         assert(#original.equipments==0 and not original.enhancement)

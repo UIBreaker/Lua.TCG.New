@@ -78,23 +78,23 @@ assert(poly.finalScore<math.floor(plain.finalScore*1.5),"base hand and other car
 
 E.setEffect(card,"echo")
 local echo,g=score({card,other},true)
-assert(math.abs(g.gold-2)<1e-8,"Echo ability must award gold twice at full strength")
+assert(g.gold==0,"Echo does not trigger discard gold")
 local triggers=0;for _,st in ipairs(echo.steps) do if st.type=="card_scored" and st.card==card then triggers=triggers+1 end end
 assert(triggers==2,"Echo must retrigger exactly once")
 local ownChips=0;for _,st in ipairs(plain.steps) do if st.type=="card_scored" and st.card==card then ownChips=st.addedChips end end
 assert(math.abs(echo.bonusChips-plain.bonusChips-ownChips)<1e-8)
 
 E.setEffect(card,"ancient");card.evolutionLevel=2
-assert(A.params(card).gold==1 and A.params(card).bonus==4,"Ancient triples evolution gains, not costs or conditions")
+assert(A.params(card).gold==3,"discard evolution follows its ten-tier scale")
 card.evolutionLevel=0;assert(A.params(card).gold==1)
 local left=D.newCard(2,"diamonds");local right=D.newCard(2,"diamonds");local relay=D.newCard(8,"spades")
 E.setEffect(relay,"resonant");g=fixture({left,relay,right})
 local h={type=P.HAND_TYPES.PAIR,scoringCards={left,right},unscoredCards={},chips=10,mult=2}
 A.beginHand(g,h,{left,right});g.hand={relay}
 S.calculate(h,{}, {gameState=g,monster=g.monster})
-assert(g.gold==3 and g.playerArmor>=2,"Both neighbors get resonance within the resource budget")
+assert(g.gold==0 and g.playerArmor==0,"resonance does not activate discard effects while scoring")
 g=fixture({left,relay,right});A.beginHand(g,h,{left,relay,right});g.hand={}
-S.calculate(h,{}, {gameState=g,monster=g.monster});assert(g.gold==3,"Played relay no longer grants resonance; global gold cap remains")
+S.calculate(h,{}, {gameState=g,monster=g.monster});assert(g.gold==0,"playing a relay does not activate discard gold")
 
 local goldCard=D.newCard(9,"spades");E.setEffect(goldCard,"gilded");g=fixture({goldCard})
 Combat.onPlayerTurnEnd(g);assert(g.gold==3)
@@ -108,11 +108,11 @@ assert(stars[5].suit==originalSuit and stars[5].rank==10)
 stars[4].suit="hearts";assert(P.evaluate(stars).type.id=="straight","one Astral cannot cover two incompatible suits")
 
 local dying=D.newCard(13,"diamonds");E.setEffect(dying,"void");g=fixture({dying})
-assert(A.destroy(g,dying));assert(g.gold==2,"Void final activations obey the Continental resource ledger")
-assert(not A.destroy(g,dying) and g.gold==2,"Destruction is idempotent")
+assert(A.destroy(g,dying));assert(g.gold==0,"destroying Void is not an active discard")
+assert(not A.destroy(g,dying) and g.gold==0,"Destruction is idempotent")
 local dyingScore=D.newCard(2,"diamonds");E.setEffect(dyingScore,"void")
 g=fixture({dyingScore,other});A.beginHand(g,P.evaluate({dyingScore,other}),{dyingScore,other})
-A.destroy(g,dyingScore);assert(g.gold==2,"Void cannot farm the same resource ability after it already fired")
+A.destroy(g,dyingScore);assert(g.gold==0,"Void cannot trigger active-discard resources")
 for _,suit in ipairs({"valoria","aurelia","elaris","vharos"}) do
     for rank=2,14 do
         local c=D.newCard(rank,suit);E.setEffect(c,"void");g=fixture({c});g.gold=100

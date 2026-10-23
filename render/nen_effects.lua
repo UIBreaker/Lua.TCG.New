@@ -120,7 +120,7 @@ local function guardian(g,a,x,y,size,alpha,side,armed)
     glow(g,a,-4,-29,8,18,alpha*.3,.45)
     glow(g,a,0,-48,10,13,alpha*.16,.25)
     if armed then
-        if side<0 then fill(g,a,alpha,-24,-33,-9,-30,-9,-7,-18,4,-28,-12)
+        if side<0 then require("ui.components.shield").draw(-20,-15,39,a.color or {.35,.80,1},alpha)
         else lance(g,a,24,-21,50,alpha) end
     else stroke(g,a,alpha,2,side*15,-29,side*35,-70) end
     g.pop()

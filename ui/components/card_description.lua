@@ -40,7 +40,8 @@ function View.model(item,title,body,expanded)
     if def then
         m.title=def.name;m.badge=(item.rankName or tostring(item.rank))..(item.suitSymbol or "").." · QUÂN BÀI";m.accent=Theme.colors.gold
         m.subtitle=def.characterName
-        m.stats={damage=item.baseChips or require("src.deck").getChipValue(item.rank),speed=require("src.deck").getCardAttackSpeed(item)}
+        local Deck=require("src.deck")
+        m.stats={damage=Deck.getCardDamage(item),speed=Deck.getCardAttackSpeed(item),empowerment=Deck.getCardEmpowerment(item)}
     elseif body:match("^SPN · ") or item.deityId then m.badge="SPN";m.accent=Theme.colors.cyan
     elseif body:match("^ITM · ") then m.badge="TRANG BỊ";m.accent=Theme.colors.green
     elseif item.encounterPreview then m.badge="ĐỐI THỦ · XEM TRƯỚC";m.accent=Theme.colors.gold
@@ -108,7 +109,7 @@ function View.layout(m,fonts)
     l.showSubtitle=m.expanded and m.subtitle
     if l.showSubtitle then l.headerH=l.headerH+height(l.labelFont,m.subtitle,l.w-36)+5 end
     l.statsY=l.headerH
-    if m.stats then l.headerH=l.headerH+30 end
+    if m.stats then l.headerH=l.headerH+44 end
     l.footerH=m.hasDetails and 24 or 12
     local function measure(summarizeEquipment,summarizeAdditions)
         local y=0
@@ -183,12 +184,12 @@ function View.draw(m,l,x,y,scroll)
     Core.text(m.title,18,29,w-36,l.titleFont,Theme.colors.text)
     if l.showSubtitle then Core.text(m.subtitle,18,l.subtitleY,w-36,l.labelFont,Theme.colors.muted) end
     if m.stats then
-        local tileW=(math.min(w,400)-44)/2
+        local tileW=(math.min(w,400)-52)/3
         Core.color(Theme.colors.metal,0.35);g.line(18,l.statsY-3,w-18,l.statsY-3)
-        for i,stat in ipairs({{"SÁT THƯƠNG GỐC",m.stats.damage,Theme.colors.gold},{"TỐC ĐÁNH CỦA LÁ",m.stats.speed,Theme.colors.cyan}}) do
+        for i,stat in ipairs({{"SÁT THƯƠNG",m.stats.damage,Theme.colors.gold},{"TỐC ĐÁNH",m.stats.speed,Theme.colors.cyan},{"CƯỜNG HÓA",m.stats.empowerment,Theme.colors.purple}}) do
             local tx=18+(i-1)*(tileW+8)
-            Core.text(stat[1],tx,l.statsY+8,tileW-36,l.labelFont,Theme.colors.muted)
-            Core.text(tostring(stat[2]),tx,l.statsY+5,tileW,l.valueFont,stat[3],"right")
+            Core.text(stat[1],tx,l.statsY+3,tileW,l.labelFont,Theme.colors.muted)
+            Core.text(tostring(stat[2]),tx,l.statsY+19,tileW,l.valueFont,stat[3],"left")
         end
     end
     Core.color(Theme.colors.metal,0.5);g.line(18,l.headerH-4,w-18,l.headerH-4)

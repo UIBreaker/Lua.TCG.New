@@ -119,7 +119,7 @@ assert(game.gold==20 and preview.bribeDollarsSpent==0,"legacy king bribe is reti
 require("src.card_abilities").start(game)
 require("src.card_abilities").beginHand(game,king,king.scoringCards)
 local actual=Scoring.calculate(king,{}, {gameState=game,monster=bribeMonster})
-assert(actual.finalScore==preview.finalScore and game.gold==17,"king buys exactly 12 armor for 3 gold before scoring")
+assert(actual.finalScore==preview.finalScore and game.gold==20,"king scores without spending gold or granting armor")
 Combat.start(game,Monster.create(1,false,false,1),1)
 assert(not effect("spirit_molt",solo,game) and not effect("spirit_pivot",solo,game))
 assert(#D.getRandomShopPool({},999)==100)

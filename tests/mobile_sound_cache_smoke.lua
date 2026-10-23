@@ -43,4 +43,4 @@ assert(loads==prepared,'prepared attack must not allocate Sources at playback')
 S.trimMemory();S.init();assert(S.stats().cachedAudioBytes==0,'repeat initialization releases cache')
 love=previousLove;T.lowPower=low
 package.loaded['src.sound']=nil;package.loaded['src.runtime_assets']=nil
-print('Mobile sound cache PASS: no startup synthesis, 812 deferred cues, active voices, bounded eviction, prewarm/no playback allocation, reload and trim')
+print('Mobile sound cache PASS: no startup synthesis, 814 deferred cues, active voices, bounded eviction, prewarm/no playback allocation, reload and trim')

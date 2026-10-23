@@ -60,6 +60,16 @@ local function buyFocused(x, y)
 end
 
 function Capture.update(gameRef, callbacks)
+    for _,value in ipairs(arg or {}) do
+        if value=="--capture-menu-sparkles" then
+            return require("tests.menu_sparkles_capture").update(gameRef,callbacks)
+        end
+    end
+    for _,value in ipairs(arg or {}) do if value=="--capture-discard-feedback" then
+        local ok,err=xpcall(function() require("tests.discard_feedback_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print(err);love.event.quit(1) end
+        return
+    end end
     for _,value in ipairs(arg or {}) do if value=="--capture-combat-timing" then
         local ok,err=xpcall(function() require("tests.combat_timing_capture").update(gameRef,callbacks) end,debug.traceback)
         if not ok then print(err);love.event.quit(1) end

@@ -3,7 +3,7 @@ local Boss=require("src.boss_abilities")
 local S={}
 local D
 function S.baseDamage(card)
-    return math.max(0,card.baseChips or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0))
+    return math.max(0,Deck.getCardDamage(card))
 end
 local function clone(value,seen)
     if type(value)~="table" then return value end

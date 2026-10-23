@@ -128,7 +128,7 @@ function I.draw(UI,card,definition,showDamage)
     local tier=UI.CardFrame.tier(card)
     rankBadge(UI,card,definition,tier,UI.CardFrame.styles[tier].gem,alpha,time,moving,low)
     local speed=require("src.deck").getCardAttackSpeed(card)
-    local damage=card.baseChips or require("src.deck").getChipValue(card.rank)
+    local damage=require("src.deck").getCardDamage(card)
     local speedTier,damageTier=I.statTier("speed",speed),I.statTier("damage",damage)
     local function statColor(tier,speedStat)
         local s=(tier-1)/9
@@ -159,6 +159,8 @@ function I.draw(UI,card,definition,showDamage)
         text(UI,name,14,147,100,UI.fonts.tiny,{.98,.96,.89},alpha)
     end
     if showDamage then
+        plate(77,166,43,18,damageTier,blue,alpha,time,moving,low)
+        text(UI,"CH "..tostring(require("src.deck").getCardEmpowerment(card)),79,168,39,UI.fonts.tiny,{.75,.90,1},alpha)
         plate(8,166,66,18,damageTier,fire,alpha,time,moving,low)
         text(UI,"ST "..tostring(damage),12,168,58,UI.fonts.tiny,{1,.90,.73},alpha,glow(damageTier,fire))
     end

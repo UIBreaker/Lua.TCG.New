@@ -110,7 +110,7 @@ function V.draw(game,buttons,mx,my)
             text(selected and "SẴN SÀNG HIẾN MÁU" or "TẾ ĐÀN ĐANG CHỜ",758,239,452,UI.fonts.medium,Theme.colors.gold,"center")
             text("Hiến 10% máu hiện tại để nhận một kết quả ngẫu nhiên. Thay đổi lên quân bài là vĩnh viễn.",779,292,408,UI.fonts.regular,Theme.colors.text)
             if selected then
-                text("Sát thương  "..(selected.baseChips or 0).."\nTốc đánh  "..require("src.deck").peekCardAttackSpeed(selected).."\nTiến hóa  "..(selected.evolutionLevel or 0),779,390,408,UI.fonts.regular,Theme.colors.muted)
+                text("Sát thương  "..require("src.deck").getCardDamage(selected).."\nTốc đánh  "..require("src.deck").peekCardAttackSpeed(selected).."\nTiến hóa  "..(selected.evolutionLevel or 0),779,390,408,UI.fonts.regular,Theme.colors.muted)
             end
             if e.last then text(e.message,761,515,442,UI.fonts.small,Theme.colors.muted) end
         end
@@ -136,7 +136,7 @@ function V.draw(game,buttons,mx,my)
 end
 function V.snapshot(game,card)
     return {hp=game.playerHp,gold=game.gold or 0,count=#(game.persistentDeck or {}),
-        damage=card.baseChips or 0,speed=require("src.deck").peekCardAttackSpeed(card),level=card.evolutionLevel or 0,power=card.statuePower or 1}
+        damage=require("src.deck").getCardDamage(card),speed=require("src.deck").peekCardAttackSpeed(card),level=card.evolutionLevel or 0,power=card.statuePower or 1}
 end
 function V.update(game,dt)
     local r=V.ritual;if not r then return end

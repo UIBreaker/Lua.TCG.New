@@ -11,7 +11,7 @@ local function game()
     assert(D.addDeity(g,D.CATALOG.spirit_discard_forge,1));return g
 end
 local function cards(values)
-    local list={};for _,value in ipairs(values) do local c=Deck.newCard(3,"spades");c.baseChips=value;c.disableFactionPassives=true;list[#list+1]=c end;return list
+    local list={};for _,value in ipairs(values) do local c=Deck.newCard(3,"hearts");c.baseChips=value;c.disableFactionPassives=true;list[#list+1]=c end;return list
 end
 local function discard(g,values,context)
     g.playerArmor=0;g.playerShield=0
@@ -31,8 +31,8 @@ assert(discard(g,{6,9,15},{playerDiscard=true,preview=true})==0)
 assert(discard(g,{6,9,15},{})==0,"forced discards do not qualify")
 local saved=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
 saved.monster=g.monster;assert(saved.deities[1].evolutionLevel==2 and discard(saved,{6,9,15})==20)
-g=game();local c=Deck.newCard(3,"spades");c.baseChips=18;c.bonusBaseChips=15
-local other=Deck.newCard(3,"spades");other.baseChips=nil;other.bonusBaseChips=7
+g=game();local c=Deck.newCard(3,"hearts");c.baseChips=18;c.bonusBaseChips=15
+local other=Deck.newCard(3,"hearts");other.baseChips=nil;other.bonusBaseChips=7
 c.equipments={{id="test",onCardScore=function() return {addChips=9999} end}}
 g.potionCombat={damageCards={[c.id]=999}}
 A.discard(g,{c,other},{playerDiscard=true});assert(g.playerArmor==14,"18 + (3+7), no gear/score/temporary potion damage")

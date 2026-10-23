@@ -1,4 +1,9 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do if a=="--test-discard-feedback" then
+    local ok,err=xpcall(function() require("tests.discard_feedback_smoke") end,debug.traceback)
+    if not ok then print(err) end;os.exit(ok and 0 or 1)
+end end
+for _,a in ipairs(arg or {}) do if a=="--test-shields" then require("tests.shield_capture");return end end
 for _,a in ipairs(arg or {}) do if a=="--test-memory-soak" then require("tests.memory_soak.main");return end end
 for _,a in ipairs(arg or {}) do if a=="--test-campaign-balance" then
     love.filesystem.setIdentity("poker_roguelike_balance_tests")
@@ -261,6 +266,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-modal-hover" then isCaptureMode = true end
     if a == "--test-inventory-rail" then isCaptureMode = true end
     if a == "--capture-potion-vfx" then isCaptureMode = true end
+    if a == "--capture-discard-feedback" then isCaptureMode = true end
     if a == "--test-bed-explosion" then isCaptureMode = true end
     if a == "--test-bed-speed" then isCaptureMode = true end
     if a == "--test-enemy-attacks" then isCaptureMode = true end
@@ -490,7 +496,7 @@ local function drawConsumableSlot(c, cx, cy, conSlotW, conSlotH, j, mx, my)
         -- Icon
         love.graphics.setFont(UI.fonts.medium)
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.printf(c.icon or "✨", cx, cy + 10, conSlotW, "center")
+        require("ui.components.shield").printf(c.icon or "✨", cx, cy + 10, conSlotW, "center")
 
         -- Name
         love.graphics.setFont(UI.fonts.tiny)
@@ -549,7 +555,7 @@ local function drawBattleConsumableCard(c, cx, cy, cardW, cardH, index, mx, my, 
     UI.drawCardBorder(0, 0, cardW, cardH, hovered and UI.COLORS.goldYellow, opacity, c)
     g.setFont(UI.fonts.medium)
     g.setColor(1, 1, 1, opacity)
-    g.printf(c.icon or "✦", 3, 6, cardW - 6, "center")
+    require("ui.components.shield").printf(c.icon or "✦", 3, 6, cardW - 6, "center")
     g.setFont(UI.fonts.tiny)
     g.setColor(UI.COLORS.textLight[1], UI.COLORS.textLight[2], UI.COLORS.textLight[3], opacity)
     g.printf(UI.truncateUtf8(c.name or "Thẻ phép", 7), 5, 39, cardW - 10, "center")
@@ -958,6 +964,7 @@ local function initializeCombat(monster, round)
     UI.ScoringFeel.cancel(anim)
     anim.active, anim.enemyTurn, anim.attackTiming, anim.playerTimingResult = false, nil, nil, nil
     anim.parryVictoryPending=nil
+    require("src.timing_vfx").clear()
     local result = Combat.start(game, monster, round)
     UI.HandMotion.reset()
     for i,card in ipairs(game.hand) do anim.prepareDrawAnimation(card,i) end
@@ -1868,16 +1875,29 @@ end
 
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
+        local timing=anim.enemyTurn.parryResult
+        if hit.action=="attack" then
+            local effect=hit.missed and "miss" or (hit.reflectedAttack or 0)>0 and "reflect"
+                or hit.parried and "block" or timing and timing.reduction>0 and "block" or "break"
+            require("src.timing_vfx").emit(effect,timing and timing.grade or "normal",enemy.screenX or UI.BATTLE_CENTER_X,
+                hit.missed and 430 or 270,{reducedMotion=settings.reducedMotion,mobile=Touch.lowPower,audio=true})
+            if hit.parried then Sound.play("armor_gain",timing and timing.grade=="apex" and .80 or timing and timing.grade=="ultimate" and .88 or .98) end
+            if hit.parried and not settings.reducedMotion then anim.hitStop=math.max(anim.hitStop or 0,.025+(timing and (timing.reflectMultiplier or 0)>0 and .025 or 0)) end
+        end
         -- The contact queue owns these meters and accents until recovery ends.
         juice.lastHp,juice.lastArmor=game.playerHp,game.playerArmor or game.playerShield or 0
         require("src.spn_anomalies").showFeedback(game,anim)
-        for m,reaction in pairs(anim.enemyTurn.reactions or {}) do
-            if reaction.damage>0 then
-                local ft=Feedback.add(anim.floatingTexts,"damage",reaction.damage,m.screenX or UI.BATTLE_CENTER_X,212,UI.formatNumber)
-                ft.reducedMotion=settings.reducedMotion
-                if m.hp<=0 then DeathVFX.startEnemy(m,m.screenX or UI.BATTLE_CENTER_X,Renderer.quality,settings.reducedMotion) end
+        local turn=anim.enemyTurn
+        local function showReactions()
+            for m,reaction in pairs(turn.reactions or {}) do
+                if reaction.damage>0 then
+                    local ft=Feedback.add(anim.floatingTexts,"damage",reaction.damage,m.screenX or UI.BATTLE_CENTER_X,212,UI.formatNumber)
+                    ft.reducedMotion=settings.reducedMotion
+                    if m.hp<=0 then DeathVFX.startEnemy(m,m.screenX or UI.BATTLE_CENTER_X,Renderer.quality,settings.reducedMotion) end
+                end
             end
         end
+        if (hit.reflectedAttack or 0)>0 then turn.onReflectionImpact=showReactions else showReactions() end
         if hit.action and hit.action~="attack" then
             local target=hit.target or enemy
             local ft=Feedback.add(anim.floatingTexts,hit.action=="damage" and "speed" or hit.action,
@@ -1895,7 +1915,7 @@ local function startEnemyAttack(phase, speed, done, played)
                 x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
             return
         elseif hit.blocked then
-            table.insert(anim.floatingTexts,{text=(hit.reflectedAttack or 0)>0 and "TUYỆT KỸ · PHẢN ĐÒN ×100"
+            table.insert(anim.floatingTexts,{text=(hit.reflectedAttack or 0)>0 and ("PHẢN ĐÒN ×"..UI.formatNumber(timing and timing.reflectMultiplier or 100))
                 or (hit.parryArmor or 0)>0 and ("PHẢN THẾ · +"..hit.parryArmor.." GIÁP")
                 or hit.parried and "PARRY CHUẨN · CHẶN ĐÒN" or "HÀNH ĐỘNG BỊ CHẶN",color={.4,.84,1},
                 x=enemy.screenX or UI.BATTLE_CENTER_X,y=478,alpha=1.6})
@@ -2802,6 +2822,10 @@ function love.update(dt,realDt)
         return
     end
     UI.HandMotion.reducedMotion,UI.HandMotion.fast=settings.reducedMotion,settings.fastScoring
+    require("src.combat_timing").reducedMotion=settings.reducedMotion
+    if not (isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isDeckViewerOpen or inspectCardModal or isCollectionOpen) then
+        require("src.timing_vfx").update(realDt)
+    end
     UI.CardPhysics.reducedMotion,UI.CardPhysics.fast=settings.reducedMotion,settings.fastScoring
     UI.HandMotion.updateReturns(dt)
     require("ui.potion_effects").update(game,dt,settings.reducedMotion,state,settings.fastScoring)
@@ -2844,7 +2868,8 @@ function love.update(dt,realDt)
     end
     if DeathVFX.kind and state ~= "playing" and state ~= "scoring" and state ~= "defeating" and state ~= "gameover" and state ~= "chest" and state ~= "treasure" and not (state == "shop" and shopData and shopData.currentPackOpening) then DeathVFX.reset() end
     if DeathVFX.monster and DeathVFX.monster ~= game.monster then DeathVFX.reset() end
-    if (state == "playing" or state == "scoring") and game.monster and (game.monster.hp or 1) <= 0 then
+    if (state == "playing" or state == "scoring") and game.monster and (game.monster.hp or 1) <= 0
+        and not (anim.enemyTurn and anim.enemyTurn.result and (anim.enemyTurn.result.reflectedAttack or 0)>0 and (anim.enemyTurn.reflectionAge or 0)<.22) then
         DeathVFX.startEnemy(game.monster, game.monster.screenX or UI.BATTLE_CENTER_X, Renderer.quality,settings.reducedMotion)
     end
     local deathStep=math.min(dt,.05)*(settings.fastScoring and UI.Polish.config.fastFactor or 1)
@@ -2871,6 +2896,8 @@ function love.update(dt,realDt)
     cameraX,cameraY=cameraX+bedCameraX,cameraY+bedCameraY
     local deathCameraX,deathCameraY=DeathVFX.camera()
     cameraX,cameraY=cameraX+deathCameraX,cameraY+deathCameraY
+    local timingCameraX,timingCameraY=require("src.timing_vfx").camera()
+    cameraX,cameraY=cameraX+timingCameraX,cameraY+timingCameraY
     Renderer.reducedMotion=settings.reducedMotion
     Renderer.fastMotion=settings.fastScoring
     UI.Polish.reducedMotion=settings.reducedMotion
@@ -2908,8 +2935,8 @@ function love.update(dt,realDt)
     if UI.AbilityUI.current then updateCaptureMode(); return end
     UI.ScoringFeel.updateLab(dt)
     if UI.ScoringFeel.labOpen then updateCaptureMode(); return end
-    local hitStopped = (state == "scoring" or state == "playing") and (anim.hitStop or 0) > 0
-    if hitStopped then anim.hitStop = math.max(0, anim.hitStop - dt) end
+    local hitStopped = (state == "scoring" or state == "playing") and ((anim.hitStop or 0)>0 or require("src.timing_vfx").pause())
+    if hitStopped then anim.hitStop = math.max(0, (anim.hitStop or 0) - dt) end
     local motionDt = hitStopped and 0 or dt
     if state=="playing" and game and game.abilityCombat then
         local notices=UI.Abilities.takeFeedback(game)
@@ -3239,6 +3266,11 @@ function love.update(dt,realDt)
                         beforeHit[#beforeHit+1]={enemy=enemy,hp=enemy.hp or 0,armor=enemy.creatureArmor or 0}
                     end
                     local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult,anim.playerTimingResult)
+                    if not attackResult.frozen then
+                        require("src.timing_vfx").emit(attackResult.missed and "miss" or "attack",
+                            anim.playerTimingResult and anim.playerTimingResult.grade or "normal",
+                            game.monster.screenX or UI.BATTLE_CENTER_X,270,{reducedMotion=settings.reducedMotion,mobile=Touch.lowPower})
+                    end
                     local outcome={armorBroken=false,finisher=false,bossFinisher=false}
                     for _,before in ipairs(beforeHit) do
                         if before.hp>0 then
@@ -3248,6 +3280,10 @@ function love.update(dt,realDt)
                         end
                     end
                     local authoredFinish=UI.ScoringFeel.damageApplied(anim,game.monster.hp,actualDmg,attackResult.missed,game.monster.creatureArmor,outcome)
+                    if not attackResult.missed and not attackResult.frozen and anim.playerTimingResult and not settings.reducedMotion then
+                        local profile=require("src.timing_vfx").profiles[anim.playerTimingResult.grade]
+                        anim.hitStop=math.max(anim.hitStop or 0,.008+(profile and profile.rank or 0)*.006)
+                    end
                     local advance=game.advancedFeedback
                     if advance then
                         for i,entry in ipairs({{"heal",advance.heal},{"armor",advance.armor},{"gold",advance.gold},{"speed",advance.speed}}) do
@@ -3474,7 +3510,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.145.0", 48, 185)
+    g.print("beta 0.146.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4116,6 +4152,7 @@ local function drawBattleInfoPanel(m, eval)
         or UI.localizeText(anim.stepLog or "")) or ""
     if scoring and finished and anim.playerAttackResult and anim.playerAttackResult.frozen then detail="Đóng băng mục tiêu · 0 sát thương" end
     UI.components.HandInfoPanel.draw({
+        discardReceipt=require("ui.discard_effects").receipt(game,state),
         handName = handName, chips = chips, mult = mult, xMult = xMult, aura = aura,
         writtenAura = scoring and anim.scoringData and anim.scoringData.writtenAura,
         writtenAuraFactor = scoring and anim.scoringData and anim.scoringData.spnAuraMultiplier,
@@ -4163,7 +4200,7 @@ local function drawCombatFeedback()
     if turn and turn.phase~="pause" then
         local intent=turn.intent
         local label=turn.phase=="recover" and turn.result and
-            (turn.result.missed and "ĐỊCH ĐÁNH HỤT" or turn.result.blocked and "HÀNH ĐỘNG BỊ CHẶN" or turn.result.label)
+            (turn.result.missed and "ĐỊCH ĐÁNH HỤT" or turn.result.parried and "PARRY · CHẶN HOÀN TOÀN" or turn.result.blocked and "HÀNH ĐỘNG BỊ CHẶN" or turn.result.label)
             or intent and intent.type~="attack" and intent.label
             or (turn.phase=="prepare" and (turn.order=="after" and "ĐỊCH CHUẨN BỊ PHẢN CÔNG" or "ĐỊCH CHUẨN BỊ TẤN CÔNG")
                 or turn.order=="after" and "ĐỊCH PHẢN CÔNG" or "ĐỊCH TẤN CÔNG")
@@ -6204,6 +6241,7 @@ function love.draw()
     end
 
     UI.CardPhysics.suspend()
+    if state=="playing" or state=="scoring" then require("src.timing_vfx").draw("arena") end
     if state=="playing" or state=="scoring" or state=="CASH_OUT" then require("src.combat_notices").draw(UI,game) end
     drawShopFx()
     if state == "chest" or state == "treasure" then drawChestReveal() end
@@ -6218,6 +6256,7 @@ function love.draw()
     UI.ExpandedInventory.drawBattle()
     if state=="playing" or state=="scoring" then
         require("src.combat_timing").draw(anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing,UI)
+        require("src.timing_vfx").draw("rail")
     end
     if isDeckViewerOpen then
         beginLayer(5)
@@ -6312,7 +6351,8 @@ function love.draw()
     love.graphics.pop()
 
     if not UI.AbilityUI.current and not UI.Backpack.open and not UI.ExpandedInventory.open and not isSettingsOpen and not isPauseMenuOpen
-        and not isHandbookOpen and not isCollectionOpen and not inspectCardModal and not isShopTransferOpen then
+        and not isHandbookOpen and not isCollectionOpen and not inspectCardModal and not isShopTransferOpen
+        and not isDeckViewerOpen and not isDebugOpen and not isUiGalleryOpen and not packOpening then
         require("ui.potion_effects").draw(UI,game,state)
     end
     local descriptionContext=inspectCardModal or isSettingsOpen and "settings" or isPauseMenuOpen and "pause"

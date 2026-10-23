@@ -364,19 +364,6 @@ function Scoring.calculate(handInfo, deities, context)
         bonusMult = bonusMult + b.mult
     end
 
-    -- Count Soldiers (ranks 2..10) in played hand (scoringCards and unscoredCards) for Knight (J) synergy
-    local soldierCount = 0
-    for _, c in ipairs(handInfo.scoringCards or {}) do
-        if c.rank >= 2 and c.rank <= 10 then
-            soldierCount = soldierCount + 1
-        end
-    end
-    for _, c in ipairs(handInfo.unscoredCards or {}) do
-        if c.rank >= 2 and c.rank <= 10 then
-            soldierCount = soldierCount + 1
-        end
-    end
-
     -- Step 2: Scoring cards, Roles, Faction Passives & Equipments
     local hasAureliaCard = false
 
@@ -440,23 +427,25 @@ function Scoring.calculate(handInfo, deities, context)
             do
                 local before={chips=bonusChips,mult=bonusMult,x=xMultBonus,damage=flatDamageBonus,
                     extra=totalExtraDamagePct,gold=bonusGoldAwarded,armor=totalArmorGain,heal=totalHealHp,hp=totalHpCost}
-                local cardChips = card.baseChips or (Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0))
+                local cardChips = Deck.getCardDamage(card)
                 local potionChips,potionMult=require("src.potions").cardBonus(abilityGame or context and context.gameState,card)
                 cardChips=cardChips+potionChips
+                local empowerment=Deck.getCardEmpowerment(card)
                 bonusChips = bonusChips + cardChips
-                bonusMult=bonusMult+potionMult
+                bonusMult=bonusMult+potionMult+empowerment
 
                 local cardEvent = {
                     type = "card_scored",
                     card = card,
                     cardIndex = idx,
                     addedChips = cardChips,
-                    addedMult = potionMult,
+                    addedMult = potionMult+empowerment,
                     message = (card.roleIcon or "") .. " " .. card.rankName .. (card.suitSymbol or "") .. " +" .. cardChips .. " Chips"
                 }
                 if potionChips>0 or potionMult>0 then
                     cardEvent.message=cardEvent.message.." · THUỐC +"..potionChips.." ST / +"..potionMult.." CƯỜNG HÓA"
                 end
+                if empowerment>0 then cardEvent.message=cardEvent.message.." · +"..empowerment.." CƯỜNG HÓA" end
 
             do
             if abilityHand then
@@ -504,183 +493,6 @@ function Scoring.calculate(handInfo, deities, context)
                 cardEvent.addedChips = cardEvent.addedChips + 50
                 cardEvent.addedMult = cardEvent.addedMult + 5
                 cardEvent.message = cardEvent.message .. " | 🦗 Chân Rết Nguyên Thủy (+50 Chips, +5 Mult)"
-            end
-
-            -- Card Role Passives & Faction Royals:
-            -- J (Hiệp Sĩ): +15 Chips & +2 Mult per Soldier in the hand
-            if card.rank == 11 then
-                if soldierCount > 0 then
-                    local jChips = 15 * soldierCount*require("src.blood_shop").powerOf(card)
-                    local jMult = 2 * soldierCount*require("src.blood_shop").powerOf(card)
-                    bonusChips = bonusChips + jChips
-                    bonusMult = bonusMult + jMult
-                    cardEvent.addedChips = cardEvent.addedChips + jChips
-                    cardEvent.addedMult = cardEvent.addedMult + jMult
-                    cardEvent.message = cardEvent.message .. " | 🗡️ Cận Vệ (+" .. jChips .. " Chips, +" .. jMult .. " Mult)"
-                end
-                -- J♠ (Tổng Trấn Tiền Phương): +40 Chips per Soldier behind it when J is first/lowest
-                if isSpade(card) then
-                    local isFirstOrLowest = (idx == 1)
-                    if not isFirstOrLowest then
-                        local minR = 999
-                        for _, sc in ipairs(handInfo.scoringCards) do
-                            if sc.rank < minR then minR = sc.rank end
-                        end
-                        if card.rank <= minR then isFirstOrLowest = true end
-                    end
-                    if isFirstOrLowest then
-                        local soldiersBehind = 0
-                        for sIdx = idx + 1, #handInfo.scoringCards do
-                            local sc = handInfo.scoringCards[sIdx]
-                            if sc.rank >= 2 and sc.rank <= 10 then
-                                soldiersBehind = soldiersBehind + 1
-                            end
-                        end
-                        if soldiersBehind > 0 then
-                            local jSpadeChips = soldiersBehind * 40
-                            bonusChips = bonusChips + jSpadeChips
-                            cardEvent.addedChips = cardEvent.addedChips + jSpadeChips
-                            cardEvent.message = cardEvent.message .. " | 🛡️ Tổng Trấn Tiền Phương (+" .. jSpadeChips .. " Chips)"
-                        end
-                    end
-                end
-                -- J♦ (Thương Nhân Vong Mạng): Steals $2 into purse
-                if isDiamond(card) then
-                    bonusGoldAwarded = bonusGoldAwarded + 2
-                    cardEvent.message = cardEvent.message .. " | 💸 Thương Nhân Vong Mạng (+$2)"
-                end
-                -- J♣ (Ấu Trùng Ký Sinh): Draws 2 cards from deck to hand
-                if isClub(card) then
-                    if context and context.drawCards then
-                        context.drawCards(2)
-                    end
-                    cardEvent.message = cardEvent.message .. " | 🐛 Ấu Trùng Ký Sinh (Bốc 2 lá)"
-                end
-
-            -- Q (Hoàng Hậu): +0.1 XMult & +15 Chips, +2 Mult per equipped socket
-            elseif card.rank == 12 then
-                xMultBonus = xMultBonus + 0.1*require("src.blood_shop").powerOf(card)
-                local eqCount = #(card.equipments or {})
-                if eqCount > 0 then
-                    local qChips = 15 * eqCount*require("src.blood_shop").powerOf(card)
-                    local qMult = 2 * eqCount*require("src.blood_shop").powerOf(card)
-                    bonusChips = bonusChips + qChips
-                    bonusMult = bonusMult + qMult
-                    cardEvent.addedChips = cardEvent.addedChips + qChips
-                    cardEvent.addedMult = cardEvent.addedMult + qMult
-                    cardEvent.message = cardEvent.message .. " | 👑 Hoàng Hậu (+0.1 XMult, +" .. qChips .. " Chips, +" .. qMult .. " Mult)"
-                else
-                    cardEvent.message = cardEvent.message .. " | 👑 Hoàng Hậu (+0.1 XMult)"
-                end
-
-                -- Q♠ (Mệnh Lệnh Thiết Kỷ): +0.4 XMult if hand has 5 Spades
-                if isSpade(card) then
-                    local spadeCount = 0
-                    for _, sc in ipairs(handInfo.scoringCards) do
-                        if isSpade(sc) then spadeCount = spadeCount + 1 end
-                    end
-                    if spadeCount >= 5 then
-                        xMultBonus = xMultBonus + 0.4
-                        cardEvent.message = cardEvent.message .. " | ⚔️ Mệnh Lệnh Thiết Kỷ (+0.4 XMult)"
-                    end
-                end
-
-                -- Q♥ (Mẫu Nghi Tế Đàn): Other Hearts lose 1 rank, +0.35 XMult
-                if isHeart(card) then
-                    xMultBonus = xMultBonus + 0.35
-                    for _, sc in ipairs(handInfo.scoringCards) do
-                        if sc ~= card and isHeart(sc) then
-                            sc.rank = math.max(2, sc.rank - 1)
-                            sc.rankName = Deck.RANK_NAMES[sc.rank] or tostring(sc.rank)
-                            sc.baseChips = Deck.getChipValue(sc.rank) + (sc.bonusBaseChips or 0)
-                        end
-                    end
-                    cardEvent.message = cardEvent.message .. " | 🩸 Mẫu Nghi Tế Đàn (-1 Rank Cơ, +0.35 XMult)"
-                end
-
-                -- Q♦ (Nữ Hoàng Tài Phiệt): +Gold * 0.02 capped at +1.0
-                if isDiamond(card) then
-                    local goldHold = (context and context.gold) or (context and context.gameState and context.gameState.gold) or 0
-                    local qWealthBonus = math.min(1.0, goldHold * 0.02)
-                    if qWealthBonus > 0 then
-                        xMultBonus = xMultBonus + qWealthBonus
-                        cardEvent.message = cardEvent.message .. " | 💎 Nữ Hoàng Tài Phiệt (+" .. string.format("%.2f", qWealthBonus) .. " XMult)"
-                    end
-                end
-
-            -- K (Quốc Vương): Pillar of damage: +25 Chips & +5 Mult
-            elseif card.rank == 13 then
-                local kChips = 25*require("src.blood_shop").powerOf(card)
-                local kMult = 5*require("src.blood_shop").powerOf(card)
-                bonusChips = bonusChips + kChips
-                bonusMult = bonusMult + kMult
-                cardEvent.addedChips = cardEvent.addedChips + kChips
-                cardEvent.addedMult = cardEvent.addedMult + kMult
-                cardEvent.message = cardEvent.message .. " | 🏰 Quốc Vương (+" .. kChips .. " Chips, +" .. kMult .. " Mult)"
-
-                -- K♠ (Đại Tướng Quân Pháo Đài): +15 Chips per Spade remaining in hand
-                if isSpade(card) then
-                    local unplayedSpades = 0
-                    local unplayedList = (context and context.unplayedCards) or (context and context.hand) or (context and context.gameState and context.gameState.hand) or {}
-                    for _, hc in ipairs(unplayedList) do
-                        if isSpade(hc) then unplayedSpades = unplayedSpades + 1 end
-                    end
-                    if unplayedSpades > 0 then
-                        local kSpadeBonus = unplayedSpades * 15
-                        bonusChips = bonusChips + kSpadeBonus
-                        cardEvent.addedChips = cardEvent.addedChips + kSpadeBonus
-                        cardEvent.message = cardEvent.message .. " | 🛡️ Đại Tướng Quân (+" .. kSpadeBonus .. " Chips từ " .. unplayedSpades .. " Bích trên tay)"
-                    end
-                end
-
-                -- K♥ (Huyết Vương Bất Tử): If <= 1 Hand left, +100 Chips & +25 Mult
-                if isHeart(card) then
-                    local handsLeft = (context and context.handsRemaining) or 0
-                    if handsLeft <= 1 then
-                        bonusChips = bonusChips + 100
-                        bonusMult = bonusMult + 25
-                        cardEvent.addedChips = cardEvent.addedChips + 100
-                        cardEvent.addedMult = cardEvent.addedMult + 25
-                        cardEvent.message = cardEvent.message .. " | 💀 Huyết Vương Bất Tử (+100 Chips, +25 Mult)"
-                    end
-                end
-
-                -- K♦ (Đế Vương Mua Chuộc): Flagged for bribe calculation
-                if isDiamond(card) then
-                    hasKingOfDiamonds = true
-                end
-
-                -- K♣ (Chúa Tể Bầy Đàn): Each scored Club adds +0.3 XMult
-                if isClub(card) then
-                    local clubScoredCount = 0
-                    for _, sc in ipairs(handInfo.scoringCards) do
-                        if isClub(sc) then clubScoredCount = clubScoredCount + 1 end
-                    end
-                    if clubScoredCount > 0 then
-                        local kClubBonus = clubScoredCount * 0.3
-                        xMultBonus = xMultBonus + kClubBonus
-                        cardEvent.message = cardEvent.message .. " | 🐜 Chúa Tể Bầy Đàn (+" .. string.format("%.2f", kClubBonus) .. " XMult)"
-                    end
-                end
-
-            -- A (Thần Khí): Ultimate resonance: +15 Chips
-            elseif card.rank == 1 or card.rank == 14 then
-                local aChips = 15*require("src.blood_shop").powerOf(card)
-                bonusChips = bonusChips + aChips
-                cardEvent.addedChips = cardEvent.addedChips + aChips
-                cardEvent.message = cardEvent.message .. " | ⚡ Thần Khí (+" .. aChips .. " Chips)"
-
-                -- A♠ (Lưỡi Hái Trật Tự): Flags overkill Sát Khí storage
-                if isSpade(card) then
-                    hasAceOfSpades = true
-                    cardEvent.message = cardEvent.message .. " | ⚔️ Lưỡi Hái Trật Tự (Tích Sát Khí khi Overkill)"
-                end
-
-                -- A♥ (Chén Thánh Khát Máu): Flags killing blow gold conversion (5% monster max HP)
-                if isHeart(card) then
-                    hasAceOfHearts = true
-                    cardEvent.message = cardEvent.message .. " | 🩸 Chén Thánh Khát Máu (Hút máu thành Vàng khi dứt điểm)"
-                end
             end
 
             cardEvent.cardXMultTotal = math.min(5, 1 + xMultBonus)

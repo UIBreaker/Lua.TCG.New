@@ -35,10 +35,11 @@ function F.update(game,dt,reducedMotion,state,fast)
             elseif previous.age>.45 then previous.life=math.min(previous.life,previous.age+.3) end
         end
         event.age=0;event.reduced=reducedMotion
-        event.reactive=event.kind=="rebirth" or event.kind=="rank_drain" or event.target and (event.kind=="accuracy" or event.kind=="evasion")
+        if event.kind=="discard" then event.combat=game.abilityCombat end
+        event.reactive=event.kind=="discard" or event.kind=="rebirth" or event.kind=="rank_drain" or event.target and (event.kind=="accuracy" or event.kind=="evasion")
             or event.kind=="gold_blood" and (event.value or 0)>0
         event.contactAt=(event.reactive or reducedMotion) and 0 or .42
-        event.life=event.contactAt+1.5
+        event.life=event.contactAt+(event.kind=="discard" and 3.2 or 1.5)
         event.x=event.target and (event.target.screenX or 640) or 640
         event.y=event.target and 305 or 438
         if event.kind=="evasion" then event.x=640;event.y=448 end
@@ -46,7 +47,7 @@ function F.update(game,dt,reducedMotion,state,fast)
         for _,card in ipairs(event.cards or {}) do event.anchors[#event.anchors+1]={card=card} end
         event.particles={}
         local seed=0;for i=1,#event.kind do seed=seed+event.kind:byte(i) end
-        for i=1,reducedMotion and 12 or 54 do
+        for i=1,event.kind=="discard" and 0 or reducedMotion and 12 or 54 do
             event.particles[i]={angle=hash(i,seed)*tau,speed=28+hash(i,seed+1)*125,
                 size=1+hash(i,seed+2)*2.7,delay=hash(i,seed+3)*.42,
                 life=.75+hash(i,seed+4)*.9,phase=hash(i,seed+5)*tau}
@@ -59,7 +60,7 @@ function F.update(game,dt,reducedMotion,state,fast)
         local e=F.active[i];e.age=e.age+math.min(dt,.05)*(fast and 2 or 1);e.reduced=reducedMotion
         if not e.contacted and e.age>=e.contactAt then
             e.contacted=true
-            Lighting.flash(e.x,e.y,colors[e.kind] or colors.heal,reducedMotion and .05 or .14,.36,160)
+            if e.kind~="discard" then Lighting.flash(e.x,e.y,colors[e.kind] or colors.heal,reducedMotion and .05 or .14,.36,160) end
         end
         if e.age>=e.life then table.remove(F.active,i) end
     end
@@ -104,18 +105,11 @@ local function spiral(x,y,r,age,c,a,vertical)
     end
     stroke(points,c,a,1.5)
 end
-local function shield(x,y,c,a,r)
-    stroke({x-r*.7,y-r*.78,x+r*.7,y-r*.78,x+r*.65,y+r*.22,x,y+r*.82,
-        x-r*.65,y+r*.22,x-r*.7,y-r*.78},c,a,2)
-    stroke({x-r*.43,y-r*.49,x+r*.43,y-r*.49,x+r*.37,y+r*.13,x,y+r*.51,
-        x-r*.37,y+r*.13,x-r*.43,y-r*.49},c,a*.65,1)
-end
-
 local function motif(e,c,a)
     local g=love.graphics;local t=e.reduced and .55 or math.max(0,e.age-e.contactAt)
     local burst=e.reduced and 1 or Motion.settle(t,.36)
     local x,y=e.x,e.y
-    if #e.anchors==0 then glow(x,y,145,c,a*.4);glow(x,y,48,c,a*.45) end
+    if #e.anchors==0 and e.kind~="armor" and e.kind~="armor_break" then glow(x,y,145,c,a*.4);glow(x,y,48,c,a*.45) end
     if e.kind=="accuracy" then
         ring(x,y,58+22*(1-burst),c,a)
         ring(x,y,92,c,a*.65,1,t*1.2,math.pi*1.45)
@@ -150,24 +144,16 @@ local function motif(e,c,a)
         glow(x,y,32,c,a*.8)
         for i=1,8 do local angle=i*tau/8+t*.4;spark(x+math.cos(angle)*72,y+math.sin(angle)*88,5,c,a) end
     elseif e.kind=="armor" then
-        shield(x,y,c,a,62);ring(x,y,96,c,a*.7,1,t*.45,tau*.87)
-        for i=0,5 do
-            local angle=i*tau/6+t*.25
-            spark(x+math.cos(angle)*96,y+math.sin(angle)*96,3,c,a)
+        require("ui.components.shield").draw(x,y,110,c,a)
+        if not e.reduced then
+            for i=1,3 do
+                local dx=(i-2)*21;local fade=math.max(0,1-t/.30)
+                spark(x+dx,y-30-t*20,2,c,a*fade)
+            end
         end
     elseif e.kind=="armor_break" then
-        local r=30+burst*85
-        ring(x,y,r,c,a*.65,.55);ring(x,y,r*.65,c,a*.5,.55)
-        for i=1,12 do
-            local angle=i*tau/12;local d=20+burst*(30+hash(i,4)*90)
-            local px=x+math.cos(angle)*d;local py=y+math.sin(angle)*d*.8+t*t*25
-            glow(px,py,18,c,a*.55)
-            g.push();g.translate(px,py);g.rotate(angle+t*(i%2==0 and 1 or -1))
-            g.setColor(c[1],c[2],c[3],a*.8);g.polygon("fill",-5,-11,8,-2,1,9)
-            g.setColor(1,.92,.65,a);g.line(-4,-9,6,-2);g.pop()
-        end
-        stroke({x-24,y-41,x-5,y-12,x-21,y+6,x,y+34},c,a,3)
-        stroke({x+30,y-40,x+5,y-8,x+23,y+14},c,a,3)
+        require("ui.components.shield").draw(x,y,110,c,a,{
+            broken=true,split=e.reduced and 7 or math.min(27,t*80),tilt=e.reduced and .1 or t*.9})
     elseif e.kind=="evasion" then
         for i=-1,1 do
             local offset=i*(28+burst*54)
@@ -278,7 +264,7 @@ function F.draw(UI,game,activeState)
         local presentation=F.pose(e)
         local alpha=presentation.alpha
         local c=colors[e.kind] or colors.heal
-        if alpha>0 then
+        if alpha>0 and e.kind~="discard" then
             motif(e,c,alpha)
             for _,particle in ipairs(e.particles) do
                 local age=e.age-e.contactAt-particle.delay
@@ -308,11 +294,14 @@ function F.draw(UI,game,activeState)
     end
     g.setBlendMode("alpha")
     for _,e in ipairs(F.active) do
-        local a=F.pose(e).alpha
-        local c=colors[e.kind] or colors.heal
-        local y=e.y-116
-        g.setColor(.015,.025,.038,.8*a);g.rectangle("fill",e.x-220,y,440,30,5,5)
-        g.setColor(c[1],c[2],c[3],a);g.setFont(UI.fonts.small);g.printf(e.label or "THUỐC",e.x-213,y+5,426,"center")
+        if e.kind=="discard" then require("ui.discard_effects").draw(UI,e,game,activeState)
+        else
+            local a=F.pose(e).alpha
+            local c=colors[e.kind] or colors.heal
+            local y=e.y-116
+            g.setColor(.015,.025,.038,.8*a);g.rectangle("fill",e.x-220,y,440,30,5,5)
+            g.setColor(c[1],c[2],c[3],a);g.setFont(UI.fonts.small);g.printf(e.label or "THUỐC",e.x-213,y+5,426,"center")
+        end
     end
     g.pop()
 end

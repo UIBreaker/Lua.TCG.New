@@ -17,7 +17,7 @@ local voucherGlyphs = { v_discount = "◇", v_interest = "$", v_hand_plus = "♠
 local function text(value, x, y, width, font, color, align)
     love.graphics.setFont(font or UI.fonts.tiny)
     love.graphics.setColor(color or C.text)
-    love.graphics.printf(value, x, y, width, align or "left")
+    require("ui.components.shield").printf(value, x, y, width, align or "left")
 end
 
 local function panel(x, y, w, h, title, note, accent)

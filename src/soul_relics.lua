@@ -90,14 +90,13 @@ function R.score(g,card,ctx)
                 local Abilities=require("src.card_abilities")
                 local target,candidates
                 for _,other in ipairs(ctx.scoring) do
-                    if other~=card and not other.destroyed and not other.exhausted and Abilities.definition(other)
-                        and (other.evolutionLevel or 0)<Abilities.config.maxEvolutionLevel then
+                    if other~=card and not other.destroyed and not other.exhausted and Abilities.definition(other) then
                         candidates=candidates or {};candidates[#candidates+1]=other
                     end
                 end
                 target=candidates and candidates[require("src.rng").random(#candidates)]
                 if target and Abilities.upgrade(g,target,power,false) then message="TIẾN HÓA "..(target.rankName or "")..(target.suitSymbol or "").." · +"..power.." CẤP"
-                else message="CẦN ĐỒNG ĐỘI TÍNH ĐIỂM CHƯA ĐẠT TRẦN" end
+                else message="CẦN ĐỒNG ĐỘI TÍNH ĐIỂM" end
             elseif id=="soul_silence_anchor" and not s.used[key] and require("src.boss_abilities").state(g.monster) then
                 local Boss=require("src.boss_abilities");local bs=Boss.state(g.monster)
                 local remaining=math.max(0,math.max(bs.passiveUntil or 0,bs.activeUntil or 0)-bs.handIndex)

@@ -41,9 +41,7 @@ function ProgressBar.draw(x, y, w, h, value, maxValue, options)
     if options.shield then
         local flash=math.max(0,math.min(1,options.pulse or 0))
         Core.color({0.70,0.94,1},flash*0.24);g.rectangle("fill",x+2,y+2,w-4,h-4,2,2)
-        Core.color({0.65,0.90,1},0.92);g.setLineWidth(1)
-        local cx,cy,r=x+9,y+h/2,h*0.34
-        g.polygon("line",cx-r*0.7,cy-r*0.6,cx,cy-r,cx+r*0.7,cy-r*0.6,cx+r*0.6,cy+r*0.2,cx,cy+r,cx-r*0.6,cy+r*0.2)
+        require("ui.components.shield").draw(x+9,y+h/2,h*.84,{.24,.90,1},.98)
     end
     if options.label then Core.text(options.label, x + 5, y + (h - (options.font or g.getFont()):getHeight()) / 2,
         w - 10, options.font, Theme.colors.text, "center") end

@@ -50,7 +50,7 @@ def main():
     args = parser.parse_args()
     from build_release import package, runtime_files
     if args.game is None:
-        args.game = ROOT / "dist/LUA-TCG-0.145.0-Mobile.love"
+        args.game = ROOT / "dist/LUA-TCG-0.146.0-Mobile.love"
         package(args.game, mobile=True)
     with zipfile.ZipFile(args.game) as game:
         for path in runtime_files(ROOT):
@@ -92,8 +92,8 @@ def main():
             '<resources><style name="TerraSuitFullscreen" parent="@android:style/Theme.NoTitleBar.Fullscreen">'
             '<item name="android:windowFullscreen">true</item>' + cutout + '</style></resources>', encoding="utf-8")
     metadata = work / "apktool.yml"
-    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 14500")
-    text = text.replace("versionName: 11.5a", "versionName: 0.145.0-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
+    text = metadata.read_text(encoding="utf-8").replace("versionCode: 32", "versionCode: 14600")
+    text = text.replace("versionName: 11.5a", "versionName: 0.146.0-beta").replace("minSdkVersion: 16", "minSdkVersion: 23")
     # The .love file is already a ZIP. Outer DEFLATE makes Android asset seeks repeatedly inflate it.
     text = text.replace("doNotCompress:\n", "doNotCompress:\n- love\n")
     metadata.write_text(text, encoding="utf-8")
@@ -127,7 +127,7 @@ def main():
             "-keyalg", "RSA", "-keysize", "3072", "-validity", "10000", "-storetype", "PKCS12",
             "-storepass:env", "TERRA_SIGNING_PASSWORD", "-dname", "CN=Terra Suit, OU=Game, O=UIBreaker, C=VN")
         del os.environ["TERRA_SIGNING_PASSWORD"]
-    output = ROOT / "downloads/LUA-TCG-0.145.0-Android.apk"
+    output = ROOT / "downloads/LUA-TCG-0.146.0-Android.apk"
     output.parent.mkdir(exist_ok=True)
     signer = sdk / "lib/apksigner.jar"
     run("java", "-jar", signer, "sign", "--ks", key, "--ks-pass", "file:" + str(password.relative_to(ROOT)),
@@ -140,7 +140,7 @@ def main():
         with zipfile.ZipFile(io.BytesIO(apk.read("assets/game.love"))) as game, zipfile.ZipFile(args.game) as source:
             assert b"t.window.fullscreen = true" in game.read("conf.lua")
             assert b"t.window.resizable = false" in game.read("conf.lua")
-            assert b"beta 0.145.0" in game.read("main.lua")
+            assert b"beta 0.146.0" in game.read("main.lua")
             assert game.read("main.lua") == source.read("main.lua")
             for path in runtime_files(ROOT):
                 if path.suffix in (".lua", ".glsl"):

@@ -21,49 +21,18 @@ local function game(cards,bossKey)
     g.monster=Monster.create(1,true,false,1,bossKey or "memory_eater");g.monster.hp=10000;g.monster.maxHp=10000
     A.start(g);Boss.start(g);return g
 end
-local function context(g,c,scoring)
-    local x={game=g,scoring=scoring,played=scoring,active=g.hand,queue={},repeats={},once={},visited={},triggerCount=0,feedback={},
-        scored={scoring[1],scoring[2]},index=1,play=3,full=true,depth=0,spnCount=3,spnSeen={},spnRepeats=0,returns={},
-        unusedDiscards=3,goldBeforeInterest=70,damage=20,handInfo={type={id="pair"},scoringCards=scoring,unscoredCards={},chips=10,mult=2}}
-    g.abilityHand=x;return x
-end
 local registered=0
 for _,id in ipairs(A.config.order) do
     local d=A.definitions[id];registered=registered+1
     local c=card(d.rank,d.suit=="heart" and "hearts" or d.suit=="diamond" and "diamonds" or d.suit=="club" and "clubs" or "spades")
     assert(A.definition(c)==d,id.." registration")
-    local other=card(2,"diamonds",2)
-    local g=game({c,other},"black_tax_collector")
-    g.deck={card(3,"hearts"),card(4,"clubs"),card(5,"diamonds")}
-    local scoring={c,other}
-    if d.op:find("suits") then scoring={c,card(4,"hearts"),card(4,"diamonds"),card(4,"clubs"),card(4,"spades")} end
-    if d.baseParams.count==5 then scoring={c,other,card(5,"clubs"),card(5,"spades"),card(5,"hearts")} end
-    local x=context(g,c,scoring)
-    if d.op=="spn_repeat" then x.spnCount=1 end
-    if d.op=="copy_previous" then x.previous=other end
-    if d.op=="copy_diamond" then g.abilityCombat.lastDiamond={card=other,definition=A.definition(other),event="score"} end
-    if d.op=="copy_destroyed" then g.abilityCombat.lastDestroyed=card(13,"hearts") end
-    if d.op=="copy_held" then g.hand={card(14,"hearts"),c};assert(A.handSize(g)==5) end
-    if d.op=="transfer" then c.evolutionLevel=1 end
-    if d.op=="consume_cancel" then g.hand={c};scoring={other};x.scoring=scoring;x.played=scoring end
-    if d.trigger=="choice" then
-        local info={type={id="pair"},scoringCards=scoring,unscoredCards={}}
-        local choices=A.choices(g,info,d.op=="consume_cancel" and {other} or scoring)
-        local chosen
-        for _,v in ipairs(choices) do if v.card==c then chosen=v;break end end
-        assert(chosen,id.." must offer a real optional choice")
-        x.decisions={{card=c,definition=d,params=A.params(c),target=chosen.options[1].target}}
-        A.applyDecisions(g,"before");A.applyDecisions(g,"after")
-        assert(x.decisions[1].applied,id.." choice executed")
-    elseif d.trigger=="held" then
-        A.dispatch(g,"held",{c},x)
-        assert(A.handSize(g)>g.maxHandSize,id.." held effect changes capacity")
-    else
-        A.dispatch(g,d.trigger,{c},x)
-    end
-    local fired=false
-    for _,v in ipairs(x.feedback) do if v.abilityId==id then fired=true end end
-    assert(fired,id.." trigger must execute, not just register")
+    local g=game({c})
+    g.deities={};g.monster=nil
+    local beforeHp,beforeGold,beforeArmor=g.playerHp,g.gold,g.playerArmor
+    A.discard(g,{c},{playerDiscard=true})
+    assert(g.playerHp==beforeHp+(d.suit=="heart" and 1 or 0))
+    assert(g.gold==beforeGold+(d.suit=="diamond" and 1 or 0))
+    assert(g.playerArmor==beforeArmor+(d.suit=="spade" and 1 or 0))
     local title,text=Description.resolve(c,g);assert(title:find(d.name,1,true));assert(#text>20 and not text:find("{[%w_]+}"),id.." tooltip")
     c.evolutionLevel=0;c.temporaryAbilityLevels=0
     local before=A.params(c);assert(A.evolve(g,c),id.." evolve")
@@ -81,31 +50,17 @@ end
 assert(registered==52)
 print("52 abilities: registration, real trigger, tooltip, stronger evolution, identity and old/new saves passed")
 do
-    assert(A.config.maxEvolutionLevel==10)
-    local c=card(2,"hearts",7)
-    local g=game({c})
-    assert(A.evolve(g,c) and c.evolutionLevel==8 and g.persistentDeck[1].evolutionLevel==8)
-    for level=9,10 do
-        local before=A.params(c)
+    local c=card(2,"hearts",7);local g=game({c})
+    for level=8,12 do
         assert(A.evolve(g,c) and c.evolutionLevel==level and g.persistentDeck[1].evolutionLevel==level)
-        local after=A.params(c);local changed=false
-        for k,v in pairs(before) do if after[k]~=v then changed=true end end
-        assert(changed,"new evolution levels must improve ability parameters")
-        local tier,overflow=require("ui.components.card_frame").tier(c)
-        assert(tier==10 and overflow==level-9,"new levels must use TT / TT+1 frames")
+        assert(A.params(c).healPercent==math.min(10,level+1))
+        assert(Deck.getCardDamage(c)==2+math.max(0,level-9))
     end
-    assert(not A.evolve(g,c),"level 10 must reject further evolution")
-    assert(not A.upgrade(g,c,100,false) and c.evolutionLevel==10,"bulk upgrade must respect level 10 cap")
-    g.run=Run.newRun("red_deck")
+    assert(A.upgrade(g,c,100,false) and c.evolutionLevel==112)
     local restored=assert(Persistence.restoreSnapshot(Persistence.makeSnapshot(g,"shop")))
-    assert(restored.persistentDeck[1].evolutionLevel==10,"save/load must retain level 10")
-    local capped=card(2,"hearts",8);local bulk=game({capped})
-    assert(A.upgrade(bulk,capped,100,false) and capped.evolutionLevel==10,"bulk upgrade from old cap must stop at 10")
-    local forged=Persistence.makeSnapshot(g,"shop");forged.game.persistentDeck[1].evolutionLevel=999
-    assert(assert(Persistence.restoreSnapshot(forged)).persistentDeck[1].evolutionLevel==10,"restore must clamp above new cap")
-    local _,body=Description.resolve(c,g)
-    assert(body:find("10 / 10",1,true),"card tooltip must display new cap")
-    print("Evolution cap PASS: 7 through 10, stronger abilities, TT/TT+1 frames, hand/deck copies, bulk cap, save/load and tooltip")
+    assert(restored.persistentDeck[1].evolutionLevel==112)
+    local _,body=Description.resolve(c,g);assert(body:find("10 / 10",1,true))
+    print("Evolution PASS: ten discard tiers, TT+, bulk upgrades and save retention")
 end
 local function play(g,cards,info,decisions)
     info=info or Poker.evaluate(cards)
@@ -156,8 +111,8 @@ end
 local j1,j2=card(11,"clubs",5),card(11,"spades",5)
 local g=game({j1,j2});g.abilityCombat.lastDestroyed=j1
 play(g,{j1,j2})
-local q=card(12,"hearts",2);assert(A.params(q).heal==2 and A.params(q).charge==3)
-local k=card(13,"hearts",2);assert(A.params(k).heal==2 and A.params(k).bonus==7)
+local q=card(12,"hearts",2);assert(A.params(q).healPercent==3)
+local k=card(13,"hearts",2);assert(A.params(k).healPercent==3)
 -- Every shipped boss is attached to an actual active, with usable counter lifecycle.
 local catalog={}
 for _,d in pairs(Monster.BOSSES) do catalog[d.debuffId]=d end
@@ -238,17 +193,17 @@ local a,b=card(12,"hearts"),card(12,"hearts");b.id=a.id;Deck.restoreDeck({a,b});
 local held=card(12,"hearts",2);local g2=game({held});A.runtime(held).tacticCharge=2
 local info={type=Poker.HAND_TYPES.HIGH_CARD,scoringCards={card(14,"diamonds")},unscoredCards={held},chips=5,mult=1}
 A.beginHand(g2,info,{held,info.scoringCards[1]});assert(g2.playerHp==50 and A.runtime(held).tacticCharge==2,"unscored queen does not spend stored charge")
-local c1,c2=card(2,"hearts",2),card(2,"diamonds");local g3=game({c1,c2});play(g3,{c1,c2});assert(#g3.hand==0 and g3.playerHp==57,"pair evolution increases real healing")
+local c1,c2=card(2,"hearts",2),card(2,"diamonds");local g3=game({c1,c2});play(g3,{c1,c2});assert(#g3.hand==0 and g3.playerHp==50,"playing a pair does not trigger discard healing")
 g3.monster.hp=0;local cycle=Boss.state(g3.monster).cycle;Boss.handEnd(g3);assert(Boss.state(g3.monster).cycle==cycle,"dead boss must not act")
 for id,d in pairs(Deck.ENHANCEMENTS) do assert(not Deck.getModifierDescription("enhancement",id):find("{[%w_]+}"),id) end
 for _,catalog in ipairs({require("src.shop").SPECTRAL_CARDS,require("src.shop").JOKER_SPELLS,Poker.PLANET_CARDS}) do
     for _,item in ipairs(catalog) do local _,body=Description.resolve(item);assert(#body>10 and not body:find("{[%w_]+}"),item.id) end
 end
--- Last-place healing improves at every level without inventing card instances.
+-- Discard healing improves with evolution.
 local recovery={}
 for level=4,5 do
     local c=card(5,"hearts",level);local g=game({c})
-    A.beginHand(g,Poker.evaluate({c}),{c});recovery[level]=g.playerHp
+    A.discard(g,{c},{playerDiscard=true});recovery[level]=g.playerHp
 end
 assert(recovery[5]>recovery[4],"evolution must improve actual recovery")
 local g=game({card(2,"diamonds")},"executioner");g.playerArmor=1

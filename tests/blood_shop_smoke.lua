@@ -59,7 +59,7 @@ assert(recipe and B.craft(crafted,recipe));assert(B.item(crafted.backpackEquipme
 assert(E.getDescription(E.instance("gem_blast",{bloodPower=5})):find("đúng 3",1,true),"activation counts are not scaled")
 local king=Blood.reward(D.newCard(13,"clubs"));king.disableFactionPassives=true
 local result=require("src.scoring").calculate({type={id="high_card"},chips=1,mult=1,scoringCards={king},unscoredCards={}}, {}, {playerHp=100,hand={king}})
-assert(result.totalChips==king.baseChips+125+1 and result.totalMult==26,"royal-role stats receive the blood multiplier")
+assert(result.totalChips==king.baseChips+1 and result.totalMult==1,"blood stats do not restore removed royal-role bonuses")
 local opening=Shop.openPack({packType="arcana",bloodPower=5},g)
 for _,item in ipairs(opening.cards) do assert(item.bloodPower==5 and item.onCardScore) end
 local potion=Blood.reward(Shop.healingItem(nil,"healing_potion").consumable)

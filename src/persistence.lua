@@ -210,6 +210,16 @@ local function restoreCard(savedCard)
     for key, value in pairs(savedCard) do
         if key ~= "equipments" then card[key] = sanitize(value) end
     end
+    if savedCard.playingStatsVersion~=3 and not card.isPrimalDrone then
+        local oldValue=card.rank==14 and 11 or card.rank>=10 and 10 or card.rank
+        local newValue=Deck.getChipValue(card.rank)
+        card.baseChips=(card.baseChips or oldValue+(card.bonusBaseChips or 0))
+            +(newValue-oldValue)*require("src.blood_shop").powerOf(card)
+        card.bonusBaseChips=card.baseChips-newValue
+    end
+    card.playingStatsVersion=3
+    local role=Deck.getCardRole(card.rank)
+    card.roleDesc=role.desc
     card.seal=Deck.normalizeSeal(card.seal)
     card.isAnchor=card.seal=="seal_anchor"
     card.equipments = {}
@@ -217,8 +227,9 @@ local function restoreCard(savedCard)
         local equipment = restoreEquipment(savedEquipment)
         if equipment then table.insert(card.equipments, equipment) end
     end
-    card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
+    card.evolutionLevel = math.max(0, math.floor(tonumber(card.evolutionLevel) or 0))
     card.temporaryAbilityLevels, card.abilityState, card.abilityDisabledUntil = nil, nil, nil
+    card.heldEmpowerment,card.discardSpeedBonus=nil,nil
     card.disableFactionPassives=true;card.isWildSuit=false;card.isDualRankAce=false
     card.maxSockets = Equipment.getMaxSlots(card)
     card.unlockedSockets = card.maxSockets
@@ -226,6 +237,7 @@ local function restoreCard(savedCard)
     card.selected = false
     card.hovered = false
     card.faceDown = false
+    Deck.getCardAttackSpeed(card)
     Deck.ensureNextCardId(card.id)
     return card
 end

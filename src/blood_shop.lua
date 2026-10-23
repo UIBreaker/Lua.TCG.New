@@ -69,7 +69,6 @@ function B.applyConsumable(game,item,target,apply)
             for _,k in ipairs(fields) do
                 local gain=(c[k] or 0)-before[c][k]
                 if gain>0 then local n=(c[k] or 0)+gain*(power-1)
-                    if k=="evolutionLevel" then n=math.min(require("config.card_ability_data").maxEvolutionLevel,n) end
                     require("src.chest_expansion").sync(game,c,function(copy) copy[k]=n end)
                 end
             end

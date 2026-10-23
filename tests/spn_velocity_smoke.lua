@@ -56,9 +56,9 @@ g=game("spirit_slow_colossus");D.addDeity(g,D.CATALOG.spirit_pebble,1)
 assert(score(g,h).totalChips==240)
 g.deities[1]=g.deities[5];g.deities[5]=D.CATALOG.spirit_pebble
 assert(score(g,h).totalChips==220,"flat damage after versus before the multiplier")
-g=game("spirit_twinbeat");h,cards=hand({11,13},{"hearts","spades"})
+g=game("spirit_twinbeat");h,cards=hand({12,13},{"hearts","spades"});cards[2].speedBonus=1
 assert(step(score(g,h),"spirit_twinbeat").xMult==2,"distinct ranks can synchronize")
-cards[2].speedBonus=1;assert(not step(score(g,h),"spirit_twinbeat"))
+cards[2].speedBonus=2;assert(not step(score(g,h),"spirit_twinbeat"))
 cards[1].equipments={{attackSpeed=1}};assert(step(score(g,h),"spirit_twinbeat").xMult==2)
 assert(not step(score(g,hand({3})),"spirit_twinbeat"))
 

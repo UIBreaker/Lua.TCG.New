@@ -10,7 +10,7 @@ function Modal.openChoices(game,choices,callback)
 end
 function Modal.openEvolution(game,consumable,callback,sourceRect)
     local cards={}
-    for _,c in ipairs(game.persistentDeck or {}) do if A.definition(c) and (c.evolutionLevel or 0)<A.config.maxEvolutionLevel then cards[#cards+1]=c end end
+    for _,c in ipairs(game.persistentDeck or {}) do if A.definition(c) then cards[#cards+1]=c end end
     for i=1,Deities.getMaxSlots(game) do if game.deities and game.deities[i] then cards[#cards+1]=game.deities[i] end end
     if #cards==0 then return false end
     Modal.current={mode="evolution",game=game,consumable=consumable,cards=cards,page=1,callback=callback,sourceRect=sourceRect}
@@ -160,11 +160,11 @@ function Modal.draw(UI,mx,my)
     if m.mode=="evolution" and m.selected then
         local c=m.selected;local d=A.definition(c)
         love.graphics.setFont(UI.fonts.tiny);love.graphics.setColor(0.86,0.76,1,1)
-        local before=d and A.description(c) or Deities.getDescription(c)
+        local before=d and A.description(c,nil,true) or Deities.getDescription(c)
         local after
         local gain=require("src.blood_shop").powerOf(m.consumable)
-        local nextLevel=d and math.min(A.config.maxEvolutionLevel,A.level(c)+gain) or A.level(c)+gain
-        if d then after=A.description(c,nextLevel)
+        local nextLevel=A.level(c)+gain
+        if d then after=A.description(c,nextLevel,true)
         else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=(copy.evolutionLevel or 0)+gain;after=Deities.getDescription(copy) end
         local changes={}
         if d then local a,b=A.params(c),A.params(c,d,nextLevel);for k,v in pairs(a) do if b[k]~=v then changes[#changes+1]=(paramLabels[k] or k)..": "..v.." → "..b[k] end end;table.sort(changes) end

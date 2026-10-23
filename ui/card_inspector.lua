@@ -60,9 +60,9 @@ function I.model(item,game)
     end
     if item.rank then
         m.role=item.role and Deck.CARD_ROLES[item.role] or Deck.getCardRole(item.rank)
-        m.stats={{"SÁT THƯƠNG",item.baseChips or Deck.getChipValue(item.rank)},
+        m.stats={{"SÁT THƯƠNG",Deck.getCardDamage(item)},
             {"TỐC ĐÁNH",Deck.peekCardAttackSpeed(item,game)},
-            {"TIẾN HÓA",(item.evolutionLevel or 0).." / "..A.config.maxEvolutionLevel},
+            {"CƯỜNG HÓA",Deck.getCardEmpowerment(item)},
             {"HỐC KHẢM",E.getUsedSlots(item).." / "..E.getMaxSlots(item)}}
         local entries=E.getSocketEntries(item)
         local positions={"Trái trên","Phải trên","Phải dưới","Trái dưới","Cạnh trên","Cạnh phải","Cạnh dưới","Cạnh trái"}

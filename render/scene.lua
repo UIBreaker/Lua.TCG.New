@@ -70,7 +70,32 @@ local function drawLayer(layer,particleCap,blurred)
                 g.ellipse("fill",x,y,110+band*16,10+band*8)
             end
         end
-    elseif layer.kind=="particles" and not Scene.weather and C.effects.particles and C.enabled then
+    elseif layer.kind=="particles" and not Scene.weather and C.effects.particles and (C.enabled or Scene.name=="menu") then
+        if Scene.name=="menu" then
+            -- Layered fireflies over the landscape; keep logo and button text clear.
+            g.setBlendMode("add","alphamultiply")
+            local drift=Scene.reducedMotion and 0 or t
+            for i=1,particleCap*3 do
+                local depth=(i%11)/11
+                local x=(i*173.13+drift*(2+depth*5)+math.sin(drift*.18+i)*9)%1320-20
+                local y=(i*97.71-drift*(3+depth*9))%760-20
+                local quiet=(x<630 and y<205 or x>800 and y>225 and y<575) and .25 or 1
+                local pulse=Scene.reducedMotion and .5 or (.5+.5*math.sin(t*(.7+depth*.6)+i*2.4))^3
+                local alpha=(.22+.65*pulse)*quiet
+                local r,gc,bc=1,.79,.39
+                if i%3==0 then r,gc,bc=.48,.81,1 elseif i%3==1 then r,gc,bc=.76,.55,1 end
+                local radius=.9+depth*1.4
+                g.setColor(r,gc,bc,alpha*.12);g.circle("fill",x,y,radius*5)
+                g.setColor(r,gc,bc,alpha*.3);g.circle("fill",x,y,radius*2.5)
+                g.setColor(r,gc,bc,alpha);g.circle("fill",x,y,radius)
+                if i%7==0 then
+                    local ray=radius*(2+2*pulse)
+                    g.setColor(r,gc,bc,alpha*.65);g.setLineWidth(.7)
+                    g.line(x-ray,y,x+ray,y);g.line(x,y-ray,x,y+ray)
+                end
+            end
+            return
+        end
         local color=p.particleType=="embers" and C.palette.reward or p.lightTint
         -- Deterministic analytic particles: no gameplay RNG or per-frame tables.
         for i=1,particleCap do

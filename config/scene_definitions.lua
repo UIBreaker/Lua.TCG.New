@@ -40,7 +40,7 @@ D.states = {playing="battle", scoring="battle", menu="menu", shop="shop", CASH_O
     victory="reward", treasure="reward", chest="reward", map="map", rest="rest", gameover="battle",
     BLIND_SELECT="archive", event="archive", socketing="archive", boss_deity="archive"}
 -- Landscape menus do not acquire indoor columns or a combat floor.
-D.scenes.menu.layers={D.layers[1],D.layers[5],D.layers[6],D.layers[7]}
+D.scenes.menu.layers={D.layers[1],D.layers[5],D.layers[6]}
 D.bossPresets = {echo_knight="ICE",taxman="DESERT",gem_devourer="MYSTIC",executioner="VOLCANIC",
     faceless="VOID",the_needle="RUINS",the_water="ICE",the_hook="RUINS",the_fish="FOREST",the_arm="VOLCANIC"}
 function D.resolve(state, monster)

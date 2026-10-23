@@ -3,6 +3,9 @@ local F={}
 local meters=setmetatable({}, {__mode="k"})
 local faces=setmetatable({}, {__mode="k"})
 local gold,cyan={1,.83,.40,1},{.42,.91,1,1}
+local function pendingReflection(turn,m)
+    return turn and turn.result and (turn.result.reflectedAttack or 0)>0 and turn.reactions and turn.reactions[m] and (turn.reflectionAge or 0)<.22
+end
 local function inside(x,y,bx,by,w,h) return x>=bx and y>=by and x<=bx+w and y<=by+h end
 
 function F.targetAt(game,mx,my)
@@ -62,7 +65,7 @@ function F.world(game,UI,Renderer,Art,Death,art,time,motion,scoring,turn)
         local x,y,w,h=G.rect(i,#list);local cx,cy=x+w/2,y+h/2
         m.screenX=cx
         local img=Art.image(m,art)
-        if m.hp>0 then
+        if m.hp>0 or pendingReflection(turn,m) then
             local target=m==game.monster
             local recoil,squash,flash=0,1,0
             local reacting=not turn and scoring and (scoring.sequence.enemy==m or not scoring.sequence.enemy and target)
@@ -97,7 +100,7 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
     local Style=require("ui.backpack_style");local Chrome=require("ui.combat_chrome")
     local hovered=not locked and F.targetAt(game,mx,my)
     for i,m in ipairs(list) do
-        local x,y,w,h=G.rect(i,#list);local target=m==game.monster;local alive=m.hp>0
+        local x,y,w,h=G.rect(i,#list);local target=m==game.monster;local alive=m.hp>0 or pendingReflection(turn,m)
         local moving=turn and turn.attackers[turn.index]==m and turn.phase~="pause"
         local c=target and gold or hovered==m and cyan or {0.68,0.76,0.82,1}
         if turn and turn.attackers[turn.index]==m then
@@ -134,7 +137,7 @@ function F.hud(game,UI,mx,my,turn,sequence,locked)
             drawMeter(UI,Health,Chrome,x-9,120,w+18,20,armor,armor,math.max(armor,m.creatureArmorMax or 0,scoring and scoring.armorBefore or 0),true,reflected and reflected.armor.trail or scoring and scoring.armorTrail or state.armor and state.armor.trail)
         end
         local shownHp=reflected and reflected.hp.shown or scoring and scoring.hp or state.hp and state.hp.shown or m.hp
-        drawMeter(UI,Health,Chrome,x-9,142,w+18,22,shownHp,scoring and scoring.hp or m.hp,m.maxHp,false,
+        drawMeter(UI,Health,Chrome,x-9,142,w+18,22,shownHp,pendingReflection(turn,m) and shownHp or scoring and scoring.hp or m.hp,m.maxHp,false,
             reflected and reflected.hp.trail or scoring and scoring.hpTrail or state.hp and state.hp.trail)
         if not moving then
             Style.glow(x+w/2,y+h+4,69,c,target and .16 or .06)

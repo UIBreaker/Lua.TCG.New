@@ -410,22 +410,26 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     local cardScaleY = (card.scaleY or card.scale or 1) * s
     local shearX = (card.tiltX or 0) * 0.035
     local shearY = (card.tiltY or 0) * 0.025
+    local handMotion = UI.HandMotion.get(card)
+    local onHand = handMotion and x == card.visualX and y == card.visualY and effectHovered ~= nil
+    local buffX,buffY,buffAngle=0,0,0
+    if onHand and not card.faceDown and not isFloating and not UI.CardPhysics.isHeld(card) then
+        buffX,buffY,buffAngle=require("ui.discard_effects").cardPose(card,UI.HandMotion.reducedMotion)
+    end
     local fxTiltX, fxTiltY = CardEffects.getTilt(card)
     shearX, shearY = shearX + fxTiltX, shearY + fxTiltY
     if effectHovered ~= nil then CardEffects.setInteraction(card, effectHovered, selected or UI.Polish.isFocused(card)) end
-    CardEffects.prepareDraw(card, effectX or x, effectY or y, w, h,
+    CardEffects.prepareDraw(card, (effectX or x)+buffX, (effectY or y)+buffY, w, h,
         effectShearX or shearX, effectShearY or shearY,
         effectScaleX or cardScaleX, effectScaleY or cardScaleY,
         UI.virtualMouseX, UI.virtualMouseY)
     g.push("all")
-    g.translate(x + w / 2, y + h / 2)
-    g.rotate(card.rotation or 0)
+    g.translate(x + w / 2+buffX, y + h / 2+buffY)
+    g.rotate((card.rotation or 0)+buffAngle)
     g.shear(shearX, shearY)
     g.scale(cardScaleX, cardScaleY)
     g.translate(-w / 2, -h / 2)
     UI.CardPhysics.capture(card, 0, 0, w, h)
-    local handMotion = UI.HandMotion.get(card)
-    local onHand = handMotion and x == card.visualX and y == card.visualY and effectHovered ~= nil
     if onHand and not card.faceDown and not isFloating then
         local hover, chosen = handMotion.hover, handMotion.selected
         local blue, gold = UI.COLORS.chipsBlue, UI.COLORS.goldYellow
@@ -691,6 +695,9 @@ end
 function UI.drawItemEmblem(item, cx, cy, size, color)
     if item and (item.sealType or item.id and Deck.SEALS[item.id]) then
         return UI.SealEmblems.draw(item.sealType or item.id,cx,cy,size)
+    end
+    if item and type(item.icon)=="string" and item.icon:find("🛡",1,true) then
+        return require("ui.components.shield").draw(cx,cy,size*2,color or item.color,1)
     end
     local g = love.graphics
     local id = tostring((item and (item.id or item.name)) or "relic")
@@ -1406,7 +1413,7 @@ function UI.drawCardHoverBadge(card, cx, cy, cardW, cardH)
     -- Bottom Section: +Chips / Equipment bonus
     love.graphics.setFont(UI.fonts.tiny)
     love.graphics.setColor(UI.COLORS.chipsBlue)
-    local chipStr = "+" .. (card.baseChips or 0) .. " chip"
+    local chipStr = "+" .. Deck.getCardDamage(card) .. " ST / " .. Deck.getCardEmpowerment(card) .. " CH"
     if card.equipments and #card.equipments > 0 then
         local eqMult = 0
         for _, eq in ipairs(card.equipments) do

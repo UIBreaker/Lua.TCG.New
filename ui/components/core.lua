@@ -26,7 +26,7 @@ function Core.text(value, x, y, w, font, color, align)
     local g = love.graphics
     if font then g.setFont(font) end
     Core.color(color or Theme.colors.text)
-    g.printf(tostring(value or ""), x, y, math.max(1, w), align or "left")
+    require("ui.components.shield").printf(tostring(value or ""), x, y, math.max(1, w), align or "left")
 end
 
 function Core.textLine(value, x, y, w, font, color, align, smallerFont)

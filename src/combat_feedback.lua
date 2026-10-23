@@ -201,12 +201,12 @@ end
 
 local function outlined(g, text, x, y, width, color, alpha)
     g.setColor(0.015,0.02,0.035,alpha*0.95)
-    g.printf(text,x+1,y+4,width,"center")
+    require("ui.components.shield").printf(text,x+1,y+4,width,"center",true)
     for _,offset in ipairs({{-2,0},{2,0},{0,-2},{0,2},{-1,-1},{1,-1},{-1,1},{1,1}}) do
-        g.printf(text,x+offset[1],y+offset[2],width,"center")
+        require("ui.components.shield").printf(text,x+offset[1],y+offset[2],width,"center",true)
     end
     g.setColor(color[1],color[2],color[3],alpha)
-    g.printf(text,x,y,width,"center")
+    require("ui.components.shield").printf(text,x,y,width,"center")
 end
 
 local function sparkle(g,x,y,r,color,alpha)
@@ -221,7 +221,7 @@ local function luminousText(g,text,color,alpha,strength)
         g.setColor(color[1],color[2],color[3],alpha*strength*(radius==4 and 0.14 or 0.055))
         for i=1,8 do
             local angle=i*math.pi/4
-            g.printf(text,-230+math.cos(angle)*radius,math.sin(angle)*radius,460,"center")
+            require("ui.components.shield").printf(text,-230+math.cos(angle)*radius,math.sin(angle)*radius,460,"center",true)
         end
     end
     g.setBlendMode("alpha")
@@ -233,9 +233,7 @@ local function resourceIcon(g,kind,x,y,color,alpha,negative)
         g.circle("fill",x,y,6);g.setColor(0.17,0.09,0.025,alpha);g.circle("line",x,y,4)
         g.line(x,y-2,x,y+2)
     elseif kind=="armor" then
-        g.polygon("line",x-6,y-5,x,y-7,x+6,y-5,x+5,y+3,x,y+7,x-5,y+3)
-        if negative then g.line(x-2,y-5,x+2,y-1,x-2,y+2,x+1,y+5)
-        else g.line(x-3,y,x,y+3,x+3,y-2) end
+        require("ui.components.shield").draw(x,y,16,color,alpha,{broken=negative,split=3,tilt=.1})
     else g.setLineWidth(2);g.line(x-4,y,x+4,y);g.line(x,y-4,x,y+4) end
 end
 
@@ -475,7 +473,7 @@ function F.draw(ft, ui)
     if ft.kind and not ft.reducedMotion then
         -- A brief ivory highlight sells impact without washing out the value.
         g.setColor(1,0.97,0.85,alpha*math.exp(-age*12)*0.75)
-        g.printf(text,-230,-0.7,460,"center")
+        require("ui.components.shield").printf(text,-230,-0.7,460,"center",true)
     end
     if ft.kind=="damage" and tier==5 and F.foilShader then
         local shader=g.getShader()
@@ -487,7 +485,7 @@ function F.draw(ft, ui)
         F.foilShader:send("origin",{ox,oy})
         F.foilShader:send("span",math.max(1,right-ox))
         g.setShader(F.foilShader);g.setColor(ink[1],ink[2],ink[3],alpha)
-        g.printf(text,-230,0,460,"center")
+        require("ui.components.shield").printf(text,-230,0,460,"center",true)
         g.setShader(shader)
     end
     if ft.label and not crowded then
@@ -542,9 +540,6 @@ local function line(g,c,alpha,width,...)
     g.setColor(c[1],c[2],c[3],alpha*0.065);g.setLineWidth(width*2.6);g.line(...)
     g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(width);g.line(...)
 end
-local function shield(g,x,y,r,mode)
-    g.polygon(mode,x-r*0.7,y-r*0.65,x,y-r,x+r*0.7,y-r*0.65,x+r*0.62,y+r*0.2,x,y+r,x-r*0.62,y+r*0.2)
-end
 local function contact(e)
     local age=math.max(0,e.age-e.profile.contact)
     return age,e.age>=e.profile.contact and math.exp(-age*26) or 0
@@ -552,32 +547,14 @@ end
 local painters={}
 painters.armor_gain=function(g,e,p,c,alpha)
     local age,hit=contact(e);local build=clamp(e.age/e.profile.contact)^2
-    local r=17+hit*2
-    g.setColor(c[1],c[2],c[3],alpha*(0.035+hit*0.055));shield(g,0,0,r*1.15,"fill")
-    g.setColor(c[1],c[2],c[3],alpha*build);g.setLineWidth(1.8);shield(g,0,0,r,"line")
-    for i=1,4 do local a=i*math.pi/2;local d=36*(1-build)+r
-        line(g,c,alpha*(1-build),2,math.cos(a)*d,math.sin(a)*d,math.cos(a)*(d+6),math.sin(a)*(d+6)) end
-    line(g,c,alpha*build,2,-6,0,0,6,8,-7)
-    g.setColor(c[1],c[2],c[3],alpha*hit*0.6);g.setLineWidth(1)
-    shield(g,0,0,r+out(age/0.24)*15,"line")
-    sparkle(g,13,-13,2+hit*4,{0.85,0.98,1},alpha*hit)
+    require("ui.components.shield").draw(0,0,36+hit*3,c,alpha*build)
+    sparkle(g,9,-10,1+hit*3,{.85,.98,1},alpha*hit)
 end
 painters.armor_loss=function(g,e,p,c,alpha)
-    local age,hit=contact(e);local fly=clamp(age/0.32)
-    if e.age<e.profile.contact then
-        g.setColor(c[1],c[2],c[3],alpha);g.setLineWidth(2);shield(g,0,0,18,"line")
-        line(g,c,alpha,1.8,-4,-17,3,-5,-4,3,5,17)
-    else
-        local points={{-13,-12},{0,-18},{13,-12},{11,4},{0,18},{-11,4}}
-        for i=1,6 do
-            local a,b=points[i],points[i%6+1];local dx,dy=(a[1]+b[1])*0.5,(a[2]+b[2])*0.5
-            local travel=1-math.exp(-age*12)
-            g.push();g.translate(dx*travel*1.6,dy*travel*1.3+fly*fly*30);g.rotate((i%2==0 and 1 or -1)*fly*0.85)
-            g.setBlendMode("alpha");g.setColor(0.10,0.22,0.29,alpha*0.8);g.polygon("fill",0,0,a[1],a[2],b[1],b[2])
-            g.setBlendMode("add");g.setColor(c[1],c[2],c[3],alpha*(0.65+hit*0.35));g.setLineWidth(1.3)
-            g.polygon("line",0,0,a[1],a[2],b[1],b[2]);g.pop()
-        end
-    end
+    local age,hit=contact(e)
+    local broken=e.age>=e.profile.contact
+    require("ui.components.shield").draw(0,0,36,c,alpha,{
+        broken=broken,split=math.min(22,age*70),tilt=age*.9})
 end
 painters.heal=function(g,e,p,c,alpha)
     local age,hit=contact(e);local gather=clamp(e.age/0.28);local ease=gather*gather*(3-2*gather)
@@ -670,7 +647,7 @@ function F.drawVfx(ui)
             g.setBlendMode("alpha");g.setFont(ui.fonts.tiny or ui.fonts.small)
             g.setColor(0.01,0.02,0.035,alpha*0.8);g.rectangle("fill",-115,15,230,24,5,5)
             g.setColor(e.profile.color[1],e.profile.color[2],e.profile.color[3],alpha)
-            g.printf(e.profile.label,-115,19,230,"center")
+            require("ui.components.shield").printf(e.profile.label,-115,19,230,"center")
         end
         g.pop()
     end

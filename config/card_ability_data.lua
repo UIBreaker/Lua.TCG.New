@@ -1,77 +1,73 @@
--- Continental 52: resource tactics resolve once before initiative, never on retriggers.
+-- The 52 cards share rank stats and suit-based discard effects.
 local Data = {
     maxEvolutionLevel=10, maxRetriggerDepth=4, maxCopyDepth=3,
     maxTriggersPerHand=128, maxRetriggersPerCard=8, armorCap=999,
-    tacticsVersion=2, goldPerHand=3, goldPerCombat=12, speedPerHand=3,
-    definitions={}, order={},
+    tacticsVersion=3, definitions={}, order={},
 }
-local function add(suit,rank,character,name,description,resource,base,bonus,rule,ambition,concept)
+local effects={
+    heart={name="Hồi sinh lực",text="Bỏ lá này: hồi {healPercent}% máu tối đa.",params={healPercent=1}},
+    diamond={name="Thu vàng",text="Bỏ lá này: nhận {gold} Vàng.",params={gold=1}},
+    club={name="Tiếp sức",text="Bỏ lá này: các lá còn trên tay +{speed} Tốc đánh trong 1 lượt.",params={speed=0.5}},
+    spade={name="Dựng giáp",text="Bỏ lá này: nhận Giáp bằng {armorPercent}% máu tối đa.",params={armorPercent=1}},
+}
+local function add(suit,rank,character,ambition)
     local id=suit.."_"..(({[11]="jack",[12]="queen",[13]="king",[14]="ace"})[rank] or rank)
-    local params={[resource]=base,bonus=bonus}
-    local speedRule=resource=="speed" or rule=="buy_speed" or rule=="armor_speed"
-    local scale={bonus={every=1,amount=speedRule and 0.125 or 0.5}}
-    if rule=="charge" then
-        params.charge=bonus/(suit=="diamond" and 2 or 3)
-        scale.charge={every=1,amount=resource=="speed" and 0.125 or 0.5}
-        description=description:gsub("mỗi tầng hồi thêm 2 Máu","mỗi tầng hồi thêm {charge} Máu")
-            :gsub("mỗi tầng 1 Vàng","mỗi tầng {charge} Vàng")
-            :gsub("mỗi tầng thêm 0.5","mỗi tầng thêm {charge}")
-            :gsub("mỗi tầng thêm 2 Giáp","mỗi tầng thêm {charge} Giáp")
-    end
-    local d={id=id,suit=suit,rank=rank,characterName=character,name=name,description=description,
-        trigger="before_score",op="tactic",rule=rule,baseParams=params,evolutionRules=scale,ambition=ambition}
+    local effect=effects[suit]
+    local d={id=id,suit=suit,rank=rank,characterName=character,name=effect.name,
+        description=effect.text.." Các lá cùng chất còn trên tay +1 Cường hóa.",
+        trigger="discard",op="suit_discard",baseParams=effect.params,evolutionRules={},ambition=ambition}
     Data.definitions[id]=d;Data.order[#Data.order+1]=id
 end
-add("heart",2,"Maera · Y Sĩ Tro Hồng","Song Hành","Hồi {heal} Máu; đúng 2 lá tính điểm: hồi thêm {bonus} Máu. Hồi dư chuyển thành Giáp.","heal",2,4,"pair","Cứu mọi người bị bỏ lại ở biên giới dung nham.","young freckled red-haired woman, asymmetrical short hair, ivory medic coat over oxblood leather, crimson vial and small buckler, ruined basalt bridge")
-add("heart",3,"Corvin · Người Giữ Nhịp Tim","Nhịp Thứ Ba","Hồi {heal} Máu; mỗi lượt đánh thứ 3: hồi thêm {bonus} Máu.","heal",2,6,"third","Tìm cách chữa trái tim hóa đá của em trai.","lean middle-aged man with ash-grey braid, charcoal surgeon apron, bronze heartbeat tuning fork against red crystal heart, volcanic infirmary")
-add("heart",4,"Yselle · Sứ Giả Bốn Bờ","Lời Thề Đoàn Kết","Hồi {heal} Máu; có ít nhất 3 chất tính điểm: hồi thêm {bonus} Máu.","heal",2,5,"diverse","Hợp nhất những đoàn viễn chinh từng là kẻ thù.","dark-skinned woman diplomat with shaved side hair, crimson traveling mantle, four simple woven cords knotted around healing lantern, basalt crossroads")
-add("heart",5,"Bram · Người Cõng Bình Minh","Hậu Tuyến","Hồi {heal} Máu; đứng cuối thứ tự tính điểm: hồi thêm {bonus} Máu và 4 Giáp.","heal",2,3,"last","Đưa đoàn tị nạn vượt vùng tro trước bình minh.","broad ginger-bearded porter, oxblood padded vest, enormous rescue backpack and sturdy walking staff, rising over ash ridge at sunrise")
-add("heart",6,"Edda · Bếp Lửa Viễn Chinh","Ấm Lòng","Hồi {heal} Máu; mỗi lá Cơ còn giữ: hồi thêm 2 Máu, tối đa {bonus}.","heal",2,4,"held_hearts","Nấu bữa tối cuối cùng ở mọi trại bị chiến tranh bỏ quên.","older stout woman with silver curls, rolled sleeves red quilted coat, iron cooking pot filled with restorative ember soup, calm basalt campsite")
-add("heart",7,"Lucan · Kẻ Trả Nợ Máu","Huyết Ước","Hồi {heal} Máu; đầu tay từ 50% Máu và 7 Vàng: trả 3 Máu để +1.5 Tốc đánh tay và {bonus} Giáp.","heal",2,4,"blood_pledge","Chuộc lại đoàn lính từng bị mình bán đứng.","one-eyed tan man with cropped black hair, red scarf, brass coin locket and crimson bandaged gauntlet raised defensively, volcanic trade gate")
-add("heart",8,"Vesta · Người Vá Khiên","Hồi Phục Sau Giáp","Hồi {heal} Máu; đã có Giáp trước tay: thêm {bonus} Máu; chưa có: +6 Giáp.","heal",2,3,"armored","Tái tạo bộ giáp bảo vệ quê nhà khỏi núi lửa.","young muscular woman with dark bun, leather smith apron over crimson armor, stitching glowing red seam into battered shield, basalt forge")
-add("heart",9,"Neris · Người Canh Lều","Dành Chỗ Cho Ngày Mai","Hồi {heal} Máu; còn ít nhất 1 lá không chơi: hồi thêm {bonus} Máu.","heal",2,3,"reserve","Dựng nơi trú ẩn mà không người lữ hành nào bị từ chối.","pale man with long auburn locks, quilted burgundy cloak, erecting an ivory rescue tent using a red lantern, ash wind plain")
-add("heart",10,"Aveline · Người Không Gục","Sống Để Che Chở","Đầu tay dưới 75% Máu: hồi {bonus} Máu; từ 75%: trả 4 Máu, nhận 8 Giáp và +0.5 Tốc đánh tay.","heal",2,6,"blood_plate","Giữ lời hứa sống sót để bảo vệ con gái.","athletic older woman with grey-streaked black ponytail, scarred red steel breastplate, tall shield planted in cracked lava ground, defiant gaze")
-add("heart",11,"Ronan · Cận Vệ Đỏ","Tiếp Sức Người Đi Trước","Hồi {heal} Máu; ngay trước là lá 2–10: hồi thêm {bonus} Máu.","heal",2,4,"soldier_before","Trở thành người bảo hộ mà người thầy đã không kịp trở thành.","young brown-skinned knight with tightly curled hair, plain red surcoat, sword lowered and healing hand extended forward, volcanic Western stairway")
-add("heart",12,"Seraphine · Người Gom Tàn Lửa","Ủ Sinh Mệnh","Hồi {heal} Máu; mỗi tay giữ không chơi tích 1 Tàn Lửa (tối đa 3), khi chơi mỗi tầng hồi thêm 2 Máu.","heal",2,6,"charge","Khôi phục khu vườn đầu tiên trên đất cháy.","mature woman with long silver hair, flowing russet healer dress, cupping three ember seeds beside a fragile sapling growing through basalt")
-add("heart",13,"Garrick · Vua Không Ngai","Đứng Dậy Lần Nữa","Hồi {heal} Máu, +2 Giáp; bắt đầu tay dưới 35% Máu: hồi thêm {bonus} Máu và +4 Giáp.","heal",2,6,"critical","Giành lại vương quốc bằng cách cứu dân trước khi lấy ngai.","heavy scarred bald man, weathered red regal armor without crown, broken royal sword used as walking support, kneeling then rising in ash ruins")
-add("heart",14,"Althea · Người Mở Bình Minh","Khởi Hành","Hồi {heal} Máu; tay đầu trận: hồi thêm {bonus} Máu và +1 Tốc đánh tay.","heal",2,3,"opening","Chứng minh ánh sáng vẫn tồn tại phía sau nhật thực.","young blonde woman with radiant determined eyes, white and crimson expedition cloak, lifting a restrained dawn lantern above lava coast")
-add("diamond",2,"Orrin · Người Đổi Muối","Giao Dịch Đôi","Nhận {gold} Vàng; đúng 2 lá tính điểm: thêm {bonus} Vàng.","gold",1,1,"pair","Mở tuyến trao đổi công bằng giữa sa mạc và biển.","stocky olive-skinned salt trader with black moustache, ochre waistcoat, balance scale weighing salt and coin, sandstone caravan gate")
-add("diamond",3,"Tamsin · Người Đòi Công","Ngày Nhận Lương","Nhận {gold} Vàng; mỗi lượt đánh thứ 3: thêm {bonus} Vàng.","gold",1,2,"third","Thu hồi tiền công bị cướp của thợ khai quật.","young woman with copper pixie cut and sand freckles, practical yellow mining coat, coin-stamped hammer held toward buried Western vault")
-add("diamond",4,"Nasira · Người Nối Bốn Chợ","Đa Dạng Hóa","Nhận {gold} Vàng; ít nhất 3 chất tính điểm: thêm {bonus} Vàng và 4 Giáp.","gold",1,1,"diverse","Kết nối bốn thương cảng mà không phục tùng đế chế.","dark-skinned woman with intricate short braids, bone-white desert cloak, four-region map and a single brass compass, fossil desert junction")
-add("diamond",5,"Perrin · Chủ Đoàn Lữ Hành","Chuyến Hàng Trọn Vẹn","Nhận {gold} Vàng; 5 lá tính điểm: thêm {bonus} Vàng và +1 Tốc đánh tay.","gold",1,1,"five","Dẫn đoàn hàng đầu tiên đến tận rìa lục địa.","lanky man with windswept sandy hair, ochre caravan captain coat, hauling a sealed brass cargo case along colossal fossil road")
-add("diamond",6,"Mirel · Người Nhặt Cơ Hội","Tái Chế","Nhận {gold} Vàng; đã bỏ bài từ tay trước: thêm {bonus} Vàng.","gold",1,1,"discarded","Biến những thứ bị bỏ đi thành cơ nghiệp của riêng mình.","young woman with tight black curls, patched mustard scavenger jacket, sorting one discarded broken relic into a valuable gold core, desert scrapyard")
-add("diamond",7,"Hadrien · Người Đếm Hoàng Hôn","Lãi Có Giới Hạn","Nhận {gold} Vàng; mỗi 10 Vàng đầu tay thêm 1 Vàng, tối đa {bonus} thêm.","gold",1,2,"interest","Tích đủ tiền mua tự do cho thị trấn mắc nợ.","older lean man with grey handlebar moustache and spectacles, sand linen banker coat, brass abacus and sunset sundial, quiet fossil desert")
-add("diamond",8,"Sabria · Người Bảo Chứng","Giáp Bảo Lãnh","Nhận {gold} Vàng; bắt đầu tay có ít nhất 8 Giáp: thêm {bonus} Vàng; chưa đủ: +2 Giáp.","gold",1,1,"armor8","Xây ngân khố không thể cướp để bảo vệ lương của đoàn.","strong dark woman with cropped platinum hair, antique-gold plated coat, heavy iron lockbox used as shield, ruined desert bank arch")
-add("diamond",9,"Elio · Người Bán Thuốc","Quỹ Cứu Thương","Dưới 50% Máu và đủ 2 Vàng: trả 2 Vàng để hồi {bonus} Máu; trường hợp khác nhận {gold} Vàng.","gold",1,8,"buy_heal","Đem thuốc tới những người mà thương hội không chịu cứu.","slender bronze-skinned man with chestnut curls, ivory desert apothecary robe, green medicine bottle offered beside a two-coin purse, sandstone well")
-add("diamond",10,"Rhea · Người Thuê Gió","Thuê Tiên Phong","Đủ 2 Vàng: trả 2 Vàng để +{bonus} Tốc đánh tay; thiếu tiền: nhận {gold} Vàng.","gold",1,2,"buy_speed","Thuê được đoàn trinh sát đưa mình tới thành phố thất lạc.","young woman with shaved auburn head, gold desert aviator scarf, brass wind vane spear and coin pouch, running across sand dune")
-add("diamond",11,"Dorian · Người Giữ Hợp Đồng","Bảo Lãnh Đồng Đội","Nhận {gold} Vàng; ngay trước khác chất: +{bonus} Giáp.","gold",1,6,"different_before","Viết bản hiệp ước mà cả người giàu lẫn nghèo đều giữ lời.","tall pale man with neat black side-part hair, practical gold-and-ivory envoy coat, wax-sealed blank scroll and round travel shield, sandstone bridge")
-add("diamond",12,"Isolde · Người Gom Hạt Vàng","Tiết Kiệm","Nhận {gold} Vàng; mỗi tay giữ không chơi tích 1 Hạt Vàng (tối đa 2), khi chơi nhận thêm mỗi tầng 1 Vàng.","gold",1,2,"charge","Mua lại ốc đảo bị chính gia đình bán cho bạo chúa.","mature brown-skinned woman with silver braided crown hair, ochre explorer dress, cupping two gold grains over a dry oasis spring")
-add("diamond",13,"Balthazar · Vua Của Đường Xa","Mua Thành Lũy","Có ít nhất 15 Vàng đầu tay và đủ 3 Vàng: trả 3 Vàng nhận {bonus} Giáp; trường hợp khác nhận {gold} Vàng.","gold",2,12,"buy_armor","Dùng tài sản xây con đường an toàn thay vì cung điện.","older broad man with auburn white-streaked beard, humble antique-gold armor and sand mantle, planting a coin-funded fortification stake in desert")
-add("diamond",14,"Zara · Người Bắt Đầu Từ Không","Vốn Khởi Nghiệp","Nhận {gold} Vàng; đầu tay dưới 5 Vàng: thêm {bonus} Vàng và 3 Giáp; từ 5 Vàng: +0.5 Tốc đánh tay.","gold",1,1,"poor","Chứng minh một đứa trẻ đường phố cũng có thể dựng thương hội.","young tan woman with messy black cropped hair, patched bone-white coat, small empty purse and bright antique coin, immense desert market ruins")
-add("club",2,"Finn · Người Chạy Song Song","Bước Đôi","+{speed} Tốc đánh tay; đúng 2 lá tính điểm: thêm {bonus}.","speed",0.5,1.5,"pair","Chạy nhanh đủ để không mất người bạn đồng hành lần nữa.","lean fair young man with red curly hair, moss-green ranger tunic, twin short batons, sprinting beside a river through ancient forest")
-add("club",3,"Sylva · Người Đếm Sấm","Nhịp Bứt Phá","+{speed} Tốc đánh tay; mỗi lượt đánh thứ 3: thêm {bonus}.","speed",0.5,2,"third","Tìm nơi tiếng sấm đã đánh thức khu rừng.","dark-skinned young woman with green leather hood and long black braids, bronze three-pronged tuning spear, poised on wet giant-tree root")
-add("club",4,"Kellan · Người Dẫn Bốn Lối","Giao Lộ Gió","+{speed} Tốc đánh tay; ít nhất 3 chất tính điểm: thêm {bonus}.","speed",0.5,1.5,"diverse","Vẽ đường thoát hiểm từ mọi ngả rừng.","red-bearded man with shaved temples, deep-green trailfinder cape, four-way carved wooden compass and running staff, forest crossing")
-add("club",5,"Ivara · Đội Trưởng Lá Rơi","Đội Hình Toàn Tốc","+{speed} Tốc đánh tay; 5 lá tính điểm: thêm {bonus} và 3 Giáp.","speed",0.5,1.5,"five","Đưa cả đội tới đích mà không bỏ người chậm nhất.","athletic bronze woman with short wavy brown hair, emerald captain mantle, wind-filled plain pennant and archer bracer, waterfall ledge")
-add("club",6,"Tobin · Người Cắt Lối","Đổi Đường","+{speed} Tốc đánh tay; đã bỏ bài từ tay trước: thêm {bonus}.","speed",0.5,1.5,"discarded","Phá vòng lặp của cánh rừng nuốt người.","stocky older man with salt-black beard, moss-green woodcutter harness, broad machete cutting one vine across a giant-tree path")
-add("club",7,"Liora · Người Chạy Qua Đau","Liều Lĩnh","+{speed} Tốc đánh tay; đầu tay dưới 50% Máu: thêm {bonus} và hồi 2 Máu.","speed",0.5,1.5,"wounded","Mang lời cầu cứu về trước khi vết thương khuất phục mình.","scarred pale woman with dark short swept hair, torn green courier cloak and bandaged leg, sprinting across forest rope bridge")
-add("club",8,"Aeric · Người Lướt Khiên","Trượt Giáp","+{speed} Tốc đánh tay; đầu tay có ít nhất 8 Giáp: thêm {bonus}.","speed",0.5,1.5,"armor8","Tạo cách di chuyển giúp lính giáp nặng vượt rừng.","young broad brown man with buzz cut, lightweight green steel armor, curved shield used as a gliding board over mossy roots")
-add("club",9,"Moss · Người Canh Nhịp","Giữ Đà","+{speed} Tốc đánh tay; còn lá không chơi: thêm {bonus}.","speed",0.5,1,"reserve","Nghe được nhịp sống của cây cổ nhất lục địa.","androgynous freckled adult with pale-green hood and long brown braid, wooden pendulum staff, balancing on root above waterfall")
-add("club",10,"Kael · Người Vượt Dốc","Leo Thang","+{speed} Tốc đánh tay; ngay trước có rank nhỏ hơn: thêm {bonus}.","speed",0.5,1.5,"ascending","Đặt chân lên đỉnh cây che cả bầu trời.","slender black-haired man with amber skin, fern-green climbing vest, grappling hook and rope stretched upward against colossal tree")
-add("club",11,"Thalia · Người Mở Lối","Tiên Phong","+{speed} Tốc đánh tay; đứng đầu thứ tự tính điểm: thêm {bonus}.","speed",0.5,1.5,"first","Mở đường để đoàn không phải trả giá bằng mạng người.","young woman with golden brown skin and auburn undercut, dark-green scout armor, thin saber sweeping aside leaves, heroic frontal forest stance")
-add("club",12,"Elowen · Người Ủ Gió","Gió Tích Lũy","+{speed} Tốc đánh tay; mỗi tay giữ không chơi tích 1 Gió (tối đa 3), khi chơi mỗi tầng thêm 0.5.","speed",0.5,1.5,"charge","Tìm lại giọng hát của khu rừng đã im lặng.","older elegant woman with long black hair streaked white, flowing deep-green travel robe, holding a spiral wind flute inside ancient canopy")
-add("club",13,"Rowan · Vua Những Bước Chân","Lệnh Rút Gọn","+{speed} Tốc đánh tay; chỉ 1 lá tính điểm: thêm {bonus} và 4 Giáp.","speed",0.5,1.5,"solo","Kết thúc chiến tranh bằng một bước đi quyết định.","weathered bearded man with silver short hair, hunter-green kingly leather cloak without crown, solitary long spear planted at forest cliff")
-add("club",14,"Zephyr · Người Đuổi Chân Trời","Đón Gió Đầu","+{speed} Tốc đánh tay; tay đầu trận: thêm {bonus} và nhận 1 Vàng.","speed",0.5,1.5,"opening","Nhìn thấy nơi tận cùng của tất cả những dòng sông.","young dark woman with white cropped curls, leaf-green and silver windrunner coat, open-winged cloak while leaping a waterfall gap")
-add("spade",2,"Torren · Người Giữ Cửa","Khiên Đôi","+{armor} Giáp; đúng 2 lá tính điểm: thêm {bonus} Giáp.","armor",4,4,"pair","Giữ cánh cổng băng đến khi người cuối cùng vượt qua.","massive bald dark-skinned man, blue-black northern guard armor, two interlocking slab shields, frozen Western fortress gate")
-add("spade",3,"Freya · Người Đếm Tuyết","Lớp Băng Thứ Ba","+{armor} Giáp; mỗi lượt đánh thứ 3: thêm {bonus} Giáp.","armor",4,6,"third","Ghi lại tên mọi người mất tích trong bão tuyết.","young pale woman with ash-blonde bob, glacial blue scale coat, three broad ice plates orbit a slate shield, snowy pass")
-add("spade",4,"Soren · Người Xây Bốn Trụ","Liên Kết Thành Lũy","+{armor} Giáp; ít nhất 3 chất tính điểm: thêm {bonus} Giáp.","armor",4,5,"diverse","Xây pháo đài nơi bốn dân tộc cùng được bảo vệ.","lean older man with grey moustache, steel-blue engineer coat, four anchor spikes linked by one chain, glacial cliff fortress")
-add("spade",5,"Hilda · Người Gánh Tường Thành","Hàng Ngũ Kín","+{armor} Giáp; 5 lá tính điểm: thêm {bonus} Giáp.","armor",4,6,"five","Mang một phần thành lũy tới những nơi không có thành.","powerful muscular woman with dark blonde braids, battered blue plate armor, enormous rectangular pavise on back, ascending ice stair")
-add("spade",6,"Borek · Thợ Rèn Băng","Tái Rèn","+{armor} Giáp; đã bỏ bài từ tay trước: thêm {bonus} Giáp.","armor",4,4,"discarded","Rèn từ phế tích một tấm khiên không bao giờ bỏ chủ.","stocky black-bearded northern man, ice-blue forge apron and silver gloves, hammering salvaged armor on a frozen anvil")
-add("spade",7,"Astrid · Người Che Vết Thương","Bảo Vệ Khẩn Cấp","+{armor} Giáp; đầu tay dưới 50% Máu: thêm {bonus} Giáp.","armor",4,6,"wounded","Bảo vệ người em từng mất một tay vì mình.","scarred mature woman with platinum ponytail, midnight-blue guardian cloak, curved silver shield covering bandaged shoulder, icy bridge")
-add("spade",8,"Osric · Người Rút Đinh","Nhẹ Giáp Đón Đòn","Đầu tay từ 8 Giáp và đủ 4 Giáp: đổi 4 Giáp lấy +{bonus} Tốc đánh tay, rồi +{armor} Giáp; chưa đủ: +8 Giáp.","armor",4,1.5,"armor_speed","Chứng minh phòng thủ cũng có thể chủ động ra đòn.","lean brown-skinned man with silver dreadlocks, segmented ice-blue armor, unfastening one heavy shield plate while advancing through snow")
-add("spade",9,"Eira · Người Giữ Hậu Phương","Tường Sau Lưng","+{armor} Giáp; còn lá không chơi: thêm {bonus} Giáp.","armor",4,4,"reserve","Giữ ánh đèn của trại luôn cháy trong đêm cực dài.","young olive woman with short raven hair, navy fur-lined expedition coat, broad camp shield and blue lantern, snowbound campsite")
-add("spade",10,"Magnus · Người Vá Xương Sống","Giáp Sinh Mệnh","Đầu tay từ 12 Giáp và đủ 6 Giáp: đổi 6 Giáp hồi {bonus} Máu, rồi +{armor} Giáp; chưa đủ: +6 Giáp.","armor",4,6,"armor_heal","Chữa lời nguyền khiến cơ thể đồng đội hóa thành sắt.","older large man with braided grey beard, glacier physician armor, withdrawing a steel splint from red healing crystal, frozen chapel ruins")
-add("spade",11,"Cedric · Người Chốt Đoàn","Hậu Vệ Thép","+{armor} Giáp; đứng cuối thứ tự tính điểm: thêm {bonus} Giáp.","armor",4,5,"last","Không bao giờ để kẻ truy đuổi chạm vào đoàn mình.","young pale knight with straight dark hair and square jaw, steel-blue surcoat, reversed sword and heavy kite shield, watching icy rear path")
-add("spade",12,"Morrigan · Người Ủ Pha Lê","Giáp Tích Lũy","+{armor} Giáp; mỗi tay giữ không chơi tích 1 Băng (tối đa 3), khi chơi mỗi tầng thêm 2 Giáp.","armor",4,6,"charge","Tái tạo hồ băng giữ ký ức của mẹ.","mature dark-skinned woman with silver coils, midnight-blue crystal-weaver mantle, holding three growing ice facets beside frozen lake")
-add("spade",13,"Ulric · Vua Của Người Ở Lại","Thành Lũy Đơn Độc","+{armor} Giáp; chỉ 1 lá tính điểm: thêm {bonus} Giáp và hồi 2 Máu.","armor",4,6,"solo","Bảo vệ một vương quốc nhỏ còn đúng một ngôi làng.","old one-eyed man with long white beard, plain blackened king armor and blue cloak, huge shield planted beside one distant winter village")
-add("spade",14,"Vaela · Người Dựng Trại Đầu","Khai Trận Kiên Cố","+{armor} Giáp; tay đầu trận: thêm {bonus} Giáp và +0.5 Tốc đánh tay.","armor",4,4,"opening","Dựng trại đầu tiên ở bên kia dãy núi không ai vượt qua.","young tan woman with short silver hair, blue expedition commander armor, planting a plain campsite standard into glacier beside silver shield")
+add("heart",2,"Maera · Y Sĩ Tro Hồng","Cứu mọi người bị bỏ lại ở biên giới dung nham.")
+add("heart",3,"Corvin · Người Giữ Nhịp Tim","Tìm cách chữa trái tim hóa đá của em trai.")
+add("heart",4,"Yselle · Sứ Giả Bốn Bờ","Hợp nhất những đoàn viễn chinh từng là kẻ thù.")
+add("heart",5,"Bram · Người Cõng Bình Minh","Đưa đoàn tị nạn vượt vùng tro trước bình minh.")
+add("heart",6,"Edda · Bếp Lửa Viễn Chinh","Nấu bữa tối cuối cùng ở mọi trại bị chiến tranh bỏ quên.")
+add("heart",7,"Lucan · Kẻ Trả Nợ Máu","Chuộc lại đoàn lính từng bị mình bán đứng.")
+add("heart",8,"Vesta · Người Vá Khiên","Tái tạo bộ giáp bảo vệ quê nhà khỏi núi lửa.")
+add("heart",9,"Neris · Người Canh Lều","Dựng nơi trú ẩn mà không người lữ hành nào bị từ chối.")
+add("heart",10,"Aveline · Người Không Gục","Giữ lời hứa sống sót để bảo vệ con gái.")
+add("heart",11,"Ronan · Cận Vệ Đỏ","Trở thành người bảo hộ mà người thầy đã không kịp trở thành.")
+add("heart",12,"Seraphine · Người Gom Tàn Lửa","Khôi phục khu vườn đầu tiên trên đất cháy.")
+add("heart",13,"Garrick · Vua Không Ngai","Giành lại vương quốc bằng cách cứu dân trước khi lấy ngai.")
+add("heart",14,"Althea · Người Mở Bình Minh","Chứng minh ánh sáng vẫn tồn tại phía sau nhật thực.")
+add("diamond",2,"Orrin · Người Đổi Muối","Mở tuyến trao đổi công bằng giữa sa mạc và biển.")
+add("diamond",3,"Tamsin · Người Đòi Công","Thu hồi tiền công bị cướp của thợ khai quật.")
+add("diamond",4,"Nasira · Người Nối Bốn Chợ","Kết nối bốn thương cảng mà không phục tùng đế chế.")
+add("diamond",5,"Perrin · Chủ Đoàn Lữ Hành","Dẫn đoàn hàng đầu tiên đến tận rìa lục địa.")
+add("diamond",6,"Mirel · Người Nhặt Cơ Hội","Biến những thứ bị bỏ đi thành cơ nghiệp của riêng mình.")
+add("diamond",7,"Hadrien · Người Đếm Hoàng Hôn","Tích đủ tiền mua tự do cho thị trấn mắc nợ.")
+add("diamond",8,"Sabria · Người Bảo Chứng","Xây ngân khố không thể cướp để bảo vệ lương của đoàn.")
+add("diamond",9,"Elio · Người Bán Thuốc","Đem thuốc tới những người mà thương hội không chịu cứu.")
+add("diamond",10,"Rhea · Người Thuê Gió","Thuê được đoàn trinh sát đưa mình tới thành phố thất lạc.")
+add("diamond",11,"Dorian · Người Giữ Hợp Đồng","Viết bản hiệp ước mà cả người giàu lẫn nghèo đều giữ lời.")
+add("diamond",12,"Isolde · Người Gom Hạt Vàng","Mua lại ốc đảo bị chính gia đình bán cho bạo chúa.")
+add("diamond",13,"Balthazar · Vua Của Đường Xa","Dùng tài sản xây con đường an toàn thay vì cung điện.")
+add("diamond",14,"Zara · Người Bắt Đầu Từ Không","Chứng minh một đứa trẻ đường phố cũng có thể dựng thương hội.")
+add("club",2,"Finn · Người Chạy Song Song","Chạy nhanh đủ để không mất người bạn đồng hành lần nữa.")
+add("club",3,"Sylva · Người Đếm Sấm","Tìm nơi tiếng sấm đã đánh thức khu rừng.")
+add("club",4,"Kellan · Người Dẫn Bốn Lối","Vẽ đường thoát hiểm từ mọi ngả rừng.")
+add("club",5,"Ivara · Đội Trưởng Lá Rơi","Đưa cả đội tới đích mà không bỏ người chậm nhất.")
+add("club",6,"Tobin · Người Cắt Lối","Phá vòng lặp của cánh rừng nuốt người.")
+add("club",7,"Liora · Người Chạy Qua Đau","Mang lời cầu cứu về trước khi vết thương khuất phục mình.")
+add("club",8,"Aeric · Người Lướt Khiên","Tạo cách di chuyển giúp lính giáp nặng vượt rừng.")
+add("club",9,"Moss · Người Canh Nhịp","Nghe được nhịp sống của cây cổ nhất lục địa.")
+add("club",10,"Kael · Người Vượt Dốc","Đặt chân lên đỉnh cây che cả bầu trời.")
+add("club",11,"Thalia · Người Mở Lối","Mở đường để đoàn không phải trả giá bằng mạng người.")
+add("club",12,"Elowen · Người Ủ Gió","Tìm lại giọng hát của khu rừng đã im lặng.")
+add("club",13,"Rowan · Vua Những Bước Chân","Kết thúc chiến tranh bằng một bước đi quyết định.")
+add("club",14,"Zephyr · Người Đuổi Chân Trời","Nhìn thấy nơi tận cùng của tất cả những dòng sông.")
+add("spade",2,"Torren · Người Giữ Cửa","Giữ cánh cổng băng đến khi người cuối cùng vượt qua.")
+add("spade",3,"Freya · Người Đếm Tuyết","Ghi lại tên mọi người mất tích trong bão tuyết.")
+add("spade",4,"Soren · Người Xây Bốn Trụ","Xây pháo đài nơi bốn dân tộc cùng được bảo vệ.")
+add("spade",5,"Hilda · Người Gánh Tường Thành","Mang một phần thành lũy tới những nơi không có thành.")
+add("spade",6,"Borek · Thợ Rèn Băng","Rèn từ phế tích một tấm khiên không bao giờ bỏ chủ.")
+add("spade",7,"Astrid · Người Che Vết Thương","Bảo vệ người em từng mất một tay vì mình.")
+add("spade",8,"Osric · Người Rút Đinh","Chứng minh phòng thủ cũng có thể chủ động ra đòn.")
+add("spade",9,"Eira · Người Giữ Hậu Phương","Giữ ánh đèn của trại luôn cháy trong đêm cực dài.")
+add("spade",10,"Magnus · Người Vá Xương Sống","Chữa lời nguyền khiến cơ thể đồng đội hóa thành sắt.")
+add("spade",11,"Cedric · Người Chốt Đoàn","Không bao giờ để kẻ truy đuổi chạm vào đoàn mình.")
+add("spade",12,"Morrigan · Người Ủ Pha Lê","Tái tạo hồ băng giữ ký ức của mẹ.")
+add("spade",13,"Ulric · Vua Của Người Ở Lại","Bảo vệ một vương quốc nhỏ còn đúng một ngôi làng.")
+add("spade",14,"Vaela · Người Dựng Trại Đầu","Dựng trại đầu tiên ở bên kia dãy núi không ai vượt qua.")
 return Data

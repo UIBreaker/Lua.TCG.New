@@ -1,4 +1,5 @@
 local T=require("src.combat_timing")
+require("tests.timing_vfx_smoke")
 local C=require("src.combat")
 local P=require("src.enemy_attack_presentation")
 local M=require("src.monster")
@@ -69,14 +70,14 @@ for i=1,150 do
     assert(T.grade(s,(s.zones[1].from+s.zones[1].to)/2)=="perfect")
     assert(T.grade(s,(s.zones[4].from+s.zones[4].to)/2)=="critical")
     assert(T.grade(s,s.zones[5].from+.01)=="trap","red surrounds the risky gold point")
-    assert(T.grade(s,(s.zones[6].from+s.zones[6].to)/2)=="trap")
+    assert(T.grade(s,s.zones[6].from+.005)=="trap")
     assert(T.grade(s,0)=="normal" and T.grade(s,1)=="normal")
 end
 local count=0;for _ in pairs(layouts) do count=count+1 end
 assert(count>10 and directions[true] and directions[false],"shuffle and offset targets and travel direction")
 local function stopAt(index,offset)
     local s=T.start("attack",10,10)
-    s.age=s.ready;s.position=offset and s.zones[index].from+offset or (s.zones[index].from+s.zones[index].to)/2
+    s.age=s.ready;s.position=offset and s.zones[index].from+offset or (index==6 and s.zones[index].from+.005 or (s.zones[index].from+s.zones[index].to)/2)
     assert(T.press(s));return s.result
 end
 local trap=stopAt(6)
@@ -98,12 +99,12 @@ local cues=require("config.timing_audio_baked")
 local sound=require("src.sound");local play=sound.play;local heard={}
 sound.play=function(name) assert(cues[name],name);heard[#heard+1]=name;return true end
 for _,kind in ipairs({"attack","parry"}) do
-    for _,grade in ipairs({"good","perfect","critical","ultimate","trap","normal","timeout"}) do
+    for _,grade in ipairs({"good","perfect","critical","ultimate","apex","trap","normal","timeout"}) do
         local s=T.start(kind,10,10)
         if grade=="timeout" then T.update(s,s.ready+s.duration+.01)
         else
             local index=({good=3,perfect=1,critical=4,ultimate=7,trap=6})[grade]
-            s.age=s.ready;s.position=index and (s.zones[index].from+s.zones[index].to)/2 or 0
+            s.age=s.ready;s.position=grade=="apex" and (s.apex.from+s.apex.to)/2 or grade=="trap" and s.zones[6].from+.005 or index and (s.zones[index].from+s.zones[index].to)/2 or 0
             T.press(s)
         end
         assert(heard[#heard]==audio.cue(kind,grade),"each mode/grade routes its own recording")
@@ -112,7 +113,7 @@ end
 sound.play=play
 assert(M.getBlindHp(1,"small")==80 and M.getBlindHp(1,"big")==160 and M.getBlindHp(1,"boss")==240)
 assert(M.getBlindHp(2,"small")==120)
-print("Timing modes passed: 16 distinct audio routes and stronger enemy HP/damage/speed")
+print("Timing modes passed: 18 distinct audio routes and stronger enemy HP/damage/speed")
 
 local ultimate=stopAt(7)
 g,m=fixture();g.lastPlayerAttackSpeed=1
@@ -151,3 +152,42 @@ C.resolveMonsterAttack(g,nil,10,m,ultimate)
 assert(m.hp==0 and ally.hp==5000 and C.getOutcome(g)=="continue","reflection hits only its attacker, not the whole formation")
 assert(require("src.enemy_group").ensureTarget(g)==ally,"a reflected kill retargets a surviving enemy")
 print("Reflection formation passed: exact attacker, surviving allies and target transfer")
+
+local apexBar=T.start("attack",10,10)
+apexBar.age=apexBar.ready;apexBar.position=(apexBar.apex.from+apexBar.apex.to)/2
+assert(T.press(apexBar) and apexBar.result.grade=="apex")
+local apex=apexBar.result
+g,m=fixture();g.lastPlayerAttackSpeed=1
+assert(C.resolvePlayerAttack(g,40,nil,apex)==320,"apex x8 damage and guaranteed accuracy")
+g,m=fixture();m.maxHp=10000;m.hp=10000
+hit=C.resolveMonsterAttack(g,nil,10,m,apex)
+assert(hit.parried and hit.reflectedAttack==5000 and m.hp==5000 and g.playerHp==100 and hit.parryArmor==10)
+for i=1,150 do
+    local s=T.start("parry",10,10);local z=s.apex
+    assert(z.to-z.from<s.zones[7].to-s.zones[7].from and math.abs(z.to-z.from-.015)<1e-9)
+    assert(T.grade(s,(z.from+z.to)/2)=="apex")
+    assert(T.grade(s,z.from-.001)=="trap" and T.grade(s,z.to+.001)=="trap")
+end
+print("Apex passed: x8 damage, x250 reflection, 1.5% target, 150 randomized red-bordered layouts")
+
+for _,fps in ipairs({30,60,144}) do for _,speed in ipairs({1,2.6}) do
+    g,m=fixture();m.hp=10000;m.maxHp=10000
+    local turn;local hits,impacts,time=0,0,0
+    turn=P.start(g,nil,10,function(result)
+        hits=hits+1;assert(result.reflectedAttack==5000)
+        turn.onReflectionImpact=function()
+            impacts=impacts+1;assert(turn.reflectionAge>=.22)
+        end
+    end,function() end)
+    turn.parryResult=apex
+    while not turn.finished do
+        P.update(turn,g,speed/fps,false,1/fps);time=time+1/fps
+        if turn.phase=="recover" and turn.result and (turn.reflectionAge or 0)<.22 then
+            assert(turn.reactions[m].hp.shown==10000,"enemy meter must wait for the return beam")
+            local _,_,flash=P.reaction(turn,m);assert(flash==0,"no recoil before return contact")
+        end
+        assert(time<5)
+    end
+    assert(hits==1 and impacts==1 and turn.reflectionAge>=.48 and g.playerHp==100)
+end end
+print("Reflection presentation passed: delayed enemy meters/recoil, one impact callback, readable recovery at 30/60/144 FPS and fast speed")

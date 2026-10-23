@@ -8,7 +8,7 @@ local Poker=require("src.poker")
 local S=require("src.scoring")
 local Rng=require("src.rng")
 local Persistence=require("src.persistence")
-local function card(rank) local c=Deck.newCard(rank or 3,"spades");c.disableFactionPassives=true;return c end
+local function card(rank) local c=Deck.newCard(rank or 3,"diamonds");c.disableFactionPassives=true;return c end
 local function game(id)
     local g=Game.new();g.deities={};g.backpackDeities={};g.playerHp=100;g.playerArmor=0;g.playerShield=0
     g.monster={hp=10000,maxHp=10000,attack=1,attackSpeed=1}

@@ -66,35 +66,18 @@ function D.resolve(item,game)
     local def=A.definition(item)
     if def then
         local level=item.evolutionLevel or 0
-        local text=A.description(item).."\nTIẾN HÓA "..level.." / "..A.config.maxEvolutionLevel
-        if (item.temporaryAbilityLevels or 0)>0 then text=text.." · TẠM +"..item.temporaryAbilityLevels end
-        if level>=A.config.maxEvolutionLevel then text=text.." · MAX EVOLUTION" end
-        text=text.."\n"..def.ambition.."\nKích hoạt trước so tốc đánh, một lần/lá/tay; lặp điểm không lặp tài nguyên."
-        text=text.."\nToàn tay: tối đa 12 hồi Máu, 24 Giáp, +3 Tốc; 3 Vàng/tay và 12 Vàng/trận từ bộ 52."
-        if def.suit=="heart" then text=text.."\nCơ: hồi Máu dư chuyển thành Giáp." end
-        text=text.."\nVàng hoặc Tốc vượt giới hạn tạo 2 Giáp mỗi đơn vị, vẫn chịu giới hạn Giáp."
-        if level<A.config.maxEvolutionLevel then text=text.."\nKẾ TIẾP: "..A.description(item,A.level(item)+1) end
-        text=text.."\nCơ bản: "..(item.baseChips or Deck.getChipValue(item.rank)).." ST · Tốc đánh "..Deck.getCardAttackSpeed(item)
+        local text=A.description(item).."\nBẬC "..Deities.getRarityBadge(item).." · Cấp "..math.min(10,level+1).." / 10"
+        text=text.."\n"..def.ambition.."\nKích hoạt khi chủ động bỏ bài; Cường hóa giữ đến khi lá rời tay."
+        text=text.."\nHiệu ứng bỏ bài tối đa cấp 10. Từ TT, mỗi lần tiến hóa +1 ST, +1 Tốc và +1 Cường hóa gốc."
+        text=text.."\nKẾ TIẾP: "..A.description(item,level+1,true)
         local mark=require("src.spn_pacts").cardMark(game,item);if mark then text=text.."\n"..mark end
         local potionDamage,potionMult=require("src.potions").cardBonus(game,item)
         potionMult=potionMult-(item.potionPermanentMult or 0)
         if potionDamage>0 or potionMult>0 then text=text.."\nTHUỐC · +"..potionDamage.." ST / +"..potionMult.." Cường hóa · hết lượt là hết hiệu lực." end
         if (item.potionPermanentDamage or 0)>0 or (item.potionPermanentMult or 0)>0 then text=text.."\nDƯỢC HỒN · +"..(item.potionPermanentDamage or 0).." ST / +"..(item.potionPermanentMult or 0).." Cường hóa VĨNH VIỄN." end
         local power=require("src.blood_shop").powerOf(item)
-        if item.rank==11 then text=text.."\nVai trò J: +"..(15*power).." ST và +"..(2*power).." Cường hóa mỗi lá 2–10 được chơi."
-        elseif item.rank==12 then
-            local count=#(item.equipments or {})
-            text=text.."\nVai trò Q: +"..(.1*power).." hệ số; +"..(15*count*power).." ST và +"..(2*count*power).." Cường hóa từ "..count.." trang bị hiện tại (+"..(15*power).." ST / +"..(2*power).." Cường hóa mỗi món)."
-        elseif item.rank==13 then text=text.."\nVai trò K: +"..(25*power).." ST và +"..(5*power).." Cường hóa."
-        elseif item.rank==14 then text=text.."\nVai trò A: +"..(15*power).." ST." end
         if power>1 then text=text.."\n"..(item.statuePower and "TƯỢNG CỔ ×"..power or item.voidPower and "THE VOID ×"..power or "HUYẾT LUYỆN ×5").." · Chỉ số hiệu quả gấp "..power.."." end
         if (item.statueSpeedPenalty or 0)>0 then text=text.."\nLỜI NGUYỀN TƯỢNG CỔ · −"..item.statueSpeedPenalty.." Tốc vĩnh viễn (tối thiểu Tốc 1)." end
-        local state=item.abilityState or {}
-        if state.tacticCharge then text=text.."\nTích hiện tại: "..state.tacticCharge end
-        if state.hearts then text=text.."\nTâm hiện tại: "..state.hearts.." / "..(A.params(item).maxStacks or 0) end
-        if state.savings then text=text.."\nVàng tích: "..state.savings.." / "..(A.params(item).maxStacks or 0) end
-        if state.bribeUsed then text=text.."\nHối lộ: đã dùng trong trận." end
-        if state.guardUsed then text=text.."\nVí Cứu Mệnh: đã dùng trong vòng." end
         if game and Boss.isAbilityDisabled(game,item) then text=text.."\nKHẢ NĂNG VÔ HIỆU trong tay này." end
         local monster=game and game.monster
         local blocked=Boss.scoreBlockReason(monster,item)
@@ -147,7 +130,7 @@ function D.resolve(item,game)
         return item.name,text
     end
     if item.category=="evolution" or item.id=="cons_evolution" then
-        return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +"..require("src.blood_shop").powerOf(item).." cấp thông số khả năng lâu dài, không đổi rank/chất. Tối đa "..A.config.maxEvolutionLevel..". Cũng có thể nâng SPN theo hệ bậc hiện tại."
+        return item.name,"Chọn một lá trong bộ bài, xem TRƯỚC → SAU rồi xác nhận. +"..require("src.blood_shop").powerOf(item).." bậc tiến hóa lâu dài. Hiệu ứng bỏ bài tối đa cấp 10; TT+ tiếp tục cộng +1 ST / +1 Tốc / +1 Cường hóa gốc mỗi bậc. Cũng có thể nâng SPN theo hệ bậc hiện tại."
     end
     if item.category=="edition" then return item.name,(Effects.getScoreBonus({edition=item.edition}) and "Chọn lá bài hoặc SPN" or "Chọn lá bài").." để áp dụng. Dùng chuột phải; không tiêu hao nếu hủy lựa chọn."..D.edition({edition=item.edition,editionPower=item.bloodPower}) end
     if item.packType then return item.name,item.desc or "" end

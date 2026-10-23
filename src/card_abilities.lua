@@ -11,12 +11,12 @@ end
 function A.level(card) return math.max(0,(tonumber(card.evolutionLevel) or 0)+(tonumber(card.temporaryAbilityLevels) or 0)) end
 function A.params(card, def, level)
     def=def or A.definition(card); if not def then return {} end
-    level=level or A.level(card)
+    level=math.min(9,level or A.level(card))
     local p={}
     for k,v in pairs(def.baseParams) do
-        local r=def.evolutionRules[k]
+        local r=def.op=="suit_discard" and v or def.evolutionRules[k]
         local gain=type(r)=="number" and r*level or type(r)=="table" and math.floor(level/r.every)*r.amount or 0
-        p[k]=v+gain*((card.edition=="ancient" or card.visualEffect=="ancient") and 3 or 1)
+        p[k]=v+gain
     end
     return require("src.blood_shop").params(p,require("src.blood_shop").powerOf(card))
 end
@@ -50,10 +50,14 @@ function A.effectiveParams(game,card,def,ctx)
     return p
 end
 local function number(n) return string.format("%g",n) end
-function A.description(card, level)
+function A.description(card, level, includeStats)
     local d=A.definition(card); if not d then return "" end
     local p=A.params(card,d,level)
-    return d.description:gsub("{([%w_]+)}",function(k) return number(p[k] or 0) end)
+    local text=d.description:gsub("{([%w_]+)}",function(k) return number(p[k] or 0) end)
+    if not includeStats then return text end
+    local Deck=require("src.deck")
+    local speed=Deck.peekCardAttackSpeed(card,nil,level)
+    return text.." "..number(Deck.getCardDamage(card,level)).." ST · "..number(speed).." Tốc · "..number(Deck.getCardEmpowerment(card,level)).." Cường hóa"
 end
 function A.runtime(card) card.abilityState=card.abilityState or {}; return card.abilityState end
 local function stateCopy(card)
@@ -74,6 +78,7 @@ function A.start(game)
     for _,c in ipairs(allCards(game)) do
         c.abilityState={};c.temporaryAbilityLevels=0;c.abilityDisabledUntil=nil;c.destroyed=nil;c.destructionNotified=nil
         c.disableFactionPassives=true;c.isWildSuit=false;c.isDualRankAce=false
+        c.heldEmpowerment=nil;c.discardSpeedBonus=nil
     end
 end
 local function combat(game)
@@ -109,10 +114,10 @@ function A.upgrade(game,card,levels,temporary)
     local previous=A.level(card)
     if temporary then card.temporaryAbilityLevels=(card.temporaryAbilityLevels or 0)+levels
     else
-        local level=math.max(0,math.min(Data.maxEvolutionLevel,(card.evolutionLevel or 0)+levels))
+        local level=math.max(0,(card.evolutionLevel or 0)+levels)
         card.evolutionLevel=level
         for _,pile in ipairs({game.persistentDeck or {},game.hand or {},game.deck or {},game.discardPile or {}}) do
-            for _,copy in ipairs(pile) do if copy.id==card.id then copy.evolutionLevel=level end end
+            for _,copy in ipairs(pile) do if copy.id==card.id then copy.evolutionLevel=level;require("src.deck").getCardAttackSpeed(copy) end end
         end
     end
     if A.level(card)>previous then
@@ -122,7 +127,6 @@ function A.upgrade(game,card,levels,temporary)
     return A.level(card)~=previous
 end
 function A.evolve(game,card)
-    if (card.evolutionLevel or 0)>=Data.maxEvolutionLevel then return false end
     return A.upgrade(game,card,1,false)
 end
 function A.handSize(game,base)
@@ -295,7 +299,7 @@ function A.finishHand(game)
     local held={}
     for _,c in ipairs(game.hand or {}) do if not contains(ctx.played,c) then held[#held+1]=c end end
     A.dispatch(game,"hand_end",held,ctx)
-    require("src.playing_card_tactics").hold(game,held)
+    require("src.playing_card_tactics").finishHand(game,ctx.played)
     combat(game).tacticDiscarded=nil
     combat(game).previousHandType=ctx.handInfo.type.id
     require("src.free_human_bosses").finishHand(game,ctx)
@@ -342,7 +346,7 @@ function A.discard(game,cards,context)
     if #(cards or {})>0 then combat(game).tacticDiscarded=true end
     if #(cards or {})>0 then require("src.spn_convergence").discard(game) end
     require("src.chest_depth").discard(game,cards,context)
-    A.dispatch(game,"discard",cards,{})
+    require("src.playing_card_tactics").discard(game,cards,context)
     require("src.spn_discard").discard(game,cards,context)
     if context and context.bloodPaid and context.playerDiscard and not context.preview and #(cards or {})>0 then
         require("src.spn_pacts").bloodReward(game)
@@ -390,7 +394,6 @@ function A.dispatch(game,event,cards,ctx)
     end
 end
 local H=A.handlers
-H.tactic=require("src.playing_card_tactics").apply
 local function suits(ctx) local seen,n={},0; for _,c in ipairs(ctx.scoring or {}) do local d=A.definition(c); local s=d and d.suit or c.suit; if not seen[s] then seen[s]=true;n=n+1 end end return n end
 local function once(ctx,c,key) ctx.once=ctx.once or {}; key=(c.id or tostring(c))..":"..key..((ctx.copyDepth or 0)>0 and (":copy"..(ctx.copyIteration or 1)) or ""); if ctx.once[key] then return false end; ctx.once[key]=true; return true end
 H.capacity=function() return true end

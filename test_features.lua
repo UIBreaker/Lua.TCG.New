@@ -19,14 +19,14 @@ print(" Test 1 Passed: Mono-Suit Deck (52 cards all Hearts)")
 -- Test 2: Monster and Boss stage logic
 local m1 = Monster.create(1)
 assert(m1.isBoss == false, "Round 1 should be normal monster")
-assert(m1.hp == 21, "Encounter 1 HP should be 21")
+assert(m1.hp == 80, "Encounter 1 HP should be 80")
 
 local m3 = Monster.create(3)
 assert(m3.isBoss == false, "Round 3 should be normal monster")
 
 local m4 = Monster.create(4, true, false, 4)
 assert(m4.isBoss == true, "Round 4 should be BOSS")
-assert(m4.hp == 142, "Encounter 4 Boss HP should be 142")
+assert(m4.hp == 360, "Encounter 4 Boss HP should be 360")
 
 local m8 = Monster.create(8, true, false, 8)
 assert(m8.isBoss == true, "Round 8 should be BOSS 2")
@@ -82,14 +82,14 @@ print(" Test 5 Passed: Spillover Mirror Adjacent Buff")
 local evolvingGame = { deities = {} }
 assert(Deities.addDeity(evolvingGame, Deities.CATALOG.spirit_drum))
 local evolvingDeity = evolvingGame.deities[1]
-local raritySteps = { "UC", "R", "E", "L", "M", "T", "UQ", "UQ+1" }
+local raritySteps = { "UC", "R", "E", "L", "M", "T", "UQ", "VH" }
 for _, expectedBadge in ipairs(raritySteps) do
     local ok, badge = Deities.evolve(evolvingDeity)
     assert(ok and badge == expectedBadge, "Expected evolved rarity " .. expectedBadge .. ", got " .. tostring(badge))
 end
 local scaledEffect = Deities.scaleEffect(evolvingDeity, { addMult = 1, message = "+1 Mult" })
-assert(scaledEffect.addMult == 5, "UQ+1 evolution must apply +50% of base power per evolution")
-assert(evolvingDeity.desc:find("+5 Mult", 1, true), "Evolved SPN description should show its concrete current stat")
+assert(scaledEffect.addMult == 5, "VH evolution must apply +50% of base power per evolution")
+assert(evolvingDeity.desc:find("+10 Cường hóa", 1, true), "Evolved SPN description should show its concrete current stat")
 assert(not evolvingDeity.desc:find("×", 1, true), "Evolved SPN description should not show a multiplier")
 local scoringGame = { deities = {} }
 assert(Deities.addDeity(scoringGame, Deities.CATALOG.spirit_drum))
@@ -98,8 +98,8 @@ local testHand = Poker.evaluate({ Deck.newCard(2, "hearts") })
 local baseSpnScore = Scoring.calculate(testHand, scoringGame.deities, {})
 assert(Deities.evolve(scoringDeity))
 local evolvedSpnScore = Scoring.calculate(testHand, scoringGame.deities, {})
-assert(evolvedSpnScore.totalMult == baseSpnScore.totalMult + 0.5,
-    "One SPN evolution must increase its original +1 Mult effect by 50%")
+assert(evolvedSpnScore.totalMult == baseSpnScore.totalMult + 1,
+    "One SPN evolution must increase its original +2 Mult effect by 50%")
 
 local rewardRun = RunManager.newRun()
 rewardRun.ante = 4
@@ -110,8 +110,8 @@ assert(RunManager.completeCurrentBlind(rewardRun, rewardGame), "Completing Ante 
 assert(rewardGame.pendingRoundRewardChoice and #rewardGame.pendingRoundRewardChoice.options == 3,
     "Ante 4 reward must offer Evolution, single speed, and team speed")
 assert(RunManager.chooseRoundReward(rewardGame, 2), "Player should be able to choose the single-card speed reward")
-assert(#rewardGame.consumables == 1 and rewardGame.consumables[1].category == "speed_single",
-    "Chosen speed reward should enter the consumable inventory")
+assert(#rewardGame.consumables == 0 and #rewardGame.backpackConsumables == 1 and rewardGame.backpackConsumables[1].category == "speed_single",
+    "Chosen speed reward should enter backpack storage")
 
 local normalRun = RunManager.newRun()
 normalRun.stats.blindsWon = 3
@@ -125,12 +125,12 @@ fullRewardRun.blinds = RunManager.generateAnteBlinds(4, "aurelia")
 local fullRewardGame = { consumables = { {}, {}, {} } }
 RunManager.completeCurrentBlind(fullRewardRun, fullRewardGame)
 assert(RunManager.chooseRoundReward(fullRewardGame, 1), "Player should be able to choose evolution even with full slots")
-assert(#fullRewardGame.consumables == 3 and #fullRewardGame.pendingRewardCards == 1,
-    "Chosen reward must queue safely when all consumable slots are full")
+assert(#fullRewardGame.consumables == 3 and #fullRewardGame.backpackConsumables == 1,
+    "Chosen reward must enter the backpack without replacing equipped consumables")
 table.remove(fullRewardGame.consumables, 1)
 RunManager.deliverEvolutionRewards(fullRewardRun, fullRewardGame)
-assert(#fullRewardGame.consumables == 3 and #fullRewardGame.pendingRewardCards == 0,
-    "Queued round reward should enter the first free consumable slot")
+assert(#fullRewardGame.consumables == 2 and #fullRewardGame.backpackConsumables == 1 and #fullRewardGame.pendingRewardCards == 0,
+    "Delivering again must not duplicate or auto-equip a backpack reward")
 
 local speedCard = Deck.newCard(2, "hearts")
 assert(Deck.applyAttackSpeedBonus(speedCard, 5) == 17, "Rank 2 base speed 12 plus potion 5")

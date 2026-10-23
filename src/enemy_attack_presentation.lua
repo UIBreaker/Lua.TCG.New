@@ -36,6 +36,7 @@ local function nextPhase(s,game)
         if not s.intent or s.intent.type=="attack" then require("src.sound").play("enemy_strike") end
     elseif s.phase == "strike" then
         s.phase = "recover"
+        s.reflectionAge=0
         local before={}
         for _,m in ipairs(Group.members(game)) do before[m]={hp=m.hp,armor=m.creatureArmor or 0} end
         s.result = Combat.resolveMonsterAttack(game, s.order, s.speed, s.attackers[s.index],s.parryResult)
@@ -62,6 +63,17 @@ end
 
 function P.update(s, game, dt, fast, realDt)
     if s.finished then return true end
+    local reflecting=s.phase=="recover" and s.result and (s.result.reflectedAttack or 0)>0
+    if reflecting then
+        s.reflectionAge=(s.reflectionAge or 0)+math.max(0,realDt or dt)
+        if s.reflectionAge>=.22 then
+            if s.onReflectionImpact then local impact=s.onReflectionImpact;s.onReflectionImpact=nil;impact() end
+            for m,r in pairs(s.reactions or {}) do
+                r.hp=Feedback.updateMeter(r.hp,m.hp,realDt or dt,0.24)
+                r.armor=Feedback.updateMeter(r.armor,m.creatureArmor,realDt or dt,0.24)
+            end
+        end
+    end
     if s.timing then
         if Timing.update(s.timing,realDt or dt) then
             s.parryResult=s.timing.result;s.timing=nil
@@ -75,11 +87,14 @@ function P.update(s, game, dt, fast, realDt)
         s.hp=Feedback.updateMeter(s.hp,game.playerHp,step,0.28)
         s.armor=Feedback.updateMeter(s.armor,armor(game),step,0.28)
         for m,r in pairs(s.reactions or {}) do
-            r.hp=Feedback.updateMeter(r.hp,m.hp,step,0.28)
-            r.armor=Feedback.updateMeter(r.armor,m.creatureArmor,step,0.28)
+            if not s.result or (s.result.reflectedAttack or 0)==0 then
+                r.hp=Feedback.updateMeter(r.hp,m.hp,step,0.28)
+                r.armor=Feedback.updateMeter(r.armor,m.creatureArmor,step,0.28)
+            end
         end
         if s.age>=P.timing[s.phase]-1e-9 then
             if s.phase=="prepare" and s.timing then return false end
+            if s.phase=="recover" and s.result and (s.result.reflectedAttack or 0)>0 and (s.reflectionAge or 0)<.48 then return false end
             if nextPhase(s,game) then s.finished=true;return true end
             if s.timing then return false end
         end
@@ -89,8 +104,18 @@ end
 
 function P.reaction(s,m)
     if not s or s.reducedMotion or not (s.reactions and s.reactions[m]) then return 0,1,0 end
-    local p=Motion.impact(s.age,0.32)
-    return -6*p,1-0.035*p,p
+    local age=s.result and (s.result.reflectedAttack or 0)>0 and (s.reflectionAge or 0)-.22 or s.age
+    local p=Motion.impact(age,0.32)
+    local reflected=s.result and (s.result.reflectedAttack or 0)>0
+    if reflected then
+        -- Fast contact, a short compressed hold, then a firm release instead of a soft sine wobble.
+        if age<0 then p=0
+        elseif age<.025 then p=age/.025
+        elseif age<.065 then p=1
+        else p=math.exp(-(age-.065)*16)*math.max(0,1-(age-.065)/.25) end
+    end
+    local force=reflected and (s.parryResult and s.parryResult.grade=="apex" and 28 or 20) or 6
+    return -force*p,1-(reflected and .11 or .035)*p,p
 end
 
 function P.motion(s, m)
@@ -157,10 +182,12 @@ function P.draw(s)
         local alpha=impact*(s.reducedMotion and .32 or .65)
         g.setColor(color[1],color[2],color[3],alpha);g.setLineWidth(1.7)
         local radius=s.reducedMotion and 24 or 18+smooth(math.min(1,s.age/.30))*32
-        g.arc("line","open",x,y,radius,math.pi*.08,math.pi*.92)
         if shield then
-            g.polygon("line",x-14,y-12,x,y-18,x+14,y-12,x+11,y+7,x,y+16,x-11,y+7)
-        end
+            -- A successful timing parry already owns the larger contact shield.
+            if not s.parryResult or (s.parryResult.reduction or 0)<=0 then
+                require("ui.components.shield").draw(x,y,38,color,alpha)
+            end
+        else g.arc("line","open",x,y,radius,math.pi*.08,math.pi*.92) end
         -- A restrained lower-edge tint places the hit on the player's side of the table.
         for i=1,6 do
             g.setColor(color[1],color[2],color[3],alpha*.022*(7-i))

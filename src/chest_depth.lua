@@ -86,7 +86,7 @@ add(D.equipment,"itm_bloodvial","Lọ Huyết Tế","Bỏ lá này khi còn hơn
     local g=game(ctx);local n=value(g,c,"drops",ctx);set(g,c,"drops",0,ctx);return {addMult=n*7}
 end)
 add(D.equipment,"itm_relay","Dây Xích Tiếp Sức","Nếu lá tính điểm ngay trước có trang bị: nhận thêm ST bằng một nửa ST cơ bản của lá trước (làm tròn xuống), tối đa 60.","A physical broad iron chain connecting two expedition weapon hilts in a forest workshop.",function(c,cs,i)
-    local p=cs[i-1];if p and #(p.equipments or {})>0 then return {addChips=math.min(60,math.floor((p.baseChips or 0)/2))} end
+    local p=cs[i-1];if p and #(p.equipments or {})>0 then return {addChips=math.min(60,math.floor(require("src.deck").getCardDamage(p)/2))} end
 end)
 add(D.equipment,"itm_lockbox","Khóa Giáp Ngân","Khi tính điểm và đang có ít nhất 8 Giáp: tiêu 8 Giáp để +20% sát thương. Giáp đã tiêu không chặn đòn quái sau đó.","One physical silver shield-lock opening and releasing a controlled gold beam from glacial armor.",function(c,cs,i,ctx)
     local g=game(ctx);if spend(g,"playerArmor",8,ctx) then if not ctx.preview then g.playerShield=g.playerArmor end;return {extraDamagePct=0.2} end

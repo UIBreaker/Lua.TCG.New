@@ -302,28 +302,28 @@ Deck.CARD_ROLES = {
         name = "Hiệp Sĩ",
         title = "Hiệp Sĩ / Cận Vệ (J)",
         icon = "🗡️",
-        desc = "Bản lề chiến thuật: Tăng thêm +15 Chips & +2 Mult cho mỗi lá Chiến Binh đứng cùng.",
+        desc = "J: 11 sát thương, 3 tốc đánh. Hiệu ứng bỏ bài theo chất.",
     },
     queen = {
         id = "queen",
         name = "Hoàng Hậu",
         title = "Hoàng Hậu / Phù Sư (Q)",
         icon = "👑",
-        desc = "Tương tác trang bị: Tự đem lại x1.1 XMult, +15 Chips & +2 Mult cho mỗi ô trang bị đã khảm.",
+        desc = "Q: 12 sát thương, 2 tốc đánh. Hiệu ứng bỏ bài theo chất.",
     },
     king = {
         id = "king",
         name = "Quốc Vương",
         title = "Quốc Vương / Lãnh Chúa (K)",
         icon = "🏰",
-        desc = "Sức mạnh áp đảo: Trụ cột dồn sát thương nặng ký, cộng trực tiếp +25 Chips & +5 Mult.",
+        desc = "K: 13 sát thương, 1 tốc đánh. Hiệu ứng bỏ bài theo chất.",
     },
     ace = {
         id = "ace",
         name = "Thần Khí",
         title = "Át Chủ Bài / Thần Khí (A)",
         icon = "⚡",
-        desc = "Linh hoạt tối đa: Có thể làm đầu hoặc cuối trong Sảnh.",
+        desc = "A: 1 sát thương, 13 tốc đánh; có thể làm đầu hoặc cuối trong Sảnh.",
     },
 }
 
@@ -343,33 +343,38 @@ function Deck.getCardRole(rank)
 end
 
 function Deck.getChipValue(rank)
-    if rank == 1 then
-        return 1
-    elseif rank == 14 then
-        return 11
-    elseif rank >= 10 and rank <= 13 then
-        return 10
-    else
-        return rank
-    end
+    return (rank == 1 or rank == 14) and 1 or rank
 end
 
 function Deck.getAttackSpeed(rank)
     rank = tonumber(rank)
     if not rank then return 1 end
-    if rank == 1 or rank == 14 then return 7 end
-    if rank >= 11 and rank <= 13 then return 3 end -- Court damage trades initiative.
-    return math.max(1,14-rank) -- Low ranks win initiative; high ranks hit harder.
+    if rank == 1 or rank == 14 then return 13 end
+    return math.max(1,14-rank)
 end
 
-function Deck.peekCardAttackSpeed(card,game)
+-- Internal evolution starts at zero: tier 10 (TT) is level 9.
+function Deck.getOverEvolution(card,level)
+    return math.max(0,(level or card.evolutionLevel or 0)-9)
+end
+
+function Deck.getCardDamage(card,level)
+    return (card.baseChips or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0))
+        +Deck.getOverEvolution(card,level)
+end
+
+function Deck.getCardEmpowerment(card,level)
+    return (card.baseMult or 0)+Deck.getOverEvolution(card,level)+(card.heldEmpowerment or 0)
+end
+
+function Deck.peekCardAttackSpeed(card,game,level)
     if not card then return 1 end
-    local base = Deck.getAttackSpeed(card.rank)*require("src.blood_shop").powerOf(card)
+    local base = (Deck.getAttackSpeed(card.rank)+Deck.getOverEvolution(card,level))*require("src.blood_shop").powerOf(card)
     local equipmentSpeed=0
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
     local basics=require("src.spn_basics")
     local spiritSpeed=basics.speed(game or basics.cardGames[card])
-    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+equipmentSpeed+spiritSpeed-(card.statueSpeedPenalty or 0)-(card.humanSpeedPenalty or 0)))
+    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+(card.discardSpeedBonus or 0)+equipmentSpeed+spiritSpeed-(card.statueSpeedPenalty or 0)-(card.humanSpeedPenalty or 0)))
 end
 
 function Deck.getCardAttackSpeed(card)
@@ -429,6 +434,7 @@ function Deck.newCard(rank, suit)
         attackSpeed = Deck.getAttackSpeed(rank),
         speedBonus = 0,
         evolutionLevel = 0,
+        playingStatsVersion = 3,
         role = role.id,
         roleName = role.name,
         roleTitle = role.title,
@@ -555,9 +561,11 @@ function Deck.restoreDeck(deck)
         card.selected = false
         card.hovered = false
         card.faceDown = false
-        card.evolutionLevel = math.max(0, math.min(require("config.card_ability_data").maxEvolutionLevel, tonumber(card.evolutionLevel) or 0))
+        card.evolutionLevel = math.max(0, math.floor(tonumber(card.evolutionLevel) or 0))
         card.temporaryAbilityLevels = nil
         card.abilityState = nil
+        card.heldEmpowerment,card.discardSpeedBonus=nil,nil
+        card.playingStatsVersion=3
         card.disableFactionPassives = true
         card.abilityDisabledUntil = nil
     end
@@ -613,6 +621,7 @@ function Deck.cloneCard(card)
     Deck.getCardAttackSpeed(newC)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
+    newC.baseMult = card.baseMult
     newC.spnPermanentDamage = card.spnPermanentDamage
     newC.potionPermanentDamage = card.potionPermanentDamage
     newC.potionPermanentMult = card.potionPermanentMult

@@ -19,7 +19,7 @@ local function accuracy(attackerSpeed,targetSpeed)
 end
 function Combat.rollPlayerAttack(game,timing)
     if timing and timing.forceMiss then return {hitChance=0,missed=true,timingMiss=true} end
-    if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate") then return {hitChance=1,missed=false,timing=timing} end
+    if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate" or timing.grade=="apex") then return {hitChance=1,missed=false,timing=timing} end
     if require("src.spn_elements").openingPower(game)>0 then return {hitChance=1,missed=false,frozen=true} end
     if (game.potionCombat or {}).accuracy or game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
@@ -180,10 +180,6 @@ function Combat.getAverageAttackSpeed(cards,game,handInfo)
         count = count + 1
     end
     local bonus=0
-    if game and count>0 then
-        if handInfo then bonus=require("src.playing_card_tactics").preview(game,cards,handInfo)
-        elseif game.abilityHand and not game.abilityHand.finished then bonus=game.abilityHand.tacticSpeed or 0 end
-    end
     local advanced=game and game.advancedCombat or {}
     bonus=bonus+(advanced.speed or 0)+(handInfo and (advanced.nextSpeed or 0) or (advanced.currentSpeed or 0))
     return count > 0 and math.min(999,total/count+bonus) or 0

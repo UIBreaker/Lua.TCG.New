@@ -123,6 +123,7 @@ function R.veil(alpha,color)
     g.setColor(c[1],c[2],c[3],alpha or C.ui.veil);g.rectangle("fill",0,0,1280,720)
 end
 function R.drawWorld(drawEntities,drawVfx)
+    Scene.reducedMotion=R.reducedMotion
     local g=love.graphics; local start=love.timer.getTime()
     R.worldRoot=R.worldRoot or love.math.newTransform()
     local ox,oy=g.transformPoint(0,0)

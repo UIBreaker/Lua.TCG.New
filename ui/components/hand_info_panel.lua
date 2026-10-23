@@ -78,6 +78,11 @@ local function drawMetric(x, y, w, h, label, value, variant, icon, fonts, bounce
     love.graphics.pop()
 end
 
+function HandInfoPanel.receiptRect()
+ local sidebar=require("ui.layout").battle.hand
+ return {x=sidebar[1]+10,y=sidebar[2]+44,w=sidebar[3]-20,h=255}
+end
+
 function HandInfoPanel.draw(data,fonts,formatNumber)
  data=data or {};loadImages()
  local Chrome=require("ui.combat_chrome")
@@ -90,6 +95,9 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
  local panelH=615
  Chrome.panel(x,y,w,panelH)
  Chrome.title("THẾ TRẬN",x+18,y+17,w-36,(fonts and fonts.bookChapter) or f.title,Theme.colors.gold)
+ if data.discardReceipt then
+  require("ui.discard_effects").drawReceipt(require("src.ui"),data.discardReceipt,HandInfoPanel.receiptRect())
+ else
  Core.text(data.scoring and "ĐANG TÍNH AURA" or "CHỌN THẾ ĐÁNH",x+18,y+45,w-36,f.detail,Theme.colors.muted)
 
  Core.textLine(data.handName or "Chọn bài để xem",x+16,y+76,w-32,f.body,Theme.colors.text,"left",f.label)
@@ -116,8 +124,9 @@ function HandInfoPanel.draw(data,fonts,formatNumber)
   local progress=math.max(0,math.min(1,data.scoreProgress or 0))
   Core.color(Theme.colors.gold,.85);g.rectangle("fill",x+22,y+294,(w-44)*progress,2)
  end
- -- Keep scoring targets fixed; only the preparation layout closes the empty space.
- y=y+(data.scoring and 0 or -108)
+ end
+ -- Receipts use the preview area; enemy order and intent remain below it.
+ y=y+((data.scoring or data.discardReceipt) and 0 or -108)
  local es=tonumber(data.enemySpeed);local ps=tonumber(data.playerSpeed)
  local orderColor=(data.turnTransition or not ps) and Theme.colors.gold or ps>=(es or 1) and Theme.colors.cyan or Theme.colors.red
  Chrome.well(x+12,y+309,w-24,69,orderColor)

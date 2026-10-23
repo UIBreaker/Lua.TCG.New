@@ -15,7 +15,7 @@ function love.load()
     for i,id in ipairs(A.config.order) do
         local d=A.definitions[id]
         local suit=({heart="hearts",diamond="diamonds",club="clubs",spade="spades"})[d.suit]
-        local c=Deck.newCard(d.rank,suit);c.evolutionLevel=(i-1)%9
+        local c=Deck.newCard(d.rank,suit);c.evolutionLevel=(i-1)%12
         local art=assert(UI.getCardImage(c.suit,c.rank));assert(not seen[art],"unique runtime portrait")
         seen[art]=true
         local x,y=((i-1)%13)*128+5,math.floor((i-1)/13)*228+8
@@ -24,12 +24,13 @@ function love.load()
         g.printf((c.rankName or "")..c.suitSymbol,x,y+185,118,"center")
     end
     g.pop();save(canvas,"docs/continental52_runtime.png");canvas:release()
-    local c=Deck.newCard(10,"diamonds");c.evolutionLevel=8
+    local c=Deck.newCard(10,"diamonds");c.evolutionLevel=10
     canvas=g.newCanvas(1280,720)
     g.push("all");g.setCanvas(canvas);g.origin();g.clear(.025,.03,.045,1)
     UI.drawCard(c,50,130,256,384)
     local title,body=UI.Description.resolve(c,{hand={c},gold=10,playerHp=50,maxPlayerHp=100,playerArmor=10})
     local View=require("ui.components.card_description");local model=View.model(c,title,body)
+    assert(model.stats.damage==11 and model.stats.speed==5 and model.stats.empowerment==1,"TT+1 tooltip shows all three actual stats")
     View.draw(model,View.layout(model,UI.fonts),370,12)
     -- Small hand card with triple-digit speed and two-digit rank at maximum ornament.
     c.speedBonus=995;UI.drawCard(c,850,140,82,123);UI.drawCardFace(c,960,140,128,192)

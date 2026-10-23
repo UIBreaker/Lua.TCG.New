@@ -75,14 +75,14 @@ function Picker.draw(UI,m,mx,my)
         local gain=require("src.blood_shop").powerOf(m.consumable)
         if not upgrade and not d then gain=math.min(gain,Deities.getEvolutionCredits(c)) end
         local nextSockets=math.min(require("src.equipment").SOCKET_CAP,maximum+gain)
-        local nextLevel=d and math.min(A.config.maxEvolutionLevel,(c.evolutionLevel or 0)+gain) or (c.evolutionLevel or 0)+gain
-        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..nextSockets.." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and ("Cấp "..(c.evolutionLevel or 0).."  →  Cấp "..nextLevel) or ("Lượt còn: "..Deities.getEvolutionCredits(c).." · Nâng +"..gain.." bậc"),848,245,324,"small",violet)
-        local before=d and A.description(c) or Deities.getDescription(c)
+        local nextLevel=(c.evolutionLevel or 0)+gain
+        text(UI,upgrade and (sockets and (maximum.." hốc  →  "..nextSockets.." hốc") or "MỞ KHÓA · TRANG BỊ TRÙNG") or d and (Deities.getRarityBadge(c).."  →  "..Deities.getRarityBadge({evolutionLevel=nextLevel})) or ("Lượt còn: "..Deities.getEvolutionCredits(c).." · Nâng +"..gain.." bậc"),848,245,324,"small",violet)
+        local before=d and A.description(c,nil,true) or Deities.getDescription(c)
         local after
         if upgrade then
             before="Trang bị: "..require("src.equipment").getUsedSlots(c).." / "..maximum.." hốc đang dùng.\n"..(c.allowDuplicateEquipment and "Có thể gắn trang bị trùng loại." or "Mỗi loại trang bị chỉ được gắn một món.")
             after=sockets and ("Thêm tối đa "..gain.." hốc trang bị vĩnh viễn: "..nextSockets.." hốc. Tối đa 8 hốc trên một lá.\nCó thể tiếp tục dùng thẻ Khảm Hốc nếu chưa đạt trần.") or "Cho phép gắn nhiều món cùng loại vào lá này. Từng món có hiệu ứng và lần dùng riêng.\nVẫn cần đủ hốc, đủ chi phí kích hoạt và chịu trần Vàng / Giáp chung."
-        elseif d then after=A.description(c,nextLevel+(c.temporaryAbilityLevels or 0))
+        elseif d then after=A.description(c,nextLevel+(c.temporaryAbilityLevels or 0),true)
         else local copy={};for k,v in pairs(c) do copy[k]=v end;copy.evolutionLevel=nextLevel;copy.evolutionCredits=Deities.getEvolutionCredits(c)-gain;after=Deities.getDescription(copy) end
         text(UI,"HIỆN TẠI",848,291,324,"tiny",muted)
         description(UI,before,848,315,324,95,muted)

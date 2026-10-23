@@ -1,3 +1,17 @@
+# Kiểm chứng luật bài mới — 2026-10-23
+
+Luật hiện tại: [PLAYING_CARD_RULES.md](PLAYING_CARD_RULES.md). Nội dung v2 phía dưới là lịch sử trước khi bỏ khả năng cũ.
+
+- `--test-continental52`: 312 trường hợp rank/chất/tiến hóa; tài nguyên bỏ bài, Cường hóa khi giữ, buff Chuồn cộng dồn/hết lượt, dự báo so với tính điểm thật, bỏ ép, TT+, chọn tiến hóa và save cũ/mới.
+- `--test-continental52-regressions`: 29/30 nhóm qua. Còn `soul_shop_smoke.lua:133` (thưởng Linh Hồn từ spell_ankh/spell_hex). Đã tái hiện cùng lỗi khi nạp mã gốc HEAD của các module thay đổi trong đợt này.
+- Kiểm tra riêng: combat_tactics, scoring_runtime (208 kiểm tra), card_shop, spn_discard_forge, blood_shop qua.
+- `--capture-continental52`: render đủ 52 lá, các bậc tới TT+, đủ ba chỉ số; đã xem ảnh runtime và tooltip. Ảnh: `continental52_runtime.png`, `continental52_inspector.png`.
+- `--test-poker` dừng ở `test_poker.lua:107` (kỳ vọng 64 Chips/12 Mult trong khi SPN hiện tại cho 68/10). `--test-features` dừng ở `test_features.lua:22` (HP quái vòng 1). Cả hai lỗi đều tái hiện trên mã gốc HEAD; không sửa cân bằng SPN/quái trong thay đổi luật bài.
+
+Chưa mô phỏng cân bằng toàn chiến dịch theo luật mới.
+
+---
+
 # Kiểm chứng bộ 52 v2 — 2026-10-07
 
 Đã lưu 52 PNG riêng biệt, mỗi ảnh 1024×1536. SHA-256 khác nhau cho mọi ảnh; không dùng đổi màu một chân dung. Đã xem bốn contact sheet và bảng render thực tế của cả 52 lá. Nguồn và prompt: `continental_52_v2.json`, `CONTINENTAL_52_PROMPTS.md`.

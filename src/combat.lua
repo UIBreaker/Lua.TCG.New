@@ -19,7 +19,7 @@ local function accuracy(attackerSpeed,targetSpeed)
 end
 function Combat.rollPlayerAttack(game,timing)
     if timing and timing.forceMiss then return {hitChance=0,missed=true,timingMiss=true} end
-    if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate" or timing.grade=="apex") then return {hitChance=1,missed=false,timing=timing} end
+    if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate" or timing.grade=="apex" or timing.grade=="divine") then return {hitChance=1,missed=false,timing=timing} end
     if require("src.spn_elements").openingPower(game)>0 then return {hitChance=1,missed=false,frozen=true} end
     if (game.potionCombat or {}).accuracy or game.spnAttack and game.spnAttack.guaranteeHit then return {hitChance=1,missed=false} end
     return accuracy(game.lastPlayerAttackSpeed,EnemyAbilities.speed(game.monster))
@@ -157,6 +157,7 @@ function Combat.resolvePlayerAttack(game, aura,roll,timing)
     end
     for _,hit in ipairs(require("src.advanced_hands").resolve(game)) do splashHits[#splashHits+1]=hit end
     require("src.soul_relics").reap(game)
+    roll.timingSouls=require("src.combat_timing").awardSouls(game,timing)
     return damage, Group.alive(Group.members(game)) == 0, splashHits,roll
 end
 
@@ -166,9 +167,7 @@ function Combat.getOutcome(game)
     if require("src.human_bosses").victory(game) then return "victory" end
     if Group.alive(Group.members(game))==0 then return "victory" end
     local noCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) == 0
-    local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle" and Boss.passiveEnabled(game.monster)
-    if game.handsRemaining and game.handsRemaining <= 0 and (noCards or handLimitIsFinal) then require("src.human_bosses").finish(game);return "defeat" end
+    if game.handsRemaining and game.handsRemaining<=0 and noCards then require("src.human_bosses").finish(game);return "defeat" end
     return "continue"
 end
 
@@ -235,7 +234,7 @@ local function resolveOneAttack(game,playerSpeed,timing)
         local reflectedAttack=incomingAttack*(timing.reflectMultiplier or 0)
         local reflectedDamage=reflectedAttack>0 and require("src.monster").takeDamage(monster,reflectedAttack) or 0
         return {attack=incomingAttack,absorbed=0,damage=0,killedPlayer=false,blocked=true,parried=true,
-            parryArmor=game.playerArmor-armorBefore,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,action="attack"}
+            timingSouls=require("src.combat_timing").awardSouls(game,timing),parryArmor=game.playerArmor-armorBefore,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,action="attack"}
     end
     attack=attack*(1-(timing and timing.reduction or 0))
     local phantomAbsorbed
@@ -301,6 +300,7 @@ function Combat.resolveMonsterAttack(game, phase, playerSpeed, attacker,timing)
                 result.killedPlayer=attack.killedPlayer
                 result.blocked=attack.blocked
                 result.parried=attack.parried
+                result.timingSouls=(result.timingSouls or 0)+(attack.timingSouls or 0)
                 result.parryArmor=attack.parryArmor
                 result.reflectedAttack=attack.reflectedAttack
                 result.reflectedDamage=attack.reflectedDamage
@@ -330,6 +330,7 @@ function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
     local drawnCount = 0
     while #game.hand < Abilities.handSize(game, maxHandSize) and #game.deck > 0 do
         local card = table.remove(game.deck)
+        card.combatFatigue=game.combatReshuffles or 0
         card.selected = false
         drawnCount = drawnCount + 1
         if prepareDraw then prepareDraw(card, drawnCount) end
@@ -342,6 +343,30 @@ function Combat.drawCards(game, maxHandSize, prepareDraw, recycleDiscard)
     return drawnCount
 end
 
+-- Rebuild only the combat piles. Master cards keep their upgrades and never receive fatigue.
+function Combat.reshuffleExhaustedHand(game,maxHandSize,prepareDraw)
+    if (game.handsRemaining or 0)>0 or (game.playerHp or 0)<=0 then return 0,{} end
+    local pool,seen,before={},{},{}
+    for _,pile in ipairs({game.hand or {},game.deck or {},game.discardPile or {}}) do
+        for _,card in ipairs(pile) do
+            if not seen[card] and not card.destroyed then
+                seen[card]=true;pool[#pool+1]=card
+                before[card]={speed=Deck.peekCardAttackSpeed(card),damage=Deck.getCardDamage(card),empowerment=Deck.getCardEmpowerment(card)}
+            end
+        end
+    end
+    if #pool==0 then return 0,{} end
+    game.combatReshuffles=(game.combatReshuffles or 0)+1
+    for _,card in ipairs(pool) do
+        card.combatFatigue=game.combatReshuffles;card.selected=false;card.hovered=false
+        Deck.getCardAttackSpeed(card)
+    end
+    game.hand={};game.deck=Deck.shuffle(pool);game.discardPile={};game.selectedIndices={}
+    game.handsRemaining=game.turnHandLimit or game.maxHands or 3
+    game.discardsRemaining=game.spnDiscardCap or game.maxDiscards or 3
+    return Combat.drawCards(game,maxHandSize,prepareDraw,false),before
+end
+
 local function isFaction(game, id)
     return game.selectedFaction == id or game.selectedSuit == id
 end
@@ -352,6 +377,7 @@ function Combat.start(game, monster, round)
     game.round = round or 1
     game.monster = monster
     game.spnBasicArmorGranted=nil
+    game.combatReshuffles=0
     game.enemies=Group.build(monster)
     require("src.kingdom_bosses").start(game)
     require("src.free_human_bosses").start(game)

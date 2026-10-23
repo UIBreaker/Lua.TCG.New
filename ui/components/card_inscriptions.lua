@@ -136,6 +136,10 @@ function I.draw(UI,card,definition,showDamage)
         return {1,.44+s*.40,.22+s*.30}
     end
     local blue,fire=statColor(speedTier,true),statColor(damageTier,false)
+    if (card.combatFatigue or 0)>0 then
+        g.setColor(.10,.025,.035,alpha*.92);g.rectangle("fill",8,125,75,15,3)
+        text(UI,"SUY YẾU −"..card.combatFatigue,10,126,71,UI.fonts.tiny,{1,.52,.39},alpha)
+    end
     local function glow(tier,color)
         if tier<4 then return end
         return {color[1],color[2],color[3],.12+(tier-4)*.025+(moving and .08*math.sin(time*2)^2 or 0)}

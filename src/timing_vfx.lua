@@ -7,6 +7,7 @@ V.profiles={
     critical={rank=3,color={1,.88,.32},duration=.64,radius=72,shards=8},
     ultimate={rank=4,color={.80,.36,1},duration=.72,radius=86,shards=10},
     apex={rank=5,color={.72,.96,1},duration=.80,radius=100,shards=12},
+    divine={rank=6,color={1,.30,.53},duration=.86,radius=110,shards=12},
     trap={rank=0,color={.92,.23,.26},duration=.56,radius=45,shards=8},
     timeout={rank=0,color={.56,.64,.70},duration=.50,radius=40,shards=6},
 }
@@ -70,7 +71,7 @@ function V.camera()
         if not e.reduced then
             local t=e.age-(e.kind=="reflect" and .22 or 0)
             if (e.kind=="attack" or e.kind=="reflect") and t>0 and t<.20 then
-                local force=e.profile.rank==5 and 3.4 or e.profile.rank*.48
+                local force=e.profile.rank>=5 and 3.4 or e.profile.rank*.48
                 local a=math.sin(t/.20*math.pi)*(1-t/.20)*force
                 if math.abs(a)>math.abs(y) then x=math.sin(t*54)*a*.35;y=-a end
             end
@@ -87,13 +88,13 @@ local function color(c,a) love.graphics.setColor(c[1],c[2],c[3],a) end
 local function stroke(points,c,alpha,width)
     color(c,alpha);love.graphics.setLineWidth(width);love.graphics.line(points)
 end
-local function blade(x,y,length,angle,c,a,width)
+local function blade(x,y,length,angle,c,a,width,core)
     local g=love.graphics
     g.push("all");g.translate(x,y);g.rotate(angle)
     g.setBlendMode("alpha")
     color(c,a)
     g.polygon("fill",-length,0,-length*.10,-width,length,0,length*.10,width*.65)
-    g.setBlendMode("add");g.setColor(1,1,1,a)
+    g.setBlendMode("add");core=core or {1,1,1};g.setColor(core[1],core[2],core[3],a)
     g.polygon("fill",-length*.55,0,0,-width*.25,length*.83,0)
     g.pop()
 end
@@ -106,7 +107,7 @@ local function sparks(e,x,y,t,a,count)
         local sx=x+math.cos(angle)*d;local sy=y+math.sin(angle)*d*.72+t*t*36
         local length=math.max(0,(2+i%3)*(1-t/.35))
         if length>0 then
-            if e.profile.rank==5 then
+            if e.profile.rank>=5 then
                 love.graphics.push("all");love.graphics.translate(sx,sy);love.graphics.rotate(angle+t*4)
                 color(i%2==0 and {1,1,1} or c,a)
                 love.graphics.polygon("fill",-length*1.5,0,0,-2,length,0,0,1.2)
@@ -178,12 +179,15 @@ local function whiteCleave(e,length,a,t)
 end
 local function impact(e,t,alpha)
     local p=e.profile;local rank=p.rank
-    local endTime=rank==5 and .32 or .28
+    local endTime=rank>=5 and .32 or .28
     local fade=math.min(1,math.max(0,(endTime-t)/.14))
     local length=e.reduced and 22+rank*3 or p.radius*(.62+.18*math.min(1,t/.065))
     local a=math.min(1,alpha*1.35)*fade
     if fade>0 then
-        if rank==5 then whiteCleave(e,length,a,t)
+        if rank==6 then
+            local lead=e.reduced and 0 or (1-math.min(1,t/.055))^2
+            blade(e.x-12*lead,e.y-14*lead,length,-.94,p.color,a,7,{1,.90,.54})
+        elseif rank==5 then whiteCleave(e,length,a,t)
         elseif rank==4 then violetCut(e,length,a,t)
         else blade(e.x,e.y,length,-.50,p.color,a,2+rank*.46) end
     end
@@ -205,7 +209,7 @@ local function confirm(e,alpha,p)
         stroke({x,y-6,x,y+6},c,alpha,2);return
     end
     local left=e.railX or x-185;local right=left+(e.railW or 370)
-    local reach=rank==5 and right-left or 14+rank*22
+    local reach=rank>=5 and right-left or 14+rank*22
     local grow=1-(1-math.min(1,t/.13))^3
     local strength=math.max(0,1-t/.36)
     -- A light pulse lives on the rail itself; tiered rays escape upwards at the stop.
@@ -227,7 +231,7 @@ local function confirm(e,alpha,p)
         local tail=rank>=4 and .028 or .014
         stroke({sx,sy,sx-vx*tail*fade,sy-vy*tail*fade},c,alpha*fade,rank>=4 and 1.5 or 1.2)
         if rank>=3 and i%2==0 then
-            local h=(rank==5 and 3.4 or 2.3)*fade
+            local h=(rank>=5 and 3.4 or 2.3)*fade
             g.setColor(1,1,1,alpha*fade)
             g.polygon("fill",sx,sy-h,sx+h*.28,sy,sx,sy+h,sx-h*.28,sy)
         end
@@ -249,10 +253,10 @@ function V.draw(layer)
                 local travel=V.returnTravel(e.age)
                 if travel>0 and e.age<.22 and not e.reduced then
                     local tip=440+(e.y-440)*travel
-                    local length=(e.profile.rank==5 and 30 or 20)*(0.4+travel*.6)
+                    local length=(e.profile.rank>=5 and 30 or 20)*(0.4+travel*.6)
                     local tail=math.min(440,tip+length)
-                    stroke({e.x,tail,e.x,tip},e.profile.color,alpha,e.profile.rank==5 and 6 or 3)
-                    blade(e.x,tip,e.profile.rank==5 and 16 or 10,-math.pi/2,e.profile.color,alpha,e.profile.rank==5 and 5 or 2.5)
+                    stroke({e.x,tail,e.x,tip},e.profile.color,alpha,e.profile.rank>=5 and 6 or 3)
+                    blade(e.x,tip,e.profile.rank>=5 and 16 or 10,-math.pi/2,e.profile.color,alpha,e.profile.rank>=5 and 5 or 2.5)
                 end
                 if e.age>=.22 then
                     local t=e.age-.22

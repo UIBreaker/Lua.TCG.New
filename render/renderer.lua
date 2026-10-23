@@ -82,7 +82,7 @@ function R.update(dt,state,monster,sequence,impulseX,impulseY,attack,reward,deat
 end
 function R.sceneContext(state,game)
     if not game then return nil end
-    if state=="BLIND_SELECT" or state=="map" or state=="shop" or state=="victory" or state=="travel" or state=="barter" or state=="blood_statue" then
+    if state=="BLIND_SELECT" or state=="map" or state=="shop" or state=="victory" or state=="travel" or state=="barter" or state=="blood_statue" or state=="memory_match" then
         local run=game.run or {}
         return {stage=run.ante or 1,regionId=run.regionId,areaStage=run.areaStage,shopMode=game.shopMode}
     end

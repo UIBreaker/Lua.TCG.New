@@ -15,6 +15,7 @@ local function title(item) return item.name or item.characterName or ((item.rank
 local function itemStamp(item)
     local fields={"id","rank","baseRank","suit","baseChips","bonusBaseChips","speedBonus","maxSockets","unlockedSockets","allowDuplicateEquipment","rarity","baseRarity","baseRarityTier","evolutionLevel","edition","editionPower","enchantment","enchantmentPower","bloodPower","voidPower","seal","sealPower","enhancement","healAmt","armorAmt","permanentSpeed","investment","amount","resource","cost","potionPermanentDamage","potionPermanentMult","spnPermanentDamage"}
     fields[#fields+1]="bloodDomainPower";fields[#fields+1]="statuePower";fields[#fields+1]="statueSpeedPenalty"
+    fields[#fields+1]="trainingEmpowerment"
     local stamp={};for _,field in ipairs(fields) do stamp[field]=item[field] end
     stamp.acquisitionCost=item.acquisitionCost
     stamp.acquisitionMarketValue=item.acquisitionMarketValue

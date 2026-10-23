@@ -14,6 +14,7 @@ local TRANSIENT_GAME_KEYS = {
     map = true,
     abilityCombat = true,
     depthCombat = true,
+    combatReshuffles = true,
     enchantmentCombat = true,
     spnCombat = true,
     spnAttack = true,
@@ -275,6 +276,8 @@ function Persistence.makeSnapshot(game, activeState)
             or (activeState == "socketing" and game.pendingRewardEquipment and "socketing")
             or (activeState == "shop" and "shop")
             or (activeState == "barter" and game.barterEvent and "barter")
+            or (activeState == "memory_match" and game.memoryMatch and "memory_match")
+            or (activeState == "training_camp" and game.trainingCamp and "training_camp")
             or (activeState == "blood_statue" and (game.ancientStatue or game.bloodDomain) and "blood_statue")
             or (activeState == "void" and game.voidEvent and "void")
             or "BLIND_SELECT",
@@ -366,6 +369,7 @@ function Persistence.restoreSnapshot(snapshot)
     require("src.void_tickets").count(game)
     game.run = restoreRun(snapshot.game.run, game.selectedFaction)
     if game.barterEvent then require("src.barter").restore(game) end
+    require("src.memory_match").restore(game)
     require("src.ancient_statue").restore(game)
     game.regionRecognitions=game.regionRecognitions or {}
     if game.run.travelPermit and snapshot.game.run.travelRulesVersion~=2 then

@@ -64,7 +64,7 @@ function T.update(game,cb)
     if T.railScene~=T.index then
         local Timing=require("src.combat_timing")
         T.rail=Timing.start((scene[1]=="reflect" or scene[1]=="block") and "parry" or "attack",10,10)
-        local band=T.rail.apex
+        local band=scene[2]=="divine" and T.rail.divine or T.rail.apex
         for _,zone in ipairs(T.rail.zones) do if zone.grade==scene[2] then band=zone;break end end
         T.rail.position=(band.from+band.to)/2;T.rail.age=1;T.rail.result={grade=scene[2]}
         T.railScene=T.index

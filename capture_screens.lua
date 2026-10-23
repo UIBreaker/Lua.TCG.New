@@ -85,6 +85,16 @@ function Capture.update(gameRef, callbacks)
         if not ok then print("COMBAT NOTICES FAIL: "..tostring(err));love.event.quit(1) end
         return
     end end
+    for _,value in ipairs(arg or {}) do if value=="--test-training-camp" then
+        local ok,err=xpcall(function() require("tests.training_camp_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("TRAINING CAMP FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
+    for _,value in ipairs(arg or {}) do if value=="--test-memory-match" then
+        local ok,err=xpcall(function() require("tests.memory_match_capture").update(gameRef,callbacks) end,debug.traceback)
+        if not ok then print("MEMORY MATCH FAIL: "..tostring(err));love.event.quit(1) end
+        return
+    end end
     for _,value in ipairs(arg or {}) do if value=="--test-rarity-boss" then
         local ok,err=xpcall(function() require("tests.rarity_boss_capture").update(gameRef,callbacks) end,debug.traceback)
         if not ok then print("RARITY BOSS FAIL: "..tostring(err));love.event.quit(1) end

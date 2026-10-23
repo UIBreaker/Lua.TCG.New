@@ -15,11 +15,18 @@ Mỗi lần thanh xuất hiện, các vùng được xáo vị trí và thêm đ
 | Vàng nhạt ◆ (rộng 4,5%, kẹp giữa đỏ) | Đòn quyết định ×2,6 và chắc chắn trúng | Phản thế: chặn toàn bộ, tạo giáp bằng 25% sát thương đòn địch, theo giới hạn giáp hiện có |
 | Tím sáng ★ (rộng 2,5%, kẹp giữa đỏ) | Tuyệt Kỹ ×4 và chắc chắn trúng | Chặn toàn bộ, phản lại 10.000% (×100) sát thương đòn địch trước giáp người chơi; tạo giáp bằng 50% sát thương đòn địch theo giới hạn giáp hiện có |
 | Trắng sáng ✦ Cực Hạn (rộng 1,5%, giữa bẫy đỏ) | ×8 và chắc chắn trúng | Chặn toàn bộ, phản 25.000% (×250) sát thương trước giáp người chơi; giữ phần thưởng giáp của tím ★ |
+| Hồng ngọc ♦ Thần Tích (rộng 0,8%, giữa bẫy đỏ) | ×12 và chắc chắn trúng | Chặn toàn bộ, phản 50.000% (×500) sát thương trước giáp; tạo giáp như tím |
 | Đỏ sọc | Chắc chắn đánh hụt, kể cả khi có thuốc/buff chính xác | Lộ sườn: đòn địch gây thêm 25% sát thương trước giáp nếu trúng |
 | Nền tối | Sát thương gốc, giữ xác suất đánh trúng | Không đỡ được |
 | Hết thời gian | Sát thương ×0,75, giữ xác suất đánh trúng | Không đỡ được |
 
 Hệ số tốc thanh = `clamp(sqrt(tốc địch / tốc người chơi), 0.55, 2.4)`. Tốc dùng chỉ số thực tế sau buff và trang bị. Hai bên bằng tốc có hệ số 1, thanh đi hết trong 1,6 giây; địch nhanh hơn thì thanh nhanh hơn, người chơi nhanh hơn thì thanh chậm hơn. Cửa sổ canh nhịp dùng thời gian thực, độc lập tốc độ game ×1/×2/×4 và tùy chọn giảm chuyển động. Mở menu tạm dừng hoặc cài đặt sẽ dừng thanh.
+
+Thần Tích có cửa sổ 12,8 ms khi ngang tốc (trắng 24 ms), nằm ngẫu nhiên ở một trong hai bên vùng đỏ bao quanh vàng ◆, không chồng lên mốc khác. Bấm lệch hai bên đều vào đỏ. Có nhát chém hồng ngọc lõi vàng, ánh lóe toàn thanh và hai cue âm thanh riêng; vẫn không vòng sáng hoặc dư ảnh. Bộ âm timing hiện có 20 cue.
+
+Đánh trúng hoặc parry thành công ở tím thưởng **ngẫu nhiên 1–5 linh hồn**, trắng **+2**, Thần Tích **+3**. Thưởng được ghi nhận khi xử lý đòn thực tế, không phải khi bấm thanh; parry kèm phản đòn chỉ trả một lần cho cùng một lần canh nhịp. Mốc tím quay thưởng đúng một lần bằng RNG của lượt chơi; gọi lại phần nhận thưởng không quay lại kết quả. Đánh hụt, địch tự hụt hoặc bị né, đóng băng bỏ qua lượt đánh và hành động hỗ trợ không thưởng. Linh hồn hạ địch vẫn là phần thưởng riêng. Có chữ nổi xác nhận số linh hồn nhận được và giới hạn số nguyên an toàn cho tiền thưởng timing.
+
+Kiểm tra `--test-combat-timing` gồm 200 bố cục mới, hệ số ×12/×500, ba cấp linh hồn, chống trả lặp và không trả khi hụt/né. `--capture-combat-timing --divine-only` kiểm tra đòn và ví linh hồn thật, gồm phản đòn kết liễu; fixture đặt thời điểm bấm chính xác vì cửa sổ 5 ms ở tốc cao hẹp hơn một khung hình chụp. `--vfx-gallery` hiện có 24 cảnh gồm mốc mới.
 
 Địch thường / tinh anh / boss có nền HP ải đầu 80 / 160 / 240 (trước đây 50 / 100 / 150), tiếp tục theo đường cong tăng HP hiện có. Sát thương nền 8 / 12 / 16, tăng theo lần gặp với hệ số 2,4 / 3,2 / 4,8. Tốc đánh khởi điểm ngẫu nhiên 8–22, cận dưới tăng 0,4 và cận trên tăng 0,6 mỗi lần gặp; trang bị và hiệu ứng khu vực tiếp tục áp dụng như trước.
 

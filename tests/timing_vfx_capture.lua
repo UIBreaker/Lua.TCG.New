@@ -2,11 +2,11 @@ local V=require("src.timing_vfx")
 local T={index=1,started=false}
 local cases={
     {"confirm","good",.10},{"confirm","perfect",.10},{"confirm","critical",.10},
-    {"confirm","ultimate",.10},{"confirm","apex",.10},
+    {"confirm","ultimate",.10},{"confirm","apex",.10},{"confirm","divine",.10},
     {"attack","good",.16},{"attack","perfect",.16},{"attack","critical",.16},
-    {"attack","ultimate",.16},{"attack","apex",.16},
+    {"attack","ultimate",.16},{"attack","apex",.16},{"attack","divine",.16},
     {"block","good",.12},{"block","perfect",.12},{"block","apex",.12},
-    {"reflect","ultimate",.13},{"reflect","ultimate",.36},{"reflect","apex",.13},{"reflect","apex",.36},
+    {"reflect","ultimate",.13},{"reflect","ultimate",.36},{"reflect","apex",.13},{"reflect","apex",.36},{"reflect","divine",.13},{"reflect","divine",.36},
     {"miss","trap",.20},{"break","trap",.18},{"reflect","apex",.36,true},
 }
 function T.update(game,cb)
@@ -33,13 +33,13 @@ function T.update(game,cb)
     end
     if love.timer.getTime()<T.next then return end
     local spec=cases[T.index]
-    if not spec then T.finished=true;print("Timing VFX gallery passed: 20 authored grade/outcome frames including rail bursts and reduced motion");love.event.quit(0);return end
+    if not spec then T.finished=true;print("Timing VFX gallery passed: 24 authored grade/outcome frames including rail bursts and reduced motion");love.event.quit(0);return end
     V.clear()
     local e=V.emit(spec[1],spec[2],630,270,{reducedMotion=spec[4]})
     e.age=spec[3];T.rail=nil
     if spec[1]=="confirm" then
         T.rail=require("src.combat_timing").start("attack",10,10)
-        local band=T.rail.apex
+        local band=spec[2]=="divine" and T.rail.divine or T.rail.apex
         for _,zone in ipairs(T.rail.zones) do if zone.grade==spec[2] then band=zone;break end end
         T.rail.position=(band.from+band.to)/2;T.rail.age=1;T.rail.result={grade=spec[2]};T.rail.hold=e.age
         e.x=500+T.rail.position*370;e.y=667;e.railX=500;e.railW=370

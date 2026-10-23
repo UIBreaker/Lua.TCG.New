@@ -7,6 +7,7 @@ return {
     timing_attack_critical={path="assets/audio/continental/sfx/timing_attack_critical.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_attack_ultimate={path="assets/audio/continental/sfx/timing_attack_ultimate.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_attack_apex={path="assets/audio/continental/sfx/timing_attack_apex.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
+    timing_attack_divine={path="assets/audio/continental/sfx/timing_attack_divine.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_attack_trap={path="assets/audio/continental/sfx/timing_attack_trap.wav",gain=0.74,peak=0.600,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_attack_timeout={path="assets/audio/continental/sfx/timing_attack_timeout.wav",gain=0.74,peak=0.600,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_parry_ready={path="assets/audio/continental/sfx/timing_parry_ready.wav",gain=0.38,peak=0.600,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
@@ -16,6 +17,7 @@ return {
     timing_parry_critical={path="assets/audio/continental/sfx/timing_parry_critical.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_parry_ultimate={path="assets/audio/continental/sfx/timing_parry_ultimate.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_parry_apex={path="assets/audio/continental/sfx/timing_parry_apex.wav",gain=0.82,peak=0.680,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
+    timing_parry_divine={path="assets/audio/continental/sfx/timing_parry_divine.wav",gain=0.82,peak=0.671,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_parry_trap={path="assets/audio/continental/sfx/timing_parry_trap.wav",gain=0.74,peak=0.588,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
     timing_parry_timeout={path="assets/audio/continental/sfx/timing_parry_timeout.wav",gain=0.74,peak=0.588,priority=5,cooldown=.045,duck=.42,duckDuration=.16},
 }

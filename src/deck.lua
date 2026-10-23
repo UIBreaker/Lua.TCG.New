@@ -358,13 +358,13 @@ function Deck.getOverEvolution(card,level)
     return math.max(0,(level or card.evolutionLevel or 0)-9)
 end
 
-function Deck.getCardDamage(card,level)
-    return (card.baseChips or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0))
-        +Deck.getOverEvolution(card,level)
+function Deck.getCardDamage(card,level,bonus)
+    return math.max(0,(card.baseChips or Deck.getChipValue(card.rank)+(card.bonusBaseChips or 0))
+        +Deck.getOverEvolution(card,level)+(bonus or 0)-(card.combatFatigue or 0))
 end
 
-function Deck.getCardEmpowerment(card,level)
-    return (card.baseMult or 0)+Deck.getOverEvolution(card,level)+(card.heldEmpowerment or 0)
+function Deck.getCardEmpowerment(card,level,bonus)
+    return math.max(0,(card.baseMult or 0)+Deck.getOverEvolution(card,level)+(card.heldEmpowerment or 0)+(card.trainingEmpowerment or 0)+(bonus or 0)-(card.combatFatigue or 0))
 end
 
 function Deck.peekCardAttackSpeed(card,game,level)
@@ -374,7 +374,7 @@ function Deck.peekCardAttackSpeed(card,game,level)
     for _,eq in ipairs(card.equipments or {}) do equipmentSpeed=equipmentSpeed+(eq.attackSpeed or 0) end
     local basics=require("src.spn_basics")
     local spiritSpeed=basics.speed(game or basics.cardGames[card])
-    return math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+(card.discardSpeedBonus or 0)+equipmentSpeed+spiritSpeed-(card.statueSpeedPenalty or 0)-(card.humanSpeedPenalty or 0)))
+    return math.max(0,math.max(1,math.min(999,base+math.max(0,tonumber(card.speedBonus) or 0)+(card.temporarySpeedBonus or 0)+(card.discardSpeedBonus or 0)+equipmentSpeed+spiritSpeed-(card.statueSpeedPenalty or 0)-(card.humanSpeedPenalty or 0)))-(card.combatFatigue or 0))
 end
 
 function Deck.getCardAttackSpeed(card)
@@ -545,6 +545,7 @@ function Deck.restoreDeck(deck)
     for _, card in ipairs(deck) do
         if not card.id or seen[tostring(card.id)] then card.id=nextCardId;nextCardId=nextCardId+1 end
         seen[tostring(card.id)]=true
+        card.combatFatigue=nil
         local bRank = card.baseRank or card.rank
         card.rank = bRank
         card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
@@ -622,6 +623,7 @@ function Deck.cloneCard(card)
     newC.baseChips = card.baseChips or Deck.getChipValue(newC.rank)
     newC.bonusBaseChips = card.bonusBaseChips or 0
     newC.baseMult = card.baseMult
+    newC.trainingEmpowerment = card.trainingEmpowerment
     newC.spnPermanentDamage = card.spnPermanentDamage
     newC.potionPermanentDamage = card.potionPermanentDamage
     newC.potionPermanentMult = card.potionPermanentMult

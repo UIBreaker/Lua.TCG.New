@@ -73,6 +73,8 @@ function DebugTools.clearScene(game)
     for _, key in ipairs({"currentNodeId", "currentEvent", "eventOutcomeText", "monster", "enemies",
         "pendingVictoryReward", "pendingRoundRewardChoice", "pendingRewardEquipment", "pendingShopEquipment",
         "pendingSoulShop", "pendingBloodShop", "pendingBarter", "barterEvent", "voidEvent", "pendingAncientStatue", "ancientStatue", "bloodDomain",
+        "pendingMemoryMatch", "memoryMatch",
+        "pendingTrainingCamp", "trainingCamp",
         "soulDestroyConsumable", "potionVictoryPending", "abilityCombat", "abilityHand", "bossCombat",
         "spnAttack", "enemyActed", "enemyActionPhases", "advancedCombat", "advancedHand"}) do game[key] = nil end
     game.soulDestroyActive = false

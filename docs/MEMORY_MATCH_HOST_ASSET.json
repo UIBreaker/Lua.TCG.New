@@ -1,0 +1,19 @@
+{
+  "id": "memory_match_host",
+  "group": "event_character",
+  "name": "Ông Chủ Bàn Ký Ức",
+  "source": "ui/memory_match.lua",
+  "file": "assets/scene/events/memory_match_host.png",
+  "prompt": "Use case: stylized-concept. Production NPC cutout for a Western dark-fantasy expedition card game's memory matching event. Portrait 2:3 PNG 1024x1536 with genuinely TRANSPARENT background, no environmental backdrop, generous clear margins, full seated body and boots visible, one HUMAN adult man. A charismatic middle-aged traveling card-game host with a friendly shrewd face, neatly trimmed salt-and-pepper beard, swept-back brown hair, wearing an aged dark navy waistcoat, ivory linen sleeves, rolled travel cloak, antique-brass belt and restrained burgundy scarf. Seated on a small simple folding wooden stool, three-quarter view facing slightly right; he leans forward invitingly, holding two identical blank antique-gold-backed rectangular cards side by side in one hand while the other palm gestures toward an unseen game table to his right. Readable relaxed silhouette, medium detail, cinematic painterly Continental Western fantasy materials and warm golden rim light with cool navy shadows. Convey a fair but cunning host testing memory, not a sinister masked dealer. No game table obscuring his body, no floating scenery, no text, letters, numerals, poker suit symbols, ranks, emblems, fixed frame, border, UI, watermark, dense filigree, East Asian motifs or monster anatomy. Keep all background pixels transparent including outside stool and between arms.",
+  "concept": "A friendly shrewd male traveling game host seated on a folding stool, presenting two identical blank-backed cards and inviting the player to a memory table.",
+  "status": "generated",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "transparent_background": true,
+  "generation": {
+    "mode": "built-in image_gen",
+    "generator_source": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-048bf72c-0003-493a-b73c-e3459bc9fac4.png"
+  }
+}

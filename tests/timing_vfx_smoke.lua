@@ -2,7 +2,7 @@ local V=require("src.timing_vfx")
 local R=require("src.rng")
 local state=R.getState()
 for _,fps in ipairs({30,60,144}) do
-    for _,grade in ipairs({"good","perfect","critical","ultimate","apex","trap","normal","timeout"}) do
+    for _,grade in ipairs({"good","perfect","critical","ultimate","apex","divine","trap","normal","timeout"}) do
         for _,kind in ipairs({"confirm","attack","block","reflect","miss","break"}) do
             V.clear()
             local e=V.emit(kind,grade,630,270)
@@ -21,9 +21,9 @@ V.clear()
 for i=1,100 do V.emit("reflect","apex",630,270,{reducedMotion=true}) end
 assert(#V.active==V.limit and V.camera()==0,"bounded events, no reduced-motion shake")
 local previous=0
-for _,grade in ipairs({"good","perfect","critical","ultimate","apex"}) do
+for _,grade in ipairs({"good","perfect","critical","ultimate","apex","divine"}) do
     local p=V.profiles[grade]
-    assert(p.radius>previous and p.shards<=12 and p.radius<=100 and p.duration<=.80)
+    assert(p.radius>previous and p.shards<=12 and p.radius<=110 and p.duration<=.86)
     previous=p.radius
 end
 V.update(10);assert(#V.active==0)
@@ -53,4 +53,4 @@ for _,fps in ipairs({30,60,144}) do
     assert(not V.pause() and V.parryPose(e).y==0 and V.parryPose(e).sx==1)
     V.clear()
 end
-print("Timing VFX passed: 144 grade/outcome/FPS combinations, bounded lifetime/geometry, RNG isolation and reduced motion")
+print("Timing VFX passed: 162 grade/outcome/FPS combinations, bounded lifetime/geometry, RNG isolation and reduced motion")

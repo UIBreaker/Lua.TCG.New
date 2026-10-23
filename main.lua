@@ -1,4 +1,8 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do if a=="--test-combat-fatigue" then
+    local ok,err=xpcall(function() require("tests.combat_fatigue_smoke") end,debug.traceback)
+    if not ok then print(err) end;os.exit(ok and 0 or 1)
+end end
 for _,a in ipairs(arg or {}) do if a=="--test-discard-feedback" then
     local ok,err=xpcall(function() require("tests.discard_feedback_smoke") end,debug.traceback)
     if not ok then print(err) end;os.exit(ok and 0 or 1)
@@ -239,6 +243,10 @@ for _, a in ipairs(arg or {}) do
     if a=="--test-kingdom-bosses" or a=="--test-free-human-bosses" or a=="--test-oneshot-boss" or a=="--test-rarity-boss" then
         isCaptureMode=true
         function love.errorhandler(message) print("KINGDOM UI ERROR: "..tostring(message));return function() return 1 end end
+    end
+    if a=="--test-memory-match" or a=="--test-training-camp" then
+        isCaptureMode=true
+        function love.errorhandler(message) print("MEMORY MATCH UI ERROR: "..tostring(message));return function() return 1 end end
     end
     if a=="--test-ancient-statue" then
         isCaptureMode=true
@@ -966,7 +974,7 @@ local function initializeCombat(monster, round)
     anim.parryVictoryPending=nil
     require("src.timing_vfx").clear()
     local result = Combat.start(game, monster, round)
-    UI.HandMotion.reset()
+    UI.HandMotion.reset();require("ui.reshuffle_effects").clear()
     for i,card in ipairs(game.hand) do anim.prepareDrawAnimation(card,i) end
     if result.slaughterChips > 0 then
         table.insert(anim.floatingTexts, {
@@ -999,7 +1007,7 @@ end
 local function startNewGame(chosenDeck)
     anim.socketingApplication=nil
     anim.deityHit={}
-    UI.HandMotion.reset()
+    UI.HandMotion.reset();require("ui.reshuffle_effects").clear()
     UI.ExpandedInventory.close()
     UI.BedExplosion.clear(); anim.pendingBedScore=nil
     anim.pendingStoredEquipment=nil
@@ -1876,12 +1884,15 @@ end
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
         local timing=anim.enemyTurn.parryResult
+        if (hit.timingSouls or 0)>0 then
+            table.insert(anim.floatingTexts,{text="+"..hit.timingSouls.." LINH HỒN",color={.85,.48,1},x=enemy.screenX or UI.BATTLE_CENTER_X,y=440,alpha=1.6})
+        end
         if hit.action=="attack" then
             local effect=hit.missed and "miss" or (hit.reflectedAttack or 0)>0 and "reflect"
                 or hit.parried and "block" or timing and timing.reduction>0 and "block" or "break"
             require("src.timing_vfx").emit(effect,timing and timing.grade or "normal",enemy.screenX or UI.BATTLE_CENTER_X,
                 hit.missed and 430 or 270,{reducedMotion=settings.reducedMotion,mobile=Touch.lowPower,audio=true})
-            if hit.parried then Sound.play("armor_gain",timing and timing.grade=="apex" and .80 or timing and timing.grade=="ultimate" and .88 or .98) end
+            if hit.parried then Sound.play("armor_gain",timing and timing.grade=="divine" and .76 or timing and timing.grade=="apex" and .80 or timing and timing.grade=="ultimate" and .88 or .98) end
             if hit.parried and not settings.reducedMotion then anim.hitStop=math.max(anim.hitStop or 0,.025+(timing and (timing.reflectMultiplier or 0)>0 and .025 or 0)) end
         end
         -- The contact queue owns these meters and accents until recovery ends.
@@ -2140,13 +2151,25 @@ local function playSelectedHand()
     end
 end
 
+function UI.reshuffleExhaustedHand()
+    if (game.handsRemaining or 0)>0 or (game.playerHp or 0)<=0 then return 0 end
+    local pile=Layout.battle.deck
+    for i,card in ipairs(game.hand) do
+        UI.HandMotion.collect(card,i,pile[1]+(pile[3]-100)/2,pile[2]+(pile[4]-145)/2)
+    end
+    local drawn,before=Combat.reshuffleExhaustedHand(game,maxCombatHandSize(),anim.prepareDrawAnimation)
+    clearAllSelections();syncCardSelections()
+    for _,card in ipairs(game.hand) do require("ui.reshuffle_effects").emit(card,before[card]) end
+    table.insert(anim.floatingTexts,{text="XÀO BÀI · SUY YẾU −"..(game.combatReshuffles or 0),
+        color={1,.52,.38},x=UI.BATTLE_CENTER_X,y=435,alpha=2.2})
+    Sound.play("card_deal",.82)
+    return drawn
+end
+
 local function endPlayerTurn(force, playAfterTurn)
     if UI.HandMotion.busy(game.hand) then return false end
     if anim.enemyTurn then return true end
     if not game or not game.monster then return false end
-    local handLimitIsFinal = game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle" and UI.BossAbilities.passiveEnabled(game.monster)
-    if handLimitIsFinal and (game.handsRemaining or 0) <= 0 then return false end
     local canEndTurn = #game.hand == 0 or (game.handsRemaining or 0) <= 0
     local availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
     if (not canEndTurn and not force) or availableCards == 0 then return false end
@@ -2154,7 +2177,8 @@ local function endPlayerTurn(force, playAfterTurn)
     availableCards = #(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {})
     if availableCards == 0 then return false end
 
-    local queuedCards = playAfterTurn and getSelectedCards()
+    local exhausted=(game.handsRemaining or 0)<=0
+    local queuedCards = not exhausted and playAfterTurn and getSelectedCards()
     UI.Abilities.roundEnd(game)
     local function finishTurn()
         Combat.onPlayerTurnEnd(game)
@@ -2165,9 +2189,13 @@ local function endPlayerTurn(force, playAfterTurn)
                 x = 640, y = 300, alpha = 2.5,
             })
         end
-        game.handsRemaining = game.turnHandLimit or game.maxHands or game.handsRemaining or 0
         local drawnCards = 0
-        if #game.hand == 0 then
+        if exhausted then
+            drawnCards=UI.reshuffleExhaustedHand()
+        else
+            game.handsRemaining = game.turnHandLimit or game.maxHands or game.handsRemaining or 0
+        end
+        if not exhausted and #game.hand == 0 then
             drawnCards = dealCombatHand(true)
         else
             clearAllSelections()
@@ -2203,7 +2231,7 @@ end
 function UI.playHandAction()
     if state ~= "playing" or anim.active or anim.enemyTurn or UI.AbilityUI.current then return end
     if #game.hand == 0 or (game.handsRemaining or 0) <= 0 then
-        if #game.selectedIndices > 0 and not require("src.spn_legacy").canPlay(game,#game.selectedIndices) then return end
+        if (game.handsRemaining or 0)>0 and #game.selectedIndices > 0 and not require("src.spn_legacy").canPlay(game,#game.selectedIndices) then return end
         return endPlayerTurn(false, #game.selectedIndices > 0)
     end
     return playSelectedHand()
@@ -2736,6 +2764,12 @@ local function updateCaptureMode()
             game.bossDeityDraft = Deities.getBossDraftPool(require("src.loadout").ownedDeities(game), 2)
             state = "boss_deity"
         end,
+        openMemoryMatch = function()
+            game.pendingMemoryMatch=true;UI.continueAfterMarket()
+        end,
+        openTrainingCamp = function()
+            game.pendingTrainingCamp=true;UI.continueAfterMarket()
+        end,
         openInspector = function(card) inspectCardModal = card end,
         getInspector = function() return inspectCardModal end,
         closeInspector = function() inspectCardModal = nil end,
@@ -2825,11 +2859,13 @@ function love.update(dt,realDt)
     require("src.combat_timing").reducedMotion=settings.reducedMotion
     if not (isPauseMenuOpen or isSettingsOpen or isHandbookOpen or isDeckViewerOpen or inspectCardModal or isCollectionOpen) then
         require("src.timing_vfx").update(realDt)
+        require("ui.reshuffle_effects").update(realDt)
     end
     UI.CardPhysics.reducedMotion,UI.CardPhysics.fast=settings.reducedMotion,settings.fastScoring
     UI.HandMotion.updateReturns(dt)
     require("ui.potion_effects").update(game,dt,settings.reducedMotion,state,settings.fastScoring)
     if state=="barter" and not isPauseMenuOpen and not isSettingsOpen and require("src.barter").update(game,dt) then saveRunAtSafePoint() end
+    if state=="memory_match" and not isPauseMenuOpen and not isSettingsOpen and require("src.memory_match").update(game,dt) then saveRunAtSafePoint() end
     require("ui.enemy_formation").update(game,dt,not anim.enemyTurn and not anim.counterAttackStarted and state=="scoring" and anim.active and anim.sequence or nil,anim.enemyTurn)
     if not isCollectionOpen then Collection.prepareCacheStep() end
     if isCollectionOpen and require("ui.collection_book").update(dt) then
@@ -3049,6 +3085,7 @@ function love.update(dt,realDt)
     -- Smoothly lerp player hand cards visual positions & rotation
     if game.hand and #game.hand > 0 then
         for i, c in ipairs(game.hand) do
+            if state=="playing" or state=="scoring" then c.combatFatigue=game.combatReshuffles or 0 end
             local tx, ty, tw, th, tangle = getHandCardPosition(i, #game.hand)
             local idle = settings.reducedMotion and 0 or math.sin(juice.ambientTimer * 1.35 + i * 0.82) * 0.85
             ty = ty + idle
@@ -3266,6 +3303,9 @@ function love.update(dt,realDt)
                         beforeHit[#beforeHit+1]={enemy=enemy,hp=enemy.hp or 0,armor=enemy.creatureArmor or 0}
                     end
                     local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult,anim.playerTimingResult)
+                    if (attackResult.timingSouls or 0)>0 then
+                        table.insert(anim.floatingTexts,{text="+"..attackResult.timingSouls.." LINH HỒN",color={.85,.48,1},x=game.monster.screenX or UI.BATTLE_CENTER_X,y=328,alpha=1.6})
+                    end
                     if not attackResult.frozen then
                         require("src.timing_vfx").emit(attackResult.missed and "miss" or "attack",
                             anim.playerTimingResult and anim.playerTimingResult.grade or "normal",
@@ -3459,8 +3499,7 @@ function love.update(dt,realDt)
                     if anim.monsterDefeated then
                         UI.finishCombatVictory()
                     else
-                        -- Preserve per-hand lifecycle effects; turn recycling itself
-                        -- only happens when the player explicitly ends the turn.
+                        -- Finish the last enemy response before automatically rebuilding an exhausted hand.
                         Combat.cleanupDestroyedCards(game)
                         Combat.onPlayerTurnEnd(game)
                         local cleansed, cleanseMsg = Combat.onMonsterTurnEnd(game)
@@ -3474,7 +3513,15 @@ function love.update(dt,realDt)
                             })
                         end
                         EnemyGroup.ensureTarget(game)
-                        dealCombatHand(false)
+                        if (game.handsRemaining or 0)<=0 then
+                            UI.Abilities.roundEnd(game)
+                            UI.reshuffleExhaustedHand()
+                            UI.BossAbilities.handEnd(game)
+                            UI.Abilities.resolveBossDamage(game)
+                            require("src.enemy_abilities").handEnd(game)
+                            if (game.playerHp or 0)<=0 then beginPlayerDefeat();Persistence.deleteRun();return end
+                            UI.Abilities.roundStart(game)
+                        else dealCombatHand(false) end
                         UI.Abilities.handStart(game)
                         state = "playing"
                         Sound.play("card_deal")
@@ -3510,7 +3557,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.146.0", 48, 185)
+    g.print("beta 0.147.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4427,16 +4474,13 @@ local function drawPlayingState()
     local actionY = 636
 
     -- Left: Chơi Tay Bài [Space]
-    local handLimitIsFinal = game.monster and game.monster.isBoss and game.monster.bossData
-        and game.monster.bossData.debuffId == "the_needle" and UI.BossAbilities.passiveEnabled(game.monster)
-    local canEndTurn = not (handLimitIsFinal and (game.handsRemaining or 0) <= 0)
-        and (#game.hand == 0 or (game.handsRemaining or 0) <= 0)
+    local canEndTurn = (#game.hand == 0 or (game.handsRemaining or 0) <= 0)
         and (#(game.hand or {}) + #(game.deck or {}) + #(game.discardPile or {}) > 0)
-    local playNextTurn = canEndTurn and hasSelection
+    local playNextTurn = canEndTurn and hasSelection and (game.handsRemaining or 0)>0
     local btnPlay = {
         id = canEndTurn and not playNextTurn and "end_turn" or "play",
         text = state == "scoring" and not anim.enemyTurn and "ĐANG TÍNH AURA"
-            or (playNextTurn and "ĐÁNH LƯỢT KẾ" or canEndTurn and "KẾT THÚC LƯỢT"
+            or (canEndTurn and (game.handsRemaining or 0)<=0 and "XÀO BÀI · SUY YẾU" or playNextTurn and "ĐÁNH LƯỢT KẾ" or canEndTurn and "KẾT THÚC LƯỢT"
                 or hasSelection and ("TẤN CÔNG #"..(game.monster.groupIndex or 1)) or "CHỌN BÀI"),
         x = UI.BATTLE_CENTER_X - 255,
         y = actionY,
@@ -4445,7 +4489,7 @@ local function drawPlayingState()
         font = UI.fonts.bookChapter,
         variant = "cyan",
         disabled = anim.enemyTurn ~= nil or state == "scoring" or UI.HandMotion.busy(game.hand)
-            or (hasSelection and not require("src.spn_legacy").canPlay(game,#selectedCards))
+            or (not canEndTurn and hasSelection and not require("src.spn_legacy").canPlay(game,#selectedCards))
             or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
     }
@@ -6215,6 +6259,12 @@ function love.draw()
     elseif state=="barter" then
         buttons={}
         require("ui.barter").draw(game,buttons,toVirtual(love.mouse.getPosition()))
+    elseif state=="training_camp" then
+        buttons={}
+        require("ui.training_camp").draw(game,buttons,toVirtual(love.mouse.getPosition()))
+    elseif state=="memory_match" then
+        buttons={}
+        require("ui.memory_match").draw(game,buttons,toVirtual(love.mouse.getPosition()))
     elseif state=="blood_statue" then
         buttons={}
         require("ui.ancient_statue").draw(game,buttons,toVirtual(love.mouse.getPosition()))
@@ -6525,6 +6575,14 @@ local function handlePlayingMousepressed(mx, my, button)
 end
 
 function UI.continueAfterMarket()
+    if game.pendingTrainingCamp then
+        if require("src.training_camp").create(game) then state="training_camp";lastActiveState=state;saveRunAtSafePoint();return true end
+        game.pendingTrainingCamp=nil
+    end
+    if game.pendingMemoryMatch then
+        if require("src.memory_match").create(game) then state="memory_match";lastActiveState=state;saveRunAtSafePoint();return true end
+        game.pendingMemoryMatch=nil
+    end
     if game.pendingAncientStatue then
         require("src.ancient_statue").create(game);state="blood_statue";lastActiveState=state;saveRunAtSafePoint();return true
     end
@@ -6738,7 +6796,7 @@ end
 
 function UI.Debug.clearScene()
     anim.socketingApplication=nil
-    UI.HandMotion.reset()
+    UI.HandMotion.reset();require("ui.reshuffle_effects").clear()
     UI.ScoringFeel.cancel(anim)
     anim.active, anim.enemyTurn, anim.sequence, anim.scoringData = false, nil, nil, nil
     anim.pendingBedScore, anim.pendingStoredEquipment = nil, nil
@@ -7977,6 +8035,28 @@ function love.mousepressed(x, y, button, istouch)
                 local result=require("ui.ancient_statue").press(game,btn)
                 if result=="leave" or result=="claimed" then UI.continueAfterMarket()
                 elseif result=="entered" then state="BLIND_SELECT";lastActiveState=state;saveRunAtSafePoint()
+                elseif result then saveRunAtSafePoint() end
+                if result then Sound.play("card_deal") end
+                return
+            end
+        end
+    elseif state=="training_camp" then
+        if button~=1 then return end
+        for _,btn in ipairs(buttons) do
+            if not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local result=require("ui.training_camp").press(game,btn)
+                if result=="leave" then game.trainingCamp=nil;UI.continueAfterMarket()
+                elseif result then saveRunAtSafePoint() end
+                if result then Sound.play("card_deal") end
+                return
+            end
+        end
+    elseif state=="memory_match" then
+        if button~=1 then return end
+        for _,btn in ipairs(buttons) do
+            if not btn.disabled and mx>=btn.x and mx<=btn.x+btn.w and my>=btn.y and my<=btn.y+btn.h then
+                local result=require("ui.memory_match").press(game,btn)
+                if result=="claimed" then game.memoryMatch=nil;UI.continueAfterMarket()
                 elseif result then saveRunAtSafePoint() end
                 if result then Sound.play("card_deal") end
                 return

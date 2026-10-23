@@ -501,7 +501,7 @@ function Shop.getMarketValue(item,kind)
             value=value-(eq.cost or 0)*Shop.PRICE_MULTIPLIER+Shop.getMarketValue(eq,"equipment")
         end
         value=value+math.max(0,item.bonusBaseChips or 0)*.8+math.max(0,item.speedBonus or 0)*8
-            +math.max(0,item.potionPermanentMult or 0)*12+math.max(0,Equipment.getMaxSlots(item)-4)*16
+            +math.max(0,(item.potionPermanentMult or 0)+(item.trainingEmpowerment or 0))*12+math.max(0,Equipment.getMaxSlots(item)-4)*16
     else
         if not marketConsumables then
             marketConsumables={}
@@ -1515,6 +1515,8 @@ function Shop.enterAfterCombat(gameState)
     local blood=Blood.roll(gameState)
     if require("src.barter").roll(gameState) then gameState.pendingBarter=true end
     if require("src.ancient_statue").roll(gameState) then gameState.pendingAncientStatue=true end
+    if require("src.memory_match").roll(gameState) then gameState.pendingMemoryMatch=true end
+    if require("src.training_camp").roll(gameState) then gameState.pendingTrainingCamp=true end
     if Shop.enterSoulShop(gameState) then gameState.pendingBloodShop=blood or gameState.pendingBloodShop
     else
         gameState.shopMode="small"

@@ -281,7 +281,7 @@ function H.afterAttack(g,m,result)
             if not c.destroyed and (not target or require("src.deck").peekCardAttackSpeed(c,g)>require("src.deck").peekCardAttackSpeed(target,g)) then target=c end
         end
         if target then
-            local stolen=math.min(2,require("src.deck").peekCardAttackSpeed(target,g)-1)
+            local stolen=math.max(0,math.min(2,require("src.deck").peekCardAttackSpeed(target,g)-1))
             require("src.chest_expansion").sync(g,target,function(c) c.humanSpeedPenalty=(c.humanSpeedPenalty or 0)+stolen;require("src.deck").getCardAttackSpeed(c) end)
             s.stolen=s.stolen+stolen;emit(g,"ĐOẠT PHONG · -"..stolen.." TỐC VĨNH VIỄN",target);save(g)
             g.lastPlayerAttackSpeed=require("src.combat").getAverageAttackSpeed(g.abilityHand.played,g)

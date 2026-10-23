@@ -392,6 +392,7 @@ UI.drawPlayingMetadata=drawPlayingMetadata
 local function drawCardEditionRim(card, w, h, highlight)
     local color = highlight or (CardEffects.getEffectName(card) and CardEffects.getBeamColor(card))
     UI.drawCardBorder(0, 0, w, h, color, card.alpha or 1, card)
+    require("ui.reshuffle_effects").draw(UI,card,w,h)
 end
 
 function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
@@ -415,6 +416,7 @@ function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,
     local buffX,buffY,buffAngle=0,0,0
     if onHand and not card.faceDown and not isFloating and not UI.CardPhysics.isHeld(card) then
         buffX,buffY,buffAngle=require("ui.discard_effects").cardPose(card,UI.HandMotion.reducedMotion)
+        buffY=buffY+require("ui.reshuffle_effects").pose(card,UI.HandMotion.reducedMotion)
     end
     local fxTiltX, fxTiltY = CardEffects.getTilt(card)
     shearX, shearY = shearX + fxTiltX, shearY + fxTiltY

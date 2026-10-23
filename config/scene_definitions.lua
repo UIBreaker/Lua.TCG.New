@@ -44,12 +44,15 @@ D.scenes.menu.layers={D.layers[1],D.layers[5],D.layers[6]}
 D.bossPresets = {echo_knight="ICE",taxman="DESERT",gem_devourer="MYSTIC",executioner="VOLCANIC",
     faceless="VOID",the_needle="RUINS",the_water="ICE",the_hook="RUINS",the_fish="FOREST",the_arm="VOLCANIC"}
 function D.resolve(state, monster)
+    if state=="training_camp" then
+        return "training_camp",{base="trainingCamp",backgroundPath="assets/scene/events/training_camp.png",brightness=.95,preset="FOREST",layers={D.layers[1],D.layers[6]}},D.presets.FOREST
+    end
     local name = D.states[state] or "archive"
     local definition = D.scenes[name]
     if state=="void" then
         return "void",{base="theVoid",backgroundPath=require("config.void_gacha").background,brightness=.9,preset="VOID",layers={D.layers[1],D.layers[6]}},D.presets.VOID
     end
-    if (state=="barter" or state=="blood_statue") and monster and monster.stage then
+    if (state=="barter" or state=="blood_statue" or state=="memory_match") and monster and monster.stage then
         local area=require("src.expedition").area(monster.areaStage or monster.stage,monster.regionId)
         return "barter",{base=area.background,brightness=.88,preset=area.preset,layers={D.layers[1],D.layers[5],D.layers[6]}},D.presets[area.preset]
     end

@@ -6,7 +6,7 @@ import numpy as np
 from build_audio import ROOT, RATE, TAU, seed, stereo, tone, write_audio
 
 GRADES = {"ready": (.24, 420), "normal": (.23, 220), "good": (.36, 440),
-          "perfect": (.58, 660), "critical": (.78, 880), "ultimate": (.95, 1046.5), "apex": (1.1, 1174.66), "trap": (.35, 145), "timeout": (.28, 175)}
+          "perfect": (.58, 660), "critical": (.78, 880), "ultimate": (.95, 1046.5), "apex": (1.1, 1174.66), "divine": (1.22, 1318.51), "trap": (.35, 145), "timeout": (.28, 175)}
 
 def render(mode, grade):
     duration, freq = GRADES[grade]
@@ -28,13 +28,13 @@ def render(mode, grade):
         x += .26 * noise * np.exp(-t*35)
     else:
         notes = {"ready": (1,), "normal": (1,), "good": (1,1.5),
-                 "perfect": (1,1.25,1.5), "critical": (1,1.25,1.5,2), "ultimate": (1,1.5,2,2.5,3), "apex": (1,1.25,1.5,2,3,4)}[grade]
+                 "perfect": (1,1.25,1.5), "critical": (1,1.25,1.5,2), "ultimate": (1,1.5,2,2.5,3), "apex": (1,1.25,1.5,2,3,4), "divine": (1,1.5,2,3,4,5)}[grade]
         for i, ratio in enumerate(notes):
             at=.025+i*.045
             u=np.maximum(0,t-at)
             x += .43/len(notes)**.5 * tone(u,freq*ratio,8 if metallic else 11,
                 (1,.20,.08),(1,2.756 if metallic else 2,4.07)) * (t>=at)
-        if grade in ("critical", "ultimate", "apex"):
+        if grade in ("critical", "ultimate", "apex", "divine"):
             x += .3*tone(np.maximum(0,t-.085),82,9)*(t>=.085)
     return stereo(x,.18 if metallic else .10)
 
@@ -44,14 +44,14 @@ def build():
         for grade in GRADES:
             name="timing_"+mode+"_"+grade
             path=ROOT/"assets/audio/continental/sfx"/(name+".wav")
-            meta=write_audio(path,render(mode,grade),.68 if grade in ("perfect","critical","ultimate","apex") else .60)
-            gain=.38 if grade=="ready" else .82 if grade in ("critical","ultimate","apex") else .74
+            meta=write_audio(path,render(mode,grade),.68 if grade in ("perfect","critical","ultimate","apex","divine") else .60)
+            gain=.38 if grade=="ready" else .82 if grade in ("critical","ultimate","apex","divine") else .74
             lines.append(f'    {name}={{path="{meta["path"]}",gain={gain},peak={meta["peak"]:.3f},priority=5,cooldown=.045,duck=.42,duckDuration=.16}},')
     lines.append("}")
     (ROOT/"config/timing_audio_baked.lua").write_text("\n".join(lines)+"\n",encoding="utf-8")
     clips=[]
     for mode in ("attack", "parry"):
-        for grade in ("good", "perfect", "critical", "ultimate", "apex", "trap"):
+        for grade in ("good", "perfect", "critical", "ultimate", "apex", "divine", "trap"):
             with wave.open(str(ROOT/"assets/audio/continental/sfx"/("timing_"+mode+"_"+grade+".wav"))) as f:
                 clips.append(np.frombuffer(f.readframes(f.getnframes()),"<i2").reshape(-1,2)/32768)
             clips.append(np.zeros((RATE//4,2)))

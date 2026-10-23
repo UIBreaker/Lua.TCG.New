@@ -1,5 +1,11 @@
 # Prompts and concepts
 
+## 2026-10-23 — Trạm Nghỉ Huấn Luyện
+
+Nền trại viễn chinh Western fantasy lúc chạng vạng: lều và giường nghỉ bên trái, lửa trại giữa, bù nhìn tập kiếm và giá vũ khí bên phải. Rừng xanh navy, lửa vàng ấm, ít chi tiết li ti, không chữ hoặc UI. PNG landscape 1672×941.
+
+Ảnh tạo bằng built-in image_gen: `assets/scene/events/training_camp.png`. Prompt nguyên văn, concept và nguồn ảnh: `docs/TRAINING_CAMP_ASSET.json`. Luật và kiểm tra: `docs/TRAINING_CAMP.md`.
+
 ## 2026-10-14 — Utility / recognition_hearts
 
 Concept: Official recognition of Valoria, the volcanic human kingdom. One unrolled thick ivory parchment charter upright on a rugged black basalt lectern, with a large dark red wax seal anchored by a bronze phoenix relief (a bird, not a heart or poker symbol), crimson ribbon hanging below. A broad warm volcanic dawn and distant medieval Western fortress arch behind. Antique gold, oxblood and lava orange, dark navy shadows. Prestigious hard-earned expedition recognition, not a magic spell. Parchment contains subtle pictorial map-like mountains with no written marks; one document is the focal subject.
@@ -5889,6 +5895,12 @@ Boss tự do hình người có giáp nứt hút đòn kết liễu vào lõi v�
 Boss tự do hình người tóc bạc, đóng ấn đồng phong tỏa một lá linh thể và tước hai mảnh tinh thể phẩm cấp khỏi lá khác. Concept thể hiện phong ấn một bậc SPN C–TT và hạ 2 bậc một SPN mỗi lượt. Phong cách Continental, ánh tím có kiểm soát, không chữ/chất/khung vẽ sẵn.
 
 Ảnh tạo bằng built-in image_gen, PNG 1024×1536: `assets/cards/continental/enemy/human_rank_inquisitor.png`. Prompt, concept, nguồn ảnh: `docs/RARITY_INQUISITOR_ASSET.json`. Cơ chế: `docs/RARITY_INQUISITOR.md`. QA: `docs/rarity_boss_sealed.png`, `docs/rarity_boss_downgrade.png`.
+
+## 2026-10-23 — Ông Chủ Bàn Ký Ức
+
+Người đàn ông viễn chinh có râu điểm bạc, ngồi trên ghế gấp, giơ hai lá cùng mặt sau và mời người chơi thử trí nhớ. NPC tách nền alpha 1024×1536, phong cách Continental với vải navy, da thuộc, đồng cổ và ánh viền vàng ấm. Không vẽ chữ, chất hoặc khung UI vào ảnh.
+
+Ảnh tạo bằng built-in image_gen tại `assets/scene/events/memory_match_host.png`. Prompt nguyên văn và nguồn: `docs/MEMORY_MATCH_HOST_ASSET.json`. Sáu lá hỗ trợ dùng lại asset hiện có; ba SPN dùng loader và khung chuẩn. Luật, cân bằng và QA: `docs/MEMORY_MATCH.md`.
 
 
 ### Kẻ Xóa Vương Quyền / spirit_crown_eraser — 2026-10-22

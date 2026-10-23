@@ -31,6 +31,11 @@ local function clickAction(cb)
 end
 function T.update(game, cb)
     local now = love.timer.getTime()
+    local active=cb.getScoringState()
+    local timing=active.attackTiming or active.enemyTurn and active.enemyTurn.timing
+    if timing and not timing.result and timing.age>=timing.ready+.02 then
+        timing.position=0;love.keypressed("space",nil,false)
+    end
     if not T.originalPlayer then
         local Core = require("ui.components.core")
         T.originalText = Core.text
@@ -112,12 +117,15 @@ function T.update(game, cb)
                 assert(T.playerHits == 0 and game.playerHp == 0, "dead player cannot execute a queued hand")
             elseif state ~= "playing" or a.active or a.enemyTurn then return
             else
-                local expected = spec.noSelection and 0 or 1
+                local expected = (spec.noSelection or spec.remaining==0) and 0 or 1
                 assert(T.playerHits == expected, spec.name .. ": selected attack disappeared; player resolutions=" .. T.playerHits)
                 assert(game.handsRemaining == (spec.remaining == 0 and game.turnHandLimit or spec.remaining) - expected,
                     "queued attack must spend exactly one hand in the new turn")
-                assert(T.enemyHits == (spec.noSelection and 1 or spec.remaining == 0 and 2 or 1), "enemy must act once per phase")
-                if not spec.noSelection then
+                assert(T.enemyHits == 1, "enemy must act once per phase")
+                if spec.remaining==0 then
+                    assert(game.combatReshuffles==1 and #game.selectedIndices==0,"rollover shuffles and cancels stale card selections")
+                end
+                if expected>0 then
                     assert(T.chosen == a.playedCards[1] or T.chosen == game.discardPile[#game.discardPile], "play must keep the chosen card")
                     if spec.multiple then
                         local found = false

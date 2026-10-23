@@ -427,19 +427,18 @@ function Scoring.calculate(handInfo, deities, context)
             do
                 local before={chips=bonusChips,mult=bonusMult,x=xMultBonus,damage=flatDamageBonus,
                     extra=totalExtraDamagePct,gold=bonusGoldAwarded,armor=totalArmorGain,heal=totalHealHp,hp=totalHpCost}
-                local cardChips = Deck.getCardDamage(card)
                 local potionChips,potionMult=require("src.potions").cardBonus(abilityGame or context and context.gameState,card)
-                cardChips=cardChips+potionChips
-                local empowerment=Deck.getCardEmpowerment(card)
+                local cardChips=Deck.getCardDamage(card,nil,potionChips)
+                local empowerment=Deck.getCardEmpowerment(card,nil,potionMult)
                 bonusChips = bonusChips + cardChips
-                bonusMult=bonusMult+potionMult+empowerment
+                bonusMult=bonusMult+empowerment
 
                 local cardEvent = {
                     type = "card_scored",
                     card = card,
                     cardIndex = idx,
                     addedChips = cardChips,
-                    addedMult = potionMult+empowerment,
+                    addedMult = empowerment,
                     message = (card.roleIcon or "") .. " " .. card.rankName .. (card.suitSymbol or "") .. " +" .. cardChips .. " Chips"
                 }
                 if potionChips>0 or potionMult>0 then

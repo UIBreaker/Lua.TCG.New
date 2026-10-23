@@ -1,0 +1,9 @@
+{
+  "name": "Trạm Nghỉ Huấn Luyện",
+  "mode": "built-in image_gen",
+  "file": "assets/scene/events/training_camp.png",
+  "dimensions": [1672, 941],
+  "generatorSource": "C:/Users/Nhật Nam/.codex/generated_images/01a10210-4fc0-7760-b277-afe44fa945b6/exec-91bbda12-1e5d-491f-adf5-62b38cf1a699.png",
+  "concept": "Western expedition rest/training camp at twilight, warm fire, tent and bedroll, practice dummies and swords.",
+  "prompt": "Use case: stylized-concept. Create one landscape 16:9 production game background, cinematic painterly Western dark-fantasy Continental expedition art. An inviting small expedition rest and training camp in a forest clearing above a distant mysterious continent at twilight. Left: canvas tent with bedroll, a modest wooden table and warm lantern. Center foreground: a stone-ring campfire, one strong readable warm light source with a few restrained embers. Right: two wooden practice dummies and a simple rack of steel swords near a broad open dirt training ground. Quiet pine-green woods, navy-blue distant mountains, antique gold warm fire, medium detail and large clear shapes. Welcoming respite during a dangerous journey, grounded practical expedition equipment. Wide balanced environmental composition with breathing room, no prominent characters. Full bleed landscape, no UI, no letters, words, numbers, card frames, badges or watermark. No East Asian architecture or motifs, no excessive particles or blown out glow."
+}

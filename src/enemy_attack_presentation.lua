@@ -114,7 +114,7 @@ function P.reaction(s,m)
         elseif age<.065 then p=1
         else p=math.exp(-(age-.065)*16)*math.max(0,1-(age-.065)/.25) end
     end
-    local force=reflected and (s.parryResult and s.parryResult.grade=="apex" and 28 or 20) or 6
+    local force=reflected and (s.parryResult and s.parryResult.grade=="divine" and 32 or s.parryResult and s.parryResult.grade=="apex" and 28 or 20) or 6
     return -force*p,1-(reflected and .11 or .035)*p,p
 end
 

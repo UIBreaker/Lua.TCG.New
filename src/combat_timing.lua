@@ -24,11 +24,14 @@ function T.start(kind, playerSpeed, enemySpeed)
     band(s,slots[5],.025,"ultimate")
     band(s,slots[5],.13,"trap")
     s.apex={from=slots[4]-.0075,to=slots[4]+.0075,grade="apex"}
+    local center=slots[3]+(Rng.random(2)==1 and -.052 or .052)
+    s.divine={from=center-.004,to=center+.004,grade="divine"}
     require("src.timing_audio").play(kind,"ready")
     return s
 end
 
 function T.grade(s, position)
+    if s.divine and position>=s.divine.from and position<=s.divine.to then return "divine" end
     if position>=s.apex.from and position<=s.apex.to then return "apex" end
     for _,zone in ipairs(s.zones) do
         if position>=zone.from and position<=zone.to then return zone.grade end
@@ -37,12 +40,26 @@ function T.grade(s, position)
 end
 
 local function result(grade)
-    return {grade=grade,multiplier=grade=="apex" and 8 or grade=="ultimate" and 4 or grade=="critical" and 2.6 or grade=="perfect" and 2
+    return {grade=grade,multiplier=grade=="divine" and 12 or grade=="apex" and 8 or grade=="ultimate" and 4 or grade=="critical" and 2.6 or grade=="perfect" and 2
         or grade=="good" and 1.35 or grade=="timeout" and .75 or grade=="trap" and 0 or 1,
-        reduction=(grade=="perfect" or grade=="critical" or grade=="ultimate" or grade=="apex") and 1 or grade=="good" and .5
+        reduction=(grade=="perfect" or grade=="critical" or grade=="ultimate" or grade=="apex" or grade=="divine") and 1 or grade=="good" and .5
         or grade=="trap" and -.25 or 0,
-        forceMiss=grade=="trap",armorPct=(grade=="ultimate" or grade=="apex") and .5 or grade=="critical" and .25 or 0,
-        reflectMultiplier=grade=="apex" and 250 or grade=="ultimate" and 100 or 0}
+        forceMiss=grade=="trap",armorPct=(grade=="ultimate" or grade=="apex" or grade=="divine") and .5 or grade=="critical" and .25 or 0,
+        reflectMultiplier=grade=="divine" and 500 or grade=="apex" and 250 or grade=="ultimate" and 100 or 0}
+end
+
+function T.soulReward(grade)
+    if grade=="ultimate" then return Rng.random(1,5) end
+    return ({apex=2,divine=3})[grade] or 0
+end
+function T.awardSouls(game,timing)
+    if not timing or timing.soulClaimed then return 0 end
+    local amount=T.soulReward(timing.grade)
+    if amount<=0 then return 0 end
+    timing.soulClaimed=true
+    local before=game.souls or 0
+    game.souls=math.min(9007199254740991,before+amount)
+    return game.souls-before
 end
 
 function T.press(s)
@@ -66,20 +83,22 @@ function T.update(s,dt)
     return false
 end
 
-local colors={good={.25,.72,.70},perfect={.95,.72,.28},critical={1,.91,.61},ultimate={.82,.52,1},apex={.86,1,1},trap={.76,.25,.24}}
+local colors={good={.25,.72,.70},perfect={.95,.72,.28},critical={1,.91,.61},ultimate={.82,.52,1},apex={.86,1,1},divine={1,.38,.60},trap={.76,.25,.24}}
 local function label(s)
     local grade=s.result and s.result.grade
     if not grade then return nil end
     if s.kind=="parry" then
         return ({perfect="PARRY · CHẶN TOÀN BỘ",critical="PHẢN THẾ · CHẶN ĐÒN + TẠO GIÁP",
-            ultimate="TUYỆT KỸ · PHẢN 10.000% SÁT THƯƠNG",
-            apex="CỰC HẠN · PHẢN 25.000% SÁT THƯƠNG",
+            ultimate="TUYỆT KỸ · PHẢN ×100 · +1–5 LH",
+            apex="CỰC HẠN · PHẢN ×250 · +2 LH",
+            divine="THẦN TÍCH · PHẢN ×500 · +3 LH",
             good="ĐỠ TỐT · GIẢM 50%",trap="LỘ SƯỜN · NHẬN THÊM 25%",normal="LỠ NHỊP · KHÔNG ĐỠ ĐƯỢC",
             timeout="QUÁ CHẬM · KHÔNG ĐỠ ĐƯỢC"})[grade]
     end
     return ({perfect="CHÍNH XÁC · SÁT THƯƠNG ×2",critical="ĐÒN QUYẾT ĐỊNH · SÁT THƯƠNG ×2.6",
-        ultimate="TUYỆT KỸ · SÁT THƯƠNG ×4",
-        apex="CỰC HẠN · SÁT THƯƠNG ×8",
+        ultimate="TUYỆT KỸ · SÁT THƯƠNG ×4 · +1–5 LH",
+        apex="CỰC HẠN · SÁT THƯƠNG ×8 · +2 LH",
+        divine="THẦN TÍCH · SÁT THƯƠNG ×12 · +3 LH",
         good="ĐÁNH TỐT · SÁT THƯƠNG ×1.35",trap="SA BẪY · ĐÁNH HỤT",normal="ĐÒN THƯỜNG · SÁT THƯƠNG ×1",
         timeout="QUÁ CHẬM · SÁT THƯƠNG ×0.75"})[grade]
 end
@@ -115,11 +134,15 @@ function T.draw(s,UI)
     for tick=1,19 do
         g.setColor(.48,.58,.60,.16);g.line(bx+bw*tick/20,by+4,bx+bw*tick/20,by+8)
     end
-    for i=#s.zones,0,-1 do
-        local zone=i==0 and s.apex or s.zones[i];local c=colors[zone.grade]
+    for i=#s.zones,-1,-1 do
+        local zone=i==-1 and s.divine or i==0 and s.apex or s.zones[i];local c=colors[zone.grade]
         local zx,zw=bx+bw*zone.from,bw*(zone.to-zone.from)
         Core.gradient(zx,by,zw,12,{c[1],c[2],c[3],.95},{c[1]*.48,c[2]*.48,c[3]*.48,1},1)
-        if zone.grade=="apex" then
+        if zone.grade=="divine" then
+            local cx=zx+zw/2
+            g.setColor(1,.87,.52);g.polygon("fill",cx,by-12,cx+4,by-6,cx,by,cx-4,by-6)
+            Core.color(c);g.setLineWidth(1.3);g.line(cx-6,by-6,cx-3,by-3);g.line(cx+6,by-6,cx+3,by-3)
+        elseif zone.grade=="apex" then
             local cx=zx+zw/2
             Core.color(c,.25);g.rectangle("fill",zx-2,by-2,zw+4,16,2)
             g.setColor(1,1,1)
@@ -149,12 +172,12 @@ function T.draw(s,UI)
     if text then
         require("ui.components.timing_caption").draw(text,s.result.grade,bx,y+43,bw,UI.fonts.small,s.hold,s.reducedMotion)
     else
-        local legend=parry and {"Đỡ 50%","Đỡ hết","◆ Giáp","★ ×100","✦ ×250","Lộ 25%"}
-            or {"×1.35","×2","◆ ×2.6","★ ×4","✦ ×8","Hụt"}
-        for i,grade in ipairs({"good","perfect","critical","ultimate","apex","trap"}) do
-            local lx=bx+(i-1)*bw/6
+        local legend=parry and {"Đỡ 50%","Đỡ hết","◆ Giáp","★ ×100","✦ ×250","♦ ×500","Lộ 25%"}
+            or {"×1.35","×2","◆ ×2.6","★ ×4","✦ ×8","♦ ×12","Hụt"}
+        for i,grade in ipairs({"good","perfect","critical","ultimate","apex","divine","trap"}) do
+            local lx=bx+(i-1)*bw/7
             Core.color(colors[grade]);g.rectangle("fill",lx,y+48,5,5,1)
-            Core.text(legend[i],lx+8,y+43,bw/6-8,UI.fonts.tiny,colors[grade])
+            Core.text(legend[i],lx+8,y+43,bw/7-8,UI.fonts.tiny,colors[grade])
         end
     end
     g.pop()

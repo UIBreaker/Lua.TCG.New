@@ -30,6 +30,7 @@ function T.update(game,cb)
     end
     if stage=="start" then
         require("tests.enemy_motion_smoke")
+        require("tests.enemy_idle_render").verify()
         local update=love.update
         love.update=function(dt)
             local step=math.min(dt,recording and 1/30 or .05);T.clock=T.clock+step;update(step)

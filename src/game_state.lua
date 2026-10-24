@@ -18,6 +18,8 @@ function GameState.resetRun(game, faction)
     game.act = 1
     game.gold = 6
     game.souls = 0
+    game.timingChains={}
+    game.timingRewardMultiplier=1
     game.depthCombat = nil
     game.advancedHand=nil;game.advancedCombat=nil;game.advancedFeedback=nil
     game.soulDestroyedIds = {}

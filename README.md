@@ -1,6 +1,6 @@
 # 🃏 LUA.TCG — Poker Roguelike
 
-**beta 0.147.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
+**beta 0.148.0** · Lua / LuaJIT · LÖVE 11.5 · [MIT](LICENSE)
 
 Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài và chiến đấu theo lượt. Từ bốn vương quốc trên lục địa, bạn giành giấy phép viễn chinh, lên tàu và khám phá vùng đất bí ẩn trong thế giới fantasy phương Tây.
 
@@ -22,6 +22,15 @@ Game thẻ bài roguelike kết hợp thế bài Poker, xây dựng bộ bài v�
 | Soi chi tiết lá bài | Bộ sưu tập |
 | :---: | :---: |
 | ![Thông tin khả năng, tiến hóa và trang bị của quân bài](docs/screenshots/0.75.3/card-inspector.png) | ![Tra cứu các nhóm nội dung trong bộ sưu tập](docs/screenshots/0.75.3/collection.png) |
+
+## Mới trong beta 0.148.0
+
+- Chuỗi timing riêng theo mốc, giữ qua trận/save; tăng thưởng vàng, linh hồn, giáp và lễ trao thưởng. Thần Tích tiến hóa bài/SPN đang sở hữu theo chuỗi.
+- Sáu mốc chiến thuật: Hấp huyết, Xuyên phá, Tiếp nhịp, Hồi sức, Tiếp tế, Đỡ phản; thêm vùng phản đòn/vỡ thế và nhịp thanh thay đổi có báo trước.
+- Lá bị vô hiệu không thể đánh, tạo bộ hoặc kích hoạt SPN; vẫn có thể bỏ. Đồng bộ dự báo và kết quả thật.
+- Tinh chỉnh khung kim loại, chuyển động gom bài, hiệu ứng tiến hóa/tăng tốc và thứ tự SPN/tiêu hao theo ô trang bị.
+- Phối lại SFX trầm, gọn và nhỏ hơn; giảm chồng tiếng và giữ cache mobile.
+- Chi tiết: [ghi chú phát hành](docs/RELEASE_NOTES_0.148.0.md).
 
 ## Mới trong beta 0.147.0
 

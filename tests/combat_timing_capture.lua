@@ -1,3 +1,6 @@
+for _,a in ipairs(arg or {}) do if a=="--disabled-runtime" then return require("tests.disabled_cards_runtime") end end
+for _,a in ipairs(arg or {}) do if a=="--hazard-runtime" then return require("tests.timing_hazard_runtime") end end
+for _,a in ipairs(arg or {}) do if a=="--chains" then return require("tests.timing_chain_capture") end end
 for _,a in ipairs(arg or {}) do if a=="--fatigue" then return require("tests.combat_fatigue_capture") end end
 for _,a in ipairs(arg or {}) do if a=="--vfx-gallery" then return require("tests.timing_vfx_capture") end end
 for _,a in ipairs(arg or {}) do if a=="--vfx-reel" then return require("tests.timing_vfx_reel") end end

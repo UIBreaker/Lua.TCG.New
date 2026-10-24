@@ -412,7 +412,8 @@ local function getPossibleHands(sorted)
     return hands
 end
 
-function Poker.evaluate(cards, unlockedHands, handLevels)
+function Poker.evaluate(cards, unlockedHands, handLevels,game)
+    if game then cards=require("src.boss_abilities").playableCards(game,cards) end
     if not cards or #cards == 0 then return nil end
 
     -- Shallow copy sorted descending by rank

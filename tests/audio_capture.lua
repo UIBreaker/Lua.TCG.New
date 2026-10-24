@@ -2,6 +2,7 @@
 function love.load()
     io.stdout:setvbuf("no")
     local realLove=love
+    assert(loadfile("tests/audio_finish_smoke.lua"))()
     assert(loadfile("tests/nen_audio_smoke.lua"))()
     assert(loadfile("tests/reward_audio_smoke.lua"))()
     for _,name in ipairs({"audio_smoke","menu_music_smoke","enemy_attack_presentation_smoke",
@@ -46,13 +47,17 @@ function love.load()
         end
     end
     local nativeNewSource=love.audio.newSource
+    local timingCount=0
+    for name in pairs(require("config.timing_audio_baked")) do
+        assert(S.play(name),"real timing playback: "..name);S.stopAll();timingCount=timingCount+1
+    end
     local allocations=0
     love.audio.newSource=function(...) allocations=allocations+1;return nativeNewSource(...) end
     local rewardCount=0
     for _,id in ipairs(require("src.reward_audio").order) do for _,phase in ipairs({"charge","open","receive","collect"}) do
         assert(S.play("reward_"..phase.."_"..id));S.stopAll();rewardCount=rewardCount+1
     end end
-    for i=1,30 do love.timer.sleep(.04);assert(S.play("chip_tick"));S.stopAll() end
+    for i=1,30 do love.timer.sleep(.065);assert(S.play("chip_tick"));S.stopAll() end
     for _,id in ipairs(require("config.nen_vfx_config").order) do
         assert(S.play("nen_"..id.."_charge_extreme",3.72));S.stopCue("nen_"..id.."_charge_extreme")
         assert(S.play("nen_"..id.."_release_extreme",3.72));S.stopAll()
@@ -89,7 +94,7 @@ function love.load()
     local preview=love.sound.newSoundData(rate*seconds,rate,16,2)
     local bed=love.sound.newSoundData(C.music.boss.path)
     for i=0,preview:getSampleCount()-1 do
-        for channel=1,2 do preview:setSample(i,channel,bed:getSample(i,channel)*.32) end
+        for channel=1,2 do preview:setSample(i,channel,bed:getSample(i,channel)*C.music.boss.gain*.8) end
     end
     bed:release()
     local moments={nen_high_card_impact=2,nen_pair_release=5,nen_tesla_369_impact_extreme=8,
@@ -226,7 +231,7 @@ function love.load()
         local phase,id=name:match("^reward_(.-)_([^_]+)$")
         local at=({charge=0,open=.50,receive=1.70,collect=2.50})[phase]
         pitched(rewardShowcase,(rewardOrder[id]-1)*4+at,data,cue.gain*.8,1,phase=="charge" and .50 or nil)
-        local theme=210*.83*2/261.63
+        local theme=210*.80*.83*2/196
         if id=="legendary" and phase=="charge" then pitched(rewardFlow,4.10,data,cue.gain*.8,theme,.525)
         elseif id=="legendary" and phase=="open" then pitched(rewardFlow,4.625,data,cue.gain*.8,theme)
         elseif phase=="receive" then
@@ -270,7 +275,7 @@ function love.load()
     for _,path in ipairs({"main.lua","conf.lua","src/sound.lua","src/scoring_presentation.lua","src/enemy_attack_presentation.lua","ui/audio_settings.lua","config/audio_catalog.lua"}) do
         local fn,err=loadfile(path);assert(fn,err)
     end
-    print(string.format("LÖVE audio PASS: %d file SFX + %d Nen + %d reward cues + all variants, music and ambience; no playback allocation; init %.1fms",count,nenCount,rewardCount,initTime*1000))
+    print(string.format("LÖVE audio PASS: %d file SFX + %d Nen + %d reward + %d timing cues + all variants, music and ambience; no playback allocation; init %.1fms",count,nenCount,rewardCount,timingCount,initTime*1000))
     love.event.quit(0)
 end
 function love.errorhandler(message)

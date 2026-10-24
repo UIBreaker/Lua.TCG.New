@@ -147,7 +147,7 @@ function H.handStart(g)
             local cards={}
             for index=1,size do if math.floor(mask/2^(index-1))%2==1 then cards[#cards+1]=g.hand[index] end end
             if #cards<=math.min(5,limit) then
-                local info=Poker.evaluate(cards,g.unlockedHands,g.handLevels)
+                local info=Poker.evaluate(cards,g.unlockedHands,g.handLevels,g)
                 if info then reachable[info.type.id]=true end
             end
         end

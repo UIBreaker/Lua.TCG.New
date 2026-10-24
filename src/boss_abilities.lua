@@ -12,21 +12,21 @@ Boss.actives = {
     max_4_cards=active("Ép Quân", "hands", "Khóa 1 lượt đánh tay kế tiếp (không hạ dưới 1).",1),
     max_3_cards=active("Ép Quân", "hands", "Khóa 1 lượt đánh tay kế tiếp (không hạ dưới 1).",1),
     the_needle=active("Xuyên Tâm", "damage", "Gây {amount} sát thương (được Giáp và Ví Cứu Mệnh chặn).",3),
-    the_hook=active("Móc Câu Ký Ức", "silence", "Khóa khả năng lá đã báo trước trong tay kế tiếp.",1),
+    the_hook=active("Móc Câu Ký Ức", "silence", "Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN.",1),
     the_fish=active("Mù Sương", "face", "Úp mặt lá đã báo trước trong tay kế tiếp.",1),
-    faceless=active("Mặt Nạ Câm", "silence", "Khóa khả năng lá đã báo trước trong tay kế tiếp.",1),
-    the_arm=active("Bàn Tay Câm", "silence", "Khóa khả năng lá đã báo trước trong tay kế tiếp; không đổi rank/chất.",1),
+    faceless=active("Mặt Nạ Câm", "silence", "Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN.",1),
+    the_arm=active("Bàn Tay Câm", "silence", "Vô hiệu lá đã báo trước trong tay kế tiếp; giữ rank/chất, nhưng không thể đánh hoặc kích hoạt SPN.",1),
     echo_knight=active("Dội Âm", "repeat_penalty", "Tay kế tiếp: lặp thế đánh vừa dùng sẽ mất {amount} Cường hóa.",2),
     taxman=active("Truy Thu", "gold", "Lấy tối đa {amount} Vàng, không tạo nợ HP.",2),
     gem_devourer=active("Nuốt Linh Lực", "heal", "Hồi {amount} HP; không xóa thêm trang bị.",12),
     executioner=active("Lưỡi Đao", "damage", "Gây {amount} sát thương (được Giáp chặn).",3),
-    lock_royals=active("Câm Vương", "silence_royal", "Khóa khả năng một lá J/Q/K đã báo trước trong tay kế tiếp.",1),
+    lock_royals=active("Câm Vương", "silence_royal", "Vô hiệu một lá J/Q/K đã báo trước trong tay kế tiếp: không thể đánh hoặc kích hoạt SPN.",1),
     black_tax_collector=active("Tịch Thu", "tax_lock", "Luân phiên khóa ô Tiêu Hao / SPN số 1 trong tay kế tiếp; không xóa vật phẩm.",1),
-    memory_eater=active("Xóa Dấu", "silence", "Khóa khả năng lá đã báo trước trong tay kế tiếp; vẫn tính điểm bình thường.",1),
+    memory_eater=active("Xóa Dấu", "silence", "Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN.",1),
     gatekeeper=active("Phong Tỏa", "gate_lock", "Luân phiên khóa 1 lượt bỏ / lượt đánh tay kế tiếp, không hạ dưới 1.",1),
 }
 for _, suit in ipairs({"aurelia","elaris","vharos","valoria"}) do
-    Boss.actives["lock_"..suit]=active("Dấu Ấn Câm", "silence_suit", "Khóa khả năng lá thuộc chất áp chế đã báo trước trong tay kế tiếp.",1)
+    Boss.actives["lock_"..suit]=active("Dấu Ấn Câm", "silence_suit", "Vô hiệu lá thuộc chất áp chế đã báo trước trong tay kế tiếp: không thể đánh hoặc kích hoạt SPN.",1)
 end
 Boss.newDefinitions = {
     black_tax_collector={id="black_tax_collector",debuffId="black_tax_collector",name="KẺ THU THUẾ ĐEN",title="THUẾ ĐEN",
@@ -144,12 +144,20 @@ function Boss.isSlotLocked(game, kind, slot)
     return s and s.slotLock and s.slotLock.kind==kind and s.slotLock.slot==slot and s.slotLock.untilHand>=s.handIndex or false
 end
 function Boss.isAbilityDisabled(game, card)
+    if card and card.rank and Boss.scoreBlockReason(game and game.monster,card) then return true end
     if require("src.free_human_bosses").disabled(game,card) then return true end
     if require("src.kingdom_bosses").disabled(game,card) then return true end
     if game and card and require("src.human_bosses").disabled(game,card) then return true end
     if not game or not game.monster or (game.monster.hp or 0)<=0 then return false end
     local s=Boss.state(game and game.monster)
     return s and card.abilityDisabledUntil and card.abilityDisabledUntil>=s.handIndex or false
+end
+function Boss.playableCards(game,cards)
+    local active={}
+    for _,card in ipairs(cards or {}) do
+        if not card.destroyed and not Boss.isAbilityDisabled(game,card) then active[#active+1]=card end
+    end
+    return active
 end
 -- Shared by scoring and the face overlay, including the exceptions to faction immunity.
 function Boss.scoreBlockReason(monster,card)

@@ -49,6 +49,7 @@ function T.verify()
     require("tests.spn_rarity_badges_capture").verify()
     require("tests.spn_rarity_frames_capture").verify()
     require("tests.card_inscriptions_capture").verify()
+    assert(not package.loaded["ui.components.card_jewelwork"],"procedural frames must not load the removed jewel image overlays")
 end
 
 return T

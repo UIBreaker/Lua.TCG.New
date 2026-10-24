@@ -1,7 +1,19 @@
 -- lovec.exe . --capture-shop --capture-deck-viewer (isolated player saves)
 local T = {stage=0, deadline=0}
+for _,a in ipairs(arg or {}) do if a=="--no-motion-preview" then T.skipShots=true end end
 local Viewer = require("ui.deck_viewer")
 local Deck = require("src.deck")
+local UI = require("src.ui")
+local function checkMotion(game)
+    for _,card in ipairs(game.persistentDeck) do
+        local pose=UI.CardPhysics.getState(card)
+        if pose then
+            if T.closedPoses and T.closedPoses[card] then assert(pose~=T.closedPoses[card],"Reopening must start with a fresh viewer motion surface") end
+            assert(math.abs(pose.b/pose.a)<.025 and math.abs(pose.c/pose.d)<.025,"Deck viewer must not inherit hand rotation/shear")
+            assert(math.abs(pose.a-1)<.04 and math.abs(pose.d-1)<.04,"Deck viewer must not inherit hand scale/flip")
+        end
+    end
+end
 local function pointer(x,y,click)
     local w,h=love.graphics.getDimensions()
     local s=math.min(w/1280,h/720)
@@ -19,6 +31,7 @@ local function button(cb,id,click)
     error("Missing button "..id)
 end
 local function shot(name)
+    if T.skipShots then return end
     pointer(5,5)
     require("src.ui").Description.reset()
     love.graphics.captureScreenshot(function(data)
@@ -34,6 +47,9 @@ function T.update(game,cb)
         cb.startNewGame("red_deck");cb.openShop()
         game.persistentDeck={}
         for i=1,9 do game.persistentDeck[i]=Deck.newCard(i+1,i%2==0 and "clubs" or "diamonds") end
+        for _,card in ipairs(game.persistentDeck) do
+            card.rotation=.45;card.tiltX=1;card.tiltY=-1;card.visualScale=.4;card.scaleX=-.5;card.scaleY=.6
+        end
         game.handLevels.pair=3
         game.unlockedHands={high_card=true,pair=true,two_pair=true,three_of_a_kind=true,four_of_a_kind=true}
         cb.openDeckViewer()
@@ -45,6 +61,10 @@ function T.update(game,cb)
         local sorted=Viewer.sortCards({a,b,c})
         assert(sorted[1]==b and sorted[2]==a and sorted[3]==c,"stable rank sort")
     elseif n==1 then
+        checkMotion(game)
+        for _,card in ipairs(game.persistentDeck) do
+            assert(card.rotation==.45 and card.visualScale==.4 and card.scaleX==-.5,"Preview must not mutate live hand state")
+        end
         assert(button(cb,"deck_page_next").disabled)
         if not T.overview then shot("overview");T.overview=true;T.deadline=now+.3;return end
         button(cb,"deck_sort",true);assert(Viewer.sort=="suit")
@@ -94,8 +114,16 @@ function T.update(game,cb)
     elseif n==13 then
         local P=require("src.ui").Polish
         assert(P.focus and P.focus.kind=="card","destruction selection retained")
+        T.closedPoses={}
+        for _,card in ipairs(game.persistentDeck) do
+            local pose=UI.CardPhysics.getState(card)
+            if pose then T.closedPoses[card]=pose;pose.rotation=.6;pose.vx=300;pose.settling=true end
+        end
         cb.closeDeckViewer()
-        print("DECK VIEWER PASS: stable sorting, grid bounds, filters, pagination, wheel, inspector, sale/destruction selection and 960 input")
+    elseif n==14 then cb.openDeckViewer()
+    elseif n==15 then
+        checkMotion(game)
+        print("DECK VIEWER PASS: straight isolated card poses, live state retained, clean reopen, stable sorting, bounds, filters, pages, inspector, sale/destruction and 960 input")
         love.event.quit(0);return
     end
     T.stage=n+1;T.deadline=now+.7

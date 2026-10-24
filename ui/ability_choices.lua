@@ -58,6 +58,8 @@ function Modal.confirm()
     if not success then return false end
     if m.mode~="card_upgrade" then table.remove(m.game.consumables,index);A.consumableUsed(m.game) end
     m.ritual={age=0,before=before,reduced=UI.CardPhysics.reducedMotion==true}
+    local effect=require("ui.progression_effects").active[c]
+    if effect and effect.evolution then effect.evolution.age=-EvolutionMotion.contactAt end
     Modal.toast=nil
     Sound.play("card_slide",.95)
     if m.callback then m.callback(c) end
@@ -97,6 +99,8 @@ function Modal.update(dt,fast,reduced)
         r.age=r.age+math.min(dt,.05)*(fast and 2 or 1);r.reduced=reduced==true
         if not r.contacted and r.age>=EvolutionMotion.contactAt then
             r.contacted=true;Effects.triggerScorePulse(m.selected);Sound.play("xmult_boom",.96)
+            local effect=require("ui.progression_effects").active[m.selected]
+            if effect and effect.evolution then effect.evolution.age=0 end
         end
         if r.age>=EvolutionMotion.duration then Modal.current=nil end
     end

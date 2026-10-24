@@ -36,7 +36,7 @@ for _,c in pairs(C.ambience) do peaks[c.path]=.32 end
 local function checkPeak()
     local peak=0
     for _,s in ipairs(sources) do if s.playing and not s.released then peak=peak+s.volume*peaks[s.path] end end
-    assert(peak<=.920001,"mixer must leave headroom even when every waveform peak coincides")
+    assert(peak<=.720001,"quiet mix must stay bounded even when every waveform peak coincides")
 end
 assert(S.init())
 local cueCount=0
@@ -49,8 +49,12 @@ local function advance(dt,state,game,paused)
     checkPeak()
 end
 assert(S.play("card_draw") and not S.play("card_draw"),"cooldown")
+local firstDraw
+for _,s in ipairs(sources) do if s.playing then firstDraw=s end end
+local singleDrawVolume=firstDraw.volume
 time=time+.1;assert(S.play("card_draw"))
 time=time+.1;assert(S.play("card_draw"))
+assert(firstDraw.volume<singleDrawVolume*.61,"repeated card sounds must share a level budget")
 time=time+.1;assert(not S.play("card_draw"),"per-cue pool cap")
 S.stopAll()
 local takes={}
@@ -110,7 +114,7 @@ advance(2,"playing",{monster={isBoss=true,stage=1},playerHp=20,maxPlayerHp=100})
 assert(S.currentTrack=="boss" and stem.volume>calm,"boss and low HP raise tension")
 for _,s in ipairs(sources) do if not s.released and s.path==C.music.boss.path then assert(s.position==24.5,"sync preserves developed second phrase") end end
 assert(S.play("damage_heavy"));advance(.01,"playing")
-assert(S.stats().duck<.6,"impact ducks music")
+assert(S.stats().duck>=.85 and S.stats().duck<1,"tabletop contact ducks music gently")
 advance(1,"playing");assert(S.stats().duck>.8,"long effect tail must not hold music down")
 S.silence(.06);assert(not S.play("pair_impact") and S.stats().voices==0)
 advance(.08,"playing");assert(S.play("pair_impact"))
@@ -200,15 +204,15 @@ local bossData={};peaks[bossData]=bossCue.peak
 assert(S.registerProcedural("nen_four_of_a_kind_boss_finisher_extreme",bossData,bossCue))
 assert(S.play("nen_four_of_a_kind_boss_finisher_extreme",.83))
 local rewardPitch,rewardLead=S.rewardPitch()
-assert(math.abs(rewardPitch-210*.83*2/261.63)<.00001 and rewardLead>2.6 and rewardLead<2.8,"reward key and lead must follow the actual pitched triumph")
+assert(math.abs(rewardPitch-210*.80*.83*2/196)<.00001 and rewardLead>2.6 and rewardLead<2.8,"reward key and lead must follow the retuned triumph")
 local bossVoices=S.stats().voices
 assert(S.playCombatVictory() and S.playCombatVictory())
 assert(S.stats().voices==bossVoices,"reward calculation and screen change must not stack generic victory over the hand's phrase")
 advance(1.48,"CASH_OUT")
-assert(math.abs(S.stats().duck-.14)<.00001,"victory transition must leave the late boss seal audible")
+assert(S.stats().duck>.97,"background must recover after the short boss contact")
 assert(S.play("card_deal"));advance(.04,"CASH_OUT")
-assert(math.abs(S.stats().duck-.14)<.00001,"reward sounds must not release the boss duck early")
-advance(1.2,"CASH_OUT");assert(math.abs(S.stats().duck-.14)<.00001,"hold the spotlight through the victory crown")
+assert(S.stats().duck>.97,"paper must not pump the background during rewards")
+advance(1.2,"CASH_OUT");assert(S.stats().duck>.97,"quiet victory must coexist with a steady background")
 advance(2.5,"CASH_OUT");assert(S.stats().duck>.9,"background must recover after victory")
 S.stopAll()
 local neutralPitch,neutralLead=S.rewardPitch()

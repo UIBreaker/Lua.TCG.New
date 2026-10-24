@@ -4,7 +4,12 @@ local Frame = UI.CardFrame
 local Deities = require("src.deities")
 local function save(canvas,path)
     local data=canvas:newImageData()
-    local f=assert(io.open(path,"wb"));f:write(data:encode("png"):getString());f:close();data:release()
+    local f,err=io.open(path,"wb")
+    for attempt=1,10 do
+        if f then break end
+        love.timer.sleep(.1);f,err=io.open(path,"wb")
+    end
+    assert(f,err);f:write(data:encode("png"):getString());f:close();data:release()
 end
 function love.errorhandler(message)
     print(debug.traceback(message,2));return function() return 1 end

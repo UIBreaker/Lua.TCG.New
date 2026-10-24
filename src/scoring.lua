@@ -101,7 +101,25 @@ end
 
 function Scoring.calculate(handInfo, deities, context)
     context=context or {}
+    local game=context.gameState or {monster=context.monster}
+    local played=require("src.spn_formations").played(handInfo)
+    local active=Boss.playableCards(game,played)
+    if #active~=#played then
+        handInfo=require("src.poker").evaluate(active,game.unlockedHands,game.handLevels,game)
+        if not handInfo then
+            return {baseChips=0,baseMult=0,bonusChips=0,bonusMult=0,totalChips=0,totalMult=0,
+                xMultTotal=1,cardXMultTotal=1,rawScore=0,finalScore=0,flatDamageBonus=0,localAuraBonus=0,
+                auraEditionMultiplier=1,spnAuraMultiplier=1,auraDebtTotal=0,totalExtraDamagePct=0,
+                bonusGoldAwarded=0,addArmor=0,healHp=0,hpCost=0,bountySealGold=0,bribeDollarsSpent=0,
+                martyrStacksConsumed=0,steps={{type="final_score",finalScore=0,totalChips=0,totalMult=0,xMult=1,message="BÀI BỊ VÔ HIỆU · KHÔNG THỂ TẤN CÔNG"}}}
+        end
+    end
     if context.preview and not context.previewSandbox then return preview(handInfo, deities, context) end
+    if game.abilityHand and not game.abilityHand.finished then
+        local h=game.abilityHand;h.handInfo=handInfo;h.scoring=handInfo.scoringCards;h.played=active
+        h.active=Boss.playableCards(game,h.active)
+        for i=#h.queue,1,-1 do if Boss.isAbilityDisabled(game,h.queue[i].card) then table.remove(h.queue,i) end end
+    end
     for _,card in ipairs(handInfo.scoringCards or {}) do card.seal=Deck.normalizeSeal(card.seal) end
     context.hand=Deck.heldCards(handInfo,context)
     context.unplayedCards=context.hand
@@ -388,7 +406,7 @@ function Scoring.calculate(handInfo, deities, context)
         end
         if not job then break end
         local idx, card = job.index, job.card
-        local debuffReason=Boss.scoreBlockReason(context.monster,card)
+        local debuffReason=Boss.scoreBlockReason(context.monster,card) or (Boss.isAbilityDisabled(game,card) and "VÔ HIỆU · KHÔNG THỂ KÍCH HOẠT" or nil)
         local isPillarLocked=debuffReason~=nil
         if isSpade(card) then card.faceDown=false end
         if card.exhausted then

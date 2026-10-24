@@ -42,8 +42,8 @@ function N.restriction(game,card)
     if card.rank then
         if card.exhausted then return "KIỆT SỨC","Không ghi điểm trong tay này" end
         local reason=Boss.scoreBlockReason(game.monster,card)
-        if reason then return "VÔ HIỆU",reason.." · 0 điểm" end
-        if Boss.isAbilityDisabled(game,card) then return "KHÓA KỸ NĂNG","Boss vô hiệu khả năng; vẫn tính chỉ số bài" end
+        if reason then return "VÔ HIỆU",reason.." · Không thể đánh, tạo bộ hoặc kích hoạt SPN" end
+        if Boss.isAbilityDisabled(game,card) then return "VÔ HIỆU","Không thể đánh, tạo bộ hoặc kích hoạt SPN" end
         if card.faceDown then return "ÚP MẶT","Boss che mặt lá bài" end
     else
         for slot,d in pairs(game.deities or {}) do if d==card and Boss.isSlotLocked(game,"spn",slot) then

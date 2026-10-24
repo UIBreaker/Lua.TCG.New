@@ -1,4 +1,12 @@
 local Rail={}
+function Rail.consumableOrder(game)
+    local indices={}
+    for i in ipairs(game.consumables or {}) do indices[#indices+1]=i end
+    table.sort(indices,function(a,b)
+        return (game.consumables[a].loadoutSlot or a)<(game.consumables[b].loadoutSlot or b)
+    end)
+    return indices
+end
 function Rail.range(kind,game)
     local total=kind=="spn" and require("src.deities").getMaxSlots(game) or require("src.inventory").limit(game)
     return 1,total,total

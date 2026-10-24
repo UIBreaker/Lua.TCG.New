@@ -78,6 +78,7 @@ function Deities.evolve(deity)
     deity.baseRarityTier = baseTier
     deity.baseRarity = deity.baseRarity or rarity.id
     deity.evolutionLevel = evolutionLevel + 1
+    require("ui.progression_effects").emit(deity,"evolution",1)
     local nextRarity = rarityState(deity)
     deity.rarity = nextRarity.id
     deity.baseDesc = deity.baseDesc or deity.desc or ""

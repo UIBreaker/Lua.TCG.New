@@ -12115,6 +12115,248 @@
         "generator_source": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a107ed-d0cb-7490-aa27-a26f8cfe519f\\exec-55f52079-b3c2-4d4c-92e1-173962c6931e.png",
         "mode": "built-in image_gen"
       }
+    },
+    {
+      "tier": 1,
+      "id": "frame_jewel_1",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_01.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-42bcfe6b-16d7-4a70-aa21-c7edc0cac3d7.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. COMMON: restrained collector-grade aged bronze and dark gunmetal. A narrow, meticulously forged bronze perimeter with fine stepped bevels, four understated bronze corner clasps and small steel rivets. A tiny restrained octagonal seal at top and bottom center, no gemstones, no scrolling vines, no crown. Very simple aristocratic antique tool/reliquary construction, beautiful solid metal craftsmanship. Dark leather-like inset channels between bronze rails, no wood. Let simplicity and metal quality do the work.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 1",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 2,
+      "id": "frame_jewel_2",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_02.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-3c268b56-ebe8-4096-93e6-799f222eabd8.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. UNCOMMON: antique pewter with muted verdigris details and forest-green spinel. Narrow sinuous botanical rails: subtle sculpted Western acanthus leaves embracing the four corners, a pair of small green oval stone settings at side centers, a delicate leafy clasp at top and bottom center. Organic growing silhouette distinctly different from a plain riveted frame. Refined and sparse, moderately ornate, a genuine forged and engraved expedition relic.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 2",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 3,
+      "id": "frame_jewel_3",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_03.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-b1718d81-6898-45dd-8078-bfaa378214bf.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. RARE: polished old silver and midnight-blue enamel with brilliant sapphire. Pair of elegant heraldic shield-shaped sapphire settings at middle sides; top and bottom fitted with small rounded shield clasps. Long faceted silver ribs with engraved grooves, architectural, confidently symmetrical. Four broad sculpted silver corner mounts with one little blue stone each. More precious than bronze but NOT excessive ornament. Light-catching real sapphire and rounded metal, not cartoon triangles.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 3",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 4,
+      "id": "frame_jewel_4",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_04.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-f2a09089-6a76-41bb-ba5b-fdf30767a662.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. EPIC: exquisitely chased blackened silver and luminous violet amethyst. Distinct Western gothic crescent jewelwork: elegant crescent bezels and curved silver scrolls, a pear-cut amethyst suspended in the top-center clasp and a smaller matching bottom setting. Each side has one broad deep-purple faceted jewel in a sculpted moon-shaped silver mount, with gracefully curving leaf-like silver tendrils along the rails. Dark niello engraving, silvery highlights, regal rich violet. No giant rings, no flat arcs.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 4",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 5,
+      "id": "frame_jewel_5",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_05.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-ed452c00-c020-4ab9-9e56-0754bdc0d865.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. LEGENDARY: magnificent old royal gold and amber citrine. Distinct royal laurel frame, cast three-dimensional golden oak and laurel leaves sweeping into a graceful low crown at top center. Top crown made of elegant rounded fleur-de-lis and a glowing golden amber cabochon, NOT triangular spikes. The bottom has a sculpted lion-paw/leaf clasp; mid-sides feature luxurious gold shoulder mounts holding oval amber stones. Broad softly sculpted layered gold moldings with deep dark engraved recesses, lavish but not cluttered.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 5",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 6,
+      "id": "frame_jewel_6",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_06.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-a941806d-ec4f-4956-9449-b499e946117b.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. MYTHIC: ancient rose gold, dark meteorite metal and exceptionally deep crimson rubies. Distinct Phoenix reliquary frame: sculpted flowing feather barbs and warm rose-gold filigree rise along the side rails; organic fire/phoenix feather motifs curl inward near side centers. Top center is a softly sculpted sunburst setting with an oval blood-red ruby, bottom smaller ruby and feather clasp. Controlled tiny inner ember glow. Rich deep metal, no flat triangles, no jagged serrated plates, no literal bird or animal painting. Higher craftsmanship and more depth than legendary.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 6",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 7,
+      "id": "frame_jewel_7",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_07.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-115dea33-9f19-44fb-9ce4-0e5f4ec4ae01.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. TRANSCENDENT: ethereal platinum and glacial silver, transparent pale-cyan aquamarine. A spectacular frozen-reliquary frame: smooth sculpted crystalline arcs and icy elongated gemstone bezels integrated into narrow silver rails. Three slender luminous ice gems ascend near each mid-side, with sweeping frosted-metal fins connecting them; ornate yet flowing and natural, never flat angular polygon plates. Top-center tall brilliant aquamarine teardrop in delicate silver star cradle; bottom a small matching crystal. Finest cold mirror bevels, dark blue-silver recesses, restrained inner cyan refraction. Clearly more exalted and graceful than ruby phoenix.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 7",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 8,
+      "id": "frame_jewel_8",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_08.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-aec89975-082f-4be4-8700-775f430bcc76.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. UNIQUE: black rhodium, aged platinum and imperial violet star-sapphires, rare celestial navigational relic. Refined astronomical astrolabe filigree integrated into frame rails, delicate arcs and actual tiny sculpted star clasps linked by fine chains at middle sides. Top center a luminous violet cabochon held within a finely chased crescent-and-orbit setting; bottom a smaller matching jewel. Rich dark polished metal and restrained platinum highlights, hints of iridescence within the purple gems. Compact intricate Western celestial jewelry, broad readable star settings rather than texture noise. NO printed symbols or letters, no giant flat circle diagram.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 8",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 9,
+      "id": "frame_jewel_9",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_09.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-af5db6d1-301f-4968-828a-64826275a5ef.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. ETERNAL: exquisite pale warm gold and antique silver intertwined with deep luminous emerald gemstones. Most graceful eternity reliquary frame: sculpted braided double strands, elegant interlocking oval knotwork, three pairs of entwined narrow arcs on each side. Top center a magnificent emerald pear-cut gem held by a double infinity loop of chased pale gold with restrained laurel sprigs, bottom matching smaller eternity clasp. Extraordinarily rich real metal reflections, layered depth and relief, rich green refraction. Western Celtic-inspired aristocratic jewelwork, NOT East Asian jade motif. Elegant controlled opulence with clear large forms.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 9",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 10,
+      "id": "frame_jewel_10",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_10.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-3d7b7ab9-600f-4220-8c20-1b218984a595.png",
+      "prompt": "Production game UI asset: ONE exquisitely crafted Western dark-fantasy collectible card FRAME, tier SUPREME, the ultimate tenth rarity. Portrait 2:3 canvas, 1024 by 1536. Transparent PNG with REAL ALPHA both outside the frame and throughout its EMPTY center. Front view orthographic, no perspective. NO card illustration, NO backing plate, NO characters, NO scene, NO text, NO numbers, NO letters, NO rank badge, NO suit, NO banners. This is only an open rectangular jewelwork rim. Outer frame hugs all four canvas edges, all ornament remains inside the canvas. Same simple rectangular silhouette with subtly clipped 6-percent corners; do not add wings outside the rectangle. Wide empty clear window: leave central x=115..909 and y=145..1391 completely transparent. Most metal lies within 65 pixels of edges; focal ornaments may extend to 105 px near side centers, and to 135 px at top/bottom centers. Leave upper-left and upper-right label regions largely unobstructed. Art direction: master jeweler relic from a mysterious ancient Western continent, cinematic painterly photoreal material, extraordinary restrained luxury. White gold and platinum, aged gold recesses, sharply sculpted rounded bevels, dark chased grooves, polished small diamond cabochons, fine woven laurel leaves. A luminous celestial diamond reliquary integrated into the top-center rim, subtle ascending featherwork and sun-disc mounting; bottom-center echoes a smaller jewel. Symmetrical narrow side rails with exceptionally elegant sculpted feather-shaped filigree clustered near mid-sides, inlaid translucent champagne diamonds. Metal must look tangible and expensive, not flat vector art, not a cardboard border, not triangles, no jagged polygon spikes, no cartoon gold outline, no thick white stroke. Sophisticated hierarchy and generous negative space; readable when the complete card is reduced to 100 px width. Controlled pin-point specular highlights, a trace of warm radiance in gems only. No fog, no bloom clouds, no particles crossing the empty window, no checkerboard pixels baked into art. Premium collectible physical artifact, museum-grade fantasy jewelry, perfectly isolated transparent cutout.",
+      "purpose": "Shared SPN rarity / playing-card evolution frame",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 10",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Shared SPN rarity / playing-card evolution frame",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
+    },
+    {
+      "tier": 11,
+      "id": "frame_jewel_11",
+      "group": "ui_frames",
+      "file": "assets/ui/jewel_frames/tier_11.png",
+      "source_generator": "built-in image_gen",
+      "source_image": "C:\\Users\\Nhật Nam\\.codex\\generated_images\\01a1335e-ea88-7683-a368-7974a147c376\\exec-30a90992-eae1-4d50-8581-d4766bf00142.png",
+      "prompt": "Create ONE production transparent PNG game UI FRAME, portrait 2:3, 1024x1536. A genuine empty OPEN rectangular rim with REAL ALPHA in its entire center AND outside; no background. The frame hugs the canvas edge, subtle clipped 6-percent corners, no protruding ornaments beyond canvas. Central x=115..909 y=180..1356 must be completely clear transparent. Metal rails stay within 60-85 pixels of side edges, ornaments may reach 105 px only near side centers; top/bottom crest no deeper than 155 pixels. Preserve generous transparent space for existing card art and live corner labels. Front view orthographic. Western cinematic dark-fantasy expedition relic. Beautiful physically sculpted jewelry materials, dimensional rounded bevels, cast relief, patinated recesses, subtle grain, restrained polished highlights, exceptionally good silhouette at 100px card width. No cardboard, no flat triangles, no flat vector polygon look, no cartoon outline, no thick white stroke. Elegant medium-scale ornament, avoid microdetail noise. This is only the removable frame overlay, not a full card: absolutely no characters, no painting, no scene, no backing, no text, no letters, no numbers, no rank badge, no suit icons, no banner. No Asian fantasy motifs or jade pendants. No painted checkerboard. ASCENDED SUPREME level-ten champion, even grander than supreme white-gold laurel: exceptional imperial platinum and radiant warm gold, translucent opalescent diamond. The apex collector card frame: narrow elaborate sculpted double wing/feather rails, real curved feather vanes and laurel leaves, tall complex top-center aureole crown with TWO bright round diamond stones in a nested celestial halo, a floating-looking small oval diamond pendant just below the crown but still attached by fine metalwork. Bottom-center large opal diamond held by layered feathered laurel scrolls; at middle sides brilliant opalescent diamond clusters in sophisticated wing-shaped gold/platinum mounts. Rich weight and deeply sculpted material, soft opal rainbow inside jewels only, crisp glancing speculars. A distinctly majestic cathedral-jewelry silhouette but no big triangular spikes, no weapons, no literal faces. Most prestigious and ornate of the whole set, yet readable small. Keep clear central window x=140..884, y=225..1310 and do not let filigree cover more than 14 percent of card width at the mid-sides. No enormous protrusions outside rectangle.",
+      "purpose": "Playing card evolution 10, ascended TT",
+      "runtime": "ui/components/card_frame.lua",
+      "name": "Khung kim hoàn 11",
+      "ratio": "2:3",
+      "status": "generated",
+      "concept": "Playing card evolution 10, ascended TT",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "redesigned_from_existing": false,
+      "previous_paths": [],
+      "source": "ui/components/card_frame.lua"
     }
   ],
   "scene_backgrounds": [
@@ -12263,8 +12505,8 @@
     }
   ],
   "completion": {
-    "generated": 501,
-    "total": 501,
+    "generated": 512,
+    "total": 512,
     "missing": []
   },
   "reference_file": "docs/continental_reference.png",

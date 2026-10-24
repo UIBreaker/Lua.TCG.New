@@ -1,5 +1,5 @@
 -- Original authored contact scores, rendered once at load; never uses gameplay RNG.
-local A={profiles=require("config.attack_audio")}
+local A={profiles=require("config.attack_audio"),toneScale=.80}
 local C=require("config.nen_vfx_config")
 local tau,rate=math.pi*2,32000
 local sin,exp,abs=math.sin,math.exp,math.abs
@@ -60,6 +60,7 @@ local function render(s,kind,tier,index)
     for i=1,count do left[i],right[i]=0,0 end
     local serial=0
     local function event(instrument,at,length,f,amplitude,pan,glide,attack,decay,rising)
+        if instrument~="body" then f=f*A.toneScale end
         serial=serial+1
         local seed=index*1009+serial*7919+tier*379+(impact and 71 or kind=="release" and 97 or kind=="beat" and 131 or 151)
         local offset=math.floor(at*rate)
@@ -71,7 +72,7 @@ local function render(s,kind,tier,index)
             local noise=seed/1073741823.5-1
             air=air+(noise-air)*.38;low=low+(noise-low)*.035
             local phase=tau*(f*t+f*((glide or 1)-1)*t*t/(2*length))
-            local envelope=(1-exp(-t/(attack or .0012)))*exp(-t/(decay or length*.28))
+            local envelope=(1-exp(-t/(attack or .0025)))*exp(-t/((decay or length*.28)*(rising and 1 or .85)))
                 *math.min(1,(n-1-i)/96)
             if rising then envelope=envelope*(.12+.88*(i/math.max(1,n-1))^1.5) end
             local value=material(instrument,t,phase,air,low,noise)*envelope*amplitude
@@ -235,12 +236,12 @@ local function render(s,kind,tier,index)
     local peak=0
     for i=1,count do
         dryL[i],dryR[i]=left[i],right[i]
-        local wet=impact and (tier==3 and .20 or tier==2 and .11 or .035) or .10
+        local wet=impact and (tier==3 and .07 or tier==2 and .045 or .02) or .025
         local l=left[i]+(dryR[i-1184] or 0)*wet+(dryL[i-2784] or 0)*wet*.55
         local r=right[i]+(dryL[i-1504] or 0)*wet+(dryR[i-3552] or 0)*wet*.55
         if impact and tier==3 then
-            l=l+(dryR[i-6592] or 0)*.12+(dryL[i-10016] or 0)*.075
-            r=r+(dryL[i-7488] or 0)*.12+(dryR[i-11328] or 0)*.075
+            l=l+(dryR[i-6592] or 0)*.025
+            r=r+(dryL[i-7488] or 0)*.025
         end
         if kind=="charge" then
             local p=(i-1)/math.max(1,count-1)
@@ -263,23 +264,22 @@ local function render(s,kind,tier,index)
         right[i]=r/(1+compression*abs(r))*edge
         peak=math.max(peak,abs(left[i]),abs(right[i]))
     end
+    peak=require("src.audio_finish").apply(left,right,rate)
     local ceiling=impact and (.70+(tier-1)*.04) or kind=="charge" and (.46+(tier-1)*.08)
         or kind=="release" and (.60+(tier-1)*.08) or kind=="miss" and ({.44,.58,.70})[tier] or .62
     local data=love.sound.newSoundData(count,rate,16,2)
     local gain=ceiling/math.max(.001,peak)
     for i=1,count do data:setSample(i-1,1,left[i]*gain);data:setSample(i-1,2,right[i]*gain) end
-    return data,{gain=impact and math.min(1,.86+(tier-1)*.06+(finish and .02 or 0)) or kind=="charge" and (tier==3 and .73 or tier==2 and .63 or .48)
-            or kind=="release" and (.54+(tier-1)*.11) or kind=="miss" and ({.48,.64,.80})[tier] or .35,
+    local level=impact and math.min(1,.86+(tier-1)*.06+(finish and .02 or 0)) or kind=="charge" and (tier==3 and .73 or tier==2 and .63 or .48)
+            or kind=="release" and (.54+(tier-1)*.11) or kind=="miss" and ({.48,.64,.80})[tier] or .35
+    return data,{gain=level*.58,
         priority=impact and 5 or kind=="release" and 4 or kind=="miss" and 4 or kind=="charge" and tier>=2 and 4 or 3,
         cooldown=kind=="beat" and .035 or .06,peak=ceiling,maxPitch=(kind=="charge" or kind=="release") and 4 or nil,
-        duck=kind=="miss" and .80 or impact and (boss and (tier==3 and .14 or tier==2 and .30 or .46)
-            or tier==3 and (finish and .22 or fracture and .25 or .30) or tier==2 and .46 or .62)
-            or kind=="release" and (tier==3 and .38 or tier==2 and .55 or .75)
-            or kind=="charge" and tier>=2 and (tier==3 and .72 or .84) or nil,
+        duck=kind=="miss" and .95 or impact and (boss and ({.84,.80,.76})[tier] or ({.88,.84,.80})[tier])
+            or kind=="release" and .92 or kind=="charge" and .96 or nil,
         bossVictory=boss and 1 or nil,
-        duckDuration=kind=="miss" and .09 or impact and (boss and (tier==3 and 3.90 or tier==2 and 2.70 or 1.80)
-            or tier==3 and (finish and .55 or fracture and .42 or .34) or tier==2 and .21 or .12)
-            or kind=="release" and .10 or kind=="charge" and duration or nil}
+        duckDuration=kind=="miss" and .06 or impact and (boss and ({.22,.30,.38})[tier] or ({.09,.12,.16})[tier])
+            or kind=="release" and .06 or kind=="charge" and .12 or nil}
 end
 
 function A.register(sound,forceRender)

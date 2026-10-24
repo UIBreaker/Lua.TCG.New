@@ -35,7 +35,9 @@ function T.discard(game,cards,context)
             local d=A.definition(card)
             local empowerment=d and suits[d.suit] or 0
             card.heldEmpowerment=(card.heldEmpowerment or 0)+empowerment
+            local beforeSpeed=Deck.peekCardAttackSpeed(card)
             card.discardSpeedBonus=(card.discardSpeedBonus or 0)+speed
+            require("ui.progression_effects").emit(card,"speed",Deck.peekCardAttackSpeed(card)-beforeSpeed)
             Deck.getCardAttackSpeed(card)
             if speed>0 or empowerment>0 then
                 result.targets[#result.targets+1]={card=card,speed=speed,empowerment=empowerment}
@@ -44,6 +46,7 @@ function T.discard(game,cards,context)
         end
     end
     result.speed=#result.targets>0 and speed or 0
+    if result.speed>0 then require("ui.progression_effects").team(game.hand) end
     if result.count>0 then
         result.count=#cards
         game.potionFeedback=game.potionFeedback or {}

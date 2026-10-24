@@ -72,7 +72,7 @@ function R.heldCount(game,played)
     local count,seen=0,{}
     for _,pile in ipairs({game.hand or {},played or {}}) do
         for _,card in ipairs(pile) do local key=card.id or card
-            if not card.destroyed and not seen[key] then seen[key]=true;count=count+1 end
+            if not card.destroyed and not require("src.boss_abilities").isAbilityDisabled(game,card) and not seen[key] then seen[key]=true;count=count+1 end
         end
     end
     return count

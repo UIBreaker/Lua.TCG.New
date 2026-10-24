@@ -178,6 +178,7 @@ function P.reroll(shop,game)
     return true
 end
 function P.update(dt,fast,state,shop)
+    require("ui.progression_effects").update(dt,P.reducedMotion)
     local step=dt*(fast and Config.fastFactor or 1)
     P.time=P.time+step;P.age=P.age+step
     if P.goldMeter then P.goldMeter=Feedback.updateMeter(P.goldMeter,P.goldMeter.value,step,0.58) end

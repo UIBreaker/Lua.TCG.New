@@ -39,7 +39,7 @@ for _,def in ipairs(K.definitions) do
     local result=require("src.scoring").calculate(info,{}, {gameState=g,monster=m,hand=g.hand,preview=true})
     local found=false
     for _,step in ipairs(result.steps) do if step.type=="card_scored" and step.card.id==c.id then assert(step.addedChips==0 and step.addedMult==0);found=true end end
-    assert(found and result.bonusChips==0 and hp==g.playerHp and gold==g.gold and P.encode(g.persistentDeck)==encoded,"Mute all suits including legacy spade immunity, without preview mutation")
+    assert(not found and result.finalScore==0 and result.bonusChips==0 and hp==g.playerHp and gold==g.gold and P.encode(g.persistentDeck)==encoded,"Muted cards cannot attack or trigger a scored-card event, without preview mutation")
     legacy.seal="seal_echoes"
     result=require("src.scoring").calculate(info,{}, {gameState=g,monster=m,hand=g.hand,preview=true})
     for _,step in ipairs(result.steps) do assert(step.type~="seal_trigger","A sealed held card must not activate its seal") end

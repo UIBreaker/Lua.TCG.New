@@ -2,6 +2,31 @@ local Viewer = { pageSize = 18, sort = "rank" }
 local Core = require("ui.components.core")
 local Chrome = require("ui.combat_chrome")
 local Theme = require("ui.theme")
+local previews=setmetatable({}, {__mode="k"})
+local drawSurface
+
+local function drawPreview(card,x,y,w,h,hovered)
+    local UI=require("src.ui")
+    local preview=previews[card]
+    if not preview then
+        preview=setmetatable({rotation=0,tiltX=0,tiltY=0,visualScale=1,scale=1,scaleX=1,scaleY=1,
+            alpha=1,selected=false,hovered=false},{__index=card})
+        previews[card]=preview
+    end
+    UI.drawCard(preview,x,y,w,h,false,false)
+    if hovered then UI.drawCardBorder(x,y,w,h,UI.COLORS.chipsBlue,nil,preview) end
+end
+
+function Viewer.drawCard(card,x,y,w,h,hovered)
+    if not drawSurface then drawSurface=require("src.card_physics").wrap(drawPreview,nil,7) end
+    Viewer.motionActive=true
+    -- Keep hit-testing/dragging on the real card, with an independent upright face.
+    drawSurface(card,x,y,w,h,hovered,false)
+end
+
+function Viewer.resetMotion()
+    drawSurface=nil;previews=setmetatable({}, {__mode="k"});Viewer.motionActive=false
+end
 
 function Viewer.cardRect(index, x, y)
     return x + 32 + ((index - 1) % 6) * 111,

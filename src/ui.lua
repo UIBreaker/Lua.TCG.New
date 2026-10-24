@@ -393,6 +393,7 @@ local function drawCardEditionRim(card, w, h, highlight)
     local color = highlight or (CardEffects.getEffectName(card) and CardEffects.getBeamColor(card))
     UI.drawCardBorder(0, 0, w, h, color, card.alpha or 1, card)
     require("ui.reshuffle_effects").draw(UI,card,w,h)
+    require("ui.progression_effects").draw(UI,card,w,h)
 end
 
 function UI.drawCard(card, x, y, w, h, isFloating, effectHovered,

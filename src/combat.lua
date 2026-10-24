@@ -18,6 +18,8 @@ local function accuracy(attackerSpeed,targetSpeed)
     return {hitChance=chance,missed=chance<1 and require("src.rng").random()>=chance}
 end
 function Combat.rollPlayerAttack(game,timing)
+    if timing and timing.selfReflect then return {hitChance=1,missed=false} end
+    if timing and require("src.combat_timing").utility[timing.grade] then return {hitChance=1,missed=false} end
     if timing and timing.forceMiss then return {hitChance=0,missed=true,timingMiss=true} end
     if timing and (timing.grade=="perfect" or timing.grade=="critical" or timing.grade=="ultimate" or timing.grade=="apex" or timing.grade=="divine") then return {hitChance=1,missed=false,timing=timing} end
     if require("src.spn_elements").openingPower(game)>0 then return {hitChance=1,missed=false,frozen=true} end
@@ -64,6 +66,22 @@ function Combat.resolvePlayerAttack(game, aura,roll,timing)
     require("src.spn_basics").armor(game,false)
     local Monster = require("src.monster")
     local target = game.monster
+    if timing and timing.selfReflect then
+        game.spnAttack=nil
+        local raw=math.max(0,aura or 0)
+        local incoming,phantom=require("src.spn_elements").absorb(game,raw)
+        local armor=game.playerArmor or game.playerShield or 0
+        local absorbed=math.min(armor,incoming)
+        local damage=Abilities.damageGuard(game,incoming-absorbed)
+        game.playerArmor=phantom>0 and incoming==0 and armor or math.floor((armor-absorbed)*.5)
+        game.playerShield=game.playerArmor
+        local before=game.playerHp or 100
+        game.playerHp=math.max(0,before-damage)
+        require("src.potions").payBlood(game,before)
+        require("src.advanced_hands").resolve(game,false)
+        return 0,false,{}, {missed=true,enemyCounter=true,reflectedAttack=raw,damage=damage,
+            absorbed=absorbed+phantom,killedPlayer=game.playerHp<=0}
+    end
     if require("src.spn_elements").opening(game) then
         game.spnAttack=nil;require("src.advanced_hands").resolve(game,false)
         return 0,false,{}, {hitChance=1,missed=false,frozen=true}
@@ -106,11 +124,11 @@ function Combat.resolvePlayerAttack(game, aura,roll,timing)
     if spread then
         portalHits={}
         for _,hit in ipairs(spread) do
-            if hit.enemy==target then damage=Monster.takeDamage(target,hit.raw)
+            if hit.enemy==target then damage=Monster.takeDamage(target,hit.raw,timing and timing.piercing)
             else portalHits[#portalHits+1]=hit end
         end
-    else damage=Monster.takeDamage(target, routedAura) end
-    for _,hit in ipairs(portalHits) do hit.damage=Monster.takeDamage(hit.enemy,hit.raw) end
+    else damage=Monster.takeDamage(target, routedAura,timing and timing.piercing) end
+    for _,hit in ipairs(portalHits) do hit.damage=Monster.takeDamage(hit.enemy,hit.raw,timing and timing.piercing) end
     local splashHits = Anomalies.playerAttack(game,aura,hpBefore,damage,locked)
     for _,hit in ipairs(portalHits) do splashHits[#splashHits+1]=hit end
     for _,source in ipairs(attackEffects.afterstorms or {}) do
@@ -157,7 +175,7 @@ function Combat.resolvePlayerAttack(game, aura,roll,timing)
     end
     for _,hit in ipairs(require("src.advanced_hands").resolve(game)) do splashHits[#splashHits+1]=hit end
     require("src.soul_relics").reap(game)
-    roll.timingSouls=require("src.combat_timing").awardSouls(game,timing)
+    roll.timingSouls=require("src.combat_timing").awardSuccess(game,timing)
     return damage, Group.alive(Group.members(game)) == 0, splashHits,roll
 end
 
@@ -172,6 +190,7 @@ function Combat.getOutcome(game)
 end
 
 function Combat.getAverageAttackSpeed(cards,game,handInfo)
+    if game then cards=Boss.playableCards(game,cards) end
     if game then require("src.spn_basics").bind(game,cards or {}) end
     local total, count = 0, 0
     for _, card in ipairs(cards or {}) do
@@ -207,12 +226,13 @@ local function resolveOneAttack(game,playerSpeed,timing)
     if EnemyAbilities.speed(monster)>(playerSpeed or game.lastPlayerAttackSpeed or 0) then
         require("src.spn_basics").armor(game,true)
     end
-    if (game.potionCombat or {}).evasion then
+    local exposed=timing and timing.grade=="exposed"
+    if (game.potionCombat or {}).evasion and not exposed then
         require("src.potions").emit(game,"evasion","NÉ ĐÒN ĐỊCH · 0 ST",nil,monster)
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=0,action="attack"}
     end
     local guaranteed=((monster.enemyInventory or {}).guaranteedAttacks or 0)>0
-    local roll=guaranteed and {hitChance=1,missed=false} or accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
+    local roll=(guaranteed or exposed) and {hitChance=1,missed=false} or accuracy(EnemyAbilities.speed(monster),playerSpeed or game.lastPlayerAttackSpeed)
     if roll.missed then
         return {attack=0,absorbed=0,damage=0,killedPlayer=false,missed=true,hitChance=roll.hitChance,action="attack"}
     end
@@ -228,13 +248,13 @@ local function resolveOneAttack(game,playerSpeed,timing)
     local incomingAttack=attack
     if timing and timing.reduction==1 then
         local armorBefore=game.playerArmor or game.playerShield or 0
-        local reward=math.floor(incomingAttack*(timing.armorPct or 0))
+        local reward=math.floor(incomingAttack*(timing.armorPct or 0))*math.max(1,timing.chain or 1)
         game.playerArmor=math.max(armorBefore,math.min(Abilities.config.armorCap,armorBefore+reward))
         game.playerShield=game.playerArmor
         local reflectedAttack=incomingAttack*(timing.reflectMultiplier or 0)
         local reflectedDamage=reflectedAttack>0 and require("src.monster").takeDamage(monster,reflectedAttack) or 0
         return {attack=incomingAttack,absorbed=0,damage=0,killedPlayer=false,blocked=true,parried=true,
-            timingSouls=require("src.combat_timing").awardSouls(game,timing),parryArmor=game.playerArmor-armorBefore,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,action="attack"}
+            timingSouls=require("src.combat_timing").awardSuccess(game,timing),parryArmor=game.playerArmor-armorBefore,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,action="attack"}
     end
     attack=attack*(1-(timing and timing.reduction or 0))
     local phantomAbsorbed
@@ -266,8 +286,15 @@ local function resolveOneAttack(game,playerSpeed,timing)
         end
     end
 
+    local timingSouls,reflectedAttack,reflectedDamage=0,0,0
+    if timing and timing.reduction>0 and game.playerHp>0 then
+        reflectedAttack=incomingAttack*(timing.reflectMultiplier or 0)
+        if reflectedAttack>0 then reflectedDamage=require("src.monster").takeDamage(monster,reflectedAttack) end
+        timingSouls=require("src.combat_timing").awardSuccess(game,timing)
+    end
     return {
         attack = incomingAttack,
+        timingSouls=timingSouls,reflectedAttack=reflectedAttack,reflectedDamage=reflectedDamage,
         absorbed = absorbed+phantomAbsorbed,
         phantomAbsorbed = phantomAbsorbed,
         damage = damage,
@@ -378,6 +405,7 @@ function Combat.start(game, monster, round)
     game.monster = monster
     game.spnBasicArmorGranted=nil
     game.combatReshuffles=0
+    game.timingRewardMultiplier=1
     game.enemies=Group.build(monster)
     require("src.kingdom_bosses").start(game)
     require("src.free_human_bosses").start(game)

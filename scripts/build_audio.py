@@ -79,6 +79,19 @@ for i, (name, kind, freq, beats) in enumerate(HANDS):
         cue(beat, kind, .24 + i * .024, freq * 2 ** (j * 3 / 12), .51, 3, .025)
 
 
+for name, recipe in CUES.items():
+    tactile = recipe["kind"] in ("paper", "riffle", "slam", "wood")
+    recipe["gain"] = round(recipe["gain"] * (.55 if tactile else .58), 4)
+    if name == "ui_hover": recipe["gain"] = .045
+    if recipe["kind"] in ("glass", "metal", "coins", "pluck"):
+        recipe["freq"] *= .55
+    elif not tactile:
+        recipe["freq"] *= .78
+    if name in ("chip_tick", "mult_pop") or name.startswith("reward_coin"):
+        recipe["gain"] = round(recipe["gain"] * .7, 4)
+    recipe["cooldown"] = max(recipe["cooldown"], .06)
+
+
 def tone(t, freq, decay=10, partials=(1, .30, .10), ratios=(1, 2, 3)):
     return sum(a * np.sin(TAU * freq * r * t) * np.exp(-t * decay * (1 + k * .18))
                for k, (a, r) in enumerate(zip(partials, ratios)))
@@ -131,80 +144,50 @@ def material_detail(t, f, kind, rng):
 
 
 def effect(recipe, rng):
+    """Tabletop contacts and restrained relic magic, with short, close reflections."""
     d, f, kind = recipe["duration"], recipe["freq"], recipe["kind"]
     t = np.arange(round(d * RATE)) / RATE
-    n = len(t)
-    air = filtered_noise(n, rng, 9)
-    hiss = filtered_noise(n, rng, 2)
-    low = filtered_noise(n, rng, 150)
-    sweep = np.sin(TAU * (f * t + f * .85 * t * t / d))
-    swell = np.sin(np.pi * t / d) ** 1.5
-    if kind == "wood":
-        x = tone(t, f, 55, (1, .28, .16), (1, 1.47, 2.13)) + .5 * hiss * np.exp(-t * 190)
-        if d > .15: x += .6 * tone(np.maximum(0, t - .095), f * .79, 45) * (t >= .095)
-    elif kind in ("paper", "riffle", "slam"):
-        rustle = (hiss - .6 * air) * swell * .50
-        if kind == "riffle": rustle *= (.15 + .85 * np.maximum(0, np.sin(TAU * 42 * t)) ** 8)
-        x = rustle + .24 * tone(t, f, 48)
-        at = d * .62
-        x += .48 * tone(np.maximum(0, t - at), 120 if kind == "slam" else 230, 32) * (t >= at)
-        if kind == "slam": x += .4 * low * np.exp(-t * 19)
-    elif kind in ("glass", "metal", "pluck", "coins"):
-        ratios = (1, 2.76, 4.07) if kind in ("metal", "coins") else (1, 2, 3)
-        x = tone(t, f, 12 if kind == "metal" else 18, (1, .27, .08), ratios)
-        x += .18 * hiss * np.exp(-t * 160)
+    air = filtered_noise(len(t), rng, 16)
+    body = filtered_noise(len(t), rng, 110)
+    x = material_detail(t, f, kind, rng)
+    if kind in ("paper", "riffle", "slam", "wood"):
+        # Keep card handling dry and largely unpitched; a play is a felt-table tap.
+        x += .20 * body * np.exp(-t * (40 if kind == "slam" else 75))
+        wet = .015
+    elif kind in ("glass", "metal", "coins", "pluck"):
+        x *= np.exp(-t * 12)
         if kind == "coins":
-            for at, r in ((.065, 1.25), (.13, 1.5), (.23, 2)):
+            for at, ratio in ((.045, 1), (.10, 1.25)):
                 u = np.maximum(0, t - at)
-                x += .48 * tone(u, f * r, 19, (1, .24, .08), ratios) * (t >= at)
-    elif kind in ("impact", "crush", "explosion", "rumble", "debris", "shatter", "dust"):
-        decay = 6 if kind in ("explosion", "rumble") else 13
-        phase = TAU * (f * t + (f * .32 - f) * t * t / (2 * d))
-        x = .85 * np.sin(phase) * np.exp(-t * decay) + .55 * low * np.exp(-t * decay * 1.1)
-        x += .37 * hiss * np.exp(-t * (23 if kind == "explosion" else 65))
-        if kind in ("crush", "debris", "shatter"):
-            for at in rng.uniform(.025, d * .8, 9):
-                u = np.maximum(0, t - at)
-                x += .18 * (tone(u, f * rng.uniform(2, 7), 55, (1, .3, .1), (1, 1.6, 2.8)) + hiss * np.exp(-u * 80)) * (t >= at)
-        if kind == "dust": x = .45 * air * swell + .35 * sweep * np.exp(-t * 8)
-        if kind == "rumble": x *= np.minimum(1, t * 30)
+                x += .17 * tone(u, f * ratio, 35, (1, .15), (1, 2.756)) * (t >= at)
+        wet = .025
+    elif kind in ("impact", "crush", "explosion", "rumble", "debris", "shatter", "fusion"):
+        # Leather, wood and stone carry contact; no sustained sub-bass blast.
+        x *= .6 * np.exp(-t * 8)
+        x += .48 * tone(t, max(95, f), 26, (1, .20, .08), (1, 1.59, 2.31))
+        wet = .045
     elif kind in ("fanfare", "fall", "heal", "unseal", "rune", "seal", "astral"):
-        notes = (1, 1.25, 1.5, 2) if kind in ("fanfare", "heal", "unseal") else (1, 1.5, 2)
-        if kind == "fall": notes = (1.5, 1.25, 1, .75)
-        if kind == "astral": notes = (1, 1.498, 2.01, 2.994)
-        x = np.zeros(n)
-        for j, r in enumerate(notes):
-            at = j * d * .12
+        # Muted plucked strings and an old bronze relic, rather than a victory siren.
+        x = air * .10 * np.sin(np.pi * t / d) ** 2
+        notes = (1, 1.25, 1.5) if kind in ("fanfare", "heal", "unseal") else (1, 1.5)
+        if kind == "fall": notes = (1, .84, .75)
+        for j, ratio in enumerate(notes):
+            at = .012 + j * min(.085, d * .14)
             u = np.maximum(0, t - at)
-            env = np.minimum(1, u * (25 if kind in ("heal", "astral") else 150))
-            x += .42 * tone(u, f * r, 4.5 if kind == "astral" else 7, (1, .23, .12), (1, 2.003, 3.01)) * env * (t >= at)
-        if kind in ("seal", "unseal"): x += .32 * low * np.exp(-t * 25) + .25 * hiss * np.exp(-t * 35)
-        if kind == "rune": x += .20 * sweep * swell
-        if kind == "astral": x += .22 * np.sin(TAU * f * .5 * t) * swell
+            x += .36 * tone(u, f * ratio, 16 + j * 2, (1, .13, .035), (1, 2.003, 3.01)) * (t >= at)
+        if kind in ("seal", "unseal"):
+            x += .23 * body * np.exp(-t * 45)
+        wet = .055
     elif kind in ("charge", "fuse", "growl"):
-        x = .40 * sweep * swell + .27 * air * swell
-        if kind == "fuse": x += .36 * hiss * np.maximum(0, np.sin(TAU * (22 * t + 28 * t * t))) ** 10
-        if kind == "growl": x = .55 * low * swell + .42 * np.tanh(2 * np.sin(TAU * f * t)) * swell
+        swell = np.sin(np.pi * t / d) ** 1.6
+        x = (.24 * air + .18 * body + .10 * np.sin(TAU * f * .5 * t)) * swell
+        wet = .025
     else:
-        x = .35 * air * swell
-        if kind in ("slash", "pierce", "storm"):
-            x += .36 * hiss * np.exp(-((t / d - .28) / .12) ** 2)
-            x += .35 * tone(t, f, 14, (1, .32, .15), (1, 2.71, 4.16))
-            if kind == "storm": x *= .4 + .6 * np.sin(TAU * 18 * t) ** 4
-        if kind == "orbit": x += .5 * sweep * swell * (.5 + .5 * np.sin(TAU * 9 * t) ** 2)
-        if kind == "wave": x += .6 * low * swell + .25 * np.sin(TAU * f * t) * swell
-        if kind == "chain": x += .6 * tone(t, f, 12, (1, .4, .12), (1, 2.76, 4.07))
-        if kind == "fusion": x += .70 * tone(t, f * .5, 8) + .4 * sweep * np.exp(-t * 6)
-    detail = material_detail(t, f, kind, rng)
-    blend = .78 if kind in ("paper", "riffle", "slam", "wood") else .52
-    x = x * (1 - blend) + detail * blend
-    # Every effect has a click-free envelope; room reflections give it a material.
-    x *= np.minimum(1, t * 650) * np.minimum(1, (d - t) * 45)
-    y = stereo(x, wet=.10 if kind in ("paper", "wood", "riffle") else .24)
-    if kind in ("slash", "orbit", "wave", "storm", "astral"):
-        pan = (.48 * np.sin(TAU * t / d) if kind in ("orbit", "storm") else .38 * np.sin(np.pi * (t / d - .5)))
-        y *= np.column_stack((np.sqrt(1 - pan), np.sqrt(1 + pan)))
-    return y
+        x *= np.exp(-t * 9)
+        x += .13 * body * np.sin(np.pi * t / d) ** 2
+        wet = .035
+    x *= np.minimum(1, t * 280) * np.minimum(1, (d - t) * 65)
+    return stereo(x, wet=wet)
 
 
 def stereo(x, wet=.22, loop=False):
@@ -346,16 +329,19 @@ def seed(name):
     return np.random.default_rng(int.from_bytes(hashlib.sha256(name.encode()).digest()[:8], "little"))
 
 
-def write_audio(path, samples, peak, loop=False):
+def write_audio(path, samples, peak, loop=False, comfortable=False):
     # Remove rumble/harsh top end and keep bass centered before gentle saturation.
     frequencies = np.fft.rfftfreq(len(samples), 1 / RATE)
     spectrum = np.fft.rfft(samples, axis=0)
     highpass = frequencies ** 2 / (frequencies ** 2 + 28 ** 2)
     shelf = 1 / np.sqrt(1 + (frequencies / 10500) ** 4)
+    if comfortable:
+        highpass = frequencies ** 2 / (frequencies ** 2 + 60 ** 2)
+        shelf = 1 / (1 + (frequencies / 2300) ** 2)
     spectrum *= (highpass * shelf)[:, None]
     mid = (spectrum[:, 0] + spectrum[:, 1]) * .5
     side = (spectrum[:, 0] - spectrum[:, 1]) * .5
-    side *= frequencies ** 2 / (frequencies ** 2 + 160 ** 2)
+    side *= frequencies ** 2 / (frequencies ** 2 + 160 ** 2) * (.65 if comfortable else 1)
     samples = np.fft.irfft(np.column_stack((mid + side, mid - side)), n=len(samples), axis=0)
     samples = np.tanh(samples * 1.15)
     samples -= np.mean(samples, axis=0)
@@ -365,6 +351,11 @@ def write_audio(path, samples, peak, loop=False):
         tail = min(384, len(samples) // 4)
         samples[:attack] *= np.linspace(0, 1, attack)[:, None]
         samples[-tail:] *= np.linspace(1, 0, tail)[:, None]
+    return save_pcm(path, samples)
+
+
+def save_pcm(path, samples):
+    """Write already mixed previews without normalizing away the quiet balance."""
     assert np.isfinite(samples).all() and np.max(np.abs(samples)) < .9
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "wb") as f:
@@ -375,55 +366,57 @@ def write_audio(path, samples, peak, loop=False):
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
 
+def read_pcm(path):
+    with wave.open(str(path)) as source:
+        return np.frombuffer(source.readframes(source.getnframes()), "<i2").reshape(-1, 2) / 32768
+
+
 def build():
-    manifest = {"description": "Continental third edition: tactile paper, damped metal modes, granular fractures and breathing magic; original DSP, no third-party samples.",
+    manifest = {"description": "Continental quiet tabletop edition: dry paper, felt, wood, muted bronze and restrained relic magic; original DSP, no third-party samples.",
                 "sampleRate": RATE, "channels": 2, "bits": 16, "sfx": {}, "variants": {}, "music": {}, "ambience": {}}
     lines = ["-- Generated by scripts/build_audio.py; edit recipes there, then rebuild.", "return {", "    cues = {"]
     for name, recipe in CUES.items():
-        meta = write_audio(OUT / "sfx" / (name + ".wav"), effect(recipe, seed(name)), .64)
+        meta = write_audio(OUT / "sfx" / (name + ".wav"), effect(recipe, seed(name)), .64, comfortable=True)
         manifest["sfx"][name] = {**meta, **recipe}
         variants = []
         if name in VARIANTS:
             for take in (2, 3):
                 variant = dict(recipe, freq=recipe["freq"] * (1 + (take - 2.5) * .035))
                 key = f"{name}_{take}"
-                alternate = write_audio(OUT / "sfx" / (key + ".wav"), effect(variant, seed(key)), .64)
+                alternate = write_audio(OUT / "sfx" / (key + ".wav"), effect(variant, seed(key)), .64, comfortable=True)
                 manifest["variants"][key] = alternate
                 variants.append('"' + alternate["path"] + '"')
         alternate_paths = ", variants={" + ",".join(variants) + "}" if variants else ""
-        lines.append(f'        {name} = {{path="{meta["path"]}", gain={recipe["gain"]}, priority={recipe["priority"]}, cooldown={recipe["cooldown"]}{alternate_paths}}},')
+        lines.append(f'        {name} = {{path="{meta["path"]}", gain={recipe["gain"]}, priority={recipe["priority"]}, cooldown={recipe["cooldown"]}, duck=0.88, duckDuration=0.10{alternate_paths}}},')
     lines += ["    },", "    music = {"]
-    lines.append('        menu = {path="assets/audio/menu_theme.mp3", gain=0.38},')
+    lines.append('        menu = {path="assets/audio/menu_theme.mp3", gain=0.25},')
     for name, (_, gain) in MUSIC.items():
         meta = write_audio(OUT / "music" / (name + ".wav"), music(name, seed(name)), .48, loop=True)
         manifest["music"][name] = meta
-        lines.append(f'        {name} = {{path="{meta["path"]}", gain={gain}, seconds={meta["seconds"]}}},')
+        lines.append(f'        {name} = {{path="{meta["path"]}", gain={gain * .8:.4f}, seconds={meta["seconds"]}}},')
     lines += ["    },", "    ambience = {"]
     for name in AMBIENCE:
         meta = write_audio(OUT / "ambience" / (name + ".wav"), ambience(name, seed(name)), .32, loop=True)
         manifest["ambience"][name] = meta
-        lines.append(f'        {name} = {{path="{meta["path"]}", gain=0.25}},')
+        lines.append(f'        {name} = {{path="{meta["path"]}", gain=0.15}},')
     lines += ["    },", "}"]
     (ROOT / "config/audio_catalog.lua").write_text("\n".join(lines) + "\n", encoding="utf-8")
     (OUT / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     reel = np.zeros((RATE * 20, 2))
     for i, name in enumerate(("card_draw", "shop_buy", "heal", "pair_release", "flush_impact", "straight_flush_impact", "bed_explosion_boom", "reward_rare_reveal", "round_win")):
-        x = effect(CUES[name], seed(name)) * .32
+        x = read_pcm(OUT / "sfx" / (name + ".wav")) * CUES[name]["gain"] * .8
         start = round((.5 + i * 2.05) * RATE)
         reel[start:start + len(x)] += x
-    write_audio(ROOT / "docs/audio/continental_preview.wav", reel, .64)
+    save_pcm(ROOT / "docs/audio/continental_preview.wav", reel)
     # A short in-world mix demonstrates the arrangement and contact sounds together.
-    def read_pcm(path):
-        with wave.open(str(path)) as source:
-            return np.frombuffer(source.readframes(source.getnframes()), "<i2").reshape(-1, 2) / 32768
-    cinematic = read_pcm(OUT / "music/boss.wav")[:24 * RATE].copy() * .36
+    cinematic = read_pcm(OUT / "music/boss.wav")[:24 * RATE].copy() * MUSIC["boss"][1] * .8 * .8
     for at, name in ((1, "card_draw"), (3, "pair_release"), (3.35, "pair_impact"), (6, "spn_trigger"),
                      (9, "flush_impact"), (12, "armor_gain"), (15, "straight_flush_impact"), (20, "round_win")):
         start = round(at * RATE)
-        effect_pcm = read_pcm(OUT / "sfx" / (name + ".wav")) * CUES[name]["gain"]
+        effect_pcm = read_pcm(OUT / "sfx" / (name + ".wav")) * CUES[name]["gain"] * .8
         cinematic[start:start + len(effect_pcm)] *= .55
         cinematic[start:start + len(effect_pcm)] += effect_pcm
-    write_audio(ROOT / "docs/audio/continental_cinematic_preview.wav", cinematic, .78)
+    save_pcm(ROOT / "docs/audio/continental_cinematic_preview.wav", cinematic)
     check()
 
 

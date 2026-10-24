@@ -321,7 +321,9 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
     local size = math.min(w,h)
     local unit = math.max(0.6, math.min(1.6, size/128))
     g.push("all");g.translate(x,y);x,y=0,0;g.setShader()
-    local outer, inner = rimPath(w,h,0).points, rimPath(w,h,tier==1 and Frame.rimWidth or (ascended and 7 or 1.8+tier*.23)*unit).points
+    local depth=tier==1 and Frame.rimWidth or (ascended and 7 or 1.8+tier*.23)*unit
+    local outer, inner = rimPath(w,h,0).points, rimPath(w,h,depth).points
+    local shoulder,ledge=rimPath(w,h,depth*.28).points,rimPath(w,h,depth*.73).points
     for i=1,16,2 do
         local j = i == 15 and 1 or i+2
         if tier==1 then g.setColor(Frame.metal[1],Frame.metal[2],Frame.metal[3],alpha)
@@ -330,6 +332,15 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
             g.setColor(style.metal[1]*f,style.metal[2]*f,style.metal[3]*f,alpha)
         end
         g.polygon("fill",outer[i],outer[i+1],outer[j],outer[j+1],inner[j],inner[j+1],inner[i],inner[i+1])
+        -- Polish the same rail into a raised shoulder, satin face and recessed inner lip.
+        local metal=tier==1 and Frame.color or style.metal
+        local f=facet[(i+1)/2]
+        g.setColor(math.min(1,metal[1]*f*1.12+.08),math.min(1,metal[2]*f*1.12+.07),math.min(1,metal[3]*f*1.12+.05),alpha)
+        g.polygon("fill",outer[i],outer[i+1],outer[j],outer[j+1],shoulder[j],shoulder[j+1],shoulder[i],shoulder[i+1])
+        g.setColor(metal[1]*f*.78,metal[2]*f*.78,metal[3]*f*.78,alpha)
+        g.polygon("fill",shoulder[i],shoulder[i+1],shoulder[j],shoulder[j+1],ledge[j],ledge[j+1],ledge[i],ledge[i+1])
+        g.setColor(metal[1]*f*.35,metal[2]*f*.35,metal[3]*f*.35,alpha)
+        g.polygon("fill",ledge[i],ledge[i+1],ledge[j],ledge[j+1],inner[j],inner[j+1],inner[i],inner[i+1])
     end
     local color = style.metal
     -- Hover brightens the tier's metal without erasing its identity.
@@ -338,8 +349,12 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
         color[2]*(1-mix)+(highlight and highlight[2] or 0)*mix,
         color[3]*(1-mix)+(highlight and highlight[3] or 0)*mix
     local stroke = (highlight and 2 or math.max(0.8,math.min(1.6,w*0.012))) + (tier-1)*0.10
-    g.setColor(r,b,c,alpha); g.setLineWidth(stroke)
+    g.setColor(r,b,c,alpha); g.setLineWidth(tier==1 and stroke or stroke*.68)
     g.polygon("line",rimPath(w,h,.75).points)
+    if tier>=2 then
+        g.setColor(.97,.94,.83,alpha*.30);g.setLineWidth(math.max(.45,unit*.45))
+        g.polygon("line",rimPath(w,h,depth*.32).points)
+    end
     if tier == 1 then
         if not skipSockets then Frame.drawSockets(x,y,w,h,card,alpha,time,reduced) end
         g.pop(); return
@@ -368,9 +383,16 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
             g.setColor(r,b,c,alpha)
             g.polygon("fill",3*unit,bevel+10*unit,3*unit,bevel+3*unit,bevel+3*unit,3*unit,
                 bevel+10*unit,3*unit,bevel+4*unit,6*unit,6*unit,bevel+4*unit)
+            g.setColor(r*.22,b*.22,c*.22,alpha*.9);g.setLineWidth(.7*unit)
+            g.line(4.6*unit,bevel+9*unit,4.6*unit,bevel+4*unit,bevel+4*unit,4.6*unit,bevel+9*unit,4.6*unit)
+            g.setColor(1,.96,.84,alpha*.58);g.setLineWidth(.5*unit)
+            g.line(3.3*unit,bevel+9*unit,3.3*unit,bevel+3.5*unit,bevel+3.5*unit,3.3*unit,bevel+9*unit,3.3*unit)
         end
         if tier >= 4 then
+            g.setColor(r*.32,b*.32,c*.32,alpha);g.setLineWidth(1.6*unit)
             g.line(6*unit,bevel+reach*0.85,6*unit,bevel+6*unit,bevel+6*unit,6*unit,bevel+reach*0.85,6*unit)
+            g.setColor(r,b,c,alpha*.85);g.setLineWidth(.55*unit)
+            g.line(5.7*unit,bevel+reach*0.85,5.7*unit,bevel+5.7*unit,bevel+5.7*unit,5.7*unit,bevel+reach*0.85,5.7*unit)
         end
         if tier >= 6 then
             g.setColor(style.gem[1]*.65,style.gem[2]*.65,style.gem[3]*.65,alpha)
@@ -384,11 +406,24 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
         g.pop()
     end
     local function gem(cx,cy,radius)
+        local jewel=style.gem
         g.setColor(0.035,0.045,0.060,alpha)
         g.polygon("fill",cx,cy-radius-unit,cx+radius+unit,cy,cx,cy+radius+unit,cx-radius-unit,cy)
-        g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha)
+        g.setColor(jewel[1],jewel[2],jewel[3],alpha)
         g.polygon("fill",cx,cy-radius,cx+radius,cy,cx,cy+radius,cx-radius,cy)
+        g.setColor(jewel[1]*.42,jewel[2]*.42,jewel[3]*.42,alpha)
+        g.polygon("fill",cx,cy,cx+radius,cy,cx,cy+radius)
+        g.setColor(jewel[1]*.68,jewel[2]*.68,jewel[3]*.68,alpha)
+        g.polygon("fill",cx,cy,cx,cy+radius,cx-radius,cy)
+        g.setColor(jewel[1]*.5+.5,jewel[2]*.5+.5,jewel[3]*.5+.5,alpha)
+        g.polygon("fill",cx,cy-radius,cx,cy,cx-radius,cy)
+        g.setColor(jewel[1]*.83+.12,jewel[2]*.83+.12,jewel[3]*.83+.12,alpha)
+        local tableRadius=radius*.42
+        g.polygon("fill",cx,cy-tableRadius,cx+tableRadius,cy,cx,cy+tableRadius,cx-tableRadius,cy)
+        g.setLineWidth(.55*unit)
         g.setColor(1,0.97,0.89,alpha*0.9);g.line(cx-radius*0.5,cy,cx,cy-radius*0.5)
+        g.setColor(r*.85,b*.85,c*.85,alpha*.8);g.setLineWidth(.55*unit)
+        g.polygon("line",cx,cy-radius-unit*.5,cx+radius+unit*.5,cy,cx,cy+radius+unit*.5,cx-radius-unit*.5,cy)
     end
     local radius=(tier>=8 and 4 or tier>=5 and 3 or 2)*unit
     if tier>=3 then
@@ -401,6 +436,11 @@ function Frame.draw(x, y, w, h, highlight, alpha, card, time, reduced,skipSocket
                 g.polygon("fill",-25,2,-16,3,-9,7,0,9,9,7,16,3,25,2,16,12,0,17,-16,12)
                 g.setColor(r,b,c,alpha)
                 g.polygon("fill",-23,2,-15,4,-8,8,0,10,8,8,15,4,23,2,14,10,0,14,-14,10)
+                g.setColor(r*.46,b*.46,c*.46,alpha)
+                g.polygon("fill",-23,2,-14,10,0,14,14,10,23,2,16,12,0,17,-16,12)
+                g.setColor(r*.9,b*.9,c*.9,alpha);g.setLineWidth(.55)
+                g.line(-17,7,-10,10,0,12,10,10,17,7)
+                g.setLineWidth(.7)
                 g.setColor(1,.97,.86,alpha*.75);g.line(-23,2,-15,4,-8,8,0,10,8,8,15,4,23,2)
                 if tier>=8 then
                     g.setColor(style.gem[1],style.gem[2],style.gem[3],alpha*.85)

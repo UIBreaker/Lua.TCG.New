@@ -121,6 +121,16 @@ function A.upgrade(game,card,levels,temporary)
         end
     end
     if A.level(card)>previous then
+        local fx=require("ui.progression_effects")
+        fx.emit(card,"evolution",A.level(card)-previous)
+        local seen={[card]=true}
+        for _,pile in ipairs({game.persistentDeck or {},game.hand or {},game.deck or {},game.discardPile or {}}) do
+            for _,copy in ipairs(pile) do
+                if not temporary and card.id and copy.id==card.id and not seen[copy] then
+                    seen[copy]=true;fx.emit(copy,"evolution",A.level(card)-previous)
+                end
+            end
+        end
         A.dispatch(game,"upgraded",{card},{})
         feedback(game,card,(card.rankName or "")..(card.suitSymbol or "").." · CẤP KHẢ NĂNG +"..levels,"evolution")
     end
@@ -156,14 +166,19 @@ function A.handStart(game)
     Boss.handStart(game)
 end
 function A.beginHand(game, handInfo, played, decisions)
+    local active=Boss.playableCards(game,played)
+    if #active~=#played then
+        handInfo=require("src.poker").evaluate(active,game.unlockedHands,game.handLevels,game)
+        if not handInfo then return end
+    end
+    played=active
     require("src.spn_trials").prepare(game)
     require("src.spn_basics").bind(game,played)
     local ctx={game=game,handInfo=handInfo,scoring=handInfo.scoringCards,played=played,
-        active={},full=#(game.hand or {})>=A.handSize(game),play=combat(game).playIndex+1,
+        active={},full=#Boss.playableCards(game,game.hand)>=A.handSize(game),play=combat(game).playIndex+1,
         queue={},cursor=0,repeats={},triggerCount=0,feedback={},spnSeen={},spnCount=0,
         returns={},scored={},decisions=decisions or {},copyDepth=0,visited={},once={},depth=0,echoSeen={},resonanceHand={}}
-    for _,c in ipairs(game.hand or {}) do ctx.resonanceHand[#ctx.resonanceHand+1]=c end
-    for _,c in ipairs(game.hand or {}) do ctx.active[#ctx.active+1]=c end
+    for _,c in ipairs(Boss.playableCards(game,game.hand)) do ctx.resonanceHand[#ctx.resonanceHand+1]=c;ctx.active[#ctx.active+1]=c end
     game.abilityHand=ctx
     ctx.spnHeldBeforePlay=require("src.spn_reserves").heldCount(game,played)
     require("src.spn_predators").beginHand(game,played)
@@ -490,6 +505,7 @@ function A.draw(game,count,full)
 end
 -- Optional costs are collected before scoring and explicitly approved, never picked randomly.
 function A.choices(game,handInfo,played)
+    played=Boss.playableCards(game,played)
     local choices={};local candidates={}
     for _,c in ipairs(played) do candidates[#candidates+1]=c end
     for _,c in ipairs(game.hand or {}) do if not contains(played,c) and A.definition(c) and A.definition(c).op=="consume_cancel" then candidates[#candidates+1]=c end end

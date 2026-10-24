@@ -5912,3 +5912,12 @@ Prompt: Create one full-bleed portrait 2:3 PNG 1024x1536 game SPN illustration, 
 Output: assets/cards/continental/spn/spirit_crown_eraser.png — 1024×1536; runtime assets/cards/continental/runtime/spn/spirit_crown_eraser.jpg — 512×768.
 
 Generator source: C:\Users\Nhật Nam\.codex\generated_images\01a107ed-d0cb-7490-aa27-a26f8cfe519f\exec-55f52079-b3c2-4d4c-92e1-173962c6931e.png (built-in image_gen).
+
+
+## 2026-10-24 — Đại tu khung kim hoàn C–TT và cấp 10
+
+11 ảnh PNG trong `assets/ui/jewel_frames/`, mỗi ảnh tạo bằng một lần gọi built-in image_gen riêng. Đây là lớp trang trí UI có tâm trong suốt, không thay tranh Continental. Renderer khung chung cắt theo silhouette, ghép alpha, rồi dựng ánh kim động bằng shader.
+
+Thiết kế: C đồng cổ; UC bạc chạm lá; R sapphire/khiên bạc; E amethyst/cung nguyệt; L vòng nguyệt quế vàng/citrine; M lông phượng đồng hồng/ruby; T băng bạc/aquamarine; UQ thiên văn rhodium/sapphire tím; VH nút vô cực vàng/emerald; TT cánh bạch kim/kim cương; cấp 10 cánh kép/kim cương opal.
+
+Prompt nguyên văn, đường dẫn nguồn và tệp từng ảnh: `docs/FRAME_JEWEL_ASSETS.json`. Tất cả được đăng ký trong `docs/asset_manifest.json`.

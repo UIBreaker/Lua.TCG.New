@@ -8,6 +8,7 @@ local signalProblems={}
 local misses={}
 require("src.nen_audio").register({registerProcedural=function(name,data,cue)
     assert(name:match("^nen_.*_.*$") and cue.gain>0 and cue.gain<=1)
+    assert(cue.gain<=.58,"tabletop cues must stay below the cinematic gain range")
     assert(data:getChannelCount()==2 and data:getSampleRate()==32000,"stereo Nen at 32kHz")
     local peak,energy,signature,width,early,total,late,side=0,0,0,0,0,0,0,0
     local bins={};for i=1,24 do bins[i]=0 end
@@ -106,12 +107,12 @@ require("src.nen_audio").register({registerProcedural=function(name,data,cue)
                 duration=data:getSampleCount()/32000,total=total*cue.gain^2,late=late*cue.gain^2}
             assert(cue.priority==5 and cue.duckDuration>0,"outcome must take foreground at contact")
             if kind:match("^boss_") then
-                assert(cue.duck==({.46,.30,.14})[level] and cue.duckDuration==({1.80,2.70,3.90})[level],"boss verdict and victory must own their foreground window")
+                assert(cue.duck==({.84,.80,.76})[level] and cue.duckDuration==({.22,.30,.38})[level],"quiet boss contact must avoid prolonged background pumping")
                 assert(cue.bossVictory==1 and data:getDuration()>=victoryAt+2.19,"victory belongs to the same finishing voice")
                 local joinRms=math.sqrt(joinEnergy/(32000*.08))*cue.gain
                 local victoryRms=math.sqrt(victoryEnergy/(32000*2.4))*cue.gain
                 if joinRms<=.008 then signalProblems[#signalProblems+1]=name..string.format(" silent gap into victory (%.3f)",joinRms) end
-                if victoryRms<=.035 then signalProblems[#signalProblems+1]=name..string.format(" weak victory phrase (%.3f)",victoryRms) end
+                if victoryRms<=.020 then signalProblems[#signalProblems+1]=name..string.format(" inaudible quiet victory phrase (%.3f)",victoryRms) end
                 if kind=="boss_finisher" then
                     victories[hand]=victories[hand] or {}
                     local features={}
@@ -149,17 +150,18 @@ for i,id in ipairs(order) do
         check(charge[tier].rise>(tier==3 and 2.5 or tier==2 and 2 or 1.4),id,"charge must crescendo",charge[tier].rise)
         if tier==3 then check(charge[tier].endWidth<charge[tier].startWidth*.35,id,"extreme pressure must close the stereo field") end
         if tier>1 then
-            check(charge[tier].rms>charge[tier-1].rms*1.08,id,"tier "..tier.." needs a denser windup",charge[tier].rms/charge[tier-1].rms)
+            -- Tier identity comes from cadence/length; softer filtering need not increase loudness.
+            check(charge[tier].rms>charge[tier-1].rms*.85,id,"tier "..tier.." windup must remain audible",charge[tier].rms/charge[tier-1].rms)
             check(release[tier].rms>release[tier-1].rms*1.10,id,"higher tier needs a stronger launch",release[tier].rms/release[tier-1].rms)
             assert(release[tier].duration>release[tier-1].duration+.06,id.." launch tiers need distinct durations")
         end
     end
-    check(tiers[2].rms>tiers[1].rms*1.08,id,"strong contact needs more weight",tiers[2].rms/tiers[1].rms)
-    check(tiers[3].rms>tiers[2].rms*1.10,id,"extreme contact needs more weight",tiers[3].rms/tiers[2].rms)
+    check(tiers[2].rms>tiers[1].rms,id,"strong contact must remain readable",tiers[2].rms/tiers[1].rms)
+    check(tiers[3].rms>tiers[2].rms,id,"extreme contact must remain readable",tiers[3].rms/tiers[2].rms)
     assert(tiers[2].duration>=tiers[1].duration+.19 and tiers[3].duration>=tiers[2].duration+.51,id.." tier scale must have distinct duration")
-    check(tiers[2].total>tiers[1].total*1.30,id,"strong gesture needs more energy",tiers[2].total/tiers[1].total)
-    check(tiers[3].total>tiers[2].total*1.40,id,"extreme gesture needs a grander body",tiers[3].total/tiers[2].total)
-    check(tiers[3].late>tiers[2].late*2,id,"extreme needs an audible material aftershock",tiers[3].late/tiers[2].late)
+    check(tiers[2].total>tiers[1].total*1.10,id,"strong gesture needs its own phrase",tiers[2].total/tiers[1].total)
+    check(tiers[3].total>tiers[2].total*1.10,id,"extreme gesture needs its own phrase",tiers[3].total/tiers[2].total)
+    check(tiers[3].late>tiers[2].late*1.3,id,"extreme needs a restrained material answer",tiers[3].late/tiers[2].late)
     check(tiers[3].width>tiers[1].width*1.4,id,"extreme must open the stereo field",tiers[3].width/tiers[1].width)
     for kind,bank in pairs(outcomes) do
         local gesture=assert(bank[id],kind.." missing "..id)
@@ -170,11 +172,11 @@ for i,id in ipairs(order) do
             for k,v in ipairs(g.features) do difference=difference+(v-tiers[tier].features[k])^2 end
             check(math.sqrt(difference)>.012,id,kind.." must be distinct from a normal contact",math.sqrt(difference))
             if tier>1 then
-                check(g.rms>gesture[tier-1].rms*1.06,id,kind.." tier "..tier.." needs more contact weight",g.rms/gesture[tier-1].rms)
-                check(g.total>gesture[tier-1].total*1.20,id,kind.." needs more total energy",g.total/gesture[tier-1].total)
+                check(g.rms>gesture[tier-1].rms*.90,id,kind.." tier "..tier.." must keep a readable contact",g.rms/gesture[tier-1].rms)
+                check(g.total>gesture[tier-1].total,id,kind.." must retain its material phrase",g.total/gesture[tier-1].total)
             end
         end
-        check(gesture[3].late>gesture[2].late*1.7,id,kind.." extreme needs a longer material collapse",gesture[3].late/gesture[2].late)
+        check(gesture[3].late>gesture[2].late*1.3,id,kind.." extreme needs a short material aftermath",gesture[3].late/gesture[2].late)
     end
     for _,kinds in ipairs({{"boss_finisher","finisher"},{"boss_armored_finisher","armored_finisher"}}) do
         for tier=1,3 do

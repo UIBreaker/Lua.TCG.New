@@ -61,6 +61,9 @@ end
 
 function Capture.update(gameRef, callbacks)
     for _,value in ipairs(arg or {}) do
+        if value=="--test-hand-collection" then return require("tests.hand_collection_capture").update(gameRef,callbacks) end
+    end
+    for _,value in ipairs(arg or {}) do
         if value=="--capture-menu-sparkles" then
             return require("tests.menu_sparkles_capture").update(gameRef,callbacks)
         end

@@ -4,6 +4,7 @@ local Rail=require("ui.inventory_rail")
 local L=require("src.loadout")
 local step,deadline=0,0
 local drawnSpn,drawnCon={},{}
+local drawnConOrder={}
 local function pointer(r,click,mouse)
     local w,h=love.graphics.getDimensions();local s=math.min(w/1280,h/720)
     local x,y=(w-1280*s)/2+(r[1]+r[3]/2)*s,(h-720*s)/2+(r[2]+r[4]/2)*s
@@ -36,17 +37,23 @@ function T.update(game,cb)
         game.extraDeitySlots=10;game.maxConsumables=7;game.deities={};game.consumables={}
         local ids={};for id in pairs(require("src.deities").CATALOG) do ids[#ids+1]=id end;table.sort(ids)
         for slot=1,15 do local d={};for k,v in pairs(require("src.deities").CATALOG[ids[slot]]) do d[k]=v end;game.deities[slot]=d end
-        for _,slot in ipairs({1,2,3,7}) do local c=require("src.shop").healingItem("upper","healing_potion").consumable;c.loadoutSlot=slot;game.consumables[#game.consumables+1]=c end
+        for _,slot in ipairs({3,1,7,2}) do local c=require("src.shop").healingItem("upper","healing_potion").consumable;c.loadoutSlot=slot;game.consumables[#game.consumables+1]=c end
         L.init(game)
         local draw,patron,consumable=love.draw,UI.drawPatronCard,UI.getConsumableImage
         UI.drawPatronCard=function(d,...) drawnSpn[d]=true;return patron(d,...) end
-        UI.getConsumableImage=function(c,...) drawnCon[c]=true;return consumable(c,...) end
-        love.draw=function(...) drawnSpn,drawnCon={},{};return draw(...) end
+        UI.getConsumableImage=function(c,...)
+            if not drawnCon[c] then
+                for _,item in ipairs(game.consumables) do if item==c then drawnConOrder[#drawnConOrder+1]=c;break end end
+            end
+            drawnCon[c]=true;return consumable(c,...)
+        end
+        love.draw=function(...) drawnSpn,drawnCon,drawnConOrder={},{},{};return draw(...) end
         pointer({0,0,1,1})
     elseif step==1 then
         check("spn",game,15);check("consumable",game,7)
         for _,d in pairs(game.deities) do assert(drawnSpn[d],"Every SPN actually renders") end
         for _,c in ipairs(game.consumables) do assert(drawnCon[c],"Every consumable actually renders") end
+        for i,slot in ipairs({7,3,2,1}) do assert(drawnConOrder[i].loadoutSlot==slot,"Consumables must stack in slot order, first slot on top like SPN") end
         assert(L.equipped(game,"consumable",7) and not L.equipped(game,"consumable",4))
         love.graphics.captureScreenshot(function(data)
             local f=assert(io.open("docs/inventory_rail_15_spn_7_consumables.png","wb"));f:write(data:encode("png"):getString());f:close()
@@ -61,11 +68,16 @@ function T.update(game,cb)
             local x,y,w,h=UI.getDeitySlotRect(T.hoverSlot,"playing")
             pointer({x+w-2,y+h/2,1,1});deadline=love.timer.getTime()+.2;return
         end
-        pointer({UI.getConsumableSlotRect(4,"playing")})
+        local _,index=L.equipped(game,"consumable",1);T.firstConsumable=game.consumables[index]
+        local x,y,w,h=UI.getConsumableSlotRect(index,"playing")
+        pointer({x+w-2,y+h/2,1,1})
     elseif step==3 then
-        assert(UI.descriptionCandidate==game.consumables[4],"Sparse consumable slot 7 stays accessible")
-        game.playerHp=50;pointer({UI.getConsumableSlotRect(4,"playing")},true,2)
-        assert(game.playerHp==75 and #game.consumables==3,"Exact consumable activates")
+        assert(UI.descriptionCandidate==T.firstConsumable,"Top consumable must own its overlap like the top SPN")
+        local _,index=L.equipped(game,"consumable",1)
+        local x,y,w,h=UI.getConsumableSlotRect(index,"playing")
+        game.playerHp=50;pointer({x+w-2,y+h/2,1,1},true,2)
+        assert(game.playerHp==75 and #game.consumables==3 and not L.equipped(game,"consumable",1),"Right click uses the visible top card rather than the covered neighbor")
+        assert(L.equipped(game,"consumable",7),"Other equipped slots retain their cards")
         game.extraDeitySlots=11
         game.deities[16]={};for k,v in pairs(game.deities[15]) do game.deities[16][k]=v end
     elseif step==4 then

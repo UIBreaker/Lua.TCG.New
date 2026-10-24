@@ -15,6 +15,7 @@ local TRANSIENT_GAME_KEYS = {
     abilityCombat = true,
     depthCombat = true,
     combatReshuffles = true,
+    timingRewardMultiplier=true,
     enchantmentCombat = true,
     spnCombat = true,
     spnAttack = true,

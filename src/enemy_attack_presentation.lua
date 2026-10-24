@@ -28,7 +28,7 @@ local function nextPhase(s,game)
     if s.phase == "pause" then
         s.phase = "prepare";s.intent=s.attackers[s.index].intent
         if s.interactive and (not s.intent or s.intent.type=="attack") then
-            s.timing=Timing.start("parry",s.speed or game.lastPlayerAttackSpeed,require("src.enemy_abilities").speed(s.attackers[s.index]))
+            s.timing=Timing.start("parry",s.speed or game.lastPlayerAttackSpeed,require("src.enemy_abilities").speed(s.attackers[s.index]),game)
         end
         require("src.sound").play("enemy_prepare")
     elseif s.phase == "prepare" then

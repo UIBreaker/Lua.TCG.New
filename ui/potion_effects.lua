@@ -60,7 +60,7 @@ function F.update(game,dt,reducedMotion,state,fast)
         local e=F.active[i];e.age=e.age+math.min(dt,.05)*(fast and 2 or 1);e.reduced=reducedMotion
         if not e.contacted and e.age>=e.contactAt then
             e.contacted=true
-            if e.kind~="discard" then Lighting.flash(e.x,e.y,colors[e.kind] or colors.heal,reducedMotion and .05 or .14,.36,160) end
+            if e.kind~="discard" and e.kind~="speed" then Lighting.flash(e.x,e.y,colors[e.kind] or colors.heal,reducedMotion and .05 or .14,.36,160) end
         end
         if e.age>=e.life then table.remove(F.active,i) end
     end
@@ -264,7 +264,7 @@ function F.draw(UI,game,activeState)
         local presentation=F.pose(e)
         local alpha=presentation.alpha
         local c=colors[e.kind] or colors.heal
-        if alpha>0 and e.kind~="discard" then
+        if alpha>0 and e.kind~="discard" and e.kind~="speed" then
             motif(e,c,alpha)
             for _,particle in ipairs(e.particles) do
                 local age=e.age-e.contactAt-particle.delay

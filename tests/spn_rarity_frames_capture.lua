@@ -95,7 +95,13 @@ function T.verify()
         UI.CardPhysics.resume();g.pop()
     end
     local function save(path)
-        local data=canvas:newImageData();local file=assert(io.open(path,"wb"))
+        local data=canvas:newImageData();local file,err=io.open(path,"wb")
+        -- Windows previews may briefly hold a regenerated gallery open.
+        for attempt=1,10 do
+            if file then break end
+            love.timer.sleep(.1);file,err=io.open(path,"wb")
+        end
+        assert(file,err)
         file:write(data:encode("png"):getString());file:close();data:release()
     end
     sheet(1.3);save("docs/spn_rarity_frames.png")

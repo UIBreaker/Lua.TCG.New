@@ -175,7 +175,7 @@ function Deck.heldCards(handInfo,context)
     local hand=context.hand or context.unplayedCards or context.gameState and context.gameState.hand or {}
     for _,c in ipairs(hand) do
         local key=c.id or c
-        if not played[key] and not seen[key] and not c.destroyed then seen[key]=true;out[#out+1]=c end
+        if not played[key] and not seen[key] and not c.destroyed and not require("src.boss_abilities").isAbilityDisabled(context.gameState or {monster=context.monster},c) then seen[key]=true;out[#out+1]=c end
     end
     return out
 end
@@ -386,16 +386,22 @@ end
 
 function Deck.applyAttackSpeedBonus(card, amount)
     if not card then return 1 end
+    local before=Deck.getCardAttackSpeed(card)
     local base = Deck.getAttackSpeed(card.rank)
     local currentBonus = math.max(0, tonumber(card.speedBonus) or 0)
     card.speedBonus = math.min(999 - base, currentBonus + math.max(0, tonumber(amount) or 0))
-    return Deck.getCardAttackSpeed(card)
+    local after=Deck.getCardAttackSpeed(card)
+    require("ui.progression_effects").emit(card,"speed",after-before)
+    return after
 end
 
 function Deck.applyTemporaryAttackSpeedBonus(card, amount)
     if not card then return 1 end
+    local before=Deck.getCardAttackSpeed(card)
     card.temporarySpeedBonus = (card.temporarySpeedBonus or 0) + math.max(0, tonumber(amount) or 0)
-    return Deck.getCardAttackSpeed(card)
+    local after=Deck.getCardAttackSpeed(card)
+    require("ui.progression_effects").emit(card,"speed",after-before)
+    return after
 end
 
 local nextCardId = 1
@@ -523,6 +529,7 @@ end
 
 -- Upgrade card rank by 1 (used in Rest Site / Forge to restore durability)
 function Deck.upgradeCard(card)
+    local previous=card.baseRank or card.rank
     local bRank = card.baseRank or card.rank
     if bRank == 1 then
         bRank = 2
@@ -534,6 +541,7 @@ function Deck.upgradeCard(card)
     card.rankName = Deck.RANK_NAMES[card.rank] or tostring(card.rank)
     card.baseChips = Deck.getChipValue(card.rank) + (card.bonusBaseChips or 0)
     Deck.getCardAttackSpeed(card)
+    if bRank~=previous then require("ui.progression_effects").emit(card,"evolution",1) end
     return card
 end
 

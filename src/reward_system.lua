@@ -68,7 +68,9 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
 
     local bossVictoryBonus = not wasSkip and ((blind and blind.type == "boss") or (gameState.monster and gameState.monster.isBoss))
         and require("config.reward_loot").bossVictoryGold or 0
-    local totalGold = subtotal + factionBonus + bossVictoryBonus
+    local normalGold = subtotal + factionBonus + bossVictoryBonus
+    local timingMultiplier=not wasSkip and math.max(1,math.floor(gameState.timingRewardMultiplier or 1)) or 1
+    local totalGold=normalGold*timingMultiplier
 
     return {
         blind = blind,
@@ -90,6 +92,7 @@ function RewardSystem.calculate(blind, gameState, wasSkipped)
         factionBonus = factionBonus,
         bossVictoryBonus = bossVictoryBonus,
         totalGold = totalGold,
+        timingMultiplier=timingMultiplier,timingBonus=totalGold-normalGold,
         victoryRecovery = not wasSkip and gameState.abilityCombat and gameState.abilityCombat.victoryRecovery or 0,
     }
 end
@@ -173,7 +176,8 @@ rollTable = function(tableId, game, source, depth, modifier, lootBonus)
     local rewards = {}
     -- Extra rolls belong only to the ceremony; nested chests inherit the rarity blessing.
     local extra=(depth or 0)==0 and lootBonus and lootBonus.extraRolls or 0
-    for _ = 1, Rng.random(tableData.rolls[1], tableData.rolls[2])+extra do
+    local multiplier=(depth or 0)==0 and lootBonus and lootBonus.timingMultiplier or 1
+    for _ = 1, (Rng.random(tableData.rolls[1], tableData.rolls[2])+extra)*multiplier do
         local id = RewardSystem.weighted(tableData.entries, nil, function(entry)
             return require("src.spn_bounty").weight(entry,modifier and modifier(entry) or entry.weight or 0,lootBonus)
         end)
@@ -205,19 +209,27 @@ function RewardSystem.begin(breakdown, game, context)
     end
     local result = {breakdown = breakdown, tableId = tableId, loot = {}, bonusGold = 0, claimed = false}
     if not breakdown.wasSkipped then
-        result.spnLootBonus=require("src.spn_bounty").bonus(game)
+        result.spnLootBonus=copy(require("src.spn_bounty").bonus(game))
+        result.spnLootBonus.timingMultiplier=breakdown.timingMultiplier or 1
         result.loot = rollTable(tableId, game, boss and "BOSS" or "VICTORY", 0, modifier,result.spnLootBonus)
         local ticket=require("src.void_gacha").ticketReward(boss)
-        if ticket then result.loot[#result.loot+1]=ticket end
+        if ticket then
+            ticket.amount=ticket.amount*(breakdown.timingMultiplier or 1)
+            ticket.name="+"..ticket.amount.." VÉ THE VOID"
+            ticket.desc=ticket.desc:gsub("^Nhận %d+","Nhận "..ticket.amount)
+            result.loot[#result.loot+1]=ticket
+        end
         for _,card in ipairs(game.pendingJourneyRewards or {}) do
             result.loot[#result.loot+1]={id=card.id,type="JOURNEY_DOCUMENT",card=card,name=card.name,
                 desc=card.desc,rarity=card.rarity,source="CHINH PHỤC KHU VỰC"}
         end
         game.pendingJourneyRewards=nil
         if not context.lootTableId and Rng.random() < (boss and Config.supplies.bossChance or Config.supplies.normalChance) then
-            result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries,nil,function(entry)
-                return require("src.spn_bounty").weight(entry,entry.weight,result.spnLootBonus)
-            end), game, "TIẾP TẾ", 0,result.spnLootBonus)
+            for _=1,(breakdown.timingMultiplier or 1) do
+                result.loot[#result.loot + 1] = createReward(RewardSystem.weighted(Config.supplies.entries,nil,function(entry)
+                    return require("src.spn_bounty").weight(entry,entry.weight,result.spnLootBonus)
+                end), game, "TIẾP TẾ", 0,result.spnLootBonus)
+            end
         end
     end
     result.earnedSouls = 0
@@ -229,6 +241,10 @@ function RewardSystem.begin(breakdown, game, context)
             game.souls = (game.souls or 0) + result.earnedSouls
         end
     end
+    local extraSouls=result.earnedSouls*((breakdown.timingMultiplier or 1)-1)
+    game.souls=(game.souls or 0)+extraSouls
+    result.earnedSouls=result.earnedSouls+extraSouls
+    result.timingMultiplier=breakdown.timingMultiplier or 1
     result.soulsBefore = (game.souls or 0) - result.earnedSouls
     local hadPack = false
     game.rewardPacks = game.rewardPacks or {}
@@ -260,6 +276,7 @@ function RewardSystem.begin(breakdown, game, context)
     game.gold = (game.gold or 0) + result.earnedGold
     result.claimed = true
     game.pendingVictoryReward = result
+    if not breakdown.wasSkipped then game.timingRewardMultiplier=1 end
     if not breakdown.wasSkipped then game.rewardPackDrought = hadPack and 0 or (game.rewardPackDrought or 0) + 1 end
     return result
 end
@@ -382,6 +399,9 @@ function RewardSystem.newAnimation(breakdown, result, options)
     if breakdown.deityBonus > 0 then lines[#lines + 1] = {label = "THƯỞNG HỘ LINH", valNum = breakdown.deityBonus} end
     if (breakdown.voucherBonus or 0)>0 then lines[#lines+1]={label="GIAO KÈO TRO VÀNG",valNum=breakdown.voucherBonus} end
     if breakdown.factionBonus > 0 then lines[#lines + 1] = {label = "VIỆN TRỢ VALORIA", valNum = breakdown.factionBonus} end
+    if (breakdown.timingBonus or 0)>0 then
+        lines[#lines+1]={label="CHUỖI TIMING ×"..(breakdown.timingMultiplier or 1),valNum=breakdown.timingBonus}
+    end
     local slots = {}
     for _, reward in ipairs(result.loot) do
         slots[#slots + 1] = {reward = reward, chest = reward.type == "CHEST", effect = Effects.profile(reward)}

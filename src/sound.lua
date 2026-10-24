@@ -33,9 +33,16 @@ end
 local function mixVoices()
     local foreground=false
     for _,v in ipairs(voices) do if v.priority>=4 then foreground=true;break end end
+    local repeats={}
+    for _,v in ipairs(voices) do
+        local family=v.name:match("^reward_coin_") and "reward_coins" or v.name
+        repeats[family]=(repeats[family] or 0)+1
+    end
     local density=0
     for _,v in ipairs(voices) do
         v.weight=foreground and (v.priority<=1 and .18 or v.priority==2 and .34 or v.priority==3 and .68 or 1) or 1
+        local family=v.name:match("^reward_coin_") and "reward_coins" or v.name
+        v.weight=v.weight/math.sqrt(repeats[family])
         density=density+v.weight*v.weight
     end
     local headroom = 1 / math.sqrt(math.max(1, density / 4))
@@ -45,7 +52,7 @@ local function mixVoices()
         peak=peak+l.level*l.gain*volumes[l.bus]*duck*l.peak
     end
     -- Bound coincident hits, including the codec margin in optimized packages.
-    limiter=math.min(1,.92/math.max(.001,peak))
+    limiter=math.min(1,.72/math.max(.001,peak))
     for _,v in ipairs(voices) do v.source:setVolume(v.gain * v.weight * volumes.sfx * headroom * limiter) end
     for _,l in pairs(loops) do l.source:setVolume(l.level*l.gain*volumes[l.bus]*duck*limiter) end
 end
@@ -237,12 +244,13 @@ function Sound.rewardPitch()
             local id=voices[i].name:match("^nen_(.-)_boss_")
             local score=require("config.attack_audio")[id]
             if score then
-                local root=score.tone*voices[i].pitch
-                while root>392.445 do root=root*.5 end
-                while root<196.2225 do root=root*2 end
+                local reference=require("src.reward_audio").root
+                local root=score.tone*require("src.nen_audio").toneScale*voices[i].pitch
+                while root>reference*1.5 do root=root*.5 end
+                while root<reference*.75 do root=root*2 end
                 local tier=voices[i].name:match("_extreme$") and 3 or voices[i].name:match("_strong$") and 2 or 1
                 local lift=.65+(tier-1)*.45+.70
-                return root/261.63,math.max(0,lift/voices[i].pitch-(now()-voices[i].startedAt))
+                return root/reference,math.max(0,lift/voices[i].pitch-(now()-voices[i].startedAt))
             end
         end
     end

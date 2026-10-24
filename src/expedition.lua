@@ -70,12 +70,12 @@ E.kingdoms = {
 E.shipBosses = {
     {name="ĐẠI ĐÔ ĐỐC", key="gatekeeper", skill="Mệnh Lệnh Phong Tỏa", op="gate_lock", amount=2, desc="Luân phiên khóa 2 lượt đổi / lượt đánh tay kế tiếp (giữ tối thiểu 1)."},
     {name="ĐAO VƯƠNG", key="executioner", skill="Đao Phán Quyết", op="damage", amount=8, desc="Gây 8 sát thương, có thể chặn bằng Giáp."},
-    {name="NỮ HOÀNG MẶT NẠ", key="faceless", skill="Phong Ấn Câm Lặng", op="silence", amount=1, desc="Khóa khả năng lá đã báo trước trong tay kế tiếp."},
+    {name="NỮ HOÀNG MẶT NẠ", key="faceless", skill="Phong Ấn Câm Lặng", op="silence", amount=1, desc="Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN."},
     {name="CHỦ HỘI HẮC KIM", key="black_tax_collector", skill="Lệnh Tịch Thu", op="tax_lock", amount=1, desc="Luân phiên khóa ô Tiêu Hao / SPN và gây sát thương theo Nợ."},
     {name="KIẾM THÁNH VỌNG ÂM", key="echo_knight", skill="Phản Kiếm", op="repeat_penalty", amount=4, desc="Lặp thế đánh vừa dùng sẽ mất 4 Cường hóa ở tay kế tiếp."},
-    {name="BẬC THẦY KÝ ỨC", key="memory_eater", skill="Xóa Ký Ức", op="silence", amount=1, desc="Khóa khả năng lá đã báo trước trong tay kế tiếp."},
+    {name="BẬC THẦY KÝ ỨC", key="memory_eater", skill="Xóa Ký Ức", op="silence", amount=1, desc="Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN."},
     {name="VƯƠNG HẦU ĐOẠT NGỌC", key="gem_devourer", skill="Hấp Thu Linh Lực", op="heal", amount=60, desc="Hồi 60 HP, không xóa thêm trang bị."},
-    {name="TỔNG CHỈ HUY HẢI ĐOÀN", key="the_hook", skill="Tước Vũ Khí", op="silence", amount=1, desc="Khóa khả năng lá đã báo trước trong tay kế tiếp."},
+    {name="TỔNG CHỈ HUY HẢI ĐOÀN", key="the_hook", skill="Tước Vũ Khí", op="silence", amount=1, desc="Vô hiệu lá đã báo trước trong tay kế tiếp: không thể đánh, tạo bộ hoặc kích hoạt SPN."},
 }
 function E.region(stage,regionId)
     if E.byId[regionId] then return E.byId[regionId] end

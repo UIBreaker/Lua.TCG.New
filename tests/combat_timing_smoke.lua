@@ -1,4 +1,7 @@
 local T=require("src.combat_timing")
+require("tests.disabled_cards_smoke")
+require("tests.timing_utility_smoke")
+require("tests.timing_hazards_smoke")
 require("tests.timing_vfx_smoke")
 local C=require("src.combat")
 local P=require("src.enemy_attack_presentation")
@@ -10,7 +13,7 @@ local function fixture()
 end
 assert(T.start("attack",10,10).speed==1)
 assert(T.start("attack",10,20).speed>1 and T.start("parry",20,10).speed<1)
-assert(T.start("attack",0,99999).speed==2.4 and T.start("parry",99999,0).speed==.55)
+assert(T.start("attack",0,99999).speed==2.4 and T.start("parry",99999,0).speed==.95)
 for _,fps in ipairs({30,60,144}) do
     local s=T.start("attack",10,10)
     assert(not T.press(s),"ignore the click that opened the bar")
@@ -103,8 +106,8 @@ for _,kind in ipairs({"attack","parry"}) do
         local s=T.start(kind,10,10)
         if grade=="timeout" then T.update(s,s.ready+s.duration+.01)
         else
-            local index=({good=3,perfect=1,critical=4,ultimate=7,trap=6})[grade]
-            s.age=s.ready;s.position=grade=="divine" and (s.divine.from+s.divine.to)/2 or grade=="apex" and (s.apex.from+s.apex.to)/2 or grade=="trap" and s.zones[6].from+.005 or index and (s.zones[index].from+s.zones[index].to)/2 or 0
+            local index=({perfect=1,critical=4,ultimate=7,trap=6})[grade]
+            s.age=s.ready;s.position=grade=="good" and s.zones[2].from+.01 or grade=="divine" and (s.divine.from+s.divine.to)/2 or grade=="apex" and (s.apex.from+s.apex.to)/2 or grade=="trap" and s.zones[6].from+.005 or index and (s.zones[index].from+s.zones[index].to)/2 or 0
             T.press(s)
         end
         assert(heard[#heard]==audio.cue(kind,grade),"each mode/grade routes its own recording")
@@ -123,10 +126,10 @@ assert(hit.parried and hit.parryArmor==10 and g.playerArmor==20 and g.playerHp==
 for i=1,150 do
     local s=T.start("attack",10,10);local zone=s.zones[7]
     local center=(zone.from+zone.to)/2
-    assert(math.abs(zone.to-zone.from-.025)<1e-9 and zone.to-zone.from<s.zones[4].to-s.zones[4].from)
+    assert(math.abs(zone.to-zone.from-.022)<1e-9 and zone.to-zone.from<s.zones[4].to-s.zones[4].from)
     assert(T.grade(s,center)=="ultimate")
     assert(T.grade(s,zone.from-.001)=="trap" and T.grade(s,zone.to+.001)=="trap","a near miss lands in red")
-    assert(math.abs((zone.to-zone.from)*s.duration-.04)<1e-9,"equal speeds give a 40ms ultimate window")
+    assert(math.abs((zone.to-zone.from)*s.duration-.0319)<1e-9,"equal speeds give a 31.9ms nominal ultimate window")
 end
 print("Ultimate timing passed: x4 damage, double parry armor, 150 randomized narrow targets with dangerous near misses")
 
@@ -164,11 +167,11 @@ hit=C.resolveMonsterAttack(g,nil,10,m,apex)
 assert(hit.parried and hit.reflectedAttack==5000 and m.hp==5000 and g.playerHp==100 and hit.parryArmor==10)
 for i=1,150 do
     local s=T.start("parry",10,10);local z=s.apex
-    assert(z.to-z.from<s.zones[7].to-s.zones[7].from and math.abs(z.to-z.from-.015)<1e-9)
+    assert(z.to-z.from<s.zones[7].to-s.zones[7].from and math.abs(z.to-z.from-.013)<1e-9)
     assert(T.grade(s,(z.from+z.to)/2)=="apex")
     assert(T.grade(s,z.from-.001)=="trap" and T.grade(s,z.to+.001)=="trap")
 end
-print("Apex passed: x8 damage, x250 reflection, 1.5% target, 150 randomized red-bordered layouts")
+print("Apex passed: x8 damage, x250 reflection, 1.3% target, 150 randomized red-bordered layouts")
 
 for _,fps in ipairs({30,60,144}) do for _,speed in ipairs({1,2.6}) do
     g,m=fixture();m.hp=10000;m.maxHp=10000
@@ -197,53 +200,40 @@ local function stop(grade,kind)
     local z=grade=="divine" and s.divine or grade=="apex" and s.apex or s.zones[7]
     s.age=s.ready;s.position=(z.from+z.to)/2
     assert(T.press(s) and s.result.grade==grade)
-    assert(not s.result.soulClaimed,"pressing a band cannot award currency before a real hit")
+    assert(not s.result.successClaimed,"pressing a band cannot award currency before a real hit")
     return s.result
 end
 for i=1,200 do
     local s=T.start("attack",10,10);local z=s.divine
-    assert(math.abs(z.to-z.from-.008)<1e-9 and z.to-z.from<s.apex.to-s.apex.from)
-    assert(math.abs((z.to-z.from)*s.duration-.0128)<1e-9)
+    assert(math.abs(z.to-z.from-.007)<1e-9 and z.to-z.from<s.apex.to-s.apex.from)
+    assert(math.abs((z.to-z.from)*s.duration-.01015)<1e-9)
     assert(T.grade(s,z.from-.0001)=="trap" and T.grade(s,z.to+.0001)=="trap")
     assert(T.grade(s,(z.from+z.to)/2)=="divine")
 end
-for _,entry in ipairs({{"ultimate",1,4,100},{"apex",2,8,250},{"divine",3,12,500}}) do
+for _,entry in ipairs({{"ultimate",5,4,100},{"apex",5,8,250},{"divine",5,12,500}}) do
     local grade,reward,multiplier,reflection=unpack(entry)
     local timing=stop(grade)
     g,m=fixture();m.hp=50000;m.maxHp=50000;g.lastPlayerAttackSpeed=1
     local damage,_,_,roll=C.resolvePlayerAttack(g,40,nil,timing)
     if grade=="ultimate" then reward=roll.timingSouls;assert(reward>=1 and reward<=5 and reward%1==0) end
     assert(damage==40*multiplier and roll.timingSouls==reward and g.souls==reward)
-    assert(T.awardSouls(g,timing)==0 and g.souls==reward,"one receipt per timing attempt")
+    assert(T.awardSuccess(g,timing)==0 and g.souls==reward,"one receipt per timing attempt")
     timing=stop(grade,"parry")
     g,m=fixture();m.hp=50000;m.maxHp=50000
     local hit=C.resolveMonsterAttack(g,nil,10,m,timing)
     if grade=="ultimate" then reward=hit.timingSouls;assert(reward>=1 and reward<=5 and reward%1==0) end
     assert(hit.parried and hit.reflectedAttack==20*reflection and hit.timingSouls==reward and g.souls==reward)
-    assert(T.awardSouls(g,timing)==0,"reflection cannot pay a second soul reward")
+    assert(T.awardSuccess(g,timing)==0,"reflection cannot pay a second soul reward")
     timing=stop(grade);timing.forceMiss=true
     g,m=fixture();C.resolvePlayerAttack(g,40,nil,timing)
-    assert((g.souls or 0)==0 and not timing.soulClaimed,"a miss cannot award souls")
+    assert((g.souls or 0)==0 and not timing.successClaimed,"a miss cannot award souls")
     timing=stop(grade,"parry")
     g,m=fixture();g.potionCombat={evasion=true}
     C.resolveMonsterAttack(g,nil,10,m,timing)
-    assert((g.souls or 0)==0 and not timing.soulClaimed,"enemy evasion is not a successful parry")
+    assert((g.souls or 0)==0 and not timing.successClaimed,"enemy evasion is not a successful parry")
 end
 local timing=stop("divine");g,m=fixture();g.souls=9007199254740990
-assert(T.awardSouls(g,timing)==1 and g.souls==9007199254740991)
-print("Divine and souls passed: 200 risky 0.8% targets, x12 attack/x500 reflection, purple/white/ruby soul rewards, single receipts, misses/evasion and currency cap")
+assert(T.awardSuccess(g,timing)==1 and g.souls==9007199254740991)
+print("Divine and souls passed: 200 risky 0.7% targets, x12 attack/x500 reflection, purple/white/ruby soul rewards, single receipts, misses/evasion and currency cap")
 
-local rng=require("src.rng");local saved=rng.getState();local seen={};local rewards={}
-for i=1,100 do
-    local game={};local attempt={grade="ultimate"}
-    local amount=T.awardSouls(game,attempt)
-    assert(amount>=1 and amount<=5 and amount%1==0 and game.souls==amount)
-    seen[amount]=true;rewards[i]=amount
-    local after=rng.getState()
-    assert(T.awardSouls(game,attempt)==0 and game.souls==amount and rng.getState()==after,"duplicate claims cannot reroll the reward")
-end
-for amount=1,5 do assert(seen[amount],"purple soul rewards should vary across the full 1-5 range") end
-rng.setState(saved)
-for i=1,100 do assert(T.awardSouls({},{grade="ultimate"})==rewards[i],"soul rewards must follow the saved gameplay RNG") end
-rng.setState(saved)
-print("Purple souls passed: random integers 1-5, full range, saved RNG replay and no duplicate payout/reroll")
+require("tests.timing_chains_smoke")

@@ -1,5 +1,9 @@
 # Chuyển động và viền lá bài
 
+Trạng thái hiện tại: theo yêu cầu bỏ asset viền kim hoàn, renderer đã trở về bộ viền kim loại vẽ bằng mã trước đó. Không tải `assets/ui/jewel_frames/`, không dùng `card_jewelwork.lua` hay shader phản chiếu ảnh khung. Số/chất, tên, chỉ số, hốc trang bị và giới hạn tiến hóa 10 vẫn giữ nguyên. Các mô tả kim hoàn PNG bên dưới là lịch sử phương án đã gỡ khỏi hiển thị.
+
+Tinh chỉnh trên bộ viền bằng mã hiện có: giữ đường bao, vị trí nẹp góc, miện và đặc trưng màu từng bậc. Nẹp được chia thành vai kim loại bắt sáng, mặt satin và mép trong tối; nét biên cơ bản chung được giữ nguyên. Các miếng góc có đường khắc chìm kèm cạnh sáng mảnh, miện có mặt bên tối và rãnh chạm, bảo thạch có bốn mặt cắt cùng mặt bàn sáng và ổ kim loại ôm sát. Không thêm asset ảnh hay thay thiết kế khung. `--test-card-motion` xác minh nét chung trên sáu loại bài, alpha/transform, 10 bậc/3 kích thước, phân biệt cấp 8–10, Reduced Motion/LOW và không tải module ảnh viền đã bỏ. Xem `docs/frame_polish_current.mp4`.
+
 Tham khảo FFF3.mp4 về nhịp nghiêng nhẹ và hover theo con trỏ; giữ tranh Continental và chất kim loại cổ của game.
 
 Tinh chỉnh tay bài theo nhịp tương tác của FFF4.mp4 (2026-10-11):
@@ -16,26 +20,34 @@ Tinh chỉnh tay bài theo nhịp tương tác của FFF4.mp4 (2026-10-11):
 - Rương giữ quyền điều khiển lá trong lúc materialize; khi lá sẵn sàng thì chuyển sang hover chung.
 - `ui/components/card_frame.lua` giải bậc theo cùng quy tắc của huy hiệu SPN: bậc gốc + tiến hóa, chặn ở TT và có dấu khắc vượt bậc. Save cũ UQ+1/UQ+2 hiển thị thành VH/TT mà không đổi sức mạnh.
 
-| Bậc | Viền |
-| --- | --- |
-| C | Đồng cơ bản, nét mảnh |
-| UC | Kim loại xanh cổ, khắc góc và một ánh quét chậm |
-| R | Bạc vát cạnh, nẹp góc, sapphire và dòng sáng xanh chạy viền |
-| E | Men amethyst, viền khắc kép và đường năng lượng thở nhẹ |
-| L | Vàng cổ nổi khối, bệ đá quý hai đầu và hai luồng ánh kim |
-| M | Đồng hồng, ruby hai bên và tinh thạch phát sáng theo nhịp |
-| T | Bạc lam, hai quỹ đạo ngược chiều và sóng năng lượng vào mép tranh |
-| UQ | Bạch kim tím, ba đuôi sao, tinh tú ở góc và bùng sáng bảo thạch |
-| VH | Bạc xanh ngọc, nút thắt vĩnh hằng, hai đường dẫn và luồng sáng đan ngược chiều |
-| TT | Vàng trắng, bốn luồng sao, hai lớp sóng sáng và vầng mặt trời ở bốn góc |
+| Bậc | Thiết kế kim hoàn hiện có | Chuyển động nhận diện |
+| --- | --- | --- |
+| C | Đồng cổ và thép tối, khóa góc đúc, đinh tán nhỏ, rãnh da tối | Tĩnh, nổi chiều sâu kim loại cổ |
+| UC | Bạc cổ chạm lá acanthus, patina xanh và spinel xanh lá | Một ánh phản xạ chậm đi lên theo nẹp lá |
+| R | Khiên bạc khảm sapphire, men xanh đêm và sống kim loại vát | Hai khiên sapphire lóe lạnh luân phiên |
+| E | Bạc niello tối, cung nguyệt chạm nổi, amethyst cắt giọt nước | Ánh tím thở theo chu kỳ cung nguyệt |
+| L | Vàng cổ chạm nguyệt quế, miện hoa đúc và citrine hổ phách | Ánh vàng tỏa từ miện ra các lá |
+| M | Đồng hồng/thiên thạch, lông phượng uốn, ruby đỏ sâu | Vệt lửa đi lên theo lông phượng |
+| T | Bạch kim băng, nẹp thủy tinh khắc và aquamarine dài | Khúc xạ băng mảnh trượt hai chiều |
+| UQ | Rhodium tối, vòng thiên văn, sao khảm và sapphire tím | Ánh sao chạy trên vòng kim loại thiên văn |
+| VH | Vàng/bạc đan nút vô cực, lá nguyệt quế và emerald | Hai phản xạ đan ngược chiều theo nút vô cực |
+| TT | Vàng trắng/bạch kim, cánh chạm nhiều lớp và kim cương | Ánh vàng trắng rộng, chậm theo các lớp cánh |
+| Quân bài cấp 10 | Cánh kép, hào quang miện và kim cương opal có sẵn | Ba sóng sáng từ miện xuống viền, miện bùng sáng, phản sắc opal |
 
-Họa tiết ôm vào tranh, cờ đuôi én ở góc trên phải; thu nhỏ vẫn giữ rõ hình chính. Hover làm sáng kim loại nhưng giữ màu bậc.
+Đại tu ngày 2026-10-24 thay toàn bộ nẹp đa giác cũ bằng 11 PNG UI được tạo qua 11 lần gọi built-in image_gen riêng, giữ nguyên tranh Continental. Ảnh nằm ở `assets/ui/jewel_frames/`, tâm và nền có alpha trong suốt. Prompt nguyên văn, nguồn và ánh xạ từng ảnh: `docs/FRAME_JEWEL_ASSETS.json`; đăng ký trong `docs/asset_manifest.json`. Đây là lớp trang trí do renderer chung ghép lên, không có chữ, rank/chất hay huy hiệu vẽ cứng trong ảnh.
 
-Huy hiệu SPN dùng `Frame.drawRarityPennant` trong cùng khung cơ bản. Bậc càng cao, phù hiệu càng lớn: C/UC là kim loại khắc trên men tối; R/E thêm bảo thạch và viền kép; L/M có vương miện và cánh kim loại; T/UQ thêm quỹ đạo, tinh tú và ánh kim; VH có nút thắt vĩnh hằng màu ngọc; TT có vương miện vàng trắng, tinh thạch và vầng mặt trời bùng sáng. Chữ nổi có bóng, luôn nằm trong bảng men tối để đọc trên cả tranh sáng lẫn tối.
+Tinh chỉnh tiếp theo yêu cầu giữ thiết kế hiện có: không thay hay tạo thêm PNG. Shader tăng tương phản phần chạm nổi, độ trong màu đá và ánh phản chiếu; giữ nguyên alpha và dáng khung. Mỗi bậc dùng nhịp sáng trong bảng trên. Cấp 10 có ba sóng sáng, quầng sáng ngay trên chi tiết miện và phản sắc opal, phân biệt với cánh vàng trắng cấp 9. Ánh mạnh được nén mềm theo phần sáng còn lại của chất liệu để tránh mất nét chạm khi bùng sáng. Kiểm tra `frame_tier_identity` so 55 cặp chất liệu/relief ở 46/82/200 px, đo mức phát sáng qua 12 thời điểm của cấp 9/10 và kiểm tra uniform của khung cao không ảnh hưởng khung thấp. Các kiểm tra LOW, Reduced Motion, alpha, giới hạn ánh sáng và GPU cache nằm trong `--test-card-motion`.
 
-Ánh quét, quỹ đạo và đợt bùng sáng tính theo đồng hồ trình diễn, không dùng RNG gameplay. LOW bỏ các đốm sáng bay; Reduced Motion giữ phù hiệu tĩnh. Mọi chi tiết nằm trong giới hạn lá, theo transform và alpha của lá. Ảnh tổng hợp: `docs/spn_rarity_badges.png`; bản chuyển động: `docs/spn_rarity_badges.mp4`.
+Video tinh chỉnh trên ảnh hiện có: `docs/frame_refinement_all.mp4` (C–TT, cấp 0–9) và `docs/frame_refinement_10.mp4` (so sánh cấp 8/9/10). Kết quả kiểm tra: 55 cặp khác nhau tối thiểu 75% theo tiêu chí alpha/luminance của test; phát sáng cấp 10 trung bình 3.35× cấp 9 trong 12 thời điểm lấy mẫu. Đây là phép đo renderer phục vụ phân biệt hiệu ứng, không phải hệ số sức mạnh gameplay.
 
-Viền động SPN và quân bài dùng `Frame.drawEnergy` ngay trong khung chung, nhận cùng đồng hồ và Reduced Motion với huy hiệu. Quân bài tiến hóa vĩnh viễn tối đa cấp 10: cấp 0–8 dùng lần lượt kiểu viền C–VH, cấp 9 dùng TT, cấp 10 dùng TT+1 có giáp viền vàng trắng dày, nẹp kép, vương miện nhiều tầng trên/dưới và cánh kim loại hai bên. Khi chuyển động có sáu luồng sao (LOW: ba), bốn ấn mặt trời với hai quỹ đạo đối chiều, tia sáng và sóng bùng riêng. Dáng khung vẫn khác rõ cấp 9 khi Reduced Motion/tắt hiệu ứng. Hiệu ứng riêng áp dụng cho quân bài có tổng tiến hóa từ 10; không đổi khung SPN. Cấp 0 là lá ban đầu; có 10 lần nâng cấp. Cấp tăng tạm thời vẫn cộng vào kiểu viền rồi trở về cấp thực khi hết hiệu lực. Nâng cấp, xem trước, inspector và khôi phục save đều dùng chung giới hạn 10 trong config/card_ability_data.lua; các lá cấp 8 tiếp tục nâng được. Xem docs/playing_card_evolution_10.png. Số, chất, tốc đánh và hốc trang bị giữ nguyên. Đường dẫn mép được dùng lại; sóng đang lan không được ghi vào cache. Kim loại có cạnh sáng/tối, mặt men và bệ bảo thạch; ánh chạy và tia sáng nằm trong vùng mép để không che chủ thể. LOW giảm số luồng/đoạn và bỏ sóng phụ nhưng vẫn giữ chuyển động của bậc cao; Reduced Motion hoặc tắt hiệu ứng sẽ giữ viền tĩnh. Không áp chuyển động này cho quái, trang bị hay mặt sau lá bài. Ảnh tổng hợp: `docs/spn_rarity_frames.png`, `docs/playing_card_frames.png`; bản chuyển động: `docs/spn_rarity_frames.mp4`, `docs/playing_card_frames.mp4`.
+`ui/components/card_frame.lua` vẫn sở hữu silhouette vát góc và nét biên chung cho các loại bài. Nó dùng `card_jewelwork.lua` để tải/ghép ảnh, rồi vẽ huy hiệu, metadata và hốc bằng các thành phần hiện có. Mỗi PNG được lấy mẫu một lần vào Canvas 384×576 có alpha premultiplied; ảnh nguồn giải phóng khỏi GPU sau đó. 11 texture cache chiếm khoảng 9.3 MiB RGBA8, không tính các asset khác. Không tạo Image/Canvas theo frame.
+
+`shaders/card_jewel_glints.glsl` chỉ chiếu sáng lên phần ảnh khung có alpha: ánh phản xạ quét chéo theo mặt kim loại, vệt phản xạ ngược chiều từ bậc cao, điểm ngọc lóe thành tia nhỏ. Luminance của chất liệu quyết định nơi nhận phản sáng, nên không vẽ vòng sao rời hoặc ánh sáng qua cửa sổ giữa. C đứng yên; UC–TT tăng cường độ/độ dày điểm lóe; cấp 10 tăng thêm và dùng ảnh riêng. LOW giảm mật độ điểm lóe. Reduced Motion/tắt hiệu ứng giữ khung ảnh tĩnh. Hiệu ứng theo cùng transform/alpha, không dùng RNG gameplay.
+
+Quân bài vẫn có cấp 0 ban đầu và tối đa 10 lần tiến hóa: 0–8 tương ứng C–VH, 9 dùng TT, 10 dùng biến thể opal riêng. Tiến hóa tạm thời tiếp tục cộng vào bậc hiển thị. Không đổi giới hạn, chỉ số, giá hoặc xác suất. Huy hiệu SPN dùng `Frame.drawRarityPennant` như trước, cùng đồng hồ trình diễn.
+
+Ảnh xem trước: `docs/spn_rarity_frames.png`, `docs/playing_card_frames.png`, `docs/playing_card_evolution_10.png`; video cùng tên đuôi mp4. `tests/frame_tier_identity.lua` kiểm tra 45 cặp bằng thang xám của chất liệu và silhouette ở 46/82/200 px, không có tranh/chữ/chuyển động. Đây là phép kiểm tra nhận diện, không phải điểm thẩm mỹ. Ảnh kiểm tra: `docs/frame_tier_silhouettes.png`.
+
 
 Chỉ số và thẻ tên quân bài dùng `ui/components/card_inscriptions.lua` trong cùng lượt metadata sau khung. Tốc đánh lấy giá trị từ `Deck.getCardAttackSpeed`, sát thương dùng `baseChips` như trước; hiệu ứng không tăng sức mạnh. Mỗi bảng có nền men tối, viền kim loại, ánh chạy, đá quý và tia bùng sáng tăng dần theo giá trị. Chữ giữ nguyên giá trị, tự thu nhỏ theo bề rộng; từ mốc thứ tư có ánh phát quanh chữ số. Tốc đánh dùng lam bạc, sát thương dùng đỏ vàng. Các mốc hiệu ứng:
 

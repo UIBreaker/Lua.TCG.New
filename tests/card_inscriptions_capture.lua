@@ -90,7 +90,12 @@ function T.verify()
         UI.CardPhysics.resume();g.pop()
     end
     local function save(path)
-        local data=canvas:newImageData();local f=assert(io.open(path,"wb"))
+        local data=canvas:newImageData();local f,err=io.open(path,"wb")
+        for attempt=1,10 do
+            if f then break end
+            love.timer.sleep(.1);f,err=io.open(path,"wb")
+        end
+        assert(f,err)
         f:write(data:encode("png"):getString());f:close();data:release()
     end
     sheet(1.3);save("docs/playing_card_inscriptions.png")

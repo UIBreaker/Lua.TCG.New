@@ -78,4 +78,5 @@ local pose=Choices.pose(chest.cardsAt,1)
 assert(pose.scale==1 and pose.rotation==0 and pose.y==chest.cardY)
 UI.Polish.reducedMotion=false
 require("tests.chest_reveal_smoke")
+require("tests.hand_collection_smoke")
 print("Hand/chest motion PASS: exact endpoints, stagger, collection-before-deal, ghost isolation, one-shot callback/sound, FPS/stalls, fast/reduced motion")

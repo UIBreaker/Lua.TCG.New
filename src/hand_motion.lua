@@ -39,7 +39,8 @@ function HandMotion.collect(card,order,x,y)
     local ghost={};for k,v in pairs(card) do ghost[k]=v end
     ghost.visualScale,ghost.rotation,ghost.selected,ghost.hovered=1,0,false,false
     ghost.scaleX,ghost.scaleY=1,1
-    local s=states[card];if s then s.collecting=true end
+    local s=states[card] or {vx=0,vy=0,angularVelocity=0,scaleVelocity=0,hover=0,selected=0}
+    states[card]=s;s.collecting=true;s.deal=nil
     returns[#returns+1]={card=ghost,owner=card,state=s,age=-math.min(order-1,7)*Config.collectStagger,
         x=card.visualX or x,y=card.visualY or y,angle=card.rotation or 0,scale=card.visualScale or 1,targetX=x,targetY=y}
 end
@@ -53,12 +54,17 @@ end
 
 function HandMotion.updateReturns(dt)
     local step=dt*(HandMotion.fast and Config.fastFactor or 1)
+    local complete=#returns>0
     for i=#returns,1,-1 do
         local fx=returns[i];fx.age=HandMotion.reducedMotion and Config.collect or fx.age+step
-        if fx.age>=Config.collect then
+        if fx.age<Config.collect then complete=false end
+    end
+    if complete then
+        -- Originals remain hidden until the last staggered return has arrived.
+        for _,fx in ipairs(returns) do
             if states[fx.owner]==fx.state and fx.state then fx.state.collecting=false end
-            table.remove(returns,i)
         end
+        returns={}
     end
     if #returns==0 and HandMotion.onCollected then
         local done=HandMotion.onCollected;HandMotion.onCollected=nil;done()
@@ -69,7 +75,7 @@ function HandMotion.drawReturns(UI)
     local g=love.graphics
     UI.CardPhysics.suspend()
     for _,fx in ipairs(returns) do
-        if fx.age>=0 then
+        if fx.age>=0 and fx.age<Config.collect then
             local p=HandMotion.returnPose(fx)
             g.push("all");g.translate(p.x+50,p.y+72.5);g.rotate(p.angle)
             g.scale(p.scale*math.max(0.025,math.abs(math.cos(p.flip*math.pi))),p.scale)

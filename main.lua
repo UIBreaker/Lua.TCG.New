@@ -1,4 +1,10 @@
 local cardEffectsSmokeMode = false
+for _,a in ipairs(arg or {}) do if a=="--test-timing-utility-visuals" then require("tests.timing_utility_visual_capture");return end end
+for _,a in ipairs(arg or {}) do if a=="--test-progression-effects" then require("tests.progression_effects_capture");return end end
+for _,a in ipairs(arg or {}) do if a=="--test-timing-rewards" then
+    local ok,err=xpcall(function() require("tests.reward_ceremony_smoke");require("tests.timing_chains_smoke") end,debug.traceback)
+    if not ok then print(err) end;os.exit(ok and 0 or 1)
+end end
 for _,a in ipairs(arg or {}) do if a=="--test-combat-fatigue" then
     local ok,err=xpcall(function() require("tests.combat_fatigue_smoke") end,debug.traceback)
     if not ok then print(err) end;os.exit(ok and 0 or 1)
@@ -218,6 +224,7 @@ for _, a in ipairs(arg or {}) do
     if a == "--test-game-speed" then isCaptureMode = true end
     if a == "--test-combat-notices" then isCaptureMode = true end
     if a == "--test-hand-chest-motion" then isCaptureMode = true;chestAnimationCaptureMode=true end
+    if a == "--test-hand-collection" then isCaptureMode = true end
     if a == "--test-combat-motion" then isCaptureMode = true end
     if a == "--test-enemy-motion" then isCaptureMode = true end
     if a == "--test-outcome-motion" then isCaptureMode = true end
@@ -1635,9 +1642,10 @@ local function useConsumable(idx)
         table.remove(game.consumables, idx)
         Sound.play("round_win")
         table.insert(anim.floatingTexts, {
-            text = "TĂNG TỐC ĐỘI · +2 TỐC ĐÁNH CHO " .. affected .. " LÁ",
+            text = "TĂNG TỐC ĐỘI · +"..p.speed.." TỐC ĐÁNH CHO " .. affected .. " LÁ",
             color = { 0.38, 0.90, 0.68, 1 }, x = 640, y = 350, alpha = 2.8,
         })
+        require("ui.progression_effects").team(game.hand)
         return true
     end
 
@@ -1881,11 +1889,23 @@ local function applyPendingSpeedAt(mx, my)
     return false
 end
 
+UI.showTimingUtilityReward=function(timing,x,y)
+    if not timing then return end
+    local text=(timing.rewardHeal or 0)>0 and ("+"..UI.formatNumber(timing.rewardHeal).." HP")
+        or (timing.rewardDiscards or 0)>0 and ("+"..timing.rewardDiscards.." LƯỢT BỎ")
+        or (timing.rewardSpeed or 0)>0 and ("TOÀN ĐỘI +"..timing.rewardSpeed.." TỐC")
+    if text then table.insert(anim.floatingTexts,{text=text,color=(require("src.combat_timing").utility[timing.grade] or {}).color or {.4,1,.7},x=x,y=y,alpha=1.5}) end
+end
 local function startEnemyAttack(phase, speed, done, played)
     anim.enemyTurn = EnemyAttack.start(game, phase, speed, function(hit, enemy)
         local timing=anim.enemyTurn.parryResult
+        UI.showTimingUtilityReward(timing,enemy.screenX or UI.BATTLE_CENTER_X,365)
         if (hit.timingSouls or 0)>0 then
-            table.insert(anim.floatingTexts,{text="+"..hit.timingSouls.." LINH HỒN",color={.85,.48,1},x=enemy.screenX or UI.BATTLE_CENTER_X,y=440,alpha=1.6})
+            table.insert(anim.floatingTexts,{text="+"..hit.timingSouls.." LH · +"..(timing and timing.rewardGold or 0).." VÀNG",color={.85,.48,1},x=enemy.screenX or UI.BATTLE_CENTER_X,y=440,alpha=1.6})
+        end
+        if timing and ((timing.evolvedSpn or 0)>0 or (timing.evolvedCards or 0)>0) then
+            table.insert(anim.floatingTexts,{text="TIẾN HÓA TOÀN ĐỘI +"..(timing.chain or 1),color={1,.65,.46},x=enemy.screenX or UI.BATTLE_CENTER_X,y=406,alpha=1.8})
+            anim.deityHit=anim.deityHit or {};for slot in pairs(game.deities or {}) do anim.deityHit[slot]=0 end
         end
         if hit.action=="attack" then
             local effect=hit.missed and "miss" or (hit.reflectedAttack or 0)>0 and "reflect"
@@ -1936,14 +1956,15 @@ local function startEnemyAttack(phase, speed, done, played)
         anim.hitStop = settings.reducedMotion and 0 or (settings.fastScoring and 0.012 or 0.025)
         local hitX = enemy.screenX or UI.BATTLE_CENTER_X
         if hit.damage>0 or hit.absorbed>0 then
-            Sound.play(hit.damage==0 and "armor_loss" or heavy and "damage_heavy" or "damage_hit", 0.78)
+            if not (timing and timing.grade=="exposed") then Sound.play(hit.damage==0 and "armor_loss" or heavy and "damage_heavy" or "damage_hit", 0.78) end
         end
         if hit.absorbed > 0 then
             local ft = Feedback.add(anim.floatingTexts, "armor", -hit.absorbed, hitX, 458, UI.formatNumber)
             ft.label = "GIÁP HẤP THỤ"
         end
         if hit.damage > 0 then
-            Feedback.add(anim.floatingTexts, "heal", -hit.damage, hitX, 500, UI.formatNumber)
+            local ft=Feedback.add(anim.floatingTexts, "heal", -hit.damage, hitX, 500, UI.formatNumber)
+            if timing and timing.grade=="exposed" then ft.label="VỠ THẾ · NHẬN ×5";ft.color={1,.34,.17} end
         elseif hit.absorbed == 0 then
             table.insert(anim.floatingTexts, {text="ĐÒN BỊ CHẶN",color={0.4,0.84,1},x=hitX,y=478,alpha=1.6})
         end
@@ -1970,12 +1991,16 @@ local function playSelectedHand()
     if anim.enemyTurn or anim.attackTiming then return end
     if state ~= "playing" or anim.active or #game.selectedIndices == 0 or game.handsRemaining <= 0 then return end
 
-    local playedCards = getSelectedCards()
+    local playedCards = UI.BossAbilities.playableCards(game,getSelectedCards())
+    if #playedCards==0 then
+        table.insert(anim.floatingTexts,{text="BÀI BỊ VÔ HIỆU · KHÔNG THỂ TẤN CÔNG",color={1,.42,.28},x=640,y=430,alpha=1.6})
+        Sound.play("cant_afford");return
+    end
     if not require("src.spn_legacy").canPlay(game,#playedCards) then
         table.insert(anim.floatingTexts,{text="ĐỘC KÍCH · CHỈ ĐƯỢC ĐÁNH 1 LÁ",color=UI.COLORS.goldYellow,x=640,y=430,alpha=1.5})
         Sound.play("cant_afford");return
     end
-    local evalForChoices = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
+    local evalForChoices = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels,game)
     if not evalForChoices then return end
     if require("src.free_human_bosses").handBlocked(game,evalForChoices.type.id) then
         table.insert(anim.floatingTexts,{text="CẤM THẾ · "..(evalForChoices.type.vnName or evalForChoices.type.id).." ĐÃ BỊ KHÓA",color=UI.COLORS.goldYellow,x=640,y=430,alpha=2})
@@ -2001,7 +2026,7 @@ local function playSelectedHand()
             rotation = pose and pose.a and math.atan2(pose.b,pose.a) or card.rotation or card.visualAngle or 0,
         }
     end
-    local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels)
+    local evalResult = Poker.evaluate(playedCards, game.unlockedHands, game.handLevels,game)
     if not evalResult then return end
     UI.Abilities.beginHand(game, evalResult, playedCards, game.abilityApproved)
     require("src.advanced_hands").begin(game,evalResult)
@@ -2025,10 +2050,9 @@ local function playSelectedHand()
 
     -- Remove played cards from hand
     table.sort(game.selectedIndices, function(a, b) return a > b end)
-    for _, idx in ipairs(game.selectedIndices) do
-        local c = table.remove(game.hand, idx)
-        c.selected = false
-        table.insert(game.discardPile, c)
+    local playedSet={};for _,c in ipairs(playedCards) do playedSet[c]=true end
+    for i=#game.hand,1,-1 do
+        if playedSet[game.hand[i]] then local c=table.remove(game.hand,i);c.selected=false;table.insert(game.discardPile,c) end
     end
     clearAllSelections()
     syncCardSelections()
@@ -2142,7 +2166,7 @@ local function playSelectedHand()
     end
     local function timedScoring()
         anim.active=true
-        anim.attackTiming=require("src.combat_timing").start("attack",playerSpeed,require("src.enemy_abilities").speed(game.monster))
+        anim.attackTiming=require("src.combat_timing").start("attack",playerSpeed,require("src.enemy_abilities").speed(game.monster),game)
         anim.attackTiming.onDone=beginScoring
     end
     if not startEnemyAttack("before", playerSpeed, timedScoring, playedCards) then
@@ -3099,7 +3123,7 @@ function love.update(dt,realDt)
     -- Check hand rank bounce when cards selected change hand evaluation
     if state == "playing" then
         local selCards = getSelectedCards()
-        local curHand = (#selCards > 0) and Poker.evaluate(selCards, game.unlockedHands, game.handLevels) or nil
+        local curHand = (#selCards > 0) and Poker.evaluate(selCards, game.unlockedHands, game.handLevels,game) or nil
         local curName = (curHand and curHand.type) and curHand.type.vnName or ""
         if curName ~= juice.lastEvaluatedRank then
             if juice.lastEvaluatedRank ~= nil and curName ~= "" then
@@ -3303,10 +3327,22 @@ function love.update(dt,realDt)
                         beforeHit[#beforeHit+1]={enemy=enemy,hp=enemy.hp or 0,armor=enemy.creatureArmor or 0}
                     end
                     local actualDmg, defeated, splashHits,attackResult = Combat.resolvePlayerAttack(game, st.finalScore,anim.playerAttackResult,anim.playerTimingResult)
-                    if (attackResult.timingSouls or 0)>0 then
-                        table.insert(anim.floatingTexts,{text="+"..attackResult.timingSouls.." LINH HỒN",color={.85,.48,1},x=game.monster.screenX or UI.BATTLE_CENTER_X,y=328,alpha=1.6})
+                    local timing=anim.playerTimingResult
+                    UI.showTimingUtilityReward(timing,game.monster.screenX or UI.BATTLE_CENTER_X,365)
+                    if attackResult.enemyCounter then
+                        require("src.timing_vfx").emit("enemy_reflect","riposte",game.monster.screenX or UI.BATTLE_CENTER_X,270,{reducedMotion=settings.reducedMotion,audio=true})
+                        local ft=Feedback.add(anim.floatingTexts,"damage",attackResult.damage,UI.BATTLE_CENTER_X,425,UI.formatNumber)
+                        ft.label="ĐỊCH PHẢN ĐÒN · DỘI 100%";ft.color={1,.39,.13}
+                        Sound.play("armor_gain",.76)
                     end
-                    if not attackResult.frozen then
+                    if timing and ((timing.evolvedSpn or 0)>0 or (timing.evolvedCards or 0)>0) then
+                        table.insert(anim.floatingTexts,{text="TIẾN HÓA TOÀN ĐỘI +"..(timing.chain or 1),color={1,.65,.46},x=game.monster.screenX or UI.BATTLE_CENTER_X,y=360,alpha=1.8})
+                        anim.deityHit=anim.deityHit or {};for slot in pairs(game.deities or {}) do anim.deityHit[slot]=0 end
+                    end
+                    if (attackResult.timingSouls or 0)>0 then
+                        table.insert(anim.floatingTexts,{text="+"..attackResult.timingSouls.." LH · +"..(anim.playerTimingResult.rewardGold or 0).." VÀNG",color={.85,.48,1},x=game.monster.screenX or UI.BATTLE_CENTER_X,y=328,alpha=1.6})
+                    end
+                    if not attackResult.frozen and not attackResult.enemyCounter then
                         require("src.timing_vfx").emit(attackResult.missed and "miss" or "attack",
                             anim.playerTimingResult and anim.playerTimingResult.grade or "normal",
                             game.monster.screenX or UI.BATTLE_CENTER_X,270,{reducedMotion=settings.reducedMotion,mobile=Touch.lowPower})
@@ -3469,7 +3505,7 @@ function love.update(dt,realDt)
             else
                 if UI.ScoringFeel.isFinished(anim) then
                     if DeathVFX.enemyActive(game.monster) and DeathVFX.busy() then return end
-                    if not anim.counterAttackStarted and Combat.getOutcome(game) ~= "victory" then
+                    if not anim.counterAttackStarted and Combat.getOutcome(game) == "continue" then
                         anim.counterAttackStarted = true
                         if startEnemyAttack("after", anim.playerAttackSpeed, function() end) then return end
                     end
@@ -3557,7 +3593,7 @@ local function drawMainMenu()
     end
     g.setFont(UI.fonts.medium)
     g.setColor(UI.COLORS.goldYellow)
-    g.print("beta 0.147.0", 48, 185)
+    g.print("beta 0.148.0", 48, 185)
     -- g.print("LỤC ĐỊA THỨC TỈNH", 76, 168)
     -- g.setFont(UI.fonts.tiny)
     -- g.setColor(UI.COLORS.textLight)
@@ -4217,7 +4253,7 @@ local function drawBattleInfoPanel(m, eval)
         intent = UI.localizeText((m and m.intent and m.intent.label) or "Chưa rõ"),
         playerSpeed = anim.enemyTurn and (anim.enemyTurn.speed or game.lastPlayerAttackSpeed) or scoring and anim.playerAttackSpeed
             or (#(game.selectedIndices or {}) > 0 and Combat.getAverageAttackSpeed(getSelectedCards(),game,
-                Poker.evaluate(getSelectedCards(),game.unlockedHands,game.handLevels)) or nil),
+                Poker.evaluate(getSelectedCards(),game.unlockedHands,game.handLevels,game)) or nil),
         enemySpeed = m and require("src.enemy_abilities").speed(m),
         chipsBounce = scoring and anim.bounceScale.chips or 1,
         multBounce = scoring and anim.bounceScale.mult or 1,
@@ -4306,7 +4342,7 @@ local function drawPlayingState()
 
     local m = game.monster
     local selectedCards = getSelectedCards()
-    local eval = (#selectedCards > 0) and Poker.evaluate(selectedCards, game.unlockedHands, game.handLevels) or nil
+    local eval = (#selectedCards > 0) and Poker.evaluate(selectedCards, game.unlockedHands, game.handLevels,game) or nil
     require("ui.combat_chrome").table(game,UI)
     drawBattleEnemy(m)
     drawBattleHud(m, mx, my)
@@ -4381,8 +4417,9 @@ local function drawPlayingState()
     end
 
     -- All occupied consumables retain their physical slots in the original fan.
+    local consumableOrder=UI.InventoryRail.consumableOrder(game)
     local hoveredConsumableIndex = nil
-    for j = #game.consumables, 1, -1 do
+    for _,j in ipairs(consumableOrder) do
         local cx, cy, cw, ch = getConsumableSlotRect(j, "playing")
         local c = game.consumables[j]
         if c and mx >= cx and mx <= cx + cw and my >= cy and my <= cy + ch then
@@ -4390,7 +4427,8 @@ local function drawPlayingState()
             break
         end
     end
-    for j = 1, #game.consumables do
+    for order = #consumableOrder, 1, -1 do
+        local j=consumableOrder[order]
         local cx, cy, cardW, cardH = getConsumableSlotRect(j, "playing")
         local c = game.consumables[j]
         if c and cx>-1000 then
@@ -4471,6 +4509,7 @@ local function drawPlayingState()
     ----------------------------------------------------------------------------
     if not (anim.attackTiming or anim.enemyTurn and anim.enemyTurn.timing) then
     local hasSelection = (#selectedCards >= 1 and #selectedCards <= getMaxSelectableCards())
+    local attackCount=#UI.BossAbilities.playableCards(game,selectedCards)
     local actionY = 636
 
     -- Left: Chơi Tay Bài [Space]
@@ -4489,7 +4528,8 @@ local function drawPlayingState()
         font = UI.fonts.bookChapter,
         variant = "cyan",
         disabled = anim.enemyTurn ~= nil or state == "scoring" or UI.HandMotion.busy(game.hand)
-            or (not canEndTurn and hasSelection and not require("src.spn_legacy").canPlay(game,#selectedCards))
+            or (not canEndTurn and attackCount==0)
+            or (not canEndTurn and hasSelection and not require("src.spn_legacy").canPlay(game,attackCount))
             or (not canEndTurn and (not hasSelection or game.handsRemaining <= 0)),
         pressScale = 0.95,
     }
@@ -5234,7 +5274,7 @@ local function drawDeckViewerModal()
             if isHov then hoveredDeckCard = c end
 
             c.hovered = isHov
-            if not (state == "shop" and UI.Polish.hiddenOwned(c)) then UI.drawCard(c, cx, cy, cw, ch) end
+            if not (state == "shop" and UI.Polish.hiddenOwned(c)) then DeckViewer.drawCard(c, cx, cy, cw, ch,isHov) end
         end
     end
 
@@ -6167,6 +6207,7 @@ UI.ExpandedInventory.drawBattle=function()
 end
 
 function love.draw()
+    if not isDeckViewerOpen and DeckViewer.motionActive then DeckViewer.resetMotion() end
     UI.descriptionCandidate = nil
     UI.descriptionGame = game
     local packOpening = state == "shop" and shopData and shopData.currentPackOpening and not UI.Polish.busy()
@@ -7389,8 +7430,7 @@ local function handleModalsMousepressed(mx, my, button)
         end
         if (state == "playing" or state == "shop") and not isDeckViewerOpen
             and not (shopData and shopData.currentPackOpening) then
-            local count = UI.Inventory.limit(game)
-            for i = count, 1, -1 do
+            for _,i in ipairs(UI.InventoryRail.consumableOrder(game)) do
                 local x, y, w, h = getConsumableSlotRect(i, state)
                 if game.consumables and game.consumables[i]
                     and mx >= x and mx <= x + w and my >= y and my <= y + h then
